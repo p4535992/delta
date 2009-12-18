@@ -21,11 +21,11 @@
       </actions>
       <dialogs>
          <dialog name="volumeListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/volume/web/volume-list-dialog.jsp" managed-bean="VolumeListDialog"
-            icon="/images/icons/versioned_properties_large.gif" actions-config-id="browse_actions_volume" title-id="volume_list" description-id="volume_list_info">
+            icon="/images/icons/versioned_properties_large.gif" actions-config-id="browse_actions_volume" title-id="volume_list" description-id="volume_list_info" >
          </dialog>
 
-         <dialog name="volumeDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/volume/web/volume-details-dialgo.jsp" managed-bean="VolumeDetailsDialog"
-            title-id="volume_details" show-ok-button="true">
+         <dialog name="volumeDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/volume/web/volume-details-dialog.jsp" managed-bean="VolumeDetailsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="volume_details" show-ok-button="true">
             <buttons>
                <button id="close-button" label-id="close" action="#{VolumeDetailsDialog.close}" disabled="#{VolumeDetailsDialog.closed}" />
             </buttons>

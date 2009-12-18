@@ -1,12 +1,14 @@
 package ee.webmedia.alfresco.document.service;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
@@ -46,6 +48,12 @@ public interface DocumentService {
      * @return new Node representing document if node had reference to volumeNodeRef
      */
     Node updateDocument(Node node);
+    
+    /**
+     * @param volumeRef
+     * @return all documents that have been assigned under given volume
+     */
+    List<Document> getAllDocumentsByVolume(NodeRef volumeRef);
 
     void deleteDocument(NodeRef nodeRef);
 

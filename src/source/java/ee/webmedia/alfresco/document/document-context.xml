@@ -41,6 +41,7 @@
       <property name="nodeService" ref="NodeService" />
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="generalService" ref="GeneralService" />
+      <property name="documentTypeService" ref="DocumentTypeService" />
       <property name="userService" ref="UserService" />
       <property name="authenticationService" ref="AuthenticationService" />
       <property name="draftsPath" value="/app:drafts" />

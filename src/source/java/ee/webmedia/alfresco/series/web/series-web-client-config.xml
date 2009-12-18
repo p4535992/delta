@@ -21,10 +21,10 @@
       </actions>
       <dialogs>
          <dialog name="seriesListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/series/web/series-list-dialog.jsp" managed-bean="SeriesListDialog"
-            icon="/images/icons/versioned_properties_large.gif" actions-config-id="browse_actions_series" title-id="series_list" description-id="series_list_info">
+            icon="/images/icons/versioned_properties_large.gif" actions-config-id="browse_actions_series" title-id="series_list" description-id="series_list_info" >
          </dialog>
 
-         <dialog name="seriesDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/series/web/series-details-dialgo.jsp" managed-bean="SeriesDetailsDialog"
+         <dialog name="seriesDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/series/web/series-details-dialog.jsp" managed-bean="SeriesDetailsDialog"
             title-id="series_details" show-ok-button="true">
             <buttons>
                <button id="close-button" label-id="close" action="#{SeriesDetailsDialog.close}" disabled="#{SeriesDetailsDialog.closed}" />

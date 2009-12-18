@@ -20,6 +20,8 @@ public class Volume implements Serializable, Comparable<Volume> {
     private Date validTo;
     private String status;
     private Date dispositionDate;
+    private Date seriesIdentifier;
+    private boolean containsCases;
     // non-mappable fields
     @AlfrescoModelProperty(isMappable = false)
     private NodeRef seriesNodeRef;
@@ -73,6 +75,22 @@ public class Volume implements Serializable, Comparable<Volume> {
 
     public void setDispositionDate(Date dispositionDate) {
         this.dispositionDate = dispositionDate;
+    }
+
+    public Date getSeriesIdentifier() {
+        return seriesIdentifier;
+    }
+
+    public void setSeriesIdentifier(Date seriesIdentifier) {
+        this.seriesIdentifier = seriesIdentifier;
+    }
+    
+    public boolean isContainsCases() {
+        return containsCases;
+    }
+    
+    public void setContainsCases(boolean containsCases) {
+        this.containsCases = containsCases;
     }
 
     public NodeRef getSeriesNodeRef() {

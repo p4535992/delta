@@ -117,6 +117,10 @@ public class VolumeServiceImpl implements VolumeService {
         Map<String, Object> props = volume.getNode().getProperties();
         props.put(VolumeModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
 
+        if (props.get(VolumeModel.Props.VALID_TO) == null) {
+            props.put(VolumeModel.Props.VALID_TO.toString(), new Date());
+        }
+
         Series series = seriesService.getSeriesByNoderef(volume.getSeriesNodeRef().toString());
         final Integer retentionPeriod = series.getRetentionPeriod();
         if (retentionPeriod != null) {

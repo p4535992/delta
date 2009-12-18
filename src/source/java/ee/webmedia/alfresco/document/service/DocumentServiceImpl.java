@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.document.service;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -9,20 +11,25 @@ import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileNotFoundException;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.GUID;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
 /**
@@ -30,11 +37,15 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
  */
 public class DocumentServiceImpl implements DocumentService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentServiceImpl.class);
+
+    private static final BeanPropertyMapper<Document> documentBeanPropertyMapper = BeanPropertyMapper.newInstance(Document.class);
+    
     private DictionaryService dictionaryService;
     private NamespaceService namespaceService;
     private NodeService nodeService;
     private FileFolderService fileFolderService;
     private GeneralService generalService;
+    private DocumentTypeService documentTypeService;
     private UserService userService;
     private AuthenticationService authenticationService;
 
@@ -100,7 +111,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
         if (targetParentRef != null) {
             final Node existingVolumeNode = getVolumeByDocument(docNodeRef);
-            if(existingVolumeNode != null && targetParentRef == null) {
+            if (existingVolumeNode != null && targetParentRef == null) {
                 throw new RuntimeException("Can't remove link from volume, once it has been assigned");
             }
             if (existingVolumeNode == null || !targetParentRef.equals(existingVolumeNode.getNodeRef())) {
@@ -133,6 +144,37 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    public List<Document> getAllDocumentsByVolume(NodeRef volumeRef) {
+        List<ChildAssociationRef> volumeAssocs = nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
+        List<Document> docsOfVolume = new ArrayList<Document>(volumeAssocs.size());
+        for (ChildAssociationRef volume : volumeAssocs) {// nim
+            NodeRef volumeNodeRef = volume.getChildRef();
+            final Node doc = getDocument(volumeNodeRef);
+            docsOfVolume.add(getDocumentByNoderef(doc.getNodeRef(), volumeRef));
+        }
+        return docsOfVolume;
+    }
+
+    private Document getDocumentByNoderef(NodeRef docRef, NodeRef volRef) {
+        Document doc = documentBeanPropertyMapper.toObject(nodeService.getProperties(docRef));
+        if (volRef == null) {
+            List<ChildAssociationRef> parentAssocs = nodeService.getParentAssocs(docRef);
+            if (parentAssocs.size() != 1) {
+                throw new RuntimeException("Volume is expected to have only one parent series, but got " + parentAssocs.size() + " matching the criteria.");
+            }
+            volRef = parentAssocs.get(0).getParentRef();
+        }
+        final Node documentNode = getDocument(docRef);
+        doc.setVolumeNodeRef(volRef);
+        doc.setNode(documentNode);
+        doc.setDocumentType(documentTypeService.getDocumentType(documentNode.getType()));
+        if (log.isDebugEnabled()) {
+            log.debug("Document: " + doc);
+        }
+        return doc;
+    }
+
+    @Override
     public void addPropertiesModifierCallback(QName qName, PropertiesModifierCallback propertiesModifierCallback) {
         this.creationPropertiesModifierCallbacks.put(qName, propertiesModifierCallback);
     }
@@ -146,8 +188,8 @@ public class DocumentServiceImpl implements DocumentService {
     public Node[] getAncestorNodesByDocument(NodeRef nodeRef) {
         Node volumeNode = getVolumeByDocument(nodeRef);
         Node seriesNode = volumeNode != null ? getSeriesByVolume(volumeNode.getNodeRef()) : null;
-        Node functionNode = seriesNode != null ? getFunctionBySeries(seriesNode.getNodeRef()): null;
-        return new Node[] {volumeNode, seriesNode, functionNode};
+        Node functionNode = seriesNode != null ? getFunctionBySeries(seriesNode.getNodeRef()) : null;
+        return new Node[] { volumeNode, seriesNode, functionNode };
     }
 
     private Node getFunctionBySeries(NodeRef seriesRef) {
@@ -159,6 +201,10 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     // START: getters / setters
+    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
+        this.documentTypeService = documentTypeService;
+    }
+
     public void setDictionaryService(DictionaryService dictionaryService) {
         this.dictionaryService = dictionaryService;
     }

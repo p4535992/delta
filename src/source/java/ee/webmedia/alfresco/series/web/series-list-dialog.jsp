@@ -63,3 +63,5 @@
    </a:richList>
 
 </a:panel>
+
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

@@ -46,8 +46,8 @@
 <f:verbatim>
    <script type="text/javascript">
       $jQ(document).ready(function () {
-         var finishButton = $jQ('#' + escapeId4JQ('dialog:cancel-button'));
-         finishButton.remove();
+         var cancelButton = $jQ('#' + escapeId4JQ('dialog:cancel-button'));
+         cancelButton.remove();
       });
    </script>
 </f:verbatim>

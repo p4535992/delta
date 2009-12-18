@@ -22,13 +22,5 @@
 </a:panel>
 
 <a:booleanEvaluator value="#{!DialogManager.bean.meta.inEditMode}">
-   <f:verbatim>
-      <script type="text/javascript">
-         $jQ(document).ready(function () {
-            var finishButton = $jQ('#' + escapeId4JQ('dialog:finish-button'));
-            finishButton.next().remove();
-            finishButton.remove();
-         });
-      </script>
-   </f:verbatim>
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
 </a:booleanEvaluator>

@@ -1,9 +1,12 @@
 <alfresco-config>
    <config>
       <dialogs>
+         <dialog name="documentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" description-id="document_list_info" >
+         </dialog>
 
          <dialog name="document" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-dialog.jsp" managed-bean="DocumentDialog"
-                 icon="/images/icons/details_large.gif" title-id="document" />
+            icon="/images/icons/details_large.gif" title-id="document" />
 
       </dialogs>
    </config>

@@ -27,7 +27,10 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.volume_title}" value="title" styleClass="header" />
          </f:facet>
-         <h:outputText id="col2-text" value="#{r.title}" /><!-- TODO: asjade taski puhul link asjade nimekirja? -->
+         <a:actionLink id="col2-link" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{msg.document_list_info}"
+            showLink="false" actionListener="#{DocumentListDialog.showAll}" >
+            <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
 
       <%-- validFrom --%>
@@ -82,3 +85,5 @@
    </a:richList>
 
 </a:panel>
+
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
