@@ -40,7 +40,7 @@ public class FileServiceImpl implements FileService {
             File item = new File(fi);
             item.setCreator(generalService.getPersonFullNameByUserName((String) fi.getProperties().get(ContentModel.PROP_CREATOR)));
             item.setModifier(versionsService.getPersonFullNameFromAspect(item.getNodeRef(), (String) fi.getProperties().get(ContentModel.PROP_MODIFIER)));
-            item.setDownloadUrl(generateURL(item.getNodeRef(), item.getName()));
+            item.setDownloadUrl(generateURL(item.getNodeRef()));
             files.add(item);
             boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());
             if (isDdoc) {
@@ -56,7 +56,7 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public String generateURL(NodeRef nodeRef, String name) {
+    public String generateURL(NodeRef nodeRef) {
         // calculate a WebDAV URL for the given node
         StringBuilder path = new StringBuilder("/").append(WebDAVServlet.WEBDAV_PREFIX);
 
@@ -70,6 +70,7 @@ public class FileServiceImpl implements FileService {
         NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();
         path.append("/").append(URLEncoder.encode(parent.getId()));
 
+        String name = fileFolderService.getFileInfo(nodeRef).getName();
         path.append("/").append(URLEncoder.encode(name));
 
         return path.toString();

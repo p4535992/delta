@@ -23,8 +23,7 @@ public interface FileService {
      * Calculatees WebDAV URL for given node
      * 
      * @param nodeRef
-     * @param name
      * @return
      */
-    String generateURL(NodeRef nodeRef, String name);
+    String generateURL(NodeRef nodeRef);
 }

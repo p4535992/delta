@@ -37,7 +37,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
         for (ChildAssociationRef templateRef : templateRefs) {
             DocumentTemplate docTmpl = templateBeanPropertyMapper.toObject(nodeService.getProperties(templateRef.getChildRef()));
             docTmpl.setNodeRef(templateRef.getChildRef());
-            docTmpl.setDownloadUrl(fileService.generateURL(templateRef.getChildRef(), null));
+            docTmpl.setDownloadUrl(fileService.generateURL(templateRef.getChildRef()));
             NodeRef nodeRef = generalService.getNodeRef(DocumentTypeModel.Repo.DOCUMENT_TYPES_SPACE+ "/" + docTmpl.getDocTypeId());
             if(nodeRef != null) {
                 docTmpl.setDocTypeName((new Node(nodeRef)).getProperties().get(DocumentTypeModel.Props.NAME).toString());

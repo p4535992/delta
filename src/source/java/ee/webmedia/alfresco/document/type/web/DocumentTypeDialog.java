@@ -1,6 +1,8 @@
 package ee.webmedia.alfresco.document.type.web;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -73,6 +75,13 @@ public class DocumentTypeDialog extends BaseDialogBean {
         for (SelectItem selectItem : results) {
             resultArray[i++] = selectItem;
         }
+
+        Arrays.sort(resultArray, new Comparator<SelectItem>() {
+            @Override
+            public int compare(SelectItem a, SelectItem b) {
+                return a.getLabel().compareTo(b.getLabel());
+            }
+        });
         return resultArray;
     }
 

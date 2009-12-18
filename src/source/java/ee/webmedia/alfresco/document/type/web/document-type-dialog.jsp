@@ -40,11 +40,9 @@
 
 <f:verbatim>
    <script type="text/javascript">
-      window.onload = pageLoaded;
-      function pageLoaded()
-      {
-         document.getElementById("dialog:cancel-button").style.display = "none";
-      }
+      $jQ(document).ready(function () {
+         var finishButton = $jQ('#' + escapeId4JQ('dialog:cancel-button'));
+         finishButton.remove();
+      });
    </script>
 </f:verbatim>
-
