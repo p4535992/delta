@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="vol:volumeModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
+   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="docc" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/volume/1.0" prefix="vol" />
+   </namespaces>
+
+   <types>
+      <type name="vol:volume">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="vol:title">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="vol:containsCases">
+               <type>d:boolean</type>
+            </property>
+            <property name="vol:description">
+               <type>d:text</type>
+            </property>
+            <property name="vol:status">
+               <type>d:text</type>
+            </property>
+            <property name="vol:validFrom">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="vol:validTo">
+               <type>d:date</type>
+            </property>
+            <property name="vol:dispositionDate">
+               <type>d:date</type>
+            </property>
+            <property name="vol:volumeType">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="vol:volumeMark">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+         </properties>
+         <associations>
+            <child-association name="docc:document">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docc:document</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </type>
+   </types>
+
+</model>

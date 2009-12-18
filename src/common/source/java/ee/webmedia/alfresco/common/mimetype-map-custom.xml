@@ -1,0 +1,9 @@
+<alfresco-config area="mimetype-map">
+   <config condition="Mimetype Map" evaluator="string-compare">
+      <mimetypes>
+         <mimetype display="DigiDoc" mimetype="application/digidoc">
+            <extension>ddoc</extension>
+         </mimetype>
+      </mimetypes>
+   </config>
+</alfresco-config>

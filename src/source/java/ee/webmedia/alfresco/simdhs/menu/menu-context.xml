@@ -1,0 +1,36 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="menuService" class="ee.webmedia.alfresco.menu.service.MenuServiceImpl">
+      <property name="menuConfigLocation" value="classpath:ee/webmedia/alfresco/simdhs/menu/menu-structure.xml" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="documentTypeService" ref="DocumentTypeService" />
+   </bean>
+
+   <bean id="MenuService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.menu.service.MenuService</value>
+         </list>
+      </property>
+      <property name="target">
+         <ref bean="menuService" />
+      </property>
+   </bean>
+
+   <bean id="menuLoaderBootstrap" class="ee.webmedia.alfresco.menu.bootstrap.MenuLoaderBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="menuLoaderBootstrap" />
+      <property name="sinceVersion" value="1.1.1.29" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="menuService" ref="MenuService" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentTypeSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>
+
+</beans>

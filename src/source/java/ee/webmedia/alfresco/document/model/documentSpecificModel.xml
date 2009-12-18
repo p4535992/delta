@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="docspec:documentSpecificModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
+   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/document/specific/1.0" prefix="docspec" />
+   </namespaces>
+
+   <aspects>
+
+      <aspect name="docspec:sender">
+         <properties>
+            <property name="docspec:senderRegNumber"><!-- Saatja kirja reg nr -->
+               <type>d:text</type>
+            </property>
+            <property name="docspec:senderRegDate"><!-- Saatja kirja reg kpv -->
+               <type>d:date</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docspec:template">
+         <properties>
+            <property name="docspec:templateName"><!-- Mall -->
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+   </aspects>
+
+</model>

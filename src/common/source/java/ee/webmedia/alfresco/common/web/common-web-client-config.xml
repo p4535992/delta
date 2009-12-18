@@ -1,0 +1,42 @@
+<alfresco-config>
+   <plug-ins>
+      <element-readers>
+         <element-reader element-name="property-sheet" class="ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetElementReader" />
+      </element-readers>
+   </plug-ins>
+   <config>
+      <actions>
+         <action id="add_adm_content">
+            <permissions>
+               <permission allow="true">CreateChildren</permission>
+            </permissions>
+            <label-id>add_content</label-id>
+            <image>/images/icons/add_item.png</image>
+            <action>dialog:addContent</action>
+            <action-listener>#{AddContentDialog.start}</action-listener>
+         </action>
+      </actions>
+   </config>
+   <config evaluator="string-compare" condition="Views">
+      <views>
+         <view-defaults>
+            <browse>
+               <view>details</view>
+               <page-size>
+                  <list>20</list>
+                  <details>20</details>
+                  <icons>20</icons>
+               </page-size>
+            </browse>
+         </view-defaults>
+      </views>
+   </config>
+   <config evaluator="string-compare" condition="Languages" replace="true">
+      <languages>
+         <language locale="et_EE">Estonian</language>
+<!--
+         <language locale="en_US">English</language>
+-->
+      </languages>
+   </config>
+</alfresco-config>

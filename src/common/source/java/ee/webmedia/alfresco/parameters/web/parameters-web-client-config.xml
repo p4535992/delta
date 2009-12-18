@@ -1,0 +1,10 @@
+<alfresco-config>
+   <config>
+      <dialogs>
+
+         <dialog name="parametersListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/parameters/web/parameters-list-dialog.jsp" managed-bean="ParametersListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="parameters_title" />
+
+      </dialogs>
+   </config>
+</alfresco-config>

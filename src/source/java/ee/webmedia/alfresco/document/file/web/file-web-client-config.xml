@@ -1,0 +1,30 @@
+<alfresco-config>
+   <config>
+      <dialogs>
+
+         <dialog name="addFile" page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/add-file-dialog.jsp" managed-bean="AddFileDialog" icon="/images/icons/add_content_large.gif"
+            title-id="add_file_dialog_title" description-id="add_content_dialog_desc" />
+
+         <dialog name="deleteFile" page="/jsp/dialog/delete.jsp" managed-bean="DeleteFileDialog" icon="/images/icons/delete_large.gif" title-id="delete_file"
+            description-id="delete_file_info" />
+
+      </dialogs>
+      <actions>
+
+         <action id="addFile">
+            <permissions>
+               <permission allow="true">CreateChildren</permission>
+            </permissions>
+            <label-id>file_add_file</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <action>dialog:addFile</action>
+            <action-listener>#{AddFileDialog.start}</action-listener>
+         </action>
+
+         <action-group id="addFileMenu">
+            <action idref="addFile" />
+         </action-group>
+
+      </actions>
+   </config>
+</alfresco-config>

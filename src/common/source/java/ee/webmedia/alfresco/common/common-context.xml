@@ -1,0 +1,129 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <import resource="classpath:ee/webmedia/alfresco/common/propertysheet/common-propertysheet-context.xml"/>
+   <!--
+      Overrides 'global-properties' bean defined in
+      alfresco/WEB-INF/classes/alfresco/core-services-context.xml
+   -->
+   <bean id="global-properties" class="org.alfresco.config.JndiPropertiesFactoryBean">
+      <property name="locations">
+         <list>
+            <value>classpath:alfresco/repository.properties</value>
+            <value>classpath:alfresco/domain/transaction.properties</value>
+            <!-- Add project and common specific configuration files -->
+            <value>classpath:ee/webmedia/alfresco/common/common-alfresco-global.properties</value>
+            <value>classpath:ee/webmedia/alfresco/common/project-alfresco-global.properties</value>
+            <value>classpath*:alfresco-global.properties</value>
+         </list>
+      </property>
+      <property name="systemPropertiesModeName">
+         <value>SYSTEM_PROPERTIES_MODE_OVERRIDE</value>
+      </property>
+      <property name="systemProperties">
+         <list>
+            <value>hibernate.dialect</value>
+            <value>hibernate.query.substitutions</value>
+            <value>hibernate.jdbc.use_get_generated_keys</value>
+            <value>hibernate.default_schema</value>
+         </list>
+      </property>
+   </bean>
+
+   <!--
+      Overrides 'mimetypeConfigService' bean defined in
+      alfresco/WEB-INF/classes/alfresco/content-services-context.xml
+   -->
+   <bean id="mimetypeConfigService" class="org.alfresco.config.xml.XMLConfigService" init-method="init">
+      <constructor-arg>
+         <bean class="org.alfresco.config.source.UrlConfigSource">
+            <constructor-arg>
+               <list>
+                  <value>classpath:alfresco/mimetype/mimetype-map.xml</value>
+                  <value>classpath:alfresco/mimetype/mimetype-map-openoffice.xml</value>
+                  <!-- Add our own mimetypes -->
+                  <value>classpath:ee/webmedia/alfresco/common/mimetype-map-custom.xml</value>
+               </list>
+            </constructor-arg>
+         </bean>
+      </constructor-arg>
+   </bean>
+
+   <bean id="projectNameProperties" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+      <property name="ignoreUnresolvablePlaceholders" value="true" />
+      <property name="locations">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/common/project-name.properties</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="commonResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.common.system-messages</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="commonTransactionInterceptor" class="org.springframework.transaction.interceptor.TransactionInterceptor">
+      <property name="transactionManager" ref="transactionManager" />
+      <property name="transactionAttributes">
+         <props>
+            <prop key="get*">${server.transaction.mode.readOnly}</prop>
+            <prop key="exist*">${server.transaction.mode.readOnly}</prop>
+            <prop key="has*">${server.transaction.mode.readOnly}</prop>
+            <prop key="is*">${server.transaction.mode.readOnly}</prop>
+            <prop key="list*">${server.transaction.mode.readOnly}</prop>
+            <prop key="search*">${server.transaction.mode.readOnly}</prop>
+            <prop key="*">${server.transaction.mode.default}</prop>
+         </props>
+      </property>
+   </bean>
+
+   <bean id="commonWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/common/web/common-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="serializingFilter" class="ee.webmedia.alfresco.common.filter.SerializingFilter">
+      <property name="enabled" value="${serializingfilter.enabled}" />
+   </bean>
+
+   <bean id="ApplicationService" class="ee.webmedia.alfresco.common.service.ApplicationServiceImpl">
+      <property name="moduleService" ref="ModuleService" />
+      <property name="commonVersionLocation" value="classpath:ee/webmedia/alfresco/common/common-version.properties" />
+      <property name="projectVersionLocation" value="classpath:ee/webmedia/alfresco/common/project-version.properties" />
+      <property name="projectName" value="${project.name}" />
+   </bean>
+
+   <bean id="generalService" class="ee.webmedia.alfresco.common.service.GeneralServiceImpl">
+      <property name="defaultStore" value="${spaces.store}" />
+      <property name="personService" ref="PersonService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="namespaceService" ref="NamespaceService" />
+      <property name="searchService" ref="SearchService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+   </bean>
+   
+   <bean id="GeneralService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.common.service.GeneralService</value>
+         </list>
+      </property>
+      <property name="target" ref="generalService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="SearchExtensionService" class="ee.webmedia.alfresco.common.search.SearchExtensionServiceImpl" />
+
+</beans>

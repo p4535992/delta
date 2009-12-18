@@ -1,0 +1,28 @@
+<alfresco-config>
+   <config>
+      <actions>
+
+         <action id="classificator_add_value">
+            <label-id>classificator_add_value</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{ClassificatorDetailsDialog.addNewValue}</action-listener>
+         </action>
+
+         <action-group id="browse_classificator_values">
+            <action idref="classificator_add_value" />
+         </action-group>
+
+      </actions>
+
+
+      <dialogs>
+
+         <dialog name="classificatorListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificator-list-dialog.jsp" managed-bean="ClassificatorListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="classificators_title" show-ok-button="false" />
+
+         <dialog name="classificatorDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificator-details-dialog.jsp"
+            managed-bean="ClassificatorDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="classificators_title" show-ok-button="true" />
+
+      </dialogs>
+   </config>
+</alfresco-config>

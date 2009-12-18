@@ -1,0 +1,168 @@
+<alfresco-config>
+
+   <config evaluator="aspect-name" condition="ab:everyone">
+      <property-sheet>
+         <show-property name="ab:activeStatus" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:person">
+      <property-sheet>
+         <show-property name="ab:personFirstName" />
+         <show-property name="ab:personLastName" />
+         <show-property name="ab:personId" />
+         <show-property name="ab:mobilePhone" />
+         <show-property name="ab:jobName" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:organizationProperties">
+      <property-sheet>
+         <show-property name="ab:orgName" />
+         <show-property name="ab:orgAltName" />
+         <show-property name="ab:orgAcronym" />
+         <show-property name="ab:orgCode" />
+         <show-property name="ab:location" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:everyone">
+      <property-sheet>
+         <show-property name="ab:email" />
+         <show-property name="ab:phone" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:skype">
+      <property-sheet>
+         <show-property name="ab:skype" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:struct">
+      <property-sheet>
+         <show-property name="ab:struct" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="ab:orgPrivate">
+      <property-sheet>
+         <show-property name="ab:address1" />
+         <show-property name="ab:address2" />
+         <show-property name="ab:postal" />
+         <show-property name="ab:city" />
+         <show-property name="ab:country" />
+         <show-property name="ab:fax" />
+         <show-property name="ab:website" />
+      </property-sheet>
+   </config>
+
+   <config>
+      <wizards>
+
+         <wizard name="addressbookAddOrg" managed-bean="AddressbookOrgWizard" title-id="addressbook_new_entry" icon="/images/icons/new_user_large.gif">
+            <step name="book-entry-properties-org" title-id="addressbook_entry_properties">
+               <page path="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/addressbook-add.jsp" title-id="addressbook_add_org" description-id="addressbook_add_org_desc" />
+            </step>
+            <step name="summary-org" title-id="summary">
+               <page path="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/summary.jsp" title-id="summary" description-id="summary_desc" />
+            </step>
+         </wizard>
+
+         <wizard name="addressbookAddPerson" managed-bean="AddressbookPersonWizard" title-id="addressbook_new_entry" icon="/images/icons/new_user_large.gif">
+            <step name="book-entry-properties-person" title-id="addressbook_entry_properties">
+               <page path="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/addressbook-add.jsp" title-id="addressbook_add_person" description-id="addressbook_new_entry_step1_desc" />
+            </step>
+            <step name="summary-person" title-id="summary">
+               <page path="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/summary.jsp" title-id="summary" description-id="summary_desc" />
+            </step>
+         </wizard>
+
+         <wizard name="addressbookAddOrgPerson" managed-bean="AddressbookOrgPersonWizard" title-id="addressbook_new_entry" icon="/images/icons/new_user_large.gif">
+            <step name="book-entry-properties-org-person" title-id="addressbook_entry_properties">
+               <page path="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/addressbook-add.jsp" title-id="addressbook_add_contakt_person" description-id="addressbook_new_entry_step1_desc" />
+            </step>
+            <step name="summary-org-person" title-id="summary">
+               <page path="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/summary.jsp" title-id="summary" description-id="summary_desc" />
+            </step>
+         </wizard>
+
+      </wizards>
+      <actions>
+
+         <!-- Addressbook action-->
+         <action id="addressbook_add_org">
+            <label-id>addressbook_add_org</label-id>
+            <image>/images/icons/create_user.gif</image>
+            <action>wizard:addressbookAddOrg</action>
+         </action>
+
+         <action id="addressbook_edit_org">
+            <label-id>addressbook_edit_org</label-id>
+            <image>/images/icons/edituser.gif</image>
+            <action>wizard:addressbookAddOrg</action>
+            <action-listener>#{AddressbookOrgWizard.setupEdit}</action-listener>
+            <params>
+               <param name="nodeRef">#{AddressbookDialog.currentNode.nodeRef}</param>
+            </params>
+         </action>
+
+         <action id="addressbook_edit_person">
+            <label-id>addressbook_edit_person</label-id>
+            <image>/images/icons/edituser.gif</image>
+            <action>wizard:addressbookAddPerson</action>
+            <action-listener>#{AddressbookPersonWizard.setupEdit}</action-listener>
+            <params>
+               <param name="nodeRef">#{AddressbookDialog.currentNode.nodeRef}</param>
+            </params>
+         </action>
+
+         <action id="addressbook_add_person">
+            <label-id>addressbook_add_person</label-id>
+            <image>/images/icons/create_user.gif</image>
+            <action>wizard:addressbookAddPerson</action>
+         </action>
+
+         <action id="addressbook_add_org_person">
+            <label-id>addressbook_add_person</label-id>
+            <image>/images/icons/create_user.gif</image>
+            <action>wizard:addressbookAddOrgPerson</action>
+            <action-listener>#{AddressbookOrgPersonWizard.setupEntryOrg}</action-listener>
+            <params>
+               <param name="org">#{AddressbookDialog.currentNode.nodeRef}</param>
+            </params>
+         </action>
+
+         <!-- Action menu for Addressbook-->
+         <action-group id="addressbook_menu">
+            <action idref="addressbook_add_org" />
+            <action idref="addressbook_add_person" />
+         </action-group>
+
+         <action-group id="addressbook_org_menu">
+            <action idref="addressbook_edit_org" />
+            <action idref="addressbook_add_org_person" />
+         </action-group>
+
+         <action-group id="addressbook_person_menu">
+            <action idref="addressbook_edit_person" />
+         </action-group>
+
+      </actions>
+      <dialogs>
+
+         <dialog name="addressbookManage" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/addressbook.jsp" managed-bean="AddressbookDialog" icon="/images/icons/users_large.gif"
+            title-id="addressbook_manage" actions-config-id="addressbook_menu" show-ok-button="false" />
+
+         <dialog name="addressbookViewEntry" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/view-entry-org.jsp" managed-bean="AddressbookDialog" icon="/images/icons/users_large.gif"
+            title-id="addressbook_entry" actions-config-id="addressbook_org_menu" show-ok-button="false" />
+
+         <dialog name="addressbookViewEntryPerson" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/view-entry-person.jsp" managed-bean="AddressbookDialog" icon="/images/icons/users_large.gif"
+            title-id="addressbook_private_person_data" actions-config-id="addressbook_person_menu" show-ok-button="false" />
+
+         <dialog name="addressbookDeleteEntry" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/summary-dialog.jsp" managed-bean="AddressbookDeleteDialog" icon="/images/icons/users_large.gif"
+            title-id="addressbook_delete_entry" show-ok-button="true" />
+
+      </dialogs>
+   </config>
+</alfresco-config>

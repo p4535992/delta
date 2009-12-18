@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="signatureService" class="ee.webmedia.alfresco.signature.service.SignatureServiceImpl" init-method="init">
+      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="jDigiDocCfg" value="ee/webmedia/alfresco/signature/service/jdigidoc.cfg" />
+   </bean>
+
+   <bean id="SignatureService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.signature.service.SignatureService</value>
+         </list>
+      </property>
+      <property name="target" ref="signatureService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="transformer.DigiDocContent" class="ee.webmedia.alfresco.signature.transform.DigiDocContentTransformer" parent="baseContentTransformer">
+      <!-- XXX When using "ContentService" in place of "contentService" the following exception occurs: -->
+      <!-- UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only -->
+      <property name="contentService" ref="contentService" />
+      <property name="signatureService" ref="SignatureService" />
+   </bean>
+
+   <bean id="signatureResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.signature.web.webclient-signature</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="signatureWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/signature/web/signature-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+</beans>

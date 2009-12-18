@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:os="http://alfresco.webmedia.ee/model/orgstructure/1.0">
+   <os:orgstructs view:childName="os:orgstructs" />
+</view:view>

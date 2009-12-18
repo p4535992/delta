@@ -1,0 +1,157 @@
+package ee.webmedia.alfresco.parameters.service;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.service.namespace.QName;
+
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.parameters.job.ParameterResceduledTriggerBean;
+import ee.webmedia.alfresco.parameters.model.Parameter;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.model.ParametersModel;
+import ee.webmedia.alfresco.parameters.model.ParametersModel.Repo;
+
+/**
+ * Class to retrieve user-configurable parameters
+ * 
+ * @author Ats Uiboupin
+ */
+public class ParametersServiceImpl implements ParametersService {
+    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ParametersServiceImpl.class);
+
+    private GeneralService generalService;
+    private NodeService nodeService;
+
+    private Boolean applicationStarted = false;
+    private final Map<String /* parameterName */, List<ParameterChangedCallback>> parameterChangeListeners = new HashMap<String, List<ParameterChangedCallback>>();
+    private List<ParameterResceduledTriggerBean> reschedulableJobs = new ArrayList<ParameterResceduledTriggerBean>();
+
+    @Override
+    public void addParameterChangeListener(String paramName, ParameterChangedCallback callback) {
+        List<ParameterChangedCallback> listeners = parameterChangeListeners.get(paramName);
+        if (listeners == null) {
+            listeners = new LinkedList<ParameterChangedCallback>();
+            parameterChangeListeners.put(paramName, listeners);
+        }
+        listeners.add(callback);
+    }
+
+    @Override
+    public void applicationStarted() {
+        synchronized (applicationStarted) {
+            if (!applicationStarted) {
+                for (ParameterResceduledTriggerBean job : reschedulableJobs) {
+                    job.resolvePropertyValueAndSchedule();
+                }
+                applicationStarted = true;
+            }
+        }
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public <T> T getParameter(Parameters parameter, Class<T> requiredClazz) {
+        String xPath = parameter.toString();
+        final NodeRef nodeRef = generalService.getNodeRef(xPath);
+        final Serializable parameterValue = nodeService.getProperty(nodeRef, ParametersModel.Props.Parameter.VALUE);
+        if (requiredClazz != null) {
+            return DefaultTypeConverter.INSTANCE.convert(requiredClazz, parameterValue);
+        }
+        return (T) parameterValue;
+    }
+
+    private <T> T getParameter(Parameter<? extends Serializable> parameter, Class<T> requiredClazz) {
+        return getParameter(Parameters.get(parameter), requiredClazz);
+    }
+
+    @Override
+    public String getStringParameter(Parameters parameter) {
+        return getParameter(parameter, String.class);
+    }
+
+    @Override
+    public Long getLongParameter(Parameters parameter) {
+        return getParameter(parameter, Long.class);
+    }
+
+    @Override
+    public Double getDoubleParameter(Parameters parameter) {
+        return getParameter(parameter, Double.class);
+    }
+
+    @Override
+    public List<Parameter<?>> getAllParameters() {
+        String xPath = Repo.PARAMETERS_SPACE;
+        final NodeRef parametersRootNodeRef = generalService.getNodeRef(xPath);
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parametersRootNodeRef);
+        List<Parameter<?>> parameters = new ArrayList<Parameter<?>>(childRefs.size());
+        for (ChildAssociationRef ref : childRefs) {
+            final QName qName = ref.getQName();
+            final String paramName = qName.getLocalName();
+            NodeRef paramNodeRef = ref.getChildRef();
+            final QName nodeType = nodeService.getType(paramNodeRef);
+            final Serializable paramValue = nodeService.getProperty(paramNodeRef, ParametersModel.Props.Parameter.VALUE);
+            parameters.add(Parameter.newInstance(paramName, paramValue, nodeType));
+        }
+        return parameters;
+    }
+
+    @Override
+    public void updateParameters(List<Parameter<?>> parameters) {
+        for (Parameter<? extends Serializable> parameter : parameters) {
+            updateParameter(parameter);
+        }
+    }
+
+    private void updateParameter(Parameter<? extends Serializable> parameter) {
+        final Parameters parameterEnum = Parameters.get(parameter);
+        final String xPath = parameterEnum.toString();
+        final NodeRef nodeRef = generalService.getNodeRef(xPath);
+        if (log.isDebugEnabled()) {
+            log.debug("updateing parameter: " + parameter);
+        }
+        Serializable previousValueInRepo = getParameter(parameter, parameter.getParamValue().getClass());
+        nodeService.setProperty(nodeRef, ParametersModel.Props.Parameter.VALUE, parameter.getParamValue());
+        // only reschedule jobs if the parameter value actually changed
+        if (!previousValueInRepo.equals(parameter.getParamValue())) {
+            log.debug("Parameters value changed:\n\tin repo:" + previousValueInRepo + "'\n\tupdateable parameter: '" + parameter + "'");
+            List<ParameterChangedCallback> listeners = parameterChangeListeners.get(parameter.getParamName());
+            if (listeners != null) {
+                for (ParameterChangedCallback callback : listeners) {
+                    callback.doWithParameter(parameter.getParamValue());
+                }
+            }
+            return;
+        }
+    }
+
+    // START: getters / setters
+    public void setGeneralService(GeneralService generalService) {
+        this.generalService = generalService;
+    }
+
+    public void setNodeService(NodeService nodeService) {
+        this.nodeService = nodeService;
+    }
+
+    @Override
+    public void addParameterResceduledJob(ParameterResceduledTriggerBean job) {
+        synchronized (applicationStarted) {
+            reschedulableJobs.add(job);
+            if (applicationStarted) {
+                job.resolvePropertyValueAndSchedule();
+            }
+        }
+    }
+
+    // END: getters / setters
+}

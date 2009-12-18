@@ -1,0 +1,10 @@
+<alfresco-config>
+   <config>
+      <dialogs>
+
+         <dialog name="document" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-dialog.jsp" managed-bean="DocumentDialog"
+                 icon="/images/icons/details_large.gif" title-id="document" />
+
+      </dialogs>
+   </config>
+</alfresco-config>

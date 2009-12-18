@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="docsub:documentSubtypeModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
+   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+      <import uri="http://alfresco.webmedia.ee/model/document/specific/1.0" prefix="docspec" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/document/subtype/1.0" prefix="docsub" />
+   </namespaces>
+
+   <types>
+
+      <type name="docsub:outgoingLetter">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:sender</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+
+   </types>
+
+</model>

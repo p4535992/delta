@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alfresco-config>
+   <config>
+      <actions>
+
+         <action id="volume_add_new">
+            <evaluator>ee.webmedia.alfresco.user.web.DocumentManagerEvaluator</evaluator>
+            <label-id>volume_add_new</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{VolumeDetailsDialog.addNewVolume}</action-listener>
+            <action>dialog:volumeDetailsDialog</action>
+            <params>
+               <param name="seriesNodeRef">#{DialogManager.bean.parent.node.nodeRef}</param>
+            </params>
+         </action>
+
+         <action-group id="browse_actions_volume">
+            <action idref="volume_add_new" />
+         </action-group>
+
+      </actions>
+      <dialogs>
+         <dialog name="volumeListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/volume/web/volume-list-dialog.jsp" managed-bean="VolumeListDialog"
+            icon="/images/icons/versioned_properties_large.gif" actions-config-id="browse_actions_volume" title-id="volume_list" description-id="volume_list_info">
+         </dialog>
+
+         <dialog name="volumeDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/volume/web/volume-details-dialgo.jsp" managed-bean="VolumeDetailsDialog"
+            title-id="volume_details" show-ok-button="true">
+            <buttons>
+               <button id="close-button" label-id="close" action="#{VolumeDetailsDialog.close}" disabled="#{VolumeDetailsDialog.closed}" />
+            </buttons>
+         </dialog>
+      </dialogs>
+   </config>
+
+   <config evaluator="node-type" condition="vol:volume">
+      <property-sheet>
+         <show-property name="vol:volumeMark" display-label-id="volume_volumeMark" readOnlyIf="vol:status=suletud" />
+         <show-property name="vol:title" display-label-id="volume_title" readOnlyIf="vol:status=suletud" />
+         <show-property name="vol:volumeType" display-label-id="volume_volumeType" classificatorName="volumeType" component-generator="ClassificatorSelectorGenerator" readOnlyIf="vol:status=suletud" />
+         <show-property name="vol:containsCases" display-label-id="volume_containsCases" component-generator="CheckboxGenerator" readOnlyIf="vol:status=suletud" />
+         <show-property name="vol:description" display-label-id="volume_description" readOnlyIf="vol:status=suletud" styleClass="expand5-200" component-generator="TextAreaGenerator"/>
+         <show-property name="vol:validFrom" display-label-id="volume_validFrom" readOnlyIf="vol:status=suletud" />
+         <show-property name="vol:validTo" display-label-id="volume_validTo" readOnlyIf="vol:status=suletud" />
+         <show-property name="vol:status" display-label-id="series_status" read-only="true" classificatorName="docListUnitStatus" component-generator="ClassificatorSelectorGenerator" />
+         <show-property name="vol:dispositionDate" display-label-id="volume_dispositionDate" />
+      </property-sheet>
+   </config>
+</alfresco-config>
+

@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE faces-config PUBLIC "-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.1//EN"
+                              "http://java.sun.com/dtd/web-facesconfig_1_1.dtd">
+<faces-config>
+
+   <managed-bean>
+      <description>Bean that holds the menu state.</description>
+      <managed-bean-name>MenuBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.menu.ui.MenuBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>menuService</property-name>
+         <value>#{MenuService}</value>
+      </managed-property>
+   </managed-bean>
+
+   <!-- ==================== [ COMPONENTS] =================================== -->
+   <component>
+      <component-type>ee.webmedia.alfresco.menu.ui.component.UIMenuComponent</component-type>
+      <component-class>ee.webmedia.alfresco.menu.ui.component.UIMenuComponent</component-class>
+   </component>
+   
+   <component>
+      <component-type>ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper</component-type>
+      <component-class>ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper</component-class>
+   </component>
+   
+   <component>
+      <component-type>ee.webmedia.alfresco.menu.ui.component.YahooTreeItem</component-type>
+      <component-class>ee.webmedia.alfresco.menu.ui.component.YahooTreeItem</component-class>
+   </component>
+
+	<!-- ==================== [/COMPONENTS] =================================== -->
+	
+   
+   <!-- ===================== [ RENDERERS ] =================================== -->
+   
+   <render-kit>
+      <renderer>
+         <component-family>ee.webmedia.alfresco.menu.ui.component.UIMenuComponent</component-family>
+         <renderer-type>ee.webmedia.alfresco.menu.ui.component.MenuRenderer</renderer-type>
+         <renderer-class>ee.webmedia.alfresco.menu.ui.component.MenuRenderer</renderer-class>
+      </renderer>
+   </render-kit>
+	
+   <!-- ===================== [/RENDERERS ] =================================== -->
+	
+
+</faces-config>

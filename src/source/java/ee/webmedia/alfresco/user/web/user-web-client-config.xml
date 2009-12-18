@@ -1,0 +1,24 @@
+<alfresco-config>
+   <config>
+      <dialogs>
+         <dialog name="userListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/user-list-dialog.jsp" managed-bean="UserListDialog"
+            icon="/images/icons/users_large.gif" title-id="users" show-ok-button="false" />
+         <dialog name="userDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/user-details-dialog.jsp" managed-bean="UserDetailsDialog"
+            icon="/images/icons/user_console_large.gif" title-id="user_data" show-ok-button="false" />
+      </dialogs>
+   </config>
+   <config evaluator="node-type" condition="cm:person" replace="true">
+      <property-sheet>
+         <show-property name="cm:firstName" />
+         <show-property name="cm:lastName" />
+         <show-property name="cm:userName" display-label-id="user_username" />
+         <show-property name="cm:firstName" />
+         <show-property name="unit" display-label-id="unit" />
+         <show-property name="cm:jobtitle" display-label-id="jobtitle" />
+         <show-property name="cm:telephone" display-label-id="telephone" />
+         <show-property name="cm:email" display-label-id="user_email" />
+         <show-property name="cm:homeFolder" display-label-id="user_home_folder" component-generator="HomespaceLinkGenerator" />
+      </property-sheet>
+   </config>
+</alfresco-config>
+

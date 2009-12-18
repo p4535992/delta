@@ -1,0 +1,10 @@
+<alfresco-config>
+   <config>
+      <dialogs>
+
+         <dialog name="documentTypeDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/type/web/document-type-dialog.jsp" managed-bean="DocumentTypeDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_types" />
+
+      </dialogs>
+   </config>
+</alfresco-config>

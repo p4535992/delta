@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <!-- @Override classpath:alfresco/web-client-application-context.xml -->
+   <bean id="defaultAuthenticationFilter" class="ee.webmedia.alfresco.orgstructure.amr.AMRAuthenticationFilter">
+      <property name="configService">
+         <ref bean="webClientConfigService" />
+      </property>
+   </bean>
+
+   <!-- User registry synchronization jobs -->
+   <!-- @Override classpath:alfresco/bootstrap-context.xml -->
+   <bean id="Synchronization" class="org.alfresco.repo.management.subsystems.ChildApplicationContextFactory" parent="abstractPropertyBackedBean">
+      <property name="autoStart">
+         <value>true</value>
+      </property>
+      <property name="id">
+         <list><!-- use AMR subsystem -->
+            <value>amr</value>
+         </list>
+      </property>
+   </bean>
+   
+   <!-- @Override classpath:alfresco/subsystems/Authentication/common-ldap-context.xml -->
+   <bean id="userRegistry" class="ee.webmedia.alfresco.orgstructure.amr.AMRUserRegistry">
+      <property name="active" value="true" />
+      <property name="personService" ref="PersonService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="amrService" ref="AmrService" />
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+
+   <!--  @Override authentication-services-context.xml -->
+   <bean name="userHomesHomeFolderProvider" class="org.alfresco.repo.security.person.UIDBasedHomeFolderProvider" parent="baseHomeFolderProvider">
+      <property name="path" value="/app:userHomes" />
+      <property name="storeUrl" value="${spaces.store}" />
+      <property name="ownerOnCreate" value="System" />
+      <property name="onCreatePermissionsManager" ref="userHomesHomeFolderPermissionsManager" />
+      <property name="onReferencePermissionsManager" ref="userHomesHomeFolderPermissionsManager" />
+   </bean>
+
+   <!-- TODO: @Override vist peaks saama amr-authentication-context.xml'is kogu WebDavAuthenticationFilter override asemel üle kirjutada ainult webDavAuthenticationFilter - alfresco/web-client-application-context.xml
+   <bean id="webDavAuthenticationFilter" class="ee.webmedia.alfresco.webdav.auth.AuthenticationFilter">
+      <property name="authenticationService" ref="AuthenticationService" />
+      <property name="personService" ref="PersonService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="transactionService" ref="TransactionService" />
+   </bean>
+   @Override WebDavAuthenticationFilter alfresco/web-client-application-context.xml -->
+   <bean id="WebDavAuthenticationFilter" class="org.alfresco.repo.management.subsystems.ChainingSubsystemProxyFactory">
+      <property name="applicationContextManager">
+         <ref bean="Authentication" />
+      </property>
+      <property name="interfaces">
+         <list>
+            <value>org.alfresco.repo.web.filter.beans.DependencyInjectedFilter</value>
+         </list>
+      </property>
+      <property name="sourceBeanName">
+         <value>webDavAuthenticationFilter</value>
+      </property>
+      <!-- Fall back to the default alfresco implementation -->
+      <property name="defaultTarget">
+         <bean class="ee.webmedia.alfresco.webdav.auth.AuthenticationFilter">
+            <property name="authenticationService">
+               <ref bean="AuthenticationService" />
+            </property>
+            <property name="personService">
+               <ref bean="PersonService" />
+            </property>
+            <property name="nodeService">
+               <ref bean="NodeService" />
+            </property>
+            <property name="transactionService">
+               <ref bean="TransactionService" />
+            </property>
+         </bean>
+      </property>
+   </bean>
+
+</beans>

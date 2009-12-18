@@ -1,0 +1,220 @@
+/*
+	LOGO, CONTROL PANEL AND NAVIGATION
+	*************************************************************************/
+/* *************************************************************************/
+
+/*
+	HEADER
+	******************************/
+#logo > a + a {
+	position: relative;
+	top: 1px;
+}
+
+#alfsearch_menu ul li {
+	margin: 0; 
+}
+
+	#alfsearch_menu ul li input {
+		position: relative;
+		top: 1px;
+		margin-right: 4px;
+	}
+	
+#menu li.dropdown > div {
+	position: absolute;
+	top: 10px;
+	left: 0;
+	padding-left: 17px;
+	width: 85%;
+	z-index: -1;
+}
+
+/*
+	LEFT NAVIGATION BAR
+	*************************************************************************/
+/* *************************************************************************/
+
+/*
+	SIDEBAR
+	******************************/
+#sidebar {
+	margin-top: 1px;
+}
+
+#sidebar > ul > li .treeNode td:first-child {
+	height: 16px;
+}
+
+/*
+	CONTENT
+	*************************************************************************/
+/* *************************************************************************/
+
+#content,
+.column,
+.panel-column {
+	overflow: hidden;
+}
+
+#actions .actions {
+	padding-top: 8px;
+}
+
+.page-controls {
+	bottom: 2px;
+}
+
+#content input[type=submit] {
+	background-position: 0 3px;
+}
+
+td.actions-column {
+	position: static;
+}
+
+.actions-column .ie7-z-index {
+	position: relative;
+	z-index: 100;
+}
+
+.dropdown-menu {
+	left: 0;
+	z-index: 90;
+}
+
+.right.dropdown-menu {
+	left: auto;
+}
+
+td .dropdown-menu {
+	top: 0;
+	left: auto;
+}
+
+.propertiesLabel img {
+	margin-left: 0;
+}
+
+/*
+	TITLEBAR
+	******************************/
+	
+#additional {
+	z-index: 100;
+}
+
+#actions {
+	margin-bottom: 5px;
+}
+
+.extra-actions > li:first-child > a,
+.extra-actions > li:first-child > span > a {
+	padding-top: 0px;
+	padding-bottom: 6px;
+}
+
+.dropdown-menu > span {
+	position: relative;
+	top: 5px;
+}
+
+.dropdown-menu span > li:first-child {
+	margin-top: -7px;
+}
+
+.extra-actions .dropdown-menu {
+	overflow: visible !important;
+}
+
+	.dropdown-menu.no-icon span,
+	.dropdown-menu.no-icon a {
+		padding-left: 22px;
+	}
+
+.dropdown-menu li {
+	min-width: 120px;
+}
+
+.dropdown-menu a {
+	min-width: 90px;
+}
+
+/*
+	FOOTER
+	******************************/
+#footer {
+	z-index: -1;
+}
+
+
+/*
+	PANELS
+	******************************/
+.panel-90 {
+	margin-left: -1px;
+	margin-right: 1%;
+}
+
+.panel-10 {
+	margin-left: -1px;
+}
+
+.panel-border {
+	padding-bottom: 40px;
+}
+
+#advanced-search-field .panel-border,
+#adv-search-1st-col .panel-border,
+#adv-search-2nd-col .panel-border {
+	padding-bottom: 20px;
+}
+
+#restrict-panel td,
+#location-panel td {
+	padding-bottom: 0px !important;
+}
+
+/*
+	CONTAINER CONTROLS
+	******************************/
+
+.container-buttons input {
+	margin-top: 3px;
+}
+
+.container-buttons input[disabled] {
+	background: url("../images/parts/button-deactive-bg.png") repeat-x;
+	font-weight: normal;
+}
+
+/*
+	VIEWS
+	*************************************************************************/
+/* *************************************************************************/
+
+/*
+	MANAGE USER GROUPS
+	******************************/
+#quota-panel {
+	margin-bottom: 0;
+}
+
+/*
+	hasLayout
+	*************************************************************************/
+/* *************************************************************************/
+
+.panel-border,
+#content,
+#titlebar,
+#titlebar-search {
+	height: 1%;	
+}
+
+#header li,
+#shelf li,
+#content li,
+.icon-link {
+	zoom: 1;
+}

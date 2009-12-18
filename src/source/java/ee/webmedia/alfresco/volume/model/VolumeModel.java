@@ -1,0 +1,25 @@
+package ee.webmedia.alfresco.volume.model;
+
+import org.alfresco.service.namespace.QName;
+
+public interface VolumeModel {
+    String URI = "http://alfresco.webmedia.ee/model/volume/1.0";
+
+    interface Types {
+        QName VOLUME = QName.createQName(URI, "volume");
+    }
+    
+    interface Associations {
+        QName VOLUME = QName.createQName(URI, "volume");
+    }
+
+    /**
+     * Properties described in alfresco model
+     */
+    public interface Props {
+        QName STATUS = QName.createQName(URI, "status");
+        QName DISPOSITION_DATE = QName.createQName(URI, "dispositionDate");
+        QName TITLE = QName.createQName(URI, "title");
+        QName MARK = QName.createQName(URI, "volumeMark");
+    }
+}

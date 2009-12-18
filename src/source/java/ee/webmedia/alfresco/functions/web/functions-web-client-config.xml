@@ -1,0 +1,47 @@
+<alfresco-config>
+   <config>
+      <actions>
+
+         <action id="function_add_new">
+            <evaluator>ee.webmedia.alfresco.user.web.DocumentManagerEvaluator</evaluator>
+            <label-id>function_add_new</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{FunctionsDetailsDialog.addNewFunction}</action-listener>
+            <action>dialog:functionsDetailsDialog</action>
+         </action>
+
+         <action-group id="browse_actions_functions">
+            <action idref="function_add_new" />
+         </action-group>
+
+      </actions>
+
+      <dialogs>
+
+         <dialog name="functionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/functions-list-dialog.jsp" managed-bean="FunctionsListDialog"
+            icon="/images/icons/versioned_properties_large.gif" actions-config-id="browse_actions_functions" title-id="functions_title" show-ok-button="false" />
+
+         <dialog name="functionsDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/functions-details-dialog.jsp" managed-bean="FunctionsDetailsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="functions_details_title" show-ok-button="true">
+            <buttons>
+               <button id="close-button" label-id="close" action="#{FunctionsDetailsDialog.close}" disabled="#{FunctionsDetailsDialog.closed}" />
+            </buttons>
+         </dialog>
+
+      </dialogs>
+   </config>
+
+   <config evaluator="node-type" condition="fn:function">
+      <property-sheet>
+         <show-property name="fn:type" display-label-id="function_type" classificatorName="functionType" component-generator="ClassificatorSelectorGenerator"
+            readOnlyIf="fn:status=suletud" />
+         <show-property name="fn:mark" display-label-id="function_mark" readOnlyIf="fn:status=suletud" />
+         <show-property name="fn:title" display-label-id="function_title" readOnlyIf="fn:status=suletud" />
+         <show-property name="fn:description" display-label-id="function_description" readOnlyIf="fn:status=suletud" styleClass="expand5-200"
+            component-generator="TextAreaGenerator" mandatory="false"/>
+         <show-property name="fn:status" display-label-id="function_status" read-only="true" classificatorName="docListUnitStatus"
+            component-generator="ClassificatorSelectorGenerator" />
+         <show-property name="fn:order" display-label-id="function_order" converter="javax.faces.Integer"/>
+      </property-sheet>
+   </config>
+</alfresco-config>

@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="fn:functionsModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
+   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/series/1.0" prefix="ser" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/functions/1.0" prefix="fn" />
+   </namespaces>
+
+   <types>
+      <type name="fn:functions">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="fn:function">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>fn:function</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="fn:function">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="fn:type">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="fn:mark">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="fn:title">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="fn:description">
+               <type>d:text</type>
+            </property>
+            <property name="fn:status">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="fn:order">
+               <type>d:int</type>
+            </property>
+         </properties>
+         <associations>
+            <child-association name="ser:series">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>ser:series</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </type>
+   </types>
+
+</model>

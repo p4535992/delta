@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<model name="docTempl:documentTemplateModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
+   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/document-template/1.0" prefix="docTempl" />
+   </namespaces>
+
+   <aspects>
+      <aspect name="docTempl:template">
+         <properties>
+            <property name="docTempl:name">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docTempl:comment">
+               <type>d:text</type>
+            </property>
+            <property name="docTempl:docTypeId">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+         </properties>
+      </aspect>
+   </aspects>
+</model>

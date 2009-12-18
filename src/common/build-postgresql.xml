@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="postgresql" basedir="..">
+
+   <import file="build-common.xml" />
+
+   <target name="recreateDbAndRepository" depends="load-conf" description="delete all data and create what is needed: delete database, user, ${dir.root} and recreate them">
+      <property file="${project.basedir}/source/java/ee/webmedia/alfresco/${project.name}/${project.name}-alfresco-global.properties" />
+      <property file="${conf.basedir}/${conf.name}/classes/alfresco-global.properties" userproperty="true" />
+      <property name="db.pgadmin.url" value="jdbc:postgresql://${db.host}:${db.port}/postgres" />
+
+      <echo>Droping database '${db.name}'</echo>
+      <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
+         <classpath location="lib/postgresql-8.3-605.jdbc3.jar" />
+         DROP DATABASE ${db.name};
+      </sql>
+      <echo>Droping database user '${db.username}'</echo>
+      <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
+         <classpath location="lib/postgresql-8.3-605.jdbc3.jar" />
+         DROP ROLE ${db.username};
+      </sql>
+      <echo>Creating database user '${db.username}' (with password given by property $${db.password})</echo>
+      <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
+         <classpath location="lib/postgresql-8.3-605.jdbc3.jar" />
+         CREATE ROLE ${db.username} LOGIN PASSWORD '${db.password}' NOSUPERUSER NOINHERIT NOCREATEDB NOCREATEROLE;
+      </sql>
+      <echo>Creating database user '${db.username}'</echo>
+      <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
+         <classpath location="lib/postgresql-8.3-605.jdbc3.jar" />
+         CREATE DATABASE alfresco WITH OWNER = ${db.username} ENCODING ='UTF8';
+      </sql>
+      <echo>Deleting alfresco repository data directory '${dir.root}'</echo>
+      <delete dir="${dir.root}" />
+   </target>
+
+</project>

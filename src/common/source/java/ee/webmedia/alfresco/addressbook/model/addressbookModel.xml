@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="ab:addressbookModel" xmlns="http://www.alfresco.org/model/dictionary/1.0">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/addressbook/1.0" prefix="ab" />
+   </namespaces>
+
+   <types>
+
+      <type name="ab:addressbook">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="ab:organizations">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>ab:organization</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+            <child-association name="ab:abPeople">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>ab:privPerson</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="ab:base">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>ab:everyone</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="ab:secondaryBase">
+         <parent>ab:base</parent>
+         <mandatory-aspects>
+            <aspect>ab:orgPrivate</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="ab:organization">
+         <parent>ab:secondaryBase</parent>
+         <associations>
+            <child-association name="ab:orgPeople">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>ab:orgPerson</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>ab:organizationProperties</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="ab:orgPerson">
+         <parent>ab:base</parent>
+         <mandatory-aspects>
+            <aspect>ab:person</aspect>
+            <aspect>ab:struct</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="ab:privPerson">
+         <parent>ab:secondaryBase</parent>
+         <mandatory-aspects>
+            <aspect>ab:person</aspect>
+            <aspect>ab:skype</aspect>
+         </mandatory-aspects>
+      </type>
+
+   </types>
+   <aspects>
+
+      <aspect name="ab:organizationProperties">
+         <properties>
+            <property name="ab:orgName">
+               <type>d:text</type>
+            </property>
+            <property name="ab:orgAltName">
+               <type>d:text</type>
+            </property>
+            <property name="ab:orgAcronym">
+               <type>d:text</type>
+            </property>
+            <property name="ab:orgCode">
+               <type>d:text</type>
+            </property>
+            <property name="ab:location">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="ab:struct">
+         <properties>
+            <property name="ab:struct">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="ab:skype">
+         <properties>
+            <property name="ab:skype">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="ab:orgPrivate">
+         <properties>
+            <property name="ab:address1">
+               <type>d:text</type>
+            </property>
+            <property name="ab:address2">
+               <type>d:text</type>
+            </property>
+            <property name="ab:postal">
+               <type>d:text</type>
+            </property>
+            <property name="ab:city">
+               <type>d:text</type>
+            </property>
+            <property name="ab:country">
+               <type>d:text</type>
+            </property>
+            <property name="ab:fax">
+               <type>d:text</type>
+            </property>
+            <property name="ab:website">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="ab:everyone">
+         <properties>
+            <property name="ab:activeStatus">
+               <type>d:boolean</type>
+               <default>true</default>
+            </property>
+            <property name="ab:email">
+               <type>d:text</type>
+            </property>
+            <property name="ab:phone">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="ab:person">
+         <properties>
+            <property name="ab:personFirstName">
+               <type>d:text</type>
+            </property>
+            <property name="ab:personLastName">
+               <type>d:text</type>
+            </property>
+            <property name="ab:personId">
+               <type>d:text</type>
+            </property>
+            <property name="ab:mobilePhone">
+               <type>d:text</type>
+            </property>
+            <property name="ab:jobName">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+   </aspects>
+</model>

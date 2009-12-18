@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="common" basedir=".">
+   <dirname property="common.basedir" file="${ant.file.common}" />
+
+   <property name="common.dir.lib" location="${common.basedir}/lib" />
+   <property name="common.dir.lib.dev" location="${common.basedir}/lib-dev" />
+   <property name="common.dir.lib.server" location="${common.basedir}/lib-server" />
+   <property name="common.dir.src" location="${common.basedir}/source/java" />
+   <property name="common.dir.src.test" location="${common.basedir}/source/test/java" />
+   <property name="common.dir.web" location="${common.basedir}/web" />
+   <property name="common.dir.etc" location="${common.basedir}/etc" />
+   <property name="common.alfresco.war" location="${common.dir.etc}/alfresco.war" />
+
+   <property name="project.dir.amp" location="${project.basedir}/amp" />
+   <property name="project.dir.etc" location="${project.basedir}/etc" />
+   <property name="project.dir.lib.appserver" location="${project.dir.etc}/lib-appserver" />
+   <property name="project.dir.lib" location="${project.basedir}/lib" />
+   <property name="project.dir.lib.dev" location="${project.basedir}/lib-dev" />
+   <property name="project.dir.src" location="${project.basedir}/source/java" />
+   <property name="project.dir.src.test" location="${project.basedir}/source/test/java" />
+   <property name="project.dir.web" location="${project.basedir}/web" />
+   <property name="project.dir.webinf" location="${project.basedir}/WEB-INF" />
+   <property name="project.dir.build" location="${project.basedir}/build" />
+   <property name="project.dir.exploded" location="${project.dir.build}/exploded" />
+   <property name="project.dir.exploded.lib" location="${project.dir.exploded}/WEB-INF/lib" />
+   <property name="project.dir.exploded.classes" location="${project.dir.exploded}/WEB-INF/classes" />
+   <property name="project.dir.test" location="${project.dir.build}/test" />
+   <property name="project.dir.test.classes" location="${project.dir.test}/classes" />
+   <property name="project.dir.test.reports" location="${project.dir.test}/reports" />
+   <property name="project.dir.coverage.reports" location="${project.dir.test.reports}/coverage" />
+   <property name="project.dir.coverage.instrumented" location="${project.dir.test}/classes-instrumented" />
+   <property name="project.build.temporary.war" location="${project.dir.build}/temporary.war" />
+   <property name="project.build.result.war" location="${project.dir.build}/${project.name}.war" />
+
+   <property name="conf.basedir" location="${project.dir.etc}/conf" />
+   <property name="conf.name.file" location="${project.basedir}/conf-name.properties" />
+   <property file="${conf.name.file}" />
+
+   <path id="classpath">
+      <fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
+      <fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
+      <fileset dir="${project.dir.lib.dev}" includes="**/*.jar" />
+   </path>
+
+   <!-- XXX: emma/findbugs need some classes from other jars than unit tests -->
+   <path id="classpath.test.base">
+      <pathelement path="${conf.basedir}/${conf.name}/classes" />
+      <pathelement path="${project.dir.exploded.classes}" />
+      <pathelement path="${project.dir.test.classes}" />
+      <fileset dir="${common.dir.lib.server}" includes="**/*.jar" />
+      <fileset dir="${project.dir.lib.appserver}" includes="**/*.jar" />
+   </path>
+
+   <path id="classpath.test">
+      <path refid="classpath" />
+      <path refid="classpath.test.base" />
+   </path>
+
+   <path id="classpath.test.compile">
+      <fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
+      <fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
+      <fileset dir="${project.dir.lib.dev}" includes="**/*.jar" />
+      <pathelement path="${conf.basedir}/${conf.name}/classes" />
+      <pathelement path="${project.dir.exploded.classes}" />
+      <pathelement path="${project.dir.test.classes}" />
+      <fileset dir="${project.dir.lib.appserver}" includes="**/*.jar" />
+   </path>
+
+
+   <target name="clean" description="Remove build directory">
+      <delete dir="${project.dir.build}" failonerror="false" />
+      <delete dir="${project.dir.webinf}" failonerror="false" />
+   </target>
+
+   <target name="clean-all" depends="clean,clean-project" description="Remove build directory and all extracted libraries" />
+
+   <!-- ============= General project setup targets ============= -->
+
+   <target name="clean-project">
+      <delete dir="${common.dir.lib.server}" failonerror="false" />
+   </target>
+
+   <target name="setup-project" depends="clean-project" description="Extract libraries that are needed for building the project">
+      <!-- Eclipse can't use libraries from output folders; also mmt needs classpath before war is extracted to exploded dir -->
+      <mkdir dir="${common.dir.lib.server}" />
+      <unwar src="${common.alfresco.war}" dest="${common.dir.lib.server}">
+         <patternset>
+            <include name="WEB-INF/lib/**/*.jar" />
+         </patternset>
+         <flattenmapper />
+      </unwar>
+
+      <!-- Newer version of XStream is added from common/lib folder -->
+      <delete file="${common.dir.lib.server}/xstream-1.2.2.jar" />
+   </target>
+
+   <target name="setup-project-done">
+      <available file="${common.dir.lib.server}" property="setup.project.done" />
+      <antcall target="setup-project-conditionally" />
+   </target>
+
+   <target name="setup-project-conditionally" unless="setup.project.done">
+      <antcall target="setup-project" />
+   </target>
+
+   <!-- ============= Exploded setup targets ============= -->
+
+   <target name="clean-exploded">
+      <delete dir="${project.dir.exploded}" failonerror="false" />
+   </target>
+
+   <target name="setup-exploded" depends="setup-project-done,clean-exploded" description="Setup exploded directory">
+      <copy file="${common.alfresco.war}" tofile="${project.build.temporary.war}" preservelastmodified="true" overwrite="true" />
+      <java dir="${project.basedir}" fork="true" classname="org.alfresco.repo.module.tool.ModuleManagementTool">
+         <classpath>
+            <fileset dir="${common.dir.lib.server}" includes="**/*.jar" />
+         </classpath>
+         <arg line="install ${project.dir.amp} ${project.build.temporary.war} -directory -nobackup" />
+      </java>
+      <mkdir dir="${project.dir.exploded}" />
+      <unwar src="${project.build.temporary.war}" dest="${project.dir.exploded}" />
+      <delete file="${project.build.temporary.war}" />
+
+      <!-- Keep libraries in sync with common/lib-server -->
+      <delete dir="${project.dir.exploded.lib}" />
+      <mkdir dir="${project.dir.exploded.lib}" />
+      <copy todir="${project.dir.exploded.lib}" preservelastmodified="true">
+         <fileset dir="${common.dir.lib.server}" />
+      </copy>
+
+      <mkdir dir="${project.dir.webinf}" />
+   </target>
+
+   <target name="setup-exploded-done">
+      <available file="${project.dir.exploded}/index.jsp" property="setup.exploded.done" />
+      <antcall target="setup-exploded-conditionally" />
+      <taskdef resource="emma_ant.properties" classpathref="classpath" />
+   </target>
+
+   <target name="setup-exploded-conditionally" unless="setup.exploded.done">
+      <antcall target="setup-exploded" />
+   </target>
+
+   <!-- ============= Exploded development targets ============= -->
+
+   <target name="init" depends="load-conf,setup-project-done,setup-exploded-done" />
+
+   <target name="create-version-file">
+      <property file="${source}" />
+      <echo file="${target}">currentVersion=${stage}.${milestone}.${submilestone}.${version}${line.separator}</echo>
+   </target>
+
+   <target name="compile" depends="init" description="Copy all files and compile sources to exploded directory">
+      <antcall target="create-version-file">
+         <param name="source" value="${project.basedir}/version.properties" />
+         <param name="target" value="${project.dir.build}/project-version.properties" />
+      </antcall>
+      <antcall target="create-version-file">
+         <param name="source" value="${common.basedir}/version.properties" />
+         <param name="target" value="${project.dir.build}/common-version.properties" />
+      </antcall>
+
+      <!-- Project files overwrite common files, they are always defined later -->
+      <!-- You must also define source folders in Eclipse in a certain order - common ones first and project ones later -->
+      <copy todir="${project.dir.exploded.lib}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${common.dir.lib}" includes="**/*.jar" />
+      </copy>
+      <copy todir="${project.dir.exploded.lib}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${project.dir.lib}" includes="**/*.jar" />
+      </copy>
+      <copy todir="${project.dir.exploded}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${common.dir.web}" />
+      </copy>
+      <copy todir="${project.dir.exploded}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${project.dir.web}" />
+      </copy>
+
+      <copy todir="${project.dir.exploded.classes}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${common.dir.src}" excludes="**/*.java,**/*_en_US.properties" />
+      </copy>
+      <copy todir="${project.dir.exploded.classes}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${common.dir.src}" includes="**/*_et_EE.properties" excludes="alfresco/messages/**,alfresco/workflow/**" />
+         <globmapper from="*_et_EE.properties" to="*.properties" />
+      </copy>
+      <replace dir="${project.dir.exploded.classes}" includes="ee/webmedia/alfresco/**/*.xml" propertyfile="${project.dir.build}/common-version.properties">
+         <replacefilter token="@currentVersion@" property="currentVersion" />
+      </replace>
+
+      <copy todir="${project.dir.exploded.classes}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${project.dir.src}" excludes="**/*.java,**/*_en_US.properties" />
+      </copy>
+      <copy todir="${project.dir.exploded.classes}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${project.dir.src}" includes="**/*_et_EE.properties" excludes="alfresco/messages/**,alfresco/workflow/**" />
+         <globmapper from="*_et_EE.properties" to="*.properties" />
+      </copy>
+      <replace dir="${project.dir.exploded.classes}" includes="ee/webmedia/alfresco/**/*.xml" propertyfile="${project.dir.build}/project-version.properties">
+         <replacefilter token="@currentVersion@" property="currentVersion" />
+      </replace>
+
+      <!-- PropertyPlaceholderConfigurer can't resolve properties on itself -->
+      <move file="${project.dir.exploded.classes}/ee/webmedia/alfresco/${project.name}/${project.name}-alfresco-global.properties"
+            tofile="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/project-alfresco-global.properties"
+            preservelastmodified="true"
+            overwrite="true" />
+      <!-- Provide version information -->
+      <copy tofile="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/common-version.properties"
+            file="${common.basedir}/project.properties"
+            preservelastmodified="true"
+            overwrite="true" />
+      <replace file="${project.dir.exploded.classes}/alfresco/module/${project.name}/module.properties"
+               propertyfile="${project.dir.build}/project-version.properties">
+         <replacefilter token="@currentVersion@" property="currentVersion" />
+      </replace>
+      <copy tofile="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/project-version.properties"
+            file="${project.basedir}/project.properties"
+            preservelastmodified="true"
+            overwrite="true" />
+      <replace file="${project.dir.exploded.classes}/alfresco/module/common/module.properties" propertyfile="${project.dir.build}/common-version.properties">
+         <replacefilter token="@currentVersion@" property="currentVersion" />
+      </replace>
+      <!-- Provide project name -->
+      <echo file="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/project-name.properties">project.name=${project.name}${line.separator}</echo>
+
+      <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+         <src path="${common.dir.src}" />
+         <src path="${project.dir.src}" />
+         <exclude name="ee/webmedia/**" />
+      </javac>
+      <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+         <compilerarg value="-Xlint" />
+         <!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
+         <compilerarg value="-Xlint:-path" />
+         <src path="${common.dir.src}" />
+         <src path="${project.dir.src}" />
+         <include name="ee/webmedia/**" />
+      </javac>
+
+      <available file="${conf.basedir}/${conf.name}/override" property="exists.dir.override" />
+      <antcall target="copy-override" />
+
+      <copy todir="${project.dir.webinf}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${project.dir.exploded}/WEB-INF" includes="*.tld" />
+      </copy>
+   </target>
+
+   <target name="copy-override" if="exists.dir.override">
+      <copy todir="${project.dir.exploded}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${conf.basedir}/${conf.name}/override" />
+      </copy>
+   </target>
+
+   <target name="war" depends="compile" description="Build WAR file from exploded directory">
+      <delete file="${project.build.result.war}" failonerror="false" />
+      <war destfile="${project.build.result.war}" duplicate="fail">
+         <fileset dir="${project.dir.exploded}" />
+      </war>
+   </target>
+
+   <!-- ============= Code coverage targets ============= -->
+
+   <target name="coverage" depends="compile" description="Prepare code coverage measuring for tests">
+      <delete dir="${project.dir.coverage.instrumented}" failonerror="false" />
+      <mkdir dir="${project.dir.coverage.instrumented}" />
+      <emma>
+         <instr instrpath="${project.dir.exploded.classes}"
+                destdir="${project.dir.coverage.instrumented}"
+                outfile="${project.dir.coverage.instrumented}/coverage.em">
+            <filter includes="ee.webmedia.alfresco.*.service.*" />
+            <filter includes="ee.webmedia.alfresco.signature.transform.*" />
+            <filter includes="ee.webmedia.alfresco.signature.servlet.*" />
+            <filter includes="ee.webmedia.xtee.client.service.*" />
+         </instr>
+      </emma>
+   </target>
+
+   <target name="coverage-report" if="exists.coverage.file">
+      <delete dir="${project.dir.coverage.reports}" failonerror="false" />
+      <mkdir dir="${project.dir.coverage.reports}" />
+      <emma>
+         <report sourcepath="${common.dir.src}">
+            <fileset dir="${project.dir.coverage.instrumented}">
+               <include name="coverage.*" />
+            </fileset>
+            <xml outfile="${project.dir.coverage.reports}/coverage.xml" />
+            <html outfile="${project.dir.coverage.reports}/coverage.html" />
+         </report>
+      </emma>
+   </target>
+
+   <!-- ============= Testing targets ============= -->
+
+   <target name="clean-test" description="Remove test directory">
+      <delete dir="${project.dir.test}" failonerror="false" />
+   </target>
+
+   <target name="compile-test" depends="compile" description="Compiles test sources">
+      <delete dir="${project.dir.test.classes}" failonerror="false" />
+      <mkdir dir="${project.dir.test.classes}" />
+      <copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${common.dir.src.test}" excludes="**/*.java,**/*_en_US.properties" />
+      </copy>
+      <copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true">
+         <fileset dir="${project.dir.src.test}" excludes="**/*.java,**/*_en_US.properties" />
+      </copy>
+      <javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+         <compilerarg value="-Xlint" />
+         <!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
+         <compilerarg value="-Xlint:-path" />
+         <src path="${common.dir.src.test}" />
+         <src path="${project.dir.src.test}" />
+      </javac>
+   </target>
+
+   <target name="test" depends="compile-test" description="Run test">
+      <delete dir="${project.dir.test.reports}" failonerror="false" />
+      <mkdir dir="${project.dir.test.reports}" />
+      <junit printsummary="yes" fork="yes" forkmode="perBatch" haltonfailure="yes">
+         <classpath>
+            <pathelement location="${project.dir.coverage.instrumented}" />
+            <path refid="classpath.test" />
+         </classpath>
+         <jvmarg value="-Demma.coverage.out.file=${project.dir.coverage.instrumented}/coverage.ec" />
+         <formatter type="xml" />
+         <batchtest todir="${project.dir.test.reports}" haltonerror="false" errorproperty="junit.error" haltonfailure="false" failureproperty="junit.failure">
+            <fileset dir="${common.dir.src.test}" includes="**/*Test.java" />
+            <fileset dir="${project.dir.src.test}" includes="**/*Test.java" />
+         </batchtest>
+      </junit>
+      <antcall target="create-junit-reports" />
+      <available file="${project.dir.coverage.instrumented}/coverage.ec" property="exists.coverage.file" />
+      <antcall target="coverage-report" />
+      <antcall target="test-completed" />
+   </target>
+
+   <target name="test-completed">
+      <fail if="junit.error" message="Error occured while running junit test" />
+      <fail if="junit.failure" message="Failure occured while running junit test" />
+   </target>
+
+   <target name="show-report" description="Show test results report in web browser">
+      <available file="${project.dir.test.reports}" property="exists.test.report" />
+      <antcall target="show-test-report" />
+
+      <available file="${project.dir.coverage.reports}" property="exists.coverage.report" />
+      <property name="report.coverage" location="${project.dir.coverage.reports}/coverage.html" />
+      <antcall target="show-coverage-report" />
+   </target>
+
+   <target name="show-test-report" depends="init" if="exists.test.report">
+      <exec executable="${browser}" spawn="true">
+         <arg file="${project.dir.test.reports}/index.html" />
+      </exec>
+   </target>
+
+   <target name="show-coverage-report" depends="init" if="exists.coverage.report">
+      <exec executable="${browser}" spawn="true">
+         <arg file="${report.coverage}" />
+      </exec>
+   </target>
+
+   <target name="singleClassTest" description="Run test" depends="compile-test">
+      <mkdir dir="${project.dir.test.reports}" />
+      <property name="test.single.out" value="build/test/reports/TEST-${classToTest}" />
+      <junit printsummary="yes" fork="yes" haltonfailure="yes">
+         <formatter type="xml" />
+         <test name="${classToTest}"
+               haltonerror="false"
+               errorproperty="junit.error"
+               haltonfailure="false"
+               failureproperty="junit.failure"
+               outfile="${test.single.out}" />
+         <classpath refid="classpath.test" />
+      </junit>
+
+      <echo message="Test-report generated to '${test.single.out}.xml'" />
+      <antcall target="create-junit-reports" />
+      <available file="${project.dir.test.reports}" property="exists.test.report" />
+      <antcall target="show-test-report" />
+      <antcall target="test-completed" />
+   </target>
+
+   <target name="create-junit-reports">
+      <junitreport todir="${project.dir.test.reports}">
+         <fileset dir="${project.dir.test.reports}" includes="TEST-*.xml" />
+         <report todir="${project.dir.test.reports}" />
+      </junitreport>
+   </target>
+
+   <target name="test-all" description="Run all tests with coverage analysis and show the report" depends="coverage, test, show-report" />
+
+   <!-- ============= Code analyzer targets ============= -->
+
+   <target name="findbugs" description="Checks codebase with FindBugs tool">
+      <delete dir="${project.dir.test.reports}/findbugs" failonerror="false" />
+      <mkdir dir="${project.dir.test.reports}/findbugs" />
+
+      <taskdef resource="edu/umd/cs/findbugs/anttask/tasks.properties" classpathref="classpath" />
+      <!-- TODO use excludeFilter for bugs? -->
+      <findbugs classpathref="classpath"
+                pluginlist="${common.dir.lib.dev}/findbugs.jar"
+                output="xml:withMessages"
+                outputFile="${project.dir.test.reports}/findbugs/findbugs.xml"
+                projectName="${project.name}"
+                includeFilter="${common.dir.etc}/findbugsIncludePackages.xml"
+                failOnError="true"
+                timeout="900000">
+         <auxClasspath refid="classpath" />
+         <sourcePath path="${common.dir.src}" />
+         <sourcePath path="${project.dir.src}" />
+         <class location="${project.dir.exploded.classes}" />
+      </findbugs>
+   </target>
+
+   <target name="show-findbugs-report" depends="init">
+      <exec executable="${browser}" spawn="true">
+         <arg file="${project.dir.test.reports}/findbugs/findbugs.xml" />
+      </exec>
+   </target>
+
+   <!-- ============= Configuration file targets ============= -->
+
+   <target name="clean-conf">
+      <delete file="${conf.name.file}" failonerror="false" />
+   </target>
+
+   <target name="load-conf" depends="create-conf">
+      <antcall target="check-conf" />
+      <property file="${conf.basedir}/${conf.name}/build.properties" />
+      <property file="${conf.basedir}/build-default.properties" />
+      <property file="${common.basedir}/etc/conf/build-default.properties" />
+   </target>
+
+   <target name="create-conf" unless="conf.name">
+      <available file="${conf.name.file}" property="exists.file.conf-name.properties" />
+      <fail if="exists.file.conf-name.properties"
+            message="File '${conf.name.file}' exists, but conf.name property does not point to a valid configuration directory, please configure '${conf.name.file}' correctly" />
+
+      <input message="Enter name of the configuration directory name to be used (directory name from directory ${conf.basedir}/&lt;dirname&gt;)"
+             addproperty="conf.name" />
+      <antcall target="check-conf" />
+
+      <echo file="${conf.name.file}">## environment configuration to be used (name of the folder under etc/conf/)${line.separator}</echo>
+      <echo file="${conf.name.file}" append="true">conf.name=${conf.name}${line.separator}</echo>
+   </target>
+
+   <target name="check-conf">
+      <available file="${conf.basedir}/${conf.name}/build.properties" property="exists.file.build.properties" />
+      <fail unless="exists.file.build.properties"
+            message="File '${conf.basedir}/${conf.name}/build.properties' does not exist, please create it based on 'build.properties.sample'" />
+   </target>
+
+   <!-- ============= Changelogic ============= -->
+
+   <target name="check-common-version">
+      <available file="${common.basedir}/change.properties" property="common.change.properties.present" />
+      <fail if="common.change.properties.present" message="Project version must point to a specific common version, not a change" />
+   </target>
+
+   <target name="replace-version">
+      <property file="project.properties" />
+      <echo>Replacing @currentVersion@ = ${currentVersion}${line.separator}in source/java/ee/webmedia/alfresco/**/*.xml</echo>
+      <replace dir="source/java" includes="ee/webmedia/alfresco/**/*.xml" propertyfile="project.properties" summary="true">
+         <replacefilter token="@currentVersion@" property="currentVersion" />
+      </replace>
+   </target>
+
+   <target name="prepare-conf">
+      <echo>Copying conf-name.properties to: ${cl.targetDir}/conf-name.properties</echo>
+      <copy todir="${cl.targetDir}" file="${project.basedir}/conf-name.properties" />
+   </target>
+   
+</project>

@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE faces-config PUBLIC "-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.1//EN"
+                              "http://java.sun.com/dtd/web-facesconfig_1_1.dtd">
+<faces-config>
+   <!-- 
+      Loaded after Alfresco JSF configuration files.
+      You can define here:
+      * new managed JSF beans
+      * overrides of previously defined Alfresco managed JSF beans
+      * new navigation rules
+      * ...
+      But NOT overrides of existing navigation rules (you must use META-INF/faces-config.xml for that)
+      More information: http://wiki.alfresco.com/wiki/Packaging_And_Deploying_Extensions#JSF_configuration_files
+    -->
+
+   <managed-bean>
+      <description>
+         Bean that generates a date picker component
+      </description>
+      <managed-bean-name>DatePickerGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter</converter-class>
+   </converter>
+   
+   <component>
+      <component-type>component.CustomSelectOneRadio</component-type>
+      <component-class>ee.webmedia.alfresco.common.radio.UICustomSelectOneRadio</component-class>
+      <component-extension>
+         <component-family>CustomSelectOneRadio</component-family>
+         <renderer-type>renderer.CustomSelectOneRadio</renderer-type>
+      </component-extension>
+   </component>
+   
+   <render-kit>
+      <renderer>
+         <component-family>CustomSelectOneRadio</component-family>
+         <renderer-type>renderer.CustomSelectOneRadio</renderer-type>
+         <renderer-class>ee.webmedia.alfresco.common.radio.HTMLCustomSelectOneRadioRenderer</renderer-class>
+      </renderer>
+   </render-kit>
+
+</faces-config>

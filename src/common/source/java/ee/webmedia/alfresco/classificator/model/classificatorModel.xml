@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="cl:classificatorModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
+   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/classificator/1.0" prefix="cl" />
+   </namespaces>
+
+   <types>
+      <type name="cl:classificators">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="cl:classificator">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>cl:classificator</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="cl:classificator">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="cl:name">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="cl:addRemoveValues">
+               <type>d:boolean</type>
+               <mandatory>true</mandatory>
+            </property>
+         </properties>
+         <associations>
+            <child-association name="cl:classificatorValue">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>cl:classificatorValue</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </type>
+
+      <type name="cl:classificatorValue">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="cl:valueName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="cl:order">
+               <type>d:int</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="cl:byDefault">
+               <type>d:boolean</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="cl:readOnly">
+               <type>d:boolean</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="cl:active">
+               <type>d:boolean</type>
+               <mandatory>true</mandatory>
+            </property>
+         </properties>
+      </type>
+   </types>
+
+</model>
