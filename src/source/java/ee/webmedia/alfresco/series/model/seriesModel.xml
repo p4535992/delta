@@ -53,12 +53,15 @@
                <type>d:int</type>
             </property>
             <property name="ser:docType">
-               <type>d:text</type>
+               <type>d:qname</type>
                <mandatory>true</mandatory>
                <multiple>true</multiple>
             </property>
             <property name="ser:retentionDesc">
                <type>d:text</type>
+            </property>
+            <property name="ser:individualizingNumbers">
+               <type>d:boolean</type>
             </property>
          </properties>
          <associations>

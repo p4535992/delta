@@ -1,0 +1,49 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="caseModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,documentModelBootstrap" >
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/cases/model/caseModel.xml</value>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="caseBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.cases.web.case-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="caseWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="documentWebClientBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/cases/web/case-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="caseService" class="ee.webmedia.alfresco.cases.service.CaseServiceImpl">
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="generalService" ref="GeneralService" />
+   </bean>
+
+   <bean id="CaseService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.cases.service.CaseService</value>
+         </list>
+      </property>
+      <property name="target" ref="caseService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+</beans>

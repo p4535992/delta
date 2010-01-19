@@ -28,7 +28,7 @@ public class UIMenuComponent extends UIComponentBase {
     public static final String ACTIVE_ITEM_ID_ATTRIBUTE_KEY = "activeItemId";
     public static final String ID_ATTRIBUTE_KEY = "id";
     public static final String VALUE_SEPARATOR = "_";
-    private final static String VIEW_STACK = "_alfViewStack";
+    public final static String VIEW_STACK = "_alfViewStack";
 
     @Override
     public void queueEvent(FacesEvent event) {

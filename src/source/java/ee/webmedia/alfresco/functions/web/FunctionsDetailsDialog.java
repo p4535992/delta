@@ -1,13 +1,11 @@
 package ee.webmedia.alfresco.functions.web;
 
-import java.util.List;
-
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.TransientNode;
 import org.alfresco.web.ui.common.Utils;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -15,9 +13,8 @@ import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.series.model.Series;
-import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class FunctionsDetailsDialog extends BaseDialogBean {
 
@@ -26,9 +23,9 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
     private static final String ERROR_MESSAGE_SERIES_EXIST = "function_validation_series";
     
     private transient FunctionsService functionsService;
-    private transient SeriesService seriesService;
+    
     private Function function;
-
+    
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         getFunctionsService().saveOrUpdate(function);
@@ -72,20 +69,16 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
      * @param event
      */
     public String close() {
-        List<Series> allSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef());
-        boolean noOpenSeries = true;
-        for (Series series : allSeries) {
-            if (!DocListUnitStatus.CLOSED.equals(series.getStatus())) {
-                Utils.addErrorMessage(Application.getMessage(FacesContext.getCurrentInstance(), ERROR_MESSAGE_SERIES_EXIST));
-                noOpenSeries = false;
-                break;
-            }
+        if(function.getNode() instanceof TransientNode) {
+            return null;
         }
-        if (!isClosed() && noOpenSeries) {
-            getCurrentNode().getProperties().put(FunctionsModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
-            getFunctionsService().saveOrUpdate(function);
-            return getDefaultFinishOutcome();
-        }
+        if (!isClosed()) {
+            boolean wasClosed = getFunctionsService().closeFunction(function);
+            if(!wasClosed) {
+                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), ERROR_MESSAGE_SERIES_EXIST);
+                return null;
+		    }
+	    }
         return null;
     }
     
@@ -98,7 +91,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
     public Node getCurrentNode() {
         return function.getNode();
     }
-
+    
     // START: private methods
     private void resetData() {
         function = null;
@@ -127,17 +120,5 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
         this.functionsService = functionsService;
     }
     
-    protected SeriesService getSeriesService() {
-        if (seriesService == null) {
-            seriesService = (SeriesService) FacesContextUtils.getRequiredWebApplicationContext(//
-                    FacesContext.getCurrentInstance()).getBean(SeriesService.BEAN_NAME);
-        }
-        return seriesService;
-    }
-
-    public void setSeriesService(SeriesService seriesService) {
-        this.seriesService = seriesService;
-    }
-
-    // END: getters / setters
+	// END: getters / setters
 }

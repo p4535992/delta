@@ -24,10 +24,6 @@
          <property-name>documentService</property-name>
          <value>#{DocumentService}</value>
       </managed-property>
-      <managed-property>
-         <property-name>navigator</property-name>
-         <value>#{NavigationBean}</value>
-      </managed-property>
    </managed-bean>
    
    <managed-bean>
@@ -53,6 +49,10 @@
       <managed-property>
          <property-name>fileBlockBean</property-name>
          <value>#{FileBlockBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
       </managed-property>
    </managed-bean>
 
@@ -83,6 +83,10 @@
       <managed-property>
          <property-name>documentTemplateService</property-name>
          <value>#{DocumentTemplateService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>parametersService</property-name>
+         <value>#{ParametersService}</value>
       </managed-property>
    </managed-bean>
 
@@ -133,8 +137,8 @@
          <value>#{DictionaryService}</value>
       </managed-property>
       <managed-property>
-         <property-name>generalService</property-name>
-         <value>#{GeneralService}</value>
+         <property-name>userService</property-name>
+         <value>#{UserService}</value>
       </managed-property>
    </managed-bean>
 
@@ -207,6 +211,19 @@
       <managed-property>
          <property-name>html</property-name>
          <value><![CDATA[<div class="message">Kui adressaat ei ole määratud, siis dokumenti välja ei saadeta! Ära unusta adressaati määrata!</div>]]></value>
+      </managed-property>
+   </managed-bean>
+   
+   <managed-bean>
+      <description>
+         Bean that generates a notification separator from leavingLetterContent parameter.
+      </description>
+      <managed-bean-name>LeavingLetterContentGenerator</managed-bean-name>
+      <managed-bean-class>org.alfresco.web.bean.generator.HtmlSeparatorGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+         <property-name>html</property-name>
+         <value>#{MetadataBlockBean.leavingLetterContent}</value>
       </managed-property>
    </managed-bean>
 

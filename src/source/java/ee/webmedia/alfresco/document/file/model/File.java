@@ -8,6 +8,7 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
@@ -28,7 +29,9 @@ public class File implements Serializable {
     private Date created;
     private Date modified;
     private NodeRef nodeRef;
-    private boolean digiDoc;
+    private Node node;
+    private boolean digiDocItem;
+    private boolean digiDocContainer;
     private boolean versionable;
     private SignatureItemsAndDataItems ddocItems;
 
@@ -41,7 +44,8 @@ public class File implements Serializable {
         modified = fileInfo.getModifiedDate();
         size = fileInfo.getContentData().getSize();
         nodeRef = fileInfo.getNodeRef();
-        digiDoc = false;
+        node = new Node(nodeRef);
+        digiDocItem = false;
         versionable = fileInfo.getProperties().get(ContentModel.PROP_VERSION_LABEL) != null;
         creator = "";
         modifier = "";
@@ -110,13 +114,35 @@ public class File implements Serializable {
     public void setNodeRef(NodeRef nodeRef) {
         this.nodeRef = nodeRef;
     }
-    
-    public boolean isDigiDoc() {
-        return digiDoc;
+
+    public Node getNode() {
+        return node;
     }
 
-    public void setDigiDoc(boolean digiDoc) {
-        this.digiDoc = digiDoc;
+    public void setNode(Node node) {
+        this.node = node;
+    }
+
+    /**
+     * @return true if this item/file is contained in digiDoc container
+     */
+    public boolean isDigiDocItem() {
+        return digiDocItem;
+    }
+    
+    public void setDigiDocItem(boolean digiDocItem) {
+        this.digiDocItem = digiDocItem;
+    }
+    
+    /**
+     * @return true, if this document is in digiDocItem format and may contain other documents
+     */
+    public boolean isDigiDocContainer() {
+        return digiDocContainer;
+    }
+    
+    public void setDigiDocContainer(boolean digiDocContainer) {
+        this.digiDocContainer = digiDocContainer;
     }
 
     public boolean isVersionable() {

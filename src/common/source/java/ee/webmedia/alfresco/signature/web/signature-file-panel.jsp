@@ -8,8 +8,8 @@
 <a:panel label="#{msg.ddoc_container_documents}" id="docs-panel" facetsId="workflow-panel-facets" progressive="true"
    rendered="#{DialogManager.bean.containerDataFiles}">
 
-   <a:richList id="docsList" viewMode="details" value="#{DialogManager.bean.dataFiles}" var="dataFile" styleClass="recordSet" headerStyleClass="recordSetHeader"
-      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="name" initialSortDescending="false">
+   <a:richList id="docsList" viewMode="details" value="#{DialogManager.bean.dataFiles}" var="dataFile" rowStyleClass="recordSetRow"
+      altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="name" initialSortDescending="false">
 
       <a:column id="filenameCol" style="text-align:left">
          <f:facet name="header">
@@ -32,9 +32,8 @@
 <a:panel label="#{msg.ddoc_existing_signatures}" id="signatures-panel" facetsId="workflow-panel-facets" progressive="true"
    rendered="#{DialogManager.bean.containerSignatures}">
 
-   <a:richList id="signaturesList" viewMode="details" value="#{DialogManager.bean.signatures}" var="item" styleClass="recordSet"
-      headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="signingTime"
-      initialSortDescending="false">
+   <a:richList id="signaturesList" viewMode="details" value="#{DialogManager.bean.signatures}" var="item" rowStyleClass="recordSetRow"
+      altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="signingTime" initialSortDescending="false">
 
       <a:column id="signerName" width="120" style="text-align:left">
          <f:facet name="header">

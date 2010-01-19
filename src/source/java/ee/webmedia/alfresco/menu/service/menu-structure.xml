@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+   <!--   item          link     	   menüüs olev link, mis wrapitakse li sisse -->
+   <!--   browse        xpath          viitab alfresco ruumile ja käivitab browse vaate -->
+   <!--   dropdown      paneeli id     viitab div'i id'le -->
+<menu>
+
+   <!-- MINU TÖÖÜLESANDED JA DOKUMENDID -->
+   <item title="Minu tööülesanded ja dokumendid">
+      <outcome>myalfresco</outcome>
+      <subitems>
+         <dropdown title="Minu ülesanded" expanded="true">
+            <submenu-id>my-tasks-submenu</submenu-id>
+            <subitems>
+               <item title="Täitmiseks">
+                  <outcome>myalfresco</outcome>
+               </item>
+               <item title="Teadmiseks">
+                  <outcome>myalfresco</outcome>
+               </item>
+               <item title="Arvamuse andmiseks">
+                  <outcome>myalfresco</outcome>
+               </item>
+               <item title="Kooskõlastamiseks">
+                  <outcome>myalfresco</outcome>
+               </item>
+               <item title="Digitaalseks allkirjastamiseks">
+                  <outcome>myalfresco</outcome>
+               </item>
+               <item title="Menetluses">
+                  <outcome>myalfresco</outcome>
+               </item>
+               <item title="Registreerimiseks" document-manager="true">
+                  <outcome>myalfresco</outcome>
+               </item>
+               <dropdown title="Saabunud dokumendid" document-manager="true" expanded="true">
+                  <submenu-id>received-documents-submenu</submenu-id>
+                  <subitems>
+                     <item title="E-mail (kirjad)">
+                        <outcome>myalfresco</outcome>
+                     </item>
+                     <item title="E-mail (failid)">
+                        <outcome>myalfresco</outcome>
+                     </item>
+                     <item title="Veateated">
+                        <outcome>dialog:errorMessages</outcome>
+                     </item>
+                     <item title="Skaneeritud dokumendid">
+                        <outcome>myalfresco</outcome>
+                     </item>
+                  </subitems>
+               </dropdown>
+               <item title="Saatmata dokumendid" document-manager="true">
+                  <outcome>myalfresco</outcome>
+               </item>
+               <item title="Saatmisel dokumendid" document-manager="true">
+                  <outcome>myalfresco</outcome>
+               </item>
+            </subitems>
+         </dropdown>
+         <dropdown title="Otsing" expanded="true">
+            <submenu-id>queries-submenu</submenu-id>
+            <subitems>
+               <item title="Dokumendid">
+                  <outcome>myalfresco</outcome>
+               </item>
+               <item title="Tööülesanded">
+                  <outcome>myalfresco</outcome>
+               </item>
+            </subitems>
+         </dropdown>
+         <item title="Osakonna töödokumendid">
+            <outcome>myalfresco</outcome>
+         </item>
+         <item title="Minu dokumentide loetelu">
+            <outcome>myalfresco</outcome>
+         </item>
+      </subitems>
+   </item>
+
+   <!-- DOKUMENDIREGISTER -->
+   <item title="Dokumendiregister">
+      <outcome>dialog:functionsListDialog</outcome>
+      <subitems>
+         <item title="Dokumentide loetelu">
+            <outcome>dialog:functionsListDialog</outcome>
+         </item>
+         <item title="Arhivaalide loetelu">
+            <outcome>myalfresco</outcome>
+         </item>
+      </subitems>
+   </item>
+
+   <!-- KONTAKT -->
+   <item title="Kontakt" document-manager="true">
+      <outcome>dialog:addressbookManage</outcome>
+      <subitems>
+         <item title="Kontaktide haldus">
+            <outcome>dialog:addressbookManage</outcome>
+         </item>
+         <item title="Kontaktgruppide haldus">
+            <outcome>dialog:addressbookManageContactGroups</outcome>
+         </item>
+      </subitems>
+   </item>
+
+   <!-- MINA -->
+   <item title="Mina">
+      <outcome>dialog:userConsole</outcome>
+      <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
+      <subitems>
+         <item title="Minu profiil">
+            <outcome>dialog:userConsole</outcome>
+            <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
+         </item>
+         <item title="Minu lemmikud">
+            <outcome>myalfresco</outcome>
+         </item>
+         <dropdown title="Seaded" expanded="true">
+            <submenu-id>settings-submenu</submenu-id>
+            <subitems>
+               <item title="Teavitused meilile">
+                  <outcome>myalfresco</outcome>
+               </item>
+               <item title="Eemaloleku seadistus">
+                  <outcome>myalfresco</outcome>
+               </item>
+            </subitems>
+         </dropdown>
+      </subitems>
+   </item>
+
+   <!-- ADMINISTRATOR -->
+   <item title="Administraator" admin="true">
+      <outcome>dialog:userListDialog</outcome>
+      <subitems>
+         <item title="Kasutajate haldus">
+            <outcome>dialog:userListDialog</outcome>
+         </item>
+         <item title="Kasutajagruppide haldus">
+            <outcome>dialog:manageGroups</outcome>
+         </item>
+         <item title="Klassifikaatorid">
+            <outcome>dialog:classificatorListDialog</outcome>
+         </item>
+         <item title="Parameetrid">
+            <outcome>dialog:parametersListDialog</outcome>
+         </item>
+         <item title="Registrid">
+            <outcome>dialog:registerListDialog</outcome>
+         </item>
+         <item title="Mallid">
+            <outcome>dialog:documentTemplateListDialog</outcome>
+         </item>
+         <item title="Dokumendi liigid">
+            <outcome>dialog:documentTypeDialog</outcome>
+         </item>
+         <item title="Organisatsiooni struktuur">
+            <outcome>dialog:orgstructureListDialog</outcome>
+         </item>
+         <item title="Süsteemiinfo">
+            <outcome>dialog:showSystemInfo</outcome>
+         </item>
+         <item title="Node'ide sirvija">
+            <outcome>dialog:showNodeBrowser</outcome>
+         </item>
+      </subitems>
+   </item>
+
+   <!-- ALUSTA UUT DOKUMENTI -->
+   <dropdown id="documentTypes" title="Alusta uut dokumenti" skinnable="true" temporary="true">
+      <submenu-id>new-document-submenu</submenu-id>
+      <subitems>
+         <dropdown title="Akt" hover="true">
+            <submenu-id>akt-submenu</submenu-id>
+            <subitems>
+               <item>
+                  <outcome>docsub:instrumentOfDeliveryAndReceipt</outcome>
+               </item>
+               <item>
+                  <outcome>docsub:supervisionReport</outcome>
+               </item>
+            </subitems>
+         </dropdown>
+         <item>
+            <outcome>docsub:report</outcome>
+         </item>
+         <item>
+            <outcome>docsub:managementsOrder</outcome>
+         </item>
+         <dropdown title="Kiri" hover="true">
+            <submenu-id>kiri-submenu</submenu-id>
+            <subitems>
+               <item>
+                  <outcome>docsub:incomingLetter</outcome>
+               </item>
+               <item>
+                  <outcome>docsub:outgoingLetter</outcome>
+               </item>
+            </subitems>
+         </dropdown>
+         <dropdown title="Käskkiri" hover="true">
+            <submenu-id>kaskkiri-submenu</submenu-id>
+            <subitems>
+               <item>
+                  <outcome>docsub:chancellorsOrder</outcome>
+               </item>
+               <item>
+                  <outcome>docsub:ministersOrder</outcome>
+               </item>
+               <item>
+                  <outcome>docsub:personelleOrderSim</outcome>
+               </item>
+               <item>
+                  <outcome>docsub:personelleOrderSmit</outcome>
+               </item>
+               <item>
+                  <outcome>docsub:regulation</outcome>
+               </item>
+            </subitems>
+         </dropdown>
+         <item>
+            <outcome>docsub:contractSim</outcome>
+         </item>
+         <item>
+            <outcome>docsub:contractSmit</outcome>
+         </item>
+         <item>
+            <outcome>docsub:licence</outcome>
+         </item>
+         <dropdown title="Majasisene taotlus" hover="true">
+            <submenu-id>majasisene-taotlus-submenu</submenu-id>
+            <subitems>
+            <item>
+               <outcome>docsub:trainingApplication</outcome>
+            </item>
+            <item>
+               <outcome>docsub:leavingLetter</outcome>
+            </item>
+            <item>
+               <outcome>docsub:internalApplication</outcome>
+            </item>
+            <item>
+               <outcome>docsub:vacationOrderSmit</outcome>
+            </item>
+            <item>
+               <outcome>docsub:vacationOrder</outcome>
+            </item>
+            <item>
+               <outcome>docsub:tenderingApplication</outcome>
+            </item>
+            <item>
+               <outcome>docsub:errandApplicationDomestic</outcome>
+            </item>
+            <item>
+               <outcome>docsub:errandOrderAbroad</outcome>
+            </item>
+            </subitems>
+         </dropdown>
+         <item>
+            <outcome>docsub:memo</outcome>
+         </item>
+         <item>
+            <outcome>docsub:decree</outcome>
+         </item>
+         <item>
+            <outcome>docsub:minutes</outcome>
+         </item>
+      </subitems>
+   </dropdown>
+
+</menu>

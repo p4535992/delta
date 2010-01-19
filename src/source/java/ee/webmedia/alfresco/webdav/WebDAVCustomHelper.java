@@ -12,10 +12,16 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.web.bean.repository.Repository;
 
-public class WebDAVCustomHelper extends WebDAVHelper {
+import ee.webmedia.alfresco.versions.service.VersionsService;
 
-    protected WebDAVCustomHelper(ServiceRegistry serviceRegistry, AuthenticationService authService) {
+public class WebDAVCustomHelper extends WebDAVHelper {
+    
+    // Custom services
+    private VersionsService m_versionsService;
+
+    protected WebDAVCustomHelper(ServiceRegistry serviceRegistry, AuthenticationService authService, VersionsService versionsService) {
         super(serviceRegistry, authService);
+        m_versionsService = versionsService;
     }
 
     /**
@@ -57,6 +63,14 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         } catch (InvalidNodeRefException e) {
             throw new FileNotFoundException(path);
         }
+    }
+    
+    /**
+     * @return          Return custom versions service
+     */
+    public VersionsService getVersionsService() 
+    {
+        return m_versionsService;
     }
 
 }

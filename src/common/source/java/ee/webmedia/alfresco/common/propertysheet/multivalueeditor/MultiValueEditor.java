@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
@@ -24,6 +25,7 @@ import org.alfresco.web.ui.repo.component.UIMultiValueEditor;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor.MultiValueEditorEvent;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
@@ -181,18 +183,67 @@ public class MultiValueEditor extends UIComponentBase {
         @SuppressWarnings("unchecked")
         List<UIComponent> children = getChildren();
         children.add(container);
+        List<String> types = getComponentTypes();
 
         @SuppressWarnings("unchecked")
         List<UIComponent> containerChildren = container.getChildren();
+        int columnIndex = 0;
         for (String propName : getPropNames()) {
-            UIComponent component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
+            String type = null;
+            if (types != null && types.size() > columnIndex) {
+                type = types.get(columnIndex);
+            }
+            UIComponent component = generateCellComponent(context, type);
             FacesHelper.setupComponentId(context, component, null);
             setValueBinding(context, component, propName, rowIndex);
             containerChildren.add(component);
             if (isDisabled()) {
                 ComponentUtil.setDisabledAttributeRecursively(component);
             }
+            columnIndex++;
         }
+    }
+
+    protected UIComponent generateCellComponent(FacesContext context, String spec) {
+        UIComponent component;
+        String[] fields = spec.split(":");
+
+        String type = "";
+        if (fields.length >= 1) {
+            type = fields[0];
+        }
+
+        if ("textarea".equals(type)) {
+            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
+            component.setRendererType(ComponentConstants.JAVAX_FACES_TEXTAREA);
+            FacesHelper.setupComponentId(context, component, null);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> attributes = component.getAttributes();
+            // Default values from TextAreaGenerator
+            attributes.put("rows", 3);
+            attributes.put("cols", 32);
+        } else if ("date".equals(type)) {
+            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
+            FacesHelper.setupComponentId(context, component, null);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> attributes = component.getAttributes();
+            attributes.put("styleClass", "date");
+            ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
+        } else {
+            if (StringUtils.isNotEmpty(type) && !"input".equals(type)) {
+                log.warn("Component type '" + type + "' is not supported, defaulting to input");
+            }
+            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
+            FacesHelper.setupComponentId(context, component, null);
+        }
+
+        if (fields.length >= 2) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> attributes = component.getAttributes();
+            attributes.put("styleClass", fields[1]);
+        }
+
+        return component;
     }
 
     protected void appendRow(FacesContext context) {
@@ -266,6 +317,11 @@ public class MultiValueEditor extends UIComponentBase {
     @SuppressWarnings("unchecked")
     protected List<String> getPropNames() {
         return (List<String>) getAttributes().get("propNames");
+    }
+
+    @SuppressWarnings("unchecked")
+    protected List<String> getComponentTypes() {
+        return (List<String>) getAttributes().get("componentTypes");
     }
 
     protected String getPropertySheetVar() {

@@ -8,14 +8,10 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/ajax/yahoo/dom/dom-min.js"> </script>
-<%--
-   jquery.textarea-expander binds to all textareas, that have classname containing "expand"
- --%>
 
 <a:panel id="parameters-panel" label="#{msg.parameters_list}" styleClass="panel-100">
    <a:richList id="parametersList" value="#{ParametersListDialog.parameters}" var="sParameter" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"
-      styleClass="recordSet" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
-      initialSortColumn="paramName">
+      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="paramName">
 
       <a:column id="paramNameCol" primary="true">
          <f:facet name="header">
@@ -31,7 +27,7 @@
          <a:outputText id="paramTypeOT" value="#{msg[sParameter.typeMsg]}" />
       </a:column>
 
-      <a:column id="paramValCol">
+      <a:column id="paramTypeCol" style="text-align: right">
          <f:facet name="header">
             <a:outputText value="#{msg.parameters_value}" />
          </f:facet>
@@ -43,11 +39,4 @@
    </a:richList>
 </a:panel>
 
-<f:verbatim>
-   <script type="text/javascript">
-      $jQ(document).ready(function () {
-         var cancelButton = $jQ('#' + escapeId4JQ('dialog:cancel-button'));
-         cancelButton.remove();
-      });
-   </script>
-</f:verbatim>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-cancel-button.jsp" />

@@ -94,6 +94,9 @@ html, body {
 #wrapper {
 	position: relative;
 	min-height: 100%;
+	min-width: 920px;
+	width: auto !important;
+	width: 920px;
 }
 
 #header {
@@ -193,7 +196,13 @@ html, body {
 				right: 225px;
 				cursor: pointer;
 			}
-			
+
+			#search > img.simple {
+				border-width: 0px;
+				vertical-align: -1px;
+				cursor: auto;
+			}
+      
 			#search input[type="text"] {
 				position: absolute;
 				top: -3px;
@@ -453,9 +462,6 @@ html, body {
 
 #breadcrumb, .breadcrumb {
 	margin-bottom: 10px;
-}
-
-#breadcrumb {
 	display: none;
 }
 
@@ -894,7 +900,7 @@ td.actions-column * {
 		}
 	
 	.propertiesLabel {
-		white-space: nowrap;
+		/*white-space: nowrap;*/
 	}
 	
 	.userPropertyLabel {
@@ -1116,8 +1122,33 @@ td.actions-column * {
 
 input[type="checkbox"] {
 	margin-right: 5px;
+	vertical-align: middle;
+	width: 10px !important;
 }
 
 .error {
 	color: red !important;
 }
+
+#document-panel .recordSetHeader {
+	padding: 0 2px;
+}
+
+/*
+	MANAGE USER GROUPS
+	******************************/
+	
+.modalpopup-content-inner table {
+	width: 100%;
+}
+	.modalpopup-content-inner table td {
+		padding: 4px 0 !important;
+	}
+	
+		.modalpopup-content-inner table td input[type="text"] {
+			width: 300px !important;
+		}
+
+	.modalpopup-content-inner table select {
+		width: 100% !important;
+	}

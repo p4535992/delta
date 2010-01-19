@@ -5,16 +5,18 @@
    <!-- Entry point to include other components -->
    <!-- Be sure to also include necessary JSF configuration files in web/WEB-INF/web.xml -->
    <import resource="classpath:ee/webmedia/alfresco/signature/signature-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/dvk/dvk-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/addressbook/addressbook-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/simdhs/menu/menu-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/menu/menu-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/classificator/classificator-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/parameters/parameters-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/orgstructure/organizationStructure-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/document/document-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/cases/case-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/volume/volume-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/series/series-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/document-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/functions/functions-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/user/user-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/user/user-simdhs-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/register/register-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/template/document-template-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/versions/versions-context.xml" />

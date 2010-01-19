@@ -32,6 +32,8 @@ public class ParametersServiceImpl implements ParametersService {
     private NodeService nodeService;
 
     private Boolean applicationStarted = false;
+    private Object syncLock = new Object();
+    
     private final Map<String /* parameterName */, List<ParameterChangedCallback>> parameterChangeListeners = new HashMap<String, List<ParameterChangedCallback>>();
     private List<ParameterResceduledTriggerBean> reschedulableJobs = new ArrayList<ParameterResceduledTriggerBean>();
 
@@ -62,6 +64,9 @@ public class ParametersServiceImpl implements ParametersService {
     public <T> T getParameter(Parameters parameter, Class<T> requiredClazz) {
         String xPath = parameter.toString();
         final NodeRef nodeRef = generalService.getNodeRef(xPath);
+        if(nodeRef==null) {
+            throw new RuntimeException("Unable to get nodeRef for parameter with xPath: '"+xPath+"'");
+        }
         final Serializable parameterValue = nodeService.getProperty(nodeRef, ParametersModel.Props.Parameter.VALUE);
         if (requiredClazz != null) {
             return DefaultTypeConverter.INSTANCE.convert(requiredClazz, parameterValue);
@@ -145,7 +150,7 @@ public class ParametersServiceImpl implements ParametersService {
 
     @Override
     public void addParameterResceduledJob(ParameterResceduledTriggerBean job) {
-        synchronized (applicationStarted) {
+        synchronized (syncLock) {
             reschedulableJobs.add(job);
             if (applicationStarted) {
                 job.resolvePropertyValueAndSchedule();

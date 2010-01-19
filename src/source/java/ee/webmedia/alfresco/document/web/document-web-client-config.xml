@@ -1,12 +1,46 @@
 <alfresco-config>
    <config>
+      <actions>
+
+         <action id="document_registerDoc">
+            <evaluator>ee.webmedia.alfresco.document.web.RegisterDocumentEvaluator</evaluator>
+            <label-id>document_registerDoc</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{MetadataBlockBean.registerDocument}</action-listener>
+            <action>dialog:document</action>
+         </action>
+
+         <action id="word_file_from_document">
+            <!-- No permissions check, this action is enabled to all users, but only when metadata block is in view mode (and some additional checks) -->
+            <evaluator>ee.webmedia.alfresco.document.web.CreateWordFileFromTemplateEvaluator</evaluator>
+            <label-id>document_create_word_file</label-id>
+            <image>/images/icons/template.gif</image>
+            <action-listener>#{DocumentDialog.populateTemplate}</action-listener>
+            <params>
+               <param name="documentNodeRef">#{DocumentDialog.node.nodeRef}</param>
+            </params>
+         </action>
+
+           <action id="document_copy">
+               <evaluator>ee.webmedia.alfresco.document.web.CopyDocumentActionEvaluator</evaluator>
+               <label-id>document_copy</label-id>
+               <image>/images/icons/versioned_properties.gif</image>
+               <action-listener>#{DocumentDialog.copy}</action-listener>
+           </action>
+
+        <action-group id="document_actions">
+	        <action idref="document_copy" />
+		    <action idref="word_file_from_document" />
+            <action idref="document_registerDoc" />
+         </action-group>
+
+      </actions>
       <dialogs>
          <dialog name="documentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" description-id="document_list_info" >
-         </dialog>
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" description-id="document_list_info" />
 
          <dialog name="document" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-dialog.jsp" managed-bean="DocumentDialog"
-            icon="/images/icons/details_large.gif" title-id="document" />
+            icon="/images/icons/details_large.gif" title-id="document" actions-config-id="document_actions" />
 
       </dialogs>
    </config>

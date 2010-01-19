@@ -21,4 +21,10 @@
       </view:properties>
    </param:stringParameter>
 
+   <param:stringParameter view:childName="param:dvkReceiveOrganizations">
+      <view:properties>
+         <param:value>17:00</param:value>
+      </view:properties>
+   </param:stringParameter>
+
 </view:view>

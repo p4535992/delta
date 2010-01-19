@@ -38,6 +38,14 @@
                   <doctype:used>true</doctype:used>
                </view:properties>
             </doctype:documentType>
+            
+            <doctype:documentType view:childName="docsub:vacationOrderSmit">
+               <view:properties>
+                  <doctype:name>Puhkuse käskkiri</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:comment>SMIT</doctype:comment>
+               </view:properties>
+            </doctype:documentType>
 
             <doctype:documentType view:childName="docsub:leavingLetter">
                <view:properties>
@@ -56,13 +64,6 @@
             <doctype:documentType view:childName="docsub:tenderingApplication">
                <view:properties>
                   <doctype:name>Riigihanke läbiviimise taotlus</doctype:name>
-                  <doctype:used>true</doctype:used>
-               </view:properties>
-            </doctype:documentType>
-
-            <doctype:documentType view:childName="docsub:phoneLimitOrderApplication">
-               <view:properties>
-                  <doctype:name>Mobiiltelefonile kõnelimiidi taotlemine käskkiri</doctype:name>
                   <doctype:used>true</doctype:used>
                </view:properties>
             </doctype:documentType>

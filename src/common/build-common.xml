@@ -47,22 +47,26 @@
       <pathelement path="${conf.basedir}/${conf.name}/classes" />
       <pathelement path="${project.dir.exploded.classes}" />
       <pathelement path="${project.dir.test.classes}" />
+   </path>
+
+   <path id="classpath.test.junit">
+      <path refid="classpath" />
+      <path refid="classpath.test.base" />
       <fileset dir="${common.dir.lib.server}" includes="**/*.jar" />
       <fileset dir="${project.dir.lib.appserver}" includes="**/*.jar" />
    </path>
 
-   <path id="classpath.test">
-      <path refid="classpath" />
-      <path refid="classpath.test.base" />
-   </path>
-
    <path id="classpath.test.compile">
+      <!-- XXX: järgnevaid kolme fileset'i ei saa asendada viitega 
+      <path refid="classpath" />, 
+      kuna mingi sama nimega klass kahes jar'is(common.dir.lib.dev ja project.dir.exploded.lib kataloogides), ühte vaja ühel, teist teisel juhul 
+	  -->
       <fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
       <fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
       <fileset dir="${project.dir.lib.dev}" includes="**/*.jar" />
-      <pathelement path="${conf.basedir}/${conf.name}/classes" />
-      <pathelement path="${project.dir.exploded.classes}" />
-      <pathelement path="${project.dir.test.classes}" />
+      
+      <path refid="classpath.test.base" />
+      
       <fileset dir="${project.dir.lib.appserver}" includes="**/*.jar" />
    </path>
 
@@ -221,8 +225,12 @@
       <!-- Provide project name -->
       <echo file="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/project-name.properties">project.name=${project.name}${line.separator}</echo>
 
+      <!-- Compile common separately from project, because it should be independent -->
       <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
          <src path="${common.dir.src}" />
+         <exclude name="ee/webmedia/**" />
+      </javac>
+      <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
          <src path="${project.dir.src}" />
          <exclude name="ee/webmedia/**" />
       </javac>
@@ -231,6 +239,12 @@
          <!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
          <compilerarg value="-Xlint:-path" />
          <src path="${common.dir.src}" />
+         <include name="ee/webmedia/**" />
+      </javac>
+      <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+         <compilerarg value="-Xlint" />
+         <!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
+         <compilerarg value="-Xlint:-path" />
          <src path="${project.dir.src}" />
          <include name="ee/webmedia/**" />
       </javac>
@@ -302,11 +316,17 @@
       <copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true">
          <fileset dir="${project.dir.src.test}" excludes="**/*.java,**/*_en_US.properties" />
       </copy>
+      <!-- Compile common separately from project, because it should be independent -->
       <javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
          <compilerarg value="-Xlint" />
          <!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
          <compilerarg value="-Xlint:-path" />
          <src path="${common.dir.src.test}" />
+      </javac>
+      <javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+         <compilerarg value="-Xlint" />
+         <!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
+         <compilerarg value="-Xlint:-path" />
          <src path="${project.dir.src.test}" />
       </javac>
    </target>
@@ -317,7 +337,7 @@
       <junit printsummary="yes" fork="yes" forkmode="perBatch" haltonfailure="yes">
          <classpath>
             <pathelement location="${project.dir.coverage.instrumented}" />
-            <path refid="classpath.test" />
+            <path refid="classpath.test.junit" />
          </classpath>
          <jvmarg value="-Demma.coverage.out.file=${project.dir.coverage.instrumented}/coverage.ec" />
          <formatter type="xml" />
@@ -369,7 +389,7 @@
                haltonfailure="false"
                failureproperty="junit.failure"
                outfile="${test.single.out}" />
-         <classpath refid="classpath.test" />
+         <classpath refid="classpath.test.junit" />
       </junit>
 
       <echo message="Test-report generated to '${test.single.out}.xml'" />

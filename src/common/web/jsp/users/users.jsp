@@ -83,8 +83,8 @@
          </div>
          </f:verbatim>
          
-         <a:richList id="users-list" binding="#{UsersBeanProperties.usersRichList}" viewMode="details" pageSize="10" styleClass="recordSet" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="r"
-            initialSortColumn="userName" initialSortDescending="true">
+         <a:richList id="users-list" binding="#{UsersBeanProperties.usersRichList}" viewMode="details" pageSize="10" rowStyleClass="recordSetRow"
+            altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="r" initialSortColumn="userName" initialSortDescending="true">
 
             <%-- Primary column with full name --%>
             <a:column primary="true" width="200" style="padding:2px;text-align:left">

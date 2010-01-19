@@ -9,6 +9,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
@@ -17,9 +18,14 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 public interface DocumentService {
 
     public interface TransientProps {
+        String FUNCTION_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function_Lbl").toString();
+        String SERIES_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series_Lbl").toString();
+        String VOLUME_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume_Lbl").toString();
+        //
         String FUNCTION_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function_fnSerVol").toString();
         String SERIES_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series_fnSerVol").toString();
         String VOLUME_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume_fnSerVol").toString();
+        String CASE_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume_fnSerVolCase").toString();
     }
 
     String BEAN_NAME = "DocumentService";
@@ -48,12 +54,23 @@ public interface DocumentService {
      * @return new Node representing document if node had reference to volumeNodeRef
      */
     Node updateDocument(Node node);
+
+    /**
+     * Make a copy of document as a draft.
+     * To make it permanent, it must be saved explicitly.
+     *
+     * @param nodeRef Reference to document that is copied
+     * @return copied document as draft
+     */
+    Node copyDocument(NodeRef nodeRef);
     
     /**
      * @param volumeRef
      * @return all documents that have been assigned under given volume
      */
     List<Document> getAllDocumentsByVolume(NodeRef volumeRef);
+
+    List<Document> getAllDocumentsByCase(NodeRef caseRef);
 
     void deleteDocument(NodeRef nodeRef);
 
@@ -77,7 +94,7 @@ public interface DocumentService {
      * @author Ats Uiboupin
      */
     public interface PropertiesModifierCallback {
-        void doWithProperties(Map<QName, Serializable> properties, NodeRef document);
+        void doWithProperties(Map<QName, Serializable> properties);
 
         /**
          * @param documentService - reference to the implementation of DocumentService where this Callback must be registered to
@@ -90,6 +107,8 @@ public interface DocumentService {
      * @return parent volume of given document 
      */
     Node getVolumeByDocument(NodeRef nodeRef);
+    
+    Node getCaseByDocument(NodeRef nodeRef);
 
     /**
      * @param nodeRef
@@ -100,6 +119,35 @@ public interface DocumentService {
      *         <li>functionNode</li>
      *         </ol>
      */
-    Node[] getAncestorNodesByDocument(NodeRef nodeRef);
+    DocumentParentNodesVO getAncestorNodesByDocument(NodeRef nodeRef);
+
+    /**
+     * @param documentNode
+     * @return the same instance with updated values(regNumber, regDate)
+     */
+    Node registerDocument(Node documentNode);
+
+    /**
+     * @param nodeRef
+     * @return true if document is saved under case or volume
+     */
+    boolean isSaved(NodeRef nodeRef);
+
+    /**
+     * Searches for documents where:
+     * + search string matches against any Document property value (supported types: text, int, long, float, double, date, datetime)
+     * + or file name 
+     * + or file content
+     * 
+     * It returns maximum of 100 entries. It is possible that the method returns less than 100 Documents even when there 
+     * are more than 100 matches in the repository because we search for 200 matches and then filter out duplicate documents 
+     * where multiple files under the same document matched the search criteria. 
+     * 
+     * @param searchString
+     * @return list of matching documents (max 100 entries)
+     */
+    List<Document> searchDocumentsQuick(String searchString);
+
+    void setTransientProperties(Node document, DocumentParentNodesVO documentParentNodesVO);
 
 }

@@ -7,6 +7,8 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+
 public class UserUtil {
 
     public static String getPersonFullName1(Map<QName, Serializable> props) {
@@ -40,4 +42,20 @@ public class UserUtil {
         return fullName;
     }
 
+    public static String getPersonFullNameWithUnitName(Map<QName, Serializable> props, String unitName) {
+        String fullName = UserUtil.getPersonFullName1(props);
+        if (StringUtils.isNotBlank(unitName)) {
+            return fullName + " (" + unitName + ")";
+        }
+        return fullName;
+    }
+
+    public static String getPersonFullNameWithUnitName(Map<String, Object> props) {
+        String fullName = getPersonFullName2(props);
+        String unitName = (String) props.get(OrganizationStructureService.UNIT_NAME_PROP);
+        if (StringUtils.isNotBlank(unitName)) {
+            return fullName + " (" + unitName + ")";
+        }
+        return fullName;
+    }
 }

@@ -8,9 +8,6 @@ import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
-import org.alfresco.service.cmr.repository.NodeRef;
-
-import ee.webmedia.alfresco.versions.model.VersionsModel;
 
 public class UnlockMethod extends org.alfresco.repo.webdav.UnlockMethod {
     
@@ -60,7 +57,7 @@ public class UnlockMethod extends org.alfresco.repo.webdav.UnlockMethod {
                 logger.debug("Unlock token=" + getLockToken() + " Successful");
             }
             
-            updateVersionLockableAspect(lockNodeInfo.getNodeRef());
+            ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().setVersionLockableAspect(lockNodeInfo.getNodeRef(), false);
         }
         else if (lockSts == LockStatus.NO_LOCK)
         {
@@ -88,15 +85,6 @@ public class UnlockMethod extends org.alfresco.repo.webdav.UnlockMethod {
 
             // Return a success status
             m_response.setStatus(HttpServletResponse.SC_NO_CONTENT);
-        }
-    }
-
-    private void updateVersionLockableAspect(NodeRef lockNode) {
-        if (getDAVHelper().getNodeService().hasAspect(lockNode, VersionsModel.Aspects.VERSION_LOCKABLE) == true) {
-            if (logger.isDebugEnabled()) {
-                logger.debug("Setting VERSION_LOCKABLE aspect's lock to false on nodeRef = " + lockNode);
-            }
-            getDAVHelper().getNodeService().setProperty(lockNode, VersionsModel.Props.VersionLockable.LOCKED, false);
         }
     }
 }

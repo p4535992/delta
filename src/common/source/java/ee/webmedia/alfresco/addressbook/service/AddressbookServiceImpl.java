@@ -12,6 +12,7 @@ import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -19,6 +20,7 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -33,6 +35,7 @@ import org.apache.lucene.queryParser.QueryParser;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Assocs;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
+import ee.webmedia.alfresco.dvk.service.DvkService;
 
 /**
  * @author Keit Tehvan
@@ -44,21 +47,44 @@ public class AddressbookServiceImpl implements AddressbookService {
     private SearchService searchService;
     private NamespaceService namespaceService;
     private AuthorityService authorityService;
+    private DvkService dvkService;
 
-    private Set<QName> searchFields;
+    private Set<QName> searchFields; // doesn't need to be synchronized, because it is not modified during runtime
     private StoreRef store;
 
     // ---------- interface methods
 
     @Override
+    public int updateOrganizationsDvkCapability() {
+        final Map<String /*regNum*/, String /*orgName*/> sendingOptions = dvkService.getSendingOptions();
+        final List<Node> organizations = listOrganization();
+        int dvkCapableOrgs = 0;
+        for (Node orgNode : organizations) {
+            final Map<String, Object> oProps = orgNode.getProperties();
+            String orgCode = (String) oProps.get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
+            if(sendingOptions.containsKey(orgCode)) {
+                oProps.put(AddressbookModel.Props.DVK_CAPABLE.toString(), true);
+                updateNode(orgNode);
+                dvkCapableOrgs ++;
+            }
+        }
+        return dvkCapableOrgs;
+    }
+
+    @Override
     public boolean hasManagePermission() {
         Set<String> auths = authorityService.getAuthorities();
-        return auths.contains(PermissionService.ADMINISTRATOR_AUTHORITY) ? true : auths.contains("GROUP_ADDRESSBOOK");
+        return auths.contains(PermissionService.ADMINISTRATOR_AUTHORITY) || auths.contains(authorityService.getName(AuthorityType.GROUP, ADDRESSBOOK_GROUP));
     }
 
     @Override
     public List<Node> listOrganization() {
         return listAddressbookChildren(Types.ORGANIZATION);
+    }
+    
+    @Override
+    public List<Node> listContactGroups() {
+        return listAddressbookChildren(Types.CONTACT_GROUP);
     }
 
     @Override
@@ -73,8 +99,30 @@ public class AddressbookServiceImpl implements AddressbookService {
         } else if (node.getType().equals(Types.PRIV_PERSON)
                 || node.getType().equals(Types.ORGPERSON)) {
             output = createPerson(parent, convertProps(node.getProperties()));
+        } else if (node.getType().equals(Types.CONTACT_GROUP)) {
+            output = createContactGroup(convertProps(node.getProperties()));
         }
         return output;
+    }
+    
+    @Override
+    public void addToGroup(NodeRef groupNodeRef, NodeRef memberNodeRef) {
+        QName type = nodeService.getType(memberNodeRef);
+        if (Types.ORGANIZATION.equals(type)) {
+            nodeService.createAssociation(groupNodeRef, memberNodeRef, Assocs.CONTACT_ORGANIZATION);
+        } else {
+            nodeService.createAssociation(groupNodeRef, memberNodeRef, Assocs.CONTACT_PERSON_BASE);
+        }
+    }
+    
+    @Override
+    public void deleteFromGroup(NodeRef groupNodeRef, NodeRef memberNodeRef) {
+        QName type = nodeService.getType(memberNodeRef);
+        if (Types.ORGANIZATION.equals(type)) {
+            nodeService.removeAssociation(groupNodeRef, memberNodeRef, Assocs.CONTACT_ORGANIZATION);
+        } else {
+            nodeService.removeAssociation(groupNodeRef, memberNodeRef, Assocs.CONTACT_PERSON_BASE);
+        }
     }
 
     @Override
@@ -150,10 +198,37 @@ public class AddressbookServiceImpl implements AddressbookService {
 
         return result;
     }
-
+    
     @Override
     public NodeRef getOrgOfPerson(NodeRef ref) {
         return nodeService.getPrimaryParent(ref).getParentRef();
+    }
+    
+    @Override
+    public List<Node> getContactsByType(QName type, NodeRef nodeRef) {
+        List<Node> allNodes = getContacts(nodeRef);
+        List<Node> nodes = new ArrayList<Node>(allNodes.size());
+        for (Node node : allNodes) {
+            if (dictionaryService.isSubClass(node.getType(), type)) {
+                nodes.add(node);
+            }
+        }
+        return nodes;
+    }
+    
+    @Override
+    public List<Node> getContacts(NodeRef nodeRef) {
+        List<AssociationRef> assocRefs = nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL);
+        List<Node> nodes = new ArrayList<Node>(assocRefs.size());
+        for (AssociationRef assocRef : assocRefs) {
+            nodes.add(getNode(assocRef.getTargetRef()));
+        }
+        return nodes;
+    }
+
+    @Override
+    public Node getRoot() {
+        return new Node(getRootNodeRef());
     }
 
     // ---------- utility methods
@@ -177,6 +252,10 @@ public class AddressbookServiceImpl implements AddressbookService {
         return createNode(organization,
                 organization == null ? Assocs.ABPEOPLE : Assocs.ORGPEOPLE,
                 organization == null ? Types.PRIV_PERSON : Types.ORGPERSON, data);
+    }
+    
+    private NodeRef createContactGroup(Map<QName, Serializable> data) {
+        return createNode(null, Assocs.CONTACT_GROUPS, Types.CONTACT_GROUP, data);
     }
 
     private NodeRef createNode(NodeRef parent, QName assoc, QName type, Map<QName, Serializable> data) {
@@ -214,6 +293,10 @@ public class AddressbookServiceImpl implements AddressbookService {
 
     // ---------- service getters and setters
 
+    public void setDvkService(DvkService dvkService) {
+        this.dvkService = dvkService;
+    }
+    
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
     }

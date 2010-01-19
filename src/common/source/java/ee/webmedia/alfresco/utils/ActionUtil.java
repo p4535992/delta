@@ -20,4 +20,10 @@ public class ActionUtil {
         return params.get(key);
     }
 
+    public static boolean hasParam(ActionEvent event, String key) {
+        UIActionLink link = (UIActionLink) event.getComponent();
+        Map<String, String> params = link.getParameterMap();
+        return params.containsKey(key);
+    }
+
 }

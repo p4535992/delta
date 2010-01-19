@@ -47,4 +47,15 @@ public interface FunctionsService {
      * @return
      */
     Function createFunction();
+    
+    /**
+     * Closes the function. 
+     * False if there are unclosed series under the function, true otherwise.
+     * @param function
+     * @return
+     */
+    boolean closeFunction(Function function);
+
+    NodeRef getFunctionsRoot();
+
 }

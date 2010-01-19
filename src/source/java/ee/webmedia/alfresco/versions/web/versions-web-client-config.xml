@@ -3,7 +3,7 @@
       <dialogs>
 
          <dialog name="versionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/versions/web/versions-list-dialog.jsp" managed-bean="VersionsListDialog"
-            icon="/images/icons/versioned_properties_large.gif" show-ok-button="false" />
+            icon="/images/icons/versioned_properties_large.gif" />
 
       </dialogs>
    </config>

@@ -48,11 +48,10 @@ import ee.webmedia.xtee.client.service.DhlXTeeService.ReceivedDocumentsWrapper;
 import ee.webmedia.xtee.client.service.DhlXTeeService.SendDocumentsDokumentCallback;
 import ee.webmedia.xtee.client.service.DhlXTeeService.SendDocumentsRequestCallback;
 import ee.webmedia.xtee.client.service.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
-import ee.webmedia.xtee.client.service.provider.XTeeProviderPropertiesResolver;
+import ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver;
 import ee.webmedia.xtee.types.ee.riik.schemas.dhl.AadressType;
 import ee.webmedia.xtee.types.ee.riik.schemas.dhl.DhlDokumentType;
 import ee.webmedia.xtee.types.ee.riik.schemas.dhl.DokumentDocument;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.MetainfoDocument.Metainfo;
 import ee.webmedia.xtee.types.ee.riik.schemas.dhl.MetaxmlDocument.Metaxml;
 import ee.webmedia.xtee.types.ee.riik.schemas.dhl.TransportDocument.Transport;
 import ee.webmedia.xtee.types.ee.riik.schemas.dhl.rkelLetter.AccessRightsType;
@@ -87,6 +86,11 @@ public class DvkServiceImpl implements DvkService {
 
     // private SendOutService sendOutService;
 
+    @Override
+    public Map<String, String> getSendingOptions() {
+        return dhlXTeeService.getSendingOptions();
+    }
+    
     @Override
     public void updateOrganizationList() {
         dhlXTeeService.getDvkOrganizationsHelper().updateDvkCapableOrganisationsCache();

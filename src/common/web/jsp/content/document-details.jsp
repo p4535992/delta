@@ -159,9 +159,8 @@
 
 
       <%-- list of translations --%>
-      <a:richList id="TranslationList" viewMode="details" value="#{MultilingualManageDialog.translations}" var="r" styleClass="recordSet"
-         headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" pageSize="10" initialSortColumn="Name"
-         initialSortDescending="false">
+      <a:richList id="TranslationList" viewMode="details" value="#{MultilingualManageDialog.translations}" var="r" rowStyleClass="recordSetRow" 
+         altRowStyleClass="recordSetRowAlt" width="100%" pageSize="10" initialSortColumn="Name" initialSortDescending="false">
 
          <%-- Name and icon columns --%>
          <a:column id="col21" primary="true" width="300" style="text-align:left">
@@ -260,9 +259,8 @@
 <a:panel label="#{msg.version_history}" id="version-history-panel" progressive="true" rendered="#{DialogManager.bean.versionable && !NavigationBean.isGuest}"
    expanded='#{DialogManager.bean.panels["version-history-panel"]}' expandedActionListener="#{DialogManager.bean.expandPanel}" styleClass="pager-panel">
 
-   <a:richList id="versionHistoryList" viewMode="details" value="#{DialogManager.bean.versionHistory}" var="r" styleClass="recordSet"
-      headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" pageSize="10"
-      initialSortColumn="versionDate" initialSortDescending="true">
+   <a:richList id="versionHistoryList" viewMode="details" value="#{DialogManager.bean.versionHistory}" var="r" rowStyleClass="recordSetRow"
+      altRowStyleClass="recordSetRowAlt" width="100%" pageSize="10" initialSortColumn="versionDate" initialSortDescending="true">
 
       <%-- Primary column for details view mode --%>
       <a:column id="col1" primary="true" width="100" style="padding:2px;text-align:left">

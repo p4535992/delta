@@ -113,3 +113,6 @@
       }
    </script>
 </f:verbatim>
+<a:booleanEvaluator value="#{MetadataBlockBean.inEditMode}" id="addfile-docMetaInEditMode">
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block-lockRefresh.jsp" />
+</a:booleanEvaluator>

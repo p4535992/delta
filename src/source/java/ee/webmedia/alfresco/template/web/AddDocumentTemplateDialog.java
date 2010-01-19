@@ -8,6 +8,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.content.AddContentDialog;
@@ -18,6 +19,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * @author Kaarel Jõgeva
@@ -25,11 +27,23 @@ import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 public class AddDocumentTemplateDialog extends AddContentDialog {
 
     private static final long serialVersionUID = 1L;
-    public static final String BEAN_NAME = "AddDocumentTemplateDialog";
+    private static final String ERR_EXISTING_FILE = "add_file_existing_file";
     private transient GeneralService generalService;
     private Node docTemplateNode;
     boolean firstLoad;
+    boolean emailTemplate;
 
+    public void startEmail(ActionEvent event) {
+        setEmailTemplate(true);
+        start(event);
+    }
+    
+    @Override
+    public String cancel() {
+        reset();
+        return super.cancel();
+    }
+    
     @Override
     public void start(ActionEvent event) {
         // Set the templates root space as parent node
@@ -37,6 +51,9 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         setDocTemplateNode(TransientNode.createNew(getDictionaryService(), getDictionaryService().getType(ContentModel.TYPE_CONTENT), "",
                 new HashMap<QName, Serializable>(0)));
         docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE);
+        if (!isEmailTemplate()) {
+            docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_DOC_TYPE);
+        }
         // Eagerly load the properties
         docTemplateNode.getProperties();
         setFirstLoad(true);
@@ -57,20 +74,42 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         Map<String, Object> templProp = docTemplateNode.getProperties();
         String newName = templProp.get(DocumentTemplateModel.Prop.NAME).toString() + "." + FilenameUtils.getExtension(super.fileName);
-        
-        setFileName(newName);
-        saveContent(this.file, null);
+        try {
+            setFileName(newName);
+            saveContent(this.file, null);
+        } catch (FileExistsException e) {
+            isFinished = false;
+            throw new RuntimeException(MessageUtil.getMessage(context, ERR_EXISTING_FILE, e.getName()));
+        }
 
         Map<QName, Serializable> prop = new HashMap<QName, Serializable>();
         prop.put(DocumentTemplateModel.Prop.NAME, newName);
         prop.put(DocumentTemplateModel.Prop.COMMENT, templProp.get(DocumentTemplateModel.Prop.COMMENT).toString());
-        
-        if(templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID) != null && !templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID).toString().equals("")) {
-            prop.put(DocumentTemplateModel.Prop.DOCTYPE_ID, templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID).toString());
-        }
         getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE, prop);
 
+        if (!isEmailTemplate()) {
+            Map<QName, Serializable> prop2 = new HashMap<QName, Serializable>();
+            if (templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID) != null && !templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID).toString().equals("")) {
+                prop2.put(DocumentTemplateModel.Prop.DOCTYPE_ID, templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID).toString());
+            }
+            getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOC_TYPE, prop2);
+        }
+        reset();
         return outcome;
+    }
+    
+    @Override
+    public String getContainerTitle() {
+        if (isEmailTemplate()) {
+            return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_add_new_email_template");
+        }
+        return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_add_new_doc_template");
+    }
+    
+    private void reset() {
+        docTemplateNode = null;
+        firstLoad = false;
+        emailTemplate = false;
     }
 
     /**
@@ -81,6 +120,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         docTemplateNode.getProperties().put(DocumentTemplateModel.Prop.NAME.toString(), FilenameUtils.removeExtension(name));
     }
     
+    // START: getters / setters
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }
@@ -108,4 +148,12 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         this.firstLoad = firstLoad;
     }
 
+    public boolean isEmailTemplate() {
+        return emailTemplate;
+    }
+
+    public void setEmailTemplate(boolean emailTemplate) {
+        this.emailTemplate = emailTemplate;
+    }
+    // END: getters / setters
 }

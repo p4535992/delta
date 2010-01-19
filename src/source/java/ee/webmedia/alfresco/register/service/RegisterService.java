@@ -27,7 +27,13 @@ public interface RegisterService {
      * @return register node with specified ID
      */
     Node getRegisterNode(int id);
-
+    
+    /**
+     * @param registerId
+     * @return instance of Register based on registerId
+     * @see #getRegisterNode(int);
+     */
+    Register getRegister(Integer registerId);
     
     /**
      * Returns the registers root space NodeRef
@@ -53,5 +59,9 @@ public interface RegisterService {
      * @param register node to update
      */
     void updateProperties(Node register);
+
+    void updatePropertiesFromObject(Register register);
+
+    int increaseCount(int registerId);
 
 }

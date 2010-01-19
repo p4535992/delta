@@ -25,7 +25,7 @@ function pageLoaded()
 
             <a:panel id="people-panel" styleClass="column panel-60" label="#{msg.addressbook_org_person}">
 
-               <a:richList id="people-list" viewMode="details" styleClass="recordSet" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+               <a:richList id="people-list" viewMode="details" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
                   value="#{DialogManager.bean.orgPeople}" var="r" initialSortColumn="name" initialSortDescending="false" width="100%">
                   <%-- Primary column with name --%>
                   <a:column primary="true">

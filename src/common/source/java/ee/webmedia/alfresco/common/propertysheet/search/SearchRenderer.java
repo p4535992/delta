@@ -15,6 +15,7 @@ import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
 
 import ee.webmedia.alfresco.common.propertysheet.search.Search.SearchRemoveEvent;
+import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -62,6 +63,9 @@ public class SearchRenderer extends BaseRenderer {
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = component.getAttributes();
             attributes.put(Search.OPEN_DIALOG_KEY, Boolean.TRUE);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> requestMapExt = context.getExternalContext().getRequestMap();
+            requestMapExt.put(MandatoryIfValidator.DISABLE_VALIDATION, Boolean.TRUE);
         } else {
             throw new RuntimeException("Unknown action: " + action);
         }
@@ -101,8 +105,8 @@ public class SearchRenderer extends BaseRenderer {
                 throw new RuntimeException("UIComponent not supported: " + component.getClass().getCanonicalName());
             }
         }
-        if (list == null || picker == null) {
-            throw new RuntimeException("Child UIComponent is missing");
+        if ((list == null || picker == null) && !search.isDisabled()) {
+            throw new RuntimeException("Child UIComponent is missing for "+component.getClass().getSimpleName()+" component wit id '"+component.getId()+"'. list="+list+"; picker="+picker);
         }
 
         if (search.isMultiValued()) {
@@ -189,6 +193,9 @@ public class SearchRenderer extends BaseRenderer {
     }
 
     protected void renderPicker(FacesContext context, ResponseWriter out, Search search, UIGenericPicker picker) throws IOException {
+        if(search.isDisabled()) {
+            return;
+        }
         out.write("<a class=\"icon-link margin-left-4 search\" onclick=\"");
         out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION));
         out.write("return showModal('");

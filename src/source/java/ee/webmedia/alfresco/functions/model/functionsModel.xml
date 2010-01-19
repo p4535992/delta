@@ -7,6 +7,7 @@
       <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
       <import uri="http://alfresco.webmedia.ee/model/series/1.0" prefix="ser" />
+      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
    </imports>
 
    <namespaces>

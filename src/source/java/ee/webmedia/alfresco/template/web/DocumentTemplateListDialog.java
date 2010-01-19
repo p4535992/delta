@@ -3,12 +3,15 @@ package ee.webmedia.alfresco.template.web;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
+import ee.webmedia.alfresco.utils.ActionUtil;
 
 /**
  * @author Kaarel Jõgeva
@@ -18,15 +21,13 @@ public class DocumentTemplateListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
     private transient DocumentTemplateService documentTemplateService;
-    List<DocumentTemplate> templates;
-
-    /**
-     * Used in JSP
-     * 
-     * @return
-     */
+    
     public List<DocumentTemplate> getTemplates() {
         return getDocumentTemplateService().getTemplates();
+    }
+    
+    public void setupTemplateAction(ActionEvent event) {
+        browseBean.setupContentAction((new NodeRef(ActionUtil.getParam(event, "nodeRef")).getId()), true);
     }
 
     /*
@@ -48,10 +49,6 @@ public class DocumentTemplateListDialog extends BaseDialogBean {
 
     public void setDocumentTemplateService(DocumentTemplateService documentTemplateService) {
         this.documentTemplateService = documentTemplateService;
-    }
-
-    public void setTemplates(List<DocumentTemplate> templates) {
-        this.templates = templates;
     }
 
 }

@@ -25,6 +25,10 @@ p {
 	line-height: 16px;
 }
 
+strong {
+	font-weight: bold;
+}
+
 /*
 	LINKS
 	******************************/
@@ -162,6 +166,7 @@ a.action {
 
 #menu li.dropdown div > ul > li {
 	border-bottom: 1px solid #3f5481;
+	background-color: #354B7A;
 }
 
 #menu li.dropdown ul li a {
@@ -467,6 +472,7 @@ a.action {
 .message {
 	background: #ECFAFF;
 	border: 1px solid #99D6F9;
+	line-height: 16px;
 }
 
 .syserror-wrapper {
@@ -515,10 +521,8 @@ th,th a,th span {
 	color: #1f426d;
 }
 
-tr.recordSetRow td,tr.recordSetRow td span,tr.recordSetRowAlt td,tr.recordSetRowAlt span,td.more-actions-column a
-	{
+tr.recordSetRow td,tr.recordSetRow td span,tr.recordSetRowAlt td,tr.recordSetRowAlt span,td.more-actions-column a {
 	font-size: 11px;
-	color: #666;
 }
 
 tr.recordSetRowAlt,.odd {
@@ -592,6 +596,10 @@ input[disabled="disabled"],input[disabled],input[disabled="disabled"]:hover,inpu
 }
 
 input[readonly="readonly"] {
+	background: #ddd;
+	border: 1px solid #ccc;
+}
+textarea[readonly="readonly"] {
 	background: #ddd;
 	border: 1px solid #ccc;
 }
@@ -755,12 +763,18 @@ hr {
 }
 
 .propertiesLabel + td {
-	line-height: 16px;
+	line-height: 20px;
 	padding-left: 10px;
+	padding-top: 2px;
 }
 
 textarea {
 	width: 100%;
+}
+
+input, textarea {
+	font-family: "Arial" !important;
+	font-size: 12px !important;
 }
 
 input.text {
@@ -784,14 +798,24 @@ input.date {
 	cursor:pointer;
 	padding-right:18px;
 	width:120px;
-	outline-style:solid;
-	outline-width:1px;
-	outline-color: #ccc;
-	border: 0;
+	border: 1px solid #ccc;
 }
 
 input.readonly {
 	background-color: #ddd;
+}
+
+input.inline {
+	border: none;
+	border-bottom: solid 1px #ccc;
+}
+
+input.small {
+	width: 50px !important;
+}
+
+input.medium {
+	width: 100px !important;
 }
 
 .remove-person {
@@ -857,7 +881,7 @@ table.recipient th {
 }
 */
 
-#metadata-panel td input, #metadata-panel td textarea {
+#metadata-panel td input, #metadata-panel td textarea, #file-upload td textarea {
 	width: 300px;
 }
 
@@ -873,12 +897,34 @@ table.recipient th {
 	width: auto;
 }
 
+/* style for component that enables to create new case while creating document */
+.assignCaseInput.aoscModal-newCase {
+	width: 100%;
+}
+
+input[type="radio"].aoscModal-selectCase {
+	margin-right: 4px;
+}
+input[type="radio"].aoscModal-newCase {
+	margin-right: 4px;
+}
+
 table.expand5-200 {
 	width: 100%;
 }
 
 table.recipient td {
+	padding: 0;
 	padding-right: 6px;
+}
+
+.recipient.padding td,
+.recipient.padding th {
+	padding: 0 3px;
+}
+
+.recipient.cells2 textarea {
+	width: 170px !important;
 }
 
 .icon-link {
@@ -888,6 +934,11 @@ table.recipient td {
 .file-list {
 	margin-top: 5px;
 }
+
+.red {
+	color: red;
+}
+
 /*
 * jQuery UI CSS Framework
 * Copyright (c) 2009 AUTHORS.txt (http://jqueryui.com/about)
@@ -1206,7 +1257,7 @@ table.recipient td {
 	position: fixed;
 	top: 0;
 	left: 0;
-	z-index: 100;
+	z-index: 999;
 	width: 100%;
 	height: 100%;
 	background: #808080;
@@ -1219,7 +1270,7 @@ DIV.modalwrap {
 	position: fixed;
 	top: 50%;
 	left: 50%;
-	z-index: 101;
+	z-index: 1000;
 	width: 450px;
 	margin: 0 0 0 -225px;
 	padding: 0;
@@ -1368,4 +1419,11 @@ DIV.modalpopup-footer P.action {
 }
 #tooltip DIV {
 	display: none !important;
+}
+
+.incomingLetter > span {
+	color: #1E4975 !important;	
+}
+.outgoingLetter > span {
+	color: green !important;	
 }

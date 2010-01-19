@@ -3,7 +3,9 @@
       <actions>
 
          <action id="function_add_new">
-            <evaluator>ee.webmedia.alfresco.user.web.DocumentManagerEvaluator</evaluator>
+            <permissions>
+               <permission allow="true">CreateChildren</permission>
+            </permissions>
             <label-id>function_add_new</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{FunctionsDetailsDialog.addNewFunction}</action-listener>
@@ -36,7 +38,7 @@
          <show-property name="fn:type" display-label-id="function_type" classificatorName="functionType" component-generator="ClassificatorSelectorGenerator"
             readOnlyIf="fn:status=suletud" />
          <show-property name="fn:mark" display-label-id="function_mark" readOnlyIf="fn:status=suletud" />
-         <show-property name="fn:title" display-label-id="function_title" readOnlyIf="fn:status=suletud" />
+         <show-property name="fn:title" display-label-id="function_title" readOnlyIf="fn:status=suletud" styleClass="expand5-200" component-generator="TextAreaGenerator" />
          <show-property name="fn:description" display-label-id="function_description" readOnlyIf="fn:status=suletud" styleClass="expand5-200"
             component-generator="TextAreaGenerator" mandatory="false"/>
          <show-property name="fn:status" display-label-id="function_status" read-only="true" classificatorName="docListUnitStatus"

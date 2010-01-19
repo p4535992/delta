@@ -7,23 +7,25 @@ public interface FunctionsModel {
     String NAMESPACE_PREFFIX = "fn:";
 
     interface Types {
-        QName FUNCTIONS_ROOT = QName.createQName(URI, "documentList");
+        QName FUNCTIONS_ROOT = QName.createQName(URI, "functions");
         QName FUNCTION = QName.createQName(URI, "function");
     }
 
     public interface Repo {
-        final static String FUNCTIONS_PARENT = "/";
-        final static String FUNCTIONS_SPACE = FUNCTIONS_PARENT + NAMESPACE_PREFFIX + Types.FUNCTIONS_ROOT.getLocalName();
+        String FUNCTIONS_PARENT = "/";
+        String FUNCTIONS_ROOT = "documentList";
+        String FUNCTIONS_SPACE = FUNCTIONS_PARENT + NAMESPACE_PREFFIX + FUNCTIONS_ROOT;
     }
-    
+
     interface Associations {
         QName FUNCTION = QName.createQName(URI, "function");
     }
-    
+
     public interface Props {
         QName STATUS = QName.createQName(URI, "status");
         QName ORDER = QName.createQName(URI, "order");
         QName TITLE = QName.createQName(URI, "title");
         QName MARK = QName.createQName(URI, "mark");
     }
+
 }

@@ -79,9 +79,6 @@ public class RichListRenderer extends BaseRenderer
          // the RichList component we are working with
          UIRichList richList = (UIRichList)component;
          
-         // prepare the component current row against the current page settings
-         richList.bind();
-         
          // collect child column components so they can be passed to the renderer
          List<UIColumn> columnList = new ArrayList<UIColumn>(8);
          for (Iterator i=richList.getChildren().iterator(); i.hasNext(); /**/)
@@ -109,6 +106,11 @@ public class RichListRenderer extends BaseRenderer
          renderer.renderListBefore(context, richList, columns);
          out.write("</thead>");
          out.write("<tbody>");
+
+         // prepare the component current row against the current page settings
+         //NB! This has to be here (NOT at the beginning of the method) because otherwise the row index is changed and column sorting does not work
+         richList.bind();
+         
          if (richList.isDataAvailable() == true)
          {
             while (richList.isDataAvailable() == true)

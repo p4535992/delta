@@ -87,6 +87,15 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator {
             attributes.put("setterCallback", getCustomAttributes().get("setterCallback"));
         }
 
+        List<String> componentTypes;
+        String componentTypesAttribute = getCustomAttributes().get("componentTypes");
+        if (componentTypesAttribute == null) {
+            componentTypes = new ArrayList<String>(1);
+        } else {
+            componentTypes = Arrays.asList(StringUtils.split(componentTypesAttribute, ','));
+        }
+        attributes.put("componentTypes", componentTypes);
+
         if (item.isReadOnly()) {
            ComponentUtil.setDisabledAttributeRecursively(component);
         }

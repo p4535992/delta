@@ -24,8 +24,10 @@ public interface SeriesService {
     List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, QName docTypeId);
 
     Series getSeriesByNoderef(String seriesNodeRef);
-    
+
     Node getSeriesNodeByRef(NodeRef seriesNodeRef);
+
+    Series getSeriesByNodeRef(NodeRef nodeRef);
 
     /**
      * @param functionNodeRef
@@ -33,6 +35,12 @@ public interface SeriesService {
      */
     Series createSeries(NodeRef functionNodeRef);
 
-    void delete(NodeRef nodeRef);
+    /**
+     * @param series series to be closed, if it doesn't have any unclosed volumes
+     * @return flase, if didn't close series, because it had some Volumes that were not already closed, true otherwise(if closing was successful)
+     */
+    boolean closeSeries(Series series);
+
+    boolean isClosed(Node currentNode);
 
 }

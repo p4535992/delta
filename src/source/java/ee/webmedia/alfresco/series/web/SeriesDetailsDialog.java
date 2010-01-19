@@ -1,21 +1,24 @@
 package ee.webmedia.alfresco.series.web;
 
-import java.util.Map;
-
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.TransientNode;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.series.model.Series;
-import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
+/**
+ * Form backing bean for Series details
+ * 
+ * @author Ats Uiboupin
+ */
 public class SeriesDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
@@ -23,11 +26,6 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     private static final String PARAM_SERIES_NODEREF = "seriesNodeRef";
     private transient SeriesService seriesService;
     private Series series;
-
-    @Override
-    public void init(Map<String, String> params) {
-        super.init(params);
-    }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -40,6 +38,19 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     public String cancel() {
         resetFields();
         return super.cancel();
+    }
+
+    @Override
+    public Object getActionsContext() {
+        return series.getNode();
+    }
+
+    @Override
+    public String getActionsConfigId() {
+        if (!(series.getNode() instanceof TransientNode)) {
+            return "browse_actions_series_details";
+        }
+        return null;
     }
 
     // START: jsf actions/accessors
@@ -59,18 +70,23 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     }
 
     public String close() {
+        if(series.getNode() instanceof TransientNode) {
+            return null;
+        }
+        
         if (!isClosed()) {
-            getCurrentNode().getProperties().put(SeriesModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
-            getSeriesService().saveOrUpdate(series);
+            boolean wasClosed = getSeriesService().closeSeries(series);
+            if(!wasClosed) {
+                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "series_validationMsg_closeNotPossible");
+                return null;
+            }
             return getDefaultFinishOutcome();
         }
         return null;
     }
 
     public boolean isClosed() {
-        final String currentStatus = (String) getCurrentNode().getProperties().get(SeriesModel.Props.STATUS.toString());
-        final boolean closed = DocListUnitStatus.CLOSED.equals(currentStatus);
-        return closed;
+        return seriesService.isClosed(getCurrentNode());
     }
 
     // END: jsf actions/accessors

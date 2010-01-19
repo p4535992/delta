@@ -27,4 +27,9 @@ public interface ApplicationService {
      */
     String getProjectTitle();
 
+    /**
+     * Is current environment a test or production environment
+     */
+    boolean isTest();
+
 }

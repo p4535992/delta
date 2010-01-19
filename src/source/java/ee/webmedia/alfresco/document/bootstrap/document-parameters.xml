@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view 
+   xmlns:view="http://www.alfresco.org/view/repository/1.0" 
+   xmlns:param="http://alfresco.webmedia.ee/model/parameters/1.0" 
+>
+   <param:stringParameter view:childName="param:leavingLetterContent">
+      <view:properties>
+         <param:value>leavingLetterContent value</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:trainingAdviser">
+      <view:properties>
+         <param:value>trainingAdviser value</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:financialDepartmentHeadOnAccounting">
+      <view:properties>
+         <param:value>financialDepartmentHeadOnAccounting value</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:adviserGeneralDepartmentOnArchives">
+      <view:properties>
+         <param:value>adviserGeneralDepartmentOnArchives value</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:adviserGeneralDepartmentOnClassifiedRecords">
+      <view:properties>
+         <param:value>adviserGeneralDepartmentOnClassifiedRecords value</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:deputyHeadOfTheGeneralDepartment">
+      <view:properties>
+         <param:value>deputyHeadOfTheGeneralDepartment value</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:documentaryProceduresRecipient">
+      <view:properties>
+         <param:value>documentaryProceduresRecipient value</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:adviserOnICT">
+      <view:properties>
+         <param:value>adviserOnICT value</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:deputyHeadOfTheAdmDeptOnMaintenance">
+      <view:properties>
+         <param:value>deputyHeadOfTheAdmDeptOnMaintenance value</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:officialsDirectManager">
+      <view:properties>
+         <param:value>officialsDirectManager value</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:officialOnPersonnelDepartment">
+      <view:properties>
+         <param:value>officialOnPersonnelDepartment value</param:value>
+      </view:properties>
+   </param:stringParameter>
+
+</view:view>

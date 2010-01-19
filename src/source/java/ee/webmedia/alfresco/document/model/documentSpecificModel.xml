@@ -14,6 +14,17 @@
 
    <aspects>
 
+      <aspect name="docspec:senderDetails">
+         <properties>
+            <property name="docspec:senderName">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:senderEmail">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
       <aspect name="docspec:sender">
          <properties>
             <property name="docspec:senderRegNumber"><!-- Saatja kirja reg nr -->
@@ -25,6 +36,27 @@
          </properties>
       </aspect>
 
+      <!-- Used in Memo sub-type -->
+      <aspect name="docspec:whom">
+         <properties>
+            <property name="docspec:whomName">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:whomJobTitle">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docspec:whose">
+         <properties>
+            <property name="docspec:whoseName">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <!-- Used in Memo and Minutes sub-type -->
       <aspect name="docspec:template">
          <properties>
             <property name="docspec:templateName"><!-- Mall -->
@@ -32,7 +64,406 @@
             </property>
          </properties>
       </aspect>
+      
+      <!-- Used in Minutes sub-type -->
+      <aspect name="docspec:minutes">
+         <properties>
+            <property name="docspec:minutesNo">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <!-- Used in Minutes sub-type -->
+      <aspect name="docspec:report">
+         <properties>
+            <property name="docspec:rapporteur">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:rapporteurRegNumber">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:rapporteurRegDate">
+               <type>d:date</type>
+            </property>
+         </properties>
+      </aspect>
 
+      <aspect name="docspec:transmittalMode">
+         <properties>
+            <property name="docspec:transmittalModeValue">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docspec:complience">
+         <properties>
+            <property name="docspec:dueDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:complienceNotation">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:complienceDate">
+               <type>d:date</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docspec:deliverer">
+         <properties>
+            <property name="docspec:delivererName">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:delivererJobTitle">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:delivererStructUnit">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docspec:receiver">
+         <properties>
+            <property name="docspec:receiverName">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:receiverJobTitle">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:receiverStructUnit">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docspec:secondPartyReg">
+         <properties>
+            <property name="docspec:secondPartyRegNumber">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:secondPartyRegDate">
+               <type>d:date</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docspec:licenceDetails">
+         <properties>
+            <property name="docspec:licenceType">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:givenOutTo">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:vacationOrder">
+         <properties>
+            
+            <property name="docspec:leaveAnnual">
+               <type>d:boolean</type>
+            </property>
+            <property name="docspec:leaveAnnualBeginDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveAnnualEndDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveAnnualDays">
+               <type>d:int</type>
+            </property>
+            
+            <property name="docspec:leaveWithoutPay">
+               <type>d:boolean</type>
+            </property>
+            <property name="docspec:leaveWithoutPayBeginDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveWithoutPayEndDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveWithoutPayDays">
+               <type>d:int</type>
+            </property>
+            
+            <property name="docspec:leaveChild">
+               <type>d:boolean</type>
+            </property>
+            <property name="docspec:leaveChildBeginDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveChildEndDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveChildDays">
+               <type>d:int</type>
+            </property>
+            
+            <property name="docspec:leaveStudy">
+               <type>d:boolean</type>
+            </property>
+            <property name="docspec:leaveStudyBeginDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveStudyEndDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveStudyDays">
+               <type>d:int</type>
+            </property>
+            
+            <property name="docspec:leaveChange">
+               <type>d:boolean</type>
+            </property>
+            <property name="docspec:leaveInitialBeginDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveInitialEndDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveNewBeginDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveNewEndDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveNewDays">
+               <type>d:int</type>
+            </property>
+            
+            <property name="docspec:leaveCancel">
+               <type>d:boolean</type>
+            </property>
+            <property name="docspec:leaveCancelBeginDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveCancelEndDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:leaveCancelDays">
+               <type>d:int</type>
+            </property>
+            
+            <property name="docspec:substituteName">
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <default></default>
+            </property>
+            <property name="docspec:substitutionBeginDate">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:substitutionEndDate">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            
+         </properties>
+      </aspect>
+
+      <aspect name="docspec:leaveDetails">
+         <properties>
+            <property name="docspec:leaveReason">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:leaveDate">
+               <type>d:date</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+         </properties>
+      </aspect>
+
+      <!-- Advisers, Deputies and Officials on the leavingLetter form -->
+      <aspect name="docspec:leaveOfficials">
+         <properties>
+            <property name="docspec:trainingAdviser">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:financialDepartmentHeadOnAccounting">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:adviserGeneralDepartmentOnArchives">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:adviserGeneralDepartmentOnClassifiedRecords">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:deputyHeadOfTheGeneralDepartment">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:documentaryProceduresRecipient">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:adviserOnICT">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:deputyHeadOfTheAdmDeptOnMaintenance">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:officialsDirectManager">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:officialOnPersonnelDepartment">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:managementsOrderDetails">
+         <properties>
+            <property name="docspec:responsibleName">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:responsibleStructUnit">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:responsibleOrganization">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:coResponsibles">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:managementsOrderDueDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:managementsOrderComplienceNotation">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:managementsOrderComplienceDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:managementsOrderWhoseName">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:applicationContent">
+         <properties>
+            <property name="docspec:applicationContentData">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:contractType">
+         <properties>
+            <property name="docspec:contractTypeName">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:firstParty">
+         <properties>
+            <property name="docspec:firstPartyName">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:contractDetails">
+         <properties>
+            <property name="docspec:firstPartyContactPerson">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:recipientName1">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:secondPartySigner">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:recipientEmail1">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:secondPartyContactPerson">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:recipientName2">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:thirdPartySigner">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:recipientEmail2">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:thirdPartyContactPerson">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:contractSimDetails">
+         <properties>
+            <property name="docspec:secondPartyContractDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:secondPartyContractNumber">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:inclusivePriceExclVat">
+               <type>d:double</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:costManager">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:financingSource">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:contractSimEndDate">
+               <type>d:date</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:finalTermOfDeliveryAndReceipt">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:paymentAnnotation">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:contractSmitDetails">
+         <properties>
+            <property name="docspec:contractChange">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:warranty">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:inclusivePriceInclVat">
+               <type>d:double</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:contractSmitEndDate">
+               <type>d:date</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:contractEndAnnotation">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
    </aspects>
 
 </model>

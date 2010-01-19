@@ -15,22 +15,34 @@
 
 <a:panel label="#{msg.file_title}" id="files-panel" facetsId="dialog:dialog-body:files-panel-facets" styleClass="panel-100" progressive="true">
 
-   <a:richList id="filelistList" viewMode="details" value="#{DialogManager.bean.file.files}" var="r" styleClass="recordSet" headerStyleClass="recordSetHeader"
-      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%">
+   <a:richList id="filelistList" viewMode="details" value="#{DialogManager.bean.file.files}" binding="#{FileBlockBean.richList}" var="r" 
+      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
 
       <%-- Name with URL link column --%>
-      <a:column id="col1" primary="true" rendered="#{r.digiDoc == false}">
+      <a:column id="col1" primary="true" rendered="#{r.digiDocItem == false}">
          <f:facet name="header">
             <h:outputText id="col1-header" value="#{msg.file_name}" styleClass="header" />
          </f:facet>
          <f:facet name="small-icon">
-            <a:actionLink id="col1-act1" value="#{r.name}" href="#{r.downloadUrl}" target="new" image="#{r.fileType16}" showLink="false"
-               styleClass="inlineAction webdav-open" />
+            <h:panelGroup>
+               <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+                  <a:actionLink id="col1-act1" value="#{r.name}" href="#{r.downloadUrl}" target="new" image="#{r.fileType16}" showLink="false"
+                     styleClass="inlineAction webdav-open" />
+               </r:permissionEvaluator>
+               <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+                  <h:graphicImage value="#{r.fileType16}" />
+               </r:permissionEvaluator>
+            </h:panelGroup>
          </f:facet>
-         <a:actionLink id="col1-act2" value="#{r.name}" href="#{r.downloadUrl}" target="new" styleClass="webdav-open" />
+         <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+            <a:actionLink id="col1-act2" value="#{r.name}" href="#{r.downloadUrl}" target="new" styleClass="webdav-open" />
+         </r:permissionEvaluator>
+         <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+            <h:outputText value="#{r.name}" />
+         </r:permissionEvaluator>
       </a:column>
 
-      <a:column id="col1-ddoc" primary="true" rendered="#{r.digiDoc}">
+      <a:column id="col1-ddoc" primary="true" rendered="#{r.digiDocItem}">
          <f:facet name="header">
             <h:outputText id="col1-ddoc-header" value="#{msg.file_name}" styleClass="header" />
          </f:facet>
@@ -46,14 +58,14 @@
       </a:column>
 
       <%-- Created By column --%>
-      <a:column id="col2" rendered="#{r.digiDoc == false}">
+      <a:column id="col2" rendered="#{r.digiDocItem == false}">
          <f:facet name="header">
             <h:outputText id="col2-header" value="#{msg.file_added_by}" styleClass="header" />
          </f:facet>
          <h:outputText id="col2-txt" value="#{r.creator}" />
       </a:column>
 
-      <a:column id="col2-ddoc" colspan="6" rendered="#{r.digiDoc}">
+      <a:column id="col2-ddoc" colspan="6" rendered="#{r.digiDocItem}">
          <f:facet name="header">
             <h:outputText id="col2-ddoc-header" value="#{msg.file_added_by}" styleClass="header" />
          </f:facet>
@@ -99,7 +111,7 @@
          <f:facet name="header">
             <h:outputText id="col3-header" value="#{msg.file_added_time}" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-txt" value="#{r.created}" rendered="#{r.digiDoc == false}">
+         <h:outputText id="col3-txt" value="#{r.created}" rendered="#{r.digiDocItem == false}">
             <a:convertXMLDate type="both" pattern="#{msg.date_time_pattern}" />
          </h:outputText>
       </a:column>
@@ -109,7 +121,7 @@
          <f:facet name="header">
             <h:outputText id="col4-header" value="#{msg.file_modified_by}" styleClass="header" />
          </f:facet>
-         <h:outputText id="col4-txt" value="#{r.modifier}" rendered="#{r.digiDoc == false}" />
+         <h:outputText id="col4-txt" value="#{r.modifier}" rendered="#{r.digiDocItem == false}" />
       </a:column>
 
       <%-- Modified Date column --%>
@@ -117,7 +129,7 @@
          <f:facet name="header">
             <h:outputText id="col5-header" value="#{msg.file_modified_time}" styleClass="header" />
          </f:facet>
-         <h:outputText id="col5-txt" value="#{r.modified}" rendered="#{r.digiDoc == false}">
+         <h:outputText id="col5-txt" value="#{r.modified}" rendered="#{r.digiDocItem == false}">
             <a:convertXMLDate type="both" pattern="#{msg.date_time_pattern}" />
          </h:outputText>
       </a:column>
@@ -127,19 +139,20 @@
          <f:facet name="header">
             <h:outputText id="col6-header" value="#{msg.file_size}" styleClass="header" />
          </f:facet>
-         <h:outputText id="col6-txt" value="#{r.size}" rendered="#{r.digiDoc == false}">
+         <h:outputText id="col6-txt" value="#{r.size}" rendered="#{r.digiDocItem == false}">
             <a:convertSize />
          </h:outputText>
       </a:column>
 
       <%-- Remove and Version column --%>
       <a:column id="col7">
-         <a:actionLink id="col7-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false"
-            image="/images/icons/version_history.gif" rendered="#{r.versionable}" tooltip="#{msg.file_version_history}">
-            <f:param name="name" value="#{r.name}" />
-            <f:param name="ref" value="#{r.nodeRef}" />
-         </a:actionLink>
-         <r:permissionEvaluator value="#{DialogManager.bean.meta.document}" allow="Delete">
+         <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+            <a:actionLink id="col7-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false" image="/images/icons/version_history.gif" rendered="#{r.versionable}" tooltip="#{msg.file_version_history}">
+               <f:param name="fileName" value="#{r.name}" />
+               <f:param name="nodeRef" value="#{r.nodeRef}" />
+            </a:actionLink>
+         </r:permissionEvaluator>
+         <r:permissionEvaluator value="#{r.node}" allow="DeleteNode">
             <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
                image="/images/icons/delete.gif" tooltip="#{msg.file_remove}">
                <f:param name="id" value="#{r.id}" />

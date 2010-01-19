@@ -21,5 +21,7 @@ public interface SeriesModel {
         QName ORDER = QName.createQName(URI, "order");
         QName SERIES_IDENTIFIER = QName.createQName(URI, "seriesIdentifier");
         QName TITLE = QName.createQName(URI, "title");
+        QName REGISTER = QName.createQName(URI, "register");
+        QName INDIVIDUALIZING_NUMBERS = QName.createQName(URI, "individualizingNumbers");
     }
 }

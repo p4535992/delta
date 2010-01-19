@@ -61,12 +61,12 @@
          <%-- Work Area --%>
          
          <a:panel id="content">
-         <%-- Breadcrumb 
+         <%-- Breadcrumb --%>
          <%@ include file="../parts/breadcrumb.jsp"%>
             
-         <%-- Status and Actions 
+         <%-- Status and Actions --%>
          <a:panel id="titlebar"><%-- Status and Actions inner contents table --%>
-         <%-- Generally this consists of an icon, textual summary and actions for the current object 
+         <%-- Generally this consists of an icon, textual summary and actions for the current object --%>
             
             <f:verbatim>
             <h2 class="title-icon">
@@ -81,7 +81,7 @@
             <a:panel id="description">
                <h:outputText value="#{msg.dashboard_description}" />
             </a:panel>
-             --
+             --%>
 
             <a:panel id="additional">
                <a:actionLink value="#{msg.configure}" image="/images/icons/configure-dashboard.png" action="wizard:configureDashboard"
@@ -90,11 +90,10 @@
 
          </a:panel>
 
-         <%-- Details --%>
-         <f:subview id="dash-body">
-            <%-- <jsp:include page="<%=Application.getDashboardManager().getLayoutPage()%>" /> --%>
-         </f:subview>
-         <a:errors message="#{msg.error_dashboard}" styleClass="message" errorClass="error-message" infoClass="info-message" />
+         <%-- Details --%> <f:subview id="dash-body">
+            <jsp:include
+               page="<%=Application.getDashboardManager().getLayoutPage()%>" />
+         </f:subview> <a:errors message="#{msg.error_dashboard}" styleClass="message" errorClass="error-message" infoClass="info-message" />
          </a:panel>
          <f:verbatim><div class="clear"></div></f:verbatim>
          </a:panel>

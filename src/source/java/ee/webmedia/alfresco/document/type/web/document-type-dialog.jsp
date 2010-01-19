@@ -9,8 +9,7 @@
 
 <a:panel id="documenttype-panel" label="#{msg.document_types}" styleClass="panel-100">
    <a:richList id="documentTypeList" value="#{DialogManager.bean.documentTypes}" var="type" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"
-      styleClass="recordSet" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
-      initialSortColumn="name">
+      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="name">
 
       <a:column id="documentTypeUsedCol">
          <f:facet name="header">
@@ -38,11 +37,4 @@
    </a:richList>
 </a:panel>
 
-<f:verbatim>
-   <script type="text/javascript">
-      $jQ(document).ready(function () {
-         var cancelButton = $jQ('#' + escapeId4JQ('dialog:cancel-button'));
-         cancelButton.remove();
-      });
-   </script>
-</f:verbatim>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-cancel-button.jsp" />

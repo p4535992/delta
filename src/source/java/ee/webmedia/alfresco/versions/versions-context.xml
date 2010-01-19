@@ -27,9 +27,9 @@
    </bean>
 
    <bean id="versionsService" class="ee.webmedia.alfresco.versions.service.VersionsServiceImpl">
-      <property name="nodeService" ref="NodeService" />
       <property name="versionService" ref="VersionService" />
-      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="userService" ref="UserService" />
    </bean>
 
    <bean id="VersionsService" class="org.springframework.aop.framework.ProxyFactoryBean">

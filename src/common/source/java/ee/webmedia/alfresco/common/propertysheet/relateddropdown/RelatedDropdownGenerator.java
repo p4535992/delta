@@ -28,6 +28,7 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
     private static final String ATTR_ORDER = "order";
     private static final String ATTR_INITIAL_SELECTION_ITEMS = "initialSelectionItems";
     private static final String ATTR_INITIAL_CRITERIA_SOURCE_PROP = "initialSearchCriteriaSourceProp";
+    public static final String ATTR_AFTER_SELECT = "afterSelect";
 
     public UISelectOne generate(FacesContext context, String id) {
         RelatedDropdown selectComponent = (RelatedDropdown) super.generate(context, id);
@@ -86,6 +87,7 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
         selectComponent.setGroup(groupName);
         selectComponent.setOrder(order);
         selectComponent.setSelectionItems(selectionItems);
+        selectComponent.setAfterSelect(getAfterSelect());
     }
 
     private void setId(RelatedDropdown selectComponent) {
@@ -111,6 +113,10 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
 
     private String getSelectionItems() {
         return getCustomAttributes().get(ATTR_SELECTION_ITEMS);
+    }
+    
+    private String getAfterSelect() {
+        return getCustomAttributes().get(ATTR_AFTER_SELECT);
     }
 
     private String getGroupName() {

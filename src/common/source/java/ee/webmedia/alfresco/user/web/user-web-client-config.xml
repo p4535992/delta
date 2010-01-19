@@ -1,0 +1,55 @@
+<alfresco-config>
+   <config>
+      <dialogs>
+
+         <dialog name="userListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/user-list-dialog.jsp" managed-bean="UserListDialog"
+            icon="/images/icons/users_large.gif" title-id="users" show-ok-button="false" />
+
+         <dialog name="userDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/user-details-dialog.jsp" managed-bean="UserDetailsDialog"
+            icon="/images/icons/user_console_large.gif" title-id="user_data" show-ok-button="true" />
+
+         <dialog name="permissionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-list-dialog.jsp" managed-bean="PermissionsListDialog"
+            icon="/images/icons/users_large.gif" title-id="manage_invited_users" actions-config-id="browse_actions_permissions" />
+
+         <dialog name="permissionsAddDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-add-dialog.jsp" managed-bean="PermissionsAddDialog"
+            icon="/images/icons/users_large.gif" title-id="manage_invited_users" />
+
+         <dialog name="permissionsDeleteDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-delete-dialog.jsp" managed-bean="PermissionsDeleteDialog"
+            icon="/images/icons/users_large.gif" title-id="manage_invited_users" />
+
+      </dialogs>
+      <actions>
+
+         <action id="permissions_add">
+            <label-id>add_user_group</label-id>
+            <image>/images/icons/add_user.gif</image>
+            <action>dialog:permissionsAddDialog</action>
+            <action-listener>#{PermissionsAddDialog.setup}</action-listener>
+            <params>
+               <param name="nodeRef">#{PermissionsListDialog.nodeRef}</param>
+               <param name="permission">#{PermissionsListDialog.permission}</param>
+            </params>
+         </action>
+
+         <action-group id="browse_actions_permissions">
+            <action idref="permissions_add" />
+         </action-group>
+
+      </actions>
+   </config>
+
+   <config evaluator="node-type" condition="cm:person" replace="true">
+      <property-sheet>
+         <show-property name="cm:firstName" />
+         <show-property name="cm:lastName" />
+         <show-property name="cm:userName" display-label-id="user_username" />
+         <show-property name="cm:firstName" />
+         <show-property name="unit" display-label-id="unit" />
+         <show-property name="cm:jobtitle" display-label-id="jobtitle" />
+         <show-property name="cm:telephone" display-label-id="telephone" />
+         <show-property name="cm:email" display-label-id="user_email" />
+         <show-property name="cm:homeFolder" display-label-id="user_home_folder" component-generator="HomespaceLinkGenerator" />
+      </property-sheet>
+   </config>
+
+</alfresco-config>

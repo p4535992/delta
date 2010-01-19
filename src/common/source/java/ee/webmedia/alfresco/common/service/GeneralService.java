@@ -36,14 +36,6 @@ public interface GeneralService {
     ChildAssociationRef getLastChildAssocRef(String nodeRefXPath);
 
     /**
-     * Returns the full name of the user.
-     * 
-     * @param userName
-     * @return
-     */
-    String getPersonFullNameByUserName(String userName);
-
-    /**
      * Search for nodes by property values. Search results are limited by default limit.
      * 
      * @see #searchNodes(String, QName, Set, int)
@@ -68,8 +60,16 @@ public interface GeneralService {
      * 
      * @param nodeRef
      * @param nodeProps
+     * @see #setPropertiesIgnoringSystem(Map, NodeRef)
      */
     void setPropertiesIgnoringSystem(NodeRef nodeRef, Map<String, Object> nodeProps);
+
+    /**
+     * @param properties
+     * @param nodeRef
+     * @see #setPropertiesIgnoringSystem(NodeRef, Map)
+     */
+    void setPropertiesIgnoringSystem(Map<QName, Serializable> properties, NodeRef nodeRef);
 
     /**
      * @return return and remove value from request map that was put there by
@@ -78,24 +78,24 @@ public interface GeneralService {
     String getExistingRepoValue4ComponentGenerator();
 
     /**
-     * Returns a map with the user's properties.
-     * @param userName
-     * @return
-     */
-    Map<QName, Serializable> getPersonProperties(String userName);
-    
-    /**
-     * Puts two names together into one string with a separator between.
-     * @param first
-     * @param last
-     * @return
-     */
-    String getFirstAndLastNames(String first, String last, String sep);
-
-    /**
      * @param childRef - child of the parent being searched for
      * @param parentType - type that parent of given childRef is expected to have
      * @return dorect primary parent node if it has givent parentType, null otherwise
      */
     Node getParentWithType(NodeRef childRef, QName parentType);
+
+    /**
+     * @param node
+     * @param property
+     * @param testEqualityValue
+     * @return true if given node has property with given qName that equals to equalityTestValue, false otherwise
+     */
+    boolean isExistingPropertyValueEqualTo(Node node, final QName property, final Object equalityTestValue);
+
+    /**
+     * @param nodeRef
+     * @return node according to nodeRef from repo, filling properties and aspects
+     */
+    Node fetchNode(NodeRef nodeRef);
+
 }

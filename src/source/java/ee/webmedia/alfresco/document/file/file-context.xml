@@ -21,10 +21,10 @@
    <bean id="fileService" class="ee.webmedia.alfresco.document.file.service.FileServiceImpl">
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="generalService" ref="GeneralService" />
-      <property name="versionsService" ref="VersionsService" />
+      <property name="userService" ref="UserService" />
       <property name="signatureService" ref="SignatureService" />
       <property name="authenticationService" ref="AuthenticationService" />
+      <property name="permissionService" ref="PermissionService" />
    </bean>
 
    <bean id="FileService" class="org.springframework.aop.framework.ProxyFactoryBean">

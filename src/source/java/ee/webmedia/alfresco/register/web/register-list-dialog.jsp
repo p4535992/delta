@@ -10,9 +10,8 @@
 <a:panel id="register-panel" styleClass="panel-100" label="#{msg.register_list}" progressive="true">
 
    <%-- Spaces List --%>
-   <a:richList id="registersList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet" headerStyleClass="recordSetHeader"
-      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.registers}" var="r"
-      initialSortColumn="name">
+   <a:richList id="registersList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+      width="100%" value="#{DialogManager.bean.registers}" var="r" initialSortColumn="name">
 
       <%-- Primary column for the name --%>
       <a:column id="col1" primary="true">

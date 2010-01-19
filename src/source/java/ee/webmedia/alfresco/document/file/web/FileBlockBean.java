@@ -8,6 +8,7 @@ import javax.faces.context.FacesContext;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.NavigationBean;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.file.model.File;
@@ -22,13 +23,14 @@ public class FileBlockBean implements Serializable {
 
     private transient FileService fileService;
     private transient DocumentService documentService;
+    private transient UIRichList richList;
     private NavigationBean navigationBean;
     private List<File> files;
     private NodeRef nodeRef;
 
     public void init(Node node) {
         this.nodeRef = node.getNodeRef();
-        restore();
+        files = getFileService().getAllFiles(nodeRef);
         // Alfresco's AddContentDialog.saveContent uses
         // navigationBean.getCurrentNodeId() for getting the folder to save to
         navigationBean.setCurrentNodeId(node.getId());
@@ -37,11 +39,13 @@ public class FileBlockBean implements Serializable {
     public void reset() {
         files = null;
         nodeRef = null;
+        richList = null;
         navigationBean.setCurrentNodeId(getDocumentService().getDrafts().getId());
     }
 
     public void restore() {
         files = getFileService().getAllFiles(nodeRef);
+        richList.setValue(files);
     }
 
     /**
@@ -51,6 +55,20 @@ public class FileBlockBean implements Serializable {
      */
     public List<File> getFiles() {
         return files;
+    }
+    
+    /**
+     * Used in JSP pages.
+     */
+    public UIRichList getRichList() {
+        return richList;
+    }
+    
+    /**
+     * Used in JSP pages.
+     */
+    public void setRichList(UIRichList richList) {
+        this.richList = richList;
     }
 
     // START: getters / setters

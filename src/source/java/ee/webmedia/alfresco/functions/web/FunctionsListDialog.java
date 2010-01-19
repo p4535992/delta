@@ -4,16 +4,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import javax.faces.component.UIComponent;
-import javax.faces.component.UISelectItem;
-import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.bean.repository.Node;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdown;
-import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdownGenerator;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 
@@ -45,6 +41,11 @@ public class FunctionsListDialog extends BaseDialogBean {
     public String cancel() {
         functions = null;
         return super.cancel();
+    }
+
+    @Override
+    public Object getActionsContext() {
+        return new Node(getFunctionsService().getFunctionsRoot());
     }
 
     // START: private methods

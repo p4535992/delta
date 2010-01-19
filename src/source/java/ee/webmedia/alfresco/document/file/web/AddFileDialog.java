@@ -18,7 +18,8 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.versions.model.VersionsModel;
 
@@ -26,10 +27,11 @@ import ee.webmedia.alfresco.versions.model.VersionsModel;
  * @author Dmitri Melnikov
  */
 public class AddFileDialog extends AddContentDialog {
-
     private static final long serialVersionUID = 1L;
+
     private static final String ERR_EXISTING_FILE = "add_file_existing_file";
-    private transient GeneralService generalService;
+
+    private transient UserService userService;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
@@ -47,7 +49,13 @@ public class AddFileDialog extends AddContentDialog {
         if (this.showOtherProperties) {
             this.browseBean.setDocument(new Node(this.createdNode));
         }
+        // XXX Should probably be refactored to a single service method to add all the aspects there.
         addVersionModifiedAspect(this.createdNode);
+        getNodeService().addAspect(this.createdNode, DocumentCommonModel.Aspects.FILE, null);
+        NodeRef parentDocRef = getNodeService().getPrimaryParent(this.createdNode).getParentRef();
+        if (getNodeService().hasAspect(parentDocRef, DocumentCommonModel.Aspects.SEARCHABLE)) {
+            getNodeService().addAspect(this.createdNode, DocumentCommonModel.Aspects.SEARCHABLE, null);
+        }
         return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
     }
 
@@ -64,7 +72,7 @@ public class AddFileDialog extends AddContentDialog {
             Map<QName, Serializable> properties = getNodeService().getProperties(nodeRef);
             
             String user = (String)properties.get(ContentModel.PROP_CREATOR);
-            Map<QName, Serializable> personProps = getGeneralService().getPersonProperties(user);
+            Map<QName, Serializable> personProps = getUserService().getUserProperties(user);
             String first = (String) personProps.get(ContentModel.PROP_FIRSTNAME);
             String last = (String) personProps.get(ContentModel.PROP_LASTNAME);
             Date modified = DefaultTypeConverter.INSTANCE.convert(Date.class, properties.get(ContentModel.PROP_CREATED));
@@ -79,16 +87,16 @@ public class AddFileDialog extends AddContentDialog {
     }
     
     // START: getters / setters
-    protected GeneralService getGeneralService() {
-        if (generalService == null) {
-            generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(GeneralService.BEAN_NAME);
-        }
-        return generalService;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
+    protected UserService getUserService() {
+        if (userService == null) {
+            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(UserService.BEAN_NAME);
+        }
+        return userService;
     }
     // END: getters / setters
 }

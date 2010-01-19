@@ -20,7 +20,6 @@ import org.alfresco.service.cmr.search.LimitBy;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
-import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
@@ -30,7 +29,6 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
-import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * @author Ats Uiboupin
@@ -39,7 +37,6 @@ public class GeneralServiceImpl implements GeneralService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(GeneralServiceImpl.class);
 
     private StoreRef store;
-    private PersonService personService;
     private NodeService nodeService;
     private NamespaceService namespaceService;
     private DictionaryService dictionaryService;
@@ -86,12 +83,30 @@ public class GeneralServiceImpl implements GeneralService {
     @Override
     public Node getParentWithType(NodeRef childRef, final QName parentType) {
         final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
-        final QName type = nodeService.getType(parentRef);
-        if (parentType.equals(type)) {
-            return RepoUtil.fetchNode(parentRef);
-        } else {
-            return null;
+        final QName realParentType = nodeService.getType(parentRef);
+        if (parentType.equals(realParentType)) {
+            return fetchNode(parentRef);
         }
+        return null;
+    }
+
+    @Override
+    public boolean isExistingPropertyValueEqualTo(Node currentNode, final QName property, final Object equalityTestValue) {
+        final Object realValue = currentNode.getProperties().get(property.toString());
+        return equalityTestValue == null ? realValue == null : equalityTestValue.equals(realValue);
+    }
+
+    /**
+     * Create node from nodRef and populate it with properties and aspects
+     * @param nodeRef
+     * @return
+     */
+    @Override
+    public Node fetchNode(NodeRef nodeRef) {
+        final Node node = new Node(nodeRef);
+        node.getAspects();
+        node.getProperties();
+        return node;
     }
 
     @Override
@@ -117,31 +132,15 @@ public class GeneralServiceImpl implements GeneralService {
     }
 
     @Override
-    public String getFirstAndLastNames(String first, String last, String sep) {
-        if (StringUtils.isBlank(first)) {
-            return last;
-        } else if (StringUtils.isBlank(last)) {
-            return first;
-        }
-        return first + sep + last;
-    }
-
-    @Override
-    public String getPersonFullNameByUserName(String userName) {
-        return UserUtil.getPersonFullName1(getPersonProperties(userName));
-    }
-
-    public Map<QName, Serializable> getPersonProperties(String userName) {
-        return nodeService.getProperties(personService.getPerson(userName));
-    }
-
-    @Override
     public List<NodeRef> searchNodes(String input, QName type, Set<QName> props) {
         return searchNodes(input, type, props, 100);
     }
 
     @Override
     public List<NodeRef> searchNodes(String input, QName type, Set<QName> props, int limit) {
+        if (input == null) {
+            return null;
+        }
         String parsedInput = SearchUtil.replace(input, " ").trim();
         if (parsedInput.length() < 1) {
             return null;
@@ -168,30 +167,42 @@ public class GeneralServiceImpl implements GeneralService {
     }
 
     @Override
+    public void setPropertiesIgnoringSystem(Map<QName, Serializable> properties, NodeRef nodeRef) {
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        for (QName qName : properties.keySet()) {
+            addToPropsIfNotSystem(qName, properties.get(qName), props);
+        }
+        nodeService.setProperties(nodeRef, props);
+    }
+
+    @Override
     public void setPropertiesIgnoringSystem(NodeRef nodeRef, Map<String, Object> nodeProps) {
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         for (String key : nodeProps.keySet()) {
             QName qname = QName.createQName(key);
-            // ignore system and contentModel properties
-            if (RepoUtil.isSystemProperty(qname)) {
-                continue;
-            }
-            Serializable value = (Serializable) nodeProps.get(key);
-            // check for empty strings when using number types, set to null in this case
-            if ((value != null) && (value instanceof String) && (value.toString().length() == 0)) {
-                PropertyDefinition propDef = dictionaryService.getProperty(qname);
-                if (propDef != null) {
-                    if (propDef.getDataType().getName().equals(DataTypeDefinition.DOUBLE) ||
-                            propDef.getDataType().getName().equals(DataTypeDefinition.FLOAT) ||
-                            propDef.getDataType().getName().equals(DataTypeDefinition.INT) ||
-                            propDef.getDataType().getName().equals(DataTypeDefinition.LONG)) {
-                        value = null;
-                    }
-                }
-            }
-            props.put(qname, value);
+            addToPropsIfNotSystem(qname, (Serializable) nodeProps.get(key), props);
         }
         nodeService.setProperties(nodeRef, props);
+    }
+
+    private void addToPropsIfNotSystem(QName qname, Serializable value, Map<QName, Serializable> props) {
+        // ignore system and contentModel properties
+        if (RepoUtil.isSystemProperty(qname)) {
+            return;
+        }
+        // check for empty strings when using number types, set to null in this case
+        if ((value != null) && (value instanceof String) && (value.toString().length() == 0)) {
+            PropertyDefinition propDef = dictionaryService.getProperty(qname);
+            if (propDef != null) {
+                if (propDef.getDataType().getName().equals(DataTypeDefinition.DOUBLE) ||
+                        propDef.getDataType().getName().equals(DataTypeDefinition.FLOAT) ||
+                        propDef.getDataType().getName().equals(DataTypeDefinition.INT) ||
+                        propDef.getDataType().getName().equals(DataTypeDefinition.LONG)) {
+                    value = null;
+                }
+            }
+        }
+        props.put(qname, value);
     }
 
     @Override
@@ -211,10 +222,6 @@ public class GeneralServiceImpl implements GeneralService {
     // START: getters / setters
     public void setDefaultStore(String store) {
         this.store = new StoreRef(store);
-    }
-
-    public void setPersonService(PersonService personService) {
-        this.personService = personService;
     }
 
     public void setNodeService(NodeService nodeService) {

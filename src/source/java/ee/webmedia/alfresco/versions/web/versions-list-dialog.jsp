@@ -7,13 +7,11 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="versions-panel" border="white" bgcolor="white" styleClass="panel-100" label="#{msg.versions_list}" progressive="true"
-   facetsId="versions-panel-facets">
+<a:panel id="versions-panel" styleClass="panel-100" label="#{msg.versions_list}" progressive="true">
 
    <%-- Main List --%>
-   <a:richList id="versionsList" viewMode="details" pageSize="#{BrowseBean.pageSizeSpaces}" styleClass="recordSet" headerStyleClass="recordSetHeader"
-      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.versions}" var="r" initialSortColumn="version"
-      initialSortDescending="true">
+   <a:richList id="versionsList" viewMode="details" pageSize="#{BrowseBean.pageSizeSpaces}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+      width="100%" value="#{DialogManager.bean.versions}" var="r" initialSortColumn="version" initialSortDescending="true">
 
       <%-- Version --%>
       <a:column id="col1" primary="true">
@@ -55,3 +53,5 @@
    </a:richList>
 
 </a:panel>
+
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

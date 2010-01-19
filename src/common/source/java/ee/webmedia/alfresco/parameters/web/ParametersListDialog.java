@@ -47,7 +47,9 @@ public class ParametersListDialog extends BaseDialogBean {
             getParametersService().updateParameters(parameters);
             parameters = null;
         }
-        return outcome;
+        
+        // We need to stay on the same dialog
+        return "dialog:close:dialog:parametersListDialog";
     }
 
     @Override

@@ -15,7 +15,6 @@ import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
@@ -28,7 +27,6 @@ public class MenuRenderer extends BaseRenderer {
     private static final String AJAX_URL_START = "/ajax/invoke/" + NavigatorPluginBean.BEAN_NAME;
 
     private UserService userService;
-    private DocumentTypeService docTypeService;
 
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
@@ -180,7 +178,7 @@ public class MenuRenderer extends BaseRenderer {
                 if (menuItem != null)
                     children.add(menuItem);
             } else if (item instanceof DropdownMenuItem) { // Only the drop-down item in primary menu need the DocumentTypeService
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getDocumentTypeService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService());
                 if (menuItem != null)
                     children.add(menuItem);
             } else {
@@ -205,11 +203,4 @@ public class MenuRenderer extends BaseRenderer {
         return userService;
     }
 
-    protected DocumentTypeService getDocumentTypeService() {
-        if (docTypeService == null) {
-            docTypeService = (DocumentTypeService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(DocumentTypeService.BEAN_NAME);
-        }
-        return docTypeService;
-    }
 }

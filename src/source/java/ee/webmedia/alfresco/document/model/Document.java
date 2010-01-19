@@ -1,11 +1,18 @@
 package ee.webmedia.alfresco.document.model;
 
 import java.io.Serializable;
+import java.util.Date;
+import java.util.List;
+
+import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
@@ -14,10 +21,12 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 public class Document implements Serializable, Comparable<Document> {
 
     private static final long serialVersionUID = 1L;
+    private static final String LIST_SEPARATOR = ", ";
 
     private String regNumber;
     private String title;
     private String docName;
+    private Date regDateTime;
     // START: not mappable fields
     @AlfrescoModelProperty(isMappable = false)
     private DocumentType documentType;
@@ -57,16 +66,54 @@ public class Document implements Serializable, Comparable<Document> {
     }
 
     public String getSender() {
-        final QName id = documentType.getId();
-        if (id.equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
-            return "TODO: unimplemented:: kui dokumendi tüüp = incomingLetter, siis dokumendi senderName väärtus;";
-        } else {
-            return (String) getNode().getProperties().get(DocumentCommonModel.Props.OWNER_NAME.toString());
+        if (documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
+            return (String) getNode().getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME.toString());
         }
+        return (String) getNode().getProperties().get(DocumentCommonModel.Props.OWNER_NAME.toString());
+    }
+
+    public String getAllRecipients() {
+        @SuppressWarnings("unchecked")
+        final List<String> recipients = (List<String>) getNode().getProperties().get(DocumentCommonModel.Props.RECIPIENT_NAME.toString());
+        if (recipients == null) {
+            return "";
+        }
+        String allRecipients = StringUtils.join(recipients.iterator(), LIST_SEPARATOR);
+        @SuppressWarnings("unchecked")
+        final List<String> additionalRecipient = (List<String>) getNode().getProperties().get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.toString());
+        if (additionalRecipient == null) {
+            return allRecipients;
+        }
+        return allRecipients + (StringUtils.isNotBlank(allRecipients) ? LIST_SEPARATOR : "") + StringUtils.join(recipients.iterator(), LIST_SEPARATOR);
+    }
+
+    public Date getDueDate() {
+        if (documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
+            return (Date) getNode().getProperties().get(DocumentSpecificModel.Props.DUE_DATE.toString());
+        }
+        return null;
+    }
+    
+    public Date getComplienceDate() {
+        if (documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
+            return (Date) getNode().getProperties().get(DocumentSpecificModel.Props.COMPLIENCE_DATE.toString());
+        }
+        return null;
+    }
+
+    public String getDocTypeLocalName() {
+        return documentType.getId().getLocalName();
+    }
+
+    public List<File> getFiles() {
+        // probably not the best idea to call service from model, but alternatives get probably too complex
+        FileService fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext( //
+                FacesContext.getCurrentInstance()).getBean(FileService.BEAN_NAME);
+        return fileService.getAllFilesExcludingDigidocSubitems(getNode().getNodeRef());
     }
 
     // END: not mappable fields
-    
+
     public String getRegNumber() {
         return regNumber;
     }
@@ -91,10 +138,24 @@ public class Document implements Serializable, Comparable<Document> {
         this.docName = docName;
     }
 
+    public Date getRegDateTime() {
+        return regDateTime;
+    }
+
+    public void setRegDateTime(Date regDateTime) {
+        this.regDateTime = regDateTime;
+    }
+
     @Override
     public int compareTo(Document other) {
-        if (getRegNumber() == other.getRegNumber()) {
-            return 0;// TODO: 3.1.5. Nimekiri on sorteeritud kõigepealt regNumber alusel kasvavalt, seejärel regDateTime alusel kasvavalt.
+        if (StringUtils.equals(getRegNumber(), other.getRegNumber())) {
+            if (regDateTime != null) {
+                if (other.getRegDateTime() == null) {
+                    return 1;
+                }
+                return regDateTime.compareTo(other.getRegDateTime());
+            }
+            return 0;
         }
         return getRegNumber().compareTo(other.getRegNumber());
     }
@@ -102,7 +163,7 @@ public class Document implements Serializable, Comparable<Document> {
     @Override
     public String toString() {
         return new StringBuilder("Document:")//
-                .append("\n\tvolumeMark = " + regNumber)
+                .append("\n\tregNumber = " + regNumber)
                 .append("\n\ttitle = " + title)
                 .toString();
     }

@@ -19,6 +19,8 @@ import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
@@ -34,6 +36,7 @@ public class FunctionsServiceImpl implements FunctionsService {
     private GeneralService generalService;
     private NodeService nodeService;
     private DictionaryService dictionaryService;
+    private SeriesService seriesService;
 
     @Override
     public List<Function> getAllFunctions() {
@@ -69,7 +72,7 @@ public class FunctionsServiceImpl implements FunctionsService {
     @Override
     public Function getFunctionByNodeRef(NodeRef nodeRef) {
         Function function = functionsBeanPropertyMapper.toObject(nodeService.getProperties(nodeRef));
-        function.setNode(RepoUtil.fetchNode(nodeRef));
+        function.setNode(generalService.fetchNode(nodeRef));
         if (log.isDebugEnabled()) {
             log.debug("Found Function: " + function);
         }
@@ -86,7 +89,7 @@ public class FunctionsServiceImpl implements FunctionsService {
                     FunctionsModel.Associations.FUNCTION,
                     FunctionsModel.Types.FUNCTION,
                     RepoUtil.toQNameProperties(transientNode.getProperties())).getChildRef();
-            function.setNode(RepoUtil.fetchNode(functionNodeRef));
+            function.setNode(generalService.fetchNode(functionNodeRef));
         } else {
             generalService.setPropertiesIgnoringSystem(function.getNode().getNodeRef(), stringQNameProperties);
         }
@@ -105,6 +108,20 @@ public class FunctionsServiceImpl implements FunctionsService {
         return function;
     }
     
+    @Override
+    public boolean closeFunction(Function function) {
+        List<Series> allSeries = seriesService.getAllSeriesByFunction(function.getNodeRef());
+        for (Series series : allSeries) {
+            if (!DocListUnitStatus.CLOSED.equals(series.getStatus())) {
+                return false;
+            }
+        }
+        
+        function.getNode().getProperties().put(FunctionsModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
+        saveOrUpdate(function);
+        return true;
+    }
+    
     private int getNextFunctionOrderNrByFunction() {
         int maxOrder = 0;
         for (Function fn : getAllFunctions()) {
@@ -115,7 +132,8 @@ public class FunctionsServiceImpl implements FunctionsService {
         return maxOrder + 1;
     }
 
-    private NodeRef getFunctionsRoot() {
+    @Override
+    public NodeRef getFunctionsRoot() {
         return generalService.getNodeRef(FunctionsModel.Repo.FUNCTIONS_SPACE);
     }
 
@@ -130,6 +148,10 @@ public class FunctionsServiceImpl implements FunctionsService {
 
     public void setDictionaryService(DictionaryService dictionaryService) {
         this.dictionaryService = dictionaryService;
+    }
+
+    public void setSeriesService(SeriesService seriesService) {
+        this.seriesService = seriesService;
     }
     // END: getters / setters
 }

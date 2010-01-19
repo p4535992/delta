@@ -18,7 +18,7 @@ import ee.webmedia.alfresco.dvk.service.DvkServiceImpl;
 /**
  * Scheduled job to call a {@link DvkServiceImpl#receiveDocuments()}.
  * <p>
- * Job data is: <b>dvkService</b>
+ * Job data is: <b>DvkService</b>
  * 
  * @author Ats Uiboupin
  */
@@ -28,9 +28,9 @@ public class DvkReceiveDocumentsJob implements Job {
     public void execute(JobExecutionContext context) throws JobExecutionException {
         log.debug("Starting DvkReceiveDocumentsJob");
         JobDataMap jobData = context.getJobDetail().getJobDataMap();
-        Object workerObj = jobData.get("dvkService");
+        Object workerObj = jobData.get(DvkService.BEAN_NAME);
         if (workerObj == null || !(workerObj instanceof DvkService)) {
-            throw new AlfrescoRuntimeException("DvkReceiveDocumentsJob data must contain valid 'dvkService' reference");
+            throw new AlfrescoRuntimeException("DvkReceiveDocumentsJob data must contain valid 'DvkService' reference");
         }
         final DvkService worker = (DvkService) workerObj;
         

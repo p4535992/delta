@@ -1,21 +1,23 @@
 package ee.webmedia.alfresco.volume.web;
 
-import java.util.Map;
-
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.TransientNode;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
-import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
+/**
+ * Form backing bean for Volumes details
+ * 
+ * @author Ats Uiboupin
+ */
 public class VolumeDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
@@ -23,11 +25,6 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     private static final String PARAM_VOLUME_NODEREF = "volumeNodeRef";
     private transient VolumeService volumeService;
     private Volume currentEntry;
-
-    @Override
-    public void init(Map<String, String> params) {
-        super.init(params);
-    }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -49,9 +46,9 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     }
 
     public void addNewVolume(ActionEvent event) {
-        NodeRef volumeNodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_SERIES_NODEREF));
+        NodeRef seriesRef = new NodeRef(ActionUtil.getParam(event, PARAM_SERIES_NODEREF));
         // create new node for currentEntry
-        currentEntry = getVolumeService().createVolume(volumeNodeRef);
+        currentEntry = getVolumeService().createVolume(seriesRef);
     }
 
     public Node getCurrentNode() {
@@ -59,6 +56,9 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     }
 
     public String close() {
+        if(currentEntry.getNode() instanceof TransientNode) {
+            return null;
+        }
         if (!isClosed()) {
             getVolumeService().closeVolume(currentEntry);
             return getDefaultFinishOutcome();
@@ -67,9 +67,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     }
 
     public boolean isClosed() {
-        final String currentStatus = (String) getCurrentNode().getProperties().get(VolumeModel.Props.STATUS.toString());
-        final boolean closed = DocListUnitStatus.CLOSED.equals(currentStatus);
-        return closed;
+        return volumeService.isClosed(getCurrentNode());
     }
 
     // END: jsf actions/accessors

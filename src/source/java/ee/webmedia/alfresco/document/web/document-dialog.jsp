@@ -8,4 +8,5 @@
 <%@ page isELIgnored="false"%>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block.jsp" />
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-addOrSelectCase.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/file-block.jsp" />

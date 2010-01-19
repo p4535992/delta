@@ -71,5 +71,55 @@
          <value>#{AddressbookService}</value>
       </managed-property>
    </managed-bean>
-
+   
+   <managed-bean>
+      <managed-bean-name>ContactGroupListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>addressbookService</property-name>
+         <value>#{AddressbookService}</value>
+      </managed-property>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>ContactGroupContactsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupContactsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>addressbookService</property-name>
+         <value>#{AddressbookService}</value>
+      </managed-property>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>ContactGroupCreateDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupCreateDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>addressbookService</property-name>
+         <value>#{AddressbookService}</value>
+      </managed-property>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>ContactGroupAddDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>addressbookService</property-name>
+         <value>#{AddressbookService}</value>
+      </managed-property>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>ContactGroupDeleteDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupDeleteDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>addressbookService</property-name>
+         <value>#{AddressbookService}</value>
+      </managed-property>
+   </managed-bean>
+   
 </faces-config>

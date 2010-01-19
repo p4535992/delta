@@ -60,22 +60,20 @@ public class WMPropertySheetElementReader extends PropertySheetElementReader {
         String inView = item.attributeValue(ATTR_SHOW_IN_VIEW_MODE);
         String compGenerator = item.attributeValue(ATTR_COMPONENT_GENERATOR);
 
+        @SuppressWarnings("unchecked")
+        List<Attribute> allAttributes = item.attributes();
+        Map<String, String> attributes = new HashMap<String, String>(allAttributes.size());
+        for (Attribute attribute : allAttributes) {
+            attributes.put(attribute.getName(), attribute.getValue());
+        }
         if (ELEMENT_SHOW_PROPERTY.equals(item.getName())) {
-            @SuppressWarnings("unchecked")
-            List<Attribute> allAttributes = item.attributes();
-            Map<String, String> attributes = new HashMap<String, String>(allAttributes.size());
-            for (Attribute attribute : allAttributes) {
-                attributes.put(attribute.getName(), attribute.getValue());
-            }
-            // add the property to show to the custom config element
-            configElement.addProperty(propName, label, labelId, readOnly, converter, inView //
-                    , inEdit, compGenerator, item.attributeValue(ATTR_IGNORE_IF_MISSING), attributes);
+            configElement.addProperty(propName, label, labelId, readOnly, converter, inView, inEdit, compGenerator, item.attributeValue(ATTR_IGNORE_IF_MISSING), attributes);
         } else if (ELEMENT_SHOW_ASSOC.equals(item.getName())) {
-            configElement.addAssociation(propName, label, labelId, readOnly, converter, inView, inEdit, compGenerator);
+            configElement.addAssociation(propName, label, labelId, readOnly, converter, inView, inEdit, compGenerator, attributes);
         } else if (ELEMENT_SHOW_CHILD_ASSOC.equals(item.getName())) {
-            configElement.addChildAssociation(propName, label, labelId, readOnly, converter, inView, inEdit, compGenerator);
+            configElement.addChildAssociation(propName, label, labelId, readOnly, converter, inView, inEdit, compGenerator, attributes);
         } else if (ELEMENT_SEPARATOR.equals(item.getName())) {
-            configElement.addSeparator(propName, label, labelId, inView, inEdit, compGenerator);
+            configElement.addSeparator(propName, label, labelId, inView, inEdit, compGenerator, attributes);
         }
     }
 

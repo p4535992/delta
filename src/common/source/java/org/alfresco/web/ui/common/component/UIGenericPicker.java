@@ -269,15 +269,15 @@ public class UIGenericPicker extends UICommand
       String clientId = getClientId(context);
       
       // start outer table
-      out.write("<table border=0 cellspacing=4 cellpadding=0>");
+      out.write("<table cellspacing=\"4\" cellpadding=\"0\">");
       
       // top row
-      out.write("<tr valign=top><td>");
+      out.write("<tr valign=\"top\">");
       
       // filter drop-down
       if (getShowFilter() == true)
       {
-         out.write("<select name='");
+         out.write("<td><select name='");
          out.write(clientId + FIELD_FILTER);
          out.write("' size='1'");
          
@@ -312,9 +312,9 @@ public class UIGenericPicker extends UICommand
             }
          }
          
-         out.write("</select>");
+         out.write("</td></select>");
       }
-      out.write("</td><td align=right>");
+      out.write("<td>");
       
       // Contains textbox
       if (getShowContains() == true)
@@ -337,7 +337,7 @@ public class UIGenericPicker extends UICommand
       // information row
       if (this.currentResults != null && getShowContains() == true)
       {
-         out.write("<tr><td colspan=3>");
+         out.write("<tr><td colspan=\"9\">");
          out.write("<a href='#' onclick=\"");
          out.write(generateFormSubmit(context, ACTION_CLEAR));
          out.write("\">");
@@ -346,7 +346,7 @@ public class UIGenericPicker extends UICommand
       }
       
       // results list row
-      out.write("<tr><td colspan=2>");
+      out.write("<tr><td colspan=\"9\">");
       out.write("<select size='8' style='width:");
       out.write(Integer.toString(getWidth()));
       out.write("px;height:");

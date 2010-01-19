@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.common.propertysheet.validator;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.component.StateHolder;
@@ -23,6 +24,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
 
     private static final String MESSAGE_ID = "common_propertysheet_validator_mandatoryIf";
     public static final String ATTR_MANDATORY_IF = "mandatoryIf";
+    public static final String DISABLE_VALIDATION = "DISABLE_MANDATORY_IF_VALIDATOR";
     private static final List<String> SELECT_VALUES_INDICATING_MANDATORY = Arrays.asList("Jah", "true", "yes", "AK");
 
     private String otherPropertyName;
@@ -43,6 +45,9 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
     public void validate(FacesContext context, UIComponent component, Object value) throws ValidatorException {
         UIInput input = (UIInput) component;
         UIInput propertyInput = ComponentUtil.getInputFromSamePropertySheet(component, otherPropertyName);
+        if (isValidationDisabled(context)) {
+            return; // we don't want to validate before for example Search component is starting searching
+        }
         boolean mustBeFilled = isOtherFilledAndMandatory(propertyInput);
         if (mustBeFilled && !isFilled(input)) {
             UIProperty thisUIProperty = ComponentUtil.getAncestorComponent(component, UIProperty.class, true);
@@ -74,6 +79,12 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
         this._transient = newTransientValue;
     }
 
+    private boolean isValidationDisabled(FacesContext context) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
+        return (Boolean.TRUE == requestMap.get(DISABLE_VALIDATION));
+    }
+
     private boolean isOtherFilledAndMandatory(UIInput propertyInput) {
         // Checkbox
         if (propertyInput instanceof UISelectBoolean) {
@@ -86,17 +97,16 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
             String stringValue = (String) selector.getValue();
             if (stringValue == null) {
                 return false;
-            } else {
-                if (StringUtils.isNotBlank(stringValue)) {
-                    stringValue = stringValue.trim();
-                }
-                for (String allowedValue : SELECT_VALUES_INDICATING_MANDATORY) {
-                    if (stringValue.equalsIgnoreCase(allowedValue)) {
-                        return true;
-                    }
-                }
-                return false;
             }
+            if (StringUtils.isNotBlank(stringValue)) {
+                stringValue = stringValue.trim();
+            }
+            for (String allowedValue : SELECT_VALUES_INDICATING_MANDATORY) {
+                if (stringValue.equalsIgnoreCase(allowedValue)) {
+                    return true;
+                }
+            }
+            return false;
         } else {
             // text input
             String valueSubmitted = (String) propertyInput.getSubmittedValue();

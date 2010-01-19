@@ -114,7 +114,7 @@ public interface DhlXTeeService {
      */
     void markDocumentsReceived(Collection<String> receivedDocumentIds);
 
-    void runSystemCheck();
+//    void runSystemCheck();
 
     List<OccupationType> getOccupationList(List<String> institutionRegNrs);
 

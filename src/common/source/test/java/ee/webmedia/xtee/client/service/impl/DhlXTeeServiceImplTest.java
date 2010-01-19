@@ -48,7 +48,7 @@ import ee.webmedia.xtee.client.service.DhlXTeeService.MetainfoHelper;
 import ee.webmedia.xtee.client.service.DhlXTeeService.ReceivedDocumentsWrapper;
 import ee.webmedia.xtee.client.service.DhlXTeeService.SendStatus;
 import ee.webmedia.xtee.client.service.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
-import ee.webmedia.xtee.client.service.provider.XTeeProviderPropertiesResolver;
+import ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver;
 import ee.webmedia.xtee.types.ee.riik.schemas.dhl.AadressType;
 import ee.webmedia.xtee.types.ee.riik.schemas.dhl.DhlDokumentType;
 import ee.webmedia.xtee.types.ee.riik.schemas.dhl.EdastusDocument.Edastus;
@@ -66,7 +66,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
 
     private static Log log = LogFactory.getLog(DhlXTeeServiceImplTest.class);
     private static DhlXTeeService dhl;
-    private static XTeeProviderPropertiesResolver propertiesResolver;
+    private static XTeeProviderPropertiesResolver propertiesResolver; // TODO: asendada PropertiesBasedXTeeServiceConfigurationProvider extends AbstractXTeeServiceConfigurationProvider
 
     private static String SENDER_REG_NR;
     private static List<String> receivedDocumentIds;
@@ -83,6 +83,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
     private static List<String> recipients;
     private boolean EXECUTED_GET_SENDING_OPTIONS;
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
         if (dhl == null) {
@@ -111,9 +112,9 @@ public class DhlXTeeServiceImplTest extends TestCase {
         log.debug("warmup done to get better time measure for the first test");
     }
 
-    public void _testRunSystemCheck() {
-        dhl.runSystemCheck();
-    }
+//    public void _testRunSystemCheck() {
+//        dhl.runSystemCheck();
+//    }
 
     public void testGetSendingOptions() {
         dvkOrgList = dhl.getSendingOptions();
@@ -176,7 +177,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
         log.debug("got " + items.size() + " items with send statuses:");
         assertTrue(items.size() > 0 || sentDocIds.size() == 0);
         System.out.println(items.size());
-        Assert.assertTrue(items != null && items.size() > 0);
+        Assert.assertTrue(items.size() > 0);
         for (Item item : items) {
             log.debug("\titem=" + item);
             String dhlId = item.getDhlId();
@@ -299,7 +300,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
         final List<Item> items = dhl.getSendStatuses(sentDocIds);
         assertTrue(items.size() > 0 || sentDocIds.size() == 0);
         System.out.println(items.size());
-        Assert.assertTrue(items != null && items.size() > 0);
+        Assert.assertTrue(items.size() > 0);
         for (Item item : items) {
             log.debug("--item=" + item);
             String dhlId = item.getDhlId();
@@ -459,6 +460,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
         }
     }
 
+    @Override
     protected void tearDown() throws Exception {
         super.tearDown();
     }

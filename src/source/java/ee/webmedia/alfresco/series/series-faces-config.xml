@@ -23,10 +23,6 @@
          <property-name>functionsService</property-name>
          <value>#{FunctionsService}</value>
       </managed-property>
-      <managed-property>
-         <property-name>navigator</property-name>
-         <value>#{NavigationBean}</value>
-      </managed-property>
    </managed-bean>
 
    <managed-bean>

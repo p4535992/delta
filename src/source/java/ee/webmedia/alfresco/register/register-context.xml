@@ -46,6 +46,7 @@
    <bean id="registerService" class="ee.webmedia.alfresco.register.service.RegisterServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="dataSource" ref="dataSource" />
    </bean>
 
    <bean id="RegisterService" class="org.springframework.aop.framework.ProxyFactoryBean">

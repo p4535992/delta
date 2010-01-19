@@ -142,9 +142,8 @@
          actionListener="#{TrashcanDeleteListedItemsDialog.setupListAction}" />
    </a:panel>
 
-   <a:richList id="trashcan-list" binding="#{TrashcanDialogProperty.itemsRichList}" viewMode="details" pageSize="10" styleClass="recordSet"
-      headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.items}"
-      var="r" initialSortColumn="deletedDate" initialSortDescending="true">
+   <a:richList id="trashcan-list" binding="#{TrashcanDialogProperty.itemsRichList}" viewMode="details" pageSize="10" rowStyleClass="recordSetRow"
+      altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.items}" var="r" initialSortColumn="deletedDate" initialSortDescending="true">
 
       <%-- Primary column showing item name --%>
       <a:column primary="true" width="150" style="padding:2px;text-align:left">

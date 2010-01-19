@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.FacesException;
+import javax.faces.component.NamingContainer;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
@@ -13,13 +14,18 @@ import javax.faces.component.UIViewRoot;
 import javax.faces.component.ValueHolder;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
+import javax.faces.el.ValueBinding;
 
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
+import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
+
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 
 /**
  * Util methods for JSF components/component trees
@@ -250,6 +256,91 @@ public class ComponentUtil {
         buf.append(val);
         buf.append("';");
         return buf.toString();
+    }
+
+    public static UIComponent generateComponent(FacesContext context, String propertySheetVar, String idPrefix, String spec) {
+        UIComponent component;
+        String[] fields = spec.split("\\|");
+
+        String propName = null;
+        String id = null;
+        if (fields.length >= 1) {
+            propName = fields[0];
+            id = idPrefix + "_" + propName;
+        }
+        String type = "";
+        if (fields.length >= 2) {
+            type = fields[1];
+        }
+
+        String styleClass = "";
+        if ("textarea".equals(type)) {
+            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
+            FacesHelper.setupComponentId(context, component, id);
+            component.setRendererType(ComponentConstants.JAVAX_FACES_TEXTAREA);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> attributes = component.getAttributes();
+            // Default values from TextAreaGenerator
+            attributes.put("rows", 3);
+            attributes.put("cols", 32);
+
+        } else if ("boolean".equals(type)) {
+            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_SELECT_BOOLEAN);
+            FacesHelper.setupComponentId(context, component, id);
+            component.setRendererType(ComponentConstants.JAVAX_FACES_CHECKBOX);
+
+        } else if ("date".equals(type)) {
+                component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
+                FacesHelper.setupComponentId(context, component, id);
+                styleClass = "date ";
+                createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
+/*
+                List<String> params = new ArrayList<String>(2);
+
+                // add the value parameter
+                String value = "document.getElementById('" + component.getClientId(context) + "')";
+                params.add(value);
+
+                // add the validation failed messages
+                String matchMsg = Application.getMessage(context, "validation_date_failed");
+                addStringConstraintParam(params, MessageFormat.format(matchMsg, new Object[] { property.getResolvedDisplayLabel() }));
+
+                // add the validation case to the property sheet
+                propertySheet.addClientValidation(new ClientValidation("validateDate", params, true));
+*/
+
+        } else {
+            if (StringUtils.isNotEmpty(type) && !"input".equals(type)) {
+                log.warn("Component type '" + type + "' is not supported, defaulting to input");
+            }
+            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
+            FacesHelper.setupComponentId(context, component, id);
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = component.getAttributes();
+
+        if (StringUtils.isNotEmpty(propName)) {
+            component.setValueBinding("value", createValueBinding(context, propertySheetVar, propName));
+        }
+
+        if (fields.length >= 3) {
+            styleClass += fields[2];
+        }
+        if (StringUtils.isNotEmpty(styleClass)) {
+            attributes.put("styleClass", styleClass);
+        }
+
+        return component;
+    }
+
+    public static ValueBinding createValueBinding(FacesContext context, String propertySheetVar, String propName) {
+        return createValueBinding(context, propertySheetVar, propName, -1);
+    }
+
+    public static ValueBinding createValueBinding(FacesContext context, String propertySheetVar, String propName, int rowIndex) {
+        ValueBinding vb = context.getApplication().createValueBinding(
+                "#{" + propertySheetVar + ".properties[\"" + propName + "\"]" + (rowIndex >= 0 ? "[" + rowIndex + "]" : "") + "}");
+        return vb;
     }
 
 }

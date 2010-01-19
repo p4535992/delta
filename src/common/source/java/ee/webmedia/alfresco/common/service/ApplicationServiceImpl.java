@@ -16,6 +16,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private String commonVersion;
     private String projectVersion;
     private String projectName;
+    private boolean test;
 
     public void setModuleService(ModuleService moduleService) {
         this.moduleService = moduleService;
@@ -31,6 +32,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     public void setProjectName(String projectName) {
         this.projectName = projectName;
+    }
+
+    public void setTest(boolean test) {
+        this.test = test;
     }
 
     @Override
@@ -51,6 +56,11 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public String getProjectTitle() {
         return moduleService.getModule(projectName).getTitle();
+    }
+
+    @Override
+    public boolean isTest() {
+        return test;
     }
 
     private static Properties loadProperties(Resource resource) {

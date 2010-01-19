@@ -258,6 +258,9 @@ public class TextFieldGenerator extends BaseComponentGenerator
                     propertyDef.getDataType().getName().equals(DataTypeDefinition.LONG)) {
                 msg = Application.getMessage(context, "validation_is_int_number");
                 jsValidatingFunctionName = "validateIsLongNumber";
+            } else if (propertyDef.getDataType().getName().equals(DataTypeDefinition.DOUBLE)) {
+                msg = Application.getMessage(context, "validation_is_double_number");
+                jsValidatingFunctionName = "validateIsNumber";
             } else {
                 msg = Application.getMessage(context, "validation_is_number");
                 jsValidatingFunctionName = "validateIsNumber";

@@ -180,19 +180,19 @@
          
             <f:subview id="dialog-body">
 
-               <a:panel id="container-content-buttons" styleClass="column panel-90" rendered="#{DialogManager.OKButtonVisible}">
+               <a:panel id="container-content-buttons" styleClass="column panel-90" rendered="#{DialogManager.OKButtonVisible && !(DialogManager.currentDialog.name eq 'documentListDialog' && DocumentListDialog.quickSearch) || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
                   <jsp:include page="<%=Application.getDialogManager().getPage() %>" />
                </a:panel>
 
-               <a:panel id="container-content" styleClass="column panel-100" rendered="#{!DialogManager.OKButtonVisible}">
+               <a:panel id="container-content" styleClass="column panel-100" rendered="#{!(DialogManager.OKButtonVisible && !(DialogManager.currentDialog.name eq 'documentListDialog' && DocumentListDialog.quickSearch) || (DialogManager.currentDialog.name eq 'manageGroups'  && GroupsDialog.group ne null))}">
                   <jsp:include page="<%=Application.getDialogManager().getPage() %>" />
                </a:panel>
 
             </f:subview>
 
-            <a:panel id="dialog-buttons-panel" styleClass="column panel-10 container-buttons" rendered="#{DialogManager.OKButtonVisible}">
-                  <r:dialogButtons id="dialog-buttons" styleClass="wizardButton" />
-               </a:panel>
+            <a:panel id="dialog-buttons-panel" styleClass="column panel-10 container-buttons" rendered="#{DialogManager.OKButtonVisible && !(DialogManager.currentDialog.name eq 'documentListDialog' && DocumentListDialog.quickSearch) || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
+               <r:dialogButtons id="dialog-buttons" styleClass="wizardButton" />
+            </a:panel>
 
       <f:verbatim><div class="clear"></div></f:verbatim>
       </a:panel>

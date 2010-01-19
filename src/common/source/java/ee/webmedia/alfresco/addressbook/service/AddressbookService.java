@@ -13,6 +13,8 @@ public interface AddressbookService {
 
     String BEAN_NAME = "AddressbookService";
 
+    String ADDRESSBOOK_GROUP = "ADDRESSBOOK";
+
     /**
      * If current user has necessary permissions to manage addressbook (is an admin or belongs to ADDRESSBOOK group)
      */
@@ -22,6 +24,12 @@ public interface AddressbookService {
      * @return list of nodes of type ab:organization
      */
     List<Node> listOrganization();
+    
+    /**
+     * 
+     * @return list of nodes of type ab:contactGroups
+     */
+    List<Node> listContactGroups();
 
     /**
      * updates a node
@@ -57,6 +65,20 @@ public interface AddressbookService {
      * @return the nodeRef of the newly created node
      */
     NodeRef addOrUpdateNode(Node node, NodeRef parent);
+    
+    /**
+     * Add a member to the group by creating an association from groupNodeRef to memberNodeRef.
+     * @param groupNodeRef
+     * @param memberNodeRef
+     */
+    void addToGroup(NodeRef groupNodeRef, NodeRef memberNodeRef);
+    
+    /**
+     * Remove a member from the group by deleting the association from groupNodeRef to memberNodeRef.
+     * @param groupNodeRef
+     * @param memberNodeRef
+     */
+    void deleteFromGroup(NodeRef groupNodeRef, NodeRef memberNodeRef);
 
     /**
      * returns a node from the repository
@@ -89,5 +111,28 @@ public interface AddressbookService {
      * @return org node ref
      */
     NodeRef getOrgOfPerson(NodeRef ref);
+
+    /**
+     * Set ab:organization property dvkCapable=true if organization is capable to receive documents using DVK("DokumendiVahetusKeskus")
+     * @return number of organizations in the addressbook that are capable to receive documents using DVK
+     */
+    int updateOrganizationsDvkCapability();
+
+    Node getRoot();
+
+    /**
+     * Returns a list of nodes of a given type that nodeRef if associated with.
+     * @param type
+     * @param nodeRef
+     * @return
+     */
+    List<Node> getContactsByType(QName type, NodeRef nodeRef);
+    
+    /**
+     * Returns a list of all nodeRef's associations.
+     * @param nodeRef
+     * @return
+     */
+    List<Node> getContacts(NodeRef nodeRef);
 
 }

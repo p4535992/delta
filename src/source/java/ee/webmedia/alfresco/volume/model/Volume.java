@@ -5,6 +5,7 @@ import java.util.Date;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
@@ -111,7 +112,7 @@ public class Volume implements Serializable, Comparable<Volume> {
 
     @Override
     public int compareTo(Volume other) {
-        if (getVolumeMark() == other.getVolumeMark()) {
+        if (StringUtils.equals(getVolumeMark(), other.getVolumeMark())) {
             int cmpMark;
             if ((cmpMark = getTitle().compareTo(other.getTitle())) == 0) {
                 return 0;

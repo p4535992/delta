@@ -86,7 +86,15 @@ public class DocumentTypeServiceImpl implements DocumentTypeService {
 
     @Override
     public DocumentType getDocumentType(String docTypeId) {
-        return getDocumentType(QName.resolveToQName(namespaceService, docTypeId));
+        final QName qName = QName.resolveToQName(namespaceService, docTypeId);
+        if(qName==null) {
+            throw new RuntimeException("docTypeId '"+docTypeId+"' was not resolved to QName");
+        }
+        final DocumentType documentType = getDocumentType(qName);
+        if(documentType==null) {
+            throw new RuntimeException("docTypeId '"+docTypeId+"' was not resolved to QName");
+        }
+        return documentType;
     }
 
     // START: getters / setters

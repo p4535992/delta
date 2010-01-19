@@ -35,9 +35,8 @@
    <%-- Groups List --%>
    <a:panel id="groups-panel" label="#{msg.groups}" rendered="#{not empty DialogManager.bean.groups}">
 
-      <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="details" pageSize="12"
-            styleClass="recordSet" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="odd" width="100%"
-            value="#{DialogManager.bean.groups}" var="r" initialSortColumn="name" initialSortDescending="true">
+      <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="details" pageSize="12" rowStyleClass="recordSetRow"
+         altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="name" initialSortDescending="true">
          
          <%-- Primary column for details view mode --%>
          <a:column primary="true" style="padding:2px;text-align:left">
@@ -60,10 +59,10 @@
                <h:outputText value="#{msg.actions}"/>
             </f:facet>
             <r:actions id="inline-group-actions" value="group_inline_actions_no_subgroup" context="#{r}" showLink="false" styleClass="inlineAction"
-               rendered="#{r.group ne UserService.documentManagersGroup and r.group ne UserService.alfrescoAdministratorsGroup}" />
+               rendered="#{r.group ne UserService.documentManagersGroup and r.group ne UserService.administratorsGroup}" />
                
             <r:actions id="add-user-group" value="base_group_inline_actions" context="#{r}" showLink="false" styleClass="inlineAction"
-               rendered="#{r.group eq UserService.documentManagersGroup or r.group eq UserService.alfrescoAdministratorsGroup}" />
+               rendered="#{r.group eq UserService.documentManagersGroup or r.group eq UserService.administratorsGroup}" />
                
          </a:column>
          
@@ -74,9 +73,8 @@
    <%-- Users in Group list --%>
    <a:panel id="users-panel" label="#{msg.users}" rendered="#{not empty DialogManager.bean.users}">
    
-      <a:richList id="users-list" binding="#{DialogManager.bean.usersRichList}" viewMode="details" pageSize="12"
-            styleClass="recordSet" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
-            value="#{DialogManager.bean.users}" var="r" initialSortColumn="name" initialSortDescending="true">
+      <a:richList id="users-list" binding="#{DialogManager.bean.usersRichList}" viewMode="details" pageSize="12" rowStyleClass="recordSetRow"
+         altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="r" initialSortColumn="name" initialSortDescending="true">
          
          <%-- Primary column for details view mode --%>
          <a:column primary="true" style="padding:2px;text-align:left;">

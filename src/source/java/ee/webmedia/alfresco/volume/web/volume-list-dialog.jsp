@@ -7,12 +7,11 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="volume-panel" border="white" bgcolor="white" styleClass="panel-100" label="#{VolumeListDialog.parent.seriesIdentifier} #{VolumeListDialog.parent.title}" progressive="true"
-   facetsId="volume-panel-facets">
+<a:panel id="volume-panel" border="white" bgcolor="white" styleClass="panel-100" label="#{VolumeListDialog.parent.seriesIdentifier} #{VolumeListDialog.parent.title}" progressive="true">
 
    <%-- Main List --%>
-   <a:richList id="volumesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet" headerStyleClass="recordSetHeader"
-      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{VolumeListDialog.entries}" var="r">
+   <a:richList id="volumesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+      width="100%" value="#{VolumeListDialog.entries}" var="r">
 
       <%-- volumeMark --%>
       <a:column id="col1" primary="true">
@@ -27,8 +26,12 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.volume_title}" value="title" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col2-link" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{msg.document_list_info}"
-            showLink="false" actionListener="#{DocumentListDialog.showAll}" >
+         <a:actionLink id="col2-link2documents" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{msg.document_list_info}"
+            showLink="false" actionListener="#{DocumentListDialog.showAll}" rendered="#{!r.containsCases}" >
+            <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
+         <a:actionLink id="col2-link2cases" value="#{r.title}" action="dialog:caseListDialog" tooltip="#{msg.case_list_info}"
+            showLink="false" actionListener="#{CaseListDialog.showAll}" rendered="#{r.containsCases}" >
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
       </a:column>
@@ -76,7 +79,6 @@
          <a:actionLink id="col7-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:volumeDetailsDialog" showLink="false"
             actionListener="#{VolumeDetailsDialog.showDetails}" tooltip="#{msg.volume_details_info}">
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
-            <f:param name="seriesNodeRef" value="#{VolumeListDialog.parent.node.nodeRef}" />
          </a:actionLink>
       </a:column>
 

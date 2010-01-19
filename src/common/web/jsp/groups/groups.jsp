@@ -36,8 +36,7 @@
    <a:panel id="groups-panel" label="#{msg.groups}">
 
       <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="#{DialogManager.bean.viewMode}" pageSize="12"
-            styleClass="recordSet" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="odd" width="100%"
-            value="#{DialogManager.bean.groups}" var="r" initialSortColumn="name" initialSortDescending="true">
+            rowStyleClass="recordSetRow" altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="name" initialSortDescending="true">
          
          <%-- Primary column for icons view mode --%>
          <a:column primary="true" style="padding:2px;text-align:left;vertical-align:top" rendered="#{DialogManager.bean.viewMode == 'icons'}">
@@ -82,8 +81,8 @@
    <a:panel id="users-panel" label="#{msg.users}">
    
       <a:richList id="users-list" binding="#{DialogManager.bean.usersRichList}" viewMode="#{DialogManager.bean.viewMode}" pageSize="12"
-            styleClass="recordSet" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
-            value="#{DialogManager.bean.users}" var="r" initialSortColumn="name" initialSortDescending="true">
+            rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="r" initialSortColumn="name"
+            initialSortDescending="true">
          
          <%-- Primary column for icons view mode --%>
          <a:column primary="true" style="padding:2px;text-align:left;vertical-align:top;font-weight: bold;" rendered="#{DialogManager.bean.viewMode == 'icons'}">

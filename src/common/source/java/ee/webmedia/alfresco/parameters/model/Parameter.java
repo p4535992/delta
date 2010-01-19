@@ -2,9 +2,8 @@ package ee.webmedia.alfresco.parameters.model;
 
 import java.io.Serializable;
 
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
-
-import ee.webmedia.alfresco.utils.ValueConverter;
 
 /**
  * @author Ats Uiboupin
@@ -29,11 +28,11 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
 
     public static Parameter<? extends Serializable> newInstance(String paramName, Serializable property, QName nodeType) {
         if (nodeType.equals(ParametersModel.Types.PARAMETER_STRING)) {
-            return newInstance(paramName, ValueConverter.convert(property, String.class));
+            return newInstance(paramName, DefaultTypeConverter.INSTANCE.convert(String.class, property));
         } else if (nodeType.equals(ParametersModel.Types.PARAMETER_INT)) {
-            return newInstance(paramName, ValueConverter.convert(property, Integer.class));
+            return newInstance(paramName, DefaultTypeConverter.INSTANCE.convert(Integer.class, property));
         } else if (nodeType.equals(ParametersModel.Types.PARAMETER_DOUBLE)) {
-            return newInstance(paramName, ValueConverter.convert(property, Double.class));
+            return newInstance(paramName, DefaultTypeConverter.INSTANCE.convert(Double.class, property));
         } else {
             throw new IllegalArgumentException("Unimplemented nodeType: " + nodeType.toString());
         }

@@ -22,42 +22,48 @@
     if (dialog != null && dialog.getFileName() != null) {
         fileUploaded = true;
     }
-    
-    if(fileUploaded == true && ! FilenameUtils.getExtension(dialog.getFileName()).equalsIgnoreCase("dot")) {
-        fileUploaded = false;
-        wrongFormat = true;
+
+    if (fileUploaded == true) {
+        String name = dialog.getFileName();
+        if (!dialog.isEmailTemplate() && !FilenameUtils.getExtension(name).equalsIgnoreCase("dot") ||
+             dialog.isEmailTemplate() && !FilenameUtils.getExtension(name).equalsIgnoreCase("htm") && !FilenameUtils.getExtension(name).equalsIgnoreCase("html")) {
+            fileUploaded = false;
+            wrongFormat = true;
+        }
     }
-    
-    if(fileUploaded && dialog.isFirstLoad()) {
+
+    if (fileUploaded && dialog.isFirstLoad()) {
         dialog.updateNodeFileName(dialog.getFileName());
         dialog.setFirstLoad(false);
     }
-    
 %>
 <f:verbatim>
 <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/validation.js"> </script>
 
 <%
     if (wrongFormat) {
-         PanelGenerator.generatePanelStart(out, request.getContextPath(), "message", "#ffffcc");
-         out.write("<img alt='' align='absmiddle' src='");
-         out.write(request.getContextPath());
-         out.write("/images/icons/info_icon.gif' />&nbsp;&nbsp;");
-         out.write(Application.getBundle(context).getString("template_wrong_file_format"));
-         PanelGenerator.generatePanelEnd(out, request.getContextPath(), "yellowInner");
-         out.write("<div style='padding:2px;'></div>");
-     }
+            PanelGenerator.generatePanelStart(out, request.getContextPath(), "message", "#ffffcc");
+            out.write("<img alt='' align='absmiddle' src='");
+            out.write(request.getContextPath());
+            out.write("/images/icons/info_icon.gif' />&nbsp;&nbsp;");
+            if (dialog.isEmailTemplate()) {
+                out.write(Application.getBundle(context).getString("template_wrong_file_format_email"));
+            } else {
+                out.write(Application.getBundle(context).getString("template_wrong_file_format_doc"));
+            }
+            PanelGenerator.generatePanelEnd(out, request.getContextPath(), "yellowInner");
+            out.write("<div style='padding:2px;'></div>");
+        }
 
-    if(fileUploaded) {
-        PanelGenerator.generatePanelStart(out, request.getContextPath(), "message", "#ffffcc");
-        out.write("<img alt='' align='absmiddle' src='");
-        out.write(request.getContextPath());
-        out.write("/images/icons/info_icon.gif' />&nbsp;&nbsp;");
-        out.write(dialog.getFileUploadSuccessMsg());
-        PanelGenerator.generatePanelEnd(out, request.getContextPath(), "yellowInner");
-        out.write("<div style='padding:2px;'></div>");
-    }
-    
+        if (fileUploaded) {
+            PanelGenerator.generatePanelStart(out, request.getContextPath(), "message", "#ffffcc");
+            out.write("<img alt='' align='absmiddle' src='");
+            out.write(request.getContextPath());
+            out.write("/images/icons/info_icon.gif' />&nbsp;&nbsp;");
+            out.write(dialog.getFileUploadSuccessMsg());
+            PanelGenerator.generatePanelEnd(out, request.getContextPath(), "yellowInner");
+            out.write("<div style='padding:2px;'></div>");
+        }
 %>
 
 </f:verbatim>
@@ -85,7 +91,7 @@
       </h:panelGroup>
    
       <h:outputText id="text2" value="#{msg.general_properties}" styleClass="dialogpanel-title" />
-      <r:propertySheetGrid value="#{DialogManager.bean.docTemplateNode}" labelStyleClass="propertiesLabel" externalConfig="true" columns="1" />
+      <r:propertySheetGrid value="#{DialogManager.bean.docTemplateNode}" mode="edit" labelStyleClass="propertiesLabel" externalConfig="true" columns="1" />
    
    </a:panel>
 <%
@@ -93,42 +99,4 @@
 %>
    <f:verbatim>
 
-<script type="text/javascript">
-      var finishButtonPressed = false;
-      window.onload = pageLoaded;
-
-      function pageLoaded()
-      {
-   <%if (fileUploaded) {%>
-         document.getElementById("dialog").onsubmit = validate;
-   <%}%>
-         document.getElementById("dialog:finish-button").onclick = function() {finishButtonPressed = true; clear_dialog();}
-      }
-
-      function checkButtonState()
-      {
-         if (document.getElementById("dialog:dialog-body:file-name").value.length == 0 )
-         {
-            document.getElementById("dialog:finish-button").disabled = true;
-         }
-         else
-         {
-            document.getElementById("dialog:finish-button").disabled = false;
-         }
-      }
-
-      function validate()
-      {
-         if (finishButtonPressed)
-         {
-            finishButtonPressed = false;
-            return validateName(document.getElementById("dialog:dialog-body:file-name"),
-                                unescape('</f:verbatim><a:outputText id="text11" value="#{msg.validation_invalid_character}" encodeForJavaScript="true" /><f:verbatim>'), true);
-         }
-         else
-         {
-            return true;
-         }
-      }
-   </script>
 </f:verbatim>

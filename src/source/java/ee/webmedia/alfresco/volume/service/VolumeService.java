@@ -23,6 +23,8 @@ public interface VolumeService {
 
     Volume getVolumeByNoderef(String volumeNodeRef);
 
+    Volume getVolumeByNodeRef(NodeRef volumeRef);
+    
     Node getVolumeNodeByRef(NodeRef volumeNodeRef);
 
     /**
@@ -31,8 +33,12 @@ public interface VolumeService {
      */
     Volume createVolume(NodeRef seriesNodeRef);
 
+    /**
+     * Close given volume and all cases under given volume.
+     * @param volume
+     */
     void closeVolume(Volume volume);
 
-    void delete(NodeRef nodeRef);
+    boolean isClosed(Node volumeNode);
 
 }

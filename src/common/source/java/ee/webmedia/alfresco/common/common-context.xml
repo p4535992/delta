@@ -99,11 +99,11 @@
       <property name="commonVersionLocation" value="classpath:ee/webmedia/alfresco/common/common-version.properties" />
       <property name="projectVersionLocation" value="classpath:ee/webmedia/alfresco/common/project-version.properties" />
       <property name="projectName" value="${project.name}" />
+      <property name="test" value="${project.test}" />
    </bean>
 
    <bean id="generalService" class="ee.webmedia.alfresco.common.service.GeneralServiceImpl">
       <property name="defaultStore" value="${spaces.store}" />
-      <property name="personService" ref="PersonService" />
       <property name="nodeService" ref="NodeService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="searchService" ref="SearchService" />

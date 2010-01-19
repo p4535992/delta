@@ -155,6 +155,12 @@ public class GroupsDialog extends BaseDialogBean
    }
    
    @Override
+    public String cancel() {
+        setCurrentGroup(null, Application.getMessage(FacesContext.getCurrentInstance(), MSG_ROOT_GROUPS));
+        return "dialog:close:dialog:manageGroups";
+    }
+   
+   @Override
    public void restored()
    {
       Object groupToRemove = FacesContext.getCurrentInstance().getExternalContext().
@@ -541,7 +547,8 @@ public class GroupsDialog extends BaseDialogBean
    protected void updateUILocation(String group)
    {
       String groupName = this.getAuthorityService().getShortName(group);
-      this.location.add(new GroupBreadcrumbHandler(group, groupName));
+      // NOTE: "fix" to stay on the same location.
+      //this.location.add(new GroupBreadcrumbHandler(group, groupName));
       this.setCurrentGroup(group, groupName);
    }
    

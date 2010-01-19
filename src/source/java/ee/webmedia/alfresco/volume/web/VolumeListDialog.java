@@ -3,25 +3,23 @@ package ee.webmedia.alfresco.volume.web;
 import java.util.Collections;
 import java.util.List;
 
-import javax.faces.component.UIComponent;
-import javax.faces.component.UISelectItem;
-import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdown;
-import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdownGenerator;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
+/**
+ * Form backing bean for Volumes list
+ * 
+ * @author Ats Uiboupin
+ */
 public class VolumeListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     private transient SeriesService seriesService;
@@ -52,6 +50,11 @@ public class VolumeListDialog extends BaseDialogBean {
 
     public Series getParent() {
         return parent;
+    }
+
+    @Override
+    public Object getActionsContext() {
+        return parent.getNode();
     }
 
     // END: jsf actions/accessors

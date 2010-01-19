@@ -11,6 +11,8 @@ import org.alfresco.config.ConfigElement;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.PropertySheetConfigElement;
 
+import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
+
 public class AdminPropertySheetConfigElement extends WMPropertySheetConfigElement {
     private static final long serialVersionUID = 1L;
 
@@ -19,7 +21,7 @@ public class AdminPropertySheetConfigElement extends WMPropertySheetConfigElemen
 
     @Override
     protected void addItem(ItemConfig itemConfig) {
-        if (!(itemConfig instanceof WMPropertyConfig)) {
+        if (!(itemConfig instanceof CustomAttributes)) {
             super.addItem(itemConfig);
             if (itemConfig.isShownInViewMode()) {
                 adminViewableItems.put(itemConfig.getName(), itemConfig);
@@ -37,54 +39,51 @@ public class AdminPropertySheetConfigElement extends WMPropertySheetConfigElemen
             }
             return;
         }
-        WMPropertyConfig propertyConfig = (WMPropertyConfig) itemConfig;
-        boolean isViewAndEditByAdmin = Boolean.parseBoolean(propertyConfig.getCustomAttributes().get("view-and-edit-by-admin"));
-        boolean isEditByAdmin = Boolean.parseBoolean(propertyConfig.getCustomAttributes().get("edit-by-admin"));
+        CustomAttributes customItemConfig = (CustomAttributes) itemConfig;
+        boolean isViewAndEditByAdmin = Boolean.parseBoolean(customItemConfig.getCustomAttributes().get("view-and-edit-by-admin"));
+        boolean isEditByAdmin = Boolean.parseBoolean(customItemConfig.getCustomAttributes().get("edit-by-admin"));
 
-        items.put(propertyConfig.getName(), propertyConfig);
+        items.put(itemConfig.getName(), itemConfig);
 
-        if (propertyConfig.isShownInViewMode()) {
+        if (itemConfig.isShownInViewMode()) {
             // add the item to the view list if it is editable
             if (!isViewAndEditByAdmin || isEditByAdmin) {
-                viewableItems.put(propertyConfig.getName(), propertyConfig);
+                viewableItems.put(itemConfig.getName(), itemConfig);
             } else {
                 // if the item was added previously as admin viewable it should be removed
-                if (viewableItems.containsKey(propertyConfig.getName())) {
-                    viewableItems.remove(propertyConfig.getName());
+                if (viewableItems.containsKey(itemConfig.getName())) {
+                    viewableItems.remove(itemConfig.getName());
                 }
             }
-            adminViewableItems.put(propertyConfig.getName(), propertyConfig);
+            adminViewableItems.put(itemConfig.getName(), itemConfig);
         } else {
             // if the item was added previously as viewable it should be removed
-            if (viewableItems.containsKey(propertyConfig.getName())) {
-                viewableItems.remove(propertyConfig.getName());
-                adminViewableItems.remove(propertyConfig.getName());
+            if (viewableItems.containsKey(itemConfig.getName())) {
+                viewableItems.remove(itemConfig.getName());
+                adminViewableItems.remove(itemConfig.getName());
             }
         }
 
-        if (propertyConfig.isShownInEditMode()) {
+        if (itemConfig.isShownInEditMode()) {
             // add the item to the edit list if it is editable
             if (isEditByAdmin) {
                 // add to editableItems as read-only
-                WMPropertyConfig readOnlyProperty = new WMPropertyConfig(propertyConfig.getName(), propertyConfig.getDisplayLabel(), propertyConfig
-                        .getDisplayLabelId(), true, propertyConfig.getConverter(), Boolean.toString(propertyConfig.isShownInViewMode()), Boolean
-                        .toString(propertyConfig.isShownInEditMode()), propertyConfig.getComponentGenerator(), Boolean.toString(propertyConfig
-                        .getIgnoreIfMissing()), propertyConfig.getCustomAttributes());
-                editableItems.put(propertyConfig.getName(), readOnlyProperty);
+                ItemConfig readOnlyProperty = ((ReadOnlyCopiableItemConfig) itemConfig).copyAsReadOnly();
+                editableItems.put(itemConfig.getName(), readOnlyProperty);
             } else if (!isViewAndEditByAdmin) {
-                editableItems.put(propertyConfig.getName(), propertyConfig);
+                editableItems.put(itemConfig.getName(), itemConfig);
             } else {
                 // if the item was added previously as admin editable it should be removed
-                if (editableItems.containsKey(propertyConfig.getName())) {
-                    editableItems.remove(propertyConfig.getName());
+                if (editableItems.containsKey(itemConfig.getName())) {
+                    editableItems.remove(itemConfig.getName());
                 }
             }
-            adminEditableItems.put(propertyConfig.getName(), propertyConfig);
+            adminEditableItems.put(itemConfig.getName(), itemConfig);
         } else {
             // if the item was added previously as editable it should be removed
-            if (editableItems.containsKey(propertyConfig.getName())) {
-                editableItems.remove(propertyConfig.getName());
-                adminEditableItems.remove(propertyConfig.getName());
+            if (editableItems.containsKey(itemConfig.getName())) {
+                editableItems.remove(itemConfig.getName());
+                adminEditableItems.remove(itemConfig.getName());
             }
         }
     }

@@ -39,8 +39,7 @@
       <component-type>javax.faces.component.UICommand</component-type>
       <component-class>javax.faces.component.UICommand</component-class>
    </component>
-
-
+   
    <validator>
       <description>MandatoryIfValidator can be used to set UIInput required if some other UIInput is filled(i.e. checkbox checked, text input filled, selection
          made from select options(see SELECT_VALUES_INDICATING_MANDATORY constant that specifies values that indicate significance of other input)</description>
@@ -99,6 +98,16 @@
    </managed-bean>
 
    <managed-bean>
+      <managed-bean-name>ParameterTextAreaGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.parameter.ParameterTextAreaGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+         <property-name>parametersService</property-name>
+         <value>#{ParametersService}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
       <managed-bean-name>MultiValueEditorGenerator</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditorGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
@@ -107,6 +116,12 @@
    <managed-bean>
       <managed-bean-name>SearchGenerator</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.search.SearchGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>SpaceLinkGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.generator.SpaceLinkGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
@@ -121,6 +136,12 @@
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.generator.UnescapedOutputTextGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>InlinePropertyGroupGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.InlinePropertyGroupGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
 
    <render-kit>
       <renderer>
@@ -128,14 +149,13 @@
          <renderer-type>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditorRenderer</renderer-type>
          <renderer-class>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditorRenderer</renderer-class>
       </renderer>
-   </render-kit>
-
-   <render-kit>
+   
       <renderer>
          <component-family>ee.webmedia.alfresco.common.propertysheet.search.Search</component-family>
          <renderer-type>ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer</renderer-type>
          <renderer-class>ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer</renderer-class>
       </renderer>
+      
    </render-kit>
 
 </faces-config>

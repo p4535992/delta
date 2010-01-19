@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.dvk.service;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
@@ -14,6 +15,11 @@ import ee.webmedia.xtee.client.service.DhlXTeeService.ContentToSend;
  */
 public interface DvkService {
     String BEAN_NAME = "DvkService";
+
+    /**
+     * @return a map with regNum's and orgName's of organizations that are capable of receiving documents using DVK
+     */
+    Map<String /*regNum*/, String /*orgName*/> getSendingOptions();
 
     void updateOrganizationList();
 

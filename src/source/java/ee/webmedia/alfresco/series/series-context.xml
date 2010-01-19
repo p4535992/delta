@@ -30,6 +30,7 @@
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
+      <!--  XXX: property:volumeService - retrieved from applicationContext to avoid circular dependency between VolumeService and SeriesService      -->
    </bean>
 
    <bean id="SeriesService" class="org.springframework.aop.framework.ProxyFactoryBean">

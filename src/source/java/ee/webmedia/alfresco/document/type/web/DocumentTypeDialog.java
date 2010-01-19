@@ -36,7 +36,8 @@ public class DocumentTypeDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         getDocumentTypeService().updateDocumentTypes(documentTypes);
         documentTypes = null;
-        return outcome;
+        // We need to stay on the same dialog
+        return "dialog:close:dialog:documentTypeDialog";
     }
 
     @Override

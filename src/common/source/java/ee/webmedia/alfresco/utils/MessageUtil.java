@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.utils;
 
 import java.text.MessageFormat;
 
+import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.web.app.Application;
@@ -37,7 +38,28 @@ public class MessageUtil {
      * @param messageValuesForHolders
      */
     public static void addErrorMessage(FacesContext context, String messageId, Object... messageValuesForHolders) {
-        final String msg = MessageUtil.getMessage(context, "document_validationMsg_mandatory_functionSeriesVolume");
+        final String msg = getMessage(context, messageId, messageValuesForHolders);
         Utils.addErrorMessage(msg);
     }
+    
+    /**
+     * TODO: Alar: testi seda ja kasuta DvkBeanist olemasoleva lahenduse asemel
+     * @param context
+     * @param messageId
+     * @param severity
+     * @param messageValuesForHolders
+     */
+    public static void addStatusMessage(FacesContext context, String messageId, FacesMessage.Severity severity, Object... messageValuesForHolders) {
+        if (severity == FacesMessage.SEVERITY_ERROR) {
+            addErrorMessage(context, messageId, messageValuesForHolders);
+            return;
+        }
+        final String msg = getMessage(context, messageId, messageValuesForHolders);
+        context.addMessage(null, new FacesMessage(severity, msg, msg));
+    }
+
+    public static void addInfoMessage(FacesContext currentInstance, String string, Object... messageValuesForHolders) {
+        addStatusMessage(currentInstance, string, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
+    }
+
 }

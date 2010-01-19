@@ -12,6 +12,7 @@ import javax.faces.el.MethodBinding;
 import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.FacesEvent;
+import javax.faces.event.PhaseId;
 
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -24,7 +25,9 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * Values for this component are given using <code>selectionItems</code> attribute.<br>
  * The order how one component depends on another is determined using <code>order</code>(That must be integer).<br>
  * Only component that has the value of <code>order</code> larger by 1 and the same <code>group</code> will be populated with values.<br>
- * Component with larger <code>order</code> values will be disabled and made empty, components with smaller <code>order</code> will not be modified.
+ * Component with larger <code>order</code> values will be disabled and made empty, components with smaller <code>order</code> will not be modified.<br>
+ * <br>
+ * <code>afterSelect</code> attribute can be used to call method after selection has been done.
  * 
  * @author Ats Uiboupin
  */
@@ -32,7 +35,10 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(RelatedDropdown.class);
     public Integer order;
     public String group;
+    /** String for method binding to be excecuted to retrieve values for dropDown */
     public String selectionItems;
+    /** String for method binding to be excecuted after selectionItems method binding is excecuted */
+    public String afterSelect;
     public static String CHANGE_MARKER = "CHANGE_MARKER";
 
     public RelatedDropdown() {
@@ -51,6 +57,7 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
             if (StringUtils.isBlank(submittedValue)) {
                 log.debug("Submitted value is empty: '" + submittedValue + "'");
             }
+            queueEvent(new RelatedSelectEvent(this, group, order, submittedValue, true));
             queueEventToRelatedComponents(submittedValue, group, order);
         }
     }
@@ -74,6 +81,10 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
         FacesContext context = FacesContext.getCurrentInstance();
         if (event instanceof RelatedSelectEvent) {
             RelatedSelectEvent rEvent = (RelatedSelectEvent) event;
+            if (rEvent.doAfterSelect && StringUtils.isNotBlank(afterSelect)) {
+                doAfterSelect(context, rEvent.submittedValue);
+                return;
+            }
             final boolean groupsEqual = StringUtils.equals(rEvent.group, group);
             if (groupsEqual) {
                 if (rEvent.order + 1 == order) {
@@ -91,7 +102,7 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
     void clearValues() {
         @SuppressWarnings("unchecked")
         List<UIComponent> selectOptions = this.getChildren();
-        selectOptions.removeAll(selectOptions);
+        selectOptions.clear();
         this.setSubmittedValue("");
         this.setDisabled(true);
         UISelectItem selectItem = (UISelectItem) FacesContext.getCurrentInstance().getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
@@ -105,11 +116,12 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
 
     @Override
     public Object saveState(FacesContext context) {
-        Object[] state = new Object[4];
+        Object[] state = new Object[5];
         state[0] = super.saveState(context);
         state[1] = order;
         state[2] = group;
         state[3] = selectionItems;
+        state[4] = afterSelect;
         return state;
     }
 
@@ -120,12 +132,12 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
         order = (Integer) state[1];
         group = (String) state[2];
         selectionItems = (String) state[3];
-
+        afterSelect = (String) state[4];
     }
 
     private void addSelectionItems(FacesContext context, Object submittedValue) {
-        this.setDisabled(false);
         if (submittedValue instanceof String) {
+            this.setDisabled(false);
             MethodBinding mb = context.getApplication().createMethodBinding(selectionItems,
                     new Class[] { FacesContext.class, HtmlSelectOneMenu.class, Object.class });
             try {
@@ -134,6 +146,22 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
                 throw new RuntimeException("Failed to get values for selection from '" + selectionItems + "'", e);
             }
         } else {
+            // this might be ok for some cases, feel free to change it if you need to
+            throw new RuntimeException("submittedValue is not string: '" + submittedValue + "'");
+        }
+    }
+
+    private void doAfterSelect(FacesContext context, Object submittedValue) {
+        if (submittedValue instanceof String) {
+            MethodBinding mb = context.getApplication().createMethodBinding(afterSelect,
+                    new Class[] { Object.class });
+            try {
+                mb.invoke(context, new Object[] { submittedValue });
+            } catch (ClassCastException e) {
+                throw new RuntimeException("Failed to call afterSelect method binding '" + afterSelect + "'", e);
+            }
+        } else {
+            // this might be ok for some cases, feel free to change it if you need to
             throw new RuntimeException("submittedValue is not string: '" + submittedValue + "'");
         }
     }
@@ -145,17 +173,26 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
         public final int order;
         public final String group;
         public final Object submittedValue;
+        public final boolean doAfterSelect;
+
+        public RelatedSelectEvent(UIComponent uiComponent, String group, int order, Object submittedValue) {
+            this(uiComponent, group, order, submittedValue, false);
+        }
 
         /**
          * @param uiComponent
          * @param group - only components in the same group should process this event
          * @param order - determines the component, that has to process this event
          */
-        public RelatedSelectEvent(UIComponent uiComponent, String group, int order, Object submittedValue) {
+        public RelatedSelectEvent(UIComponent uiComponent, String group, int order, Object submittedValue, boolean doAfterSelect) {
             super(uiComponent);
             this.group = group;
             this.order = order;
             this.submittedValue = submittedValue;
+            this.doAfterSelect = doAfterSelect;
+            if (doAfterSelect) {
+                this.setPhaseId(PhaseId.INVOKE_APPLICATION);
+            }
         }
 
         @Override
@@ -190,6 +227,10 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
 
     public void setSelectionItems(String selectionItems) {
         this.selectionItems = selectionItems;
+    }
+
+    public void setAfterSelect(String afterSelect) {
+        this.afterSelect = afterSelect;
     }
 
     @Override

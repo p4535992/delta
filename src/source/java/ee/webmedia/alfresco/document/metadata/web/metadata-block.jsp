@@ -11,7 +11,7 @@
    <f:facet name="title">
       <r:permissionEvaluator value="#{DialogManager.bean.meta.document}" allow="WriteProperties">
          <a:actionLink id="metadata-link-edit" showLink="false" image="/images/icons/edit_properties.gif" value="#{msg.modify}" tooltip="#{msg.modify}"
-            actionListener="#{DialogManager.bean.meta.edit}" rendered="#{!DialogManager.bean.meta.inEditMode && DialogManager.bean.meta.editAllowed}" />
+            actionListener="#{DialogManager.bean.meta.edit}" rendered="#{!DialogManager.bean.meta.inEditMode}" />
       </r:permissionEvaluator>
    </f:facet>
 </h:panelGroup>
@@ -23,4 +23,7 @@
 
 <a:booleanEvaluator value="#{!DialogManager.bean.meta.inEditMode}">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
+</a:booleanEvaluator>
+<a:booleanEvaluator value="#{DialogManager.bean.meta.inEditMode}" id="docMeta-InEditMode">
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block-lockRefresh.jsp" />
 </a:booleanEvaluator>

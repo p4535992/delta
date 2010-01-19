@@ -26,7 +26,6 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.user.service.UserService;
 
@@ -87,6 +86,10 @@ public class MenuItem implements Serializable {
         this.subItems = children;
     }
 
+    public UIComponent createComponent(FacesContext context, String id, UserService userService) {
+        return createComponent(context, id, false, userService);
+    }
+
     /**
      * Return ActionLink, based on xml configuration. Returns null, if user doesn't have permissions.
      * 
@@ -94,19 +97,7 @@ public class MenuItem implements Serializable {
      * @param application Faces Application
      * @return
      */
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, DocumentTypeService docTypeService) {
-        return createComponent(context, id, false, userService, docTypeService);
-    }
-
     public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService) {
-        return createComponent(context, id, active, userService, null);
-    }
-
-    public UIComponent createComponent(FacesContext context, String id, UserService userService) {
-        return createComponent(context, id, false, userService, null);
-    }
-
-    public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService, DocumentTypeService docTypeService) {
 
         if (isRestricted() && !hasPermissions(userService)) {
             return null;

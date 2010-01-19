@@ -10,6 +10,8 @@ import org.alfresco.service.cmr.security.AuthenticationService;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
+import ee.webmedia.alfresco.versions.service.VersionsService;
+
 public class WebDAVCustomServlet extends WebDAVServlet {
     private static final long serialVersionUID = 1L;
 
@@ -21,9 +23,10 @@ public class WebDAVCustomServlet extends WebDAVServlet {
 
         ServiceRegistry serviceRegistry = (ServiceRegistry) context.getBean(ServiceRegistry.SERVICE_REGISTRY);
         AuthenticationService authService = (AuthenticationService) context.getBean("authenticationService");
+        VersionsService versionsService = (VersionsService) context.getBean(VersionsService.BEAN_NAME);
 
         // Create the WebDAV helper
-        m_davHelper = new WebDAVCustomHelper(serviceRegistry, authService);
+        m_davHelper = new WebDAVCustomHelper(serviceRegistry, authService, versionsService);
 
         // Create the WebDAV methods table
 

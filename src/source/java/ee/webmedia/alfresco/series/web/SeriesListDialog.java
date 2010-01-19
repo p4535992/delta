@@ -3,25 +3,23 @@ package ee.webmedia.alfresco.series.web;
 import java.util.Collections;
 import java.util.List;
 
-import javax.faces.component.UIComponent;
-import javax.faces.component.UISelectItem;
-import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdown;
-import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdownGenerator;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 
+/**
+ * Form backing bean for Series list
+ * 
+ * @author Ats Uiboupin
+ */
 public class SeriesListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     private transient SeriesService seriesService;
@@ -38,6 +36,11 @@ public class SeriesListDialog extends BaseDialogBean {
     public String cancel() {
         resetFields();
         return super.cancel();
+    }
+
+    @Override
+    public Object getActionsContext() {
+        return function.getNode();
     }
 
     public void showAll(ActionEvent event) {
@@ -60,7 +63,7 @@ public class SeriesListDialog extends BaseDialogBean {
         function = null;
 
     }
-    
+
     // START: getters / setters
     public void setSeriesService(SeriesService seriesService) {
         this.seriesService = seriesService;

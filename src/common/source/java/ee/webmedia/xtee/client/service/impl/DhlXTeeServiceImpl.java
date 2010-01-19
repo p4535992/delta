@@ -57,10 +57,10 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import ee.sk.digidoc.SignedDoc;
-import ee.webmedia.xtee.client.custom.CustomExtractor;
 import ee.webmedia.xtee.client.exception.XTeeServiceConsumptionException;
 import ee.webmedia.xtee.client.service.DhlXTeeService;
 import ee.webmedia.xtee.client.service.XTeeDatabaseService;
+import ee.webmedia.xtee.client.service.extractor.CustomExtractor;
 import ee.webmedia.xtee.model.XTeeAttachment;
 import ee.webmedia.xtee.model.XTeeMessage;
 import ee.webmedia.xtee.model.XmlBeansXTeeMessage;
@@ -84,8 +84,6 @@ import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.Occupation
 import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.OccupationType;
 import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.ReceiveDocumentsRequestType;
 import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.ReceiveDocumentsResponseTypeUnencoded;
-import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.RunSystemCheckRequestType;
-import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.RunSystemCheckResponseType;
 import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.SendDocumentsResponseType;
 import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.SendDocumentsV2RequestType;
 import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.GetSendStatusResponseTypeUnencoded.Item;
@@ -138,6 +136,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
         this.sendDocumentsHelper = this.new SendDocumentsHelper();
     }
 
+    /* removed from some version of dhl
     @Override
     public void runSystemCheck() {
         String queryMethod = getDatabase() + "." + RUN_SYSTEM_CHECK + "." + RUN_SYSTEM_CHECK_VERSION;
@@ -154,6 +153,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             throw new RuntimeException("Failed to excecute xtee query " + queryMethod, e);
         }
     }
+    */
 
     @Override
     public void markDocumentsReceived(Collection<String> receivedDocumentIds) {

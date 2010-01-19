@@ -285,20 +285,20 @@
                                                          <td colspan="2"><h:selectBooleanCheckbox value="#{SearchProperties.modifiedDateChecked}" id="chkModDate" /><span style="vertical-align:20%"><h:outputText value="#{msg.modified_date}" id="modDate" />:</span></td>
                                                       </tr>
                                                       <tr>
-                                                         <td><h:outputText value="#{msg.from}" id="modDateFrom" />:</td><td><a:inputDatePicker value="#{SearchProperties.modifiedDateFrom}" yearCount="#{DatePickerGenerator.yearCount}" startYear="#{DatePickerGenerator.startYear}" id="dateModFrom" initialiseIfNull="true" /></td>
+                                                         <td><h:outputText value="#{msg.from}" id="modDateFrom" />:</td><td><a:inputDatePicker value="#{SearchProperties.modifiedDateFrom}" id="dateModFrom" /></td>
                                                       </tr>
                                                       <tr>
-                                                         <td><h:outputText value="#{msg.to}" id="modDateTo" />:</td><td><a:inputDatePicker value="#{SearchProperties.modifiedDateTo}" yearCount="#{DatePickerGenerator.yearCount}" startYear="#{DatePickerGenerator.startYear}" id="dateModTo" initialiseIfNull="true" /></td>
+                                                         <td><h:outputText value="#{msg.to}" id="modDateTo" />:</td><td><a:inputDatePicker value="#{SearchProperties.modifiedDateTo}" id="dateModTo" /></td>
                                                       </tr>
                                                       
                                                       <tr>
                                                          <td colspan="2"><h:selectBooleanCheckbox value="#{SearchProperties.createdDateChecked}" id="chkCreateDate" /><span style="vertical-align:20%"><h:outputText value="#{msg.created_date}" id="createDate" />:</span></td>
                                                       </tr>
                                                       <tr>
-                                                         <td><h:outputText value="#{msg.from}" id="createDateFrom" />:</td><td><a:inputDatePicker value="#{SearchProperties.createdDateFrom}" yearCount="#{DatePickerGenerator.yearCount}" startYear="#{DatePickerGenerator.startYear}" id="dateCreatedFrom" initialiseIfNull="true" /></td>
+                                                         <td><h:outputText value="#{msg.from}" id="createDateFrom" />:</td><td><a:inputDatePicker value="#{SearchProperties.createdDateFrom}" id="dateCreatedFrom" /></td>
                                                       </tr>
                                                       <tr>
-                                                         <td><h:outputText value="#{msg.to}" id="createDateTo" />:</td><td><a:inputDatePicker value="#{SearchProperties.createdDateTo}" yearCount="#{DatePickerGenerator.yearCount}" startYear="#{DatePickerGenerator.startYear}" id="dateCreatedTo" initialiseIfNull="true" /></td>
+                                                         <td><h:outputText value="#{msg.to}" id="createDateTo" />:</td><td><a:inputDatePicker value="#{SearchProperties.createdDateTo}" id="dateCreatedTo" /></td>
                                                       </tr>
                                                    </table>
                                                    

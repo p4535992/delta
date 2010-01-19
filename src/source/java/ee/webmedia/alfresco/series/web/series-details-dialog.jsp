@@ -7,7 +7,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="metadata-panel" facetsId="dialog:dialog-body:metadata-panel-facets" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
+<a:panel id="metadata-panel" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
    <r:propertySheetGrid id="ser-metatada" value="#{SeriesDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" />
 </a:panel>
 

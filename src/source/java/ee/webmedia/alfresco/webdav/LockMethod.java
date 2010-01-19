@@ -36,8 +36,6 @@ import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.dom4j.io.XMLWriter;
 
-import ee.webmedia.alfresco.versions.model.VersionsModel;
-
 /**
  * Implements the WebDAV LOCK method
  * 
@@ -115,17 +113,8 @@ public class LockMethod extends org.alfresco.repo.webdav.LockMethod
         // Lock the node
         lockService.lock(lockNode, LockType.WRITE_LOCK, getLockTimeout());
         
-        addVersionLockableAspect(lockNode);
-    }
-    
-    private void addVersionLockableAspect(NodeRef lockNode) {
-        if (getDAVHelper().getNodeService().hasAspect(lockNode, VersionsModel.Aspects.VERSION_LOCKABLE) == false) {
-            getDAVHelper().getNodeService().addAspect(lockNode, VersionsModel.Aspects.VERSION_LOCKABLE, null);
-            if (logger.isDebugEnabled()) {
-                logger.debug("VERSION_LOCKABLE aspect added to " + lockNode);
-            }
-        }
-        getDAVHelper().getNodeService().setProperty(lockNode, VersionsModel.Props.VersionLockable.LOCKED, false);
+        ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().addVersionLockableAspect(lockNode);
+        ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().setVersionLockableAspect(lockNode, false);
     }
 
     /**

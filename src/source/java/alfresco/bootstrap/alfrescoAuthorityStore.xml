@@ -23,16 +23,6 @@
                         <cm:authorityName>GROUP_ALFRESCO_ADMINISTRATORS</cm:authorityName>
                     </view:properties>
                 </cm:authorityContainer>
-                <cm:authorityContainer view:childName="cm:GROUP_EMAIL_CONTRIBUTORS">
-                    <view:aspects>
-                        <sys:referenceable />
-                    </view:aspects>
-                    <view:properties>
-                        <cm:name>GROUP_EMAIL_CONTRIBUTORS</cm:name>
-                        <sys:node-uuid>GROUP_EMAIL_CONTRIBUTORS</sys:node-uuid>
-                        <cm:authorityName>GROUP_EMAIL_CONTRIBUTORS</cm:authorityName>
-                    </view:properties>
-                </cm:authorityContainer>
             </sys:children>
         </view:associations>
     </sys:container>
@@ -65,11 +55,6 @@
                                 view:pathref="${system.authorities_container.childname}/cm:GROUP_ALFRESCO_ADMINISTRATORS"
                                 view:childName="cm:GROUP_ALFRESCO_ADMINISTRATORS" />
                         </cm:inZone>
-						<cm:inZone>
-                            <view:reference
-                                view:pathref="${system.authorities_container.childname}/cm:GROUP_EMAIL_CONTRIBUTORS"
-                                view:childName="cm:GROUP_EMAIL_CONTRIBUTORS" />
-                        </cm:inZone>
                     </view:associations>
                 </cm:zone>
                 <cm:zone view:childName="cm:APP.DEFAULT">
@@ -90,11 +75,6 @@
                             <view:reference
                                 view:pathref="${system.authorities_container.childname}/cm:GROUP_ALFRESCO_ADMINISTRATORS"
                                 view:childName="cm:GROUP_ALFRESCO_ADMINISTRATORS" />
-                        </cm:inZone>
-						<cm:inZone>
-                            <view:reference
-                                view:pathref="${system.authorities_container.childname}/cm:GROUP_EMAIL_CONTRIBUTORS"
-                                view:childName="cm:GROUP_EMAIL_CONTRIBUTORS" />
                         </cm:inZone>
                     </view:associations>
                 </cm:zone>

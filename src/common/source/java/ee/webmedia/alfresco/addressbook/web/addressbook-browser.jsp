@@ -29,7 +29,7 @@ function setAddressbookDiv(id){
 
                         <a:actionLink id="add-org-button" value="#{msg.addressbook_add_org}" image="/images/icons/add_user.gif" showLink="false"
                            action="wizard:addressbookAddOrg" />
-                        <a:richList id="_organizations-list" viewMode="details" styleClass="recordSet" width="100%"
+                        <a:richList id="_organizations-list" viewMode="details" width="100%"
                            binding="#{AddressbookDialog.orgRichList}" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow"
                            altRowStyleClass="recordSetRowAlt" value="#{AddressbookDialog.organizations}" var="r" initialSortColumn="name"
                            initialSortDescending="false">
@@ -82,8 +82,7 @@ function setAddressbookDiv(id){
                               <f:param name="org" value="#{AddressbookDialog.currentNode.nodeRef}" />
                            </a:actionLink>
 
-                           <a:richList id="people-list2" viewMode="details" styleClass="recordSet" headerStyleClass="recordSetHeader"
-                              rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
+                           <a:richList id="people-list2" viewMode="details" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
                               value="#{AddressbookDialog.orgPeople}" var="r" initialSortColumn="name" initialSortDescending="false"
                               binding="#{AddressbookDialog.orgPeopleRichList}">
                               <%-- Primary column with name --%>
@@ -128,8 +127,8 @@ function setAddressbookDiv(id){
                         <a:actionLink value="#{msg.addressbook_add_person}" image="/images/icons/add_user.gif" showLink="false"
                            action="wizard:addressbookAddPerson" />
 
-                        <a:richList id="people-list" viewMode="details" styleClass="recordSet" binding="#{AddressbookDialog.peopleRichList}"
-                           headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
+                        <a:richList id="people-list" viewMode="details" binding="#{AddressbookDialog.peopleRichList}"
+                           rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
                            value="#{AddressbookDialog.people}" var="r" initialSortColumn="name" initialSortDescending="false">
 
                            <%-- Primary column with name --%>

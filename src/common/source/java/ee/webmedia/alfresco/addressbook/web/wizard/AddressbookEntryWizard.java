@@ -1,9 +1,5 @@
 package ee.webmedia.alfresco.addressbook.web.wizard;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 

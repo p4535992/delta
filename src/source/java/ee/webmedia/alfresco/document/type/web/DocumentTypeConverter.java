@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.document.type.web;
 
 import javax.faces.context.FacesContext;
 
-import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -15,8 +14,7 @@ public class DocumentTypeConverter extends MultiSelectConverterBase {
 
     @Override
     protected String convertSelectedValueToString(Object value) {
-        QName docTypeQName = DefaultTypeConverter.INSTANCE.convert(QName.class, value);
-        final DocumentType documentType = getDocumentTypeService().getDocumentType(docTypeQName);
+        final DocumentType documentType = getDocumentTypeService().getDocumentType((QName) value);
         if (documentType == null) {
             return value.toString();
         }

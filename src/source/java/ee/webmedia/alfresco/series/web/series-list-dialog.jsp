@@ -7,12 +7,11 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="series-panel" border="white" bgcolor="white" styleClass="panel-100" label="#{SeriesListDialog.function.mark} #{SeriesListDialog.function.title}" progressive="true"
-   facetsId="series-panel-facets">
+<a:panel id="series-panel" border="white" bgcolor="white" styleClass="panel-100" label="#{SeriesListDialog.function.mark} #{SeriesListDialog.function.title}" progressive="true">
 
    <%-- Main List --%>
-   <a:richList id="seriesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet" headerStyleClass="recordSetHeader"
-      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{SeriesListDialog.series}" var="r">
+   <a:richList id="seriesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+      width="100%" value="#{SeriesListDialog.series}" var="r">
 
       <%-- seriesIdentifier --%>
       <a:column id="col1" primary="true">
@@ -46,7 +45,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.series_status}" value="status" styleClass="header" />
          </f:facet>
-         <h:outputText id="col4-text" value="#{r.status}" /><!-- TODO: toimikute taski puhul link toimikute nimekirjale -->
+         <h:outputText id="col4-text" value="#{r.status}" />
       </a:column>
 
       <%-- show details --%>
@@ -54,7 +53,6 @@
          <a:actionLink id="col5-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:seriesDetailsDialog" showLink="false"
             actionListener="#{SeriesDetailsDialog.showDetails}" tooltip="#{msg.series_details_info}">
             <f:param name="seriesNodeRef" value="#{r.node.nodeRef}" />
-            <f:param name="functionNodeRef" value="#{SeriesListDialog.function.nodeRef}" />
          </a:actionLink>
       </a:column>
 

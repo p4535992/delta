@@ -1,24 +1,25 @@
 package ee.webmedia.alfresco.versions.web;
 
-import java.text.MessageFormat;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.versions.model.Version;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
 public class VersionsListDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;
+    private static final String PARAM_SELECT_NODEREF = "nodeRef";
+    private static final String PARAM_SELECT_FILENAME = "fileName";
     private transient VersionsService versionsService;
     private transient GeneralService generalService;
     private List<Version> versions;
@@ -38,12 +39,12 @@ public class VersionsListDialog extends BaseDialogBean {
 
     @Override
     public String getContainerTitle() {
-        return MessageFormat.format(Application.getMessage(FacesContext.getCurrentInstance(), "versions_title"), new Object[] { fileName });
+        return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "versions_title", new Object[] { fileName });
     }
 
     @Override
     public String getCancelButtonLabel() {
-        return Application.getMessage(FacesContext.getCurrentInstance(), "close");
+        return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "close");
     }
 
     /**
@@ -52,8 +53,8 @@ public class VersionsListDialog extends BaseDialogBean {
      * @param event
      */
     public void select(ActionEvent event) {
-        NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "ref"));
-        fileName = ActionUtil.getParam(event, "name");
+        NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_SELECT_NODEREF));
+        fileName = ActionUtil.getParam(event, PARAM_SELECT_FILENAME);
         versions = loadVersions(nodeRef);
     }
 

@@ -11,9 +11,9 @@
 <a:panel id="classificators-panel" styleClass="panel-100" label="#{msg.classificators_values_list}" progressive="true">
 
    <%-- Classificator Values List --%>
-   <a:richList id="classificatorsDetailsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet"
-      headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
-      value="#{DialogManager.bean.classificatorValues}" var="clValue" initialSortColumn="order" binding="#{DialogManager.bean.richList}">
+   <a:richList id="classificatorsDetailsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
+      altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.classificatorValues}" var="clValue" initialSortColumn="order"
+      binding="#{DialogManager.bean.richList}">
 
       <%-- Name column --%>
       <a:column id="col1">

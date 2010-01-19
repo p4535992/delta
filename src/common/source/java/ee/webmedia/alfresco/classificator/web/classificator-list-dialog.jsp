@@ -10,9 +10,8 @@
 <a:panel id="classificators-panel" styleClass="panel-100" label="#{msg.classificators_list}" progressive="true">
 
    <%-- Spaces List --%>
-   <a:richList id="classificatorsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet" headerStyleClass="recordSetHeader"
-      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.classificators}" var="classificator"
-      initialSortColumn="name">
+   <a:richList id="classificatorsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
+      altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.classificators}" var="classificator" initialSortColumn="name">
 
       <%-- Primary column for the name --%>
       <a:column id="col1" primary="true">

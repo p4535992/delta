@@ -4,6 +4,7 @@
 
    <imports>
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
    </imports>
 
@@ -21,9 +22,36 @@
          </mandatory-aspects>
       </type>
 
+      <type name="doccom:drafts">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>doccom:documentContainer</aspect>
+         </mandatory-aspects>
+      </type>
+
    </types>
 
    <aspects>
+
+      <aspect name="doccom:documentContainer">
+         <associations>
+            <child-association name="doccom:document">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="doccom:file" />
+      
+      <aspect name="doccom:searchable" />
 
       <aspect name="doccom:common">
          <properties>
@@ -45,9 +73,6 @@
             <property name="doccom:comment"><!-- Täiendav info -->
                <type>d:text</type>
             </property>
-            <property name="doccom:sendDesc"><!-- Välja saatmise selgitus -->
-               <type>d:text</type>
-            </property>
             <property name="doccom:storageType"><!-- Teabekandja -->
                <type>d:text</type>
                <mandatory enforced="false">true</mandatory>
@@ -60,10 +85,16 @@
          <mandatory-aspects>
             <aspect>doccom:owner</aspect>
             <aspect>doccom:accessRights</aspect>
-            <aspect>doccom:recipient</aspect>
-            <aspect>doccom:additionalRecipient</aspect>
-            <aspect>doccom:signer</aspect>
          </mandatory-aspects>
+      </aspect>
+            
+      <aspect name="doccom:sendDesc">
+         <!-- Välja saatmise selgitus -->
+         <properties>
+            <property name="doccom:sendDescValue">
+               <type>d:text</type>
+            </property>
+         </properties>
       </aspect>
 
       <aspect name="doccom:owner">
@@ -170,7 +201,15 @@
             </property>
          </properties>
       </aspect>
-
+      
+      <aspect name="doccom:legalBasis">
+         <properties>
+            <property name="doccom:legalBasisName">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
    </aspects>
 
 </model>

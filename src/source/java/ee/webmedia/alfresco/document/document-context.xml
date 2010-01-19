@@ -2,6 +2,10 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
+   <import resource="classpath:ee/webmedia/alfresco/document/file/file-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/type/document-type-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/permissions/permissions-context.xml" />
+
    <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
       <property name="models">
          <list>
@@ -39,12 +43,14 @@
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="fileFolderService" ref="FileFolderService" />
       <property name="generalService" ref="GeneralService" />
       <property name="documentTypeService" ref="DocumentTypeService" />
       <property name="userService" ref="UserService" />
       <property name="authenticationService" ref="AuthenticationService" />
-      <property name="draftsPath" value="/app:drafts" />
+      <property name="registerService" ref="RegisterService" />
+      <property name="seriesService" ref="SeriesService" />
+      <property name="volumeService" ref="VolumeService" />
+      <property name="searchService" ref="SearchService" />
    </bean>
 
    <bean id="DocumentService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -64,12 +70,6 @@
    <bean id="propertiesModifierCallback" abstract="true">
       <property name="documentService" ref="DocumentService" />
    </bean>
-
-   <bean id="testCallback" class="ee.webmedia.alfresco.document.propmodifiers.ParameterBasedPropertiesModifierCallback" parent="propertiesModifierCallback">
-      <property name="parametersService" ref="ParametersService" />
-   </bean>
-
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.LoggingPropertiesModifierCallback" depends-on="testCallback" parent="propertiesModifierCallback" />
 
    <bean class="ee.webmedia.alfresco.document.propmodifiers.OwnerPropertiesModifierCallback" parent="propertiesModifierCallback">
       <property name="personService" ref="PersonService" />
@@ -96,7 +96,25 @@
       </property>
    </bean>
 
-   <import resource="classpath:ee/webmedia/alfresco/document/file/file-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/document/type/document-type-context.xml" />
+   <bean id="documentParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="name" value="parametersSpacesBootstrap" />
+      <property name="sinceVersion" value="1.2.1.6" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/bootstrap/document-parameters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
 
 </beans>

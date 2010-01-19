@@ -24,6 +24,8 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.utils.ComponentUtil;
+
 /**
  * Generates text field for a date. UIInput has "date" class for jQuery date picker plug-in.
  * Also adds JavaScript validation.
@@ -65,13 +67,7 @@ public class DatePickerGenerator extends BaseComponentGenerator {
         if (propertySheet.inEditMode() && !Utils.isComponentDisabledOrReadOnly(component)) {
             setupValidDateConstraint(context, propertySheet, property, component);
         }
-
-        Converter converter = context.getApplication().createConverter(DatePickerConverter.CONVERTER_ID);
-        if (propertySheet.inEditMode()) {
-            ((UIInput) component).setConverter(converter);
-        } else {
-            ((UIOutput) component).setConverter(converter);
-        }
+        ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
     }
 
     protected void setupValidDateConstraint(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, UIComponent component) {

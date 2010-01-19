@@ -3,8 +3,11 @@ package ee.webmedia.alfresco.utils;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.service.cmr.dictionary.AspectDefinition;
+import org.alfresco.service.cmr.dictionary.ClassDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -33,15 +36,20 @@ public class RepoUtil {
     }
     
     /**
-     * Create node from nodRef and populate it with properties and aspects
-     * @param nodeRef
-     * @return
+     * Gets a flattened list of all mandatory aspects for a given class
+     * 
+     * @param classDef the class
+     * @param aspects a list to hold the mandatory aspects
      */
-    public static Node fetchNode(NodeRef nodeRef) {
-        final Node node = new Node(nodeRef);
-        node.getAspects();
-        node.getProperties();
-        return node;
+    // Copied from TransientNode#getMandatoryAspects
+    public static void getMandatoryAspects(ClassDefinition classDef, Set<QName> aspects) {
+        for (AspectDefinition aspect : classDef.getDefaultAspects()) {
+            QName aspectName = aspect.getName();
+            if (!aspects.contains(aspectName)) {
+                aspects.add(aspect.getName());
+                getMandatoryAspects(aspect, aspects);
+            }
+        }
     }
 
 }

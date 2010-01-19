@@ -10,14 +10,13 @@
 <a:panel id="document-template-panel" styleClass="panel-100" label="#{msg.templates}" progressive="true">
 
    <%-- Spaces List --%>
-   <a:richList id="registersList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet" headerStyleClass="recordSetHeader"
-      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.templates}" var="r" 
-      initialSortColumn="name">
+   <a:richList id="registersList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+      width="100%" value="#{DialogManager.bean.templates}" var="r" initialSortColumn="name">
       
       <%-- Primary column for the name --%>
       <a:column id="col1" primary="true">
          <f:facet name="header">
-            <a:sortLink id="col1-sort" label="#{msg.template_name_doc}" value="name" mode="case-insensitive" styleClass="header" />
+            <a:sortLink id="col1-sort" label="#{msg.template_name_doc}" value="name" mode="case-insensitive" />
          </f:facet>
          <f:facet name="small-icon">
             <a:actionLink id="col1-act1" value="#{r.name}" tooltip="#{msg.template_download}" image="/images/icons/template.gif" showLink="false" href="#{r.downloadUrl}" />
@@ -36,7 +35,7 @@
       <%-- DocTypeId column --%>
       <a:column id="col3">
          <f:facet name="header">
-            <h:outputText id="col3-txt" value="#{msg.template_document_type}" />
+            <a:sortLink id="col3-sort" label="#{msg.template_document_type}" value="docTypeName" mode="case-insensitive" />
          </f:facet>
          <h:outputText id="docType-name" value="#{r.docTypeName}" />
       </a:column>
@@ -46,9 +45,9 @@
          <f:facet name="header">
             <h:outputText id="col4-txt" value="#{msg.template_delete}" />
          </f:facet>
-         <a:actionLink id="col7-act" value="#{msg.template_delete}" tooltip="#{msg.template_delete}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
+         <a:actionLink id="col7-act" value="#{msg.template_delete}" tooltip="#{msg.template_delete}" actionListener="#{DialogManager.bean.setupTemplateAction}" action="dialog:deleteFile" showLink="false"
             image="/images/icons/delete.gif">
-            <f:param name="id" value="#{r.id}" />
+            <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
       </a:column>
 

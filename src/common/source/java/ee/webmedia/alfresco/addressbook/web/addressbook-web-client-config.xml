@@ -56,7 +56,19 @@
          <show-property name="ab:website" />
       </property-sheet>
    </config>
+   
+   <config evaluator="aspect-name" condition="ab:organizationProperties">
+      <property-sheet>
+         <show-property name="ab:dvkCapable" read-only="true" />
+      </property-sheet>
+   </config>
 
+   <config evaluator="aspect-name" condition="ab:contactGroupProperties">
+      <property-sheet>
+         <show-property name="ab:groupName" />
+      </property-sheet>
+   </config>
+   
    <config>
       <wizards>
 
@@ -132,6 +144,13 @@
                <param name="org">#{AddressbookDialog.currentNode.nodeRef}</param>
             </params>
          </action>
+         
+         <action id="addressbook_contactgroup_add">
+            <label-id>new_group</label-id>
+            <image>/images/icons/create_group.gif</image>
+            <action-listener>#{ContactGroupCreateDialog.createContactGroup}</action-listener>
+            <action>dialog:addressbookCreateContactGroup</action>
+         </action>
 
          <!-- Action menu for Addressbook-->
          <action-group id="addressbook_menu">
@@ -148,6 +167,10 @@
             <action idref="addressbook_edit_person" />
          </action-group>
 
+         <action-group id="addressbook_contactgroup_menu">
+            <action idref="addressbook_contactgroup_add" />
+         </action-group>
+
       </actions>
       <dialogs>
 
@@ -162,6 +185,21 @@
 
          <dialog name="addressbookDeleteEntry" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/summary-dialog.jsp" managed-bean="AddressbookDeleteDialog" icon="/images/icons/users_large.gif"
             title-id="addressbook_delete_entry" show-ok-button="true" />
+
+         <dialog name="addressbookManageContactGroups" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-list-dialog.jsp" managed-bean="ContactGroupListDialog"
+            icon="/images/icons/users_large.gif" title-id="addressbook_contactgroup_title" actions-config-id="addressbook_contactgroup_menu" show-ok-button="false" />
+            
+         <dialog name="addressbookManageContacts" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-contacts-dialog.jsp" managed-bean="ContactGroupContactsDialog"
+            icon="/images/icons/users_large.gif" title-id="addressbook_contactgroup_title" />
+            
+         <dialog name="addressbookCreateContactGroup" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-create-dialog.jsp" managed-bean="ContactGroupCreateDialog"
+            icon="/images/icons/create_group_large.gif" title-id="addressbook_contactgroup_create_title" />
+            
+         <dialog name="addressbookAddContactGroup" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-add-dialog.jsp" managed-bean="ContactGroupAddDialog"
+            icon="/images/icons/add_user_large.gif" title-id="addressbook_contactgroup_add_title" />
+            
+         <dialog name="addressbookDeleteContactGroup" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-delete-dialog.jsp" managed-bean="ContactGroupDeleteDialog"
+            icon="/images/icons/delete_group_large.gif" />
 
       </dialogs>
    </config>

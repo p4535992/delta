@@ -189,8 +189,7 @@
                      
                      <%-- Spaces List --%>
                      <a:richList id="spacesList" binding="#{BrowseBean.spacesRichList}" viewMode="#{BrowseBean.browseViewMode}" pageSize="#{BrowseBean.pageSizeSpaces}"
-                           styleClass="recordSet" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
-                           value="#{BrowseBean.nodes}" var="r">
+                           rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{BrowseBean.nodes}" var="r">
                         
                         <%-- component to display if the list is empty --%>
                         <f:facet name="empty">
@@ -322,8 +321,7 @@
 
             <%-- Content list --%>
             <a:richList id="contentRichList" binding="#{BrowseBean.contentRichList}" viewMode="#{BrowseBean.browseViewMode}"
-               pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow"
-               altRowStyleClass="recordSetRowAlt" width="100%" value="#{BrowseBean.content}" var="r">
+               pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{BrowseBean.content}" var="r">
 
                <%-- component to display if the list is empty --%>
                <f:facet name="empty">

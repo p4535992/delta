@@ -61,10 +61,6 @@
 	padding-top: 8px;
 }
 
-.page-controls {
-	bottom: 2px;
-}
-
 #content input[type=submit] {
 	background-position: 0 3px;
 }
@@ -94,6 +90,40 @@ td .dropdown-menu {
 
 .propertiesLabel img {
 	margin-left: 0;
+}
+
+.propertiesLabel {
+	vertical-align: top;
+}
+
+.propertiesLabel span {
+	top: 4px;
+	position: relative;
+}
+
+tr td {
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+hr {
+	heigth: 10px;
+}
+
+#metadata-panel td td input {
+	width: 300px;
+}
+
+.recipient.cells1 input {
+	width: 300px !important; 
+}
+
+.recipient.cells2 input {
+	width: 146px !important; 
+}
+
+.search {
+	background: url(../images/icons/search_icon.gif) 0 3px no-repeat;
 }
 
 /*
@@ -137,7 +167,7 @@ td .dropdown-menu {
 }
 
 .dropdown-menu a {
-	min-width: 90px;
+	min-width: 140px;
 }
 
 /*
@@ -212,9 +242,16 @@ td .dropdown-menu {
 	height: 1%;	
 }
 
-#header li,
+#menu .dropdown .dropdown {
+	
+}
+
+/*#header li,*/
 #shelf li,
 #content li,
 .icon-link {
 	zoom: 1;
+}
+.extra-actions a {
+    padding: 0 6px 6px 22px;
 }

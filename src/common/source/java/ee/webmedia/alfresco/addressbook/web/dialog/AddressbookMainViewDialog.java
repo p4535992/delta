@@ -134,9 +134,23 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
     public SelectItem[] searchContacts(int filterIndex, String contains) {
-        final String privPerson = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_private_person").toLowerCase();
-        final String organization = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_org").toLowerCase();
+        final String personLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_private_person").toLowerCase();
+        final String organizationLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_org").toLowerCase();
         List<Node> nodes = getAddressbookService().search(contains);
+        return transformNodesToSelectItems(nodes, personLabel, organizationLabel);
+    }
+    
+    /**
+     * Transforms the list of contact nodes (usually returned by the search) to SelectItems in the following form:
+     * OrganizationName (organizationLabel, email) -- if it's an organization
+     * FirstName LastName (privPersonLabel, email) -- if it's a person (can be both orgPerson or privPerson in the model)
+     *  
+     * @param nodes
+     * @param privPersonLabel
+     * @param organizationLabel
+     * @return
+     */
+    public static SelectItem[] transformNodesToSelectItems(List<Node> nodes, String privPersonLabel, String organizationLabel) {
         SelectItem[] results = new SelectItem[nodes.size()];
         int i = 0;
         for (Node node : nodes) {
@@ -146,15 +160,15 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
             if (node.getType().equals(Types.ORGANIZATION)) {
                 label.append((String) props.get(AddressbookModel.Props.ORGANIZATION_NAME.toString()));
                 label.append(" (");
-                label.append(organization);
+                label.append(organizationLabel);
             } else {
                 label.append(UserUtil.getPersonFullName((String) props.get(AddressbookModel.Props.PERSON_FIRST_NAME.toString()), (String) props
                         .get(AddressbookModel.Props.PERSON_LAST_NAME.toString())));
                 label.append(" (");
-                label.append(privPerson);
+                label.append(privPersonLabel);
             }
             String email = (String) props.get(AddressbookModel.Props.EMAIL.toString());
-            if (!StringUtils.isEmpty(email)) {
+            if (StringUtils.isNotEmpty(email)) {
                 label.append(", ");
                 label.append(email);
             }
@@ -169,7 +183,6 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
                 return a.getLabel().compareTo(b.getLabel());
             }
         });
-
         return results;
     }
 

@@ -50,12 +50,14 @@
             actionListener="#{NavigationBean.toggleShelf}" />
 --%>
             <r:actions context="#{BrowseBean.document}" value="navigator_actions" showLink="false" />
-            <a:actionLink id="addressbook_manage"
-               image="/images/icons/add_attachment.gif"
-               showLink="false"
-               value="#{msg.addressbook}"
-               action="dialog:addressbookManage"
-               rendered="#{UserService.documentManager}" />
+            <r:permissionEvaluator value="#{AddressbookService.root}" allow="AddressbookManage">
+               <a:actionLink id="addressbook_manage"
+                  image="/images/icons/add_attachment.gif"
+                  showLink="false"
+                  value="#{msg.addressbook}"
+                  action="dialog:addressbookManage"
+                  rendered="#{UserService.documentManager}" />
+            </r:permissionEvaluator>
          <f:verbatim>
          </span>
          </f:verbatim>
@@ -64,7 +66,15 @@
          <a:actionLink id="logout" image="/images/icons/logout.png" value="#{msg.logout}" rendered="#{!NavigationBean.isGuest}"
             action="#{LoginBean.logout}" immediate="true" />
          <a:actionLink id="login" image="/images/icons/login.gif" value="#{msg.login}" rendered="#{NavigationBean.isGuest}" action="#{LoginBean.logout}" />
-         <r:simpleSearch id="simple-search" actionListener="#{BrowseBean.search}" />
+
+         <f:verbatim>
+            <script type="text/javascript">
+               function _ifenter(event) { if (event && event.keyCode == 13) {$jQ('#search.panel input[id$=quickSearchBtn]').click();return false;} else {return true;} }
+            </script>
+         </f:verbatim>
+         <h:graphicImage value="/images/parts/search_controls_left.png" width="3" height="21" styleClass="simple" />
+         <h:inputText value="#{DocumentListDialog.searchValue}" maxlength="50" onkeypress="return _ifenter(event)" />
+         <h:commandButton id="quickSearchBtn" value="#{msg.search}" type="submit" action="dialog:documentListDialog" actionListener="#{DocumentListDialog.quickSearch}" />
       </a:panel>
 
    </a:panel>

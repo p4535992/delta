@@ -4,13 +4,15 @@
       <actions>
 
          <action id="volume_add_new">
-            <evaluator>ee.webmedia.alfresco.user.web.DocumentManagerEvaluator</evaluator>
+            <permissions>
+               <permission allow="true">CreateChildren</permission>
+            </permissions>
             <label-id>volume_add_new</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{VolumeDetailsDialog.addNewVolume}</action-listener>
             <action>dialog:volumeDetailsDialog</action>
             <params>
-               <param name="seriesNodeRef">#{DialogManager.bean.parent.node.nodeRef}</param>
+               <param name="seriesNodeRef">#{VolumeListDialog.parent.node.nodeRef}</param>
             </params>
          </action>
 
@@ -36,7 +38,7 @@
    <config evaluator="node-type" condition="vol:volume">
       <property-sheet>
          <show-property name="vol:volumeMark" display-label-id="volume_volumeMark" readOnlyIf="vol:status=suletud" />
-         <show-property name="vol:title" display-label-id="volume_title" readOnlyIf="vol:status=suletud" />
+         <show-property name="vol:title" display-label-id="volume_title" readOnlyIf="vol:status=suletud" styleClass="expand5-200" component-generator="TextAreaGenerator" />
          <show-property name="vol:volumeType" display-label-id="volume_volumeType" classificatorName="volumeType" component-generator="ClassificatorSelectorGenerator" readOnlyIf="vol:status=suletud" />
          <show-property name="vol:containsCases" display-label-id="volume_containsCases" component-generator="CheckboxGenerator" readOnlyIf="vol:status=suletud" />
          <show-property name="vol:description" display-label-id="volume_description" readOnlyIf="vol:status=suletud" styleClass="expand5-200" component-generator="TextAreaGenerator"/>

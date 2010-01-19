@@ -38,6 +38,17 @@
                   <many>true</many>
                </target>
             </child-association>
+            <child-association name="ab:contactGroups">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>ab:contactGroup</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
          </associations>
          <mandatory-aspects>
             <aspect>sys:aspect_root</aspect>
@@ -51,15 +62,8 @@
          </mandatory-aspects>
       </type>
 
-      <type name="ab:secondaryBase">
-         <parent>ab:base</parent>
-         <mandatory-aspects>
-            <aspect>ab:orgPrivate</aspect>
-         </mandatory-aspects>
-      </type>
-
       <type name="ab:organization">
-         <parent>ab:secondaryBase</parent>
+         <parent>ab:base</parent>
          <associations>
             <child-association name="ab:orgPeople">
                <source>
@@ -75,27 +79,74 @@
          </associations>
          <mandatory-aspects>
             <aspect>ab:organizationProperties</aspect>
+            <aspect>ab:orgPrivate</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="ab:contactGroup">
+         <parent>sys:base</parent>
+         <associations>
+            <association name="ab:contactPersonBases">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>ab:personBase</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>
+            <association name="ab:contactOrganizations">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>ab:organization</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>ab:contactGroupProperties</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="ab:personBase">
+         <parent>ab:base</parent>
+         <mandatory-aspects>
+            <aspect>ab:person</aspect>
          </mandatory-aspects>
       </type>
 
       <type name="ab:orgPerson">
-         <parent>ab:base</parent>
+         <parent>ab:personBase</parent>
          <mandatory-aspects>
-            <aspect>ab:person</aspect>
             <aspect>ab:struct</aspect>
          </mandatory-aspects>
       </type>
 
       <type name="ab:privPerson">
-         <parent>ab:secondaryBase</parent>
+         <parent>ab:personBase</parent>
          <mandatory-aspects>
-            <aspect>ab:person</aspect>
             <aspect>ab:skype</aspect>
+            <aspect>ab:orgPrivate</aspect>
          </mandatory-aspects>
       </type>
 
    </types>
    <aspects>
+
+      <aspect name="ab:contactGroupProperties">
+         <properties>
+            <property name="ab:groupName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+         </properties>
+      </aspect>
 
       <aspect name="ab:organizationProperties">
          <properties>
@@ -113,6 +164,9 @@
             </property>
             <property name="ab:location">
                <type>d:text</type>
+            </property>
+            <property name="ab:dvkCapable">
+               <type>d:boolean</type>
             </property>
          </properties>
       </aspect>

@@ -42,8 +42,8 @@ function updateButtonState()
             </a:panel>
             <a:panel id="ab-org-panel" styleClass="column panel-50" label="#{msg.addressbook_organizations}">
 
-                        <a:richList id="ab-organizations-list" viewMode="details" styleClass="recordSet" binding="#{DialogManager.bean.orgRichList}"
-                           headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+                        <a:richList id="ab-organizations-list" viewMode="details" binding="#{DialogManager.bean.orgRichList}"
+                           rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
                            value="#{DialogManager.bean.organizations}" var="r" initialSortColumn="name" initialSortDescending="false">
 
                            <%-- Primary column with name --%>

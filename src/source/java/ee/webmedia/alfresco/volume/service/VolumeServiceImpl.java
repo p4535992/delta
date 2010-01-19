@@ -19,6 +19,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.series.model.Series;
@@ -39,6 +40,7 @@ public class VolumeServiceImpl implements VolumeService {
     private NodeService nodeService;
     private GeneralService generalService;
     private SeriesService seriesService;
+    private CaseService caseService;
 
     @Override
     public List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef) {
@@ -55,7 +57,7 @@ public class VolumeServiceImpl implements VolumeService {
     public List<Volume> getAllValidVolumesBySeries(NodeRef seriesNodeRef) {
         List<Volume> volumes = getAllVolumesBySeries(seriesNodeRef);
         final Calendar cal = Calendar.getInstance();
-        for (Iterator<Volume> i = volumes.iterator(); i.hasNext(); ) {
+        for (Iterator<Volume> i = volumes.iterator(); i.hasNext();) {
             Volume volume = i.next();
 
             Date validFrom = volume.getValidFrom();
@@ -82,19 +84,24 @@ public class VolumeServiceImpl implements VolumeService {
         return volumes;
     }
 
+    @Override
     public Volume getVolumeByNoderef(String volumeNodeRef) {
-        return getVolumeByNoderef(new NodeRef(volumeNodeRef), null);
+        return getVolumeByNodeRef(new NodeRef(volumeNodeRef));
+    }
+
+    @Override
+    public Volume getVolumeByNodeRef(NodeRef volumeRef) {
+        return getVolumeByNoderef(volumeRef, null);
     }
 
     @Override
     public void saveOrUpdate(Volume volume) {
         Map<String, Object> stringQNameProperties = volume.getNode().getProperties();
         if (volume.getNode() instanceof TransientNode) { // save
-            TransientNode transientNode = (TransientNode) volume.getNode();
             NodeRef volumeNodeRef = nodeService.createNode(volume.getSeriesNodeRef(),
                     VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME, VolumeModel.Types.VOLUME,
-                    RepoUtil.toQNameProperties(transientNode.getProperties())).getChildRef();
-            volume.setNode(RepoUtil.fetchNode(volumeNodeRef));
+                    RepoUtil.toQNameProperties(volume.getNode().getProperties())).getChildRef();
+            volume.setNode(generalService.fetchNode(volumeNodeRef));
         } else { // update
             generalService.setPropertiesIgnoringSystem(volume.getNode().getNodeRef(), stringQNameProperties);
         }
@@ -113,8 +120,17 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
+    public boolean isClosed(Node node) {
+        return generalService.isExistingPropertyValueEqualTo(node, VolumeModel.Props.STATUS, DocListUnitStatus.CLOSED);
+    }
+
+    @Override
     public void closeVolume(Volume volume) {
-        Map<String, Object> props = volume.getNode().getProperties();
+        final Node volumeNode = volume.getNode();
+        if (isClosed(volumeNode)) {
+            return;
+        }
+        Map<String, Object> props = volumeNode.getProperties();
         props.put(VolumeModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
 
         if (props.get(VolumeModel.Props.VALID_TO) == null) {
@@ -128,18 +144,15 @@ public class VolumeServiceImpl implements VolumeService {
             cal1.set(cal1.get(Calendar.YEAR) + 1 + retentionPeriod, 0, 1);// 1. January next year + retentionPeriod(in years)
             props.put(VolumeModel.Props.DISPOSITION_DATE.toString(), DateUtils.truncate(cal1, Calendar.DAY_OF_MONTH).getTime());
         }
-
+        if (!(volumeNode instanceof TransientNode)) { // force closing all cases of given volume even if there are some cases that are still opened
+            caseService.closeAllCasesByVolume(volumeNode.getNodeRef());
+        }
         saveOrUpdate(volume);
     }
-    
-    @Override
-    public Node getVolumeNodeByRef(NodeRef volumeNodeRef) {
-        return RepoUtil.fetchNode(volumeNodeRef);
-    }
 
     @Override
-    public void delete(NodeRef nodeRef) {
-        nodeService.deleteNode(nodeRef);
+    public Node getVolumeNodeByRef(NodeRef volumeNodeRef) {
+        return generalService.fetchNode(volumeNodeRef);
     }
 
     /**
@@ -148,6 +161,10 @@ public class VolumeServiceImpl implements VolumeService {
      * @return Volume object with reference to corresponding seriesNodeRef
      */
     private Volume getVolumeByNoderef(NodeRef volumeNodeRef, NodeRef seriesNodeRef) {
+        if (!nodeService.getType(volumeNodeRef).equals(VolumeModel.Types.VOLUME)) {
+            throw new RuntimeException("Given noderef '" + volumeNodeRef + "' is not volume type:\n\texpected '" //
+             + VolumeModel.Types.VOLUME + "'\n\tbut got '" + nodeService.getType(volumeNodeRef) + "'");
+        }
         Volume volume = volumeBeanPropertyMapper.toObject(nodeService.getProperties(volumeNodeRef));
         if (seriesNodeRef == null) {
             List<ChildAssociationRef> parentAssocs = nodeService.getParentAssocs(volumeNodeRef);
@@ -179,6 +196,10 @@ public class VolumeServiceImpl implements VolumeService {
 
     public void setSeriesService(SeriesService seriesService) {
         this.seriesService = seriesService;
+    }
+
+    public void setCaseService(CaseService caseService) {
+        this.caseService = caseService;
     }
     // END: getters / setters
 

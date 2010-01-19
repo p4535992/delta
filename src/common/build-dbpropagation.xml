@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="dbpropagation" basedir=".">
+
+   <target name="create-change-dir" description="Creates a db propagation directory corresponding to current change.">
+      <mkdir dir="${db-propagation.current.change.dir}" />
+      <touch file="${db-propagation.current.change.dir}/go.sql" />
+      <ant target="rewrite-order-key" />
+   </target>
+
+   <target name="write-order-key" unless="db-propagation.keep.order.key">
+      <tstamp>
+         <format property="db-propagation.order.key" pattern="yyyy-MM-dd-HH-mm-ss" />
+      </tstamp>
+      <concat destfile="${db-propagation.current.change.dir}/order.txt">${db-propagation.order.key}</concat>
+   </target>
+
+   <target name="rewrite-order-key" unless="db-propagation.keep.order.key" description="Renew order key in the current change directory">
+      <condition property="db-propagation.keep.order.key">
+         <not>
+            <available file="${db-propagation.current.change.dir}" type="dir" />
+         </not>
+      </condition>
+      <antcall target="write-order-key" />
+   </target>
+
+</project>

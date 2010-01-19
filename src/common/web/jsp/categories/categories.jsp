@@ -34,7 +34,7 @@
    
       <a:panel id="categories-panel" label="#{msg.items}">
 
-         <a:richList id="categories-list"  viewMode="#{DialogManager.bean.viewMode}" pageSize="15" styleClass="recordSet" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
+         <a:richList id="categories-list"  viewMode="#{DialogManager.bean.viewMode}" pageSize="15" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
             value="#{DialogManager.bean.categories}" binding="#{DialogManager.bean.categoriesRichList}" var="r" initialSortColumn="name" initialSortDescending="true">
 
             <%-- Primary column for icons view mode --%>

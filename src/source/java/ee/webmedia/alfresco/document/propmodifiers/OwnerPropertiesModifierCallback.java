@@ -26,7 +26,7 @@ public class OwnerPropertiesModifierCallback implements PropertiesModifierCallba
     private OrganizationStructureService organizationStructureService;
 
     @Override
-    public void doWithProperties(Map<QName, Serializable> properties, NodeRef document) {
+    public void doWithProperties(Map<QName, Serializable> properties) {
         // same logic as MetadataBlockBean#setOwner
 
         NodeRef person = personService.getPerson(authenticationService.getCurrentUserName());

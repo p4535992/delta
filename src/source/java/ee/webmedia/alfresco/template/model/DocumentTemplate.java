@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.template.model;
 import java.io.Serializable;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
@@ -17,7 +18,7 @@ public class DocumentTemplate implements Serializable {
     private static final long serialVersionUID = 1L;
     private String name;
     private String comment;
-    private String docTypeId;
+    private QName docTypeId;
 
     @AlfrescoModelProperty(isMappable = false)
     private NodeRef nodeRef;
@@ -42,11 +43,11 @@ public class DocumentTemplate implements Serializable {
         this.comment = comment;
     }
 
-    public String getDocTypeId() {
+    public QName getDocTypeId() {
         return docTypeId;
     }
 
-    public void setDocTypeId(String docTypeId) {
+    public void setDocTypeId(QName docTypeId) {
         this.docTypeId = docTypeId;
     }
 
@@ -72,15 +73,5 @@ public class DocumentTemplate implements Serializable {
 
     public void setDocTypeName(String docTypeName) {
         this.docTypeName = docTypeName;
-    }
-
-    /**
-     * Gets the Id part from NodeRef
-     * 
-     * @return
-     */
-    // TODO delete this
-    public String getId() {
-        return getNodeRef().getId();
     }
 }

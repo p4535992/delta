@@ -3,9 +3,6 @@
    <config>
       <actions>
          <action id="register_add_new">
-            <permissions>
-               <permission allow="true">CreateChildren</permission>
-            </permissions>
             <label-id>add_new_register</label-id>
             <image>/images/icons/add.gif</image>
             <action>dialog:registerDetailsDialog</action>

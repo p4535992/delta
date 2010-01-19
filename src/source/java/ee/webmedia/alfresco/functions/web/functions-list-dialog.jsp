@@ -1,18 +1,16 @@
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
 
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="functions-panel" border="white" bgcolor="white" styleClass="panel-100" label="#{msg.functions_list}" progressive="true"
-   facetsId="functions-panel-facets">
+<a:panel id="functions-panel" styleClass="panel-100" label="#{msg.functions_list}" progressive="true">
 
    <%-- Main List --%>
-   <a:richList id="functionsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet" headerStyleClass="recordSetHeader"
-      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.functions}" var="r">
+   <a:richList id="functionsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+      width="100%" value="#{DialogManager.bean.functions}" var="r">
 
       <%-- Mark --%>
       <a:column id="col2" primary="true">
@@ -54,7 +52,7 @@
       <a:column id="col5" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager}" >
       <%-- TODO: check for Administrator or Dokumendihaldur permissions for this button --%>
          <a:actionLink id="col5-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:functionsDetailsDialog" showLink="false"
-            actionListener="#{FunctionsDetailsDialog.select}" >
+            actionListener="#{FunctionsDetailsDialog.select}" tooltip="#{msg.functions_details_info}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
       </a:column>

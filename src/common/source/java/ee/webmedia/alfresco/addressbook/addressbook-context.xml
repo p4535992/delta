@@ -21,6 +21,8 @@
       <property name="searchService" ref="SearchService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="authorityService" ref="AuthorityService" />
+      <property name="dvkService" ref="DvkService" />
+      <property name="store" value="${spaces.store}" />
       <property name="searchFields">
          <set>
             <value>ab:personFirstName</value>
@@ -32,7 +34,6 @@
             <value>ab:orgAcronym</value>
          </set>
       </property>
-      <property name="store" value="${spaces.store}" />
    </bean>
 
    <bean id="AddressbookService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -75,18 +76,25 @@
             <props>
                <prop key="encoding">UTF-8</prop>
                <prop key="path">/</prop>
-               <prop key="location">ee/webmedia/alfresco/addressbook/bootstrap/root.xml</prop>
+               <prop key="location">ee/webmedia/alfresco/addressbook/bootstrap/addressbook.xml</prop>
             </props>
          </list>
       </property>
    </bean>
 
-   <bean id="addressbookGroupsBootstrap" class="ee.webmedia.alfresco.addressbook.bootstrap.AddressBookGroupsBootstrap" parent="module.baseComponent">
-      <property name="moduleId" value="common" />
-      <property name="name" value="addressbookGroupsBootstrap" />
-      <property name="sinceVersion" value="1.1.1.1" />
-      <property name="executeOnceOnly" value="true" />
+   <bean id="dvkReceiveOrganizationsTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterResceduledTriggerBean" parent="parameterResceduledTriggerParent">
+      <property name="parameterName" value="dvkReceiveOrganizations" />
+      <property name="parameterFormat" value="H:mm" />
+      <property name="jobDetail">
+         <bean id="dvkReceiveOrganizationsJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.addressbook.job.DvkReceiveOrganizationsJob" />
+            <property name="jobDataAsMap">
+               <map>
+                  <entry key="AddressbookService" value-ref="AddressbookService" />
+               </map>
+            </property>
+         </bean>
+      </property>
    </bean>
 
-<!-- 1.1.1.13 -->
 </beans>

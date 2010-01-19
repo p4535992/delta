@@ -10,12 +10,14 @@ import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthenticationService;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.util.URLEncoder;
 
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
 /**
@@ -27,28 +29,37 @@ public class FileServiceImpl implements FileService {
 
     private FileFolderService fileFolderService;
     private NodeService nodeService;
-    private GeneralService generalService;
-    private VersionsService versionsService;
+    private UserService userService;
     private SignatureService signatureService;
     private AuthenticationService authenticationService;
+    private PermissionService permissionService;
 
     @Override
+    public List<File> getAllFilesExcludingDigidocSubitems(NodeRef nodeRef) {
+        return getAllFiles(nodeRef, false);
+    }
+    
     public List<File> getAllFiles(NodeRef nodeRef) {
+        return getAllFiles(nodeRef, true);
+    }
+    
+    public List<File> getAllFiles(NodeRef nodeRef, boolean includeDigidocSubitems) {
         List<File> files = new ArrayList<File>();
         List<FileInfo> fileInfos = fileFolderService.listFiles(nodeRef);
         for (FileInfo fi : fileInfos) {
             File item = new File(fi);
-            item.setCreator(generalService.getPersonFullNameByUserName((String) fi.getProperties().get(ContentModel.PROP_CREATOR)));
-            item.setModifier(versionsService.getPersonFullNameFromAspect(item.getNodeRef(), (String) fi.getProperties().get(ContentModel.PROP_MODIFIER)));
+            item.setCreator(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_CREATOR)));
+            item.setModifier(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_MODIFIER)));
             item.setDownloadUrl(generateURL(item.getNodeRef()));
             files.add(item);
             boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());
-            if (isDdoc) {
+            item.setDigiDocContainer(isDdoc);
+            if (isDdoc && includeDigidocSubitems && permissionService.hasPermission(item.getNodeRef(), PermissionService.READ_CONTENT).equals(AccessStatus.ALLOWED)) {
                 // hack: add another File to display nested tables in JSP.
                 // this "item2" should be exactly after the "item" in the list
                 File item2 = new File();
                 item2.setDdocItems(signatureService.getDataItemsAndSignatureItems(item.getNodeRef(), false));
-                item2.setDigiDoc(true);
+                item2.setDigiDocItem(true);
                 files.add(item2);
             }
         }
@@ -85,12 +96,8 @@ public class FileServiceImpl implements FileService {
         this.nodeService = nodeService;
     }
 
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
-    public void setVersionsService(VersionsService versionsService) {
-        this.versionsService = versionsService;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     public void setSignatureService(SignatureService signatureService) {
@@ -99,6 +106,10 @@ public class FileServiceImpl implements FileService {
 
     public void setAuthenticationService(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
+    }
+
+    public void setPermissionService(PermissionService permissionService) {
+        this.permissionService = permissionService;
     }
     // END: getters / setters
 }

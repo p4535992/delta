@@ -55,7 +55,7 @@ public class MultiValueEditorRenderer extends BaseMultiValueRenderer {
         @SuppressWarnings("unchecked")
         List<String> propTitles = (List<String>) component.getAttributes().get("propTitles");
         ResponseWriter out = context.getResponseWriter();
-        out.write("<table class=\"recipient\" cellpadding=\"0\" cellspacing=\"0\">");
+        out.write("<table class=\"recipient cells"+ propTitles.size() +"\" cellpadding=\"0\" cellspacing=\"0\">");
         out.write("<thead><tr>");
         for (String propTitle : propTitles) {
             out.write("<th>");
@@ -123,18 +123,19 @@ public class MultiValueEditorRenderer extends BaseMultiValueRenderer {
                     out.write("</td>");
                 }
 
+                out.write("<td>");
                 if (!Utils.isComponentDisabledOrReadOnly(multiValueEditor)) { // don't render removing link
-                    out.write("<td>");
+                    
                     out.write("<a class=\"icon-link margin-left-4 delete\" onclick=\"");
                     out.write(Utils //
                             .generateFormSubmit(context, multiValueEditor, multiValueEditor.getClientId(context), Integer.toString(UIMultiValueEditor.ACTION_REMOVE) + ";" + rowIndex));
                     out.write("\" title=\""+Application.getMessage(context, "delete")+"\">");
                     out.write("</a>");
-                    out.write("</td>");
+                    
                 }
 
                 if (hasPicker) {
-                    out.write("<td>");
+                    
                     out.write("<a class=\"icon-link search\" onclick=\"");
                     out.write(ComponentUtil.generateFieldSetter(context, multiValueEditor, getActionId(context, multiValueEditor), SearchRenderer.OPEN_DIALOG_ACTION + ";" + rowIndex));
                     out.write("return showModal('");
@@ -142,10 +143,10 @@ public class MultiValueEditorRenderer extends BaseMultiValueRenderer {
                     out.write("');\">");
                     out.write(Application.getMessage(context, SearchRenderer.SEARCH_MSG));
                     out.write("</a>");
-                    out.write("</td>");
+                    
                 }
 
-                out.write("</tr>");
+                out.write("</td></tr>");
                 rowIndex++;
             }
         }

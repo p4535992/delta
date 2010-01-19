@@ -13,7 +13,6 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.menu.ui.component.YahooTreeItem;
@@ -37,11 +36,6 @@ public class BrowseMenuItem extends MenuItem {
 
     public BrowseMenuItem(String title, String outcome, List<MenuItem> children) {
         super(title, outcome, children);
-    }
-    
-    @Override
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, DocumentTypeService docTypeService) {
-        return createComponent(context, id, userService);
     }
     
     @Override

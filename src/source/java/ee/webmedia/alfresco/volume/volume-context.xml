@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <bean id="volumeModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,documentModelBootstrap" >
+   <bean id="volumeModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,documentModelBootstrap,caseModelBootstrap" >
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/volume/model/volumeModel.xml</value>
@@ -31,6 +31,7 @@
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="seriesService" ref="SeriesService" />
+      <property name="caseService" ref="CaseService" />
    </bean>
 
    <bean id="VolumeService" class="org.springframework.aop.framework.ProxyFactoryBean">

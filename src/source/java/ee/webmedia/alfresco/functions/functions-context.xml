@@ -2,7 +2,7 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <bean id="functionsModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,seriesModelBootstrap">
+   <bean id="functionsModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,seriesModelBootstrap,documentModelBootstrap">
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/functions/model/functionsModel.xml</value>
@@ -47,6 +47,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
       <property name="dictionaryService" ref="DictionaryService" />
+      <property name="seriesService" ref="SeriesService" />
    </bean>
 
    <bean id="FunctionsService" class="org.springframework.aop.framework.ProxyFactoryBean">

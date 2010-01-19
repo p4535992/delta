@@ -3,6 +3,56 @@
    <cl:classificators view:childName="cl:classificators">
       <view:associations>
          <cl:classificator>
+         
+            <cl:classificator view:childName="cl:contractType">
+               <cl:name>contractType</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:managementsOrderWhose">
+               <cl:name>managementsOrderWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:leavingLetterReason">
+               <cl:name>leavingLetterReason</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:vacationOrderWhose">
+               <cl:name>vacationOrderWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:licenceType">
+               <cl:name>licenceType</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:decreeWhose">
+               <cl:name>decreeWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:ministersOrderWhose">
+               <cl:name>ministersOrderWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:personelleOrderSimWhose">
+               <cl:name>personelleOrderSimWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:chancellorsOrderWhose">
+               <cl:name>chancellorsOrderWhose</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
+         
+            <cl:classificator view:childName="cl:transmittalMode">
+               <cl:name>transmittalMode</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+            </cl:classificator>
 
             <cl:classificator view:childName="cl:functionType">
                <cl:name>functionType</cl:name>
@@ -104,7 +154,7 @@
                         <view:properties>
                            <cl:valueName>Avalik</cl:valueName>
                            <cl:order>1</cl:order>
-                           <cl:byDefault>true</cl:byDefault>
+                           <cl:byDefault>false</cl:byDefault>
                            <cl:readOnly>true</cl:readOnly>
                            <cl:active>true</cl:active>
                         </view:properties>

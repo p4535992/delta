@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.register.web;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -65,6 +67,13 @@ public class RegisterListDialog extends BaseDialogBean {
      */
     public void findActiveRegisters(FacesContext context, HtmlSelectOneMenu selectComponent) {
         List<Register> registers = getRegisterService().getRegisters();
+        Collections.sort(registers, new Comparator<Register>() {
+            @Override
+            public int compare(Register a, Register b) {
+                return a.getName().compareTo(b.getName());
+            }
+        });
+        
         @SuppressWarnings("unchecked")
         List<UIComponent> selectOptions = selectComponent.getChildren();
         for (Register register : registers) {

@@ -22,4 +22,39 @@ public interface VersionsService {
      * @return
      */
     List<Version> getAllVersions(NodeRef nodeRef, String fileName);
+    
+    /**
+     * Adds the user and date information to the custom aspect properties.
+     * @param nodeRef
+     */
+    void updateVersionModifiedAspect(NodeRef nodeRef);
+    
+    /**
+     * Updates the version if the node is unlocked. 
+     * Sets VersionsModel.Props.VersionLockable.LOCKED property of the VersionsModel.Aspects.VERSION_LOCKABLE aspect to true. 
+     * @param nodeRef
+     */
+    void updateVersion(NodeRef nodeRef);
+    
+    /**
+     * Returns the value of the VersionsModel.Props.VersionLockable.LOCKED property if the node has VersionsModel.Aspects.VERSION_LOCKABLE aspect.
+     * False if there is no VersionsModel.Aspects.VERSION_LOCKABLE on the node. 
+     * @param nodeRef
+     * @return
+     */
+    boolean getVersionLockableAspect(NodeRef nodeRef);
+    
+    /**
+     * If the node has VersionsModel.Aspects.VERSION_LOCKABLE aspect, sets the VersionsModel.Props.VersionLockable.LOCKED property to flag. 
+     * @param lockNode
+     * @param flag
+     */
+    void setVersionLockableAspect(NodeRef lockNode, boolean flag);
+    
+    /**
+     * Adds the VersionsModel.Aspects.VERSION_LOCKABLE aspect to the node. 
+     * Does NOT set any value for the VersionsModel.Props.VersionLockable.LOCKED property.
+     * @param lockNode
+     */
+    void addVersionLockableAspect(NodeRef lockNode);
 }

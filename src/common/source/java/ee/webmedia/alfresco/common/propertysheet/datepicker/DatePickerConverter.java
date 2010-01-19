@@ -9,9 +9,11 @@ import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
 import javax.faces.convert.ConverterException;
 
+import org.apache.commons.lang.StringUtils;
+
 public class DatePickerConverter implements Converter {
 
-    public static final String CONVERTER_ID = "ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter";
+    public static final String CONVERTER_ID = DatePickerConverter.class.getCanonicalName();
     public static final String DATE_FORMAT = "dd.MM.yyyy";
     
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DatePickerConverter.class);
@@ -21,7 +23,7 @@ public class DatePickerConverter implements Converter {
     public Object getAsObject(FacesContext context, UIComponent component, String value) throws ConverterException {
         Date date;
         try {
-            if(!"".equals(value)) {
+            if(StringUtils.isNotEmpty(value)) {
                 date = simpleDateFormat.parse(value);
             } else {
                 return null;
