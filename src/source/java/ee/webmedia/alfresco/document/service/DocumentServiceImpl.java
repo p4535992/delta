@@ -366,7 +366,7 @@ public class DocumentServiceImpl implements DocumentService {
         props.put(TransientProps.FUNCTION_NODEREF, functionNode.getNodeRef().toString());
         props.put(TransientProps.SERIES_NODEREF, seriesNode.getNodeRef().toString());
         props.put(TransientProps.VOLUME_NODEREF, volumeNode.getNodeRef().toString());
-        props.put(TransientProps.CASE_NODEREF, caseNode.getNodeRef().toString());
+        props.put(TransientProps.CASE_NODEREF, caseNode != null ? caseNode.getNodeRef().toString() : null); // case is required for only some volumes
 
         final DocumentType documentType = documentTypeService.getDocumentType(docNode.getType());
         if (!documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
