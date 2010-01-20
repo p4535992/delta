@@ -2,6 +2,9 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
+<!-- DVK is currently turned off -->
+<!--   <import resource="classpath:ee/webmedia/alfresco/addressbook/addressbook-dvk-context.xml" />-->
+
    <bean id="addressbookModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
       <property name="models">
          <list>
@@ -21,7 +24,8 @@
       <property name="searchService" ref="SearchService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="authorityService" ref="AuthorityService" />
-      <property name="dvkService" ref="DvkService" />
+<!-- DVK is currently turned off -->
+<!--      <property name="dvkService" ref="DvkService" />-->
       <property name="store" value="${spaces.store}" />
       <property name="searchFields">
          <set>
@@ -79,21 +83,6 @@
                <prop key="location">ee/webmedia/alfresco/addressbook/bootstrap/addressbook.xml</prop>
             </props>
          </list>
-      </property>
-   </bean>
-
-   <bean id="dvkReceiveOrganizationsTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterResceduledTriggerBean" parent="parameterResceduledTriggerParent">
-      <property name="parameterName" value="dvkReceiveOrganizations" />
-      <property name="parameterFormat" value="H:mm" />
-      <property name="jobDetail">
-         <bean id="dvkReceiveOrganizationsJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
-            <property name="jobClass" value="ee.webmedia.alfresco.addressbook.job.DvkReceiveOrganizationsJob" />
-            <property name="jobDataAsMap">
-               <map>
-                  <entry key="AddressbookService" value-ref="AddressbookService" />
-               </map>
-            </property>
-         </bean>
       </property>
    </bean>
 

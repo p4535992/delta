@@ -50,7 +50,9 @@ public class MultiValueEditor extends UIComponentBase {
     public void encodeBegin(FacesContext context) throws IOException {
         if (getChildCount() == 0) {
             createExistingComponents(context);
-            createPicker(context);
+            if (!isDisabled()) {
+                createPicker(context);
+            }
         }
         super.encodeBegin(context);
     }

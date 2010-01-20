@@ -32,7 +32,6 @@
          ,/WEB-INF/classes/ee/webmedia/alfresco/orgstructure/organizationStructure-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/document/document-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/functions/functions-faces-config.xml
-         ,/WEB-INF/classes/ee/webmedia/alfresco/user/user-simdhs-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/user/user-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/register/register-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/template/document-template-faces-config.xml

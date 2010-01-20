@@ -157,6 +157,11 @@ public class Document implements Serializable, Comparable<Document> {
             }
             return 0;
         }
+        if (getRegNumber() == null) {
+            return -1;
+        } else if (other.getRegNumber() == null) {
+            return 1;
+        }
         return getRegNumber().compareTo(other.getRegNumber());
     }
 

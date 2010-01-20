@@ -131,19 +131,18 @@ public class MultiValueEditorRenderer extends BaseMultiValueRenderer {
                             .generateFormSubmit(context, multiValueEditor, multiValueEditor.getClientId(context), Integer.toString(UIMultiValueEditor.ACTION_REMOVE) + ";" + rowIndex));
                     out.write("\" title=\""+Application.getMessage(context, "delete")+"\">");
                     out.write("</a>");
-                    
-                }
 
-                if (hasPicker) {
-                    
-                    out.write("<a class=\"icon-link search\" onclick=\"");
-                    out.write(ComponentUtil.generateFieldSetter(context, multiValueEditor, getActionId(context, multiValueEditor), SearchRenderer.OPEN_DIALOG_ACTION + ";" + rowIndex));
-                    out.write("return showModal('");
-                    out.write(getDialogId(context, multiValueEditor));
-                    out.write("');\">");
-                    out.write(Application.getMessage(context, SearchRenderer.SEARCH_MSG));
-                    out.write("</a>");
-                    
+                    if (hasPicker) {
+
+                        out.write("<a class=\"icon-link search\" onclick=\"");
+                        out.write(ComponentUtil.generateFieldSetter(context, multiValueEditor, getActionId(context, multiValueEditor), SearchRenderer.OPEN_DIALOG_ACTION + ";" + rowIndex));
+                        out.write("return showModal('");
+                        out.write(getDialogId(context, multiValueEditor));
+                        out.write("');\">");
+                        out.write(Application.getMessage(context, SearchRenderer.SEARCH_MSG));
+                        out.write("</a>");
+
+                    }
                 }
 
                 out.write("</td></tr>");

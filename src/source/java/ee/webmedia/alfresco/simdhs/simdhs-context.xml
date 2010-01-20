@@ -5,7 +5,8 @@
    <!-- Entry point to include other components -->
    <!-- Be sure to also include necessary JSF configuration files in web/WEB-INF/web.xml -->
    <import resource="classpath:ee/webmedia/alfresco/signature/signature-context.xml" />
-   <import resource="classpath:ee/webmedia/alfresco/dvk/dvk-context.xml" />
+<!-- DVK is currently turned off -->
+<!--   <import resource="classpath:ee/webmedia/alfresco/dvk/dvk-context.xml" />-->
    <import resource="classpath:ee/webmedia/alfresco/addressbook/addressbook-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/menu/menu-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/classificator/classificator-context.xml" />

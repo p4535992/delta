@@ -94,12 +94,14 @@ public class MetadataBlockBean implements Serializable {
     private transient ParametersService parametersService;
     private transient UIPropertySheet propertySheet;
 
+    private transient HtmlInputTextarea newCaseHtmlInput;
+
     private Node document;
     private boolean inEditMode;
     private DateFormat dateFormat;
     private String documentTypeName;
     private String selectedCaseRefNum;
-    private HtmlInputTextarea newCaseHtmlInput;
+
     /** timeOut in seconds how long lock is kept after creation(refreshing) before expiring */
     private int lockTimeout = 180;
 

@@ -42,8 +42,8 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
 
     @Override
     protected void transformInternal(ContentReader reader, ContentWriter writer, TransformationOptions options) throws Exception {
-        if (log.isDebugEnabled()) {
-            log.debug("Starting the transformation process.");
+        if (log.isTraceEnabled()) {
+            log.trace("Starting the transformation process.");
         }
         InputStream is = null;
         try {
@@ -59,7 +59,10 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
             // add the data into the original writer
             writer.putContent(text.toString());
             if (log.isDebugEnabled()) {
-                log.debug("Finished\nIndex data: \n" + text.toString());
+                log.debug("Finished transformation, produced " + text.length() + " characters of text");
+            }
+            if (log.isTraceEnabled()) {
+                log.trace("Index data:\n" + text.toString());
             }
         } catch (SignatureException e) {
             if (log.isDebugEnabled()) {

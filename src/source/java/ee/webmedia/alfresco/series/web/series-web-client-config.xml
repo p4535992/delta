@@ -45,8 +45,7 @@
          </dialog>
 
          <dialog name="seriesDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/series/web/series-details-dialog.jsp" managed-bean="SeriesDetailsDialog"
-		    actions-config-id="browse_actions_series_details" icon="/images/icons/versioned_properties_large.gif" title-id="series_details" show-ok-button="true" >
-            actions-config-id="browse_actions_series_details" icon="/images/icons/versioned_properties_large.gif" title-id="series_details" show-ok-button="true">
+		    icon="/images/icons/versioned_properties_large.gif" title-id="series_details" show-ok-button="true" >
             <buttons>
                <button id="close-button" label-id="close" action="#{SeriesDetailsDialog.close}" disabled="#{SeriesDetailsDialog.closed}" />
             </buttons>

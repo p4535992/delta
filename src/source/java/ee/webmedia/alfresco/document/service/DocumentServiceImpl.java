@@ -425,8 +425,14 @@ public class DocumentServiceImpl implements DocumentService {
 
         /*
          * Construct a query with following structure:
-         * (TYPE:document AND (@prop1:*word1* OR @prop2:*word1*) AND (@prop1:*word2* OR @prop2:*word2*)) OR
-         * (ASPECT:file AND (@name:*word1* OR @content:*word1*) AND (@name:*word2* OR @content:*word2*))
+         * ASPECT:searchable AND (
+         * (TYPE:document AND (@prop1:"*word1*" OR @prop2:"*word1*") AND (@prop1:"*word2*" OR @prop2:"*word2*")) OR
+         * (ASPECT:file AND (@name:"*word1*" OR @content:"*word1*") AND (@name:"*word2*" OR @content:"*word2*"))
+         * )
+         * Note: Property values must be wrapped with " symbols. Alfresco LuceneQueryParser somehow produces different
+         * results (something to do with multi-language fields, et locale and ALL locales). It doesn't replace non latin-1
+         * characters with latin-1 characters if the values are without wrapping " symbols and this breaks searches with estonian
+         * special characters because Alfresco indexed them with ISOLatin1AccentFilter.
          */
 
         SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
@@ -471,11 +477,7 @@ public class DocumentServiceImpl implements DocumentService {
                 query.append(" OR @").append(Repository.escapeQName(ContentModel.PROP_CONTENT)).append(":\"*").append(searchWord).append("*\")");
             }
         }
-        query.append(")");
-
-        // if (log.isDebugEnabled()) {
-        // log.debug("QUERY:\n" + query.toString() + "\n\n");
-        // }
+        query.append("))");
 
         // build up the search parameters
         SearchParameters sp = new SearchParameters();
@@ -484,6 +486,7 @@ public class DocumentServiceImpl implements DocumentService {
         sp.addStore(generalService.getStore());
         sp.setLimit(200); // only 100 unique documents used but limit set to 200 to allow room for duplicates
         sp.setLimitBy(LimitBy.FINAL_SIZE);
+
         long queryStart = System.currentTimeMillis();
         ResultSet resultSet = searchService.query(sp);
         try {
