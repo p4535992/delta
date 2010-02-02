@@ -92,7 +92,7 @@
 
       <aspect name="docspec:transmittalMode">
          <properties>
-            <property name="docspec:transmittalModeValue">
+            <property name="docspec:transmittalMode">
                <type>d:text</type>
             </property>
          </properties>
@@ -381,26 +381,26 @@
             <property name="docspec:firstPartyContactPerson">
                <type>d:text</type>
             </property>
-            <property name="docspec:recipientName1">
+            <property name="docspec:secondPartyName">
                <type>d:text</type>
                <mandatory enforced="false">true</mandatory>
             </property>
             <property name="docspec:secondPartySigner">
                <type>d:text</type>
             </property>
-            <property name="docspec:recipientEmail1">
+            <property name="docspec:secondPartyEmail">
                <type>d:text</type>
             </property>
             <property name="docspec:secondPartyContactPerson">
                <type>d:text</type>
             </property>
-            <property name="docspec:recipientName2">
+            <property name="docspec:thirdPartyName">
                <type>d:text</type>
             </property>
             <property name="docspec:thirdPartySigner">
                <type>d:text</type>
             </property>
-            <property name="docspec:recipientEmail2">
+            <property name="docspec:thirdPartyEmail">
                <type>d:text</type>
             </property>
             <property name="docspec:thirdPartyContactPerson">

@@ -85,7 +85,7 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
-    public Volume getVolumeByNoderef(String volumeNodeRef) {
+    public Volume getVolumeByNodeRef(String volumeNodeRef) {
         return getVolumeByNodeRef(new NodeRef(volumeNodeRef));
     }
 
@@ -137,7 +137,7 @@ public class VolumeServiceImpl implements VolumeService {
             props.put(VolumeModel.Props.VALID_TO.toString(), new Date());
         }
 
-        Series series = seriesService.getSeriesByNoderef(volume.getSeriesNodeRef().toString());
+        Series series = seriesService.getSeriesByNodeRef(volume.getSeriesNodeRef().toString());
         final Integer retentionPeriod = series.getRetentionPeriod();
         if (retentionPeriod != null) {
             final Calendar cal1 = Calendar.getInstance();

@@ -6,6 +6,7 @@
       <property name="menuConfigLocation" value="classpath:ee/webmedia/alfresco/menu/service/menu-structure.xml" />
       <property name="generalService" ref="GeneralService" />
       <property name="fileFolderService" ref="FileFolderService" />
+      <property name="updateCount" value="0" />
    </bean>
 
    <bean id="MenuService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -31,5 +32,11 @@
          </list>
       </property>
    </bean>
+   
+   <bean class="ee.webmedia.alfresco.menu.service.DocumentListTreeItemProcessor" init-method="init">
+      <property name="nodeService" ref="NodeService" />
+      <property name="menuService" ref="MenuService" />
+   </bean>
+   
 
 </beans>

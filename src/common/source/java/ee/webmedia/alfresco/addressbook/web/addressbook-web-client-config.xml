@@ -178,10 +178,10 @@
             title-id="addressbook_manage" actions-config-id="addressbook_menu" show-ok-button="false" />
 
          <dialog name="addressbookViewEntry" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/view-entry-org.jsp" managed-bean="AddressbookDialog" icon="/images/icons/users_large.gif"
-            title-id="addressbook_entry" actions-config-id="addressbook_org_menu" show-ok-button="false" />
+            title-id="addressbook_entry" actions-config-id="addressbook_org_menu" />
 
          <dialog name="addressbookViewEntryPerson" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/view-entry-person.jsp" managed-bean="AddressbookDialog" icon="/images/icons/users_large.gif"
-            title-id="addressbook_private_person_data" actions-config-id="addressbook_person_menu" show-ok-button="false" />
+            title-id="addressbook_private_person_data" actions-config-id="addressbook_person_menu" />
 
          <dialog name="addressbookDeleteEntry" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/summary-dialog.jsp" managed-bean="AddressbookDeleteDialog" icon="/images/icons/users_large.gif"
             title-id="addressbook_delete_entry" show-ok-button="true" />

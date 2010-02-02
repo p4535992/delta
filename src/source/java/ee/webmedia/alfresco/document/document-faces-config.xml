@@ -12,20 +12,60 @@
       <managed-bean-name>DocumentListDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.document.web.DocumentListDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DocumentSearchDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.search.web.DocumentSearchDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
       <managed-property>
-         <property-name>namespaceService</property-name>
-         <value>#{NamespaceService}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>browseBean</property-name>
-         <value>#{BrowseBean}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>documentService</property-name>
-         <value>#{DocumentService}</value>
+         <property-name>documentSearchResultsDialog</property-name>
+         <value>#{DocumentSearchResultsDialog}</value>
       </managed-property>
    </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>UnsentDocumentListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.web.UnsentDocumentListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
    
+   <managed-bean>
+      <managed-bean-name>DocumentSearchResultsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.search.web.DocumentSearchResultsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DocumentQuickSearchResultsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.search.web.DocumentQuickSearchResultsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>TodayRegisteredDocumentsSearchResultsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.search.web.TodayRegisteredDocumentsSearchResultsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>UserWorkingDocumentsSearchResultsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.search.web.UserWorkingDocumentsSearchResultsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>OutboxDocumentListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.web.OutboxDocumentListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DvkDocumentListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.web.DvkDocumentListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
    <managed-bean>
       <managed-bean-name>DocumentDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.document.web.DocumentDialog</managed-bean-class>
@@ -53,6 +93,10 @@
       <managed-property>
          <property-name>navigator</property-name>
          <value>#{NavigationBean}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>sendOutBlockBean</property-name>
+         <value>#{SendOutBlockBean}</value>
       </managed-property>
    </managed-bean>
 
@@ -140,6 +184,14 @@
          <property-name>userService</property-name>
          <value>#{UserService}</value>
       </managed-property>
+       <managed-property>
+         <property-name>fileService</property-name>
+         <value>#{FileService}</value>
+      </managed-property>
+       <managed-property>
+         <property-name>imapServiceExt</property-name>
+         <value>#{ImapServiceExt}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>
@@ -190,6 +242,22 @@
       </managed-property>
    </managed-bean>
 
+   <managed-bean>
+      <managed-bean-name>DocumentSendOutDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>addressbookDialog</property-name>
+         <value>#{AddressbookDialog}</value>
+      </managed-property>
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>SendOutBlockBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+      
    <!-- ==================== [ COMPONENT GENERATORS ] =================================== -->
 
    <managed-bean>
@@ -210,6 +278,7 @@
       <managed-bean-scope>request</managed-bean-scope>
       <managed-property>
          <property-name>html</property-name>
+         <!-- TODO: refactor message into bundle -->
          <value><![CDATA[<div class="message">Kui adressaat ei ole määratud, siis dokumenti välja ei saadeta! Ära unusta adressaati määrata!</div>]]></value>
       </managed-property>
    </managed-bean>

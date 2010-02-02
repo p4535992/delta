@@ -5,8 +5,7 @@
    <!-- Entry point to include other components -->
    <!-- Be sure to also include necessary JSF configuration files in web/WEB-INF/web.xml -->
    <import resource="classpath:ee/webmedia/alfresco/signature/signature-context.xml" />
-<!-- DVK is currently turned off -->
-<!--   <import resource="classpath:ee/webmedia/alfresco/dvk/dvk-context.xml" />-->
+   <import resource="classpath:ee/webmedia/alfresco/dvk/dvk-sim-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/addressbook/addressbook-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/menu/menu-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/classificator/classificator-context.xml" />
@@ -21,6 +20,8 @@
    <import resource="classpath:ee/webmedia/alfresco/register/register-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/template/document-template-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/versions/versions-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/imap/imap-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/email/email-context.xml" />
 
 
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">

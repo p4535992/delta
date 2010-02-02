@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
+
+<beans>
+    <bean id="imapServer" class="org.alfresco.repo.imap.AlfrescoImapServer">
+        <property name="host">
+            <value>${imap.server.host}</value>
+        </property>
+        <property name="port">
+            <value>${imap.server.port}</value>
+        </property>
+        <property name="imapServerEnabled">
+            <value>${imap.server.enabled}</value>
+        </property>
+        <property name="imapHostManager" ref="imapHostManager"/>
+        <property name="imapUserManager" ref="imapUserManager"/>
+    </bean>
+
+    <bean id="imapHostManager" class="ee.webmedia.alfresco.imap.ImmutableImapHostManager">
+        <property name="imapServiceExt" ref="ImapServiceExt"/>
+    </bean>
+
+    <bean id="imapUserManager" class="ee.webmedia.alfresco.imap.DummyImapUserManager">
+        <property name="authenticationService" ref="AuthenticationService" />
+        <property name="personService" ref="PersonService" />
+        <property name="nodeService" ref="NodeService" />
+    </bean>
+
+</beans>

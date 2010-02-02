@@ -112,7 +112,7 @@
    
    <config evaluator="aspect-name" condition="doccom:legalBasis">
       <property-sheet>
-         <show-property name="doccom:legalBasisName" />
+         <show-property name="doccom:legalBasisName" component-generator="ParameterTextAreaGenerator" parameterName="vacationOrderLegalBasis" styleClass="expand5-200" />
       </property-sheet>
    </config>
 
@@ -141,7 +141,7 @@
 
    <config evaluator="aspect-name" condition="docspec:managementsOrderDetails">
       <property-sheet>
-         <show-property name="responsible" show-in-edit-mode="false" display-label-id="document_responsible" />
+         <show-property name="responsible" show-in-edit-mode="false" display-label-id="document_responsibleName" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="docspec:responsibleName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setResponsible}" editable="true" dialogTitleId="users_search_title" />
          <show-property name="docspec:responsibleStructUnit" show-in-view-mode="false" styleClass="expand5-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:responsibleOrganization" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setOrganization}" editable="true" dialogTitleId="contacts_search_title" />
@@ -178,7 +178,7 @@
 
    <config evaluator="aspect-name" condition="docspec:transmittalMode">
       <property-sheet>
-         <show-property name="docspec:transmittalModeValue" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="ClassificatorSelectorGenerator" classificatorName="transmittalMode" forcedMandatory="true" />
+         <show-property name="docspec:transmittalMode" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="ClassificatorSelectorGenerator" classificatorName="transmittalMode" forcedMandatory="true" />
       </property-sheet>
    </config>
 
@@ -192,17 +192,27 @@
    
    <config evaluator="aspect-name" condition="docspec:vacationOrder">
       <property-sheet>
-         <separator name="vacsep0" component-generator="SeparatorGenerator" />
-         <show-property name="{temp}vacationAddText" show-in-edit-mode="false" display-label-id="document_vacationAdd" />
-         <show-property name="{temp}vacationAdd" ignore-if-missing="false" show-in-view-mode="false" display-label-id="document_vacationAdd" component-generator="InlinePropertyGroupGenerator" props="docspec:leaveAnnual|boolean,docspec:leaveAnnualBeginDate|date|inline,docspec:leaveAnnualEndDate|date|inline,docspec:leaveAnnualDays||small inline,docspec:leaveWithoutPay|boolean|inline,docspec:leaveWithoutPayBeginDate|date|inline,docspec:leaveWithoutPayEndDate|date|inline,docspec:leaveWithoutPayDays||small inline,docspec:leaveChild|boolean,docspec:leaveChildBeginDate|date|inline,docspec:leaveChildEndDate|date|inline,docspec:leaveChildDays||small inline,docspec:leaveStudy|boolean,docspec:leaveStudyBeginDate|date|inline,docspec:leaveStudyEndDate|date|inline,docspec:leaveStudyDays||small inline" textId="document_vacationAdd_edit" />
+         <separator name="vacsep0" component-generator="SeparatorGenerator" show="#{MetadataBlockBean.inEditMode == true || MetadataBlockBean.showVacationAdd == true}" />
+         <show-property name="{temp}vacationAddText" show-in-edit-mode="false" show="#{MetadataBlockBean.showVacationAdd == true}" display-label-id="document_vacationAdd" component-generator="UnescapedOutputTextGenerator" />
+         <show-property name="docspec:leaveAnnual" show-in-view-mode="false" display-label-id="document_vacationAdd" component-generator="InlinePropertyGroupGenerator" props="docspec:leaveAnnual,docspec:leaveAnnualBeginDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualEndDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualDays||styleClass=small inline|mandatoryIf=_leaveAnnual,docspec:leaveWithoutPay,docspec:leaveWithoutPayBeginDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayEndDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayDays||styleClass=small inline|mandatoryIf=_leaveWithoutPay,docspec:leaveChild,docspec:leaveChildBeginDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildEndDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildDays||styleClass=small inline|mandatoryIf=_leaveChild,docspec:leaveStudy,docspec:leaveStudyBeginDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyEndDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyDays||styleClass=small inline|mandatoryIf=_leaveStudy" textId="document_vacationAdd_edit" />
+      </property-sheet>
+   </config>
 
-         <separator name="vacsep1" component-generator="SeparatorGenerator" />
-         <show-property name="{temp}vacationChangeText" show-in-edit-mode="false" display-label-id="document_vacationChange" />
-         <show-property name="{temp}vacationChange" ignore-if-missing="false" show-in-view-mode="false" display-label-id="document_vacationChange" component-generator="InlinePropertyGroupGenerator" props="docspec:leaveChange|boolean,docspec:leaveInitialBeginDate|date|inline,docspec:leaveInitialEndDate|date|inline,docspec:leaveNewBeginDate|date|inline,docspec:leaveNewEndDate|date|inline,docspec:leaveNewDays||small inline,docspec:leaveCancel|boolean,docspec:leaveCancelBeginDate|date|inline,docspec:leaveCancelEndDate|date|inline,docspec:leaveCancelDays||small inline" textId="document_vacationChange_edit" />
+   <config evaluator="node-type" condition="docsub:vacationOrderSmit">
+      <property-sheet>
+         <show-property name="docspec:leaveAnnual" show-in-view-mode="false" display-label-id="document_vacationAdd" component-generator="InlinePropertyGroupGenerator" props="docspec:leaveAnnual,docspec:leaveAnnualBeginDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualEndDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualDays||styleClass=small inline|mandatoryIf=_leaveAnnual,docspec:leaveWithoutPay,docspec:leaveWithoutPayBeginDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayEndDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayDays||styleClass=small inline|mandatoryIf=_leaveWithoutPay,docspec:leaveChild,docspec:leaveChildBeginDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildEndDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildDays||styleClass=small inline|mandatoryIf=_leaveChild,docspec:leaveStudy,docspec:leaveStudyBeginDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyEndDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyDays||styleClass=small inline|mandatoryIf=_leaveStudy" textId="document_vacationAddSmit_edit" />
+      </property-sheet>
+   </config>
 
-         <separator name="vacsep2" component-generator="SeparatorGenerator" show-in-view-mode="false" />
-         <show-property name="{temp}vacationSubstitute" ignore-if-missing="false" show-in-view-mode="false" display-label-id="document_vacationSubstitute" component-generator="MultiValueEditorGenerator" props="docspec:substituteName,docspec:substitutionBeginDate,docspec:substitutionEndDate" componentTypes="input,date,date" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setVacationSubstitute}" dialogTitleId="users_search_title" />
-         <show-property name="vacationSubstitute" show-in-edit-mode="false" display-label-id="document_vacationSubstitute" component-generator="UnescapedOutputTextGenerator"  />
+   <config evaluator="aspect-name" condition="docspec:vacationOrder">
+      <property-sheet>
+         <separator name="vacsep1" component-generator="SeparatorGenerator" show="#{MetadataBlockBean.inEditMode == true || MetadataBlockBean.showVacationChange == true}" />
+         <show-property name="{temp}vacationChangeText" show-in-edit-mode="false" show="#{MetadataBlockBean.showVacationChange == true}" display-label-id="document_vacationChange" component-generator="UnescapedOutputTextGenerator" />
+         <show-property name="docspec:leaveChange" show-in-view-mode="false" display-label-id="document_vacationChange" component-generator="InlinePropertyGroupGenerator" props="docspec:leaveChange,docspec:leaveInitialBeginDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveInitialEndDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveNewBeginDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveNewEndDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveNewDays||styleClass=small inline|mandatoryIf=_leaveChange,docspec:leaveCancel,docspec:leaveCancelBeginDate||styleClass=date inline|mandatoryIf=_leaveCancel,docspec:leaveCancelEndDate||styleClass=date inline|mandatoryIf=_leaveCancel,docspec:leaveCancelDays||styleClass=small inline|mandatoryIf=_leaveCancel" textId="document_vacationChange_edit" />
+
+         <separator name="vacsep2" component-generator="SeparatorGenerator" />
+         <show-property name="{temp}vacationSubstitute" show-in-edit-mode="false" display-label-id="document_vacationSubstitute" component-generator="UnescapedOutputTextGenerator"  />
+         <show-property name="docspec:substituteName" show-in-view-mode="false" display-label-id="document_vacationSubstitute" component-generator="MultiValueEditorGenerator" props="docspec:substituteName,docspec:substitutionBeginDate,docspec:substitutionEndDate" componentTypes="input,date,date" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setVacationSubstitute}" dialogTitleId="users_search_title" />
       </property-sheet>
    </config>
 
@@ -244,13 +254,13 @@
    
    <config evaluator="aspect-name" condition="docspec:contractDetails">
       <property-sheet>
-         <show-property name="docspec:recipientName1" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setRecipient1}" editable="true" dialogTitleId="contacts_search_title" />
+         <show-property name="docspec:secondPartyName" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setSecondParty}" editable="true" dialogTitleId="contacts_search_title" />
          <show-property name="docspec:secondPartySigner" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="docspec:recipientEmail1" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:secondPartyEmail" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:secondPartyContactPerson" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="docspec:recipientName2" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setRecipient2}" editable="true" dialogTitleId="contacts_search_title" />
+         <show-property name="docspec:thirdPartyName" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setThirdParty}" editable="true" dialogTitleId="contacts_search_title" />
          <show-property name="docspec:thirdPartySigner" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="docspec:recipientEmail2" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:thirdPartyEmail" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:thirdPartyContactPerson" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>

@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.common.propertysheet.validator;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.validator.ValidatorException;
 
 import org.alfresco.web.ui.repo.component.property.UIProperty;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -43,15 +45,36 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
 
     @Override
     public void validate(FacesContext context, UIComponent component, Object value) throws ValidatorException {
-        UIInput input = (UIInput) component;
-        UIInput propertyInput = ComponentUtil.getInputFromSamePropertySheet(component, otherPropertyName);
         if (isValidationDisabled(context)) {
             return; // we don't want to validate before for example Search component is starting searching
         }
+
+        UIInput input = (UIInput) component;
+
+        // find otherPropertyName
+        UIPropertySheet propSheetComponent = ComponentUtil.getAncestorComponent(component, UIPropertySheet.class, true);
+        List<UIInput> inputs = new ArrayList<UIInput>();
+        ComponentUtil.getChildrenByClass(inputs, propSheetComponent, UIInput.class, otherPropertyName);
+        if (inputs.size() != 1) {
+            StringBuilder ids = new StringBuilder();
+            for (UIInput wrongInput : inputs) {
+                if (ids.length() > 0) {
+                    ids.append(", ");
+                }
+                ids.append(wrongInput.getId());
+            }
+            throw new RuntimeException("There must be only one UIInput component with id suffix '" + otherPropertyName + "', but found " + inputs.size() + " components: " + ids.toString());
+        }
+        UIInput propertyInput = inputs.get(0);
+
         boolean mustBeFilled = isOtherFilledAndMandatory(propertyInput);
         if (mustBeFilled && !isFilled(input)) {
-            UIProperty thisUIProperty = ComponentUtil.getAncestorComponent(component, UIProperty.class, true);
-            String msg = MessageUtil.getMessage(context, MESSAGE_ID, ComponentUtil.getPropertyLabel(thisUIProperty, component.getId()));
+            String label = (String) input.getAttributes().get(ComponentUtil.ATTR_DISPLAY_LABEL);
+            if (label == null) {
+                UIProperty thisUIProperty = ComponentUtil.getAncestorComponent(component, UIProperty.class, true);
+                label = ComponentUtil.getPropertyLabel(thisUIProperty, component.getId());
+            }
+            String msg = MessageUtil.getMessage(context, MESSAGE_ID, label);
             throw new ValidatorException(new FacesMessage(msg));
         }
         input.setRequired(false);

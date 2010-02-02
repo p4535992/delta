@@ -97,6 +97,8 @@
                </f:subview>
                
                <f:subview id="more-actions-panel" rendered="#{DialogManager.moreActionsId != null}">
+               <%-- TODO: uncomment this when dropdown menu is ok (see next TODO) --%>
+               <%--<f:subview id="more-actions-panel" rendered="#{DialogManager.moreActionsId != null and DialogManager.currentDialog.name ne 'document'}">--%>
                   <f:verbatim>
                   <li>
                   </f:verbatim>
@@ -126,11 +128,17 @@
                         menuStyleClass="" style="white-space: nowrap" label="#{DialogManager.actionsMenuLabel}">
                         <r:actions id="main_actions_menu_items" value="#{DialogManager.actionsId}" context="#{DialogManager.actionsContext}" />
                      </a:menu>
+                     <%-- TODO: position the menu correctly to the left alongside the buttons --%>
+                     <%--<a:menu id="more_actions_menu" rendered="#{DialogManager.moreActionsId != null and DialogManager.currentDialog.name eq 'document'}" style="white-space:nowrap" menuStyleClass="dropdown-menu"
+                        label="#{DialogManager.moreActionsMenuLabel}" image="/images/icons/arrow-down.png">
+                        <r:actions id="more_actions_menu_items" value="#{DialogManager.moreActionsId}" context="#{DialogManager.actionsContext}"/>
+                     </a:menu>--%>
                   </f:subview>
                   <f:subview id="empty-main-actions-subview" rendered="#{DialogManager.currentDialog.name eq 'manageGroups' and empty DialogManager.bean.groups}">
                      <h:outputText value="&nbsp;" escape="false" style="line-height:20px;" />
                   </f:subview>
                </a:panel>
+               
                
                <%-- Space Actions --%>
                <a:panel id="space-details-actions-panel" rendered="#{DialogManager.currentDialog.name eq 'showSpaceDetails' && DialogManager.bean.space != null}">
@@ -180,17 +188,17 @@
          
             <f:subview id="dialog-body">
 
-               <a:panel id="container-content-buttons" styleClass="column panel-90" rendered="#{DialogManager.OKButtonVisible && !(DialogManager.currentDialog.name eq 'documentListDialog' && DocumentListDialog.quickSearch) || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
+               <a:panel id="container-content-buttons" styleClass="column panel-90" rendered="#{DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
                   <jsp:include page="<%=Application.getDialogManager().getPage() %>" />
                </a:panel>
 
-               <a:panel id="container-content" styleClass="column panel-100" rendered="#{!(DialogManager.OKButtonVisible && !(DialogManager.currentDialog.name eq 'documentListDialog' && DocumentListDialog.quickSearch) || (DialogManager.currentDialog.name eq 'manageGroups'  && GroupsDialog.group ne null))}">
+               <a:panel id="container-content" styleClass="column panel-100" rendered="#{!(DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups'  && GroupsDialog.group ne null))}">
                   <jsp:include page="<%=Application.getDialogManager().getPage() %>" />
                </a:panel>
 
             </f:subview>
 
-            <a:panel id="dialog-buttons-panel" styleClass="column panel-10 container-buttons" rendered="#{DialogManager.OKButtonVisible && !(DialogManager.currentDialog.name eq 'documentListDialog' && DocumentListDialog.quickSearch) || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
+            <a:panel id="dialog-buttons-panel" styleClass="column panel-10 container-buttons" rendered="#{DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
                <r:dialogButtons id="dialog-buttons" styleClass="wizardButton" />
             </a:panel>
 

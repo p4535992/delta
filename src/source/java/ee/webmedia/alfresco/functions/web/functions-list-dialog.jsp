@@ -50,7 +50,6 @@
 
       <%-- Details actions column --%>
       <a:column id="col5" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager}" >
-      <%-- TODO: check for Administrator or Dokumendihaldur permissions for this button --%>
          <a:actionLink id="col5-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:functionsDetailsDialog" showLink="false"
             actionListener="#{FunctionsDetailsDialog.select}" tooltip="#{msg.functions_details_info}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />

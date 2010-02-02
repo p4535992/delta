@@ -64,6 +64,7 @@
       <permissionGroup name="DocumentWrite" expose="true" allowFullControl="false">
            <includePermissionGroup type="sys:base" permissionGroup="CreateChildren"/>
            <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteContent"/>
            <includePermissionGroup type="cm:lockable" permissionGroup="Lock"/>
       </permissionGroup>  
 

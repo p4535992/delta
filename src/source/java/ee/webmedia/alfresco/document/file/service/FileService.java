@@ -24,6 +24,13 @@ public interface FileService {
      * @return list of all files(including digidoc container, but witout digidocitems of container)
      */
     List<File> getAllFilesExcludingDigidocSubitems(NodeRef nodeRef);
+
+    /**
+     * 
+     * @param nodeRef
+     * @return
+     */
+    File getFile(NodeRef nodeRef);
     
     /**
      * Calculatees WebDAV URL for given node

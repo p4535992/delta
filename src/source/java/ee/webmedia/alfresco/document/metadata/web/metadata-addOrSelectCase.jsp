@@ -33,9 +33,7 @@
 <h:panelGrid id="aoscModal-newCase-controls">
          <h:outputText id="aoscModal-newCase-lbl" value="#{msg.document_aoscModal_newCaseLabel}" styleClass="aoscModal-newCase" />
          <h:inputTextarea id="newCaseName" binding="#{MetadataBlockBean.newCaseHtmlInput}" styleClass="aoscModal-newCase assignCaseInput expand15-200" readonly="readonly" />
-         <h:commandButton id="confirmCaseSelectionBtn" onclick="realSubmit()" value="#{msg.confirm}" ></h:commandButton>
-         <h:inputHidden id="caseAssigned" value="false" /><%--pole vist enam vaja --%>
-         <h:inputHidden id="volumeContainsCases" />
+         <h:commandButton id="confirmCaseSelectionBtn" onclick="realSubmit()" value="#{msg.confirm}" disabled="true" />
 </h:panelGrid>
 <f:verbatim>
 </div>
@@ -47,7 +45,7 @@ $jQ(document).ready(function(){
    relocateRadioButtons();
    clearCaseSelectionInputs();
 
-   $jQ('#' + escapeId4JQ('dialog:finish-button')).bind("click", function(e){
+   $jQ('#' + escapeId4JQ('dialog:finish-button') + ', #' + escapeId4JQ('dialog:document_register_button')).bind("click", function(e){
       if(!volumeContainsCases || isCaseAssigned()){
          volumeContainsCases = true;
          return true; // case selected, proceed
@@ -171,7 +169,7 @@ $jQ(document).ready(function(){
 
    function requestVolumeContainsCasesRefreshSuccess(ajaxResponse) {
       var xml = ajaxResponse.responseXML.documentElement;
-      if(xml.getAttribute('contains-cases') == "true"){
+      if(xml.getAttribute('volume-selection-changed') == "true" && xml.getAttribute('contains-cases') == "true"){
          volumeContainsCases = true;
          showModal('aoscModal-container-modalpopup');
       } else {

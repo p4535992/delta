@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.signature.service;
 import java.io.InputStream;
 import java.util.List;
 
+import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.sk.digidoc.DigiDocException;
@@ -30,6 +31,14 @@ public interface SignatureService {
      */
     boolean isDigiDocContainer(NodeRef nodeRef);
 
+    /**
+     * Checks if the referenced file is a .ddoc
+     * 
+     * @param fileInfo
+     * @return
+     */
+    boolean isDigiDocContainer(FileInfo fileInfo);
+    
     /**
      * Returns the signature digest made from the cert and data pointed to by nodeRef.
      * Used for signing existing .ddoc files.
@@ -120,5 +129,13 @@ public interface SignatureService {
      * @return
      */
     NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureDigest signatureDigest, String signatureHex);
-
+    
+    /**
+     * Changes an existing document to ddoc and signs it
+     * @param nodeRef - nodeRef of existing document
+     * @param contents - the contents
+     * @param signatureDigest
+     * @param signatureHex
+     */
+    void writeContainer(NodeRef nodeRef, List<NodeRef> contents, SignatureDigest signatureDigest, String signatureHex);
 }

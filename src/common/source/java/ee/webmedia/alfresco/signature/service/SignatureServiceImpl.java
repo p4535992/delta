@@ -17,7 +17,9 @@ import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.log4j.Logger;
 import org.springframework.util.StringUtils;
 
@@ -42,11 +44,16 @@ public class SignatureServiceImpl implements SignatureService {
     private static Logger log = Logger.getLogger(SignatureServiceImpl.class);
 
     private FileFolderService fileFolderService;
+    private NodeService nodeService;
 
     private String jDigiDocCfg;
 
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
+    }
+
+    public void setNodeService(NodeService nodeService) {
+        this.nodeService = nodeService;
     }
 
     public void setjDigiDocCfg(String jDigiDocCfg) {
@@ -61,9 +68,13 @@ public class SignatureServiceImpl implements SignatureService {
 
     public boolean isDigiDocContainer(NodeRef nodeRef) {
         FileInfo fileInfo = fileFolderService.getFileInfo(nodeRef);
-        return fileInfo.getName().toLowerCase().endsWith(".ddoc") && !fileInfo.isFolder();
+        return isDigiDocContainer(fileInfo);
     }
 
+    public boolean isDigiDocContainer(FileInfo fileInfo) {
+        return fileInfo.getName().toLowerCase().endsWith(".ddoc") && !fileInfo.isFolder();
+    }
+    
     public List<SignatureItem> getSignatureItems(NodeRef nodeRef) {
         SignedDoc ddoc = getSignedDoc(nodeRef);
         return getSignatureItems(nodeRef, ddoc);
@@ -130,6 +141,17 @@ public class SignatureServiceImpl implements SignatureService {
             writeSignedDoc(nodeRef, signedDoc);
         } catch (DigiDocException e) {
             throw new SignatureException("Failed to add signature to ddoc file, nodeRef = " + nodeRef, e);
+        }
+    }
+
+    public void writeContainer(NodeRef nodeRef, List<NodeRef> contents, SignatureDigest signatureDigest, String signatureHex) {
+        try {
+            SignedDoc signedDoc = createSignedDoc(contents);
+            addSignature(signedDoc, signatureDigest, signatureHex);
+            writeSignedDoc(nodeRef, signedDoc);
+            nodeService.setProperty(nodeRef, ContentModel.PROP_NAME, FilenameUtils.removeExtension((String) nodeService.getProperty(nodeRef, ContentModel.PROP_NAME)) + ".ddoc");
+        } catch (DigiDocException e) {
+            throw new SignatureException("Failed to change existing doc to ddoc or add signature to ddoc file, nodeRef = " + nodeRef, e);
         }
     }
 

@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.html.HtmlInputTextarea;
 import javax.faces.component.html.HtmlSelectOneMenu;
@@ -23,9 +24,7 @@ import javax.faces.validator.ValidatorException;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
-import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.lock.LockStatus;
-import org.alfresco.service.cmr.lock.LockType;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.PersonService;
@@ -38,7 +37,6 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.DateFormatUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
@@ -52,8 +50,10 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.TransientProps;
+import ee.webmedia.alfresco.document.service.DocumentService.UnableToPerformException;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
@@ -67,6 +67,7 @@ import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
@@ -76,8 +77,7 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
 public class MetadataBlockBean implements Serializable {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MetadataBlockBean.class);
     private static final long serialVersionUID = 1L;
-    private static final String DATE_FORMAT = "dd.MM.yyyy";
-    
+
     public static final String BEAN_NAME = "MetadataBlockBean";
 
     private transient DocumentService documentService;
@@ -89,7 +89,7 @@ public class MetadataBlockBean implements Serializable {
     private transient SeriesService seriesService;
     private transient VolumeService volumeService;
     private transient CaseService caseService;
-    private transient LockService lockService;
+    private transient DocLockService docLockService;
     private transient DocumentTemplateService documentTemplateService;
     private transient ParametersService parametersService;
     private transient UIPropertySheet propertySheet;
@@ -102,8 +102,9 @@ public class MetadataBlockBean implements Serializable {
     private String documentTypeName;
     private String selectedCaseRefNum;
 
-    /** timeOut in seconds how long lock is kept after creation(refreshing) before expiring */
-    private int lockTimeout = 180;
+    /** timeOut in seconds how often lock should be refreshed to avoid expiring */
+    private Integer lockRefreshTimeout;
+    private String originalVolumeRef;
 
     public MetadataBlockBean() {
         String datePattern = Application.getMessage(FacesContext.getCurrentInstance(), "date_pattern");
@@ -129,7 +130,7 @@ public class MetadataBlockBean implements Serializable {
     private String getAddressbookOrgOrName(NodeRef nodeRef) {
         String result = "";
         Map<QName, Serializable> props = getNodeService().getProperties(nodeRef);
-        if (AddressbookModel.Types.ORGANIZATION.equals(nodeService.getType(nodeRef))) {
+        if (AddressbookModel.Types.ORGANIZATION.equals(getNodeService().getType(nodeRef))) {
             result = (String) props.get(AddressbookModel.Props.ORGANIZATION_NAME);
         } else {
             result = UserUtil.getPersonFullName(props.get(AddressbookModel.Props.PERSON_FIRST_NAME).toString(), props.get(
@@ -145,12 +146,12 @@ public class MetadataBlockBean implements Serializable {
         docProps.put(email.toString(), getNodeService().getProperty(nodeRef, AddressbookModel.Props.EMAIL));
     }
 
-    public void setRecipient1(String nodeRefStr) {
-        setRecipient(nodeRefStr, DocumentSpecificModel.Props.RECIPIENT_NAME1, DocumentSpecificModel.Props.RECIPIENT_EMAIL1);
+    public void setSecondParty(String nodeRefStr) {
+        setRecipient(nodeRefStr, DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.SECOND_PARTY_EMAIL);
     }
 
-    public void setRecipient2(String nodeRefStr) {
-        setRecipient(nodeRefStr, DocumentSpecificModel.Props.RECIPIENT_NAME2, DocumentSpecificModel.Props.RECIPIENT_EMAIL2);
+    public void setThirdParty(String nodeRefStr) {
+        setRecipient(nodeRefStr, DocumentSpecificModel.Props.THIRD_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_EMAIL);
     }
 
     public void setFirstParty(String nodeRefStr) {
@@ -240,7 +241,29 @@ public class MetadataBlockBean implements Serializable {
         list.add(UserUtil.getPersonFullName1(personProps));
         list.add(null);
         list.add(null);
-        return list; 
+        return list;
+    }
+
+    public boolean isShowVacationAdd() {
+        return StringUtils.isNotBlank((String) document.getProperties().get("{temp}vacationAddText"));
+    }
+
+    public boolean isShowVacationChange() {
+        return StringUtils.isNotBlank((String) document.getProperties().get("{temp}vacationChangeText"));
+    }
+
+    private String formatDateOrEmpty(Date date) {
+        if (date == null) {
+            return "";
+        }
+        return dateFormat.format(date);
+    }
+
+    private String formatIntegerOrEmpty(Integer integer) {
+        if (integer == null) {
+            return "";
+        }
+        return Integer.toString(integer);
     }
 
     protected void afterModeChange() {
@@ -373,93 +396,116 @@ public class MetadataBlockBean implements Serializable {
             }
 
             if (document.hasAspect(DocumentSpecificModel.Aspects.VACATION_ORDER)) {
-			    Boolean leaveAnnual = (Boolean) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL);
-			    Boolean leaveWithoutPay = (Boolean) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY);
-			    Boolean leaveChild = (Boolean) props.get(DocumentSpecificModel.Props.LEAVE_CHILD);
-			    Boolean leaveStudy = (Boolean) props.get(DocumentSpecificModel.Props.LEAVE_STUDY);
-			    StringBuilder sb = new StringBuilder();
-			    
+                Boolean leaveAnnual = (Boolean) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL);
+                Boolean leaveWithoutPay = (Boolean) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY);
+                Boolean leaveChild = (Boolean) props.get(DocumentSpecificModel.Props.LEAVE_CHILD);
+                Boolean leaveStudy = (Boolean) props.get(DocumentSpecificModel.Props.LEAVE_STUDY);
+                StringBuilder sb = new StringBuilder();
+
+                FacesContext context = FacesContext.getCurrentInstance();
                 if (BooleanUtils.isTrue(leaveAnnual)) {
-                    String from = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL_BEGIN_DATE), DATE_FORMAT);
-                    String to = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL_END_DATE), DATE_FORMAT);
-                    Object days = (Object) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL_DAYS);
-                    sb.append(MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_leaveAnnual", from, to, days));
+                    String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL_BEGIN_DATE));
+                    String to = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL_END_DATE));
+                    String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL_DAYS));
+                    String msg = document.getType().equals(DocumentSubtypeModel.Types.VACATION_ORDER_SMIT) ? "document_leaveAnnualSmit" : "document_leaveAnnual";
+                    sb.append(Utils.encode(MessageUtil.getMessage(context, msg, from, to, days)));
                 }
                 if (BooleanUtils.isTrue(leaveWithoutPay)) {
-                    String from = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY_BEGIN_DATE), DATE_FORMAT);
-                    String to = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY_END_DATE), DATE_FORMAT);
-                    Object days = (Object) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY_DAYS);
+                    String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY_BEGIN_DATE));
+                    String to = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY_END_DATE));
+                    String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY_DAYS));
                     if (StringUtils.isNotBlank(sb.toString())) {
-                        sb.append("; ");
+                        sb.append("<br/>");
                     }
-                    sb.append(MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_leaveWithoutPay", from, to, days));
+                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveWithoutPay", from, to, days)));
                 }
                 if (BooleanUtils.isTrue(leaveChild)) {
-                    String from = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_CHILD_BEGIN_DATE), DATE_FORMAT);
-                    String to = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_CHILD_END_DATE), DATE_FORMAT);
-                    Object days = (Object) props.get(DocumentSpecificModel.Props.LEAVE_CHILD_DAYS);
+                    String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_CHILD_BEGIN_DATE));
+                    String to = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_CHILD_END_DATE));
+                    String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_CHILD_DAYS));
                     if (StringUtils.isNotBlank(sb.toString())) {
-                        sb.append("; ");
+                        sb.append("<br/>");
                     }
-                    sb.append(MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_leaveChild", from, to, days));
+                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveChild", from, to, days)));
                 }
                 if (BooleanUtils.isTrue(leaveStudy)) {
-                    String from = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_STUDY_BEGIN_DATE), DATE_FORMAT);
-                    String to = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_STUDY_END_DATE), DATE_FORMAT);
-                    Object days = (Object) props.get(DocumentSpecificModel.Props.LEAVE_STUDY_DAYS);
+                    String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_STUDY_BEGIN_DATE));
+                    String to = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_STUDY_END_DATE));
+                    String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_STUDY_DAYS));
                     if (StringUtils.isNotBlank(sb.toString())) {
-                        sb.append("; ");
+                        sb.append("<br/>");
                     }
-                    sb.append(MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_leaveStudy", from, to, days));
+                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveStudy", from, to, days)));
                 }
                 if (StringUtils.isNotBlank(sb.toString())) {
                     props.put("{temp}vacationAddText", sb.toString());
                 }
-                
+
                 Boolean leaveChange = (Boolean) props.get(DocumentSpecificModel.Props.LEAVE_CHANGE);
                 Boolean leaveCancel = (Boolean) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL);
                 sb = new StringBuilder();
                 if (BooleanUtils.isTrue(leaveChange)) {
-                    String from = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_INITIAL_BEGIN_DATE), DATE_FORMAT);
-                    String to = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_INITIAL_END_DATE), DATE_FORMAT);
-                    String newFrom = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE), DATE_FORMAT);
-                    String newTo = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_NEW_END_DATE), DATE_FORMAT);
-                    Object days = (Object) props.get(DocumentSpecificModel.Props.LEAVE_NEW_DAYS);
-                    sb.append(MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_leaveChange", from, to, newFrom, newTo, days));
+                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveChange1")));
+                    sb.append("<br/>");
+                    String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_INITIAL_BEGIN_DATE));
+                    String to = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_INITIAL_END_DATE));
+                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveChange2", from, to)));
+                    sb.append("<br/>");
+                    String newFrom = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE));
+                    String newTo = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_NEW_END_DATE));
+                    String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_NEW_DAYS));
+                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveChange3", newFrom, newTo, days)));
                 }
                 if (BooleanUtils.isTrue(leaveCancel)) {
-                    String from = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE), DATE_FORMAT);
-                    String to = DateFormatUtils.format((Date) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE), DATE_FORMAT);
-                    Object days = (Object) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_DAYS);
                     if (StringUtils.isNotBlank(sb.toString())) {
-                        sb.append("; ");
+                        sb.append("<br/>");
                     }
-                    sb.append(MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_leaveCancel", from, to, days));
+                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveCancel1")));
+                    sb.append("<br/>");
+                    String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE));
+                    String to = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE));
+                    String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_DAYS));
+                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveCancel2", from, to, days)));
                 }
                 if (StringUtils.isNotBlank(sb.toString())) {
                     props.put("{temp}vacationChangeText", sb.toString());
                 }
-                
 
-                StringBuilder table = new StringBuilder("<table cellspacing='0' cellpadding='0' class='recipient padding'><thead><tr><th>Asendaja</th><th>Alates</th><th>Kuni</th></tr></thead><tbody>");
+                StringBuilder table = new StringBuilder("<table cellspacing='0' cellpadding='0' class='recipient padding'><thead><tr><th>");
+                table.append(MessageUtil.getMessage(context, "document_vacationSubstitute2"));
+                table.append("</th><th>").append(MessageUtil.getMessage(context, "from"));
+                table.append("</th><th>").append(MessageUtil.getMessage(context, "to"));
+                table.append("</th></tr></thead><tbody>");
                 @SuppressWarnings("unchecked")
                 List<String> names = (List<String>) props.get(DocumentSpecificModel.Props.SUBSTITUTE_NAME);
                 @SuppressWarnings("unchecked")
-                List<Date> begin = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE);
+                List<Date> begins = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE);
                 @SuppressWarnings("unchecked")
-                List<Date> end = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE);
-                for(int i = 0; i < names.size(); i++) {
-                    table.append("<tr><td>")
-                    .append(names.get(i))
-                    .append("</td><td>")
-                    .append(dateFormat.format(begin.get(i)))
-                    .append("</td><td>")
-                    .append(dateFormat.format(end.get(i)))
-                    .append("</td></tr>");
+                List<Date> ends = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE);
+                if (names != null) {
+                    for (int i = 0; i < names.size(); i++) {
+                        String name = "";
+                        if (names.get(i) != null) {
+                            name = names.get(i);
+                        }
+                        String begin = "";
+                        if (begins != null && i < begins.size() && begins.get(i) != null) {
+                            begin = dateFormat.format(begins.get(i));
+                        }
+                        String end = "";
+                        if (ends != null && i < ends.size() && ends.get(i) != null) {
+                            end = dateFormat.format(ends.get(i));
+                        }
+                        if (StringUtils.isBlank(name) && StringUtils.isBlank(begin) && StringUtils.isBlank(end)) {
+                            continue;
+                        }
+                        table.append("<tr><td>").append(Utils.encode(name)).append("</td><td>");
+                        table.append(Utils.encode(begin)).append("</td><td>");
+                        table.append(Utils.encode(end)).append("</td></tr>");
+                    }
+                    table.append("</tbody></table>");
+                    props.put("{temp}vacationSubstitute", table.toString());
                 }
-                table.append("</tbody></table>");
-                System.out.println(table.toString());
-                props.put("vacationSubstitute", table.toString());
             }
 
         } else {
@@ -489,23 +535,18 @@ public class MetadataBlockBean implements Serializable {
      * @param selectComponent - selectComponent that will be rendered(use <code>selectComponent.getChildren()</code> to add selection items)
      * @return A collection of UISelectItem objects containing the selection items to show on form.
      */
-    public void findDocumentTemplates(FacesContext context, HtmlSelectOneMenu selectComponent) {
-        List<DocumentTemplate> docTemplates = getDocumentTemplateService().getTemplates();
-        @SuppressWarnings("unchecked")
-        List<UIComponent> selectOptions = selectComponent.getChildren();
-        for (DocumentTemplate tmpl : docTemplates) {
-            if (document.getType().equals(tmpl.getDocTypeId())) {
-                UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-                selectItem.setItemLabel(FilenameUtils.removeExtension(tmpl.getName()));
-                selectItem.setItemValue(tmpl.getName());
-                selectOptions.add(selectItem);
-            }
-        }
+    public List<SelectItem> findDocumentTemplates(FacesContext context, UIInput selectComponent) {
+        List<DocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(document.getType());
+        List<SelectItem> selectItems = new ArrayList<SelectItem>(docTemplates.size() + 1);
+
         // empty default selection
-        UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-        selectItem.setItemLabel("");
-        selectItem.setItemValue("");
-        selectOptions.add(0, selectItem);
+        selectItems.add(new SelectItem("", ""));
+
+        for (DocumentTemplate tmpl : docTemplates) {
+            selectItems.add(new SelectItem(tmpl.getName(), FilenameUtils.removeExtension(tmpl.getName())));
+        }
+        WebUtil.sort(selectItems);
+        return selectItems;
     }
 
     /**
@@ -523,7 +564,7 @@ public class MetadataBlockBean implements Serializable {
                 return;
             }
             // read serAccessRestriction-related values from series
-            final Series series = getSeriesService().getSeriesByNoderef(sVal);
+            final Series series = getSeriesService().getSeriesByNodeRef(sVal);
             final Map<String, Object> seriesProps = series.getNode().getProperties();
             final String serAccessRestriction = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
             final String serAccessRestrictionReason = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString());
@@ -554,16 +595,38 @@ public class MetadataBlockBean implements Serializable {
         List<Function> functions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
         @SuppressWarnings("unchecked")
         List<UIComponent> selectOptions = selectComponent.getChildren();
+        selectOptions.clear();
+        
+        /** Handle filled in data */
+        Map<String, Object> props = document.getProperties();
+        String nodeRef = (String) props.get(TransientProps.FUNCTION_NODEREF);
+        Function filled = null;
+        if (StringUtils.isNotBlank(nodeRef)) {
+            filled = getFunctionsService().getFunctionByNodeRef(nodeRef);
+            functions.add(0, filled);
+        }
+        
         for (Function function : functions) {
-            List<Series> allSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, document.getType());
-            if (allSeries.size() == 0) {
+            // skip the duplicate (when filled is open), 
+            if (function != filled && function.getNodeRef().toString().equals(nodeRef)) {
                 continue;
+            }
+            // don't check if filled is closed
+            if (function != filled || DocListUnitStatus.OPEN.equals(function.getStatus())) {
+                List<Series> allSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, document.getType());
+                if (allSeries.size() == 0) {
+                    continue;
+                }
             }
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
             selectItem.setItemLabel(function.getMark() + " " + function.getTitle());
             selectItem.setItemValue(function.getNodeRef().toString());
             selectOptions.add(selectItem);
         }
+        UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
+        selectItem.setItemLabel("");
+        selectItem.setItemValue("");
+        selectOptions.add(0, selectItem);
     }
 
     /**
@@ -587,7 +650,21 @@ public class MetadataBlockBean implements Serializable {
         @SuppressWarnings("unchecked")
         List<UIComponent> selectOptions = selectComponent.getChildren();
         selectOptions.clear();
+        
+        /** Handle filled in data */
+        Map<String, Object> props = document.getProperties();
+        String nodeRef = (String) props.get(TransientProps.SERIES_NODEREF);
+        Series filled = null;
+        if (StringUtils.isNotBlank(nodeRef)) {
+            filled = getSeriesService().getSeriesByNodeRef(nodeRef);
+            allSeries.add(0, filled);
+        }
+        
         for (Series series : allSeries) {
+            // skip the duplicate (when filled is open), 
+            if (series != filled && series.getNode().getNodeRefAsString().equals(nodeRef)) {
+                continue;
+            }
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
             selectItem.setItemLabel(series.getSeriesIdentifier() + " " + series.getTitle());
             selectItem.setItemValue(series.getNode().getNodeRef().toString());
@@ -620,13 +697,26 @@ public class MetadataBlockBean implements Serializable {
         @SuppressWarnings("unchecked")
         List<UIComponent> selectOptions = selectComponent.getChildren();
         selectOptions.clear();
+        
+        /** Handle filled in data */
+        Map<String, Object> props = document.getProperties();
+        String nodeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
+        Volume filled = null;
+        if (StringUtils.isNotBlank(nodeRef)) {
+            filled = getVolumeService().getVolumeByNodeRef(nodeRef);
+            volumes.add(0, filled);
+        }
+        
         for (Volume volume : volumes) {
+            // skip the duplicate (when filled is open),
+            if (volume != filled && volume.getNode().getNodeRefAsString().equals(nodeRef)) {
+                continue;
+            }
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
             selectItem.setItemLabel(volume.getVolumeMark() + " " + volume.getTitle());
             selectItem.setItemValue(volume.getNode().getNodeRef().toString());
             selectOptions.add(selectItem);
         }
-        // empty default selection
         UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
         selectItem.setItemLabel("");
         selectItem.setItemValue("");
@@ -711,7 +801,8 @@ public class MetadataBlockBean implements Serializable {
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
         documentTypeName = documentType != null ? documentType.getName() : null;
         afterModeChange();
-        reloadTransientProperties();
+        final Map<String, Object> props = document.getProperties();
+        originalVolumeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
     }
 
     public void reset() {
@@ -721,6 +812,16 @@ public class MetadataBlockBean implements Serializable {
         propertySheet = null;
         documentTypeName = null;
         selectedCaseRefNum = null;
+        originalVolumeRef = null;
+        newCaseHtmlInput = null;
+    }
+    
+    public void saveAndRegister() {
+        save();
+        registerDocument(new ActionEvent(getPropertySheet())); // XXX - random event object, it's not used
+        // We need to refresh the propertySheetgrid
+        propertySheet.getChildren().clear();
+        afterModeChange();
     }
 
     /**
@@ -739,6 +840,8 @@ public class MetadataBlockBean implements Serializable {
         lockOrUnlockIfNeeded(inEditMode);
         propertySheet.setMode(getMode());
         propertySheet.getChildren().clear();
+        DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
+        documentTypeName = documentType != null ? documentType.getName() : null;
         afterModeChange();
     }
 
@@ -755,14 +858,22 @@ public class MetadataBlockBean implements Serializable {
             propertySheet.setMode(getMode());
             propertySheet.getChildren().clear();
             afterModeChange();
+            final Map<String, Object> props = document.getProperties();
+            originalVolumeRef = (String) props.get(TransientProps.VOLUME_NODEREF); // user might not leave view, but return and want to save again
         }
     }
-
+    
     private boolean validate() throws ValidatorException {
+        NodeRef functionRef = null;
+        NodeRef seriesRef = null;
         NodeRef volumeRef = null;
         final Map<String, Object> props = document.getProperties();
+        final String functionNodeRef = (String) props.get(TransientProps.FUNCTION_NODEREF);
+        final String seriesNodeRef = (String) props.get(TransientProps.SERIES_NODEREF);
         final String volumeNodeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
         try {
+            functionRef = new NodeRef(functionNodeRef);
+            seriesRef = new NodeRef(seriesNodeRef);
             volumeRef = new NodeRef(volumeNodeRef);
         } catch (Exception e) {
             // invalid nodeRef
@@ -771,6 +882,24 @@ public class MetadataBlockBean implements Serializable {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_validationMsg_mandatory_functionSeriesVolume");
             return false;
         }
+        
+        final List<String> messages = new ArrayList<String>(4);
+        if (DocListUnitStatus.CLOSED.equals(getFunctionsService().getFunctionByNodeRef(functionRef).getStatus())) {
+            messages.add("document_validationMsg_closed_function");
+        }
+        if (DocListUnitStatus.CLOSED.equals(getSeriesService().getSeriesByNodeRef(seriesRef).getStatus())) {
+            messages.add("document_validationMsg_closed_series");
+        }
+        if (DocListUnitStatus.CLOSED.equals(getVolumeService().getVolumeByNodeRef(volumeRef).getStatus())) {
+            messages.add("document_validationMsg_closed_volume");
+        }
+        if (messages.size() > 0) {
+            for (String message : messages) {
+                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), message);
+            }
+            return false;
+        }
+            
         return validateCase(volumeRef);
     }
 
@@ -780,13 +909,20 @@ public class MetadataBlockBean implements Serializable {
             NodeRef caseNodeRef = null;
             try {
                 caseNodeRef = new NodeRef(selectedCaseRefNum);
+                if (DocListUnitStatus.CLOSED.equals(getCaseService().getCaseByNoderef(caseNodeRef).getStatus())) {
+                    MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_validationMsg_closed_case");
+                    return false;
+                }
             } catch (Exception e) {
                 // invalid nodeRef
             }
             final String newCaseTitle = (String) newCaseHtmlInput.getValue();
-            if (caseNodeRef == null && StringUtils.isBlank(newCaseTitle)) {
+            if (caseNodeRef == null && StringUtils.isBlank(newCaseTitle) && originalVolumeRef == null) {
+                // client-side validation should already prevent it, but just to make sure:
                 MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_validationMsg_mandatory_case");
                 return false;
+            } else if (caseNodeRef != null && StringUtils.isNotBlank(newCaseTitle)) {
+                throw new RuntimeException("specified selected name of new case '" + newCaseTitle + "' and selected existing case '" + caseNodeRef + "'");
             }
         }
         return true;
@@ -794,9 +930,12 @@ public class MetadataBlockBean implements Serializable {
 
     private void createOrSelectCase() {
         final Map<String, Object> props = document.getProperties();
-        final NodeRef volumeNodeRef = new NodeRef((String) props.get(TransientProps.VOLUME_NODEREF));
+        final String volumeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
+        final NodeRef volumeNodeRef = new NodeRef(volumeRef);
         final Volume volume = getVolumeService().getVolumeByNodeRef(volumeNodeRef);
-        if (volume.isContainsCases()) {
+        if (StringUtils.equals(volumeRef, originalVolumeRef)){
+            // no need to create case nor put value of original case to props(already set when initialized)
+        } else if (volume.isContainsCases()) {
             final String newCaseTitle = (String) newCaseHtmlInput.getValue();
             final NodeRef caseNodeRef;
             if (StringUtils.isNotBlank(newCaseTitle)) {
@@ -809,7 +948,7 @@ public class MetadataBlockBean implements Serializable {
                 caseNodeRef = new NodeRef(selectedCaseRefNum);
             }
             if (caseNodeRef == null) {
-                throw new RuntimeException("failed to save document under case, caseNodeRef=" + caseNodeRef);
+                throw new RuntimeException("failed to save document under case, caseNodeRef=null");
             }
             props.put(TransientProps.CASE_NODEREF, caseNodeRef.toString());
         } else {
@@ -834,6 +973,9 @@ public class MetadataBlockBean implements Serializable {
         return inEditMode ? UIPropertySheet.EDIT_MODE : UIPropertySheet.VIEW_MODE;
     }
 
+    /**
+     * @return SelectItems of cases from selected volume for jsp
+     */
     public List<SelectItem> getCasesOfSelectedVolume() {
         final Map<String, Object> props = document.getProperties();
         final String volumeNodeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
@@ -884,7 +1026,12 @@ public class MetadataBlockBean implements Serializable {
      * @param event
      */
     public void registerDocument(ActionEvent event) {
-        document = getDocumentService().registerDocument(document);
+        try {
+            document = getDocumentService().registerDocument(document);
+            getDocumentTemplateService().updateGeneratedFilesOnRegistration(document);
+        } catch (UnableToPerformException e) {
+            MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "document_errorMsg_register_initialDocNotRegistered");
+        }
     }
 
     /**
@@ -894,17 +1041,23 @@ public class MetadataBlockBean implements Serializable {
         NodeRef volumeNodeRef = null;
         final Map<String, Object> props = document.getProperties();
         final String volumeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
-        boolean selectedVolumeContainsCases = false;
-        if (volumeRef != null) {
-            volumeNodeRef = new NodeRef(volumeRef);
-            final Volume volume = getVolumeService().getVolumeByNodeRef(volumeNodeRef);
-            selectedVolumeContainsCases = volume.isContainsCases();
+        Boolean selectedVolumeContainsCases = null;
+        boolean volumeSelectionChanged = false;
+        if(!StringUtils.equals(volumeRef, originalVolumeRef)) {
+            volumeSelectionChanged = true;
+            if (volumeRef != null) {
+                volumeNodeRef = new NodeRef(volumeRef);
+                final Volume volume = getVolumeService().getVolumeByNodeRef(volumeNodeRef);
+                selectedVolumeContainsCases = volume.isContainsCases();
+            } else {
+                selectedVolumeContainsCases = false;
+            }
         }
         // Boolean.valueOf(selectedVolumeContainsCases).toString()
         FacesContext context = FacesContext.getCurrentInstance();
         ResponseWriter out = context.getResponseWriter();
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>" //
-                + "<volume-info contains-cases='" + selectedVolumeContainsCases + "' />";
+                + "<volume-info volume-selection-changed='"+volumeSelectionChanged+"' contains-cases='" + selectedVolumeContainsCases + "' />";
         out.write(xml);
         log.debug("returning XML: " + xml);
     }
@@ -913,7 +1066,10 @@ public class MetadataBlockBean implements Serializable {
      * @return how often (in seconds) clients should call {@link #refreshLockClientHandler()} to refresh lock
      */
     public int getClientLockRefreshFrequency() {
-        return lockTimeout / 2;
+        if (lockRefreshTimeout == null) {
+            lockRefreshTimeout = getDocLockService().getLockTimeout() / 2;
+        }
+        return lockRefreshTimeout;
     }
 
     /**
@@ -922,12 +1078,16 @@ public class MetadataBlockBean implements Serializable {
     public void refreshLockClientHandler() throws IOException {
         boolean lockSuccessfullyRefreshed = false;
         String errMsg = null;
-        synchronized (document) { // to avoid extending lock after unlock(save/cancel)
-            if (inEditMode) {
-                lockSuccessfullyRefreshed = lockOrUnlockIfNeeded(inEditMode);
-            } else {
-                errMsg = "Can't refresh lock - page not in editMode";
-                log.warn(errMsg);
+        if (document == null) {
+            errMsg = "Form is reset";
+        } else {
+            synchronized (document) { // to avoid extending lock after unlock(save/cancel)
+                if (inEditMode) {
+                    lockSuccessfullyRefreshed = lockOrUnlockIfNeeded(inEditMode);
+                } else {
+                    errMsg = "Can't refresh lock - page not in editMode";
+                    log.warn(errMsg);
+                }
             }
         }
         FacesContext context = FacesContext.getCurrentInstance();
@@ -948,10 +1108,11 @@ public class MetadataBlockBean implements Serializable {
      * @return true if current user holds the lock after execution of this function
      */
     private boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) {
+        final DocLockService lockService = getDocLockService();
         final NodeRef docRef = document.getNodeRef();
         synchronized (document) { // to avoid extending lock after unlock(save/cancel)
             if (mustLock4Edit) {
-                if (createLock(docRef) == LockStatus.LOCK_OWNER) {
+                if (lockService.createLockIfFree(docRef) == LockStatus.LOCK_OWNER) {
                     return true;
                 }
                 log.debug("Lock can't be created");
@@ -959,86 +1120,23 @@ public class MetadataBlockBean implements Serializable {
                 inEditMode = false; // don't allow going to editMode
                 return false;
             }
-            unlock(docRef);
+            lockService.unlockIfOwner(docRef);
         }
         return false;
     }
-
-    /**
-     * @return true if node is not locked after the execution of this method
-     */
-    private boolean unlock(NodeRef docRef) {
-        final LockService lockService = getLockService();
-        LockStatus lockSts = debugLock(docRef, "Document before unlocking");
-        if (lockSts == LockStatus.LOCK_OWNER) {
-            lockService.unlock(docRef);
-            if (log.isDebugEnabled()) {
-                debugLock(docRef, "Document after unlocking");
-            }
-        } else if (lockSts == LockStatus.NO_LOCK) {
-            log.debug("Document was not even locked");
-        } else if (lockSts == LockStatus.LOCK_EXPIRED) {
-            log.debug("Unable to unlock - lock was expired and hence unlocking not needed");
-        } else if (lockSts == LockStatus.LOCKED) {
-            log.debug("Unable to unlock - Not lock owner");
-            return false;
-        }
-        return true;
-    }
-
-    /**
-     * Create a new lock
-     * 
-     * @param lockNode NodeRef
-     * @return true false if lock can't be obtained, true otherwise
-     */
-    private final LockStatus createLock(NodeRef lockNode) {
-        LockService lockService = getLockService();
-        // Check the lock status of the node
-        LockStatus lockSts = debugLock(lockNode, "before creating/refreshing lock");
-        if (lockSts == LockStatus.LOCKED) {// lock owned by other user
-            log.warn("nodeRef is locked by some other user");
-        } else { // could be locked: LockStatus: LOCK_OWNER | NO_LOCK | LOCK_EXPIRED
-            if (lockSts == LockStatus.LOCK_OWNER) {
-                log.debug("Current user has the lock for nodeRef, refreshing lock");
-            }
-            lockService.lock(lockNode, LockType.WRITE_LOCK, getLockTimeout());
-            lockSts = debugLock(lockNode, "after locking/extending lock");
-            if (lockSts != LockStatus.LOCK_OWNER) {
-                throw new RuntimeException("Failed to get lock");
-            }
-        }
-        return lockSts;
-    }
-
-    private LockStatus debugLock(NodeRef lockNode, String msgPrefix) {
-        LockStatus lockSts = lockService.getLockStatus(lockNode);
-        if (log.isDebugEnabled()) {
-            String msg = msgPrefix + ": existing lock: status=" + lockSts;
-            if (lockSts != LockStatus.NO_LOCK) {
-                String lockOwnerUserName = (String) this.nodeService.getProperty(lockNode, ContentModel.PROP_LOCK_OWNER);
-                Date locExpireDate = (Date) this.nodeService.getProperty(lockNode, ContentModel.PROP_EXPIRY_DATE);
-                msg += "; owner '" + lockOwnerUserName + "'";
-                msg += "; lockType=" + lockService.getLockType(lockNode);
-                msg += "; expires=" + locExpireDate;
-            }
-            log.debug(msg);
-        }
-        return lockSts;
-    }
-
-    private int getLockTimeout() {
-        return lockTimeout;
+    
+    public DocumentType getDocumentType() {
+        return getDocumentTypeService().getDocumentType(document.getType());
     }
 
     // START: getters / setters
 
-    public LockService getLockService() {
-        if (lockService == null) {
-            lockService = (LockService) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean("LockService");
+    public DocLockService getDocLockService() {
+        if (docLockService == null) {
+            docLockService = (DocLockService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(DocLockService.BEAN_NAME);
         }
-        return lockService;
+        return docLockService;
     }
 
     public String getDocumentTypeName() {

@@ -62,6 +62,7 @@ public class MenuItem implements Serializable {
     @XStreamOmitField
     private static final String ATTR_VALUE = "value";
 
+    public MenuItem() {}
     /**
      * Constructor for {@link MenuItem}
      * 
@@ -243,7 +244,7 @@ public class MenuItem implements Serializable {
         return "Title: " + title +
                 "Outcome: " + outcome + ", " +
                 "Admin: " + admin + ", " +
-                "Subitems: " + subItems.size() + "; ";
+                "Subitems: " + (subItems == null ? null : subItems.size()) + "; ";
     }
 
     public String getId() {

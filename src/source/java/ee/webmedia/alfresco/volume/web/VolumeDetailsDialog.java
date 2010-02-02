@@ -42,7 +42,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     // START: jsf actions/accessors
     public void showDetails(ActionEvent event) {
         String volumeNodeRef = ActionUtil.getParam(event, PARAM_VOLUME_NODEREF);
-        currentEntry = getVolumeService().getVolumeByNoderef(volumeNodeRef);
+        currentEntry = getVolumeService().getVolumeByNodeRef(volumeNodeRef);
     }
 
     public void addNewVolume(ActionEvent event) {

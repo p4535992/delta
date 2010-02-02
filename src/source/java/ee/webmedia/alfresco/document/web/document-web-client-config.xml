@@ -3,7 +3,7 @@
       <actions>
 
          <action id="document_registerDoc">
-            <evaluator>ee.webmedia.alfresco.document.web.RegisterDocumentEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator</evaluator>
             <label-id>document_registerDoc</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{MetadataBlockBean.registerDocument}</action-listener>
@@ -12,7 +12,7 @@
 
          <action id="word_file_from_document">
             <!-- No permissions check, this action is enabled to all users, but only when metadata block is in view mode (and some additional checks) -->
-            <evaluator>ee.webmedia.alfresco.document.web.CreateWordFileFromTemplateEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.CreateWordFileFromTemplateEvaluator</evaluator>
             <label-id>document_create_word_file</label-id>
             <image>/images/icons/template.gif</image>
             <action-listener>#{DocumentDialog.populateTemplate}</action-listener>
@@ -21,27 +21,147 @@
             </params>
          </action>
 
-           <action id="document_copy">
-               <evaluator>ee.webmedia.alfresco.document.web.CopyDocumentActionEvaluator</evaluator>
-               <label-id>document_copy</label-id>
-               <image>/images/icons/versioned_properties.gif</image>
-               <action-listener>#{DocumentDialog.copy}</action-listener>
-           </action>
+         <action id="document_copy">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.CopyDocumentActionEvaluator</evaluator>
+            <label-id>document_copy</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.copy}</action-listener>
+         </action>
 
-        <action-group id="document_actions">
-	        <action idref="document_copy" />
-		    <action idref="word_file_from_document" />
+         <action id="document_createReply">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ReplyNodeTypeEvaluator</evaluator>
+            <label-id>document_addReply</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.createReply}</action-listener>
+         </action>
+
+         <action id="document_createFollowUp">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.FollowUpNodeTypeEvaluator</evaluator>
+            <label-id>document_addFollowUp</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+         </action>
+         
+         <!-- Drop-down menu followUp actions: tenderingApplication -->
+         <action id="document_createFollowUp_tenderingApplication">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.TenderingApplicationNodeTypeEvaluator</evaluator>
+            <label-id>document_type_tenderingApplication</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">tenderingApplication</param>
+            </params>
+         </action>
+         
+         <action id="document_createFollowUp_incomingLetter">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.LetterOrTenderingApplicationNodeTypeEvaluator</evaluator>
+            <label-id>document_type_incomingLetter</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">incomingLetter</param>
+            </params>
+         </action>
+         
+         <action id="document_createFollowUp_outgoingLetter">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.LetterOrTenderingApplicationNodeTypeEvaluator</evaluator>
+            <label-id>document_type_outgoingLetter</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">outgoingLetter</param>
+            </params>
+         </action>
+         
+         <action id="document_createFollowUp_contractSim">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractSimNodeTypeEvaluator</evaluator>
+            <label-id>document_type_contractSim</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">contractSim</param>
+            </params>
+         </action>
+         
+         <action id="document_createFollowUp_contractSmit">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractSmitNodeTypeEvaluator</evaluator>
+            <label-id>document_type_contractSim</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">contractSmit</param>
+            </params>
+         </action>
+         
+         <action id="document_createFollowUp_report">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractSimOrSmitNodeTypeEvaluator</evaluator>
+            <label-id>document_type_report</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">report</param>
+            </params>
+         </action>
+         
+         <action id="document_createFollowUp_instrumentOfDeliveryAndReceipt">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractSimOrSmitNodeTypeEvaluator</evaluator>
+            <label-id>document_type_instrumentOfDeliveryAndReceipt</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">instrumentOfDeliveryAndReceipt</param>
+            </params>
+         </action>
+
+         <action id="document_send_out">
+            <evaluator>ee.webmedia.alfresco.document.sendout.web.SendOutActionEvaluator</evaluator>
+            <label-id>document_send_out</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>dialog:documentSendOutDialog</action>
+            <action-listener>#{DocumentSendOutDialog.loadDocument}</action-listener>
+            <params><param name="documentNodeRef">#{DialogManager.bean.node.nodeRef}</param></params>
+         </action>
+				 
+         <action-group id="document_actions">
+            <action idref="document_copy" />
+            <action idref="word_file_from_document" />
             <action idref="document_registerDoc" />
+            <action idref="document_createReply" />
+            <action idref="document_createFollowUp" />
+            <action idref="document_send_out" />
          </action-group>
+
+        <action-group id="document_more_actions">
+	        <action idref="document_createFollowUp_tenderingApplication" />
+	        <action idref="document_createFollowUp_incomingLetter" />
+	        <action idref="document_createFollowUp_outgoingLetter" />
+	        <action idref="document_createFollowUp_contractSim" />
+	        <action idref="document_createFollowUp_contractSmit" />
+	        <action idref="document_createFollowUp_report" />
+	        <action idref="document_createFollowUp_instrumentOfDeliveryAndReceipt" />
+        </action-group>
 
       </actions>
       <dialogs>
+
          <dialog name="documentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_list" description-id="document_list_info" />
 
          <dialog name="document" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-dialog.jsp" managed-bean="DocumentDialog"
-            icon="/images/icons/details_large.gif" title-id="document" actions-config-id="document_actions" />
+            icon="/images/icons/details_large.gif" title-id="document" actions-config-id="document_actions" 
+            more-actions-menu-label-id="document_addFollowUp" />
 
+         <dialog name="documentSendOutDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/document-send-out-dialog.jsp" managed-bean="DocumentSendOutDialog"
+            icon="/images/icons/details_large.gif" title-id="document_send_out" />
+
+         <dialog name="outboxDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="OutboxDocumentListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" show-ok-button="false" />
+
+         <dialog name="dvkDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DvkDocumentListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" show-ok-button="false" />
+
+         <dialog name="unsentDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="UnsentDocumentListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" show-ok-button="false" />
       </dialogs>
    </config>
 </alfresco-config>

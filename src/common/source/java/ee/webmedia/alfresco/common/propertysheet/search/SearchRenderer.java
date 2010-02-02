@@ -105,7 +105,7 @@ public class SearchRenderer extends BaseRenderer {
                 throw new RuntimeException("UIComponent not supported: " + component.getClass().getCanonicalName());
             }
         }
-        if ((list == null || picker == null) && !search.isDisabled()) {
+        if ((list == null || picker == null) && (!search.isDisabled() || search.isEditable())) {
             throw new RuntimeException("Child UIComponent is missing for "+component.getClass().getSimpleName()+" component wit id '"+component.getId()+"'. list="+list+"; picker="+picker);
         }
 
@@ -193,7 +193,7 @@ public class SearchRenderer extends BaseRenderer {
     }
 
     protected void renderPicker(FacesContext context, ResponseWriter out, Search search, UIGenericPicker picker) throws IOException {
-        if(search.isDisabled()) {
+        if(search.isDisabled() && !search.isEditable()) {
             return;
         }
         out.write("<a class=\"icon-link margin-left-4 search\" onclick=\"");

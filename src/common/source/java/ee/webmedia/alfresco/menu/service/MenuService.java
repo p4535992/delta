@@ -1,9 +1,12 @@
 package ee.webmedia.alfresco.menu.service;
 
+import java.util.List;
+
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
+import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 
@@ -39,5 +42,31 @@ public interface MenuService {
         void doWithMenuItem(MenuItem menuItem);
 
     }
+
+    void setTreeItemProcessor(TreeItemProcessor processor);
+
+    public interface TreeItemProcessor {
+        
+        List<NodeRef> openTreeItem(DropdownMenuItem dd, NodeRef nodeRef);
+        
+        void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef);
+
+    }
+    
+    List<NodeRef> openTreeItem(DropdownMenuItem menuItem, NodeRef nodeRef);
+    
+    void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef);
+    
+    /**
+     * Measure to check if bean has the latest menu configuration
+     * 
+     * @return number of updates since last deploy
+     */
+    int getUpdateCount();
+
+    /**
+     * When a menu update is needed, this method invalidates beans menu configurations so it's reloaded from MenuService 
+     */
+    void menuUpdated();
 
 }

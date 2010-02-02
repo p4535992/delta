@@ -15,6 +15,10 @@
       <property name="defaultAdministratorUserNameList">
          <value>${external.authentication.defaultAdministratorUserNames}</value>
       </property>
+       <property name="accept">
+         <value>true</value>
+      </property>
+
    </bean>
 
    <!-- Wrapped version to be used within subsystem -->

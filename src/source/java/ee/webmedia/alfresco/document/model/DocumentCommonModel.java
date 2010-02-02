@@ -2,6 +2,8 @@ package ee.webmedia.alfresco.document.model;
 
 import org.alfresco.service.namespace.QName;
 
+import ee.webmedia.xtee.client.service.DhlXTeeService.SendStatus;
+
 /**
  * @author Alar Kvell
  */
@@ -19,11 +21,11 @@ public interface DocumentCommonModel {
     interface Types {
         QName DOCUMENT = QName.createQName(URI, "document");
         QName DRAFTS = QName.createQName(URI, "drafts");
+        QName SEND_INFO = QName.createQName(URI, "sendInfo");
     }
 
     interface Aspects {
         QName SEARCHABLE = QName.createQName(URI, "searchable");
-        QName FILE = QName.createQName(URI, "file");
         QName COMMON = QName.createQName(URI, "common");
         QName SEND_DESC = QName.createQName(URI, "sendDesc");
         QName OWNER = QName.createQName(URI, "owner");
@@ -35,11 +37,21 @@ public interface DocumentCommonModel {
 
     interface Assocs {
         QName DOCUMENT = QName.createQName(URI, "document");
+        QName DOCUMENT_REPLY = QName.createQName(URI, "documentReply");
+        QName DOCUMENT_FOLLOW_UP = QName.createQName(URI, "documentFollowUp");
+        QName SEND_INFO = QName.createQName(URI, "sendInfo");
     }
 
     interface Props {
+        QName FUNCTION = QName.createQName(URI, "function");
+        QName SERIES = QName.createQName(URI, "series");
+        QName FILE_NAMES = QName.createQName(URI, "fileNames");
+        QName FILE_CONTENTS = QName.createQName(URI, "fileContents");
+
         QName DOC_NAME = QName.createQName(URI, "docName");
         QName DOC_STATUS = QName.createQName(URI, "docStatus");
+        QName STORAGE_TYPE = QName.createQName(URI, "storageType");
+        QName KEYWORDS = QName.createQName(URI, "keywords");
         
         QName OWNER_NAME = QName.createQName(URI, "ownerName");
         QName OWNER_ID = QName.createQName(URI, "ownerId");
@@ -65,6 +77,18 @@ public interface DocumentCommonModel {
 
         QName ADDITIONAL_RECIPIENT_NAME = QName.createQName(URI, "additionalRecipientName");
         QName ADDITIONAL_RECIPIENT_EMAIL = QName.createQName(URI, "additionalRecipientEmail");
+
+        QName SEND_DESC_VALUE = QName.createQName(URI, "sendDescValue");
+        
+        QName SEND_INFO_RECIPIENT = QName.createQName(URI, "recipient");
+        QName SEND_INFO_RECIPIENT_REG_NR = QName.createQName(URI, "recipientRegNr");
+        QName SEND_INFO_SEND_DATE_TIME = QName.createQName(URI, "sendDateTime");
+        QName SEND_INFO_SEND_MODE = QName.createQName(URI, "sendMode");
+        /**
+         * all values for this property are defined in Enum {@link SendStatus} 
+         */
+        QName SEND_INFO_SEND_STATUS = QName.createQName(URI, "sendStatus");
+        QName SEND_INFO_DVK_ID = QName.createQName(URI, "dvkId");
     }
 
 }

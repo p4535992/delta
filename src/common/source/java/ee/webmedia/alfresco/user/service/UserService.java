@@ -97,4 +97,10 @@ public interface UserService {
      */
     Map<QName, Serializable> getUserProperties(String userName);
 
+    /**
+     * Returns the name of the authenticated user. 
+     * @return
+     */
+    String getCurrentUserName();
+
 }

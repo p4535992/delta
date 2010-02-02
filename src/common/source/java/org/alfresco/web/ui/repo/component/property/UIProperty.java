@@ -203,7 +203,8 @@ public class UIProperty extends PropertySheetItem
          // if we are trying to edit a system property type set it to read-only as  these are internal 
          // properties that shouldn't be edited.
          // NOTE: Originally there was a comparison to QName, removed because custom data models contained QName properties
-         if (typeName.equals(DataTypeDefinition.NODE_REF) || typeName.equals(DataTypeDefinition.PATH) || 
+         // NOTE: Also removed NodeRef 
+         if (typeName.equals(DataTypeDefinition.PATH) || 
              typeName.equals(DataTypeDefinition.CONTENT) || typeName.equals(DataTypeDefinition.CHILD_ASSOC_REF) ||
              typeName.equals(DataTypeDefinition.ASSOC_REF))
          {

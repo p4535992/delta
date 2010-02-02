@@ -6,13 +6,13 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
-import org.alfresco.web.ui.common.Utils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
+import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -23,6 +23,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
     private static final String ERROR_MESSAGE_SERIES_EXIST = "function_validation_series";
     
     private transient FunctionsService functionsService;
+    private transient MenuService menuService;
     
     private Function function;
     
@@ -30,6 +31,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         getFunctionsService().saveOrUpdate(function);
         resetData();
+        getMenuService().menuUpdated(); // We need to refresh the left-hand sub-menu
         return outcome;
     }
 
@@ -118,6 +120,18 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
 
     public void setFunctionsService(FunctionsService functionsService) {
         this.functionsService = functionsService;
+    }
+
+    protected MenuService getMenuService() {
+        if (menuService == null) {
+            menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(MenuService.BEAN_NAME);
+        }
+        return menuService;
+    }
+
+    public void setMenuService(MenuService menuService) {
+        this.menuService = menuService;
     }
     
 	// END: getters / setters

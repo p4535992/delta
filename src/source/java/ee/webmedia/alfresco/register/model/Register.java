@@ -13,12 +13,13 @@ public class Register implements Serializable {
     private static final long serialVersionUID = 1L;
     private int id;
     private String name;
-    private int counter;
     private String prefix;
     private String suffix;
     private String comment;
     private boolean active;
 
+    @AlfrescoModelProperty(isMappable = false)
+    private int counter;
     @AlfrescoModelProperty(isMappable = false)
     private NodeRef nodeRef;
 

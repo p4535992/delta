@@ -9,6 +9,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -25,12 +26,14 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     private static final String PARAM_FUNCTION_NODEREF = "functionNodeRef";
     private static final String PARAM_SERIES_NODEREF = "seriesNodeRef";
     private transient SeriesService seriesService;
+    private transient MenuService menuService;
     private Series series;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         getSeriesService().saveOrUpdate(series);
         resetFields();
+        getMenuService().menuUpdated(); // We need to refresh the left-hand sub-menu
         return outcome;
     }
 
@@ -56,7 +59,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     // START: jsf actions/accessors
     public void showDetails(ActionEvent event) {
         String seriesNodeRef = ActionUtil.getParam(event, PARAM_SERIES_NODEREF);
-        series = getSeriesService().getSeriesByNoderef(seriesNodeRef);
+        series = getSeriesService().getSeriesByNodeRef(seriesNodeRef);
     }
 
     public void addNewSeries(ActionEvent event) {
@@ -106,6 +109,18 @@ public class SeriesDetailsDialog extends BaseDialogBean {
 
     public void setSeriesService(SeriesService seriesService) {
         this.seriesService = seriesService;
+    }
+    
+    protected MenuService getMenuService() {
+        if (menuService == null) {
+            menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(MenuService.BEAN_NAME);
+        }
+        return menuService;
+    }
+
+    public void setMenuService(MenuService menuService) {
+        this.menuService = menuService;
     }
 
     // END: getters / setters

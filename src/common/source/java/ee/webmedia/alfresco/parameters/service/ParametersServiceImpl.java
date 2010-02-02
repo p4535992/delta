@@ -14,7 +14,7 @@ import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.parameters.job.ParameterResceduledTriggerBean;
+import ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean;
 import ee.webmedia.alfresco.parameters.model.Parameter;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.model.ParametersModel;
@@ -32,10 +32,17 @@ public class ParametersServiceImpl implements ParametersService {
     private NodeService nodeService;
 
     private Boolean applicationStarted = false;
+    /**
+     * Might happen that after most of the jobs have registered themselves to this service using
+     * {@link #addParameterRescheduledJob(ParameterRescheduledTriggerBean)} <br>
+     * and {@link #applicationStarted()} is being processed <br>
+     * some job get's lazily initialized (i.e lazy=true or using childAppContext, that gets loaded later), job will register itself to this service and
+     * resolvePropertyValueAndSchedule would not ever be called for that job
+     */
     private Object syncLock = new Object();
-    
+
     private final Map<String /* parameterName */, List<ParameterChangedCallback>> parameterChangeListeners = new HashMap<String, List<ParameterChangedCallback>>();
-    private List<ParameterResceduledTriggerBean> reschedulableJobs = new ArrayList<ParameterResceduledTriggerBean>();
+    private List<ParameterRescheduledTriggerBean> reschedulableJobs = new ArrayList<ParameterRescheduledTriggerBean>();
 
     @Override
     public void addParameterChangeListener(String paramName, ParameterChangedCallback callback) {
@@ -49,9 +56,9 @@ public class ParametersServiceImpl implements ParametersService {
 
     @Override
     public void applicationStarted() {
-        synchronized (applicationStarted) {
+        synchronized (syncLock) {
             if (!applicationStarted) {
-                for (ParameterResceduledTriggerBean job : reschedulableJobs) {
+                for (ParameterRescheduledTriggerBean job : reschedulableJobs) {
                     job.resolvePropertyValueAndSchedule();
                 }
                 applicationStarted = true;
@@ -64,8 +71,8 @@ public class ParametersServiceImpl implements ParametersService {
     public <T> T getParameter(Parameters parameter, Class<T> requiredClazz) {
         String xPath = parameter.toString();
         final NodeRef nodeRef = generalService.getNodeRef(xPath);
-        if(nodeRef==null) {
-            throw new RuntimeException("Unable to get nodeRef for parameter with xPath: '"+xPath+"'");
+        if (nodeRef == null) {
+            throw new RuntimeException("Unable to get nodeRef for parameter with xPath: '" + xPath + "'");
         }
         final Serializable parameterValue = nodeService.getProperty(nodeRef, ParametersModel.Props.Parameter.VALUE);
         if (requiredClazz != null) {
@@ -149,7 +156,7 @@ public class ParametersServiceImpl implements ParametersService {
     }
 
     @Override
-    public void addParameterResceduledJob(ParameterResceduledTriggerBean job) {
+    public void addParameterRescheduledJob(ParameterRescheduledTriggerBean job) {
         synchronized (syncLock) {
             reschedulableJobs.add(job);
             if (applicationStarted) {

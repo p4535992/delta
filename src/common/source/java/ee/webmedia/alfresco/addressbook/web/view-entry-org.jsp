@@ -71,3 +71,5 @@ function pageLoaded()
             </a:panel>
 
          </a:booleanEvaluator>
+         
+         <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

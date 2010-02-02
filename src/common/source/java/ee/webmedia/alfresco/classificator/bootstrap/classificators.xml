@@ -52,6 +52,31 @@
             <cl:classificator view:childName="cl:transmittalMode">
                <cl:name>transmittalMode</cl:name>
                <cl:addRemoveValues>true</cl:addRemoveValues>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>e-post</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>DVK</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
             </cl:classificator>
 
             <cl:classificator view:childName="cl:functionType">
@@ -324,6 +349,56 @@
                </view:associations>
             </cl:classificator>
 
+            <cl:classificator view:childName="cl:sendMode">
+               <cl:name>sendMode</cl:name>
+               <cl:addRemoveValues>true</cl:addRemoveValues>
+               <view:associations>
+                  <cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>e-post/DVK</cl:valueName>
+                           <cl:order>1</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>e-post</cl:valueName>
+                           <cl:order>2</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+                     
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>post</cl:valueName>
+                           <cl:order>3</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>true</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                     <cl:classificatorValue view:childName="cl:classificatorValue">
+                        <view:properties>
+                           <cl:valueName>tähitud post</cl:valueName>
+                           <cl:order>4</cl:order>
+                           <cl:byDefault>false</cl:byDefault>
+                           <cl:readOnly>false</cl:readOnly>
+                           <cl:active>true</cl:active>
+                        </view:properties>
+                     </cl:classificatorValue>
+
+                  </cl:classificatorValue>
+               </view:associations>
+            </cl:classificator>
+            
          </cl:classificator>
       </view:associations>
    </cl:classificators>

@@ -73,6 +73,9 @@ public class UIDialogButtons extends SelfRenderingComponent
    {
       if (!isRendered()) return;
       
+      // XXX Now button configuration is fetched on every reload. :)
+      this.getChildren().clear();
+      
       if (this.getChildCount() == 0)
       {
          // generate all the required buttons the first time

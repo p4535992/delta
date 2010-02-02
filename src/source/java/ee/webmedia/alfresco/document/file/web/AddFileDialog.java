@@ -1,11 +1,17 @@
 package ee.webmedia.alfresco.document.file.web;
 
 import java.io.Serializable;
+import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+import javax.faces.event.ValueChangeEvent;
+import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.model.FileExistsException;
@@ -13,12 +19,18 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
+import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.content.AddContentDialog;
-import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.Repository;
+import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.io.FilenameUtils;
+import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.versions.model.VersionsModel;
@@ -32,11 +44,41 @@ public class AddFileDialog extends AddContentDialog {
     private static final String ERR_EXISTING_FILE = "add_file_existing_file";
 
     private transient UserService userService;
+    private transient ImapServiceExt imapServiceExt;
+    private transient FileService fileService;
+    private transient DocumentService documentService;
+
+    private boolean attachmentSelected = false;
+    private NodeRef attachmentNodeRef;
+    private String attachmentName;
+    //private List<SelectItem> attachments;
+
+
+    @Override
+    public void start(ActionEvent event) {
+        reset();
+    }
+
+    public String reset() {
+        attachmentSelected = false;
+        attachmentName = null;
+        return removeUploadedFile();
+    }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         try {
-            return super.finishImpl(context, outcome);
+            if (attachmentSelected) {
+                NodeRef documentNodeRef = new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId());
+                this.createdNode = imapServiceExt.addAttachmentToDocument(fileName, attachmentNodeRef, documentNodeRef);
+            } else {
+                outcome = super.finishImpl(context, outcome);
+            }
+            // XXX Should probably be refactored to a single service method to add all the aspects there.
+            addVersionModifiedAspect(this.createdNode);
+            NodeRef document = getNodeService().getPrimaryParent(this.createdNode).getParentRef();
+            getDocumentService().updateSearchableFiles(document);
+            return outcome;
         } catch (FileExistsException e) {
             isFinished = false;
             throw new RuntimeException(MessageUtil.getMessage(context, ERR_EXISTING_FILE, e.getName()));
@@ -45,26 +87,16 @@ public class AddFileDialog extends AddContentDialog {
     
     @Override
     protected String doPostCommitProcessing(FacesContext context, String outcome) {
-        clearUpload();
-        if (this.showOtherProperties) {
-            this.browseBean.setDocument(new Node(this.createdNode));
-        }
-        // XXX Should probably be refactored to a single service method to add all the aspects there.
-        addVersionModifiedAspect(this.createdNode);
-        getNodeService().addAspect(this.createdNode, DocumentCommonModel.Aspects.FILE, null);
-        NodeRef parentDocRef = getNodeService().getPrimaryParent(this.createdNode).getParentRef();
-        if (getNodeService().hasAspect(parentDocRef, DocumentCommonModel.Aspects.SEARCHABLE)) {
-            getNodeService().addAspect(this.createdNode, DocumentCommonModel.Aspects.SEARCHABLE, null);
-        }
+        super.doPostCommitProcessing(context, outcome);
         return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
     }
 
     public String getFileNameWithoutExtension() {
-        return FilenameUtils.removeExtension(super.getFileName());
+        return FilenameUtils.removeExtension(getFileName());
     }
 
     public void setFileNameWithoutExtension(String name) {
-        setFileName(name + "." + FilenameUtils.getExtension(super.getFileName()));
+        setFileName(name + "." + FilenameUtils.getExtension(getFileName()));
     }
     
     private void addVersionModifiedAspect(NodeRef nodeRef) {
@@ -85,6 +117,39 @@ public class AddFileDialog extends AddContentDialog {
             getNodeService().addAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED, aspectProperties);
         }
     }
+
+    @Override
+    public String getFileName() {
+        if (attachmentSelected) {
+            return attachmentName;
+        }
+        else {
+            return super.getFileName();
+        }
+    }
+
+    @Override
+    public String getFileUploadSuccessMsg() {
+        if (attachmentSelected) {
+            String msg = Application.getMessage(FacesContext.getCurrentInstance(), "file_upload_success");
+            return MessageFormat.format(msg, Utils.encode(getFileName())); 
+        }
+        else {
+            return super.getFileUploadSuccessMsg();
+        }
+    }
+
+    public void attachmentSelected(ValueChangeEvent event) {
+        String newVal = (String) event.getNewValue();
+        Assert.notNull(newVal);
+
+        // todo: validate correct val
+
+        attachmentNodeRef = new NodeRef(newVal);
+        File file = fileService.getFile(attachmentNodeRef);
+        attachmentSelected = true;
+        attachmentName = file.getName();
+    }
     
     // START: getters / setters
     public void setUserService(UserService userService) {
@@ -97,6 +162,49 @@ public class AddFileDialog extends AddContentDialog {
                     .getBean(UserService.BEAN_NAME);
         }
         return userService;
+    }
+
+    protected ImapServiceExt getImapServiceExt() {
+        if (imapServiceExt == null) {
+            imapServiceExt = (ImapServiceExt) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(ImapServiceExt.BEAN_NAME);
+        }
+        return imapServiceExt;
+    }
+
+    public void setImapServiceExt(ImapServiceExt imapServiceExt) {
+        this.imapServiceExt = imapServiceExt;
+    }
+
+    protected FileService getFileService() {
+        if (fileService == null) {
+            fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(FileService.BEAN_NAME);
+        }
+        return fileService;
+    }
+
+    public void setFileService(FileService fileService) {
+        this.fileService = fileService;
+    }
+
+    protected DocumentService getDocumentService() {
+        if (documentService == null) {
+            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
+                    .getBean(DocumentService.BEAN_NAME);
+        }
+        return documentService;
+    }
+
+    public List<SelectItem> getAttachments() {
+        //if (attachments == null) {
+        List<SelectItem> attachments = new ArrayList<SelectItem>();
+        List<File> files = getFileService().getAllFilesExcludingDigidocSubitems(getImapServiceExt().getAttachmentRoot());
+        for (File file : files) {
+            attachments.add(new SelectItem(file.getNodeRef().toString(), file.getName()));
+        }
+        //}
+        return attachments;        
     }
     // END: getters / setters
 }

@@ -4,12 +4,12 @@
 #########################################################################
 
 #
-# Sample custom content and index data location
+# Content and index data location
 #-------------
 dir.root=/path/to/alf_data
 
 #
-# Sample database connection properties
+# Database connection properties
 #-------------
 db.name=alfresco
 db.username=alfresco
@@ -38,6 +38,10 @@ mail.host=mail1.webmedia.int
 mail.from.default=alfresco@simdhs.webmedia.int
 #mail.smtp.auth=false
 
+#
+# Authentication Configuration
+#-------------
+
 # the url to log into CAS, i.e. https://cas.rutgers.edu/login
 cas.casServerUrl=https://localhost:8181/cas/
 
@@ -50,6 +54,35 @@ cas.clientServerName=localhost:8080
 # URL on AmetnikeRegister webservice
 amr.service.url=http://10.203.128.32:8080/amr/services/AmrRequest
 
-
 # Enable session serialization filter in development
 #serializingfilter.enabled=false
+
+#
+# X-tee Configuration
+#-------------
+
+# x-tee security server
+# dhl.wsdl is located at http://${security-server}/cgi-bin/uriproxy?producer=dhl
+#x-tee.security-server=http://xtee-toodang.webmedia.int/cgi-bin/consumer_proxy
+x-tee.security-server=http://xtee-test.webmedia.int/cgi-bin/consumer_proxy
+#x-tee.security-server=http://xtee-arendus.webmedia.int/cgi-bin/consumer_proxy
+
+# business registry (äriregister) code (OÜ WebMedia: 10391131)  	
+x-tee.institution=10391131
+
+# social security number of the person whose data will be used to perform x-tee service calls
+# this must be registered in DVK system as well!
+x-tee.id-code=EE38509252736
+
+#
+# IMAP Server Configuration
+#-------------
+
+# Update this value with the IP address (or corresponding DNS address) of your external IP interface.
+# A value of 0.0.0.0 in Unix will make it listen on all IP interfaces. 
+imap.server.host=localhost
+
+# IMAP server listen port (TCP)
+# On Unix only root has permission to bind to ports lower than 1023; if application is run with non-root privileges,
+# then specify a higher port, e.g. 1143 and make a port redirection (1143 -> 143) in your firewall 
+imap.server.port=143

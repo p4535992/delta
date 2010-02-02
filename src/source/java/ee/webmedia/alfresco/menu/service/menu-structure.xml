@@ -28,7 +28,8 @@
                   <outcome>myalfresco</outcome>
                </item>
                <item title="Menetluses">
-                  <outcome>myalfresco</outcome>
+                  <outcome>dialog:userWorkingDocumentsSearchResultsDialog</outcome>
+                  <action-listener>#{UserWorkingDocumentsSearchResultsDialog.setup}</action-listener>
                </item>
                <item title="Registreerimiseks" document-manager="true">
                   <outcome>myalfresco</outcome>
@@ -36,11 +37,13 @@
                <dropdown title="Saabunud dokumendid" document-manager="true" expanded="true">
                   <submenu-id>received-documents-submenu</submenu-id>
                   <subitems>
-                     <item title="E-mail (kirjad)">
-                        <outcome>myalfresco</outcome>
+                     <item title="Sissetulevad e-kirjad">
+                        <outcome>dialog:documentListDialog</outcome>
+                        <action-listener>#{DocumentListDialog.showIncomingEmails}</action-listener>
                      </item>
-                     <item title="E-mail (failid)">
-                        <outcome>myalfresco</outcome>
+                     <item title="E-kirja manused">
+                        <outcome>dialog:attachmentListDialog</outcome>
+                         <action-listener>#{AttachmentListDialog.init}</action-listener>
                      </item>
                      <item title="Veateated">
                         <outcome>dialog:errorMessages</outcome>
@@ -48,13 +51,19 @@
                      <item title="Skaneeritud dokumendid">
                         <outcome>myalfresco</outcome>
                      </item>
+                     <item title="DVK dokumendid">
+                        <outcome>dialog:dvkDocumentListDialog</outcome>
+                        <action-listener>#{DvkDocumentListDialog.setup}</action-listener>
+                     </item>
                   </subitems>
                </dropdown>
                <item title="Saatmata dokumendid" document-manager="true">
-                  <outcome>myalfresco</outcome>
+                  <outcome>dialog:unsentDocumentListDialog</outcome>
+                  <action-listener>#{UnsentDocumentListDialog.setup}</action-listener>
                </item>
                <item title="Saatmisel dokumendid" document-manager="true">
-                  <outcome>myalfresco</outcome>
+                  <outcome>dialog:outboxDocumentListDialog</outcome>
+                  <action-listener>#{OutboxDocumentListDialog.setup}</action-listener>
                </item>
             </subitems>
          </dropdown>
@@ -62,7 +71,7 @@
             <submenu-id>queries-submenu</submenu-id>
             <subitems>
                <item title="Dokumendid">
-                  <outcome>myalfresco</outcome>
+                  <outcome>dialog:documentSearchDialog</outcome>
                </item>
                <item title="Tööülesanded">
                   <outcome>myalfresco</outcome>
@@ -73,18 +82,22 @@
             <outcome>myalfresco</outcome>
          </item>
          <item title="Minu dokumentide loetelu">
-            <outcome>myalfresco</outcome>
+            <outcome>dialog:mySeriesListDialog</outcome>
          </item>
       </subitems>
    </item>
 
    <!-- DOKUMENDIREGISTER -->
    <item title="Dokumendiregister">
-      <outcome>dialog:functionsListDialog</outcome>
+      <outcome>dialog:todayRegisteredDocumentsSearchResultsDialog</outcome>
+      <action-listener>#{TodayRegisteredDocumentsSearchResultsDialog.setup}</action-listener>
       <subitems>
-         <item title="Dokumentide loetelu">
+         <dropdown title="Dokumentide loetelu" browse="true">
+            <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}documentList</xpath>
+            <submenu-id>document-register</submenu-id>
             <outcome>dialog:functionsListDialog</outcome>
-         </item>
+            <action-listener>#{MenuBean.updateTree}</action-listener>
+         </dropdown>
          <item title="Arhivaalide loetelu">
             <outcome>myalfresco</outcome>
          </item>

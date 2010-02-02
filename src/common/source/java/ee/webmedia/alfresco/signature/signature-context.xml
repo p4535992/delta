@@ -4,6 +4,7 @@
 
    <bean id="signatureService" class="ee.webmedia.alfresco.signature.service.SignatureServiceImpl" init-method="init">
       <property name="fileFolderService" ref="FileFolderService" />
+      <property name="nodeService" ref="NodeService" />
       <property name="jDigiDocCfg" value="ee/webmedia/alfresco/signature/service/jdigidoc.cfg" />
    </bean>
 
@@ -32,14 +33,6 @@
       <property name="resourceBundles">
          <list>
             <value>ee.webmedia.alfresco.signature.web.webclient-signature</value>
-         </list>
-      </property>
-   </bean>
-
-   <bean id="signatureWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
-      <property name="configs">
-         <list>
-            <value>classpath:ee/webmedia/alfresco/signature/web/signature-web-client-config.xml</value>
          </list>
       </property>
    </bean>

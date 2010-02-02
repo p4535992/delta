@@ -68,6 +68,11 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         }
         super.restored();
     }
+    
+    @Override
+    public String getCancelButtonLabel() {
+        return Application.getMessage(FacesContext.getCurrentInstance(), "back_button");
+    }
 
     /**
      * Action handler to show all the entrys currently in the system

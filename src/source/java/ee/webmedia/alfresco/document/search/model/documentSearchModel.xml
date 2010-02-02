@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="docsearch:documentSearchModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
+   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/document/search/1.0" prefix="docsearch" />
+   </namespaces>
+
+   <types>
+
+      <type name="docsearch:filter">
+         <parent>sys:base</parent>
+         <properties>
+            <!-- Otsingu väljundformaat -->
+            <property name="docsearch:output">
+               <type>d:text</type>
+            </property>
+            <!-- Üldsisend, mis otsib kõikidelt väljadelt -->
+            <property name="docsearch:input">
+               <type>d:text</type>
+            </property>
+            <!-- Dokumendi liik -->
+            <property name="docsearch:documentType">
+               <type>d:qname</type>
+               <multiple>true</multiple>
+            </property>
+            <!-- Funktsioon - ühe valimine -->
+            <property name="docsearch:function">
+               <type>d:noderef</type>
+            </property>
+            <!-- Sari, sõltub funktsiooni valikust - mitme valimine -->
+            <property name="docsearch:series">
+               <type>d:noderef</type>
+               <multiple>true</multiple>
+            </property>
+   
+            <property name="docsearch:regDateTimeBegin">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:regDateTimeEnd">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:regNumber">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:docStatus">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docsearch:recipientName">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:docName">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:senderRegNumber">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:senderRegDateBegin">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:senderRegDateEnd">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:dueDateBegin">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:dueDateEnd">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:complienceDateBegin">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:complienceDateEnd">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:accessRestriction">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docsearch:accessRestrictionReason">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:accessRestrictionBeginDateBegin">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:accessRestrictionBeginDateEnd">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:accessRestrictionEndDateBegin">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:accessRestrictionEndDateEnd">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:accessRestrictionEndDesc">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:ownerName">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:ownerOrgStructUnit">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:ownerJobTitle">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:signerName">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:signerJobTitle">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:keywords">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:storageType">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+   
+            <!-- Saatmisviis (saatmise blokk) -->
+   
+            <property name="docsearch:costManager">
+               <type>d:text</type>
+            </property>
+   
+            <!-- Taotleja -->
+            <!-- Lähetuse alguskuupäev -->
+            <!-- Lähetuse lõppkuupäev -->
+            <!-- Lähetuse riik -->
+            <!-- Lähetuse maakond -->
+            <!-- Lähetuse linnad -->
+   
+            <property name="docsearch:responsibleName">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:coResponsibles">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:contactPerson">
+               <type>d:text</type>
+            </property>
+   
+            <!-- Hankemenetluse liik -->
+   
+         </properties>
+      </type>
+
+   </types>
+
+</model>

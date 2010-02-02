@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.common.service;
 
+import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
@@ -97,5 +98,23 @@ public interface GeneralService {
      * @return node according to nodeRef from repo, filling properties and aspects
      */
     Node fetchNode(NodeRef nodeRef);
+
+    /**
+     * Searches ancestor with specified type. Will go up in hierarchy until found.
+     * 
+     * @param childRef
+     * @param ancestorType
+     * @return return ancestor node or null if none found
+     */
+    Node getAncestorWithType(NodeRef childRef, QName ancestorType);
+
+    /**
+     * Zip-s up those files which are attached to given document, and where the id is in fileIds list.
+     * 
+     * @param document document node ref
+     * @param fileNodeRefs selected file nodeRefs as strings (from all the files assosiated to this given document).
+     * @return ByteArrayOutputStream with zip file bytes
+     */
+    ByteArrayOutputStream getZipFileFromFiles(NodeRef document, List<String> fileNodeRefs);
 
 }

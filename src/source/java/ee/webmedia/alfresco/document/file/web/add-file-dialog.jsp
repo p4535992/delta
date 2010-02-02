@@ -47,6 +47,17 @@
       </h:panelGrid>
    </a:panel>
 
+    <a:panel styleClass="column  panel-100" id="attachment-upload" label="#{msg.file_add_attachment}">
+        <h:panelGrid id="upload_attachment_panel" columns="2" cellpadding="2" cellspacing="2" border="0" width="100%"
+                     columnClasses="panelGridLabelColumn,panelGridValueColumn,panelGridRequiredImageColumn">
+            <h:outputText id="out_attachment" value="#{msg.file_add_attachment_label}:" style="padding-left:8px"/>
+            <h:selectOneMenu id="roles" style="width:250px" onchange="this.form.submit();" valueChangeListener="#{DialogManager.bean.attachmentSelected}" value="">
+                <f:selectItem itemValue="" itemLabel=""/>
+                <f:selectItems value="#{DialogManager.bean.attachments}"/>
+            </h:selectOneMenu>
+        </h:panelGrid>
+    </a:panel>
+
 <%
     }
     if (fileUploaded) {
@@ -54,7 +65,7 @@
    <a:panel styleClass="column panel-90" id="file-upload" label="#{msg.uploaded_content}">
    
       <h:panelGroup>
-         <a:actionLink image="/images/icons/delete.gif" value="#{msg.remove}" action="#{DialogManager.bean.removeUploadedFile}" showLink="false" id="link1" />
+         <a:actionLink image="/images/icons/delete.gif" value="#{msg.remove}" action="#{DialogManager.bean.reset}" showLink="false" id="link1" />
          <h:outputText id="text3" value="#{DialogManager.bean.fileName}" styleClass="dialogpanel-title filename" />
       </h:panelGroup>
    
@@ -84,11 +95,12 @@
          document.getElementById("dialog").onsubmit = validate;
    <%}%>
          document.getElementById("dialog:finish-button").onclick = function() {finishButtonPressed = true; clear_dialog();}
+        checkButtonState();
       }
 
       function checkButtonState()
       {
-         if (document.getElementById("dialog:dialog-body:file-name").value.length == 0 )
+         if (!isFileSelected())
          {
             document.getElementById("dialog:finish-button").disabled = true;
          }
@@ -97,6 +109,14 @@
             document.getElementById("dialog:finish-button").disabled = false;
          }
       }
+
+       function attachmentValueChanged() {
+            form.submit();
+       }
+
+       function isFileSelected() {
+         return document.getElementById("dialog:dialog-body:file-name").value.length != 0;
+       }
 
       function validate()
       {

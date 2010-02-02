@@ -27,6 +27,7 @@
       <property name="transactionService" ref="transactionService" />
       <property name="defaultAdministratorUserNameList" value="${external.authentication.defaultAdministratorUserNames}" />
       <property name="allowGuestLogin" value="false" />
+      <property name="accept" value="true"/>
    </bean>
 
 </beans>

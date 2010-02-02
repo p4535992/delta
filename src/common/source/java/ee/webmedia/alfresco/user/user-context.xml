@@ -3,6 +3,7 @@
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
    <bean id="userService" class="ee.webmedia.alfresco.user.service.UserServiceImpl">
+      <property name="authenticationService" ref="AuthenticationService" />
       <property name="authorityService" ref="AuthorityService" />
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />

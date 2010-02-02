@@ -13,6 +13,7 @@ import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.FacesEvent;
 import javax.faces.event.PhaseId;
+import javax.faces.model.SelectItem;
 
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -40,6 +41,8 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
     /** String for method binding to be excecuted after selectionItems method binding is excecuted */
     public String afterSelect;
     public static String CHANGE_MARKER = "CHANGE_MARKER";
+    public static String SCROLL_VIEW = "scrollView";
+    public static String SCROLL_VIEW_RENDERED = "scrollViewRendered";
 
     public RelatedDropdown() {
     }
@@ -59,6 +62,7 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
             }
             queueEvent(new RelatedSelectEvent(this, group, order, submittedValue, true));
             queueEventToRelatedComponents(submittedValue, group, order);
+            getAttributes().put(SCROLL_VIEW, Boolean.TRUE); // RelatedSelectEvent has occurred, so scroll
         }
     }
 
@@ -72,6 +76,10 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
 
     @Override
     public void encodeBegin(FacesContext context) throws IOException {
+        if(getAttributes().get(SCROLL_VIEW) != null && getAttributes().get(SCROLL_VIEW_RENDERED) == null) {
+            context.getResponseWriter().write("<input type=\"hidden\" name=\"scrollView\" value=\"600\" />");
+            getAttributes().put(SCROLL_VIEW_RENDERED, Boolean.TRUE); // otherwise there will be three items in DOM
+        }
         setOnchange(getOnChangeJS(context));
         super.encodeBegin(context);
     }
@@ -141,7 +149,9 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
             MethodBinding mb = context.getApplication().createMethodBinding(selectionItems,
                     new Class[] { FacesContext.class, HtmlSelectOneMenu.class, Object.class });
             try {
-                mb.invoke(context, new Object[] { context, this, submittedValue });
+                @SuppressWarnings("unchecked")
+                List<SelectItem> selectItems = (List<SelectItem>) mb.invoke(context, new Object[] { context, this, submittedValue });
+                ComponentUtil.addSelectItems(context, this, selectItems);
             } catch (ClassCastException e) {
                 throw new RuntimeException("Failed to get values for selection from '" + selectionItems + "'", e);
             }

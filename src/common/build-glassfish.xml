@@ -18,10 +18,10 @@
    <!-- TODO clean-glassfish target -->
 
    <target name="installcert" depends="compile" description="Install a SSL certificate into application server KeyStore">
-      <java dir="${project.basedir}" fork="true" classname="ee.webmedia.alfresco.utils.InstallCert" classpathref="classpath.test">
+      <java dir="${project.basedir}" fork="true" classname="ee.webmedia.alfresco.utils.InstallCert" classpathref="classpath.test.compile">
          <arg path="${file.glassfish.domain.config.cacerts}" />
       </java>
-	</target>
+   </target>
 
    <!-- ============= Glassfish domain targets ============= -->
 
@@ -113,6 +113,13 @@
          </sequential>
       </parallel>
       <antcall target="deploy" />
+   </target>
+
+   <target name="p-deploy" description="Paralel startGF(if needed)+deploy">
+      <parallel>
+         <antcall target="glassfish-start-done" /><!-- start glassfish if needed -->
+         <antcall target="deploy" />
+      </parallel>
    </target>
 
 </project>

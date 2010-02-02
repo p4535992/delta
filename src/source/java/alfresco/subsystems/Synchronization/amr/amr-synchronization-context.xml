@@ -3,7 +3,7 @@
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
    <!-- Job definition to import people (and possibly groups) from one or more external user registries in the authentication chain (e.g. LDAP directory) -->
-   <bean id="syncTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterResceduledTriggerBean" parent="parameterResceduledTriggerParent">
+   <bean id="syncTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
       <property name="parameterName" value="employeeRegReceiveUsersPeriod" />
       <property name="parameterFormat" value="m" />
       <property name="jobDetail">

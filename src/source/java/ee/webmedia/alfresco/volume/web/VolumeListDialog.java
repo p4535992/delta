@@ -6,6 +6,7 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -25,6 +26,8 @@ public class VolumeListDialog extends BaseDialogBean {
     private transient SeriesService seriesService;
     private transient VolumeService volumeService;
     private Series parent;
+    
+    public static final String BEAN_NAME = "VolumeListDialog";
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -39,7 +42,11 @@ public class VolumeListDialog extends BaseDialogBean {
     }
 
     public void showAll(ActionEvent event) {
-        parent = getSeriesService().getSeriesByNoderef((ActionUtil.getParam(event, "seriesNodeRef")));
+        showAll(new NodeRef(ActionUtil.getParam(event, "seriesNodeRef")));
+    }
+    
+    public void showAll(NodeRef nodeRef) {
+        parent = getSeriesService().getSeriesByNodeRef(nodeRef.toString());
     }
 
     public List<Volume> getEntries() {

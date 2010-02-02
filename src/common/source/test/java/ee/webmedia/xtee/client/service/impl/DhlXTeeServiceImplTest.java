@@ -66,12 +66,12 @@ public class DhlXTeeServiceImplTest extends TestCase {
 
     private static Log log = LogFactory.getLog(DhlXTeeServiceImplTest.class);
     private static DhlXTeeService dhl;
-    private static XTeeProviderPropertiesResolver propertiesResolver; // TODO: asendada PropertiesBasedXTeeServiceConfigurationProvider extends AbstractXTeeServiceConfigurationProvider
+    private static XTeeProviderPropertiesResolver propertiesResolver;
 
     private static String SENDER_REG_NR;
     private static List<String> receivedDocumentIds;
     private static List<String> receiveFaileddDocumentIds;
-    private static List<String> sentDocIds = new ArrayList<String>();
+    private static Set<String> sentDocIds = new HashSet<String>();
     private static Map<String, String> dvkOrgList;
 
     private static final String RECEIVE_OUTPUT_DIR = System.getProperty("java.io.tmpdir");
@@ -89,32 +89,27 @@ public class DhlXTeeServiceImplTest extends TestCase {
         if (dhl == null) {
             final ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("ee/webmedia/xtee/client/service/impl/service-impl-test.xml");
             dhl = (DhlXTeeService) context.getBean("dhlXTeeService");
-            propertiesResolver = (XTeeProviderPropertiesResolver) context.getBean("propertiesResolver");
+            propertiesResolver = (XTeeProviderPropertiesResolver) context.getBean("xTeeServicePropertiesResolver");
         }
-        SENDER_REG_NR = propertiesResolver.getProperty("institution");
+        SENDER_REG_NR = propertiesResolver.getProperty("x-tee.institution");//FIXME: institutsiooni nime võiks võtta näiteks appContextist
         recipients = Arrays.asList(SENDER_REG_NR); // testiks nii saatjale endale kui INTERINX OÜ(10425769)
     }
     
   //shared with alfresco repo testclass: DvkServiceImplTest
-    public static List<String> getRecipients(){
-        SENDER_REG_NR = "10391131";
-        recipients = Arrays.asList(SENDER_REG_NR); // testiks nii saatjale endale kui INTERINX OÜ(10425769)
-//      recipients = Arrays.asList(
-//              SENDER_REG_NR // Saatjale endale 
-//              , "44000122"  // Tallinna Ülikooli Ajaloo Instituut
-//              , "64000122"  // Tallinna Ülikooli Infoteaduse Instituut
-//              , "54000122"  // Tallinna Ülikooli Psühholoogia Instituut
-//      ); // Tallinna Ülikooli Ajaloo Instituut
+    public static List<String> getRecipients() {
+        SENDER_REG_NR = SENDER_REG_NR == null ? "10391131" : SENDER_REG_NR;
+        recipients = Arrays.asList(
+                SENDER_REG_NR // Saatjale endale
+//                 , "44000122" // Tallinna Ülikooli Ajaloo Instituut
+//                 , "64000122" // Tallinna Ülikooli Infoteaduse Instituut
+//                 , "54000122" // Tallinna Ülikooli Psühholoogia Instituut
+                );
         return recipients;
     }
 
     public void testWarmUp() {
         log.debug("warmup done to get better time measure for the first test");
     }
-
-//    public void _testRunSystemCheck() {
-//        dhl.runSystemCheck();
-//    }
 
     public void testGetSendingOptions() {
         dvkOrgList = dhl.getSendingOptions();
@@ -243,7 +238,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
             // SignedDocType signedDoc = dhlDokument.getSignedDoc();
             Transport transport = dhlDokument.getTransport();
             AadressType saatja = transport.getSaatja();
-            assertTrue(saatja != null && StringUtils.isNotBlank(saatja.getRegnr()));
+            assertTrue(StringUtils.isNotBlank(saatja.getRegnr()));
             log.debug("sender: " + saatja.getRegnr() + " : " + saatja.getAsutuseNimi());
             final List<AadressType> recipients = transport.getSaajaList();
             log.debug("document was sent to " + recipients.size() + " recipients:");
@@ -360,7 +355,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
     private AadressType getRecipient(String regNr) {
         AadressType recipient = AadressType.Factory.newInstance();
         recipient.setRegnr(regNr);
-        // recipient.setAsutuseNimi(recipientName); //seatakse DVK'st saadud reg-numbri järgi DvkServiceImpl.constructDokumentDocument()
+        // recipient.setAsutuseNimi(recipientName); // set in DhlXTeeServiceImpl.constructDokumentDocument() based on regNr
         log.debug("recipient: " + ToStringBuilder.reflectionToString(recipient) + "'");
         return recipient;
     }
@@ -368,11 +363,11 @@ public class DhlXTeeServiceImplTest extends TestCase {
     private AadressType getSenderAddress() {
         AadressType sender = AadressType.Factory.newInstance();
         sender.setRegnr(SENDER_REG_NR);
-        sender.setAsutuseNimi(propertiesResolver.getProperty("institution_name"));
+        // sender.setAsutuseNimi(senderName); // set in DhlXTeeServiceImpl.constructDokumentDocument() based on regNr
         log.debug("Sender: " + ToStringBuilder.reflectionToString(sender) + "'");
         return sender;
     }
-
+    
     /**
      * 
      * @return content to send

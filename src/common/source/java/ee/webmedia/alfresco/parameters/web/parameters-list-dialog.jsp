@@ -27,7 +27,7 @@
          <a:outputText id="paramTypeOT" value="#{msg[sParameter.typeMsg]}" />
       </a:column>
 
-      <a:column id="paramTypeCol" style="text-align: right">
+      <a:column id="paramValCol" style="text-align: right">
          <f:facet name="header">
             <a:outputText value="#{msg.parameters_value}" />
          </f:facet>

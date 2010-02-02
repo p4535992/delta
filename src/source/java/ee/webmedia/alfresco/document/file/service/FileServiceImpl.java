@@ -18,14 +18,12 @@ import org.alfresco.util.URLEncoder;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.versions.service.VersionsService;
+import org.springframework.util.Assert;
 
 /**
  * @author Dmitri Melnikov
  */
 public class FileServiceImpl implements FileService {
-
-    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(FileServiceImpl.class);
 
     private FileFolderService fileFolderService;
     private NodeService nodeService;
@@ -47,11 +45,8 @@ public class FileServiceImpl implements FileService {
         List<File> files = new ArrayList<File>();
         List<FileInfo> fileInfos = fileFolderService.listFiles(nodeRef);
         for (FileInfo fi : fileInfos) {
-            File item = new File(fi);
-            item.setCreator(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_CREATOR)));
-            item.setModifier(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_MODIFIER)));
-            item.setDownloadUrl(generateURL(item.getNodeRef()));
-            files.add(item);
+            File item = CreateFile(fi);
+            files.add(CreateFile(fi));
             boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());
             item.setDigiDocContainer(isDdoc);
             if (isDdoc && includeDigidocSubitems && permissionService.hasPermission(item.getNodeRef(), PermissionService.READ_CONTENT).equals(AccessStatus.ALLOWED)) {
@@ -64,6 +59,22 @@ public class FileServiceImpl implements FileService {
             }
         }
         return files;
+    }
+
+    private File CreateFile(FileInfo fi) {
+        File item = new File(fi);
+        item.setCreator(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_CREATOR)));
+        item.setModifier(userService.getUserFullName((String) fi.getProperties().get(ContentModel.PROP_MODIFIER)));
+        item.setDownloadUrl(generateURL(item.getNodeRef()));
+        return item;
+    }
+
+    public File getFile(NodeRef nodeRef) {
+        Assert.notNull(nodeRef);
+
+        FileInfo fi = fileFolderService.getFileInfo(nodeRef);
+        Assert.notNull(fi);
+        return CreateFile(fi);
     }
 
     @Override
@@ -112,4 +123,5 @@ public class FileServiceImpl implements FileService {
         this.permissionService = permissionService;
     }
     // END: getters / setters
+
 }

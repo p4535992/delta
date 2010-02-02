@@ -6,26 +6,27 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="document-panel" styleClass="panel-100" label="#{DocumentListDialog.listTitle}" progressive="true">
+<%-- This JSP is used from multiple dialogs, that's why DialogManager.bean reference is used --%>
+<a:panel id="document-panel" styleClass="panel-100" label="#{DialogManager.bean.listTitle}" progressive="true">
 
    <%-- Main List --%>
    <a:richList id="documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{DocumentListDialog.entries}" var="r">
+      width="100%" value="#{DialogManager.bean.documents}" var="r">
 
       <%-- regNumber --%>
       <a:column id="col1" primary="true" styleClass="#{r.docTypeLocalName}" >
          <f:facet name="header">
-            <a:sortLink id="col1-sort" label="#{msg.document_regNumber}" value="type" styleClass="header" />
+            <a:sortLink id="col1-sort" label="#{msg.document_regNumber}" value="regNumber" styleClass="header" />
          </f:facet>
-         <h:outputText id="col1-text" value="#{r.node.properties['{http://alfresco.webmedia.ee/model/document/common/1.0}regNumber']}" />
+         <h:outputText id="col1-text" value="#{r.regNumber}" />
       </a:column>
       
       <%-- Registration date --%>
       <a:column id="col2" primary="true" styleClass="#{r.docTypeLocalName}" >
          <f:facet name="header">
-            <a:sortLink id="col2-sort" label="#{msg.document_regDateTime}" value="type" styleClass="header" />
+            <a:sortLink id="col2-sort" label="#{msg.document_regDateTime}" value="regDateTime" styleClass="header" />
          </f:facet>
-         <h:outputText id="col2-text" value="#{r.node.properties['{http://alfresco.webmedia.ee/model/document/common/1.0}regDateTime']}" >
+         <h:outputText id="col2-text" value="#{r.regDateTime}" >
             <a:convertXMLDate pattern="#{msg.date_pattern}" />
          </h:outputText>
       </a:column>
@@ -33,15 +34,15 @@
       <%-- Document type --%>
       <a:column id="col3" primary="true" styleClass="#{r.docTypeLocalName}" >
          <f:facet name="header">
-            <a:sortLink id="col3-sort" label="#{msg.document_docType}" value="docType" styleClass="header" />
+            <a:sortLink id="col3-sort" label="#{msg.document_docType}" value="documentTypeName" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-text" value="#{r.docType}" />
+         <h:outputText id="col3-text" value="#{r.documentTypeName}" />
       </a:column>
       
-      <%-- Sender/receiver --%>
+      <%-- Sender/owner --%>
       <a:column id="col4" primary="true" styleClass="#{r.docTypeLocalName}" >
          <f:facet name="header">
-            <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="docType" styleClass="header" />
+            <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
          <h:outputText id="col4-text" value="#{r.sender}" />
       </a:column>

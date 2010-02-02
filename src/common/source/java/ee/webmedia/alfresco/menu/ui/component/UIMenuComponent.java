@@ -21,14 +21,14 @@ public class UIMenuComponent extends UIComponentBase {
 
     public static final String MENU_FAMILY = UIMenuComponent.class.getCanonicalName();
     private boolean primary;
-    private String activeItemId;
+    private String activeItemId; // TODO - could be refactored to int
     private String id;
 
     public static final String PRIMARY_ATTRIBUTE_KEY = "primary";
     public static final String ACTIVE_ITEM_ID_ATTRIBUTE_KEY = "activeItemId";
     public static final String ID_ATTRIBUTE_KEY = "id";
     public static final String VALUE_SEPARATOR = "_";
-    public final static String VIEW_STACK = "_alfViewStack";
+    public static final String VIEW_STACK = "_alfViewStack";
 
     @Override
     public void queueEvent(FacesEvent event) {
@@ -44,6 +44,9 @@ public class UIMenuComponent extends UIComponentBase {
             if (isPrimary != null && Boolean.parseBoolean(isPrimary.toString())) {
                 MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
                 menuBean.setActiveItemId(activeId);
+                if(Integer.parseInt(activeId) == MenuBean.DOCUMENT_REGISTER_ID) {
+                    menuBean.collapseMenuItems(null);
+                }
             }
             
             // Clear the view stack, otherwise it would grow too big as the cancel button is hidden in some views

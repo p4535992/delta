@@ -14,9 +14,43 @@
 
    <types>
 
-      <!-- in web-client config, actions are matched only on node-type, not on aspect-name -->
       <type name="doccom:document">
          <parent>cm:folder</parent>
+         <associations>
+            <association name="doccom:documentReply">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>false</many>
+               </target>
+            </association>
+            <association name="doccom:documentFollowUp">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>false</many>
+               </target>
+            </association>
+            <child-association name="doccom:sendInfo">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>doccom:sendInfo</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
          <mandatory-aspects>
             <aspect>doccom:common</aspect>
          </mandatory-aspects>
@@ -27,6 +61,33 @@
          <mandatory-aspects>
             <aspect>doccom:documentContainer</aspect>
          </mandatory-aspects>
+      </type>
+
+      <type name="doccom:sendInfo">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="doccom:recipient">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="doccom:recipientRegNr">
+               <type>d:text</type>
+            </property>
+            <property name="doccom:sendDateTime">
+               <type>d:datetime</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="doccom:sendMode">
+               <type>d:text</type>
+            </property>
+            <property name="doccom:sendStatus">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="doccom:dvkId">
+               <type>d:text</type>
+            </property>
+         </properties>
       </type>
 
    </types>
@@ -49,9 +110,35 @@
          </associations>
       </aspect>
 
-      <aspect name="doccom:file" />
-      
-      <aspect name="doccom:searchable" />
+      <!-- Duplicates some information on document for search purposes -->
+      <aspect name="doccom:searchable">
+         <properties>
+            <!-- Document's function and series noderefs are duplicated here, because we need to use them during lucene search -->
+            <property name="doccom:function">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:series">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:fileNames">
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <index enabled="true">
+                  <atomic>true</atomic>
+                  <stored>false</stored>
+                  <tokenised>both</tokenised>
+               </index>
+            </property>
+            <property name="doccom:fileContents">
+               <type>d:content</type>
+               <index enabled="true">
+                  <atomic>true</atomic>
+                  <stored>false</stored>
+                  <tokenised>true</tokenised>
+               </index>
+            </property>
+         </properties>
+      </aspect>
 
       <aspect name="doccom:common">
          <properties>

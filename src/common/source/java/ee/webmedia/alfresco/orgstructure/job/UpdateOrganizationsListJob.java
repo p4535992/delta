@@ -32,7 +32,7 @@ public class UpdateOrganizationsListJob implements StatefulJob {
         }
         final OrganizationStructureService worker = (OrganizationStructureService) workerObj;
 
-        // Run job as with systeUser privileges
+        // Run job as with systemUser privileges
         final Integer updateCount = AuthenticationUtil.runAs(new RunAsWork<Integer>() {
             @Override
             public Integer doWork() throws Exception {

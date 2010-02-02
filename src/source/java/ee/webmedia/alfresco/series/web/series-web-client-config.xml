@@ -50,6 +50,10 @@
                <button id="close-button" label-id="close" action="#{SeriesDetailsDialog.close}" disabled="#{SeriesDetailsDialog.closed}" />
             </buttons>
          </dialog>
+         
+         <dialog name="mySeriesListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/series/web/mydocuments/myseries-list-dialog.jsp" managed-bean="MySeriesListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="series_myseries_list" show-ok-button="false">
+         </dialog>
       </dialogs>
    </config>
 

@@ -39,6 +39,7 @@
          ,/WEB-INF/classes/ee/webmedia/alfresco/volume/volume-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/cases/case-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/versions/versions-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/imap/imap-faces-config.xml
       </param-value>
    </context-param>
 
@@ -100,7 +101,8 @@
 
 	<!--  These were previously init params for the WebDAV servlet,
 	      but since they are also needed to MT-enable the 
-	      ExternalAccess servlet, I have made them context wide.-->
+	      ExternalAccess servlet, I have made them context wide.
+-->
    <context-param>
          <param-name>store</param-name>
          <param-value>workspace://SpacesStore</param-value>

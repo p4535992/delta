@@ -81,7 +81,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
       </property>
    </bean>
    
-   <bean id="parameterResceduledTriggerParent" abstract="true" depends-on="parametersSpacesBootstrap">
+   <bean id="parameterRescheduledTriggerParent" abstract="true" depends-on="parametersSpacesBootstrap">
       <property name="scheduler" ref="schedulerFactory" />
       <property name="parametersService" ref="ParametersService" />
    </bean>

@@ -16,6 +16,6 @@ public enum DocumentStatus {
     }
 
     public boolean equals(String value) {
-        return this.valueName.equals(value);
+        return this.valueName.equalsIgnoreCase(value);
     }
 }

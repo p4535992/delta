@@ -3,7 +3,7 @@ package ee.webmedia.alfresco.parameters.service;
 import java.io.Serializable;
 import java.util.List;
 
-import ee.webmedia.alfresco.parameters.job.ParameterResceduledTriggerBean;
+import ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean;
 import ee.webmedia.alfresco.parameters.model.Parameter;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 
@@ -51,6 +51,6 @@ public interface ParametersService {
      */
     void applicationStarted();
 
-    void addParameterResceduledJob(ParameterResceduledTriggerBean job);
+    void addParameterRescheduledJob(ParameterRescheduledTriggerBean job);
 
 }

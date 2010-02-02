@@ -19,4 +19,7 @@ public interface DvkModel {
         QName ACCESS_RIGHTS = QName.createQName(URI, "accessRights");
     }
 
+    interface Props {
+        QName DVK_ID = QName.createQName(URI, "dvkId");
+    }
 }

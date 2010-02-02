@@ -92,7 +92,7 @@
       </property>
    </bean>
 
-   <bean id="updateOrganizationsListTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterResceduledTriggerBean" parent="parameterResceduledTriggerParent">
+   <bean id="updateOrganizationsListTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
       <property name="parameterName" value="employeeRegReceiveStructUnitsTime" />
       <property name="parameterFormat" value="H:mm" />
       <!--      <property name="jobDetail" ref="updateOrganizationsListJobDetails" />-->

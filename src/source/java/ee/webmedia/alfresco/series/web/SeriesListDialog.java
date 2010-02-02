@@ -6,6 +6,7 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -25,6 +26,8 @@ public class SeriesListDialog extends BaseDialogBean {
     private transient SeriesService seriesService;
     private transient FunctionsService functionsService;
     private Function function;
+    
+    public static final String BEAN_NAME = "SeriesListDialog"; 
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -44,7 +47,11 @@ public class SeriesListDialog extends BaseDialogBean {
     }
 
     public void showAll(ActionEvent event) {
-        function = getFunctionsService().getFunctionByNodeRef(ActionUtil.getParam(event, "functionNodeRef"));
+        showAll(new NodeRef(ActionUtil.getParam(event, "functionNodeRef")));
+    }
+    
+    public void showAll(NodeRef nodeRef) {
+        function = getFunctionsService().getFunctionByNodeRef(nodeRef);
     }
 
     public List<Series> getSeries() {

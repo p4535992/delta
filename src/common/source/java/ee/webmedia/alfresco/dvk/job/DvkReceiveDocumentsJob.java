@@ -34,7 +34,7 @@ public class DvkReceiveDocumentsJob implements Job {
         }
         final DvkService worker = (DvkService) workerObj;
         
-        // Run job as with systeUser privileges
+        // Run job as with systemUser privileges
         final Collection<String> receivedDocumentDhlIds = AuthenticationUtil.runAs(new RunAsWork<Collection<String>>() {
             @Override
             public Collection<String> doWork() throws Exception {

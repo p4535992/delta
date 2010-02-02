@@ -1,16 +1,23 @@
 package ee.webmedia.alfresco.common.service;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.Deflater;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.cmr.model.FileFolderService;
+import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -24,6 +31,9 @@ import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.UnicodeExtraFieldPolicy;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
@@ -41,6 +51,7 @@ public class GeneralServiceImpl implements GeneralService {
     private NamespaceService namespaceService;
     private DictionaryService dictionaryService;
     private SearchService searchService;
+    private FileFolderService fileFolderService;
 
     @Override
     public StoreRef getStore() {
@@ -88,6 +99,20 @@ public class GeneralServiceImpl implements GeneralService {
             return fetchNode(parentRef);
         }
         return null;
+    }
+    
+    @Override
+    public Node getAncestorWithType(NodeRef childRef, QName ancestorType) {
+        final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
+        final QName realParentType = nodeService.getType(parentRef);
+        if (ancestorType.equals(realParentType)) {
+            return fetchNode(parentRef);
+        }
+        if(realParentType.equals(ContentModel.TYPE_STOREROOT)) {
+            return null;
+        }
+        return getAncestorWithType(parentRef, ancestorType);
+        
     }
 
     @Override
@@ -172,7 +197,7 @@ public class GeneralServiceImpl implements GeneralService {
         for (QName qName : properties.keySet()) {
             addToPropsIfNotSystem(qName, properties.get(qName), props);
         }
-        nodeService.setProperties(nodeRef, props);
+        nodeService.addProperties(nodeRef, props);
     }
 
     @Override
@@ -182,7 +207,7 @@ public class GeneralServiceImpl implements GeneralService {
             QName qname = QName.createQName(key);
             addToPropsIfNotSystem(qname, (Serializable) nodeProps.get(key), props);
         }
-        nodeService.setProperties(nodeRef, props);
+        nodeService.addProperties(nodeRef, props);
     }
 
     private void addToPropsIfNotSystem(QName qname, Serializable value, Map<QName, Serializable> props) {
@@ -211,12 +236,56 @@ public class GeneralServiceImpl implements GeneralService {
         Map<String, Object> requestMap = FacesContext.getCurrentInstance().getExternalContext().getRequestMap();
         final Object[] nodeAndPropName = (Object[]) requestMap.get(WMUIProperty.REPO_NODE);
         requestMap.remove(WMUIProperty.REPO_NODE); // remove nodeAndPropName from request map
+        if (nodeAndPropName == null) {
+            return null;
+        }
         Node node = (Node) nodeAndPropName[0];
         String propName = (String) nodeAndPropName[1];
         QName qName = QName.createQName(propName, namespaceService);
         final Map<String, Object> properties = node.getProperties();
         final Object value = properties.get(qName.toString());
         return DefaultTypeConverter.INSTANCE.convert(String.class, value);
+    }
+
+    @Override
+    public ByteArrayOutputStream getZipFileFromFiles(NodeRef document, List<String> fileNodeRefs) {
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        ZipArchiveOutputStream out = new ZipArchiveOutputStream(byteStream);
+        InputStream in = null;
+        try {
+            out.setLevel(Deflater.DEFAULT_COMPRESSION);
+            out.setEncoding("Cp437");
+            out.setCreateUnicodeExtraFields(UnicodeExtraFieldPolicy.NOT_ENCODEABLE);
+            byte[] buffer = new byte[10240];
+            for (FileInfo fileInfo : fileFolderService.listFiles(document)) {
+                if (fileNodeRefs.contains(fileInfo.getNodeRef().toString())) {
+                    ZipArchiveEntry entry = new ZipArchiveEntry(fileInfo.getName());
+                    entry.setSize(fileInfo.getContentData().getSize());
+                    out.putArchiveEntry(entry);
+                    in = fileFolderService.getReader(fileInfo.getNodeRef()).getContentInputStream();
+                    int length = 0;
+                    while ((length = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, length);
+                    }
+                    out.closeArchiveEntry();
+                    in.close();
+                }
+            }
+            out.finish();
+        } catch (IOException e) {
+            log.warn("Failed to zip up files.", e);
+            throw new RuntimeException("Failed to zip up files.", e);
+        } finally {
+            try {
+                out.close();
+            } catch (IOException e) {
+            }
+            try {
+                in.close();
+            } catch (Exception e) {
+            }
+        }
+        return byteStream;
     }
 
     // START: getters / setters
@@ -238,6 +307,10 @@ public class GeneralServiceImpl implements GeneralService {
 
     public void setDictionaryService(DictionaryService dictionaryService) {
         this.dictionaryService = dictionaryService;
+    }
+    
+    public void setFileFolderService(FileFolderService fileFolderService) {
+        this.fileFolderService = fileFolderService;
     }
     // END: getters / setters
 

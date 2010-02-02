@@ -1,0 +1,13 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <import resource="classpath:ee/webmedia/alfresco/dvk/dvk-context.xml" />
+
+   <!-- @Override different implementations in concrete projects (i.e TK) -->
+   <bean id="dvkService" class="ee.webmedia.alfresco.dvk.service.DvkServiceSimImpl" parent="dvkServiceBase">
+      <property name="documentService" ref="DocumentService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
+   </bean>
+
+</beans>

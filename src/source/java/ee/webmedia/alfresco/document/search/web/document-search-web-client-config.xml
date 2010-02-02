@@ -1,0 +1,60 @@
+<alfresco-config>
+
+   <config>
+      <dialogs>
+         <dialog name="documentSearchDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-dialog.jsp" managed-bean="DocumentSearchDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_search" />
+
+         <dialog name="documentSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentSearchResultsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_search" />
+
+         <dialog name="documentSearchExtendedResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-extended-results-dialog.jsp" managed-bean="DocumentSearchResultsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_search" />
+
+         <dialog name="documentQuickSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentQuickSearchResultsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_quick_search" show-ok-button="false" />
+
+         <dialog name="todayRegisteredDocumentsSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="TodayRegisteredDocumentsSearchResultsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" show-ok-button="false" />
+
+         <dialog name="userWorkingDocumentsSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="UserWorkingDocumentsSearchResultsDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" show-ok-button="false" />
+      </dialogs>
+   </config>
+
+   <config evaluator="node-type" condition="docsearch:filter" replace="true">
+      <property-sheet>
+         <show-property name="docsearch:input" display-label-id="document_search_input" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:regDateTimeBegin" display-label-id="document_regDateTime2" component-generator="InlinePropertyGroupGenerator" props="docsearch:regDateTimeBegin||styleClass=date,docsearch:regDateTimeEnd||styleClass=date" textId="document_search_from_to" />
+         <show-property name="docsearch:regNumber" display-label-id="document_regNumber2" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:documentType" display-label-id="document_docType" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getDocumentTypes}" converter="ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter" />
+         <show-property name="docsearch:function" display-label-id="function" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getFunctions}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" valueChangeListener="#{DocumentSearchDialog.functionValueChanged}" />
+         <show-property name="docsearch:series" display-label-id="series" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getSeries}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" />
+         <show-property name="docsearch:docStatus" display-label-id="document_docStatus" component-generator="ClassificatorSelectorGenerator" classificatorName="documentStatus" />
+         <show-property name="docsearch:recipientName" display-label-id="document_allRecipients" component-generator="SearchGenerator" editable="true" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{DocumentSearchDialog.setRecipientName}" dialogTitleId="contacts_search_title" />
+         <show-property name="docsearch:docName" display-label-id="document_docName" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:senderRegNumber" display-label-id="document_senderRegNumber" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:senderRegDateBegin" display-label-id="document_senderRegDate" component-generator="InlinePropertyGroupGenerator" props="docsearch:senderRegDateBegin||styleClass=date,docsearch:senderRegDateEnd||styleClass=date" textId="document_search_from_to" />
+         <show-property name="docsearch:dueDateBegin" display-label-id="document_dueDate2" component-generator="InlinePropertyGroupGenerator" props="docsearch:dueDateBegin||styleClass=date,docsearch:dueDateEnd||styleClass=date" textId="document_search_from_to" />
+         <show-property name="docsearch:complienceDateBegin" display-label-id="document_complienceDate2" component-generator="InlinePropertyGroupGenerator" props="docsearch:complienceDateBegin||styleClass=date,docsearch:complienceDateEnd||styleClass=date" textId="document_search_from_to" />
+         <show-property name="docsearch:accessRestriction" display-label-id="document_accessRestriction" component-generator="ClassificatorSelectorGenerator" classificatorName="accessRestriction" />
+         <show-property name="docsearch:accessRestrictionReason" display-label-id="document_accessRestrictionReason" component-generator="ClassificatorSelectorAndTextGenerator" classificatorName="accessRestrictionReason" styleClass="expand5-200" />
+         <show-property name="docsearch:accessRestrictionBeginDateBegin" display-label-id="document_accessRestrictionBeginDate" component-generator="InlinePropertyGroupGenerator" props="docsearch:accessRestrictionBeginDateBegin||styleClass=date,docsearch:accessRestrictionBeginDateEnd||styleClass=date" textId="document_search_from_to" />
+         <show-property name="docsearch:accessRestrictionEndDateBegin" display-label-id="document_accessRestrictionEndDate" component-generator="InlinePropertyGroupGenerator" props="docsearch:accessRestrictionEndDateBegin||styleClass=date,docsearch:accessRestrictionEndDateEnd||styleClass=date" textId="document_search_from_to" />
+         <show-property name="docsearch:accessRestrictionEndDesc" display-label-id="document_accessRestrictionEndDesc" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:ownerName" display-label-id="document_owner2" component-generator="SearchGenerator" editable="true" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{DocumentSearchDialog.setOwner}" dialogTitleId="users_search_title" />
+         <show-property name="docsearch:ownerOrgStructUnit" display-label-id="document_ownerOrgStructUnit" component-generator="TextAreaGenerator" styleClass="expand5-200 secondary" />
+         <show-property name="docsearch:ownerJobTitle" display-label-id="document_ownerJobTitle" component-generator="TextAreaGenerator" styleClass="expand5-200 secondary" />
+         <show-property name="docsearch:signerName" display-label-id="document_signer" component-generator="SearchGenerator" editable="true" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{DocumentSearchDialog.setSigner}" dialogTitleId="users_search_title" />
+         <show-property name="docsearch:signerJobTitle" display-label-id="document_signerJobTitle" component-generator="TextAreaGenerator" styleClass="expand5-200 secondary" />
+         <show-property name="docsearch:keywords" display-label-id="document_keywords" component-generator="ClassificatorSelectorAndTextGenerator" classificatorName="keywords" styleClass="expand5-200" />
+         <show-property name="docsearch:storageType" display-label-id="document_storageType" component-generator="ClassificatorSelectorGenerator" classificatorName="storageType" />
+         <show-property name="docsearch:costManager" display-label-id="document_costManager" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:responsibleName" display-label-id="document_responsibleName" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:coResponsibles" display-label-id="document_coResponsibles" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:contactPerson" display-label-id="document_contactPerson" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:output" display-label-id="document_search_output" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getSearchOutput}" />
+      </property-sheet>
+   </config>
+
+</alfresco-config>

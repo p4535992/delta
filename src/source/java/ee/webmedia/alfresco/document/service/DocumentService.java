@@ -48,6 +48,16 @@ public interface DocumentService {
     Node createDocument(QName documentTypeId);
 
     /**
+     * Create a new blank document into <code>parentFolderRef</code>.
+     * 
+     * @param documentTypeId
+     * @param parentFolderRef
+     * @param props
+     * @return created document
+     */
+    Node createDocument(QName documentTypeId, NodeRef parentFolderRef, Map<QName, Serializable> props);
+
+    /**
      * Save new values for document properties to repository.
      * 
      * @param node document with new property values
@@ -55,14 +65,34 @@ public interface DocumentService {
      */
     Node updateDocument(Node node);
 
+    void updateSearchableFiles(NodeRef document);
+
     /**
      * Make a copy of document as a draft.
      * To make it permanent, it must be saved explicitly.
-     *
+     * 
      * @param nodeRef Reference to document that is copied
      * @return copied document as draft
      */
     Node copyDocument(NodeRef nodeRef);
+
+    /**
+     * Create a node of the specified type from the properties
+     * of the original node as a reply.
+     * @param docType
+     * @param nodeRef
+     * @return
+     */
+    Node createReply(QName docType, NodeRef nodeRef);
+    
+    /**
+     * Create a node of the specified type from the properties
+     * of the original node as a follow up.
+     * @param docType
+     * @param nodeRef
+     * @return
+     */
+    Node createFollowUp(QName docType, NodeRef nodeRef);
     
     /**
      * @param volumeRef
@@ -71,10 +101,17 @@ public interface DocumentService {
     List<Document> getAllDocumentsByVolume(NodeRef volumeRef);
 
     List<Document> getAllDocumentsByCase(NodeRef caseRef);
+    
+    List<Document> getAllDocumentFromDvk();
+
+    /**
+     * Get list of incoming email.
+     *
+     * @return list of documents
+     */
+    List<Document> getIncomingEmails();
 
     void deleteDocument(NodeRef nodeRef);
-
-    boolean isMetadataEditAllowed(NodeRef nodeRef);
 
     /**
      * Add callback to document creation phase, where default values for the properties could be created or overridden when creatable document has given
@@ -104,10 +141,10 @@ public interface DocumentService {
 
     /**
      * @param nodeRef
-     * @return parent volume of given document 
+     * @return parent volume of given document
      */
     Node getVolumeByDocument(NodeRef nodeRef);
-    
+
     Node getCaseByDocument(NodeRef nodeRef);
 
     /**
@@ -124,8 +161,9 @@ public interface DocumentService {
     /**
      * @param documentNode
      * @return the same instance with updated values(regNumber, regDate)
+     * @throws UnableToPerformException - Document can't be registered because of initial document is not registered.
      */
-    Node registerDocument(Node documentNode);
+    Node registerDocument(Node documentNode) throws UnableToPerformException;
 
     /**
      * @param nodeRef
@@ -133,21 +171,16 @@ public interface DocumentService {
      */
     boolean isSaved(NodeRef nodeRef);
 
-    /**
-     * Searches for documents where:
-     * + search string matches against any Document property value (supported types: text, int, long, float, double, date, datetime)
-     * + or file name 
-     * + or file content
-     * 
-     * It returns maximum of 100 entries. It is possible that the method returns less than 100 Documents even when there 
-     * are more than 100 matches in the repository because we search for 200 matches and then filter out duplicate documents 
-     * where multiple files under the same document matched the search criteria. 
-     * 
-     * @param searchString
-     * @return list of matching documents (max 100 entries)
-     */
-    List<Document> searchDocumentsQuick(String searchString);
-
     void setTransientProperties(Node document, DocumentParentNodesVO documentParentNodesVO);
+
+    Document getDocumentByNodeRef(NodeRef document);
+    
+    public class UnableToPerformException extends RuntimeException {
+        private static final long serialVersionUID = 1L;
+
+        public UnableToPerformException(String errMsg) {
+            super(errMsg);
+        }
+    }
 
 }

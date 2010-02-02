@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE faces-config PUBLIC "-//Sun Microsystems, Inc.//DTD JavaServer Faces Config 1.1//EN"
+        "http://java.sun.com/dtd/web-facesconfig_1_1.dtd">
+<faces-config>
+
+    <managed-bean>
+        <managed-bean-name>AttachmentListDialog</managed-bean-name>
+        <managed-bean-class>ee.webmedia.alfresco.imap.web.AttachmentListDialog</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+        <managed-property>
+            <property-name>fileService</property-name>
+            <value>#{FileService}</value>
+        </managed-property>
+        <managed-property>
+            <property-name>imapServiceExt</property-name>
+            <value>#{ImapServiceExt}</value>
+        </managed-property>
+        <managed-property>
+            <property-name>generalService</property-name>
+            <value>#{GeneralService}</value>
+        </managed-property>
+    </managed-bean>
+
+</faces-config>

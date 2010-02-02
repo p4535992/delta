@@ -62,6 +62,16 @@ public interface RegisterService {
 
     void updatePropertiesFromObject(Register register);
 
+    /**
+     * @param registerId
+     * @return new value after incrementing
+     */
     int increaseCount(int registerId);
+
+    /**
+     * reset register counter
+     * @param register
+     */
+    void resetCounter(Node register);
 
 }

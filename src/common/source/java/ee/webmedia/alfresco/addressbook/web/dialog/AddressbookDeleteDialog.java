@@ -4,6 +4,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.app.Application;
 
 import ee.webmedia.alfresco.utils.ActionUtil;
 
@@ -25,5 +26,14 @@ public class AddressbookDeleteDialog extends AddressbookBaseDialog {
     public void setupDelete(ActionEvent event) {
         setCurrentNode(getAddressbookService().getNode(new NodeRef(ActionUtil.getParam(event, "nodeRef"))));
     }
-
+    
+    @Override
+    public String getFinishButtonLabel() {
+        return Application.getMessage(FacesContext.getCurrentInstance(), "delete");
+    }
+    
+    @Override
+    public String getCancelButtonLabel() {
+        return Application.getMessage(FacesContext.getCurrentInstance(), "back_button");
+    }
 }

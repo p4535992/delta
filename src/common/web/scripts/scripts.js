@@ -1,3 +1,8 @@
+function scrollView() {
+	if (document.forms[0] != null && document.forms[0]['scrollView'] != null) {
+		window.scrollBy(0, document.forms[0]['scrollView'].value);
+	}
+}
 
 /**
  * @return input string where ":" and "." are escaped, so that the result could be used by jQuery
@@ -49,6 +54,9 @@ $jQ(document).ready(function()
          appendSelection($jQ(this), textAreaId)
       });
    });
+   
+   scrollView();
+   
 });
 
 /**

@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.Map.Entry;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -157,6 +158,11 @@ public class AddressbookServiceImpl implements AddressbookService {
 
     @Override
     public void updateNode(Node node) {
+        if (node.getType().equals(Types.ORGANIZATION)) {
+            node.getProperties().put(ContentModel.PROP_NAME.toString(), node.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME));
+        } else if (node.getType().equals(Types.PRIV_PERSON) || node.getType().equals(Types.ORGPERSON)) {
+            node.getProperties().put(ContentModel.PROP_NAME.toString(), node.getProperties().get(AddressbookModel.Props.PERSON_FIRST_NAME));
+        }
         nodeService.setProperties(node.getNodeRef(), convertProps(node.getProperties()));
     }
 
@@ -245,10 +251,12 @@ public class AddressbookServiceImpl implements AddressbookService {
     }
 
     private NodeRef createOrganization(Map<QName, Serializable> data) {
+        data.put(ContentModel.PROP_NAME, data.get(AddressbookModel.Props.ORGANIZATION_NAME));
         return createNode(null, Assocs.ORGANIZATIONS, Types.ORGANIZATION, data);
     }
 
     private NodeRef createPerson(NodeRef organization, Map<QName, Serializable> data) {
+        data.put(ContentModel.PROP_NAME, data.get(AddressbookModel.Props.PERSON_FIRST_NAME));
         return createNode(organization,
                 organization == null ? Assocs.ABPEOPLE : Assocs.ORGPEOPLE,
                 organization == null ? Types.PRIV_PERSON : Types.ORGPERSON, data);

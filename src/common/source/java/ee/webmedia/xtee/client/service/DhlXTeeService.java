@@ -71,6 +71,11 @@ public interface DhlXTeeService {
         public static SendStatus get(Edastus.Staatus.Enum staatus) {
             return get(staatus.toString());
         }
+        
+        @Override
+        public String toString() {
+            return statusCode;
+        }
 
     }
 
@@ -82,7 +87,7 @@ public interface DhlXTeeService {
     /**
      * @see {@link #sendDocuments(Collection, AadressType[], AadressType, SendDocumentsDokumentCallback)}
      */
-    List<String> sendDocuments(Collection<ContentToSend> contentsToSend, AadressType[] recipients, AadressType sender);
+    Set<String> sendDocuments(Collection<ContentToSend> contentsToSend, AadressType[] recipients, AadressType sender);
 
     /**
      * Composes and sends document to given recipients.
@@ -94,14 +99,14 @@ public interface DhlXTeeService {
      *            <i>"dokument"</i> as desired.
      * @return dhl_Id's of the sent document
      */
-    List<String> sendDocuments(Collection<ContentToSend> contentsToSend, AadressType[] recipients, AadressType sender, SendDocumentsDokumentCallback callback,
+    Set<String> sendDocuments(Collection<ContentToSend> contentsToSend, AadressType[] recipients, AadressType sender, SendDocumentsDokumentCallback callback,
             SendDocumentsRequestCallback requestCallback);
 
     /**
-     * @param ids - list of id's to be used to query statuses for.
+     * @param ids - set of id's to be used to query statuses for.
      * @return list of items containing single document status information.
      */
-    List<Item> getSendStatuses(List<String> ids);
+    List<Item> getSendStatuses(Set<String> ids);
 
     /**
      * @param maxNrOfDocuments maximum number of documents that will be returned with the service call

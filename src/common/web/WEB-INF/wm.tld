@@ -133,4 +133,47 @@
          <type>String</type>
       </attribute>
    </tag>
+
+   <tag>
+      <name>multiValueEditor</name>
+      <tag-class>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditorTag</tag-class>
+      <body-content>empty</body-content>
+      <attribute>
+         <name>varName</name>
+         <required>true</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Path to bean object where a Map with name properties exists. It's used to construct the value binding</description>
+      </attribute>
+      <attribute>
+         <name>props</name>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Comma separated list of map key names which point to List of values. Component will create one column for each field.</description>
+      </attribute>
+      <attribute>
+         <name>titles</name>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Comma separated list of column titles. Must have the same number of fields as props.</description>
+      </attribute>
+      <attribute>
+         <name>pickerCallback</name>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Picker callback method binding.</description>
+      </attribute>
+      <attribute>
+         <name>setterCallback</name>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Setter callback method binding.</description>
+      </attribute>
+      <attribute>
+         <name>dialogTitleId</name>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Dialog title id.</description>
+      </attribute>
+      <attribute>
+         <name>propTypes</name>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Comma separated list of propertyTypes:cssClass:classificatorNames combinations for props fields, for example "input,,classificator::selectMode".</description>
+      </attribute>
+   </tag>
+      
 </taglib>

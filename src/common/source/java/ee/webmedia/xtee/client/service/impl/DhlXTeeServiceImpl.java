@@ -17,6 +17,7 @@ import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -278,12 +279,12 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
     }
 
     @Override
-    public List<String> sendDocuments(Collection<ContentToSend> contentsToSend, AadressType[] recipients, AadressType sender) {
+    public Set<String> sendDocuments(Collection<ContentToSend> contentsToSend, AadressType[] recipients, AadressType sender) {
         return sendDocuments(contentsToSend, recipients, sender, null, null);
     }
 
     @Override
-    public List<String> sendDocuments(Collection<ContentToSend> contentsToSend, AadressType[] recipients, AadressType sender,
+    public Set<String> sendDocuments(Collection<ContentToSend> contentsToSend, AadressType[] recipients, AadressType sender,
             SendDocumentsDokumentCallback dokumentCallback, SendDocumentsRequestCallback requestCallback) {
 
         String queryMethod = getDatabase() + "." + SEND_DOCUMENTS + "." + SEND_DOCUMENTS_VERSION;
@@ -324,7 +325,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
 
             List<DhlDokIDType> dokumentDocuments //
             = getTypeFromGzippedAndEncodedSoapArray(response.getAttachments().get(0).getInputStream(), DhlDokIDType.class);
-            List<String> sentDocumentsDhlIds = new ArrayList<String>();
+            Set<String> sentDocumentsDhlIds = new HashSet<String>();
             for (DhlDokIDType dokIDType : dokumentDocuments) {
                 sentDocumentsDhlIds.add(dokIDType.getStringValue());
             }
@@ -377,7 +378,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
     }
 
     @Override
-    public List<Item> getSendStatuses(List<String> ids) {
+    public List<Item> getSendStatuses(Set<String> ids) {
         String queryMethod = getDatabase() + "." + XTEE_METHOD_GET_SEND_STATUS + "." + GET_SEND_STATUS_VERSION;
         try {
             DocumentRefsArrayType documentRefsArray = DocumentRefsArrayType.Factory.newInstance();
@@ -525,7 +526,8 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
         public String getOrganizationName(String regnr) {
             String orgName = getDvkOrganizationsCache().get(regnr);
             if (getUpdateStrategy().update4getOrganizationName(orgName)) {
-
+                updateDvkCapableOrganisationsCache();
+                orgName = getDvkOrganizationsCache().get(regnr);
             }
             return orgName;
         }
@@ -583,6 +585,11 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             // Add mandatory empty elements
             dokumentContainer.addNewMetaxml();
             dokumentContainer.addNewAjalugu();
+            
+            if (StringUtils.isBlank(sender.getAsutuseNimi())) {
+                String senderName = getDvkOrganizationsHelper().getOrganizationName(sender.getRegnr());
+                sender.setAsutuseNimi(senderName);
+            }
 
             Transport transport = dokumentContainer.addNewTransport();
             transport.setSaatja(sender);

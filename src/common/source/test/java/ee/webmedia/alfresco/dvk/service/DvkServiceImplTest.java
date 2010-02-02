@@ -50,11 +50,15 @@ public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
         sendableDocFileNodeRef = contentCreator.createTestFileWithContentUtf8(sendableDocFolderNodeRef, TEST_FILE_1);
     }
 
+    public void testWarmUp() {
+        log.debug("warmup done to get better time measure for the first test");
+    }
+    
     public final void testSendDocuments() {
 //        Collection<ContentToSend> contentsToSend = getContentsToSend();
         Collection<ContentToSend> contentsToSend = getContentsToSend();
         final DvkSendDocuments sendDocument = getSendDocument();
-        final List<String> dvkIds = dvkService.sendDocuments(sendableDocFolderNodeRef, contentsToSend, sendDocument);
+        final Set<String> dvkIds = dvkService.sendDocuments(sendableDocFolderNodeRef, contentsToSend, sendDocument);
         log.debug("Sent document id's:"+dvkIds);
         //TODO: SendOutService
 //        final List<SendOutItem> sendOutItems = sendOutService.getSendOut(sendableDocFolderNodeRef);

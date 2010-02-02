@@ -50,14 +50,12 @@
             actionListener="#{NavigationBean.toggleShelf}" />
 --%>
             <r:actions context="#{BrowseBean.document}" value="navigator_actions" showLink="false" />
-            <r:permissionEvaluator value="#{AddressbookService.root}" allow="AddressbookManage">
-               <a:actionLink id="addressbook_manage"
-                  image="/images/icons/add_attachment.gif"
-                  showLink="false"
-                  value="#{msg.addressbook}"
-                  action="dialog:addressbookManage"
-                  rendered="#{UserService.documentManager}" />
-            </r:permissionEvaluator>
+            <a:actionLink id="addressbook_manage"
+                image="/images/icons/address-book-open-blue.png"
+                showLink="false"
+                value="#{msg.addressbook}"
+                action="dialog:addressbookManage"
+                rendered="#{UserService.documentManager}" />
          <f:verbatim>
          </span>
          </f:verbatim>
@@ -73,8 +71,8 @@
             </script>
          </f:verbatim>
          <h:graphicImage value="/images/parts/search_controls_left.png" width="3" height="21" styleClass="simple" />
-         <h:inputText value="#{DocumentListDialog.searchValue}" maxlength="50" onkeypress="return _ifenter(event)" />
-         <h:commandButton id="quickSearchBtn" value="#{msg.search}" type="submit" action="dialog:documentListDialog" actionListener="#{DocumentListDialog.quickSearch}" />
+         <h:inputText value="#{DocumentQuickSearchResultsDialog.searchValue}" maxlength="50" onkeypress="return _ifenter(event)" />
+         <h:commandButton id="quickSearchBtn" value="#{msg.search}" type="submit" action="dialog:documentQuickSearchResultsDialog" actionListener="#{DocumentQuickSearchResultsDialog.setup}" />
       </a:panel>
 
    </a:panel>

@@ -21,7 +21,7 @@ public interface VolumeService {
 
     List<Volume> getAllValidVolumesBySeries(NodeRef seriesNodeRef);
 
-    Volume getVolumeByNoderef(String volumeNodeRef);
+    Volume getVolumeByNodeRef(String volumeNodeRef);
 
     Volume getVolumeByNodeRef(NodeRef volumeRef);
     

@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * @author Ats Uiboupin
@@ -29,13 +30,15 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
     public static Parameter<? extends Serializable> newInstance(String paramName, Serializable property, QName nodeType) {
         if (nodeType.equals(ParametersModel.Types.PARAMETER_STRING)) {
             return newInstance(paramName, DefaultTypeConverter.INSTANCE.convert(String.class, property));
+        }
+        if (property instanceof String && StringUtils.isBlank((String) property)) {
+            return null;
         } else if (nodeType.equals(ParametersModel.Types.PARAMETER_INT)) {
             return newInstance(paramName, DefaultTypeConverter.INSTANCE.convert(Integer.class, property));
         } else if (nodeType.equals(ParametersModel.Types.PARAMETER_DOUBLE)) {
             return newInstance(paramName, DefaultTypeConverter.INSTANCE.convert(Double.class, property));
-        } else {
-            throw new IllegalArgumentException("Unimplemented nodeType: " + nodeType.toString());
         }
+        throw new IllegalArgumentException("Unimplemented nodeType: " + nodeType.toString());
     }
 
     public T getParamValue() {

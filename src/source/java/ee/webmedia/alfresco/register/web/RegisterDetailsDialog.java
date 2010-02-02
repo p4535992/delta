@@ -7,7 +7,6 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.register.model.RegisterModel;
 import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 
@@ -30,7 +29,7 @@ public class RegisterDetailsDialog extends BaseDialogBean {
      * Resets current registers counter
      */
     public void resetCounter() {
-        getRegister().getProperties().put(RegisterModel.Prop.COUNTER.toString(), 0);
+        getRegisterService().resetCounter(getRegister());
     }
 
     /**

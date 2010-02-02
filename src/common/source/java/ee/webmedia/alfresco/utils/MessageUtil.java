@@ -30,6 +30,16 @@ public class MessageUtil {
     }
 
     /**
+     * Get message from faces context.
+     *
+     * @param messageId Id of the message
+     * @return message
+     */
+    public static String getMessage(String messageId) {
+        return getMessage(FacesContext.getCurrentInstance(), messageId);
+    }
+
+    /**
      * Translates <code>messageId</code> using {@link MessageUtil#getMessage(FacesContext, String, Object...)} <br>
      * and adds it to Alfreco using {@link Utils#addErrorMessage(String)}
      * 

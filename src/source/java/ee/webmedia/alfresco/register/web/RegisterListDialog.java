@@ -1,20 +1,19 @@
 package ee.webmedia.alfresco.register.web;
 
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.faces.component.UIComponent;
-import javax.faces.component.UISelectItem;
-import javax.faces.component.html.HtmlSelectOneMenu;
+import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
+import javax.faces.model.SelectItem;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.service.RegisterService;
+import ee.webmedia.alfresco.utils.WebUtil;
 
 public class RegisterListDialog extends BaseDialogBean {
 
@@ -65,30 +64,18 @@ public class RegisterListDialog extends BaseDialogBean {
      * @param selectComponent - selectComponent that will be rendered(use <code>selectComponent.getChildren()</code> to add selection items)
      * @return A collection of UISelectItem objects containing the selection items to show on form.
      */
-    public void findActiveRegisters(FacesContext context, HtmlSelectOneMenu selectComponent) {
-        List<Register> registers = getRegisterService().getRegisters();
-        Collections.sort(registers, new Comparator<Register>() {
-            @Override
-            public int compare(Register a, Register b) {
-                return a.getName().compareTo(b.getName());
-            }
-        });
-        
-        @SuppressWarnings("unchecked")
-        List<UIComponent> selectOptions = selectComponent.getChildren();
-        for (Register register : registers) {
+    public List<SelectItem> findActiveRegisters(FacesContext context, UIInput selectComponent) {
+        List<Register> allRegisters = getRegisterService().getRegisters();
+        List<SelectItem> selectItems = new ArrayList<SelectItem>(allRegisters.size());
+        // empty default selection
+        selectItems.add(new SelectItem("", ""));
+        for (Register register : allRegisters) {
             if (register.isActive()) {
-                UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-                selectItem.setItemLabel(register.getName());
-                selectItem.setItemValue(Integer.valueOf(register.getId()));
-                selectOptions.add(selectItem);
+                selectItems.add(new SelectItem(Integer.valueOf(register.getId()), register.getName()));
             }
         }
-        // empty default selection
-        UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-        selectItem.setItemLabel("");
-        selectItem.setItemValue("");
-        selectOptions.add(0, selectItem);
+        WebUtil.sort(selectItems);
+        return selectItems;
     }
 
     // START: getters / setters

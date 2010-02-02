@@ -45,7 +45,7 @@ public class CaseListDialog extends BaseDialogBean {
 
     // START: jsf actions/accessors
     public void showAll(ActionEvent event) {
-        parent = getVolumeService().getVolumeByNoderef((ActionUtil.getParam(event, "volumeNodeRef")));
+        parent = getVolumeService().getVolumeByNodeRef((ActionUtil.getParam(event, "volumeNodeRef")));
     }
 
     public List<Case> getEntries() {

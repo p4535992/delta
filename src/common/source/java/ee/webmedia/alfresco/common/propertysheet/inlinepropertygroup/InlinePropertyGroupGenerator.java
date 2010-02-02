@@ -27,12 +27,16 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator {
     public UIComponent generate(FacesContext context, String id) {
         propIndex = 0;
         UIComponent container = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_GRID);
-        FacesHelper.setupComponentId(context, container, id);
+        FacesHelper.setupComponentId(context, container, null);
         return container;
     }
 
     @Override
-    protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef, UIComponent component) {
+    protected void setupMandatoryPropertyIfNecessary(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
+            PropertyDefinition propertyDef, UIComponent component) {
+
+        // by now, this component has been added to parent's children list
+
         List<String> props;
         String propsAttribute = getCustomAttributes().get("props");
         if (propsAttribute == null) {
@@ -43,33 +47,33 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator {
         }
 
         String text = Application.getMessage(FacesContext.getCurrentInstance(), getCustomAttributes().get("textId"));
-        List<UIComponent> components = generate(context, propertySheet.getVar(), component.getId(), props, text);
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
-        children.addAll(components);
+        generate(context, propertySheet, item, children, props, text);
+
+        super.setupMandatoryPropertyIfNecessary(context, propertySheet, item, propertyDef, component);
     }
 
-    protected List<UIComponent> generate(FacesContext context, String propertySheetVar, String containerId, List<String> props, String text) {
-        List<UIComponent> components = new ArrayList<UIComponent>();
+    protected void generate(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, List<UIComponent> children, List<String> props,
+            String text) {
+
         int i = 0;
         for (String rowText : text.split("\n")) {
             UIComponent container = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_PANELGROUP);
             FacesHelper.setupComponentId(context, container, null);
-
-            List<UIComponent> rowComponents = generateRow(context, propertySheetVar, containerId + "_" + i, props, rowText);
+            children.add(container);
 
             @SuppressWarnings("unchecked")
-            List<UIComponent> children = container.getChildren();
-            children.addAll(rowComponents);
+            List<UIComponent> rowChildren = container.getChildren();
+            generateRow(context, propertySheet, item, rowChildren, props, rowText);
 
-            components.add(container);
             i++;
         }
-        return components;
     }
 
-    protected List<UIComponent> generateRow(FacesContext context, String propertySheetVar, String containerId, List<String> props, String text) {
-        List<UIComponent> components = new ArrayList<UIComponent>();
+    protected void generateRow(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, List<UIComponent> rowChildren, List<String> props,
+            String text) {
+
         List<String> textParts = new ArrayList<String>(Arrays.asList(text.split("#", props.size())));
         String last = textParts.get(textParts.size() - 1);
         if (last.endsWith("#")) {
@@ -77,25 +81,22 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator {
             textParts.add("");
         }
         for (int i = 0; i < textParts.size(); i++) {
-            String currentId = containerId + "_" + i;
             if (StringUtils.isNotEmpty(textParts.get(i))) {
-                UIOutput textComponent = createOutputTextComponent(context, currentId);
+                UIOutput textComponent = createOutputTextComponent(context, null);
                 textComponent.setValue(textParts.get(i));
-                components.add(textComponent);
+                rowChildren.add(textComponent);
             }
 
             if (props.size() > propIndex && i < textParts.size() - 1) {
-                UIComponent component = ComponentUtil.generateComponent(context, propertySheetVar, currentId, props.get(propIndex));
+                ComponentUtil.generateComponent(context, propertySheet.getVar(), props.get(propIndex), propertySheet, item, rowChildren);
+                // above method alreadys adds component to children list
                 propIndex++;
 
 // TODO add validators to vacation fields
-//                MandatoryIfValidator validator = new MandatoryIfValidator("leaveAnnual");
-//                ((UIInput) component).addValidator(validator);
-
-                components.add(component);
+//              MandatoryIfValidator validator = new MandatoryIfValidator("leaveAnnual");
+//              ((UIInput) component).addValidator(validator);
             }
         }
-        return components;
     }
 
 }

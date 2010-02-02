@@ -31,7 +31,7 @@ public class DvkReceiveOrganizationsJob implements Job {
         }
         final AddressbookService worker = (AddressbookService) workerObj;
 
-        // Run job as with systeUser privileges
+        // Run job as with systemUser privileges
         final Integer nrOfDvkCapableOrgs = AuthenticationUtil.runAs(new RunAsWork<Integer>() {
             @Override
             public Integer doWork() throws Exception {

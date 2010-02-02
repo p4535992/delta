@@ -52,6 +52,11 @@ public class CaseServiceImpl implements CaseService {
     }
     
     @Override
+    public Case getCaseByNoderef(NodeRef caseNodeRef) {
+        return getCaseByNoderef(caseNodeRef, null);
+    }
+    
+    @Override
     public boolean isClosed(Node node) {
         return generalService.isExistingPropertyValueEqualTo(node, CaseModel.Props.STATUS, DocListUnitStatus.CLOSED);
     }

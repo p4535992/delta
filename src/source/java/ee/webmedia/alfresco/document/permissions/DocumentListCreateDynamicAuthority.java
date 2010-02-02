@@ -22,15 +22,13 @@ public class DocumentListCreateDynamicAuthority extends BaseDynamicAuthority {
         types.add(FunctionsModel.Types.FUNCTIONS_ROOT);
         types.add(FunctionsModel.Types.FUNCTION);
         types.add(SeriesModel.Types.SERIES);
-        types.add(VolumeModel.Types.VOLUME);
-        types.add(DocumentCommonModel.Types.DRAFTS);
     }
 
     @Override
     public boolean hasAuthority(final NodeRef nodeRef, final String userName) {
         QName type = nodeService.getType(nodeRef);
-        if (type.equals(DocumentCommonModel.Types.DRAFTS)) {
-            log.debug("Anyone can create a node under drafts, type=" + type + ", granting authority " + getAuthority());
+        if (type.equals(DocumentCommonModel.Types.DRAFTS) || type.equals(VolumeModel.Types.VOLUME)) {
+            log.debug("Anyone can create a node under drafts or volume, type=" + type + ", granting authority " + getAuthority());
             return true;
         }
         if (!types.contains(type)) {

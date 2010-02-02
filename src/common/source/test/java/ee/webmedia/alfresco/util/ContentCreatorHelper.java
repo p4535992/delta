@@ -34,6 +34,7 @@ public class ContentCreatorHelper {
                 SearchService.LANGUAGE_XPATH,
                 "app:company_home");
         companyHome = results1.getNodeRefs().get(0);
+        results1.close();
     }
     
     public NodeRef createTestFolder(String name) {

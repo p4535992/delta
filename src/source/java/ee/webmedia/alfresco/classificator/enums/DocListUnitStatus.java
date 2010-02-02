@@ -30,6 +30,6 @@ public enum DocListUnitStatus {
     }
 
     public boolean equals(String valueName) {
-        return this.valueName.equals(valueName);
+        return this.valueName.equalsIgnoreCase(valueName);
     }
 }

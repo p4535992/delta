@@ -8,10 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
-import javax.faces.component.UIInput;
-import javax.faces.component.UIOutput;
 import javax.faces.context.FacesContext;
-import javax.faces.convert.Converter;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.web.app.Application;

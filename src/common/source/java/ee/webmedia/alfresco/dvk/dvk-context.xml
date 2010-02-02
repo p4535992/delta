@@ -23,7 +23,7 @@
          <list>
             <props>
                <prop key="encoding">UTF-8</prop>
-               <prop key="path">/${spaces.company_home.childname}</prop>
+               <prop key="path">${dvk.received.parent.folder.xpath}</prop>
                <prop key="location">ee/webmedia/alfresco/dvk/bootstrap/dvk.xml</prop>
                <prop key="messages">ee/webmedia/alfresco/dvk/bootstrap/dvk-bootstrap</prop>
             </props>
@@ -47,6 +47,7 @@
             <props>
                <prop key="path">/param:parameters</prop>
                <prop key="location">ee/webmedia/alfresco/dvk/bootstrap/dvk-parameters.xml</prop>
+               <prop key="encoding">UTF-8</prop>
             </props>
          </list>
       </property>
@@ -63,7 +64,7 @@
    </bean>
 
    <bean id="dvkServiceBase" abstract="true">
-      <property name="receivedDvkDocumentsPath" value="/${spaces.company_home.childname}/${dvk.received.childname}" />
+      <property name="receivedDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
       <property name="dhlXTeeService" ref="dhlXTeeService" />
       <property name="nodeService" ref="NodeService" />
       <property name="fileFolderService" ref="FileFolderService" />
@@ -74,8 +75,8 @@
       <property name="parametersService" ref="ParametersService" />
    </bean>
 
-   <!-- Overridden in TK project -->
-   <bean id="dvkService" class="ee.webmedia.alfresco.dvk.service.DvkServiceImpl" parent="dvkServiceBase"/>
+   <!-- Overridden in concrete projects(i.e SIM and TK) -->
+   <bean id="dvkService" class="ee.webmedia.alfresco.dvk.service.DvkServiceImpl" abstract="true" parent="dvkServiceBase" />
 
    <bean id="DvkService" class="org.springframework.aop.framework.ProxyFactoryBean">
       <property name="proxyInterfaces">
@@ -100,10 +101,25 @@
       </property>
    </bean>
 
-   <bean id="dvkReceiveDocumentsTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterResceduledTriggerBean" parent="parameterResceduledTriggerParent">
+   <bean id="dvkReceiveDocumentsTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
       <property name="parameterName" value="dvkReceiveDocumentsInterval" />
       <property name="parameterFormat" value="m" />
       <property name="jobDetail" ref="dvkReceiveDocumentsJobDetails" />
+   </bean>
+
+   <bean id="dvkReceiveDocSendStatusesJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+      <property name="jobClass" value="ee.webmedia.alfresco.dvk.job.DvkReceiveDocSendStatusesJob" />
+      <property name="jobDataAsMap">
+         <map>
+            <entry key="DvkService" value-ref="DvkService" />
+         </map>
+      </property>
+   </bean>
+
+   <bean id="dvkReceiveDocSendStatusesTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="parameterName" value="dvkReceiveDocSendStatusesInterval" />
+      <property name="parameterFormat" value="m" />
+      <property name="jobDetail" ref="dvkReceiveDocSendStatusesJobDetails" />
    </bean>
    
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">

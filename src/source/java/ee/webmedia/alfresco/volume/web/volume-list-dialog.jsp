@@ -27,7 +27,7 @@
             <a:sortLink id="col2-sort" label="#{msg.volume_title}" value="title" styleClass="header" />
          </f:facet>
          <a:actionLink id="col2-link2documents" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{msg.document_list_info}"
-            showLink="false" actionListener="#{DocumentListDialog.showAll}" rendered="#{!r.containsCases}" >
+            showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{!r.containsCases}" >
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
          <a:actionLink id="col2-link2cases" value="#{r.title}" action="dialog:caseListDialog" tooltip="#{msg.case_list_info}"

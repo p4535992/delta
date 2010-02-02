@@ -33,6 +33,28 @@
          <property-name>seriesService</property-name>
          <value>#{SeriesService}</value>
       </managed-property>
+      <managed-property>
+         <property-name>menuService</property-name>
+         <value>#{MenuService}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>MySeriesListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.series.web.mydocuments.MySeriesListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>functionsService</property-name>
+         <value>#{FunctionsService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>userService</property-name>
+         <value>#{UserService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>documentSearchService</property-name>
+         <value>#{DocumentSearchService}</value>
+      </managed-property>
    </managed-bean>
    
 </faces-config>

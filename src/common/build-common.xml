@@ -316,6 +316,9 @@
       <copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true">
          <fileset dir="${project.dir.src.test}" excludes="**/*.java,**/*_en_US.properties" />
       </copy>
+      <copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true" verbose="true">
+         <fileset dir="${conf.basedir}/${conf.name}/classes" excludes="**/*.java,**/*_en_US.properties" />
+      </copy>
       <!-- Compile common separately from project, because it should be independent -->
       <javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
          <compilerarg value="-Xlint" />

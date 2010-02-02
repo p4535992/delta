@@ -18,3 +18,5 @@ function pageLoaded()
 <a:panel id="props-panel" styleClass="mainSubTitle" label="#{msg.addressbook_private_person_data}">
    <r:propertySheetGrid id="node-props" value="#{DialogManager.bean.currentNode}" columns="1" externalConfig="true" mode="view" />
 </a:panel>
+
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

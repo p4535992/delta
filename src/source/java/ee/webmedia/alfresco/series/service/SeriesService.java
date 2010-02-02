@@ -23,7 +23,7 @@ public interface SeriesService {
 
     List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, QName docTypeId);
 
-    Series getSeriesByNoderef(String seriesNodeRef);
+    Series getSeriesByNodeRef(String seriesNodeRef);
 
     Node getSeriesNodeByRef(NodeRef seriesNodeRef);
 

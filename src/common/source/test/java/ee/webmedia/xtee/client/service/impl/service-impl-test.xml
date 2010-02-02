@@ -3,28 +3,13 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-<!-- XTee conf -->
+   <!-- import XTee beans from real context -->
+   <import resource="classpath:ee/webmedia/alfresco/dvk/service/dhl-service-impl-context.xml" />
 
-	<bean id="webServiceTemplate" class="org.springframework.ws.client.core.WebServiceTemplate" />
-
-	<bean id="xTeeConsumer" class="ee.webmedia.xtee.client.service.consumer.StandardXTeeConsumer">
-		<property name="webServiceTemplate" ref="webServiceTemplate" />
-	</bean>
-
-	<bean id="xTeeServiceConfigurationProvider" class="ee.webmedia.xtee.client.service.configuration.provider.PropertiesBasedXTeeServiceConfigurationProvider" init-method="init">
-		<property name="resource" value="ee/webmedia/xtee/client/service/impl/xtee-service.properties"/>
-	</bean>
-
-	<bean id="dhlXTeeService" class="ee.webmedia.xtee.client.service.impl.DhlXTeeServiceImpl" init-method="init">
-		<property name="database" value="dhl"/><!-- can be unset - then read from the classname prefix -->
-		<property name="xTeeServiceConfigurationProvider" ref="xTeeServiceConfigurationProvider" />
-		<property name="xTeeConsumer" ref="xTeeConsumer" />
-	</bean>
-
-<!-- /XTee conf -->
-
-	<bean id="propertiesResolver" class="ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver" init-method="init">
-		<property name="resource" value="ee/webmedia/xtee/client/service/impl/xtee-service.properties"/>
-	</bean>
+   <!-- Needed only for testing (without alfresco repository) -->
+   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+      <property name="ignoreUnresolvablePlaceholders" value="true" />
+      <property name="location" value="classpath:alfresco-global.properties" />
+   </bean>
 
 </beans>

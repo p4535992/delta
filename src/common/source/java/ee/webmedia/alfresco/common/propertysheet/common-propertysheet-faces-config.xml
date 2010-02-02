@@ -39,6 +39,16 @@
       <component-type>javax.faces.component.UICommand</component-type>
       <component-class>javax.faces.component.UICommand</component-class>
    </component>
+
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter</converter-class>
+   </converter>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter</converter-class>
+   </converter>
    
    <validator>
       <description>MandatoryIfValidator can be used to set UIInput required if some other UIInput is filled(i.e. checkbox checked, text input filled, selection
@@ -91,10 +101,6 @@
       <managed-bean-name>ClassificatorSelectorGenerator</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
-      <managed-property>
-         <property-name>classificatorService</property-name>
-         <value>#{ClassificatorService}</value>
-      </managed-property>
    </managed-bean>
 
    <managed-bean>

@@ -1,31 +1,44 @@
 package ee.webmedia.alfresco.utils;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.faces.FacesException;
-import javax.faces.component.NamingContainer;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
+import javax.faces.component.UISelectItem;
 import javax.faces.component.UIViewRoot;
 import javax.faces.component.ValueHolder;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
 import javax.faces.el.ValueBinding;
+import javax.faces.model.SelectItem;
 
+import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
+import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.cmr.dictionary.TypeDefinition;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
-import org.alfresco.web.ui.common.ComponentConstants;
+import org.alfresco.web.bean.generator.IComponentGenerator;
+import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.repo.RepoConstants;
+import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 
-import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
+import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 
 /**
  * Util methods for JSF components/component trees
@@ -151,6 +164,20 @@ public class ComponentUtil {
         return matchingComponents;
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T extends UIComponent> void getChildrenByClass(List<T> list, UIComponent parentComponent, Class<T> childComponentClass, String idSuffix) {
+        List<UIComponent> children = parentComponent.getChildren();
+        for (UIComponent childComponent : children) {
+            if (childComponentClass.isAssignableFrom(childComponent.getClass())) {
+                if (childComponent.getId().endsWith(idSuffix)) {
+                    list.add((T) childComponent);
+                    continue;
+                }
+            }
+            getChildrenByClass(list, childComponent, childComponentClass, idSuffix);
+        }
+    }
+
     /**
      * @param uiProperty - component used to find label from
      * @param propertyName - used only in case of exception
@@ -225,6 +252,35 @@ public class ComponentUtil {
         }
     }
 
+    public static void setSelectItems(FacesContext context, UIComponent component, List<SelectItem> selectItems) {
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = component.getChildren();
+        children.clear();
+        children.addAll(generateSelectItems(context, selectItems));
+    }
+
+    public static void addSelectItems(FacesContext context, UIComponent component, List<SelectItem> selectItems) {
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = component.getChildren();
+        children.addAll(generateSelectItems(context, selectItems));
+    }
+
+    public static List<UISelectItem> generateSelectItems(FacesContext context, List<SelectItem> selectItems) {
+        if (selectItems == null) {
+            return Collections.emptyList();
+        }
+        List<UISelectItem> results = new ArrayList<UISelectItem>(selectItems.size());
+        for (SelectItem selectItem : selectItems) {
+            UISelectItem uiSelectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
+            uiSelectItem.setItemValue(selectItem.getValue());
+            uiSelectItem.setItemLabel(selectItem.getLabel());
+            uiSelectItem.setItemDescription(selectItem.getDescription());
+            uiSelectItem.setItemDisabled(selectItem.isDisabled());
+            results.add(uiSelectItem);
+        }
+        return results;
+    }
+
     /**
      * Generate JavaScript that sets a hidden parameter. Implementation based on
      * {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
@@ -258,77 +314,81 @@ public class ComponentUtil {
         return buf.toString();
     }
 
-    public static UIComponent generateComponent(FacesContext context, String propertySheetVar, String idPrefix, String spec) {
-        UIComponent component;
+    public static final String ATTR_DISPLAY_LABEL = "displayLabel";
+
+    // parent component (whose 'children' is provided) needs to be added to component tree before calling this method, because the validations are setup and
+    // these need access to the component id, which in turn needs to have a parent to get the correct id
+    //
+    // spec (fields separated by |):
+    //   1) propName, mandatory, e.g. doccom:docName
+    //   2) component generator name, optional, e.g. TextFieldGenerator, see more from RepoConstants
+    //   3-...) custom attributes, e.g. styleClass=inline
+    public static UIComponent generateComponent(FacesContext context, String propertySheetVar, String spec, UIPropertySheet propertySheet,
+            PropertySheetItem item, final List<UIComponent> children) {
+
         String[] fields = spec.split("\\|");
 
-        String propName = null;
-        String id = null;
+        final String propName;
         if (fields.length >= 1) {
             propName = fields[0];
-            id = idPrefix + "_" + propName;
-        }
-        String type = "";
-        if (fields.length >= 2) {
-            type = fields[1];
-        }
-
-        String styleClass = "";
-        if ("textarea".equals(type)) {
-            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
-            FacesHelper.setupComponentId(context, component, id);
-            component.setRendererType(ComponentConstants.JAVAX_FACES_TEXTAREA);
-            @SuppressWarnings("unchecked")
-            Map<String, Object> attributes = component.getAttributes();
-            // Default values from TextAreaGenerator
-            attributes.put("rows", 3);
-            attributes.put("cols", 32);
-
-        } else if ("boolean".equals(type)) {
-            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_SELECT_BOOLEAN);
-            FacesHelper.setupComponentId(context, component, id);
-            component.setRendererType(ComponentConstants.JAVAX_FACES_CHECKBOX);
-
-        } else if ("date".equals(type)) {
-                component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
-                FacesHelper.setupComponentId(context, component, id);
-                styleClass = "date ";
-                createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
-/*
-                List<String> params = new ArrayList<String>(2);
-
-                // add the value parameter
-                String value = "document.getElementById('" + component.getClientId(context) + "')";
-                params.add(value);
-
-                // add the validation failed messages
-                String matchMsg = Application.getMessage(context, "validation_date_failed");
-                addStringConstraintParam(params, MessageFormat.format(matchMsg, new Object[] { property.getResolvedDisplayLabel() }));
-
-                // add the validation case to the property sheet
-                propertySheet.addClientValidation(new ClientValidation("validateDate", params, true));
-*/
-
         } else {
-            if (StringUtils.isNotEmpty(type) && !"input".equals(type)) {
-                log.warn("Component type '" + type + "' is not supported, defaulting to input");
-            }
-            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
-            FacesHelper.setupComponentId(context, component, id);
+            propName = null;
         }
+        if (StringUtils.isEmpty(propName)) {
+            throw new RuntimeException("Property name must be specified");
+        }
+        PropertyDefinition propDef = getPropertyDefinition(context, propertySheet.getNode(), propName);
+
+        String generatorName;
+        if (fields.length >= 2 && StringUtils.isNotEmpty(fields[1])) {
+            generatorName = fields[1];
+        } else {
+            if (propDef != null) {
+                QName dataTypeName = propDef.getDataType().getName();
+                generatorName = getDefaultGeneratorName(dataTypeName);
+                if (generatorName == null) {
+                    throw new RuntimeException("Component generator name not specified and default generator not found for data type " + dataTypeName
+                            + ", property name '" + propName + "'");
+                }
+            } else {
+                throw new RuntimeException("Component generator name not specified and property definition not found for property name '" + propName + "'");
+            }
+        }
+
+        final String label = resolveDisplayLabel(context, propDef, propName);
+        PropertySheetItem fakeItem = new WMUIProperty() {
+            @Override
+            public String getName() {
+                return propName;
+            }
+            @Override
+            public String getResolvedDisplayLabel() {
+                return label;
+            }
+            @Override
+            @SuppressWarnings("unchecked")
+            public List getChildren() {
+                return children;
+            }
+        };
+
+        IComponentGenerator generator = FacesHelper.getComponentGenerator(context, generatorName);
+        if (generator instanceof CustomAttributes && fields.length >= 3) {
+            Map<String, String> customAttributes = new HashMap<String, String>();
+            for (int i = 2; i < fields.length; i++) {
+                if (fields[i] == null || fields[i].split("=").length != 2) {
+                    throw new RuntimeException("Field " + (i + 1) + " does not contain custom attribute, spec '" + spec + "'");
+                }
+                String[] parts = fields[i].split("=");
+                customAttributes.put(parts[0], parts[1]);
+            }
+            ((CustomAttributes) generator).setCustomAttributes(customAttributes);
+        }
+        UIComponent component = generator.generateAndAdd(context, propertySheet, fakeItem);
+
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
-
-        if (StringUtils.isNotEmpty(propName)) {
-            component.setValueBinding("value", createValueBinding(context, propertySheetVar, propName));
-        }
-
-        if (fields.length >= 3) {
-            styleClass += fields[2];
-        }
-        if (StringUtils.isNotEmpty(styleClass)) {
-            attributes.put("styleClass", styleClass);
-        }
+        attributes.put(ATTR_DISPLAY_LABEL, label);
 
         return component;
     }
@@ -341,6 +401,48 @@ public class ComponentUtil {
         ValueBinding vb = context.getApplication().createValueBinding(
                 "#{" + propertySheetVar + ".properties[\"" + propName + "\"]" + (rowIndex >= 0 ? "[" + rowIndex + "]" : "") + "}");
         return vb;
+    }
+
+    public static PropertyDefinition getPropertyDefinition(FacesContext context, Node node, String propName) {
+        PropertyDefinition propDef = null;
+        DictionaryService dictionaryService = Repository.getServiceRegistry(context).getDictionaryService();
+        TypeDefinition typeDef = dictionaryService.getAnonymousType(node.getType(), node.getAspects());
+        if (typeDef != null) {
+            Map<QName, PropertyDefinition> properties = typeDef.getProperties();
+            propDef = properties.get(Repository.resolveToQName(propName));
+        }
+        return propDef;
+    }
+
+    public static String resolveDisplayLabel(FacesContext context, PropertyDefinition propDef, String propName) {
+        String displayLabel = null;
+        if (propDef != null) {
+            // try and get the repository assigned label
+            displayLabel = propDef.getTitle();
+            if (displayLabel == null) {
+                // if the label is still null default to the local name of the property
+                displayLabel = propDef.getName().getLocalName();
+            }
+        }
+        if (displayLabel == null) {
+            displayLabel = propName;
+        }
+        return displayLabel;
+    }
+
+    public static String getDefaultGeneratorName(QName dataTypeName) {
+        String generatorName = null;
+        if (dataTypeName.equals(DataTypeDefinition.TEXT) || dataTypeName.equals(DataTypeDefinition.DOUBLE) || dataTypeName.equals(DataTypeDefinition.FLOAT)
+                || dataTypeName.equals(DataTypeDefinition.INT) || dataTypeName.equals(DataTypeDefinition.LONG)) {
+            generatorName = RepoConstants.GENERATOR_TEXT_FIELD;
+        } else if (dataTypeName.equals(DataTypeDefinition.BOOLEAN)) {
+            generatorName = RepoConstants.GENERATOR_CHECKBOX;
+        } else if (dataTypeName.equals(DataTypeDefinition.DATETIME)) {
+            generatorName = RepoConstants.GENERATOR_DATETIME_PICKER;
+        } else if (dataTypeName.equals(DataTypeDefinition.DATE)) {
+            generatorName = RepoConstants.GENERATOR_DATE_PICKER;
+        }
+        return generatorName;
     }
 
 }

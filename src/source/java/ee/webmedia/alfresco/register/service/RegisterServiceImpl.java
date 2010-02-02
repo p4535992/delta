@@ -26,6 +26,7 @@ public class RegisterServiceImpl implements RegisterService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(RegisterServiceImpl.class);
 
     private static BeanPropertyMapper<Register> registerBeanPropertyMapper;
+    private static final int DEFAULT_COUNTER_INITIAL_VALUE = 1;
     static {
         registerBeanPropertyMapper = BeanPropertyMapper.newInstance(Register.class);
     }
@@ -44,6 +45,7 @@ public class RegisterServiceImpl implements RegisterService {
         for (ChildAssociationRef registerRef : registerRefs) {
             Register reg = registerBeanPropertyMapper.toObject(nodeService.getProperties(registerRef.getChildRef()));
             reg.setNodeRef(registerRef.getChildRef());
+            reg.setCounter(getRegisterCounter(reg.getId()));
             registers.add(reg);
         }
 
@@ -52,13 +54,21 @@ public class RegisterServiceImpl implements RegisterService {
 
     @Override
     public Node getRegisterNode(int id) {
-        Node node = new Node(getRegisterNodeRefById(id));
-        node.getProperties();
+        Node node = getRegisterNodeRefById(id);
         return node;
     }
 
-    private NodeRef getRegisterNodeRefById(int id) {
-        return generalService.getNodeRef(RegisterModel.Repo.REGISTERS_SPACE + "/" + RegisterModel.NAMESPACE_PREFFIX + id);
+    private Node getRegisterNodeRefById(int registerId) {
+        final NodeRef registerRef = generalService.getNodeRef(RegisterModel.Repo.REGISTERS_SPACE + "/" + RegisterModel.NAMESPACE_PREFFIX + registerId);
+        final Node registerNode = new Node(registerRef);
+        final Map<String, Object> props = registerNode.getProperties();
+        props.put(RegisterModel.Prop.COUNTER.toString(), getRegisterCounter(registerId));
+        return registerNode;
+    }
+
+    private Integer getRegisterCounter(int registerId) {
+//        return jdbcTemplate.queryForInt("SELECT last_value FROM ?", getSequenceName(registerId)); //XXX: millegi pärast viisakam lahendus ei tööta: BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [SELECT last_value FROM ?]; nested exception is org.postgresql.util.PSQLException: ERROR: syntax error at or near "$1" 
+        return jdbcTemplate.queryForInt("SELECT last_value FROM " + getSequenceName(registerId));
     }
 
     private String getSequenceName(int registerId) {
@@ -68,9 +78,12 @@ public class RegisterServiceImpl implements RegisterService {
 
     @Override
     public Register getRegister(Integer registerId) {
-        final NodeRef registerRef = getRegisterNodeRefById(registerId);
-        Register reg = registerBeanPropertyMapper.toObject(nodeService.getProperties(registerRef));
-        reg.setNodeRef(registerRef);
+        final Node registerNode = getRegisterNodeRefById(registerId);
+        final Map<String, Object> props = registerNode.getProperties();
+        Register reg = registerBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(props));
+        reg.setNodeRef(registerNode.getNodeRef());
+        //counter is not mappable(stored in sequence ant put manually into props)
+        reg.setCounter((Integer) props.get(RegisterModel.Prop.COUNTER.toString()));
         return reg;
     }
 
@@ -94,7 +107,7 @@ public class RegisterServiceImpl implements RegisterService {
         Map<QName, Serializable> prop = new HashMap<QName, Serializable>();
         int id = getMaxRegisterId() + 1;
         prop.put(RegisterModel.Prop.ID, id);
-        prop.put(RegisterModel.Prop.COUNTER, 0);
+        prop.put(RegisterModel.Prop.COUNTER, DEFAULT_COUNTER_INITIAL_VALUE);
         prop.put(RegisterModel.Prop.ACTIVE, Boolean.TRUE);
         TransientNode transientNode = new TransientNode( //
                 RegisterModel.Types.REGISTER, QName.createQName(RegisterModel.URI, Integer.toString(id)).toString(), prop);
@@ -124,20 +137,25 @@ public class RegisterServiceImpl implements RegisterService {
 
     @Override
     public int increaseCount(int registerId) {
-        return jdbcTemplate.queryForInt("SELECT nextval('" + getSequenceName(registerId) + "')");
+        // NB! even if value 0 is not allowed as initial value of sequence,
+        // it is compensated so that first call to nextval() will not increment 1 by 1, but leave it to 1 unlike consequent calls)
+        return jdbcTemplate.queryForInt("SELECT nextval(?)", getSequenceName(registerId));
+    }
+
+    @Override
+    public void resetCounter(Node register) {
+        final Map<String, Object> props = register.getProperties();
+        int registerId = (Integer) props.get(RegisterModel.Prop.ID);
+        jdbcTemplate.queryForInt("SELECT setval(?, ?)", getSequenceName(registerId),  DEFAULT_COUNTER_INITIAL_VALUE);
+        props.put(RegisterModel.Prop.COUNTER.toString(), DEFAULT_COUNTER_INITIAL_VALUE);
     }
 
     private void createSequence(int registerId) {
         final String seqName = getSequenceName(registerId);
-        final List<Register> registers = getRegisters();
-        Integer max = 1;
-        for (Register register : registers) {
-            Math.max(max, register.getCounter());
-        }
-        jdbcTemplate.update("CREATE SEQUENCE " + seqName + " START " + max);
+        jdbcTemplate.update("CREATE SEQUENCE " + seqName + " START 1"); // parameetritega ei toimi
         log.debug("created sequence: " + seqName);
     }
-
+    
     // START: getters / setters
     public void setDataSource(DataSource dataSource) {
         jdbcTemplate = new SimpleJdbcTemplate(dataSource);

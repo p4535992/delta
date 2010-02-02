@@ -64,7 +64,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         return series;
     }
 
-    public Series getSeriesByNoderef(String seriesNodeRef) {
+    public Series getSeriesByNodeRef(String seriesNodeRef) {
         return getSeriesByNoderef(new NodeRef(seriesNodeRef), null);
     }
 

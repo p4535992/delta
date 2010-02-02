@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.common.propertysheet.multivalueeditor;
 
 import java.io.IOException;
+
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,7 @@ import org.alfresco.web.ui.repo.component.UIMultiValueEditor;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor.MultiValueEditorEvent;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -66,7 +69,7 @@ public class MultiValueEditor extends UIComponentBase {
         List<UIComponent> children = getChildren();
 
         UIGenericPicker picker = (UIGenericPicker) context.getApplication().createComponent("org.alfresco.faces.GenericPicker");
-        FacesHelper.setupComponentId(context, picker, "picker");
+        FacesHelper.setupComponentId(context, picker, null);
         picker.setShowFilter(false);
         picker.setWidth(400);
         picker.setMultiSelect(true);
@@ -116,12 +119,22 @@ public class MultiValueEditor extends UIComponentBase {
             if (columnLists.get(0).size() > rowIndex + i) {
                 int columnIndex = 0;
                 for (List<Object> columnList : columnLists) {
-                    columnList.set(rowIndex + i, rowList.get(columnIndex++));
+                    if (rowList.size() > columnIndex) {
+                        columnList.set(rowIndex + i, rowList.get(columnIndex));
+                    } else {
+                        columnList.set(rowIndex + i, null);
+                    }
+                    columnIndex++;
                 }
             } else {
                 int columnIndex = 0;
                 for (List<Object> columnList : columnLists) {
-                    columnList.add(rowList.get(columnIndex++));
+                    if (rowList.size() > columnIndex) {
+                        columnList.add(rowList.get(columnIndex));
+                    } else {
+                        columnList.add(null);
+                    }
+                    columnIndex++;
                 }
                 appendRowComponent(context, rowIndex + i);
             }
@@ -196,6 +209,7 @@ public class MultiValueEditor extends UIComponentBase {
                 type = types.get(columnIndex);
             }
             UIComponent component = generateCellComponent(context, type);
+            // XXX: Why does generateCell method already invoce setupComponentId in each if block if there is a general invokation here?
             FacesHelper.setupComponentId(context, component, null);
             setValueBinding(context, component, propName, rowIndex);
             containerChildren.add(component);
@@ -207,11 +221,11 @@ public class MultiValueEditor extends UIComponentBase {
     }
 
     protected UIComponent generateCellComponent(FacesContext context, String spec) {
-        UIComponent component;
+        UIComponent component = null;
         String[] fields = spec.split(":");
 
         String type = "";
-        if (fields.length >= 1) {
+        if (fields.length >= 1 && StringUtils.isNotBlank(fields[0])) {
             type = fields[0];
         }
 
@@ -231,15 +245,27 @@ public class MultiValueEditor extends UIComponentBase {
             Map<String, Object> attributes = component.getAttributes();
             attributes.put("styleClass", "date");
             ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
-        } else {
-            if (StringUtils.isNotEmpty(type) && !"input".equals(type)) {
-                log.warn("Component type '" + type + "' is not supported, defaulting to input");
+        } else if ("classificator".equals(type)) {
+            if (fields.length >= 3 && StringUtils.isNotBlank(fields[2])) {
+                ClassificatorSelectorGenerator classificGenerator = new ClassificatorSelectorGenerator();
+                Map<String, String> customAttributes = new HashMap<String, String>();
+                customAttributes.put(ClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_NAME, fields[2]);
+                classificGenerator.setCustomAttributes(customAttributes);
+                component = classificGenerator.generateSelectComponent(context, null, false);
+                classificGenerator.setupSelectComponent(context, null, null, null, component, false);
+            } else {
+                throw new RuntimeException("Component type '" + type + "' requires a classificator name in definition. Failing fast!");
             }
+        } else if (StringUtils.isNotEmpty(type) && !"input".equals(type)) {
+            log.warn("Component type '" + type + "' is not supported, defaulting to input");
+        }
+
+        if (component == null) {
             component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
             FacesHelper.setupComponentId(context, component, null);
         }
 
-        if (fields.length >= 2) {
+        if (fields.length >= 2 && StringUtils.isNotBlank(fields[1])) {
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = component.getAttributes();
             attributes.put("styleClass", fields[1]);

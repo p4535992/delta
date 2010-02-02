@@ -333,7 +333,7 @@ a.action {
 			background: url("../images/icons/collapse-3.png") right 3px no-repeat;
 		}
 		#sidebar > ul > li > ul > li > ul > li.expanded > a {
-			background: url("../images/icons/collapse-3.png") left 3px no-repeat;
+			background: url("../images/icons/collapse-3.png") 10px center no-repeat;
 		}
 		
 		#sidebar > ul > li .treeNode + .ygtvchildren .ygtvchildren .treeNode.expanded .treeNodeLabel,
@@ -809,6 +809,17 @@ input.inline {
 	border: none;
 	border-bottom: solid 1px #ccc;
 }
+textarea.inline {
+	border: none;
+	border-bottom: solid 1px #ccc;
+/* TODO: lisa triibuline taust, mis kujutaks ridu */
+}
+
+textarea.inline {
+	border: none;
+	border-bottom: solid 1px #ccc;
+	/* TODO: lisa triibuline taust, mis kujutaks ridu */
+}
 
 input.small {
 	width: 50px !important;
@@ -833,8 +844,18 @@ input.medium {
 	line-height: 20px;
 }
 
+.add-item {
+	background: url("../images/icons/add_item.gif") no-repeat;
+	line-height: 20px;
+}
+
 .remove-item {
 	background: url("../images/icons/remove_item.gif") no-repeat;
+	line-height: 20px;
+}
+
+.add-item {
+	background: url("../images/icons/add_item.gif") no-repeat;
 	line-height: 20px;
 }
 
@@ -897,6 +918,36 @@ table.recipient th {
 	width: auto;
 }
 
+#send-out-panel td #editor {
+    width: 600px; 
+    height: 315px;
+}
+
+#send-out-panel td input[type="text"],
+#send-out-panel td select {
+	width: 300px;
+}
+
+#send-out-panel td td input[type="text"] {
+	width: 180px;
+}
+
+#send-out-panel td td select {
+	width: 140px;
+}
+
+#send-out-panel td th {
+	border-bottom: 0px none;
+}
+
+td.requiredField {
+    vertical-align: top;
+}
+
+img.requiredField {
+    vertical-align: -12px;
+}
+
 /* style for component that enables to create new case while creating document */
 .assignCaseInput.aoscModal-newCase {
 	width: 100%;
@@ -937,6 +988,26 @@ table.recipient td {
 
 .red {
 	color: red;
+}
+
+.margin-left-4 {
+	margin-left: 4px;
+}
+
+.overflow-wrapper {
+	overflow-y: scroll;
+	margin-bottom: 10px;
+}
+
+.overflow-wrapper th, 
+.overflow-wrapper td
+ {
+	padding-left: 5px !important;
+	padding-right: 5px !important;
+}
+
+.overflow-wrapper td a {
+	white-space: nowrap !important;
 }
 
 /*

@@ -36,7 +36,7 @@
    <a:panel id="groups-panel" label="#{msg.groups}" rendered="#{not empty DialogManager.bean.groups}">
 
       <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="details" pageSize="12" rowStyleClass="recordSetRow"
-         altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="name" initialSortDescending="true">
+         altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="id">
          
          <%-- Primary column for details view mode --%>
          <a:column primary="true" style="padding:2px;text-align:left">
@@ -46,7 +46,7 @@
                </a:actionLink>
             </f:facet>
             <f:facet name="header">
-               <a:sortLink label="#{msg.identifier}" value="name" mode="case-insensitive" styleClass="header"/>
+               <a:sortLink label="#{msg.identifier}" value="id" mode="case-insensitive" styleClass="header"/>
             </f:facet>
             <a:actionLink value="#{r.displayName}" actionListener="#{DialogManager.bean.clickGroup}">
                <f:param name="id" value="#{r.id}" />
@@ -74,7 +74,7 @@
    <a:panel id="users-panel" label="#{msg.users}" rendered="#{not empty DialogManager.bean.users}">
    
       <a:richList id="users-list" binding="#{DialogManager.bean.usersRichList}" viewMode="details" pageSize="12" rowStyleClass="recordSetRow"
-         altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="r" initialSortColumn="name" initialSortDescending="true">
+         altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="r" initialSortColumn="name">
          
          <%-- Primary column for details view mode --%>
          <a:column primary="true" style="padding:2px;text-align:left;">

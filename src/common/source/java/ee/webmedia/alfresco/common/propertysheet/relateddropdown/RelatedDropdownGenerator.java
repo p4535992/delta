@@ -1,14 +1,19 @@
 package ee.webmedia.alfresco.common.propertysheet.relateddropdown;
 
+import java.util.List;
 import java.util.Map;
 
-import javax.faces.component.UISelectOne;
+import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
+import javax.faces.component.UISelectItem;
+import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.el.MethodBinding;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
@@ -30,21 +35,20 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
     private static final String ATTR_INITIAL_CRITERIA_SOURCE_PROP = "initialSearchCriteriaSourceProp";
     public static final String ATTR_AFTER_SELECT = "afterSelect";
 
-    public UISelectOne generate(FacesContext context, String id) {
-        RelatedDropdown selectComponent = (RelatedDropdown) super.generate(context, id);
-        setId(selectComponent);
+    @Override
+    protected UIComponent setupMultiValuePropertyIfNecessary(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
+            PropertyDefinition propertyDef, UIComponent component) {
+
+        RelatedDropdown selectComponent = new RelatedDropdown();
+        setId(context, selectComponent);
         setFillingInformation(selectComponent);
         return selectComponent;
     }
 
     @Override
-    protected RelatedDropdown getSelectComponent(FacesContext context) {
-        return new RelatedDropdown();
-    }
+    protected List<UISelectItem> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
+            PropertyDefinition propertyDef, UIInput selectComponent, Object boundValue, boolean multiValued) {
 
-    @Override
-    protected void initializeSelectionItems(FacesContext context, HtmlSelectOneMenu selectComponent, Object boundValue, UIPropertySheet propertySheet,
-            PropertySheetItem item, PropertyDefinition propertyDef) {
         String initMethodBindingName = getInitialSelectionItems();
         ((RelatedDropdown) selectComponent).clearValues();
         final String initialSearchCriteriaSourceProp = StringUtils.trimToNull(getInitialSearchCriteriaSourceProp());
@@ -53,7 +57,11 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
         }
         if (StringUtils.isNotBlank(initMethodBindingName)) {
             // initialSelectionItems methodBinding or initialSearchCriteriaSourceProp property name is given to initialize values
-            selectComponent.setDisabled(false);
+            if (selectComponent instanceof HtmlSelectOneMenu) {
+                ((HtmlSelectOneMenu) selectComponent).setDisabled(false);
+            } else if (selectComponent instanceof HtmlSelectManyListbox) {
+                ((HtmlSelectManyListbox) selectComponent).setDisabled(false);
+            }
             MethodBinding mb = context.getApplication().createMethodBinding(initMethodBindingName,
                     new Class[] { FacesContext.class, HtmlSelectOneMenu.class, Object.class });
             Object initialSearchCriteria = null;
@@ -74,6 +82,7 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
                 selectComponent.setSubmittedValue(boundValue);// ..set selected value based on method binding
             }
         }
+        return null;
     }
 
     private void setFillingInformation(RelatedDropdown selectComponent) {
@@ -90,13 +99,13 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
         selectComponent.setAfterSelect(getAfterSelect());
     }
 
-    private void setId(RelatedDropdown selectComponent) {
+    private void setId(FacesContext context, RelatedDropdown selectComponent) {
         String name = getName();
         final int localStart = name.lastIndexOf("}") + 1;
         if (localStart != -1) {
             name = name.substring(localStart);
         }
-        selectComponent.setId("relatedDropdown_" + name);
+        FacesHelper.setupComponentId(context, selectComponent, "relatedDropdown_" + name);
     }
 
     private String getName() {
@@ -111,10 +120,6 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
         return getCustomAttributes().get(ATTR_INITIAL_CRITERIA_SOURCE_PROP);
     }
 
-    private String getSelectionItems() {
-        return getCustomAttributes().get(ATTR_SELECTION_ITEMS);
-    }
-    
     private String getAfterSelect() {
         return getCustomAttributes().get(ATTR_AFTER_SELECT);
     }

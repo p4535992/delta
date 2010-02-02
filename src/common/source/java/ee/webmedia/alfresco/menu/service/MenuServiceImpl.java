@@ -32,10 +32,12 @@ public class MenuServiceImpl implements MenuService {
     private String menuConfigLocation;
     private FileFolderService fileFolderService;
     private GeneralService generalService;
+    private int updateCount;
 
     private Menu menu;
     private List<ProcessorWrapper> processors = new ArrayList<ProcessorWrapper>(); // doesn't need to be synchronized, because it is not modified after spring initialization
-
+    private TreeItemProcessor treeItemProcessor;
+    
     private static class ProcessorWrapper {
 
         public String menuItemId;
@@ -45,7 +47,17 @@ public class MenuServiceImpl implements MenuService {
             this.menuItemId = menuItemId;
             this.processor = processor;
         }
-
+    }
+    
+    
+    @Override
+    public int getUpdateCount() {
+        return updateCount;
+    }
+    
+    @Override
+    public void menuUpdated() {
+       this.updateCount++; 
     }
 
     @Override
@@ -81,6 +93,21 @@ public class MenuServiceImpl implements MenuService {
             log.error("Menu configuration loading failed: " + menuConfigLocation, e);
             throw new RuntimeException(e);
         }
+    }
+    
+    @Override
+    public List<NodeRef> openTreeItem(DropdownMenuItem menuItem, NodeRef nodeRef) {
+        return treeItemProcessor.openTreeItem(menuItem, nodeRef);
+    }
+    
+    @Override
+    public void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef) {
+        treeItemProcessor.setupTreeItem(dd, nodeRef);
+    }
+    
+    @Override
+    public void setTreeItemProcessor(TreeItemProcessor processor) {
+        treeItemProcessor = processor;
     }
 
     @Override
@@ -139,7 +166,12 @@ public class MenuServiceImpl implements MenuService {
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }
+    
+    public void setUpdateCount(int updateCount) {
+        this.updateCount = updateCount;
+    }
 
+    
     // END: getters / setters
 
 }

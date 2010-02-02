@@ -5,6 +5,7 @@
    <import resource="classpath:ee/webmedia/alfresco/document/file/file-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/type/document-type-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/permissions/permissions-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/search/document-search-context.xml" />
 
    <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
       <property name="models">
@@ -45,12 +46,15 @@
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="documentTypeService" ref="DocumentTypeService" />
-      <property name="userService" ref="UserService" />
-      <property name="authenticationService" ref="AuthenticationService" />
       <property name="registerService" ref="RegisterService" />
       <property name="seriesService" ref="SeriesService" />
       <property name="volumeService" ref="VolumeService" />
       <property name="searchService" ref="SearchService" />
+      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="contentService" ref="ContentService" />
+      <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
+      <property name="defaultStore" value="${spaces.store}"/>
+      <property name="incomingEmailPath" value="${imap.config.home.rootPath}/app:incoming"/>
    </bean>
 
    <bean id="DocumentService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -96,6 +100,27 @@
       </property>
    </bean>
 
+   <bean id="sendOutParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="sendOutParametersBootstrap" />
+      <property name="sinceVersion" value="1.3.1.4" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/sendout/bootstrap/sendOut-parameters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
    <bean id="documentParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="name" value="parametersSpacesBootstrap" />
@@ -113,6 +138,81 @@
                <prop key="path">/param:parameters</prop>
                <prop key="location">ee/webmedia/alfresco/document/bootstrap/document-parameters.xml</prop>
             </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="docLockService" class="ee.webmedia.alfresco.document.service.DocLockServiceImpl" parent="lockService" init-method="init" />
+
+   <bean id="DocLockService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.document.service.DocLockService</value>
+            <value>org.alfresco.service.cmr.lock.LockService</value>
+         </list>
+      </property>
+      <property name="target" ref="docLockService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="LockService_transaction" />
+            <idref bean="AuditMethodInterceptor" />
+            <idref bean="exceptionTranslator" />
+<!-- XXX: security interseptori sisse lülitamisel tekivad autentimisega probleemid:
+DaoAuthenticationProvider.authenticate() 
+->getUserFromBackend()
+->DefaultMutableAuthenticationDao.loadUserByUsername()
+->throw new AlfrescoRuntimeException("Not implemented");  
+<idref local="DocLockService_security"/>
+-->
+         </list>
+      </property>
+   </bean>
+    
+    <!-- Lock and Unlock require the related aspect specific permissions. Querying the   -->
+    <!-- lock status just requires read access to the node.                              -->
+<!-- 
+    <bean id="DocLockService_security" class="net.sf.acegisecurity.intercept.method.aopalliance.MethodSecurityInterceptor">
+        <property name="authenticationManager" ref="authenticationManager"/>
+        <property name="accessDecisionManager" ref="accessDecisionManager"/>
+        <property name="afterInvocationManager" ref="afterInvocationManager"/>
+        <property name="objectDefinitionSource">
+            <value>
+                org.alfresco.service.cmr.lock.LockService.lock=ACL_NODE.0.cm:lockable.Lock
+                org.alfresco.service.cmr.lock.LockService.unlock=ACL_NODE.0.cm:lockable.Unlock
+                org.alfresco.service.cmr.lock.LockService.getLockStatus=ACL_NODE.0.sys:base.ReadProperties
+                org.alfresco.service.cmr.lock.LockService.getLockType=ACL_NODE.0.sys:base.ReadProperties
+                org.alfresco.service.cmr.lock.LockService.checkForLock=ACL_NODE.0.sys:base.ReadProperties
+                org.alfresco.service.cmr.lock.LockService.getLocks=ACL_NODE.0.sys:base.ReadProperties
+
+                ee.webmedia.alfresco.document.service.DocLockService.createLockIfFree=ACL_NODE.0.cm:lockable.Lock
+                ee.webmedia.alfresco.document.service.DocLockService.unlockIfOwner=ACL_NODE.0.cm:lockable.Unlock
+                ee.webmedia.alfresco.document.service.DocLockService.getLockTimeout=ACL_ALLOW
+            </value>
+        </property>
+    </bean>
+ -->
+ 
+   <bean id="sendOutService" class="ee.webmedia.alfresco.document.sendout.service.SendOutServiceImpl">
+      <property name="nodeService" ref="NodeService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="emailService" ref="CommonEmailService" />
+      <property name="addressbookService" ref="AddressbookService" />
+      <property name="dvkService" ref="DvkService" />
+      <property name="parametersService" ref="ParametersService" />
+      <property name="documentTypeService" ref="DocumentTypeService" />
+      <property name="fileFolderService" ref="FileFolderService" />
+   </bean>
+
+   <bean id="SendOutService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.document.sendout.service.SendOutService</value>
+         </list>
+      </property>
+      <property name="target" ref="sendOutService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
          </list>
       </property>
    </bean>

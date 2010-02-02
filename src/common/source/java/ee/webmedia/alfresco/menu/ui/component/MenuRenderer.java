@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
-import javax.faces.component.UIForm;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.ajax.NavigatorPluginBean;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -25,12 +25,14 @@ public class MenuRenderer extends BaseRenderer {
 
     private static final String TREE_SCRIPTS_WRITTEN = "_alfTreeScripts";
     private static final String AJAX_URL_START = "/ajax/invoke/" + NavigatorPluginBean.BEAN_NAME;
+    public static final String SECONDARY_MENU_PREFIX = "sm";
+    public static final String PRIMARY_MENU_PREFIX = "pm";
 
     private UserService userService;
 
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
-        writeScripts(context, component, findFormClientId(context, component));
+        writeScripts(context);
         context.getResponseWriter().write("<ul>");
     }
 
@@ -62,18 +64,6 @@ public class MenuRenderer extends BaseRenderer {
         return true;
     }
 
-    private String findFormClientId(FacesContext context,
-            UIComponent component) {
-        if (component == null) {
-            return null;
-        }
-        if (component instanceof UIForm || component.getClass().getName().endsWith("RichForm")) {
-            return component.getClientId(context);
-        }
-        return findFormClientId(context, component.getParent());
-
-    }
-
     /**
      * Renders scripts necessary for BrowseMenuItems
      * 
@@ -81,7 +71,7 @@ public class MenuRenderer extends BaseRenderer {
      * @param menu
      * @throws IOException
      */
-    static void writeScripts(FacesContext context, UIComponent menu, String formId) throws IOException {
+    static void writeScripts(FacesContext context) throws IOException {
         @SuppressWarnings("unchecked")
         Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
         Object present = requestMap.get(TREE_SCRIPTS_WRITTEN);
@@ -139,7 +129,7 @@ public class MenuRenderer extends BaseRenderer {
         if (menuItems != null) {
 
             int i = 0;
-            String id = "sm";
+            String id = SECONDARY_MENU_PREFIX;
             for (MenuItem item : menuItems) {
                 UIComponent menuItem = item.createComponent(context, id + i, getUserService());
                 if (menuItem != null) {
@@ -171,16 +161,16 @@ public class MenuRenderer extends BaseRenderer {
 
         List<MenuItem> menuItems = menu.getSubItems();
         int i = 0;
-        String id = "pm";
+        String id = PRIMARY_MENU_PREFIX;
         for (MenuItem item : menuItems) {
             if (activeItemid.equals(Integer.toString(i))) {
                 UIComponent menuItem = item.createComponent(context, id + i, true, getUserService());
                 if (menuItem != null)
                     children.add(menuItem);
-            } else if (item instanceof DropdownMenuItem) { // Only the drop-down item in primary menu need the DocumentTypeService
+            } else if (item instanceof DropdownMenuItem) { // Only the drop-down item in primary menu needs the DocumentTypeService
                 UIComponent menuItem = item.createComponent(context, id + i, getUserService());
                 if (menuItem != null)
-                    children.add(menuItem);
+                    children.add(removeTooltipRecursive(menuItem));
             } else {
                 UIComponent menuItem = item.createComponent(context, id + i, getUserService());
                 if (menuItem != null)
@@ -193,6 +183,36 @@ public class MenuRenderer extends BaseRenderer {
             Utils.encodeRecursive(context, (UIComponent) o);
         }
 
+    }
+
+    /**
+     * Removes tooltips so they don't block the view.
+     * 
+     * @param menuItem
+     * @return
+     */
+    private UIComponent removeTooltipRecursive(UIComponent menuItem) {
+        UIActionLink al;
+        
+        if (menuItem instanceof MenuItemWrapper && menuItem.getChildCount() > 0) {
+            @SuppressWarnings("unchecked")
+            final List<UIComponent> childList = menuItem.getChildren();
+            if(childList.get(0) instanceof UIActionLink) {
+                 al = (UIActionLink) childList.get(0);
+                 al.setTooltip("");
+            }
+            int children = menuItem.getChildCount();
+            for(int i = 0; i < children; i++) {
+                removeTooltipRecursive(childList.get(i));
+            }
+        } else if (menuItem instanceof UIActionLink) {
+            al = (UIActionLink) menuItem;
+            al.setTooltip("");
+        } else {
+            throw new RuntimeException("UIComponent must be either MenuItemWrapper with UIActionLink child or UIActionLink itself.");
+        }
+
+        return menuItem;
     }
 
     protected UserService getUserService() {

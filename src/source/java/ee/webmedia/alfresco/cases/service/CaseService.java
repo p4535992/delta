@@ -29,6 +29,8 @@ public interface CaseService {
 
     List<Case> getAllCasesByVolume(NodeRef volumeRef);
 
+    Case getCaseByNoderef(NodeRef caseNodeRef);
+    
     Case getCaseByNoderef(String caseNodeRef);
 
     Node getCaseNodeByRef(NodeRef caseNodeRef);
@@ -52,5 +54,6 @@ public interface CaseService {
     void closeAllCasesByVolume(NodeRef volumeRef);
 
     boolean isClosed(Node node);
+
 
 }

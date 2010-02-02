@@ -9,14 +9,14 @@
 
 <h:panelGroup id="files-panel-facets">
    <f:facet name="title">
-      <r:actions id="acts_add_content" value="addFileMenu" context="#{DialogManager.bean.node}" showLink="false" />
+      <r:actions id="acts_add_content" value="addFileMenu" context="#{DialogManager.bean.node}" showLink="false"/>
    </f:facet>
 </h:panelGroup>
 
 <a:panel label="#{msg.file_title}" id="files-panel" facetsId="dialog:dialog-body:files-panel-facets" styleClass="panel-100" progressive="true">
 
-   <a:richList id="filelistList" viewMode="details" value="#{DialogManager.bean.file.files}" binding="#{FileBlockBean.richList}" var="r" 
-      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
+   <a:richList id="filelistList" viewMode="details" value="#{DialogManager.bean.file.files}" var="r" rowStyleClass="recordSetRow"
+      altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
 
       <%-- Name with URL link column --%>
       <a:column id="col1" primary="true" rendered="#{r.digiDocItem == false}">
@@ -147,7 +147,8 @@
       <%-- Remove and Version column --%>
       <a:column id="col7">
          <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
-            <a:actionLink id="col7-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false" image="/images/icons/version_history.gif" rendered="#{r.versionable}" tooltip="#{msg.file_version_history}">
+            <a:actionLink id="col7-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false"
+               image="/images/icons/version_history.gif" rendered="#{r.versionable}" tooltip="#{msg.file_version_history}">
                <f:param name="fileName" value="#{r.name}" />
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>

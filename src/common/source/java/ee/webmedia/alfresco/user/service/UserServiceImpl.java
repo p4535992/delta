@@ -18,6 +18,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.AccessPermission;
 import org.alfresco.service.cmr.security.AccessStatus;
+import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.NoSuchPersonException;
@@ -37,6 +38,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
 public class UserServiceImpl implements UserService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(UserServiceImpl.class);
 
+    private AuthenticationService authenticationService;
     private AuthorityService authorityService;
     private GeneralService generalService;
     private NodeService nodeService;
@@ -188,6 +190,11 @@ public class UserServiceImpl implements UserService {
         String unitName = organizationStructureService.getOrganizationStructure(unitId);
         return UserUtil.getPersonFullNameWithUnitName(props, unitName);
     }
+    
+    @Override
+    public String getCurrentUserName() {
+        return authenticationService.getCurrentUserName();
+    }
 
     private Authority getAuthority(String authority, boolean returnNull) {
         AuthorityType authorityType = AuthorityType.getAuthorityType(authority);
@@ -257,8 +264,13 @@ public class UserServiceImpl implements UserService {
     }
 
     // START: setters/getters
+    
     public void setAuthorityService(AuthorityService authorityService) {
         this.authorityService = authorityService;
+    }
+
+    public void setAuthenticationService(AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
     }
 
     public void setGeneralService(GeneralService generalService) {
