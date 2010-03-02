@@ -25,6 +25,10 @@
       <property name="signatureService" ref="SignatureService" />
       <property name="authenticationService" ref="AuthenticationService" />
       <property name="permissionService" ref="PermissionService" />
+      <property name="contentService" ref="ContentService" />
+      <property name="generalService" ref="GeneralService"/>
+      <property name="documentLogService" ref="DocumentLogService"/>
+      <property name="scannedFilesPath" value="/doccom:scannedDocs"/>
    </bean>
 
    <bean id="FileService" class="org.springframework.aop.framework.ProxyFactoryBean">

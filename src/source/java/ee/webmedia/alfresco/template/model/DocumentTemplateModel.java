@@ -34,7 +34,9 @@ public interface DocumentTemplateModel {
 
     interface Aspects {
         QName TEMPLATE = QName.createQName(URI, "template");
-        QName TEMPLATE_DOC_TYPE = QName.createQName(URI, "docType");
+        QName TEMPLATE_SYSTEM = QName.createQName(URI, "systemTemplate");
+        QName TEMPLATE_EMAIL = QName.createQName(URI, "emailTemplate");
+        QName TEMPLATE_DOCUMENT = QName.createQName(URI, "documentTemplate");
     }
 
 }

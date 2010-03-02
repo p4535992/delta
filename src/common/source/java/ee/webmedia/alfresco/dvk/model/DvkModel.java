@@ -10,8 +10,7 @@ public interface DvkModel {
     String URI = "http://alfresco.webmedia.ee/model/dvk/1.0";
 
     interface Types {
-        QName ORG_LIST_ROOT = QName.createQName(URI, "orgListRoot");
-        QName ORGANIZATION = QName.createQName(URI, "organization");
+        QName FAILED_DOC = QName.createQName(URI, "failedDoc");
     }
 
     interface Aspects {

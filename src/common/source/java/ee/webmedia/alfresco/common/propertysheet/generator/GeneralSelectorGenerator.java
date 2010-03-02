@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.common.propertysheet.generator;
 
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS;
+import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,7 @@ import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.converter.BooleanToLabelConverter;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -48,18 +50,34 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
         // if property sheet is in view mode, then an output text component has been generated
         if (component == null) {
-            component = generateSelectComponent(context, item.getName(), propertyDef.isMultiValued());
+            component = generateSelectComponent(context, getDefaultId(item), isMultiValued(propertyDef));
         }
         return component;
     }
 
+    protected boolean isMultiValued(PropertyDefinition propertyDef) {
+        return propertyDef == null ? false : propertyDef.isMultiValued();
+    }
+
     public UIComponent generateSelectComponent(FacesContext context, String id, boolean multiValued) {
+        multiValued = generateMultivalued(context, multiValued);
         UIComponent component = context.getApplication().createComponent(multiValued ? HtmlSelectManyListbox.COMPONENT_TYPE : HtmlSelectOneMenu.COMPONENT_TYPE);
         // non-null id is needed, otherwise clientId is not written to HTML
         FacesHelper.setupComponentId(context, component, id);
         return component;
     }
 
+    private boolean generateMultivalued(FacesContext context, boolean multiValued) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
+        final Integer valueIndex = (Integer) requestMap.get(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
+        if(valueIndex == null || valueIndex < 0 ) {
+            return multiValued;
+        }
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
     public void setupSelectComponent(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,
             UIComponent component, boolean multiValued) {
 
@@ -67,9 +85,12 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
         String styleClass = getStyleClass();
         if (StringUtils.isNotBlank(styleClass)) {
-            @SuppressWarnings("unchecked")
             Map<String, Object> attributes = component.getAttributes();
             attributes.put(STYLE_CLASS, styleClass);
+        }
+        
+        if (getCustomAttributes().containsKey(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX)) {
+            component.getAttributes().put(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX, getCustomAttributes().get(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX));
         }
 
         if (component instanceof UIInput) {
@@ -77,7 +98,6 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
             List<UISelectItem> results = initializeSelectionItems(context, propertySheet, item, propertyDef, (UIInput) component,
                     vb != null ? vb.getValue(context) : null, multiValued);
             if (results != null) {
-                @SuppressWarnings("unchecked")
                 List<UIComponent> children = component.getChildren();
                 children.addAll(results);
             }

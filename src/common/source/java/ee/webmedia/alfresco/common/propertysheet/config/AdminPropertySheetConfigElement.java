@@ -21,6 +21,15 @@ public class AdminPropertySheetConfigElement extends WMPropertySheetConfigElemen
 
     @Override
     protected void addItem(ItemConfig itemConfig) {
+        addItemInternal(itemConfig);
+    }
+    
+    @Override
+    protected void addItem(ItemConfigVO itemConfig) {
+        addItemInternal(itemConfig);
+    }
+    
+    private void addItemInternal(ItemConfig itemConfig) {
         if (!(itemConfig instanceof CustomAttributes)) {
             super.addItem(itemConfig);
             if (itemConfig.isShownInViewMode()) {

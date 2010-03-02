@@ -14,7 +14,6 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.parameters.model.Parameter;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class ParametersListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;

@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -20,15 +19,13 @@ import javax.faces.el.ValueBinding;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
-import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
-import org.alfresco.web.bean.generator.IComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
+import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
@@ -36,9 +33,18 @@ import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
+import org.springframework.util.Assert;
+import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
+import ee.webmedia.alfresco.common.propertysheet.component.NodeAssocBrand;
+import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
+import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
+import ee.webmedia.alfresco.common.service.GeneralService;
 
 /**
  * Util methods for JSF components/component trees
@@ -46,7 +52,9 @@ import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
  * @author Ats Uiboupin
  */
 public class ComponentUtil {
+    private static final String JSF_CONVERTER = "jsfConverter";
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ComponentUtil.class);
+    private static GeneralService generalService;
 
     /**
      * @param component - UIComponent to be searched from(looking towards the ancestors up to UIPropertySheet and then down to UIProperty matching
@@ -59,6 +67,10 @@ public class ComponentUtil {
         UIProperty matchingProperty = ComponentUtil.findUIPropertyByIdSuffix(propSheetComponent, searchPropertyIdSuffix);
         UIInput propertyInput = getInputOfProperty(matchingProperty);
         return propertyInput;
+    }
+
+    public static <T extends UIComponent> T getAncestorComponent(UIComponent componentFrom, Class<T> toComponentClass) {
+        return getAncestorComponent(componentFrom, toComponentClass, true, null);
     }
 
     /**
@@ -169,7 +181,8 @@ public class ComponentUtil {
         List<UIComponent> children = parentComponent.getChildren();
         for (UIComponent childComponent : children) {
             if (childComponentClass.isAssignableFrom(childComponent.getClass())) {
-                if (childComponent.getId().endsWith(idSuffix)) {
+                final String childId = childComponent.getId();
+                if (childId != null && childId.endsWith(idSuffix)) {
                     list.add((T) childComponent);
                     continue;
                 }
@@ -220,14 +233,16 @@ public class ComponentUtil {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
         attributes.put("readonly", Boolean.TRUE);
+        if (component instanceof UIOutput) {
+            return;
+        }
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
         if (children == null) {
             return;
-        } else {
-            for (UIComponent childComponent : children) {
-                setDisabledAttributeRecursively(childComponent);
-            }
+        }
+        for (UIComponent childComponent : children) {
+            setDisabledAttributeRecursively(childComponent);
         }
     }
 
@@ -315,56 +330,42 @@ public class ComponentUtil {
     }
 
     public static final String ATTR_DISPLAY_LABEL = "displayLabel";
-
-    // parent component (whose 'children' is provided) needs to be added to component tree before calling this method, because the validations are setup and
-    // these need access to the component id, which in turn needs to have a parent to get the correct id
-    //
-    // spec (fields separated by |):
-    //   1) propName, mandatory, e.g. doccom:docName
-    //   2) component generator name, optional, e.g. TextFieldGenerator, see more from RepoConstants
-    //   3-...) custom attributes, e.g. styleClass=inline
-    public static UIComponent generateComponent(FacesContext context, String propertySheetVar, String spec, UIPropertySheet propertySheet,
-            PropertySheetItem item, final List<UIComponent> children) {
-
-        String[] fields = spec.split("\\|");
-
-        final String propName;
-        if (fields.length >= 1) {
-            propName = fields[0];
-        } else {
-            propName = null;
+    
+    /**
+     * NB! If NOT <code>componentPropVO.isUseComponentGenerator()</code>, then component generators are not used, and hence for example value bindings and
+     * validations are not set up.<br>
+     * If <code>componentPropVO.isUseComponentGenerator()</code> then parent component (whose 'children' is provided) needs to be added to component tree before
+     * calling this method, because the validations are setup and
+     * these need access to the component id, which in turn needs to have a parent to get the correct id.<br>
+     * 
+     * @param context
+     * @param componentPropVO
+     * @param propertySheet
+     * @param children
+     * @return component generated based on <code>singlePropVO</code> that is added to list of given <code>children</code> that must come from given
+     *         <code>propertySheet</code> where the generated component is added.
+     */
+    public static UIComponent generateAndAddComponent(FacesContext context, ComponentPropVO componentPropVO, UIPropertySheet propertySheet,
+            final List<UIComponent> children) {
+        if (!componentPropVO.isUseComponentGenerator()) {
+            final UIComponent component = createCellComponent(context, componentPropVO);
+            children.add(component);
+            return component;
         }
-        if (StringUtils.isEmpty(propName)) {
-            throw new RuntimeException("Property name must be specified");
-        }
-        PropertyDefinition propDef = getPropertyDefinition(context, propertySheet.getNode(), propName);
+        final String propName = componentPropVO.getPropertyName();
 
-        String generatorName;
-        if (fields.length >= 2 && StringUtils.isNotEmpty(fields[1])) {
-            generatorName = fields[1];
-        } else {
-            if (propDef != null) {
-                QName dataTypeName = propDef.getDataType().getName();
-                generatorName = getDefaultGeneratorName(dataTypeName);
-                if (generatorName == null) {
-                    throw new RuntimeException("Component generator name not specified and default generator not found for data type " + dataTypeName
-                            + ", property name '" + propName + "'");
-                }
-            } else {
-                throw new RuntimeException("Component generator name not specified and property definition not found for property name '" + propName + "'");
-            }
-        }
-
-        final String label = resolveDisplayLabel(context, propDef, propName);
+        final String label = componentPropVO.getPropertyLabel();
         PropertySheetItem fakeItem = new WMUIProperty() {
             @Override
             public String getName() {
                 return propName;
             }
+
             @Override
             public String getResolvedDisplayLabel() {
                 return label;
             }
+
             @Override
             @SuppressWarnings("unchecked")
             public List getChildren() {
@@ -372,23 +373,74 @@ public class ComponentUtil {
             }
         };
 
-        IComponentGenerator generator = FacesHelper.getComponentGenerator(context, generatorName);
-        if (generator instanceof CustomAttributes && fields.length >= 3) {
-            Map<String, String> customAttributes = new HashMap<String, String>();
-            for (int i = 2; i < fields.length; i++) {
-                if (fields[i] == null || fields[i].split("=").length != 2) {
-                    throw new RuntimeException("Field " + (i + 1) + " does not contain custom attribute, spec '" + spec + "'");
-                }
-                String[] parts = fields[i].split("=");
-                customAttributes.put(parts[0], parts[1]);
-            }
-            ((CustomAttributes) generator).setCustomAttributes(customAttributes);
-        }
-        UIComponent component = generator.generateAndAdd(context, propertySheet, fakeItem);
+        Map<String, String> customAttributes = componentPropVO.getCustomAttributes();
+        ((CustomAttributes) fakeItem).setCustomAttributes(customAttributes);
 
+        UIComponent component = componentPropVO.getComponentGenerator(context).generateAndAdd(context, propertySheet, fakeItem);
+
+        if (component instanceof UIInput) {
+            final String converterName = customAttributes.get(JSF_CONVERTER);
+            if (StringUtils.isNotBlank(converterName)) {
+                try {// XXX: pm võiks külge panna ka property tüübi järgi mingid default converterid(a la double tüübi puhul DoubleConverter), et ei peaks käsitsi attribuute lisama
+                    @SuppressWarnings("unchecked")
+                    final Class<Converter> converterClass = (Class<Converter>) Class.forName(converterName);
+                    final Converter converter = converterClass.newInstance();
+                    ((UIInput)component).setConverter(converter);
+                } catch (Exception e) {
+                    throw new RuntimeException("Can't initialize converter with class name '" + converterName + "' while creating property '" + propName + "'", e);
+                }
+            }
+        }
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
         attributes.put(ATTR_DISPLAY_LABEL, label);
+
+        return component;
+    }
+    
+    /**
+     * Method that constructs component without using componentGenerators 
+     * @param context
+     * @param vo
+     * @return
+     */
+    private static UIComponent createCellComponent(FacesContext context, ComponentPropVO vo) {
+        UIComponent component = null;
+        
+        String type = vo.getGeneratorName();
+        final Map<String, String> voCustomAttributes = vo.getCustomAttributes();
+        if(StringUtils.equals(RepoConstants.GENERATOR_TEXT_AREA, type)){
+            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
+            component.setRendererType(ComponentConstants.JAVAX_FACES_TEXTAREA);
+        } else if(StringUtils.equals(RepoConstants.GENERATOR_DATE_PICKER, type)){
+            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> attributes = component.getAttributes();
+            attributes.put("styleClass", "date");
+            ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
+        } else if(StringUtils.equals("ClassificatorSelectorGenerator", type)){
+            if (voCustomAttributes.containsKey(ClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_NAME)) {
+                ClassificatorSelectorGenerator classificGenerator = new ClassificatorSelectorGenerator();
+                classificGenerator.setCustomAttributes(voCustomAttributes);
+                component = classificGenerator.generateSelectComponent(context, null, false);
+                classificGenerator.setupSelectComponent(context, null, null, null, component, false);
+            } else {
+                throw new RuntimeException("Component type '" + type + "' requires a classificator name in definition. Failing fast!");
+            }
+        } else if (StringUtils.isNotEmpty(type) && !StringUtils.equals(RepoConstants.GENERATOR_TEXT_FIELD, type)) {
+            log.warn("Component type '" + type + "' is not supported, defaulting to input");
+        }
+
+        if (component == null) {
+            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
+        }
+
+        final String styleClass = voCustomAttributes.get(BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS);
+        if (StringUtils.isNotBlank(styleClass)) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> attributes = component.getAttributes();
+            attributes.put(BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS, styleClass);
+        }
 
         return component;
     }
@@ -405,8 +457,7 @@ public class ComponentUtil {
 
     public static PropertyDefinition getPropertyDefinition(FacesContext context, Node node, String propName) {
         PropertyDefinition propDef = null;
-        DictionaryService dictionaryService = Repository.getServiceRegistry(context).getDictionaryService();
-        TypeDefinition typeDef = dictionaryService.getAnonymousType(node.getType(), node.getAspects());
+        TypeDefinition typeDef = getGeneralService().getAnonymousType(node.getType());
         if (typeDef != null) {
             Map<QName, PropertyDefinition> properties = typeDef.getProperties();
             propDef = properties.get(Repository.resolveToQName(propName));
@@ -443,6 +494,103 @@ public class ComponentUtil {
             generatorName = RepoConstants.GENERATOR_DATE_PICKER;
         }
         return generatorName;
+    }
+
+    public static UIComponent findComponentById(FacesContext context, UIComponent root, String id) {
+		UIComponent component = null;
+
+		for (int i = 0; i < root.getChildCount() && component == null; i++) {
+			UIComponent child = (UIComponent) root.getChildren().get(i);
+			component = findComponentById(context, child, id);
+		}
+
+		if (root.getId() != null) {
+			if (component == null && root.getId().equals(id)) {
+				component = root;
+			}
+		}
+		return component;
+	}
+
+    /**
+     * @param context
+     * @param propertySheet
+     * @param propKey
+     * @param valueIndexSuffix - index between square brackets or empty string, but not null!
+     * @return If given propSheetItem <code>item</code> is on nested propertySheet then reference is returned that could be used to create valueBinding, <br>
+     *         null otherwise
+     */
+    public static String getValueBindingFromSubPropSheet(final FacesContext context, UIPropertySheet propertySheet, String propKey, String valueIndexSuffix) {
+        final List<AssocInfoHolder> pathInfos = new ArrayList<AssocInfoHolder>();
+        UIPropertySheet ancestorPropSheet = propertySheet;
+        do {
+            if (ancestorPropSheet instanceof WMUIPropertySheet) {
+                WMUIPropertySheet wmPropSheet = (WMUIPropertySheet) ancestorPropSheet;
+                final Integer associationIndex = wmPropSheet.getAssociationIndex();
+                if (associationIndex != null) {
+                    final AssocInfoHolder assocInfoHolder = new AssocInfoHolder();
+                    final SubPropertySheetItem subPropSheetItem = ComponentUtil.getAncestorComponent(ancestorPropSheet, SubPropertySheetItem.class, true);
+                    assocInfoHolder.assocTypeQName = subPropSheetItem.getAssocTypeQName();
+                    assocInfoHolder.associationBrand = wmPropSheet.getAssociationBrand();
+                    assocInfoHolder.associationIndex = associationIndex;
+                    assocInfoHolder.validate();
+                    pathInfos.add(assocInfoHolder);
+                    UIPropertySheet nextAncestorPropSheet = ComponentUtil.getAncestorComponent(subPropSheetItem, UIPropertySheet.class, true);
+                    if (nextAncestorPropSheet != null) {
+                        ancestorPropSheet = nextAncestorPropSheet;
+                        continue;
+                    }
+                }
+            }
+            break; // exit loop when no next ancestorPropSheet found
+        } while (true);
+
+        if (pathInfos.size() != 0) { // item is on SubPropertySheet?
+            String vb = "";
+            for (AssocInfoHolder assocInf : pathInfos) {
+                if (assocInf.associationBrand == NodeAssocBrand.CHILDREN) {
+                    vb = assocInf.getValueBindingPart() + vb;
+                } else {
+                    throw new RuntimeException("Creating value binding for associationBrand " + assocInf.associationBrand + " is unimplemented!");
+                }
+            }
+            Assert.notNull(valueIndexSuffix, "valueIndexSuffix index between square brackets or empty string, but not null!");
+            return "#{" + ancestorPropSheet.getVar() + vb + ".properties[\"" + propKey + "\"]" + valueIndexSuffix + "}";
+        }
+        return null;
+    }
+
+    private static GeneralService getGeneralService() {
+        if (generalService == null) {
+            generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(GeneralService.BEAN_NAME);
+        }
+        return generalService;
+    }
+
+    /** private class to hold association info for creating value binding */
+    private static class AssocInfoHolder {
+        int associationIndex;
+        NodeAssocBrand associationBrand;
+        QName assocTypeQName;
+
+        void validate() {
+            Assert.notNull(associationIndex, "associationIndex is mandatory for subPropertySheetItem");
+            Assert.notNull(associationBrand, "wmPropSheet has associationIndex=" + associationIndex + ", but no associationBrand=" + associationBrand);
+            Assert.notNull(assocTypeQName, "association type unKnown!");
+        }
+
+        public String getValueBindingPart() {
+            if (NodeAssocBrand.CHILDREN.equals(associationBrand)) {
+                return ".allChildAssociationsByAssocType[\"" + assocTypeQName.toString() + "\"][" + associationIndex + "]";
+            }
+            throw new RuntimeException("Getting ValueBinding for associationBrand='" + associationBrand + "' is unimplemented");
+        }
+
+        @Override
+        public String toString() {
+            return "AssocInfoHolder: " + getValueBindingPart();
+        }
     }
 
 }

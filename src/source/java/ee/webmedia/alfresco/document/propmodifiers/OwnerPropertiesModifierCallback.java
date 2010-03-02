@@ -9,21 +9,23 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
-import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.PropertiesModifierCallback;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.utils.UserUtil;
 
-public class OwnerPropertiesModifierCallback implements PropertiesModifierCallback, InitializingBean {
+public class OwnerPropertiesModifierCallback extends PropertiesModifierCallback {
 
-    private DocumentService documentService;
     private PersonService personService;
     private AuthenticationService authenticationService;
     private NodeService nodeService;
     private OrganizationStructureService organizationStructureService;
+    
+    @Override
+    public QName getAspectName() {
+        return DocumentCommonModel.Aspects.OWNER;
+    }
 
     @Override
     public void doWithProperties(Map<QName, Serializable> properties) {
@@ -39,16 +41,6 @@ public class OwnerPropertiesModifierCallback implements PropertiesModifierCallba
         properties.put(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT, orgstructName);
         properties.put(DocumentCommonModel.Props.OWNER_EMAIL, personProps.get(ContentModel.PROP_EMAIL));
         properties.put(DocumentCommonModel.Props.OWNER_PHONE, personProps.get(ContentModel.PROP_TELEPHONE));
-    }
-
-    @Override
-    public void afterPropertiesSet() throws Exception {
-        documentService.addPropertiesModifierCallback(DocumentCommonModel.Aspects.OWNER, this);
-    }
-
-    @Override
-    public void setDocumentService(DocumentService documentService) {
-        this.documentService = documentService;
     }
 
     public void setPersonService(PersonService personService) {

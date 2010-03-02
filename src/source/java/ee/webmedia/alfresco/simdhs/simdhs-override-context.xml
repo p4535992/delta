@@ -21,6 +21,30 @@
          </list>
       </property>
    </bean>
+
+    <!-- SIMDHS IMAP subsystem -->
+    <!-- @Override classpath:alfresco/bootstrap-context.xml -->
+    <bean id="imap" class="org.alfresco.repo.management.subsystems.ChildApplicationContextFactory" parent="abstractPropertyBackedBean">
+        <property name="autoStart">
+            <value>true</value>
+        </property>
+        <!-- Do we need following property -->
+        <property name="compositePropertyTypes">
+            <map>
+               <entry key="imap.config.server.mountPoints">
+                   <value>org.alfresco.repo.imap.config.ImapConfigMountPointsBean</value>
+               </entry>
+               <entry key="imap.config.ignore.extraction">
+                   <value>org.alfresco.util.config.RepositoryPathConfigBean</value>
+               </entry>
+            </map>
+        </property>
+        <property name="id">
+            <list>
+                <value>simdhs</value>
+            </list>
+        </property>
+    </bean>
    
    <!-- @Override classpath:alfresco/subsystems/Authentication/common-ldap-context.xml -->
    <bean id="userRegistry" class="ee.webmedia.alfresco.orgstructure.amr.AMRUserRegistry">
@@ -29,6 +53,8 @@
       <property name="nodeService" ref="NodeService" />
       <property name="amrService" ref="AmrService" />
       <property name="parametersService" ref="ParametersService" />
+      <property name="applicationService" ref="ApplicationService" />
+      <property name="testEmail" value="${mail.from.default}" />
    </bean>
 
    <!--  @Override authentication-services-context.xml -->

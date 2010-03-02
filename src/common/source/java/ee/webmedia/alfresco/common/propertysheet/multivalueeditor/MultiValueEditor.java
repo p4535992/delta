@@ -1,9 +1,10 @@
 package ee.webmedia.alfresco.common.propertysheet.multivalueeditor;
 
-import java.io.IOException;
+import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROP_GENERATOR_DESCRIPTORS;
+import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -25,10 +26,10 @@ import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor.MultiValueEditorEvent;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
-import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
@@ -40,9 +41,12 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * @author Alar Kvell
  */
 public class MultiValueEditor extends UIComponentBase {
+    protected static final String PROPERTY_SHEET_VAR = "propertySheetVar";
+
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MultiValueEditor.class);
 
     public static final String MULTI_VALUE_EDITOR_FAMILY = MultiValueEditor.class.getCanonicalName();
+    public static final String ADD_LABEL_ID = "addLabelId";
 
     @Override
     public String getFamily() {
@@ -52,7 +56,8 @@ public class MultiValueEditor extends UIComponentBase {
     @Override
     public void encodeBegin(FacesContext context) throws IOException {
         if (getChildCount() == 0) {
-            createExistingComponents(context);
+            UIPropertySheet propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
+            createExistingComponents(context, propertySheet);
             if (!isDisabled()) {
                 createPicker(context);
             }
@@ -94,7 +99,7 @@ public class MultiValueEditor extends UIComponentBase {
 
     }
 
-    protected void pickerFinish(UIGenericPicker picker) {
+    private void pickerFinish(UIGenericPicker picker) {
         String[] results = picker.getSelectedResults();
         if (results == null) {
             return;
@@ -109,9 +114,9 @@ public class MultiValueEditor extends UIComponentBase {
         for (String propName : propNames) {
             columnLists.add(getList(context, propName));
         }
-
+        UIPropertySheet propertySheet = null;
         for (int i = 0; i < results.length; i++) {
-            String setterCallback = (String) getAttributes().get("setterCallback");
+            String setterCallback = (String) getAttributes().get(Search.SETTER_CALLBACK);
             MethodBinding b = getFacesContext().getApplication().createMethodBinding(setterCallback, new Class[] { String.class });
             @SuppressWarnings("unchecked")
             List<Object> rowList = (List<Object>) b.invoke(context, new Object[] { results[i] });
@@ -136,7 +141,10 @@ public class MultiValueEditor extends UIComponentBase {
                     }
                     columnIndex++;
                 }
-                appendRowComponent(context, rowIndex + i);
+                if (propertySheet == null) {
+                    propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
+                }
+                appendRowComponent(context, rowIndex + i, propertySheet);
             }
         }
         for (List<Object> columnList : columnLists) {
@@ -166,14 +174,14 @@ public class MultiValueEditor extends UIComponentBase {
         }
     }
 
-    protected void createExistingComponents(FacesContext context) {
+    private void createExistingComponents(FacesContext context, UIPropertySheet propertySheet) {
         int rows = initializeRows(context);
         for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
-            appendRowComponent(context, rowIndex);
+            appendRowComponent(context, rowIndex, propertySheet);
         }
     }
 
-    protected int initializeRows(FacesContext context) {
+    private int initializeRows(FacesContext context) {
         // Ensure that all lists contain the same amount of elements, append null elements if necessary
         int rows = 0;
         List<String> propNames = getPropNames();
@@ -193,98 +201,46 @@ public class MultiValueEditor extends UIComponentBase {
         return rows;
     }
 
-    protected void appendRowComponent(FacesContext context, int rowIndex) {
-        UIComponent container = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_PANELGROUP);
+    private void appendRowComponent(FacesContext context, Integer rowIndex, UIPropertySheet propertySheet) {
+        UIComponent rowContainer = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_PANELGROUP);
         @SuppressWarnings("unchecked")
         List<UIComponent> children = getChildren();
-        children.add(container);
-        List<String> types = getComponentTypes();
+        children.add(rowContainer);
 
         @SuppressWarnings("unchecked")
-        List<UIComponent> containerChildren = container.getChildren();
+        List<UIComponent> rowContainerChildren = rowContainer.getChildren();
         int columnIndex = 0;
-        for (String propName : getPropNames()) {
-            String type = null;
-            if (types != null && types.size() > columnIndex) {
-                type = types.get(columnIndex);
-            }
-            UIComponent component = generateCellComponent(context, type);
-            // XXX: Why does generateCell method already invoce setupComponentId in each if block if there is a general invokation here?
-            FacesHelper.setupComponentId(context, component, null);
-            setValueBinding(context, component, propName, rowIndex);
-            containerChildren.add(component);
-            if (isDisabled()) {
-                ComponentUtil.setDisabledAttributeRecursively(component);
+        for (ComponentPropVO componentPropVO : getPropertyGeneratorDescriptors()) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
+            requestMap.put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex);
+            componentPropVO.getCustomAttributes().put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex.toString());
+            final UIComponent component = ComponentUtil.generateAndAddComponent(context, componentPropVO, propertySheet, rowContainerChildren);
+            requestMap.remove(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
+            if (!componentPropVO.isUseComponentGenerator()) {
+                // component was not generated using componentGenerator, so we have to add bindings manually
+                FacesHelper.setupComponentId(context, component, componentPropVO.getPropertyName() + "_" + rowIndex);
+                setValueBinding(context, component, componentPropVO.getPropertyName(), rowIndex);
+                if (isDisabled()) {
+                    ComponentUtil.setDisabledAttributeRecursively(component);
+                }
             }
             columnIndex++;
         }
     }
 
-    protected UIComponent generateCellComponent(FacesContext context, String spec) {
-        UIComponent component = null;
-        String[] fields = spec.split(":");
-
-        String type = "";
-        if (fields.length >= 1 && StringUtils.isNotBlank(fields[0])) {
-            type = fields[0];
-        }
-
-        if ("textarea".equals(type)) {
-            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
-            component.setRendererType(ComponentConstants.JAVAX_FACES_TEXTAREA);
-            FacesHelper.setupComponentId(context, component, null);
-            @SuppressWarnings("unchecked")
-            Map<String, Object> attributes = component.getAttributes();
-            // Default values from TextAreaGenerator
-            attributes.put("rows", 3);
-            attributes.put("cols", 32);
-        } else if ("date".equals(type)) {
-            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
-            FacesHelper.setupComponentId(context, component, null);
-            @SuppressWarnings("unchecked")
-            Map<String, Object> attributes = component.getAttributes();
-            attributes.put("styleClass", "date");
-            ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
-        } else if ("classificator".equals(type)) {
-            if (fields.length >= 3 && StringUtils.isNotBlank(fields[2])) {
-                ClassificatorSelectorGenerator classificGenerator = new ClassificatorSelectorGenerator();
-                Map<String, String> customAttributes = new HashMap<String, String>();
-                customAttributes.put(ClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_NAME, fields[2]);
-                classificGenerator.setCustomAttributes(customAttributes);
-                component = classificGenerator.generateSelectComponent(context, null, false);
-                classificGenerator.setupSelectComponent(context, null, null, null, component, false);
-            } else {
-                throw new RuntimeException("Component type '" + type + "' requires a classificator name in definition. Failing fast!");
-            }
-        } else if (StringUtils.isNotEmpty(type) && !"input".equals(type)) {
-            log.warn("Component type '" + type + "' is not supported, defaulting to input");
-        }
-
-        if (component == null) {
-            component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
-            FacesHelper.setupComponentId(context, component, null);
-        }
-
-        if (fields.length >= 2 && StringUtils.isNotBlank(fields[1])) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> attributes = component.getAttributes();
-            attributes.put("styleClass", fields[1]);
-        }
-
-        return component;
-    }
-
-    protected void appendRow(FacesContext context) {
-        int rowIndex = Integer.MAX_VALUE;
+    private void appendRow(FacesContext context) {
+        Integer rowIndex = null;
         for (String propName : getPropNames()) {
             List<?> list = getList(context, propName);
             rowIndex = list.size();
             list.add(null);
         }
-        appendRowComponent(context, rowIndex);
+        UIPropertySheet propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
+        appendRowComponent(context, rowIndex, propertySheet);
     }
 
-    protected void removeRow(FacesContext context, int removeIndex) {
+    private void removeRow(FacesContext context, int removeIndex) {
         List<String> propNames = getPropNames();
         for (String propName : propNames) {
             List<?> list = getList(context, propName);
@@ -314,24 +270,30 @@ public class MultiValueEditor extends UIComponentBase {
             }
             rowIndex++;
         }
+        final UIPropertySheet propSheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
+        if (propSheet != null) { // no propSheet, if multivalueEditor is created outside propSheet - for example in jsp using MultiValueEditorTag
+            // to remove unnecessary client-side validations that might have been added by the componentGenerator to rowItem components
+            propSheet.getChildren().clear();
+            propSheet.getClientValidations().clear();
+        }
     }
 
-    protected void setValueBinding(FacesContext context, UIComponent component, String propName, int rowIndex) {
+    private void setValueBinding(FacesContext context, UIComponent component, String propName, int rowIndex) {
         ValueBinding vb = createValueBinding(context, propName, rowIndex);
         component.setValueBinding("value", vb);
     }
 
-    protected ValueBinding createValueBinding(FacesContext context, String propName) {
+    private ValueBinding createValueBinding(FacesContext context, String propName) {
         return createValueBinding(context, propName, -1);
     }
 
-    protected ValueBinding createValueBinding(FacesContext context, String propName, int rowIndex) {
+    private ValueBinding createValueBinding(FacesContext context, String propName, int rowIndex) {
         ValueBinding vb = context.getApplication().createValueBinding(
                 "#{" + getPropertySheetVar() + ".properties[\"" + propName + "\"]" + (rowIndex >= 0 ? "[" + rowIndex + "]" : "") + "}");
         return vb;
     }
 
-    protected List<Object> getList(FacesContext context, String propName) {
+    private List<Object> getList(FacesContext context, String propName) {
         ValueBinding vb = createValueBinding(context, propName);
         @SuppressWarnings("unchecked")
         List<Object> list = (List<Object>) vb.getValue(context);
@@ -342,25 +304,31 @@ public class MultiValueEditor extends UIComponentBase {
         return list;
     }
 
-    @SuppressWarnings("unchecked")
-    protected List<String> getPropNames() {
-        return (List<String>) getAttributes().get("propNames");
+    private List<String> getPropNames() {
+        final List<ComponentPropVO> propsVOs = getPropertyGeneratorDescriptors();
+        List<String> propNames;
+        propNames = new ArrayList<String>(propsVOs.size());
+        for (ComponentPropVO componentPropVO : propsVOs) {
+            propNames.add(componentPropVO.getPropertyName());
+        }
+        return propNames;
     }
 
-    @SuppressWarnings("unchecked")
-    protected List<String> getComponentTypes() {
-        return (List<String>) getAttributes().get("componentTypes");
+    private List<ComponentPropVO> getPropertyGeneratorDescriptors() {
+        @SuppressWarnings("unchecked")
+        final List<ComponentPropVO> propsVOs = (List<ComponentPropVO>) getAttributes().get(PROP_GENERATOR_DESCRIPTORS);
+        return propsVOs;
     }
 
-    protected String getPropertySheetVar() {
-        return (String) getAttributes().get("propertySheetVar");
+    private String getPropertySheetVar() {
+        return (String) getAttributes().get(PROPERTY_SHEET_VAR);
     }
 
     protected String getPickerCallback() {
         return (String) getAttributes().get(Search.PICKER_CALLBACK_KEY);
     }
 
-    protected boolean isDisabled() {
+    private boolean isDisabled() {
         return Utils.isComponentDisabledOrReadOnly(this);
     }
 

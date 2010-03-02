@@ -36,13 +36,16 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
     public static final String ATTR_AFTER_SELECT = "afterSelect";
 
     @Override
-    protected UIComponent setupMultiValuePropertyIfNecessary(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
-            PropertyDefinition propertyDef, UIComponent component) {
-
+    public UIComponent generateSelectComponent(FacesContext context, String id, boolean multiValued) {
         RelatedDropdown selectComponent = new RelatedDropdown();
         setId(context, selectComponent);
         setFillingInformation(selectComponent);
         return selectComponent;
+    }
+    
+    @Override
+    protected boolean isMultiValued(PropertyDefinition propertyDef) {
+        return false;
     }
 
     @Override
@@ -105,7 +108,12 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
         if (localStart != -1) {
             name = name.substring(localStart);
         }
-        FacesHelper.setupComponentId(context, selectComponent, "relatedDropdown_" + name);
+        FacesHelper.setupComponentId(context, selectComponent, getIdPrefix() + name + getIdSuffix());
+    }
+
+    @Override
+    protected String getIdPrefix() {
+        return "relatedDropdown_";
     }
 
     private String getName() {

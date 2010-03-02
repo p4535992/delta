@@ -36,7 +36,6 @@ import org.apache.lucene.queryParser.QueryParser;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Assocs;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
-import ee.webmedia.alfresco.dvk.service.DvkService;
 
 /**
  * @author Keit Tehvan
@@ -48,29 +47,12 @@ public class AddressbookServiceImpl implements AddressbookService {
     private SearchService searchService;
     private NamespaceService namespaceService;
     private AuthorityService authorityService;
-    private DvkService dvkService;
 
     private Set<QName> searchFields; // doesn't need to be synchronized, because it is not modified during runtime
+    private Set<QName> contactGroupSearchFields; // doesn't need to be synchronized, because it is not modified during runtime
     private StoreRef store;
 
     // ---------- interface methods
-
-    @Override
-    public int updateOrganizationsDvkCapability() {
-        final Map<String /*regNum*/, String /*orgName*/> sendingOptions = dvkService.getSendingOptions();
-        final List<Node> organizations = listOrganization();
-        int dvkCapableOrgs = 0;
-        for (Node orgNode : organizations) {
-            final Map<String, Object> oProps = orgNode.getProperties();
-            String orgCode = (String) oProps.get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
-            if(sendingOptions.containsKey(orgCode)) {
-                oProps.put(AddressbookModel.Props.DVK_CAPABLE.toString(), true);
-                updateNode(orgNode);
-                dvkCapableOrgs ++;
-            }
-        }
-        return dvkCapableOrgs;
-    }
 
     @Override
     public boolean hasManagePermission() {
@@ -168,43 +150,47 @@ public class AddressbookServiceImpl implements AddressbookService {
 
     @Override
     public List<Node> search(String searchCriteria) {
+        return executeSearch(searchCriteria, searchFields);
+    }
 
-        if (searchCriteria == null || searchCriteria.trim().length() == 0) {
+    @Override
+    public List<Node> searchContactGroups(String searchCriteria) {
+        return executeSearch(searchCriteria, contactGroupSearchFields);
+    }
+    
+    private List<Node> executeSearch(String searchCriteria, Set<QName> fields) {
+        if (StringUtils.isBlank(searchCriteria)) {
             return Collections.emptyList();
         }
 
-        List<Node> result = null;
-
-        // define the query to find people by their first or last name
-        String search = searchCriteria.trim();
-        StringBuilder query = new StringBuilder(128);
-        for (StringTokenizer t = new StringTokenizer(search, " "); t.hasMoreTokens(); /**/) {
-            String term = QueryParser.escape(t.nextToken());
-            for (QName field : searchFields) {
-                String fieldPrefixed = field.toPrefixString(namespaceService);
-                String fieldEscaped = StringUtils.replace(fieldPrefixed, "" + QName.NAMESPACE_PREFIX, "\\"
-                        + QName.NAMESPACE_PREFIX);
-                query.append("@").append(fieldEscaped).append(":\"*").append(term).append("*\" ");
+        StringBuilder query = new StringBuilder();
+        if (StringUtils.isNotBlank(searchCriteria)) {
+            for (StringTokenizer t = new StringTokenizer(searchCriteria.trim(), " "); t.hasMoreTokens(); /**/) {
+                String term = QueryParser.escape(t.nextToken());
+                for (QName field : fields) {
+                    String fieldPrefixed = field.toPrefixString(namespaceService);
+                    String fieldEscaped = StringUtils.replace(fieldPrefixed, "" + QName.NAMESPACE_PREFIX, "\\" + QName.NAMESPACE_PREFIX);
+                    query.append("@").append(fieldEscaped).append(":\"*").append(term).append("*\" ");
+                }
             }
         }
 
-        ResultSet results = searchService.query(store, SearchService.LANGUAGE_LUCENE, query.toString());
-        List<NodeRef> people;
+        ResultSet searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, query.toString());
+        List<NodeRef> nodeRefs = null;
         try {
-            people = results.getNodeRefs();
+            nodeRefs = searchResult.getNodeRefs();
         } finally {
-            results.close();
+            searchResult.close();
         }
 
-        result = new ArrayList<Node>(people.size());
-
-        for (NodeRef nodeRef : people) {
+        List<Node> result = new ArrayList<Node>(nodeRefs.size());
+        for (NodeRef nodeRef : nodeRefs) {
             result.add(getNode(nodeRef));
         }
 
         return result;
     }
-    
+
     @Override
     public NodeRef getOrgOfPerson(NodeRef ref) {
         return nodeService.getPrimaryParent(ref).getParentRef();
@@ -301,10 +287,6 @@ public class AddressbookServiceImpl implements AddressbookService {
 
     // ---------- service getters and setters
 
-    public void setDvkService(DvkService dvkService) {
-        this.dvkService = dvkService;
-    }
-    
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
     }
@@ -332,6 +314,13 @@ public class AddressbookServiceImpl implements AddressbookService {
         }
     }
 
+    public void setContactGroupSearchFields(Set<String> fields) {
+        contactGroupSearchFields = new HashSet<QName>(fields.size());
+        for (String qname : fields) {
+            contactGroupSearchFields.add(QName.createQName(qname, namespaceService));
+        }
+    }
+    
     public void setStore(String store) {
         this.store = new StoreRef(store);
     }

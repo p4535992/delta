@@ -166,6 +166,8 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
                 label.append((String) props.get(AddressbookModel.Props.ORGANIZATION_NAME.toString()));
                 label.append(" (");
                 label.append(organizationLabel);
+            } else if (node.getType().equals(Types.CONTACT_GROUP)) {
+                label.append((String) props.get(AddressbookModel.Props.GROUP_NAME));
             } else {
                 label.append(UserUtil.getPersonFullName((String) props.get(AddressbookModel.Props.PERSON_FIRST_NAME.toString()), (String) props
                         .get(AddressbookModel.Props.PERSON_LAST_NAME.toString())));
@@ -177,7 +179,9 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
                 label.append(", ");
                 label.append(email);
             }
-            label.append(")");
+            if (!node.getType().equals(Types.CONTACT_GROUP)) {
+                label.append(")");
+            }
 
             results[i++] = new SelectItem(value, label.toString());
         }

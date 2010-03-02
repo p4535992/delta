@@ -9,7 +9,8 @@ public enum SendMode {
     
     EMAIL_DVK("e-post/DVK"),
     EMAIL("e-post"),
-    MAIL("post");
+    MAIL("post"),
+    REGISTERED_MAIL("tähitud post");
     
     private String valueName;
     

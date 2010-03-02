@@ -54,19 +54,21 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
     
     @Override
     public void unlockIfOwner(NodeRef nodeRef) {
-        String msg = "after unlocking";
-        if (isLockByOther(nodeRef)) {
-            msg = "Unable to unlock - Not lock owner";
-        } else {
-            unlock(nodeRef);
-        }
-        if (log.isDebugEnabled()) {
-            debugLock(nodeRef, msg);
+        if (nodeService.exists(nodeRef)) {
+            String msg = "after unlocking";
+            if (isLockByOther(nodeRef)) {
+                msg = "Unable to unlock - Not lock owner";
+            } else {
+                unlock(nodeRef);
+            }
+            if (log.isDebugEnabled()) {
+                debugLock(nodeRef, msg);
+            }
         }
     }
 
     @Override
-    public LockStatus createLockIfFree(NodeRef lockNode) {
+    public LockStatus setLockIfFree(NodeRef lockNode) {
         // Check the lock status of the node
         LockStatus lockSts = debugLock(lockNode, "before creating/refreshing lock");
         if (lockSts == LockStatus.LOCKED) {// lock owned by other user

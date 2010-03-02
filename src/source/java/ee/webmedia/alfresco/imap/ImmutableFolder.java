@@ -15,11 +15,14 @@ import org.springframework.util.Assert;
 import javax.mail.Flags;
 import javax.mail.internet.MimeMessage;
 import javax.mail.search.SearchTerm;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 /**
- * TODO: add comment
+ * Mail folder implementation, that disables most activities on folder: makes it immutable, unlistable etc.
+ * Append behaviour can be defined using {@link ee.webmedia.alfresco.imap.AppendBehaviour}.
  *
  * @author Romet Aidla
  */
@@ -60,12 +63,12 @@ public class ImmutableFolder implements MailFolder {
 
     @Override
     public int getMessageCount() {
-        return innerMailFolder.getMessageCount();
+        return 0;
     }
 
     @Override
     public int getRecentCount(boolean b) {
-        return innerMailFolder.getRecentCount(b);
+        return 0;
     }
 
     @Override
@@ -75,12 +78,12 @@ public class ImmutableFolder implements MailFolder {
 
     @Override
     public int getFirstUnseen() {
-        return innerMailFolder.getFirstUnseen();
+        return 0;
     }
 
     @Override
     public int getUnseenCount() {
-        return innerMailFolder.getUnseenCount();
+        return 0;
     }
 
     @Override
@@ -110,12 +113,12 @@ public class ImmutableFolder implements MailFolder {
 
     @Override
     public void addListener(FolderListener folderListener) {
-        innerMailFolder.addListener(folderListener);
+        // do nothing
     }
 
     @Override
     public void removeListener(FolderListener folderListener) {
-        innerMailFolder.addListener(folderListener);
+        // do nothing
     }
 
     @Override
@@ -150,36 +153,36 @@ public class ImmutableFolder implements MailFolder {
 
     @Override
     public void setFlags(Flags flags, boolean b, long l, FolderListener folderListener, boolean b1) throws FolderException {
-        innerMailFolder.setFlags(flags, b, l, folderListener, b1);
+        // do nothing
     }
 
     @Override
     public void replaceFlags(Flags flags, long l, FolderListener folderListener, boolean b) throws FolderException {
-        innerMailFolder.replaceFlags(flags, l, folderListener, b);
+        // do nothing
     }
 
     @Override
     public int getMsn(long l) throws FolderException {
-        return innerMailFolder.getMsn(l);
+        throw new FolderException(PERMISSION_DENIED);
     }
 
     @Override
     public void signalDeletion() {
-        innerMailFolder.signalDeletion();
+        // do nothing
     }
 
     @Override
     public List getMessages(MsgRangeFilter msgRangeFilter) {
-        return innerMailFolder.getMessages(msgRangeFilter);
+        return Collections.EMPTY_LIST;
     }
 
     @Override
     public List getMessages() {
-        return innerMailFolder.getMessages();
+        return Collections.EMPTY_LIST;
     }
 
     @Override
     public List getNonDeletedMessages() {
-        return innerMailFolder.getNonDeletedMessages();
+        return Collections.EMPTY_LIST;
     }
 }

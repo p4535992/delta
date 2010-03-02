@@ -39,7 +39,7 @@
 
    <config evaluator="node-type" condition="case:case">
       <property-sheet>
-         <show-property name="case:title" display-label-id="case_title" readOnlyIf="case:status=suletud" />
+         <show-property name="case:title" display-label-id="case_title" readOnlyIf="case:status=suletud" styleClass="expand5-200" component-generator="TextAreaGenerator" />
          <show-property name="case:status" display-label-id="series_status" read-only="true" classificatorName="docListUnitStatus" component-generator="ClassificatorSelectorGenerator" />
       </property-sheet>
    </config>

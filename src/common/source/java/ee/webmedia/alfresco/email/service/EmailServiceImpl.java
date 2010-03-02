@@ -4,14 +4,14 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.mail.MessagingException;
+import javax.mail.Address;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
+import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -38,58 +38,111 @@ public class EmailServiceImpl implements EmailService {
 
     @Override
     public void sendEmail(List<String> toEmails, List<String> toNames, String fromEmail, String subject, String content, boolean isHtml, NodeRef document,
-            List<String> fileNodeRefs, boolean zipIt, String zipFileName) {
+            List<String> fileNodeRefs, boolean zipIt, String zipFileName) throws EmailException {
         Assert.notEmpty(toEmails, "Parameter toEmails is mandatory.");
         Assert.notNull(fromEmail, "Parameter fromEmail is mandatory.");
         Assert.notNull(subject, "Parameter subject is mandatory.");
         Assert.notNull(content, "Parameter content is mandatory.");
 
-        MimeMessage message = mailService.createMimeMessage();
-        MimeMessageHelper helper = null;
+        MimeMessage message;
+        try {
+            message = mailService.createMimeMessage();
+        } catch (Exception e) {
+            throw new EmailException(e);
+        }
+        MimeMessageHelper helper;
+        String encoding;
         boolean hasFiles = fileNodeRefs != null && fileNodeRefs.size() > 0;
         try {
             helper = new MimeMessageHelper(message, hasFiles, "UTF-8");
             helper.setValidateAddresses(true);
-            String encoding = helper.getEncoding();
-
+            encoding = helper.getEncoding();
             helper.setFrom(fromEmail);
-            for (int i = 0; i < toEmails.size(); i++) {
-                String toEmail = toEmails.get(i);
-                InternetAddress toAddr = new InternetAddress(toEmail);
-                if (toNames != null && toNames.size() == toEmails.size()) {
-                    if (StringUtils.isNotBlank(encoding)) {
-                        toAddr.setPersonal(toNames.get(i), encoding);
-                    } else {
-                        toAddr.setPersonal(toNames.get(i));
+        } catch (Exception e) {
+            throw new EmailException(e);
+        }
+
+        for (int i = 0; i < toEmails.size(); i++) {
+            String toEmail = toEmails.get(i);
+            InternetAddress toAddr;
+            try {
+                toAddr = new InternetAddress(toEmail);
+            } catch (Exception e) {
+                throw new EmailException(e);
+            }
+            if (toNames != null && toNames.size() == toEmails.size()) {
+                String name = toNames.get(i);
+                if (StringUtils.isNotBlank(encoding)) {
+                    try {
+                        toAddr.setPersonal(name, encoding);
+                    } catch (Exception e) {
+                        throw new EmailException(e);
+                    }
+                } else {
+                    try {
+                        toAddr.setPersonal(name);
+                    } catch (Exception e) {
+                        throw new EmailException(e);
                     }
                 }
-                helper.addTo(toAddr);
             }
+            try {
+                helper.addTo(toAddr);
+            } catch (Exception e) {
+                throw new EmailException(e);
+            }
+        }
+        try {
             helper.setSubject(subject);
             helper.setText(content, isHtml);
+        } catch (Exception e) {
+            throw new EmailException(e);
+        }
 
-            if (hasFiles) {
-                if (zipIt) {
-                    ByteArrayOutputStream byteStream = generalService.getZipFileFromFiles(document, fileNodeRefs);
-                    helper.addAttachment(zipFileName, new BytesContentSource(byteStream.toByteArray()), "application/zip");
-                    byteStream.reset();
-                } else {
-                    for (FileInfo fileInfo : fileFolderService.listFiles(document)) {
-                        if (fileNodeRefs.contains(fileInfo.getNodeRef().toString())) {
-                            helper.addAttachment(fileInfo.getName(), new AlfrescoContentSource(fileInfo.getNodeRef()), fileFolderService.getReader(
-                                    fileInfo.getNodeRef()).getMimetype());
+        if (hasFiles) {
+            if (zipIt) {
+                ByteArrayOutputStream byteStream = generalService.getZipFileFromFiles(document, fileNodeRefs);
+                BytesContentSource contentSource = new BytesContentSource(byteStream.toByteArray());
+                try {
+                    helper.addAttachment(zipFileName, contentSource, "application/zip");
+                } catch (Exception e) {
+                    throw new EmailException(e);
+                }
+                byteStream.reset();
+            } else {
+                for (FileInfo fileInfo : fileFolderService.listFiles(document)) {
+                    if (fileNodeRefs.contains(fileInfo.getNodeRef().toString())) {
+                        String name = fileInfo.getName();
+                        AlfrescoContentSource contentSource = new AlfrescoContentSource(fileInfo.getNodeRef());
+                        String reader = fileFolderService.getReader(fileInfo.getNodeRef()).getMimetype();
+                        try {
+                            helper.addAttachment(name, contentSource, reader);
+                        } catch (AlfrescoRuntimeException e) {
+                            throw e;
+                        } catch (Exception e) {
+                            throw new EmailException(e);
                         }
                     }
                 }
             }
+        }
 
-            log.debug("Sending out email: " + Arrays.toString(message.getAllRecipients()));
+        if (log.isDebugEnabled()) {
+            Address[] recipients;
+            try {
+                recipients = message.getAllRecipients();
+            } catch (Exception e) {
+                throw new EmailException(e);
+            }
+            log.debug("Sending out email: " + Arrays.toString(recipients));
+        }
+
+        try {
             mailService.send(message);
-
-        } catch (UnsupportedEncodingException e) {
-            throw new RuntimeException(e);
-        } catch (MessagingException e) {
-            throw new RuntimeException(e);
+        } catch (AlfrescoRuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new EmailException(e);
         }
     }
 
@@ -134,7 +187,6 @@ public class EmailServiceImpl implements EmailService {
             this.bytes = bytes;
         }
 
-        @SuppressWarnings("synthetic-access")
         public InputStream getInputStream() throws IOException {
             return new ByteArrayInputStream(bytes);
         }

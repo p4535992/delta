@@ -12,6 +12,7 @@ import javax.faces.context.ResponseWriter;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
 
 import ee.webmedia.alfresco.common.propertysheet.search.Search.SearchRemoveEvent;
@@ -62,7 +63,7 @@ public class SearchRenderer extends BaseRenderer {
         } else if (action.equals(OPEN_DIALOG_ACTION)) {
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = component.getAttributes();
-            attributes.put(Search.OPEN_DIALOG_KEY, Boolean.TRUE);
+            attributes.put(Search.OPEN_DIALOG_KEY, index);
             @SuppressWarnings("unchecked")
             Map<String, Object> requestMapExt = context.getExternalContext().getRequestMap();
             requestMapExt.put(MandatoryIfValidator.DISABLE_VALIDATION, Boolean.TRUE);
@@ -155,7 +156,13 @@ public class SearchRenderer extends BaseRenderer {
     }
 
     protected void renderSingleValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
-        out.write("<table class=\"recipient\" cellpadding=\"0\" cellspacing=\"0\"><tbody><tr>");
+        out.write("<table class=\"recipient\" cellpadding=\"0\" cellspacing=\"0\"");
+        // There have been added some html for specifically displaying this component in UIRichList:
+        // full column width is used and all cells are aligned to right.
+        if (search.isChildOfUIRichList()) {
+            out.write(" width=\"100%\"");
+        }
+        out.write("><tbody><tr >");
 
         @SuppressWarnings("unchecked")
         List<UIComponent> children = list.getChildren();
@@ -165,14 +172,24 @@ public class SearchRenderer extends BaseRenderer {
                 continue;
             }
 
-            out.write("<td>");
+            out.write("<td ");
+            if (search.isChildOfUIRichList())  {
+                out.write("style=\"text-align: right;\" width=\"80%\"");
+            }
+            out.write(">");
             Utils.encodeRecursive(context, child);
-            out.write("</td><td>");
+            out.write("</td><td ");
+            if (search.isChildOfUIRichList())  {
+                out.write("style=\"text-align: right;\"");
+            }
+            out.write(">");
             renderRemoveLink(context, out, search, i);
             out.write("</td>");
 
         }
-        out.write("<td>");
+        out.write("<td ");
+        out.write("style=\"text-align: right;\"");
+        out.write(">");
         renderPicker(context, out, search, picker);
         out.write("</td></tr></tbody></table>");
     }
@@ -197,7 +214,7 @@ public class SearchRenderer extends BaseRenderer {
             return;
         }
         out.write("<a class=\"icon-link margin-left-4 search\" onclick=\"");
-        out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION));
+        out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ";" + getRowIndex(search)));
         out.write("return showModal('");
         out.write(getDialogId(context, search));
         out.write("');\" title=\"" + Application.getMessage(context, SEARCH_MSG) + "\">");
@@ -223,17 +240,27 @@ public class SearchRenderer extends BaseRenderer {
 
         out.write("</div></div></div>");
 
-        Boolean openDialog = (Boolean) search.getAttributes().get(Search.OPEN_DIALOG_KEY);
-        if (openDialog != null && openDialog) {
+        Integer openDialog = (Integer) search.getAttributes().get(Search.OPEN_DIALOG_KEY);
+        if (openDialog != null) {
             search.getAttributes().remove(Search.OPEN_DIALOG_KEY);
             out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
-            out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION));
+            out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ";" + openDialog));
             out.write("showModal('");
             out.write(getDialogId(context, search));
             out.write("');");
             out.write("});</script>");
         }
+    }
 
+     private static int getRowIndex(Search search) {
+        UIComponent comp = search.getParent().getParent();
+        if (comp instanceof UIRichList) {
+            UIRichList list = (UIRichList) comp;
+            return list.getRowIndex();
+        }
+        else {
+            return -1;
+        }
     }
 
     protected String getDialogId(FacesContext context, UIComponent component) {

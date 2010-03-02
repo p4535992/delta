@@ -9,6 +9,6 @@
 
 <a:panel id="register-details-panel" styleClass="panel-100" label="#{msg.register_data}" progressive="true">
 
-<r:propertySheetGrid value="#{RegisterDetailsDialog.register}" labelStyleClass="propertiesLabel" externalConfig="true" columns="1" />
+<r:propertySheetGrid value="#{RegisterDetailsDialog.register}" labelStyleClass="propertiesLabel" externalConfig="true" columns="1" id="reg" />
 
 </a:panel>

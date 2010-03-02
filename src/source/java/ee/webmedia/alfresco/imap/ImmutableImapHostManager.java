@@ -68,12 +68,12 @@ public class ImmutableImapHostManager implements ImapHostManager {
 
     @Override
     public Collection listMailboxes(GreenMailUser user, String pattern) throws FolderException {
-        return imapServiceExt.listFolders(getAlfrescoImapUser(user), pattern);
+        return imapServiceExt.createAndListFolders(getAlfrescoImapUser(user), pattern);
     }
 
     @Override
     public Collection listSubscribedMailboxes(GreenMailUser user, String pattern) throws FolderException {
-        return imapServiceExt.listFolders(getAlfrescoImapUser(user), pattern);
+        return imapServiceExt.createAndListFolders(getAlfrescoImapUser(user), pattern);
     }
 
     @Override

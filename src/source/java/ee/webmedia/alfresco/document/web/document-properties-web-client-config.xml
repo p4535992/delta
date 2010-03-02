@@ -21,11 +21,11 @@
    <config evaluator="aspect-name" condition="doccom:common">
       <property-sheet>
          <show-property name="owner" show-in-edit-mode="false" display-label-id="document_owner" component-generator="UnescapedOutputTextGenerator" />
-         <show-property name="doccom:ownerName" show-in-view-mode="false" read-only="true" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" editable="true" dialogTitleId="users_search_title" />
+         <show-property name="doccom:ownerName" show-in-view-mode="false" read-only="true" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" dialogTitleId="users_search_title" editableIf="doccom:docStatus=töös" />
       </property-sheet>
    </config>
 
-   <config evaluator="node-type" condition="docsub:contractSim,docsub:incomingLetter,docsub:managementsOrder,docsub:internalApplication,docsub:leavingLetter">
+   <config evaluator="node-type" condition="docsub:contractSim,docsub:incomingLetter,docsub:managementsOrder,docsub:internalApplication,docsub:leavingLetter,docsub:trainingApplication,docsub:tenderingApplication">
       <property-sheet>
          <show-property name="owner" show-in-edit-mode="false" display-label-id="document_owner2" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="doccom:ownerName" display-label-id="document_owner2" show-in-view-mode="false" read-only="true" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" editable="true" dialogTitleId="users_search_title" />
@@ -91,7 +91,296 @@
          <show-property name="doccom:regDateTime" show-in-view-mode="false" read-only="true" component-generator="DatePickerGenerator" />
       </property-sheet>
    </config>
+
+   <!-- lähetuse taotleja (välislähetuse ja siselähetuse puhul taotleja ühised väljad) -->
+   <config evaluator="aspect-name" condition="docspec:errandApplicant">
+      <property-sheet>
+         <show-property name="applicantInfo" ignore-if-missing="false" display-label-id="document_errand_applicant" textId="document_errand_applicantInfo_templateText" show-in-edit-mode="false"
+            component-generator="InlinePropertyGroupGenerator" props="
+             docspec:applicantName
+            ,docspec:applicantJobTitle
+            ,docspec:applicantStructUnitName
+            "
+         />
+         <show-property name="docspec:applicantName" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setApplicantName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="users_search_title" readOnlyIf="parent.doccom:docStatus=lõpetatud||peatatud" show-in-view-mode="false" />
+         <show-property name="docspec:applicantJobTitle" readOnlyIf="parent.doccom:docStatus=lõpetatud||peatatud" show-in-view-mode="false" />
+         <show-property name="docspec:applicantStructUnitName" readOnlyIf="parent.doccom:docStatus=lõpetatud||peatatud" show-in-view-mode="false" />
+         <show-property name="docspec:costManager" component-generator="ClassificatorSelectorGenerator" classificatorName="errandOrderAbroadCostManager" readOnlyIf="parent.doccom:docStatus=lõpetatud||peatatud" />
+      </property-sheet>
+   </config>
+
+   <!-- Koolitustaotluse dokumendi spetsiifilised väljad -->
+   <config evaluator="aspect-name" condition="docspec:trainingApplication">
+      <property-sheet>
+         <show-property name="docspec:trainingName" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:trainingOrganizer" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:trainingNeed" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:trainingBeginDate" display-label-id="document_training_trainingDates_title" textId="document_eventDates_templateText"  readOnlyIf="doccom:docStatus=lõpetatud||peatatud" 
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             docspec:trainingBeginDate¤¤styleClass=date inline¤readOnlyIf=doccom:docStatus=lõpetatud||peatatud
+            ,docspec:trainingEndDate¤¤styleClass=date inline¤readOnlyIf=doccom:docStatus=lõpetatud||peatatud
+            "
+         />
+         <show-property name="docspec:trainingHours" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:trainingLocation" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+      </property-sheet>
+   </config>
    
+   <!-- VälisLähetuse dokumendi spetsiifilised väljad -->
+   <config evaluator="aspect-name" condition="docspec:errandOrderAbroad"><!-- part 1 -->
+      <property-sheet>
+         <show-property name="docspec:legalBasisForOfficials" component-generator="ParameterTextAreaGenerator" parameterName="errandOrderLegalBasisForOfficials" styleClass="expand5-200" read-only="true" />
+         <show-property name="docspec:legalBasisForSupportStaff" component-generator="ParameterTextAreaGenerator" parameterName="errandOrderLegalBasisForSupportStaff" styleClass="expand5-200" read-only="true" />
+         <show-property name="docspec:travelPurpose" display-label-id="document_errand_travelPurpose" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+      </property-sheet>
+   </config>
+   
+   <!-- SiseLähetuse dokumendi spetsiifilised väljad -->
+   <config evaluator="aspect-name" condition="docspec:errandApplicationDomestic"><!-- part 1 -->
+      <property-sheet>
+         <show-property name="docspec:eventName" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+      <!-- TODO: -->
+      </property-sheet>
+   </config>
+   
+   <!-- VälisLähetuse ja siselähetuse DOKUMENDI ühised väljad -->
+   <config evaluator="aspect-name" condition="docspec:errandDoc">
+      <property-sheet>
+         <show-property name="docspec:eventOrganizer" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:eventBeginDate" display-label-id="document_eventDates_title" textId="document_eventDates_templateText" readOnlyIf="doccom:docStatus=lõpetatud||peatatud"
+            component-generator="InlinePropertyGroupGenerator" props="
+             docspec:eventBeginDate||styleClass=date inline
+            ,docspec:eventEndDate||styleClass=date inline" 
+         />
+      </property-sheet>
+   </config>
+
+   <!-- VälisLähetuse dokumendi spetsiifilised väljad -->
+   <config evaluator="aspect-name" condition="docspec:errandOrderAbroad"><!-- part 2 -->
+      <property-sheet>
+         <subPropertySheet name="applicantsSection" assocBrand="children" assocName="docspec:errandOrderApplicantsAbroad" actionsGroupId="document_errandOrderApplicant" titleLabelId="document_errand_applicantBlock_title" />
+      </property-sheet>
+   </config>
+   
+   <!-- Siselähetuse dokumendi spetsiifilised väljad -->
+   <config evaluator="aspect-name" condition="docspec:errandApplicationDomestic">
+      <property-sheet>
+         <subPropertySheet name="applicantsSection" assocBrand="children" assocName="docspec:errandApplicationDomesticApplicants" actionsGroupId="document_errandOrderApplicant" titleLabelId="document_errand_applicantBlock_title" />
+      </property-sheet>
+   </config>
+
+   <!-- Koolitustaotluse dokumendi spetsiifilised väljad -->
+   <config evaluator="aspect-name" condition="docspec:trainingApplication">
+      <property-sheet>
+         <subPropertySheet name="applicantsSection" assocBrand="children" assocName="docspec:trainingApplicationApplicants" actionsGroupId="document_errandOrderApplicant" titleLabelId="document_errand_applicantBlock_title" />
+      </property-sheet>
+   </config>
+
+   <!-- Riigihanke läbiviimise taotluse spetsiifilised väljad -->
+   <config evaluator="aspect-name" condition="docspec:tenderingApplication">
+      <property-sheet>
+         <show-property name="procurementApplicants" ignore-if-missing="false" show-in-view-mode="true" display-label-id="document_tendering_procurementApplicants"
+         pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setProcurementApplicantName}" dialogTitleId="users_search_title" 
+         component-generator="MultiValueEditorGenerator" propsGeneration="
+          docspec:procurementApplicantName
+         ,docspec:procurementApplicantJobTitle
+         ,docspec:procurementApplicantOrgStructUnit
+         "
+         />
+         <show-property name="docspec:procurementType" component-generator="ClassificatorSelectorGenerator" classificatorName="procurementType" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:procurementLegalBasis" component-generator="ParameterTextAreaGenerator" parameterName="procurementLegalBasis" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:procurementDesc" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:procurementSumEstimated" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:procurementBudgetClassification" component-generator="ClassificatorSelectorGenerator" classificatorName="procurementBudgetClassification" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:procurementObjectClassCode" component-generator="ParameterTextAreaGenerator" parameterName="procurementObjectClassCode" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:procurementTenderData" component-generator="ParameterTextAreaGenerator" parameterName="procurementTenderData" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+
+         <show-property name="docspec:procurementContractDateEstimated" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+
+         <show-property name="docspec:procurementOfficialResponsible" show-in-view-mode="true" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setProcurementOfficialResponsible}" editable="true" dialogTitleId="users_search_title" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+
+         <show-property name="docspec:linkedToEuProject" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:euProjectDesc" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" mandatoryIf="linkedToEuProject" />
+         <show-property name="docspec:structuralAidIdOutsideProject" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:objectTechnicalDesc" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:evaluationCriteria" component-generator="ParameterTextAreaGenerator" parameterName="procurementEvaluationCriteria" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:offeringEndDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:qualificationTermsForTenders" component-generator="ParameterTextAreaGenerator" parameterName="procurementQualificationTermsForTenders" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:contractBeginDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+
+         <show-property name="docspec:procurementNumber" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+      </property-sheet>
+   </config>
+
+   <!-- välisLähetuse taotleja spetsiifilised väljad -->
+   <config evaluator="aspect-name" condition="docspec:errandOrderApplicantAbroad">
+      <property-sheet>
+         <show-property name="docspec:expenditureItem" component-generator="ClassificatorSelectorGenerator" classificatorName="errandOrderExpenditureItem" readOnlyIf="parent.doccom:docStatus=lõpetatud||peatatud" />
+         <subPropertySheet name="errandsAbroad" assocBrand="children" assocName="docspec:errandsAbroad" actionsGroupId="document_errandsAbroad" titleLabelId="document_errand_applicantBlock_orderBlock_title" />
+      </property-sheet>
+   </config>
+   
+   <!-- siseLähetuse taotleja spetsiifilised väljad -->
+   <config evaluator="aspect-name" condition="docspec:errandApplicationApplicantDomestic">
+      <property-sheet>
+         <subPropertySheet name="errandsDomestic" assocBrand="children" assocName="docspec:errandsDomestic" actionsGroupId="document_errandsAbroad" titleLabelId="document_errand_applicantBlock_orderBlock_title" />
+      </property-sheet>
+   </config>
+   
+   <!-- LÄHETUSE BLOKK (välislähetuse ja siselähetuse puhul lähetuse bloki ühised väljad) -->
+   <config evaluator="aspect-name" condition="docspec:errandBlockCommon"><!-- part 1 -->
+      <property-sheet>
+         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText"  readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud" 
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=parent.parent.doccom:docStatus=lõpetatud||peatatud
+            ,docspec:errandEndDate¤¤styleClass=date inline¤readOnlyIf=parent.parent.doccom:docStatus=lõpetatud||peatatud
+            "
+         />
+      </property-sheet>
+   </config>
+   
+   <!-- Koolitustaotluse taotleja(dokument->taotleja) -->
+   <config evaluator="node-type" condition="docspec:trainingApplicationApplicantType">
+      <property-sheet>
+         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText"  readOnlyIf="parent.doccom:docStatus=lõpetatud||peatatud" 
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=parent.doccom:docStatus=lõpetatud||peatatud
+            ,docspec:errandEndDate¤¤styleClass=date inline¤readOnlyIf=parent.doccom:docStatus=lõpetatud||peatatud
+            "
+         />
+         <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance"
+            addLabelId="document_errandsAbroad_addCatering" styleClass="add-catering" readOnlyIf="parent.doccom:docStatus=lõpetatud||peatatud"
+            component-generator="MultiValueEditorGenerator" propsGeneration="
+             docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceCateringCount
+            ,docspec:dailyAllowanceDays¤¤styleClass=small
+            ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceRate
+            ,docspec:dailyAllowanceFinancingSource¤ClassificatorSuggestingGenerator¤classificatorName=trainingAppDailyAllowanceFinancingSource
+            "
+         />
+         <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
+            addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="parent.doccom:docStatus=lõpetatud||peatatud" 
+            component-generator="MultiValueEditorGenerator" propsGeneration="
+             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=trainingAppAbroadExpenseType
+            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand5-200
+            ,docspec:expenseFinancingSource¤ClassificatorSuggestingGenerator¤classificatorName=trainingAppExpenseFinancingSource
+            "
+         />
+         <show-property name="docspec:advancePaymentSum" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-edit" show-in-view-mode="false" readOnlyIf="parent.doccom:docStatus=lõpetatud||peatatud"
+            component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             docspec:advancePaymentSum¤¤styleClass=small¤jsfConverter=javax.faces.convert.DoubleConverter
+            ,docspec:advancePaymentDesc¤ClassificatorSelectorGenerator¤classificatorName=trainingAppAdvancePaymentDesc
+            "
+         />
+         <show-property name="advancePaymentInfo" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-view" escapeText="false" show-in-edit-mode="false" ignore-if-missing="false"
+            component-generator="InlinePropertyGroupGenerator" props="
+             docspec:advancePaymentSum
+            ,docspec:advancePaymentDesc
+            "
+         />
+         <show-property name="docspec:errandSubstituteName" readOnlyIf="parent.doccom:docStatus=lõpetatud||peatatud"
+         component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setErrandSubstituteName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="users_search_title"  />
+         <show-property name="docspec:errandComment" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="parent.doccom:docStatus=lõpetatud||peatatud" />
+      </property-sheet>
+   </config>
+
+   <!-- välislähetuse lähetuse blokk -->
+   <config evaluator="aspect-name" condition="docspec:errandBlockAbroad">
+      <property-sheet>
+         <show-property name="docspec:country" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud" show-in-view-mode="false" />
+         <show-property name="docspec:city" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud" show-in-view-mode="false" />
+         <show-property name="locationInfo" ignore-if-missing="false" display-label-id="document_errand_locationInfo" textId="document_errand_locationInfo_templateText" show-in-edit-mode="false"
+            component-generator="InlinePropertyGroupGenerator" props="
+             docspec:city
+            ,docspec:country
+            " 
+         />
+         <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance"
+            addLabelId="document_errandsAbroad_addCatering" styleClass="add-catering" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud"
+            component-generator="MultiValueEditorGenerator" propsGeneration="
+             docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceCateringCount
+            ,docspec:dailyAllowanceDays¤¤styleClass=small
+            ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceRate
+            ,docspec:dailyAllowanceFinancingSource¤ClassificatorSuggestingGenerator¤classificatorName=errandAbroadDailyAllowanceFinancingSource
+            "
+         />
+      </property-sheet>
+   </config>
+
+   <!-- SiseLähetuse lähetuse blokk -->
+   <config evaluator="aspect-name" condition="docspec:errandBlockDomestic">
+      <property-sheet>
+         <show-property name="docspec:county" component-generator="ClassificatorSelectorGenerator" classificatorName="counties" show-in-view-mode="false" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud" />
+         <show-property name="docspec:city" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud" show-in-view-mode="false" />
+         <show-property name="locationInfo" ignore-if-missing="false" display-label-id="document_errand_locationInfo" textId="document_errand_locationInfo_templateText" show-in-edit-mode="false"
+            component-generator="InlinePropertyGroupGenerator" props="
+             docspec:city
+            ,docspec:county
+            " 
+         />
+         <show-property name="docspec:travelPurpose" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="docspec:errandsAbroadType">
+      <property-sheet>
+         <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
+            addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud" 
+            component-generator="MultiValueEditorGenerator" propsGeneration="
+             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandOrderAbroadExpenseType
+            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand5-200
+            ,docspec:expenseFinancingSource¤ClassificatorSuggestingGenerator¤classificatorName=errandAbroadExpenseFinancingSource
+            "
+         />
+         <show-property name="docspec:advancePaymentSum" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-edit" show-in-view-mode="false" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud"
+            component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             docspec:advancePaymentSum¤¤styleClass=small¤jsfConverter=javax.faces.convert.DoubleConverter
+            ,docspec:advancePaymentDesc¤ClassificatorSelectorGenerator¤classificatorName=errandOrderAbroadAdvancePaymentDesc
+            "
+         />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="docspec:errandsDomesticType">
+      <property-sheet>
+         <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
+            addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud" 
+            component-generator="MultiValueEditorGenerator" propsGeneration="
+             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandApplicationDomesticExpenseType
+            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand5-200
+            ,docspec:expenseFinancingSource¤ClassificatorSuggestingGenerator¤classificatorName=errandDomesticExpenseFinancingSource
+            "
+         />
+         <show-property name="docspec:advancePaymentSum" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-edit" show-in-view-mode="false" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud"
+            component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             docspec:advancePaymentSum¤¤styleClass=small¤jsfConverter=javax.faces.convert.DoubleConverter
+            ,docspec:advancePaymentDesc¤ClassificatorSelectorGenerator¤classificatorName=errandDomesticAdvancePaymentDesc 
+            "
+         />
+      </property-sheet>
+   </config>
+
+   <!-- LÄHETUSE BLOKK (välislähetuse ja siselähetuse puhul lähetuse bloki ühised väljad) -->
+   <config evaluator="aspect-name" condition="docspec:errandBlockCommon"><!-- part 2 -->
+      <property-sheet>
+         <show-property name="advancePaymentInfo" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-view" escapeText="false" show-in-edit-mode="false" ignore-if-missing="false"
+            component-generator="InlinePropertyGroupGenerator" props="
+             docspec:advancePaymentSum
+            ,docspec:advancePaymentDesc
+            "
+         />
+         <show-property name="docspec:errandSubstituteName" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud"
+         component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setErrandSubstituteName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="users_search_title"  />
+         <show-property name="docspec:errandComment" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud" />
+      </property-sheet>
+   </config>
+
+   <!-- VälisLähetuse ja siselähetuse DOKUMENDI ühised väljad -->
+   <config evaluator="aspect-name" condition="docspec:errandDoc">
+      <property-sheet>
+         <show-property name="docspec:reportDueDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" />
+      </property-sheet>
+   </config>
+
    <config evaluator="aspect-name" condition="docspec:contractType">
       <property-sheet>
          <show-property name="docspec:contractTypeName" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="ClassificatorSelectorGenerator" classificatorName="contractType" />
@@ -212,7 +501,13 @@
 
          <separator name="vacsep2" component-generator="SeparatorGenerator" />
          <show-property name="{temp}vacationSubstitute" show-in-edit-mode="false" display-label-id="document_vacationSubstitute" component-generator="UnescapedOutputTextGenerator"  />
-         <show-property name="docspec:substituteName" show-in-view-mode="false" display-label-id="document_vacationSubstitute" component-generator="MultiValueEditorGenerator" props="docspec:substituteName,docspec:substitutionBeginDate,docspec:substitutionEndDate" componentTypes="input,date,date" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setVacationSubstitute}" dialogTitleId="users_search_title" />
+         <show-property name="docspec:substituteName" show-in-view-mode="false" display-label-id="document_vacationSubstitute" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setVacationSubstitute}" dialogTitleId="users_search_title" 
+         component-generator="MultiValueEditorGenerator" propsGeneration="
+          docspec:substituteName
+         ,docspec:substitutionBeginDate¤DatePickerGenerator
+         ,docspec:substitutionEndDate¤DatePickerGenerator
+         "
+         />
       </property-sheet>
    </config>
 
@@ -225,7 +520,7 @@
    <config evaluator="aspect-name" condition="doccom:signer">
       <property-sheet>
          <show-property name="signer" show-in-edit-mode="false" display-label-id="document_signer" />
-         <show-property name="doccom:signerName" show-in-view-mode="false" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setSigner}" editable="true" dialogTitleId="users_search_title" />
+         <show-property name="doccom:signerName" show-in-view-mode="false" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setSigner}" dialogTitleId="users_search_title" editableIf="doccom:docStatus=töös" />
          <show-property name="doccom:signerJobTitle" show-in-view-mode="false" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" labelStyleClass="secondary" />
       </property-sheet>
    </config>
@@ -270,6 +565,7 @@
          <show-property name="docspec:secondPartyContractDate" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="DatePickerGenerator" />
          <show-property name="docspec:secondPartyContractNumber" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" styleClass="expand5-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:inclusivePriceExclVat" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" converter="javax.faces.Double" />
+         <!-- FIXME: docspec:costManager väärtus pannakse hiljem klassifikaatorisse  -->
          <show-property name="docspec:costManager" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setCostManager}" editable="true" dialogTitleId="users_search_title" />
          <show-property name="docspec:financingSource" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" styleClass="expand5-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:contractSimEndDate" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="DatePickerGenerator" />
@@ -339,7 +635,13 @@
       <property-sheet>
          <separator name="recipient-note-sep" component-generator="RecipientNoteGenerator" show-in-view-mode="false" />
          <show-property name="recipients" show-in-edit-mode="false" display-label-id="document_recipients" component-generator="UnescapedOutputTextGenerator" />
-         <show-property name="doccom:recipientName" show-in-view-mode="false" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" display-label-id="document_recipients" component-generator="MultiValueEditorGenerator" props="doccom:recipientName,doccom:recipientEmail" componentTypes="textarea:expand5-200,textarea:expand5-200" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title" />
+         <show-property name="doccom:recipientName" show-in-view-mode="false" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" display-label-id="document_recipients"
+         pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title"  
+         component-generator="MultiValueEditorGenerator" propsGeneration="
+          doccom:recipientName¤TextAreaGenerator¤styleClass=expand5-200
+         ,doccom:recipientEmail¤TextAreaGenerator¤styleClass=expand5-200
+         "
+         />
       </property-sheet>
    </config>
    
@@ -353,7 +655,13 @@
    <config evaluator="aspect-name" condition="doccom:additionalRecipient">
       <property-sheet>
          <show-property name="additionalRecipients" show-in-edit-mode="false" display-label-id="document_additional_recipients" component-generator="UnescapedOutputTextGenerator" />
-         <show-property name="doccom:additionalRecipientName" show-in-view-mode="false" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" display-label-id="document_additional_recipients" component-generator="MultiValueEditorGenerator" props="doccom:additionalRecipientName,doccom:additionalRecipientEmail" componentTypes="textarea:expand5-200,textarea:expand5-200" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title" />
+         <show-property name="doccom:additionalRecipientName" show-in-view-mode="false" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" display-label-id="document_additional_recipients"
+            pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title" 
+            component-generator="MultiValueEditorGenerator" propsGeneration="
+             doccom:additionalRecipientName¤TextAreaGenerator¤styleClass=expand5-200
+            ,doccom:additionalRecipientEmail¤TextAreaGenerator¤styleClass=expand5-200
+            "
+         />
       </property-sheet>
    </config>
 
@@ -375,7 +683,7 @@
          <show-property name="doccom:docStatus" read-only="true" />
          <show-property name="doccom:comment" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" styleClass="expand5-200" component-generator="TextAreaGenerator" />
          <show-property name="doccom:keywords" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="ClassificatorSelectorAndTextGenerator" classificatorName="keywords" styleClass="expand5-200" />
-         <show-property name="doccom:storageType" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="ClassificatorSelectorGenerator" classificatorName="storageType" />
+         <show-property name="doccom:storageType" show="#{MetadataBlockBean.showStorageType == true}" readOnlyIf="doccom:docStatus=lõpetatud||peatatud" component-generator="ClassificatorSelectorGenerator" classificatorName="storageType" />
       </property-sheet>
    </config>
    

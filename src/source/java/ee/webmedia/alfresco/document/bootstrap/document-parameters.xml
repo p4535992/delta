@@ -75,4 +75,61 @@
       </view:properties>
    </param:stringParameter>
 
+
+   <param:stringParameter view:childName="param:procurementLegalBasis">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   <param:stringParameter view:childName="param:procurementObjectClassCode">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   <param:stringParameter view:childName="param:procurementTenderData">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   <param:stringParameter view:childName="param:procurementEvaluationCriteria">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   <param:stringParameter view:childName="param:procurementQualificationTermsForTenders">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:welcomeText">
+      <view:properties>
+         <param:value>Tere tulemast!</param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:taskSenderEmail">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:errandOrderLegalBasisForOfficials">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:errandOrderLegalBasisForSupportStaff">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:assignResponsibilityInstruction">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+
 </view:view>

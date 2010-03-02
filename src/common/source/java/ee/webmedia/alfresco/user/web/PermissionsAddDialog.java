@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.user.web;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -114,6 +115,9 @@ public class PermissionsAddDialog extends BaseDialogBean {
 
         String[] results = picker.getSelectedResults();
         if (results != null) {
+            if(authorities == null) {
+                authorities = new ArrayList<Authority>();
+            }
             for (int i = 0; i < results.length; i++) {
                 if (!authorities.contains(new Authority(results[i], false, null))) {
                     Authority authority = getUserService().getAuthorityOrNull(results[i]);
@@ -136,6 +140,10 @@ public class PermissionsAddDialog extends BaseDialogBean {
             authoritiesModel.setWrappedData(authorities);
         }
         return authoritiesModel;
+    }
+    
+    public NodeRef getNodeRef() {
+        return nodeRef;
     }
 
     /**

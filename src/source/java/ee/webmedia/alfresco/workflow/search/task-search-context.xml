@@ -1,0 +1,65 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/workflow/search/model/taskSearchModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/workflow/search/web/task-search-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/workflow/search/web/task-search-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="taskSearchFilterService" class="ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterServiceImpl">
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+   </bean>
+
+   <bean id="TaskSearchFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterService</value>
+         </list>
+      </property>
+      <property name="target" ref="taskSearchFilterService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="taskSearchFiltersSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="name" value="taskSearchFiltersSpacesBootstrap" />
+      <property name="sinceVersion" value="1.4.1.23" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/workflow/search/bootstrap/taskSearchFilters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+</beans>

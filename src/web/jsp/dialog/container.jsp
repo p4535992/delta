@@ -34,7 +34,22 @@
 <%@ page import="org.alfresco.web.ui.common.PanelGenerator" %>
 
 
-<%@page import="org.alfresco.web.bean.dialog.DialogManager"%><r:page title="<%=Application.getDialogManager().getTitle() %>">
+<%@page import="org.alfresco.web.bean.dialog.DialogManager"%>
+<%@page import="javax.faces.context.FacesContext"%>
+
+<% boolean isNull;
+   String title;
+   try {
+       title = Application.getDialogManager().getTitle();
+       isNull = false;
+   } catch (Exception e) {
+       isNull = true;
+       title = "";
+   }
+   
+%>
+
+<r:page title="<%=title%>">
 
 <f:view>
 
@@ -56,6 +71,7 @@
          <a:panel id="content">
             <%-- Breadcrumb --%>
             <%@ include file="../parts/breadcrumb.jsp"%>
+            <% if(!isNull) { %>
             <%-- Status and Actions --%>
             <a:panel id="titlebar">
                <%-- Status and Actions inner contents table --%>
@@ -96,18 +112,32 @@
                  </f:verbatim>
                </f:subview>
                
-               <f:subview id="more-actions-panel" rendered="#{DialogManager.moreActionsId != null}">
+               <f:subview id="more-actions-panel">
                <%-- TODO: uncomment this when dropdown menu is ok (see next TODO) --%>
                <%--<f:subview id="more-actions-panel" rendered="#{DialogManager.moreActionsId != null and DialogManager.currentDialog.name ne 'document'}">--%>
                   <f:verbatim>
                   <li>
                   </f:verbatim>
                      <a:menu id="more_actions_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
-                        label="#{DialogManager.moreActionsMenuLabel}" image="/images/icons/arrow-down.png">
+                        label="#{DialogManager.moreActionsMenuLabel}" image="/images/icons/arrow-down.png" 
+                        rendered="#{DialogManager.moreActionsId ne ''}">
                         <r:actions id="more_actions_menu_items" value="#{DialogManager.moreActionsId}" context="#{DialogManager.actionsContext}" />
                      </a:menu>
                   <f:verbatim>
+                  </li>
                   <li>
+                  </f:verbatim>   
+                     <a:menu id="workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
+                        label="#{DocumentDialog.workflow.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
+                        rendered="#{DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
+                        <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
+                             UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
+                             return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
+                              --%>
+                        <r:actions id="workflow_menu_items" value="#{DocumentDialog.workflow.workflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
+                     </a:menu>
+                  <f:verbatim>
+                  </li>
                   </f:verbatim>
                </f:subview>
                
@@ -203,6 +233,7 @@
             </a:panel>
 
       <f:verbatim><div class="clear"></div></f:verbatim>
+      <% } %>
       </a:panel>
    </a:panel>
    <%@ include file="../parts/footer.jsp"%>

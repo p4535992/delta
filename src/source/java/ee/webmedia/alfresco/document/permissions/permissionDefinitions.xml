@@ -9,10 +9,12 @@
    <namespaces>
       <namespace uri="http://www.alfresco.org/model/system/1.0" prefix="sys"/>
       <namespace uri="http://www.alfresco.org/model/content/1.0" prefix="cm"/>
+      <namespace uri="http://www.alfresco.org/model/forum/1.0" prefix="fm"/>
       <namespace uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
       <namespace uri="http://alfresco.webmedia.ee/model/functions/1.0" prefix="fn" />
       <namespace uri="http://alfresco.webmedia.ee/model/series/1.0" prefix="ser" />
       <namespace uri="http://alfresco.webmedia.ee/model/addressbook/1.0" prefix="ab" />
+      <namespace uri="http://alfresco.webmedia.ee/model/workflow/common/1.0" prefix="wfc" />
    </namespaces>
 
    <!-- =============================================== -->
@@ -126,6 +128,46 @@
 
    </permissionSet>
 
+   <permissionSet type="fm:forums" expose="selected" >
+
+      <permissionGroup name="Forum" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="ReadContent"/>
+           <includePermissionGroup type="sys:base" permissionGroup="CreateChildren"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteContent"/>
+      </permissionGroup>
+
+   </permissionSet>
+
+   <permissionSet type="wfc:compoundWorkflow" expose="selected" >
+
+      <permissionGroup name="WorkflowUser" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="CreateChildren"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>
+           <includePermissionGroup type="sys:base" permissionGroup="ReadContent"/>
+           <includePermissionGroup type="sys:base" permissionGroup="WriteContent"/>
+      </permissionGroup>
+
+      <permissionGroup name="WorkflowOwner" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="DeleteNode"/>
+      </permissionGroup>
+
+   </permissionSet>
+
+   <!--
+      doccom:metadataContainer should be parent type of all childNode types of document - then DocumentChildMetadataDynamicAuthority class grants authority if
+      parent node has write permissions.
+   -->
+   <permissionSet type="doccom:metadataContainer" expose="selected">
+
+      <permissionGroup name="DocumentChildMetadata" expose="true" allowFullControl="false">
+         <includePermissionGroup type="sys:base" permissionGroup="CreateChildren" />
+         <includePermissionGroup type="sys:base" permissionGroup="WriteProperties" />
+         <includePermissionGroup type="sys:base" permissionGroup="DeleteNode" />
+      </permissionGroup>
+
+   </permissionSet>
+
 <!--
    [NB! Rolliga antud õigused ei pärandu, nt dokumendilt failile]
 
@@ -138,12 +180,19 @@
 
    <globalPermission permission="DocumentWrite" authority="ROLE_DOCUMENT_OWNER"/>
 
-   <globalPermission permission="DocumentFileRead" authority="ROLE_DOCUMENT_OWNER_FILE"/>
-   <globalPermission permission="DocumentFileWrite" authority="ROLE_DOCUMENT_OWNER_FILE"/>
+   <globalPermission permission="DocumentChildMetadata" authority="ROLE_DOCUMENT_CHILD_METADATA"/>
+
+   <globalPermission permission="DocumentFileRead" authority="ROLE_DOCUMENT_FILE_READ"/>
+   <globalPermission permission="DocumentFileWrite" authority="ROLE_DOCUMENT_FILE_WRITE"/>
 
    <globalPermission permission="DocumentListCreate" authority="ROLE_DOCUMENT_LIST_CREATE"/>
    <globalPermission permission="DocumentListWrite" authority="ROLE_DOCUMENT_LIST_WRITE"/>
 
    <globalPermission permission="DocumentDelete" authority="ROLE_DOCUMENT_DRAFT"/>
+
+   <globalPermission permission="WorkflowUser" authority="ROLE_WORKFLOW_USER"/>
+   <globalPermission permission="WorkflowOwner" authority="ROLE_WORKFLOW_OWNER"/>
+
+   <globalPermission permission="Forum" authority="ROLE_FORUM"/>
 
 </permissions>

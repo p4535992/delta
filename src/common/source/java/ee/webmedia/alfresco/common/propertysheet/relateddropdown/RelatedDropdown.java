@@ -62,7 +62,9 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
             }
             queueEvent(new RelatedSelectEvent(this, group, order, submittedValue, true));
             queueEventToRelatedComponents(submittedValue, group, order);
-            getAttributes().put(SCROLL_VIEW, Boolean.TRUE); // RelatedSelectEvent has occurred, so scroll
+            @SuppressWarnings("unchecked")
+            Map<String, Object> attributes = getAttributes();
+            attributes.put(SCROLL_VIEW, Boolean.TRUE); // RelatedSelectEvent has occurred, so scroll
         }
     }
 
@@ -76,9 +78,11 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
 
     @Override
     public void encodeBegin(FacesContext context) throws IOException {
-        if(getAttributes().get(SCROLL_VIEW) != null && getAttributes().get(SCROLL_VIEW_RENDERED) == null) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = getAttributes();
+        if(attributes.get(SCROLL_VIEW) != null && attributes.get(SCROLL_VIEW_RENDERED) == null) {
             context.getResponseWriter().write("<input type=\"hidden\" name=\"scrollView\" value=\"600\" />");
-            getAttributes().put(SCROLL_VIEW_RENDERED, Boolean.TRUE); // otherwise there will be three items in DOM
+            attributes.put(SCROLL_VIEW_RENDERED, Boolean.TRUE); // otherwise there will be three items in DOM
         }
         setOnchange(getOnChangeJS(context));
         super.encodeBegin(context);

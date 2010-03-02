@@ -64,6 +64,7 @@
       <property name="fileService" ref="FileService" />
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="fileFolderService" ref="FileFolderService" />
+      <property name="documentLogService" ref="DocumentLogService" />
       <property name="openOfficeConnection" ref="openOfficeConnection" />
    </bean>
 

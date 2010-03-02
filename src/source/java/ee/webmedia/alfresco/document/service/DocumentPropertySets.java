@@ -19,6 +19,16 @@ public class DocumentPropertySets {
         commonProperties.add(DocumentCommonModel.Props.KEYWORDS.toString());
         commonProperties.add(DocumentCommonModel.Props.STORAGE_TYPE.toString());
     }
+    
+    /*package*/ static Set<String> ownerProperties = new HashSet<String>();
+    static {
+        ownerProperties.add(DocumentCommonModel.Props.OWNER_EMAIL.toString());
+        ownerProperties.add(DocumentCommonModel.Props.OWNER_ID.toString());
+        ownerProperties.add(DocumentCommonModel.Props.OWNER_JOB_TITLE.toString());
+        ownerProperties.add(DocumentCommonModel.Props.OWNER_NAME.toString());
+        ownerProperties.add(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT.toString());
+        ownerProperties.add(DocumentCommonModel.Props.OWNER_PHONE.toString());
+    }
 
     /*package*/ static Set<String> incomingAndOutgoingLetterProperties = new HashSet<String>();
     static {
@@ -31,11 +41,6 @@ public class DocumentPropertySets {
     static {
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.REG_NUMBER.toString());
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.REG_DATE_TIME.toString());
-        ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.OWNER_EMAIL.toString());
-        ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.OWNER_ID.toString());
-        ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.OWNER_JOB_TITLE.toString());
-        ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.OWNER_NAME.toString());
-        ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT.toString());
-        ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.OWNER_PHONE.toString());
+        ignoredPropertiesWhenMakingCopy.addAll(ownerProperties);
     }
 }

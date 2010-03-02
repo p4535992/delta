@@ -2,10 +2,28 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/menu/model/menuModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/menu/ui/menu-webclient</value>
+         </list>
+      </property>
+   </bean>
+
    <bean id="menuService" class="ee.webmedia.alfresco.menu.service.MenuServiceImpl">
       <property name="menuConfigLocation" value="classpath:ee/webmedia/alfresco/menu/service/menu-structure.xml" />
-      <property name="generalService" ref="GeneralService" />
       <property name="fileFolderService" ref="FileFolderService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="userService" ref="UserService" />
       <property name="updateCount" value="0" />
    </bean>
 
@@ -20,6 +38,8 @@
       </property>
    </bean>
 
+<!--
+   Not needed, because menu is reloaded anyway when user first logs in
    <bean id="menuLoaderBootstrap" class="ee.webmedia.alfresco.menu.bootstrap.MenuLoaderBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="name" value="menuLoaderBootstrap" />
@@ -32,7 +52,8 @@
          </list>
       </property>
    </bean>
-   
+-->
+
    <bean class="ee.webmedia.alfresco.menu.service.DocumentListTreeItemProcessor" init-method="init">
       <property name="nodeService" ref="NodeService" />
       <property name="menuService" ref="MenuService" />

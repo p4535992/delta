@@ -65,6 +65,7 @@
 
    <bean id="dvkServiceBase" abstract="true">
       <property name="receivedDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
+      <property name="corruptDvkDocumentsPath" value="${dvk.received.parent.folder.xpath}${dvk.corrupt.folder.name}" />
       <property name="dhlXTeeService" ref="dhlXTeeService" />
       <property name="nodeService" ref="NodeService" />
       <property name="fileFolderService" ref="FileFolderService" />
@@ -73,6 +74,7 @@
       <property name="noTitleSpacePrefix" value="fail_" />
       <property name="generalService" ref="GeneralService" />
       <property name="parametersService" ref="ParametersService" />
+      <property name="addressbookService" ref="AddressbookService" />
    </bean>
 
    <!-- Overridden in concrete projects(i.e SIM and TK) -->
@@ -135,6 +137,21 @@
          <list>
             <value>ee/webmedia/alfresco/dvk/web/dvk-webclient</value>
          </list>
+      </property>
+   </bean>
+
+   <bean id="dvkReceiveOrganizationsTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="parameterName" value="dvkReceiveOrganizations" />
+      <property name="parameterFormat" value="H:mm" />
+      <property name="jobDetail">
+         <bean id="dvkReceiveOrganizationsJobDetails" class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.dvk.job.DvkReceiveOrganizationsJob" />
+            <property name="jobDataAsMap">
+               <map>
+                  <entry key="DvkService" value-ref="DvkService" />
+               </map>
+            </property>
+         </bean>
       </property>
    </bean>
 

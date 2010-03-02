@@ -1,7 +1,10 @@
 package ee.webmedia.alfresco.common.propertysheet.multivalueeditor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.OPTIONS_SEPARATOR;
+import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROPS_GENERATION;
+import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROP_GENERATOR_DESCRIPTORS;
+import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALDIATION_DISABLED;
+
 import java.util.List;
 import java.util.Map;
 
@@ -15,6 +18,9 @@ import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader;
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
@@ -27,10 +33,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * 
  * @author Alar Kvell
  */
-public class MultiValueEditorGenerator extends BaseComponentGenerator {
+public class MultiValueEditorGenerator extends BaseComponentGenerator implements GeneratorsWrapper{
 
     @Override
     public UIComponent generate(FacesContext context, String id) {
+        getCustomAttributes().put(VALDIATION_DISABLED, Boolean.TRUE.toString());
         UIComponent component = context.getApplication().createComponent(MultiValueEditor.MULTI_VALUE_EDITOR_FAMILY);
         FacesHelper.setupComponentId(context, component, id);
         component.setRendererType(MultiValueEditorRenderer.MULTI_VALUE_EDITOR_RENDERER_TYPE);
@@ -40,63 +47,24 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator {
     @Override
     protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,
             UIComponent component) {
-        if (!propertySheet.inEditMode()) {
-            super.setupProperty(context, propertySheet, item, propertyDef, component);
-            return;
+        String propsAttribute = getCustomAttributes().get(PROPS_GENERATION);
+        String optionsSeparator = getCustomAttributes().get(OPTIONS_SEPARATOR);
+        if(StringUtils.isBlank(optionsSeparator)) {
+            optionsSeparator = "¤";
         }
-
-        List<String> props;
-        String propsAttribute = getCustomAttributes().get("props");
-        if (propsAttribute == null) {
-            props = new ArrayList<String>(1);
-            props.add(item.getName());
-        } else {
-            props = Arrays.asList(StringUtils.split(propsAttribute, ','));
-        }
-
-        List<String> propNames = new ArrayList<String>(props.size());
-        List<String> propTitles = new ArrayList<String>(props.size());
-        for (String prop : props) {
-            PropertyDefinition propertyDefinition = getPropertyDefinition(context, propertySheet.getNode(), prop);
-            if (propertyDefinition == null) {
-                throw new RuntimeException("Property definition '" + prop + "' not found on node: " + propertySheet.getNode() + " (PropertySheetItem "
-                        + item.getName() + ")");
-            } else if (!propertyDefinition.isMultiValued()) {
-                throw new RuntimeException("Single-valued property is not supported: " + propertyDefinition.getName() + " (PropertySheetItem " + item.getName()
-                        + ")");
-            } else if (propertyDefinition.isProtected()) {
-                throw new RuntimeException("Protected property is not supported: " + propertyDefinition.getName() + " (PropertySheetItem " + item.getName()
-                        + ")");
-            }
-            propNames.add(propertyDefinition.getName().toString());
-            propTitles.add(propertyDefinition.getTitle());
-        }
+        final List<ComponentPropVO> propVOs = CombinedPropReader.readProperties(propsAttribute, null, optionsSeparator, propertySheet.getNode(), context);
 
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
-        attributes.put("propNames", propNames);
-        attributes.put("propTitles", propTitles);
-        attributes.put("propertySheetVar", propertySheet.getVar());
-        if (getCustomAttributes().containsKey(Search.PICKER_CALLBACK_KEY)) {
-            attributes.put(Search.PICKER_CALLBACK_KEY, getCustomAttributes().get(Search.PICKER_CALLBACK_KEY));
-        }
-        if (getCustomAttributes().containsKey(Search.DIALOG_TITLE_ID_KEY)) {
-            attributes.put(Search.DIALOG_TITLE_ID_KEY, getCustomAttributes().get(Search.DIALOG_TITLE_ID_KEY));
-        }
-        if (getCustomAttributes().containsKey("setterCallback")) {
-            attributes.put("setterCallback", getCustomAttributes().get("setterCallback"));
-        }
+        attributes.put(PROP_GENERATOR_DESCRIPTORS, propVOs);
 
-        List<String> componentTypes;
-        String componentTypesAttribute = getCustomAttributes().get("componentTypes");
-        if (componentTypesAttribute == null) {
-            componentTypes = new ArrayList<String>(1);
-        } else {
-            componentTypes = Arrays.asList(StringUtils.split(componentTypesAttribute, ','));
-        }
-        attributes.put("componentTypes", componentTypes);
+        attributes.put(MultiValueEditor.PROPERTY_SHEET_VAR, propertySheet.getVar());
+        addValueFromCustomAttributes(Search.PICKER_CALLBACK_KEY, attributes);
+        addValueFromCustomAttributes(Search.DIALOG_TITLE_ID_KEY, attributes);
+        addValueFromCustomAttributes(Search.SETTER_CALLBACK, attributes);
+        addValueFromCustomAttributes(MultiValueEditor.ADD_LABEL_ID, attributes);
 
-        if (item.isReadOnly()) {
+        if (!propertySheet.inEditMode() || item.isReadOnly()) {
            ComponentUtil.setDisabledAttributeRecursively(component);
         }
     }

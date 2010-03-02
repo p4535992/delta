@@ -274,4 +274,8 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
         return null;
     }
 
+    @Override
+    public Object getActionsContext() {
+        return null;
+    }
 }

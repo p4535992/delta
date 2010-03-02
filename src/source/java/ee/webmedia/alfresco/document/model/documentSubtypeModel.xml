@@ -37,6 +37,40 @@
          </mandatory-aspects>
       </type>
 
+      <!-- Välislähetuse dokumenndi tüüp -->
+      <type name="docsub:errandOrderAbroad">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandDoc</aspect>
+            <aspect>docspec:errandOrderAbroad</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <!-- Siselähetuse dokumenndi tüüp -->
+      <type name="docsub:errandApplicationDomestic">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandDoc</aspect>
+            <aspect>docspec:errandApplicationDomestic</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <!-- Koolitustaotluse dokumenndi tüüp -->
+      <type name="docsub:trainingApplication">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:trainingApplication</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <!-- Riigihanke läbiviimise taotluse dokumenndi tüüp -->
+      <type name="docsub:tenderingApplication">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:tenderingApplication</aspect>
+         </mandatory-aspects>
+      </type>
+
       <type name="docsub:supervisionReport">
          <parent>doccom:document</parent>
          <mandatory-aspects>

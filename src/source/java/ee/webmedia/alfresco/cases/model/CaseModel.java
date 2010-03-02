@@ -16,9 +16,12 @@ public interface CaseModel {
     
     interface Associations {
         QName CASE = QName.createQName(URI, "case");
+        /** n:m relation (case:case -> doccom:document) */
+        QName CASE_DOCUMENT = QName.createQName(URI, "caseDocument");
     }
 
     public interface Props {
         QName STATUS = QName.createQName(URI, "status");
+        QName TITLE = QName.createQName(URI, "title");
     }
 }

@@ -27,6 +27,8 @@ public interface CaseService {
      */
     void saveOrUpdate(Case theCase, boolean fromNodeProps);
 
+    void saveAddedAssocs(Node caseNode);
+
     List<Case> getAllCasesByVolume(NodeRef volumeRef);
 
     Case getCaseByNoderef(NodeRef caseNodeRef);
@@ -54,6 +56,5 @@ public interface CaseService {
     void closeAllCasesByVolume(NodeRef volumeRef);
 
     boolean isClosed(Node node);
-
 
 }

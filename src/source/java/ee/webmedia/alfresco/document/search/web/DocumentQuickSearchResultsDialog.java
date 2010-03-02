@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import java.util.Map;
 import java.util.Stack;
 
 import javax.faces.context.FacesContext;
@@ -29,10 +30,14 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
         // container.jsp hack for DocumentListDialog). If there are more beans that need to sometimes display some buttons and sometimes
         // not. Then the hack should be refactored into new DialogManager isAnyButtonVisible method that asks this from then current 
         // bean (BaseDialogBean always returns true).
-        context.getExternalContext().getSessionMap().put(UIMenuComponent.VIEW_STACK, new Stack<String>());
+        @SuppressWarnings("unchecked")
+        Map<String, Object> sessionMap = context.getExternalContext().getSessionMap();
+        sessionMap.put(UIMenuComponent.VIEW_STACK, new Stack<String>());
         documents = getDocumentSearchService().searchDocumentsQuick(searchValue);
         
-        ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).collapseMenuItems(null);
+        MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
+        menuBean.collapseMenuItems(null);
+        menuBean.resetClickedId();
     }
 
     @Override

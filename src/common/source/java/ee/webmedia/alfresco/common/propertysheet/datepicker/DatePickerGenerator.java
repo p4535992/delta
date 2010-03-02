@@ -34,7 +34,6 @@ public class DatePickerGenerator extends BaseComponentGenerator {
     @Override
     public UIComponent generate(FacesContext context, String id) {
         UIComponent component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
-        component.setRendererType(ComponentConstants.JAVAX_FACES_TEXT);
         FacesHelper.setupComponentId(context, component, id);
         return component;
     }
@@ -59,11 +58,6 @@ public class DatePickerGenerator extends BaseComponentGenerator {
     @Override
     protected void setupConverter(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, PropertyDefinition propertyDef,
             UIComponent component) {
-
-        // Check for a valid date, when user can actually change it.
-        if (propertySheet.inEditMode() && !Utils.isComponentDisabledOrReadOnly(component)) {
-            setupValidDateConstraint(context, propertySheet, property, component);
-        }
         ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
     }
 
@@ -93,5 +87,11 @@ public class DatePickerGenerator extends BaseComponentGenerator {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
         attributes.put("onchange", "processButtonState();");
+
+        // Check for a valid date, when user can actually change it.
+        if (propertySheet.inEditMode() && !Utils.isComponentDisabledOrReadOnly(component)) {
+            setupValidDateConstraint(context, propertySheet, item, component);
+        }
     }
+
 }

@@ -1,0 +1,9 @@
+<alfresco-config>
+   <config>
+       <dialogs>
+          <dialog name="scannedDocsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/scanned/web/scanned-docs-list-dialog.jsp"
+                  managed-bean="ScannedDocsListDialog" show-ok-button="false"
+            icon="/images/icons/details_large.gif" title-id="document_scanned_docs" />
+      </dialogs>
+   </config>
+</alfresco-config>

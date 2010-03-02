@@ -61,7 +61,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
                 if (ids.length() > 0) {
                     ids.append(", ");
                 }
-                ids.append(wrongInput.getId());
+                ids.append(wrongInput.getClientId(context));
             }
             throw new RuntimeException("There must be only one UIInput component with id suffix '" + otherPropertyName + "', but found " + inputs.size() + " components: " + ids.toString());
         }

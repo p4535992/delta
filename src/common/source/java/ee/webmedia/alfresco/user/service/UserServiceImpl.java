@@ -11,7 +11,10 @@ import java.util.Set;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.model.ApplicationModel;
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.configuration.ConfigurableService;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -24,6 +27,7 @@ import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.NoSuchPersonException;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.cmr.security.PersonService;
+import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.SearchLanguageConversion;
 import org.alfresco.web.bean.repository.MapNode;
@@ -46,7 +50,44 @@ public class UserServiceImpl implements UserService {
     private PersonService personService;
     private PermissionService permissionService;
     private OrganizationStructureService organizationStructureService;
+    private ConfigurableService configurableService;
+    private NamespaceService namespaceService;
 
+    @Override
+    public NodeRef getUsersPreferenceNodeRef(String userName) {
+        if(userName == null) {
+            userName = AuthenticationUtil.getRunAsUser();
+        }
+
+        NodeRef prefRef = null;
+        NodeRef person = personService.getPerson(userName);
+        if (nodeService.hasAspect(person, ApplicationModel.ASPECT_CONFIGURABLE) == false) {
+            // create the configuration folder for this Person node
+            configurableService.makeConfigurable(person);
+        }
+
+        // target of the assoc is the configurations folder ref
+        NodeRef configRef = configurableService.getConfigurationFolder(person);
+        if (configRef == null) {
+            throw new IllegalStateException("Unable to find associated 'configurations' folder for node: "
+                    + person);
+        }
+
+        String xpath = NamespaceService.APP_MODEL_PREFIX + ":" + "preferences";
+        List<NodeRef> nodes = searchService.selectNodes(configRef, xpath, null, namespaceService, false);
+
+        if (nodes.size() == 1) {
+            prefRef = nodes.get(0);
+        } else {
+            // create the preferences Node for this user
+            ChildAssociationRef childRef = nodeService.createNode(configRef, ContentModel.ASSOC_CONTAINS, QName.createQName(
+                    NamespaceService.APP_MODEL_1_0_URI, "preferences"), ContentModel.TYPE_CMOBJECT);
+            prefRef = childRef.getChildRef();
+
+        }
+        return prefRef;
+    }
+    
     @Override
     public boolean isAdministrator() {
         return authorityService.hasAdminAuthority();
@@ -164,11 +205,31 @@ public class UserServiceImpl implements UserService {
     @Override
     public Map<QName, Serializable> getUserProperties(String userName) {
         try {
-            NodeRef person = personService.getPerson(userName);
-            return nodeService.getProperties(person);
+            if(personService.personExists(userName)) {
+                NodeRef person = personService.getPerson(userName);
+                return nodeService.getProperties(person);
+            } else {
+                //FIXME: workaround, et transaktsiooni Rollbakc-only'ks ei märgitaks
+                return null;
+            }
         } catch (NoSuchPersonException e) {
             return null;
         }
+    }
+
+    @Override
+    public Map<QName, Serializable> getCurrentUserProperties() {
+        return getUserProperties(getCurrentUserName());
+    }
+
+    @Override
+    public String getUserEmail(String userName) {
+        return nodeService.getProperty(personService.getPerson(userName), ContentModel.PROP_EMAIL).toString();
+    }
+
+    @Override
+    public String getUserFullName() {
+        return getUserFullName(getCurrentUserName());
     }
 
     @Override
@@ -189,6 +250,11 @@ public class UserServiceImpl implements UserService {
         String unitId = (String) props.get(ContentModel.PROP_ORGID);
         String unitName = organizationStructureService.getOrganizationStructure(unitId);
         return UserUtil.getPersonFullNameWithUnitName(props, unitName);
+    }
+    
+    @Override
+    public NodeRef getCurrentUser() {
+        return personService.getPerson(authenticationService.getCurrentUserName());
     }
     
     @Override
@@ -296,6 +362,15 @@ public class UserServiceImpl implements UserService {
     public void setOrganizationStructureService(OrganizationStructureService organizationStructureService) {
         this.organizationStructureService = organizationStructureService;
     }
+    
+    public void setConfigurableService(ConfigurableService configurableService) {
+        this.configurableService = configurableService;
+    }
+
+    public void setNamespaceService(NamespaceService namespaceService) {
+        this.namespaceService = namespaceService;
+    }
+
     // END: setters/getters
 
 }

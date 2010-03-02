@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.StringTokenizer;
 
-import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Repository;
@@ -150,18 +149,9 @@ public class SearchUtil {
         return "";
     }
 
-    public static boolean isStringProperty(QName dataType) {
-        return dataType.equals(DataTypeDefinition.TEXT) || dataType.equals(DataTypeDefinition.INT) || dataType.equals(DataTypeDefinition.LONG) ||
-                dataType.equals(DataTypeDefinition.FLOAT) || dataType.equals(DataTypeDefinition.DOUBLE) || dataType.equals(DataTypeDefinition.CONTENT);
-    }
-
-    public static boolean isDateProperty(QName dataType) {
-        return dataType.equals(DataTypeDefinition.DATE) || dataType.equals(DataTypeDefinition.DATETIME);
-    }
-
     public static List<String> parseQuickSearchWords(String searchString) {
         // Escape symbols and use only 10 first unique words which contain at least 3 characters
-        List<String> searchWords = new ArrayList<String>();
+        List<String> searchWords = new ArrayList<String>(10);
         if (StringUtils.isNotBlank(searchString)) {
             searchString = replaceCustom(searchString, " ");
             for (String searchWord : searchString.split("\\s")) {
@@ -197,6 +187,14 @@ public class SearchUtil {
     
     private static String generatePropertyNotEmptyQuery(QName documentPropName) {
         return "@" + Repository.escapeQName(documentPropName) + ":*";
+    }
+    
+    public static String generatePropertyBooleanQuery(QName documentPropName, boolean value) {
+        return "@" + Repository.escapeQName(documentPropName) + ":" + Boolean.toString(value);
+    }
+    
+    public static String generatePropertyNullQuery(QName documentPropName) {
+        return "ISNULL:" + Repository.escapeQName(documentPropName);
     }
 
     public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean escape) {

@@ -29,27 +29,10 @@
 <%@ taglib uri="/WEB-INF/wm.tld" prefix="wm" %>
 
 
-<wm:menu primary="false" id="secondaryMenu" activeItemId="#{MenuBean.activeItemId}" />
+<wm:menu primary="false" activeItemId="#{MenuBean.activeItemId}" />
 
-<%-- Shelf component --%>
-<%-- IMPORTANT NOTE: All inner components must be given an explicit ID! --%>
-<%--                 This is because they are wrapped in a Panel component --%>
-<r:shelf id="shelf" groupExpandedActionListener="#{NavigationBean.shelfGroupToggled}">
-<%--
-   <r:shelfGroup label="#{msg.clipboard}" id="shelf-group-1" expanded="#{NavigationBean.shelfItemExpanded[0]}">
-      <r:clipboardShelfItem id="clipboard-shelf" collections="#{ClipboardBean.items}" pasteActionListener="#{ClipboardBean.pasteItem}" />
-   </r:shelfGroup>
---%>
-   <%-- NOTE: this component is exanded=true as default so the RecentSpaces managed Bean is
-              instantied early - otherwise it will not be seen until this shelf component is
-              first expanded. There is no config setting to do this in JSF by default --%>
-<%--
-   <r:shelfGroup label="#{msg.recent_spaces}" id="shelf-group-2" expanded="#{NavigationBean.shelfItemExpanded[1]}">
-      <r:recentSpacesShelfItem id="recent-shelf" value="#{RecentSpacesBean.recentSpaces}" navigateActionListener="#{RecentSpacesBean.navigate}" />
-   </r:shelfGroup>
---%>
-   <r:shelfGroup label="#{msg.shortcuts}" id="shelf-group-3" expanded="#{NavigationBean.shelfItemExpanded[2]}">
-      <r:shortcutsShelfItem id="shortcut-shelf" value="#{UserShortcutsBean.shortcuts}" clickActionListener="#{UserShortcutsBean.click}"
-         removeActionListener="#{UserShortcutsBean.removeShortcut}" />
-   </r:shelfGroup>
-</r:shelf>
+<f:verbatim><div id="shelf" class="shelf"><div class="menu"><a class="icon-link collapse" href="#" onclick="_togglePersistentMenu(event, 'shortcuts');"></f:verbatim>
+<h:outputText value="#{msg.shortcuts}" />
+<f:verbatim></a><ul id="shortcuts"></f:verbatim>
+<h:panelGroup id="shortcuts" binding="#{MenuBean.shortcutsPanelGroup}" />
+<f:verbatim></ul></div></div></f:verbatim>

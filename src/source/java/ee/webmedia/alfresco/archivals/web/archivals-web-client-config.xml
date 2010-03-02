@@ -1,0 +1,10 @@
+<alfresco-config>
+   <config>
+      <dialogs>
+          <dialog name="archivedFunctionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/functions-list-dialog.jsp"
+                  managed-bean="ArchivedFunctionsListDialog" icon="/images/icons/versioned_properties_large.gif"
+                  title-id="functions_title" show-ok-button="false" />
+
+      </dialogs>
+   </config>
+</alfresco-config>

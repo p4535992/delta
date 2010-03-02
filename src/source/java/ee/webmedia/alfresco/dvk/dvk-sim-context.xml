@@ -10,4 +10,8 @@
       <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
 
+   <!-- START: web beans: -->
+   <bean id="DvkCorruptListDialog" class="ee.webmedia.alfresco.dvk.web.DvkCorruptListDialog" scope="session" />
+   <!-- END: web beans: -->
+
 </beans>

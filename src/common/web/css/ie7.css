@@ -74,6 +74,10 @@ td.actions-column {
 	z-index: 100;
 }
 
+.panel-wrapper .title-component	{
+    position: relative;
+}
+
 .dropdown-menu {
 	left: 0;
 	z-index: 90;
@@ -81,6 +85,12 @@ td.actions-column {
 
 .right.dropdown-menu {
 	left: auto;
+}
+
+.in-title.dropdown-menu {
+	left: auto;
+	right: 0px;
+	top: 20px;
 }
 
 td .dropdown-menu {
@@ -254,4 +264,8 @@ hr {
 }
 .extra-actions a {
     padding: 0 6px 6px 22px;
+}
+
+.ie7-workflow DIV.panel-border {
+  position: static !important;
 }

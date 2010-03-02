@@ -1,22 +1,20 @@
 package ee.webmedia.alfresco.imap.service;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Part;
-import javax.mail.internet.ContentType;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-
+import com.icegreen.greenmail.store.FolderException;
+import com.icegreen.greenmail.store.MailFolder;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.enums.StorageType;
+import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.imap.AppendBehaviour;
+import ee.webmedia.alfresco.imap.AttachmentsFolderAppendBehaviour;
+import ee.webmedia.alfresco.imap.ImmutableFolder;
+import ee.webmedia.alfresco.imap.IncomingFolderAppendBehaviour;
+import ee.webmedia.alfresco.imap.PermissionDeniedAppendBehaviour;
+import ee.webmedia.alfresco.imap.model.ImapModel;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
@@ -40,27 +38,27 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xml.security.transforms.TransformationException;
+import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 
-import com.icegreen.greenmail.store.FolderException;
-import com.icegreen.greenmail.store.MailFolder;
-
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
-import ee.webmedia.alfresco.classificator.enums.StorageType;
-import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.imap.AppendBehaviour;
-import ee.webmedia.alfresco.imap.AttachmentsFolderAppendBehaviour;
-import ee.webmedia.alfresco.imap.ImmutableFolder;
-import ee.webmedia.alfresco.imap.IncomingFolderAppendBehaviour;
-import ee.webmedia.alfresco.imap.PermissionDeniedAppendBehaviour;
-import ee.webmedia.alfresco.imap.model.ImapModel;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.Part;
+import javax.mail.internet.ContentType;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
- * TODO: add comment
+ * SimDhs specific IMAP logic.
  *
  * @author Romet Aidla
  */
@@ -89,7 +87,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         return addBehaviour(imapService.getFolder(user, folderName));
     }
 
-    public Long SaveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage) throws FolderException { // todo: ex handling
+    public long saveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage) throws FolderException { // todo: ex handling
         try {
             String name = AlfrescoImapConst.MESSAGE_PREFIX + GUID.generate();
             FileInfo docInfo = fileFolderService.create(folderNodeRef, name, DocumentSubtypeModel.Types.INCOMING_LETTER);
@@ -113,55 +111,42 @@ public class ImapServiceExtImpl implements ImapServiceExt {
     }
 
     @Override
-    public Collection<MailFolder> listFolders(AlfrescoImapUser user, String mailboxPattern) {
+    public Collection<MailFolder> createAndListFolders(AlfrescoImapUser user, String mailboxPattern) {
         try {
-        return addBehaviour(filter(imapService.listSubscribedMailboxes(user, mailboxPattern)));
+            return addBehaviour(filter(imapService.listSubscribedMailboxes(user, mailboxPattern)));
         }
-        catch(Exception e) {
+        catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     public void saveAttachments(NodeRef folderNodeRef, MimeMessage originalMessage, boolean saveBody)
-            throws IOException, MessagingException, TransformationException
-    {
+            throws IOException, MessagingException, TransformationException {
         if (saveBody) {
             Part p = getText(originalMessage);
             createBody(folderNodeRef, originalMessage);
         }
 
         Object content = originalMessage.getContent();
-        if (content instanceof Multipart)
-        {
+        if (content instanceof Multipart) {
             Multipart multipart = (Multipart) content;
 
-            for (int i = 0, n = multipart.getCount(); i < n; i++)
-            {
+            for (int i = 0, n = multipart.getCount(); i < n; i++) {
                 Part part = multipart.getBodyPart(i);
-                if ("attachment".equalsIgnoreCase(part.getDisposition()))
-                {
+                if ("attachment".equalsIgnoreCase(part.getDisposition())) {
                     createAttachment(folderNodeRef, part);
                 }
             }
         }
     }
 
-    @Override
-    public NodeRef addAttachmentToDocument(String name, NodeRef attachmentNodeRef, NodeRef documentNodeRef) {
-        NodeRef nodeRef = nodeService.moveNode(attachmentNodeRef, documentNodeRef,
-                        ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
-        // change file names
-        nodeService.setProperty(nodeRef, DocumentCommonModel.Props.DOC_NAME, name); // <-- WTF?
-        nodeService.setProperty(nodeRef, ContentModel.PROP_NAME, name);
-        return nodeRef;
-    }
-
     public NodeRef getAttachmentRoot() {
-        return generalService.getNodeRef(ImapModel.Repo.ATTACHMENT_SPACE);
+        NodeRef attachmentSpaceRef = generalService.getNodeRef(ImapModel.Repo.ATTACHMENT_SPACE);
+        Assert.notNull(attachmentSpaceRef, "Attachment node reference not found");
+        return attachmentSpaceRef;
     }
 
-    private void createAttachment(NodeRef folderNodeRef, Part part) throws MessagingException, IOException
-    {
+    private void createAttachment(NodeRef folderNodeRef, Part part) throws MessagingException, IOException {
         ContentType contentType = new ContentType(part.getContentType());
         FileInfo createdFile = fileFolderService.create(
                 folderNodeRef,
@@ -185,13 +170,13 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             baseName = baseName.concat("(" + i + ")");
             i++;
         }
-        
+
         return baseName + "." + extension;
     }
 
     //todo: should be refactored to File Converter Service
-    private void createBody(NodeRef folderNodeRef, MimeMessage originalMessage) throws MessagingException, IOException, TransformationException
-    {
+
+    private void createBody(NodeRef folderNodeRef, MimeMessage originalMessage) throws MessagingException, IOException, TransformationException {
         Part p = getText(originalMessage);
         if (p == null) {
             log.debug("No text part found from message, skipping body PDF creation");
@@ -225,7 +210,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         // OpenOffice HTML -> PDF converter does not read given encoding, but apparently expects ISO-8859-1
         tempWriter.setEncoding(p.isMimeType("text/html") ? "ISO-8859-1" : "UTF-8");
 //        p.writeTo(tempWriter.getContentOutputStream()); <-- THIS DOES NOT WORK
-        tempWriter.putContent(content); 
+        tempWriter.putContent(content);
         ContentReader reader = tempWriter.getReader();
 
         FileInfo createdFile = fileFolderService.create(
@@ -257,7 +242,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
         if (p.isMimeType("multipart/alternative")) {
             // prefer html text over plain text
-            Multipart mp = (Multipart)p.getContent();
+            Multipart mp = (Multipart) p.getContent();
             Part text = null;
             for (int i = 0; i < mp.getCount(); i++) {
                 Part bp = mp.getBodyPart(i);
@@ -275,7 +260,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             }
             return text;
         } else if (p.isMimeType("multipart/*")) {
-            Multipart mp = (Multipart)p.getContent();
+            Multipart mp = (Multipart) p.getContent();
             for (int i = 0; i < mp.getCount(); i++) {
                 Part s = getText(mp.getBodyPart(i));
                 if (s != null)
@@ -290,14 +275,13 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         String appendBehaviour;
         if (folder.getFolderInfo() != null) { // todo: why folder info is null?
             appendBehaviour = (String) folder.getFolderInfo().getProperties().get(ImapModel.Properties.APPEND_BEHAVIOUR);
-        }
-        else {
+        } else {
             appendBehaviour = PermissionDeniedAppendBehaviour.BEHAVIOUR_NAME;
         }
         return new ImmutableFolder(folder, getBehaviour(appendBehaviour));
     }
 
-        public AppendBehaviour getBehaviour(String behaviour) {
+    public AppendBehaviour getBehaviour(String behaviour) {
         if (PermissionDeniedAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
             return new PermissionDeniedAppendBehaviour();
         } else if (IncomingFolderAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {

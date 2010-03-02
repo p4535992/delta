@@ -11,10 +11,17 @@ import org.apache.commons.lang.StringUtils;
 public class FilenameUtil {
 
     public static String buildFileName(String title, String extension) {
-        extension = StringUtils.deleteWhitespace(stripForbiddenWindowsCharacters(extension));
-        if (extension == null || extension.length() == 0) {
+        return buildFileName(title, extension, true);
+    }
+
+    public static String buildFileName(String title, String extension, boolean extensionRequired) {
+        if (extension == null) {
+            extension = "";
+        }
+        if (StringUtils.isBlank(extension) && extensionRequired) {
             extension = MimetypeMap.EXTENSION_BINARY;
         }
+        extension = StringUtils.deleteWhitespace(stripForbiddenWindowsCharacters(extension));
         int maxLength = 254 - extension.length();
         String nameWithoutExtension = stripDotsAndSpaces(stripForbiddenWindowsCharacters(title));
         if (nameWithoutExtension.length() > maxLength) {

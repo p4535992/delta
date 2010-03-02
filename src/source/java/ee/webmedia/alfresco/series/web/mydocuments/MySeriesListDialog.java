@@ -8,7 +8,9 @@ import java.util.Map;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
@@ -31,9 +33,13 @@ public class MySeriesListDialog extends BaseDialogBean {
     public void init(Map<String, String> parameters) {
         super.init(parameters);
         seriesFunction = new ArrayList<SeriesFunction>();
-        String userName = getUserService().getCurrentUserName();
+        String userName = AuthenticationUtil.getRunAsUser();
         String orgstructId = (String) getUserService().getUserProperties(userName).get(ContentModel.PROP_ORGID);
 
+        if (StringUtils.isBlank(orgstructId)) {
+            return;
+        }
+        
         List<Series> series = getDocumentSearchService().searchSeriesUnit(orgstructId);
         for (Series sr : series) {
             Function fn = getFunctionsService().getFunctionByNodeRef(sr.getFunctionNodeRef());
@@ -90,8 +96,6 @@ public class MySeriesListDialog extends BaseDialogBean {
     
     // END: getters / setters
 
-
-    @SuppressWarnings("unused")
     public static class SeriesFunction implements Serializable {
         private static final long serialVersionUID = 1L;
         private Series series;

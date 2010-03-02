@@ -13,6 +13,7 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.ISO9075;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorModel;
@@ -70,8 +71,9 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     public Classificator getClassificatorByName(String name) {
         String xpath = "/" + ClassificatorModel.NAMESPACE_PREFFIX + ClassificatorModel.Types.CLASSIFICATOR_ROOT.getLocalName() + "/"
                 + ClassificatorModel.NAMESPACE_PREFFIX + ISO9075.encode(name);
-        NodeRef root = generalService.getNodeRef(xpath);//FIXME: ei leita tulemust, kui näiteks otsida klassifikaatorit("Kooskõlastatud (koosk)")
-        return getClassificatorByNodeRef(root);
+        NodeRef classifNodeRef = generalService.getNodeRef(xpath);
+        Assert.notNull(classifNodeRef, "Unknown classificator '"+name+"'");
+        return getClassificatorByNodeRef(classifNodeRef);
     }
 
     @Override

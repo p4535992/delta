@@ -52,6 +52,8 @@ import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
 
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
+
 /**
  * Generates a text field component.
  * 
@@ -115,7 +117,8 @@ public class TextFieldGenerator extends BaseComponentGenerator
    {
       UIComponent component = null;
       
-      if (propertySheet.inEditMode())
+      final String id = getDefaultId(item);
+      if ((propertySheet.inEditMode() || this instanceof GeneratorsWrapper) && !Boolean.parseBoolean(getCustomAttributes().get(OUTPUT_TEXT)))
       {
          // if the field has the list of values constraint 
          // and it is editable a SelectOne component is 
@@ -131,7 +134,7 @@ public class TextFieldGenerator extends BaseComponentGenerator
          {
             component = context.getApplication().createComponent(
                   UISelectOne.COMPONENT_TYPE);
-            FacesHelper.setupComponentId(context, component, item.getName());
+            FacesHelper.setupComponentId(context, component, id);
             
             // create the list of choices
             UISelectItems itemsComponent = (UISelectItems)context.getApplication().
@@ -176,13 +179,13 @@ public class TextFieldGenerator extends BaseComponentGenerator
          else
          {
             // use the standard component in edit mode
-            component = generate(context, item.getName());
+            component = generate(context, id);
          }
       }
       else
       {
          // create an output text component in view mode
-         component = createOutputTextComponent(context, item.getName());
+         component = createOutputTextComponent(context, id);
       }
       
       return component;
@@ -224,7 +227,6 @@ public class TextFieldGenerator extends BaseComponentGenerator
    }
    
    @Override
-   @SuppressWarnings("unchecked")
    protected void setupConstraints(FacesContext context, 
          UIPropertySheet propertySheet, PropertySheetItem property, 
          PropertyDefinition propertyDef, UIComponent component)

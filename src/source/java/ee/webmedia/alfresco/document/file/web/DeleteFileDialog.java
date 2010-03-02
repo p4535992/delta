@@ -8,7 +8,9 @@ import org.alfresco.web.bean.content.DeleteContentDialog;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * @author Dmitri Melnikov
@@ -26,7 +28,13 @@ public class DeleteFileDialog extends DeleteContentDialog {
             document = getNodeService().getPrimaryParent(file.getNodeRef()).getParentRef();
         }
         super.finishImpl(context, outcome);
-        getDocumentService().updateSearchableFiles(document);
+        
+        if(file != null && file.getType().equals(DocumentCommonModel.Types.DOCUMENT)) {
+            getDocumentService().getDocumentLogService().addDocumentLog(document,
+                    MessageUtil.getMessage(context, "document_log_status_fileDeleted", new Object[] { file.getName() }));
+            getDocumentService().updateSearchableFiles(document);
+        }
+        
         return outcome;
     }
 
@@ -43,5 +51,4 @@ public class DeleteFileDialog extends DeleteContentDialog {
         }
         return documentService;
     }
-
 }

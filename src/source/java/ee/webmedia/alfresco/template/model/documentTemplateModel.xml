@@ -24,13 +24,29 @@
             </property>
          </properties>
       </aspect>
-      <aspect name="docTempl:docType">
+      
+      <aspect name="docTempl:emailTemplate">
+         <mandatory-aspects>
+            <aspect>docTempl:template</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="docTempl:systemTemplate">
+         <mandatory-aspects>
+            <aspect>docTempl:template</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="docTempl:documentTemplate">
          <properties>
             <property name="docTempl:docTypeId">
                <type>d:qname</type>
                <mandatory enforced="false">true</mandatory>
             </property>
          </properties>
+         <mandatory-aspects>
+            <aspect>docTempl:template</aspect>
+         </mandatory-aspects>
       </aspect>
    </aspects>
 </model>

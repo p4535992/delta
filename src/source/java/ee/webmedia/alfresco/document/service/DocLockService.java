@@ -13,7 +13,7 @@ public interface DocLockService extends LockService {
      * @param lockNode NodeRef
      * @return true false if lock can't be obtained, true otherwise
      */
-    LockStatus createLockIfFree(NodeRef lockNode);
+    LockStatus setLockIfFree(NodeRef lockNode);
 
     /**
      * @param nodeRef

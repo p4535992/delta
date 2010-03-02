@@ -28,6 +28,8 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  */
 public class SearchGenerator extends BaseComponentGenerator {
 
+    private static final String EDITABLE_IF = "editableIf";
+    
     @Override
     public UIComponent generate(FacesContext context, String id) {
         UIComponent component = context.getApplication().createComponent(Search.SEARCH_FAMILY);
@@ -41,10 +43,11 @@ public class SearchGenerator extends BaseComponentGenerator {
             UIComponent component) {
 
         if (propertyDef == null) {
-            throw new RuntimeException("Property definition not found on node: " + propertySheet.getNode() + " (PropertySheetItem " + item.getName() + ")");
+            throw new RuntimeException("Unable to create Search component for property '"+item.getName()
+                    +"' - property definition not found on node: " + propertySheet.getNode());
         } else if (propertyDef.isProtected()) {
-            throw new RuntimeException("Protected property is not supported: " + propertyDef.getName() + " (PropertySheetItem " + item.getName()
-                    + ")");
+            throw new RuntimeException("Unable to create Search component for property '"+item.getName()
+                    +"' - property definition is protected. Node: " + propertySheet.getNode());
         }
 
         super.setupProperty(context, propertySheet, item, propertyDef, component);
@@ -65,17 +68,20 @@ public class SearchGenerator extends BaseComponentGenerator {
 
         attributes.put(Search.DATA_MULTI_VALUED, propertyDef.isMultiValued());
         attributes.put("dataMandatory", propertyDef.isMandatory());
-        attributes.put(Search.PICKER_CALLBACK_KEY, getCustomAttributes().get(Search.PICKER_CALLBACK_KEY));
 
-        if (getCustomAttributes().containsKey(Search.DIALOG_TITLE_ID_KEY)) {
-            attributes.put(Search.DIALOG_TITLE_ID_KEY, getCustomAttributes().get(Search.DIALOG_TITLE_ID_KEY));
-        }
-        if (getCustomAttributes().containsKey("setterCallback")) {
-            attributes.put("setterCallback", getCustomAttributes().get("setterCallback"));
-        }
+        addValueFromCustomAttributes(Search.PICKER_CALLBACK_KEY, attributes);
+        addValueFromCustomAttributes(Search.DIALOG_TITLE_ID_KEY, attributes);
+        addValueFromCustomAttributes(Search.SETTER_CALLBACK, attributes);
+        addValueFromCustomAttributes(Search.SETTER_CALLBACK_TAKES_NODE, attributes, Boolean.class);
         if (getCustomAttributes().containsKey("editable")) {
-            attributes.put("editable", Boolean.parseBoolean(getCustomAttributes().get("editable")));
+            addValueFromCustomAttributes("editable", attributes, Boolean.class);
+        } else if (getCustomAttributes().containsKey(EDITABLE_IF)) {
+            String expression = getCustomAttributes().get(EDITABLE_IF);
+            boolean isEditable = checkCustomPropertyExpression(context, propertySheet, expression, EDITABLE_IF, item.getName());
+            attributes.put("editable", !propertySheet.isReadOnly() && isEditable);
         }
+        addValueFromCustomAttributes(Search.SHOW_FILTER_KEY, attributes);
+        addValueFromCustomAttributes(Search.FILTERS_KEY, attributes);
     }
 
     @Override
@@ -89,6 +95,11 @@ public class SearchGenerator extends BaseComponentGenerator {
     protected void setupMandatoryValidation(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, UIComponent component, boolean realTimeChecking, String idSuffix) {
         // set realtime validation to true
         super.setupMandatoryValidation(context, propertySheet, item, component, true, idSuffix);
+    }
+    
+    @Override
+    protected String getValidateMandatoryJsFunctionName() {
+        return "validateSearchMandatory";
     }
 
     @Override

@@ -97,7 +97,7 @@ public interface AddressbookService {
     Node getEmptyNode(QName type);
 
     /**
-     * searches the addressbook
+     * searches the addressbook for private contacts, organizations and organization contacts
      * 
      * @param searchCriteria - the search string
      * @return list of node results
@@ -105,18 +105,20 @@ public interface AddressbookService {
     List<Node> search(String searchCriteria);
 
     /**
+     * Searches the addressbook for contact groups only
+     * 
+     * @param searchCriteria - the search string
+     * @return list of node results
+     */
+    List<Node> searchContactGroups(String searchCriteria);
+    
+    /**
      * returns the parent of the given node
      * 
      * @param ref - person node ref
      * @return org node ref
      */
     NodeRef getOrgOfPerson(NodeRef ref);
-
-    /**
-     * Set ab:organization property dvkCapable=true if organization is capable to receive documents using DVK("DokumendiVahetusKeskus")
-     * @return number of organizations in the addressbook that are capable to receive documents using DVK
-     */
-    int updateOrganizationsDvkCapability();
 
     Node getRoot();
 

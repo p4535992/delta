@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="wfs:workflowSpecificModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
+   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+      <import uri="http://alfresco.webmedia.ee/model/workflow/common/1.0" prefix="wfc" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/workflow/specific/1.0" prefix="wfs" />
+   </namespaces>
+
+   <types>
+
+      <!-- ========================== WORKFLOWS ========================== -->
+
+      <type name="wfs:signatureWorkflow"><!-- always sequential tasks -->
+         <parent>wfc:workflow</parent>
+         <overrides>
+            <property name="wfc:parallelTasks">
+               <default>false</default>
+            </property>
+         </overrides>
+         <mandatory-aspects>
+            <aspect>wfs:commonWorkflow</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="wfs:opinionWorkflow"><!-- always parallel tasks -->
+         <parent>wfc:workflow</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonWorkflow</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="wfs:reviewWorkflow"><!-- user chooses if sequential or parallel tasks -->
+         <parent>wfc:workflow</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonWorkflow</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="wfs:informationWorkflow"><!-- always parallel tasks -->
+         <parent>wfc:workflow</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonWorkflow</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="wfs:assignmentWorkflow"><!-- always parallel tasks -->
+         <parent>wfc:workflow</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonWorkflow</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="wfs:docRegistrationWorkflow"><!-- does not have any tasks, so sequential/parallel does not matter -->
+         <parent>wfc:workflow</parent>
+      </type>
+
+      <!-- ========================== TASKS ========================== -->
+
+      <type name="wfs:signatureTask">
+         <parent>wfc:task</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonTask</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="wfs:opinionTask">
+         <parent>wfc:task</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonTask</aspect>
+            <aspect>wfs:file</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="wfs:reviewTask">
+         <parent>wfc:task</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonTask</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="wfs:informationTask">
+         <parent>wfc:task</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonTask</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="wfs:assignmentTask"><!-- some assignmentTask-s have aspect wfs:responsible, see specification -->
+         <parent>wfc:task</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonTask</aspect>
+            <aspect>wfs:resolution</aspect>
+         </mandatory-aspects>
+      </type>
+
+   </types>
+
+   <aspects>
+
+      <!-- resolution väli täidetakse TV seadistamise ekraanil, TÜ täitmise blokis on read-only -->
+      <!-- igal TÜ täitmise all kuvatakse TV resolution, v.a. assignmentTask all kuvatakse taski resolution -->
+      <aspect name="wfs:commonWorkflow">
+         <mandatory-aspects>
+            <aspect>wfs:description</aspect>
+            <aspect>wfs:resolution</aspect>
+         </mandatory-aspects>
+      </aspect>
+
+      <!-- comment välja täidab ülesande täitja, on erinevate nimedega -->
+      <aspect name="wfs:commonTask">
+         <properties>
+            <property name="wfs:workflowResolution">
+               <type>d:text</type>
+            </property>
+            <property name="wfs:completedOverdue">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>wfs:dueDate</aspect>
+            <aspect>wfs:comment</aspect>
+         </mandatory-aspects>
+      </aspect>
+
+      <aspect name="wfs:description">
+         <properties>
+            <property name="wfs:description">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="wfs:resolution">
+         <properties>
+            <property name="wfs:resolution">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="wfs:dueDate">
+         <properties>
+            <property name="wfs:dueDate">
+               <type>d:date</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="wfs:comment">
+         <properties>
+            <property name="wfs:comment">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="wfs:file">
+         <properties>
+            <property name="wfs:file">
+               <type>d:content</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <!-- some assignmentTask-s have aspect wfs:responsible, see specification -->
+      <aspect name="wfs:responsible">
+         <properties>
+            <property name="wfs:active">
+               <type>d:boolean</type>
+               <mandatory enforced="true">true</mandatory>
+               <default>true</default>
+            </property>
+         </properties>
+      </aspect>
+
+      <!-- gets added to all tasks which are saved under document compound workflow -->
+      <aspect name="wfs:searchable"></aspect>
+      
+   </aspects>
+
+</model>

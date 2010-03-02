@@ -1,0 +1,205 @@
+<alfresco-config>
+
+   <config>
+      <actions>
+         <action id="compound_workflow_add_new">
+            <label-id>workflow_compound_add_new</label-id>
+            <image>/images/icons/add.gif</image>
+            <action>dialog:compoundWorkflowDefinitionDialog</action>
+            <action-listener>#{CompoundWorkflowDefinitionDialog.setupNewWorkflow}</action-listener>
+         </action>
+
+         <action id="compound_workflow_start">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowNewEvaluator</evaluator>
+            <label-id>workflow_compound_start</label-id>
+            <image>/images/icons/workflow.gif</image>
+            <action-listener>#{CompoundWorkflowDialog.startWorkflow}</action-listener>
+         </action>
+
+         <action id="compound_workflow_stop">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowInprogressEvaluator</evaluator>
+            <label-id>workflow_compound_stop</label-id>
+            <image>/images/icons/icon_pause.png</image>
+            <action-listener>#{CompoundWorkflowDialog.stopWorkflow}</action-listener>
+         </action>
+
+         <action id="compound_workflow_continue">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowStoppedEvaluator</evaluator>
+            <label-id>workflow_compound_continue</label-id>
+            <image>/images/icons/workflow.gif</image>
+            <action-listener>#{CompoundWorkflowDialog.continueWorkflow}</action-listener>
+         </action>
+
+         <action id="compound_workflow_finish">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowInprogressEvaluator</evaluator>
+            <label-id>workflow_compound_finish</label-id>
+            <image>/images/icons/icon_stop.png</image>
+            <action-listener>#{CompoundWorkflowDialog.finishWorkflow}</action-listener>
+         </action>
+
+         <action id="compound_workflow_copy">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowSavedEvaluator</evaluator>
+            <label-id>workflow_compound_copy</label-id>
+            <image>/images/icons/new_workflow.gif</image>
+            <action-listener>#{CompoundWorkflowDialog.copyWorkflow}</action-listener>
+         </action>
+
+         <action id="compound_workflow_delete">
+            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowNewSavedEvaluator</evaluator>
+            <label-id>workflow_compound_delete_compound</label-id>
+            <image>/images/icons/delete.gif</image>
+            <action>#{CompoundWorkflowDialog.deleteWorkflow}</action>
+         </action>
+
+         <action-group id="compound_workflow_list_actions">
+            <action idref="compound_workflow_add_new" />
+         </action-group>
+
+         <action-group id="compound_workflow_actions">
+            <action idref="compound_workflow_start" />
+            <action idref="compound_workflow_stop" />
+            <action idref="compound_workflow_continue" />
+            <action idref="compound_workflow_finish" />
+            <action idref="compound_workflow_copy" />
+            <action idref="compound_workflow_delete" />
+         </action-group>
+      </actions>
+
+      <dialogs>
+         <dialog name="compoundWorkflowDefinitionListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/compound-workflow-definition-list-dialog.jsp"
+            managed-bean="CompoundWorkflowDefinitionListDialog" icon="/images/icons/workflow_large.gif" title-id="workflow_compound_title" show-ok-button="false"
+            actions-config-id="compound_workflow_list_actions" />
+
+         <dialog name="compoundWorkflowDefinitionDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/compound-workflow-definition-dialog.jsp"
+            managed-bean="CompoundWorkflowDefinitionDialog" icon="/images/icons/workflow_large.gif" title-id="workflow_compound_setup" show-ok-button="true" />
+
+         <dialog name="compoundWorkflowDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/compound-workflow-dialog.jsp" managed-bean="CompoundWorkflowDialog"
+            icon="/images/icons/workflow_large.gif" title-id="workflow_compound_setup" show-ok-button="true" actions-config-id="compound_workflow_actions" />
+
+         <dialog name="taskListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog.jsp" managed-bean="MyTasksBean"
+            icon="/images/icons/workflow_task_large.gif" />
+
+      </dialogs>
+   </config>
+
+   <config evaluator="aspect-name" condition="wfs:commonTask">
+      <property-sheet>
+         <!--
+            See Task class, it adds a resolver which returns task's resolution if present or workflow's resolution otherwise 
+         -->
+         <show-property name="{temp}resolution" outputText="true" display-label-id="task_property_resolution" />
+         <show-property name="wfs:dueDate" outputText="true" />
+         <show-property name="wfs:comment" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+      </property-sheet>
+   </config>
+   <!-- Override: comment property label is different for assignmentTask -->
+   <config evaluator="node-type" condition="wfs:assignmentTask">
+      <property-sheet>
+         <show-property name="wfs:comment" display-label-id="task_property_comment_assignmentTask" component-generator="TextAreaGenerator" styleClass="expand5-200" forcedMandatory="true"/>
+      </property-sheet>
+   </config>
+   <!-- Override: comment property label is different for opinionTask -->
+   <config evaluator="node-type" condition="wfs:opinionTask">
+      <property-sheet>
+         <show-property name="wfs:comment" display-label-id="task_property_comment_opinionTask" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+      </property-sheet>
+   </config>
+   <!-- Override: comment property label is different for reviewTask -->
+   <config evaluator="node-type" condition="wfs:reviewTask">
+      <property-sheet>
+         <show-property name="wfs:comment" display-label-id="task_property_comment_reviewTask" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="wfs:reviewTask">
+      <property-sheet>
+         <show-property name="{temp}outcomes" display-label-id="task_property_outcomes_reviewTask" component-generator="GeneralSelectorGenerator"
+            selectionItems="#{WorkflowBlockBean.getReviewTaskOutcomes}" converter="javax.faces.Integer" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="aspect-name" condition="wfs:file">
+      <property-sheet>
+         <show-property name="wfs:file" component-generator="UploadFileGenerator" />
+      </property-sheet>
+   </config>
+
+
+
+   <!-- COMPOUND WORKFLOW CONFIG - BEGIN -->
+
+   <config evaluator="node-type" condition="wfc:compoundWorkflow">
+      <property-sheet>
+         <show-property name="wfc:ownerName" read-only="true" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}"
+            setterCallback="#{CompoundWorkflowDialog.setWorkfowOwner}" editableIf="wfc:status=uus||teostamisel||peatatud||teostamata" /> 
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="wfs:commonWorkflow" >
+      <property-sheet>
+         <separator name="wfs:description" component-generator="PropValueSeparatorGenerator" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="wfs:reviewWorkflow">
+      <property-sheet>
+         <show-property name="wfc:parallelTasks" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud||teostamata" component-generator="GeneralSelectorGenerator"
+            selectionItems="#{CompoundWorkflowDialog.getParallelSelections}" converter="ee.webmedia.alfresco.common.propertysheet.converter.BooleanToLabelConverter"
+            converterLabelPrefix="reviewWorkflow_parallel" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow" >
+      <property-sheet>
+         <show-property name="wfs:resolution" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud||teostamata" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:assignmentWorkflow" >
+      <property-sheet>
+         <show-property name="wfs:resolution" readOnlyIf="wfc:status=lõpetatud||teostamata" component-generator="TextAreaAlwaysEditGenerator" styleClass="expand5-200" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:signatureWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="signatureWorkflow_tasks" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:opinionWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="opinionWorkflow_tasks" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:reviewWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="reviewWorkflow_tasks" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:informationWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="informationWorkflow_tasks" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:assignmentWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks" responsible="true" />
+         <show-property name="{temp}workflowTasksCo" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks_co" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:docRegistrationWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow" >
+      <property-sheet>
+         <show-property name="wfc:stopOnFinish" readOnlyIf="wfc:status=lõpetatud" />
+      </property-sheet>
+   </config>
+
+   <!-- COMPOUND WORKFLOW CONFIG - END -->
+
+
+
+</alfresco-config>

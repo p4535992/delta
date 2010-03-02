@@ -52,17 +52,6 @@
         <property name="generalService" ref="GeneralService"/>
     </bean>
 
-    <bean id="ImapServiceExt_transaction" class="org.springframework.transaction.interceptor.TransactionInterceptor">
-        <property name="transactionManager">
-            <ref bean="transactionManager"/>
-        </property>
-        <property name="transactionAttributes">
-            <props>
-                <prop key="*">${server.transaction.mode.default}</prop>
-            </props>
-        </property>
-    </bean>
-
     <bean id="ImapServiceExt" class="org.springframework.aop.framework.ProxyFactoryBean">
         <property name="proxyInterfaces">
             <list>
@@ -72,7 +61,7 @@
         <property name="target" ref="imapServiceExt"/>
         <property name="interceptorNames">
             <list>
-                <idref bean="ImapServiceExt_transaction"/>
+                <idref bean="commonTransactionInterceptor"/>
             </list>
         </property>
     </bean>

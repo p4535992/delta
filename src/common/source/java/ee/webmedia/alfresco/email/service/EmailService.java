@@ -22,11 +22,12 @@ public interface EmailService {
      * @param subject mail subject
      * @param content mail content text
      * @param isHtml is content html format
-     * @param document email is sent about given document 
+     * @param document email is sent about given document
      * @param fileNodeRefs list of file node refs as strings to match those files which should be sent out as attachments from given document
      * @param zipIt if attachments should be zipped into single file, or sent as separate files
      * @param zipFileName if zipIt then zip file name
+     * @throws EmailException If e-mail sending fails in JavaMail (or Spring's JavaMail support) layer, not connected to Alfresco
      */
-    void sendEmail(List<String> toEmails, List<String> toNames, String fromEmail, String subject, String content, boolean isHtml, NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName);
+    void sendEmail(List<String> toEmails, List<String> toNames, String fromEmail, String subject, String content, boolean isHtml, NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName) throws EmailException;
 
 }

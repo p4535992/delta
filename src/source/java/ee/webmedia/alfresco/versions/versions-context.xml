@@ -30,6 +30,7 @@
       <property name="versionService" ref="VersionService" />
       <property name="nodeService" ref="NodeService" />
       <property name="userService" ref="UserService" />
+      <property name="documentLogService" ref="DocumentLogService" />
    </bean>
 
    <bean id="VersionsService" class="org.springframework.aop.framework.ProxyFactoryBean">

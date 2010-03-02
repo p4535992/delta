@@ -13,58 +13,20 @@
    </namespaces>
 
    <types>
-      <!--
-      <type name="dvk:orgListRoot">
-         <parent>sys:base</parent>
-         <associations>
-            <child-association name="dvk:organizations">
-               <source>
-                  <mandatory>true</mandatory>
-                  <many>false</many>
-               </source>
-               <target>
-                  <class>dvk:organization</class>
-                  <mandatory>false</mandatory>
-                  <many>true</many>
-               </target>
-            </child-association>
-         </associations>
+
+      <type name="dvk:failedDoc">
+         <parent>cm:content</parent>
          <mandatory-aspects>
-            <aspect>sys:aspect_root</aspect>
+            <aspect>dvk:dvkId</aspect>
          </mandatory-aspects>
       </type>
 
-      <type name="dvk:organization">
-         <parent>sys:base</parent>
-         <properties>
-            <property name="dvk:regNr">
-               <type>d:text</type>
-               <mandatory>true</mandatory>
-            </property>
-            <property name="dvk:name">
-               <type>d:text</type>
-               <mandatory>true</mandatory>
-            </property>
-            <property name="dvk:modeDhl">
-               <type>d:boolean</type>
-               <mandatory>true</mandatory>
-            </property>
-            <property name="dvk:modeDhlDirect">
-               <type>d:boolean</type>
-               <mandatory>true</mandatory>
-            </property>
-         </properties>
-      </type>
-      -->
    </types>
 
    <aspects>
+
       <aspect name="dvk:receivedDvkDocument">
          <properties>
-            <property name="dvk:dvkId">   <!-- dvk:dhlId dvk:dvkId -->
-               <type>d:text</type>
-               <mandatory>true</mandatory>
-            </property>
             <property name="dvk:senderOrgName"><!-- Saatja asutus -->
                <type>d:text</type>
                <mandatory>true</mandatory>
@@ -89,6 +51,18 @@
             </property>
             <property name="dvk:letterDeadLine"><!-- Tähtaeg -->
                <type>d:datetime</type>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>dvk:dvkId</aspect>
+         </mandatory-aspects>
+      </aspect>
+
+      <aspect name="dvk:dvkId">
+         <properties>
+            <property name="dvk:dvkId">   <!-- dvk:dhlId dvk:dvkId -->
+               <type>d:text</type>
+               <mandatory>true</mandatory>
             </property>
          </properties>
       </aspect>

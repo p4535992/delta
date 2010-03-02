@@ -11,6 +11,8 @@
       <property name="personService" ref="PersonService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="organizationStructureService" ref="OrganizationStructureService" />
+      <property name="configurableService" ref="ConfigurableService" />
+      <property name="namespaceService" ref="NamespaceService" />
    </bean>
    
    <bean id="userResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">

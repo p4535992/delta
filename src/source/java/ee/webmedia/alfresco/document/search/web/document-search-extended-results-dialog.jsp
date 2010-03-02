@@ -206,7 +206,13 @@
          <h:outputText id="col22-text" value="#{r.storageType}" />
       </a:column>
 
-      <%-- col23 Saatmisviis – dokumendi Saatmine blokis oleva kirje sendMode --%>
+      <%-- SendMode --%>
+      <a:column id="col23" primary="true" styleClass="#{r.docTypeLocalName}" >
+         <f:facet name="header">
+            <a:sortLink id="col23-sort" label="#{msg.document_send_mode}" value="sendMode" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col23-text" value="#{r.sendMode}" />
+      </a:column>
 
       <%-- CostManager --%>
       <a:column id="col24" primary="true" styleClass="#{r.docTypeLocalName}" >
@@ -216,19 +222,53 @@
          <h:outputText id="col24-text" value="#{r.costManager}" />
       </a:column>
 
-      <%--
-         col25 Taotleja – errandOrderAbroad, errandApplicationDomestic, trainingApplication ja tenderingApplication tüüpi dokumendi applicantName; tühi ülejäänud dokumendi liikide puhul
-         
-         col26 Lähetuse alguskuupäev – errandOrderAbroad ja errandApplicationDomestic tüüpi dokumendi travelBeginDate; tühi ülejäänud dokumendi liikide puhul
-         
-         col27 Lähetuse lõppkuupäev - errandOrderAbroad ja errandApplicationDomestic tüüpi dokumendi travelEndDate; tühi ülejäänud dokumendi liikide puhul
-         
-         col28 Lähetuse riik – errandOrderAbroad tüüpi dokumendi country; tühi ülejäänud dokumendi liikide puhul
-         
-         col29 Lähetuse maakond – errandApplicationDomestic tüüpi dokumendi county; tühi ülejäänud dokumendi liikide puhul
-         
-         col30 Lähetuse linnad  - errandOrderAbroad ja errandApplicationDomestic tüüpi dokumendi city; tühi ülejäänud dokumendi liikide puhul
-      --%>
+      <%-- ApplicantName --%>
+      <a:column id="col25" primary="true" styleClass="#{r.docTypeLocalName}" >
+         <f:facet name="header">
+            <a:sortLink id="col25-sort" label="#{msg.document_errand_applicant}" value="applicantName" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col25-text" value="#{r.applicantName}" />
+      </a:column>
+
+      <%-- ErrandBeginDate --%>
+      <a:column id="col26" primary="true" styleClass="#{r.docTypeLocalName}" >
+         <f:facet name="header">
+            <a:sortLink id="col26-sort" label="#{msg.document_errand_beginDate}" value="errandBeginDate" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col26-text" value="#{r.errandBeginDate}" />
+      </a:column>
+
+      <%-- ErrandEndDate --%>
+      <a:column id="col27" primary="true" styleClass="#{r.docTypeLocalName}" >
+         <f:facet name="header">
+            <a:sortLink id="col27-sort" label="#{msg.document_errand_endDate}" value="errandEndDate" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col27-text" value="#{r.errandEndDate}" />
+      </a:column>
+
+      <%-- ErrandCountry --%>
+      <a:column id="col28" primary="true" styleClass="#{r.docTypeLocalName}" >
+         <f:facet name="header">
+            <a:sortLink id="col28-sort" label="#{msg.document_errand_country}" value="errandCountry" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col28-text" value="#{r.errandCountry}" />
+      </a:column>
+
+      <%-- ErrandCounty --%>
+      <a:column id="col29" primary="true" styleClass="#{r.docTypeLocalName}" >
+         <f:facet name="header">
+            <a:sortLink id="col29-sort" label="#{msg.document_errand_county}" value="errandCounty" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col29-text" value="#{r.errandCounty}" />
+      </a:column>
+
+      <%-- ErrandCity --%>
+      <a:column id="col30" primary="true" styleClass="#{r.docTypeLocalName}" >
+         <f:facet name="header">
+            <a:sortLink id="col30-sort" label="#{msg.document_errand_city}" value="errandCity" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col30-text" value="#{r.errandCity}" />
+      </a:column>
 
       <%-- ResponsibleName --%>
       <a:column id="col31" primary="true" styleClass="#{r.docTypeLocalName}" >
@@ -254,13 +294,23 @@
          <h:outputText id="col33-text" value="#{r.contactPerson}" />
       </a:column>
 
-      <%-- col34 Hankemenetluse liik – tenderingApplication tüüpi dokumendi procurementType; tühi ülejäänud dokumendi liikide puhul --%>
+      <%-- ProcurementType --%>
+      <a:column id="col34" primary="true" styleClass="#{r.docTypeLocalName}" >
+         <f:facet name="header">
+            <a:sortLink id="col34-sort" label="#{msg.document_procurementType}" value="procurementType" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col34-text" value="#{r.procurementType}" />
+      </a:column>
 
       <%-- Files --%>
       <a:column id="col35" primary="true">
          <f:facet name="header">
             <h:outputText id="col35-header" value="#{msg.document_allFiles}" styleClass="header" />
          </f:facet>
+          <%-- exclude column from CSV export --%>
+          <f:facet name="csvExport">
+              <a:param value="false"/>
+          </f:facet>
          <r:permissionEvaluator value="#{r.files[0].node}" allow="ReadContent">
             <a:actionLink id="col35-act1" value="#{r.files[0].name}" href="#{r.files[0].downloadUrl}" target="new" showLink="false"
                image="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />

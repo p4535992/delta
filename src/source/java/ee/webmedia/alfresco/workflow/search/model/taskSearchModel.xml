@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="tasksearch:taskSearchModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
+   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/task/search/1.0" prefix="tasksearch" />
+   </namespaces>
+
+   <types>
+
+      <type name="tasksearch:taskSearchFilters">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>tasksearch:taskSearchFiltersContainer</aspect>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="tasksearch:filter">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="tasksearch:name">
+               <type>d:text</type>
+            </property>
+            <property name="tasksearch:startedDateTimeBegin">
+               <type>d:date</type>
+            </property>
+            <property name="tasksearch:startedDateTimeEnd">
+               <type>d:date</type>
+            </property>
+            <property name="tasksearch:taskType">
+               <type>d:qname</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="tasksearch:ownerName">
+               <type>d:text</type>
+            </property>
+            <property name="tasksearch:creatorName">
+               <type>d:text</type>
+            </property>
+            <property name="tasksearch:organizationName">
+               <type>d:text</type>
+            </property>
+            <property name="tasksearch:jobTitle">
+               <type>d:text</type>
+            </property>
+            <property name="tasksearch:dueDateTimeBegin">
+               <type>d:date</type>
+            </property>
+            <property name="tasksearch:dueDateTimeEnd">
+               <type>d:date</type>
+            </property>
+            <property name="tasksearch:onlyResponsible">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="tasksearch:completedDateTimeBegin">
+               <type>d:date</type>
+            </property>
+            <property name="tasksearch:completedDateTimeEnd">
+               <type>d:date</type>
+            </property>
+            <property name="tasksearch:comment">
+               <type>d:text</type>
+            </property>
+            <property name="tasksearch:resolution">
+               <type>d:text</type>
+            </property>
+            <property name="tasksearch:status">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="tasksearch:completedOverdue">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="tasksearch:stoppedDateTimeBegin">
+               <type>d:date</type>
+            </property>
+            <property name="tasksearch:stoppedDateTimeEnd">
+               <type>d:date</type>
+            </property>
+         </properties>
+      </type>
+
+   </types>
+
+   <aspects>
+
+      <aspect name="tasksearch:taskSearchFiltersContainer">
+         <associations>
+            <child-association name="tasksearch:filter">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>tasksearch:filter</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+   </aspects>
+
+</model>

@@ -39,7 +39,7 @@ public interface ImapServiceExt {
      * @return reference to node created
      * @throws FolderException
      */
-    Long SaveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage) throws FolderException;
+    long saveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage) throws FolderException;
 
     /**
      * Lists folders used for IMAP.
@@ -48,7 +48,7 @@ public interface ImapServiceExt {
      * @param mailboxPattern Mailbox pattern
      * @return Collection of IMAP folders.
      */
-    Collection<MailFolder> listFolders(AlfrescoImapUser user, String mailboxPattern);
+    Collection<MailFolder> createAndListFolders(AlfrescoImapUser user, String mailboxPattern);
 
     /**
      * Saves attachments from mail message to given folder.
@@ -60,16 +60,6 @@ public interface ImapServiceExt {
      * @throws TransformationException
      */
     void saveAttachments(NodeRef folderNodeRef, MimeMessage originalMessage, boolean saveBody) throws IOException, MessagingException, TransformationException;
-
-    /**
-     * Adds attachment to given document.
-     *
-     * @param name Attachment name
-     * @param attachmentNodeRef Reference to attachment
-     * @param documentNodeRef Reference to document
-     * @return Reference to created node
-     */
-    NodeRef addAttachmentToDocument(String name, NodeRef attachmentNodeRef, NodeRef documentNodeRef);
 
     /**
      * Get node reference to attachments folder

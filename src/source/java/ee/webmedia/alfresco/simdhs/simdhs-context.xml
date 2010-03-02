@@ -22,7 +22,11 @@
    <import resource="classpath:ee/webmedia/alfresco/versions/versions-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/imap/imap-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/email/email-context.xml" />
-
+   <import resource="classpath:ee/webmedia/alfresco/substitute/substitute-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/workflow/workflow-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/notification/notification-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/archivals/archivals-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/adr/adr-context.xml" />
 
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">

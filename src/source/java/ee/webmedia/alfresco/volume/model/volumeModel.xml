@@ -49,6 +49,12 @@
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
+            <property name="vol:sendToDestruction">
+                <type>d:boolean</type>
+            </property>
+             <property name="vol:archivingNote">
+                 <type>d:text</type>
+             </property>
          </properties>
          <associations><!-- Volumes can have either documents as direct children or cases as children with documents -->
             <child-association name="case:case">

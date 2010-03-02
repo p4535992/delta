@@ -4,13 +4,22 @@ import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 
+import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
+import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
+import ee.webmedia.alfresco.workflow.service.SignatureTask;
+import ee.webmedia.alfresco.workflow.service.Task;
 
 /**
  * @author Alar Kvell
@@ -104,6 +113,19 @@ public interface DocumentService {
     
     List<Document> getAllDocumentFromDvk();
 
+    List<DocAssocInfo> getAssocInfos(Node document);
+    
+    /**
+     * Deletes association between nodes
+     * 
+     * @param sourceNodeRef
+     * @param targetNodeRef
+     * @param assocQName if null, defaults to <code>DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT</code>
+     */
+    void deleteAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef, QName assocQName);
+
+    DocAssocInfo getDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc);
+
     /**
      * Get list of incoming email.
      *
@@ -130,14 +152,48 @@ public interface DocumentService {
      * @see {@link DocumentService#addPropertiesModifierCallback(QName, PropertiesModifierCallback)}
      * @author Ats Uiboupin
      */
-    public interface PropertiesModifierCallback {
-        void doWithProperties(Map<QName, Serializable> properties);
+    public static abstract class PropertiesModifierCallback implements InitializingBean {
+        private DocumentService documentService;
+
+        /**
+         * @param properties - initial properties for the node that is not jet constructed
+         */
+        public void doWithProperties(Map<QName, Serializable> properties) {
+            // set default properties for document with type defined by getAspectName() before creation
+        }
+
+        /**
+         * @param node - after node has been created
+         */
+        public void doWithNode(Node node) {
+            // do whatever you like after document with aspect defined by getAspectName() has been created
+        }
 
         /**
          * @param documentService - reference to the implementation of DocumentService where this Callback must be registered to
          */
-        void setDocumentService(DocumentService documentService);
+        public void setDocumentService(DocumentService documentService) {
+            this.documentService = documentService;
+        }
+
+        @Override
+        public void afterPropertiesSet() throws Exception {
+            documentService.addPropertiesModifierCallback(getAspectName(), this);
+        }
+
+        /**
+         * @return QName of the aspect that the document must have for executing callbacks defined in this class
+         */
+        public abstract QName getAspectName();
+
     }
+    
+    /**
+     * Executes the callback registered for docAspect to modify the properties. 
+     * @param docAspect
+     * @param properties
+     */
+    void callbackAspectProperiesModifier(QName docAspect, Map<QName, Serializable> properties);
 
     /**
      * @param nodeRef
@@ -158,6 +214,8 @@ public interface DocumentService {
      */
     DocumentParentNodesVO getAncestorNodesByDocument(NodeRef nodeRef);
 
+    void registerDocumentIfNotRegistered(NodeRef document, boolean logging);
+
     /**
      * @param documentNode
      * @return the same instance with updated values(regNumber, regDate)
@@ -171,16 +229,132 @@ public interface DocumentService {
      */
     boolean isSaved(NodeRef nodeRef);
 
+    /**
+     * @param nodeRef
+     * @return true if document is saved under DVK receive space
+     */
+    boolean isFromDVK(NodeRef nodeRef);
+    
+    /**
+     * @param nodeRef
+     * @return true if document is saved under incoming email space
+     */
+    boolean isFromIncoming(NodeRef nodeRef);
+    
     void setTransientProperties(Node document, DocumentParentNodesVO documentParentNodesVO);
 
     Document getDocumentByNodeRef(NodeRef document);
-    
-    public class UnableToPerformException extends RuntimeException {
-        private static final long serialVersionUID = 1L;
 
-        public UnableToPerformException(String errMsg) {
-            super(errMsg);
+    public enum AssocType{
+        INITIAL("alusdokument"), 
+        REPLY("vastusdokument"),
+        FOLLOWUP("järgdokument"),
+        DEFAULT("tavaline");
+        
+        String valueName;
+        
+        AssocType(String valueName){
+            this.valueName = valueName;
         }
+        
+        public String getValueName() {
+            return valueName;
+        }
+        
     }
+    
+    /**
+     * Changes the type of the repository node to the type of this node.
+     * @param node
+     * @return
+     */
+    void changeType(Node node);
+
+    /**
+     * Change the type of the node without writing to the repository,
+     * add new aspects and fill some required default properties.
+     * @param node
+     * @param newType
+     */
+    void changeTypeInMemory(Node node, QName newType);
+
+    /**
+     * @param document
+     * @param user
+     * @return true when the user is the document's OWNER_ID property
+     */
+    boolean isDocumentOwner(NodeRef document, String user);
+
+    void setDocumentOwner(NodeRef document, String userName);
+
+    /**
+     * 
+     * @param docNode
+     * @return true when docNode is registered.
+     */
+    boolean isRegistered(Node docNode);
+
+    /**
+     * Fetches document objects for tasks
+     * 
+     * @param tasks
+     * @return
+     */
+    List<TaskAndDocument> getTasksWithDocuments(List<Task> tasks);
+
+    /**
+     * Updates the status of the document ant it's compound workflows to stopped.
+     * @param nodeRef
+     */
+    void stopDocumentPreceedingAndUpdateStatus(NodeRef nodeRef);
+
+    /**
+     * Updates the status of the document ant it's compound workflows to working.
+     * @param nodeRef
+     */
+    void continueDocumentPreceedingAndUpdateStatus(NodeRef nodeRef);
+
+    /**
+     * Ends document.
+     *
+     * @param documentRef Reference to document to be ended
+     */
+    void endDocument(NodeRef documentRef);
+
+    /**
+     * Reopens document.
+     *
+     * @param documentRef Reference to document to be reopened
+     */
+    void reopenDocument(NodeRef documentRef);
+
+    void prepareDocumentSigning(NodeRef document);
+
+    void finishDocumentSigning(SignatureTask task, String signatureHex);
+
+    SignatureDigest prepareDocumentDigest(NodeRef document, String certHex);
+    
+    /**
+     * @return document log service
+     */
+    DocumentLogService getDocumentLogService(); // FIXME very ugly
+
+    List<Document> getFavorites();
+
+    boolean isFavorite(NodeRef document);
+
+    boolean isFavoriteAddable(NodeRef document);
+
+    void addFavorite(NodeRef document);
+
+    void removeFavorite(NodeRef document);
+
+    List<Document> processExtendedSearchResults(List<Document> documents, Node filter);
+
+    /**
+     * @param base
+     * @return list of documents that are reply or follow up to base
+     */
+    List<Document> getReplyOrFollowUpDocuments(NodeRef base);
 
 }

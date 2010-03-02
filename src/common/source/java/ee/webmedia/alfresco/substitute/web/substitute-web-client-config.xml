@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alfresco-config>
+    <config>
+        <actions>
+            <action id="substitute_add_value">
+                <label-id>substitute_add_value</label-id>
+                <image>/images/icons/versioned_properties.gif</image>
+                <action-listener>#{SubstituteListDialog.addNewValue}</action-listener>
+            </action>
+
+            <action-group id="substitute_actions">
+                <action idref="substitute_add_value"/>
+            </action-group>
+        </actions>
+
+        <dialogs>
+            <dialog name="substituteListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/substitute/web/substitute-list-dialog.jsp"
+                    managed-bean="SubstituteListDialog" actions-config-id="substitute_actions"
+                    icon="/images/icons/view_properties_large.gif" title-id="substitutes"/>
+        </dialogs>
+    </config>
+</alfresco-config>

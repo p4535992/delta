@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0"
            xmlns:cm="http://www.alfresco.org/model/content/1.0"
-           xmlns:app="http://www.alfresco.org/model/application/1.0"
            xmlns:imap-ext="http://alfresco.webmedia.ee/model/imap/1.0">
 
-    <imap-ext:imapFolder view:childName="app:imap-root">
+    <imap-ext:imapFolder view:childName="imap-ext:imap-root">
         <view:acl view:inherit="true">
             <view:ace view:access="ALLOWED">
                 <view:authority>GROUP_EVERYONE</view:authority>
@@ -13,18 +12,18 @@
                     and file/folder creation and content write is performed RunAs System user -->
             </view:ace>
         </view:acl>
-        <cm:name>SIM Dokumendihaldus</cm:name>
+        <cm:name>${imap-folders.root}</cm:name>
         <cm:contains>
-            <imap-ext:imapFolder view:childName="app:incoming">
-                <cm:name>Sissetulevad kirjad</cm:name>
+            <imap-ext:imapFolder view:childName="imap-ext:incoming">
+                <cm:name>${imap-folders.incoming}</cm:name>
                 <view:properties>
                     <imap-ext:appendBehaviour>incomingBehaviour</imap-ext:appendBehaviour>
                 </view:properties>
             </imap-ext:imapFolder>
         </cm:contains>
         <cm:contains>
-            <imap-ext:imapFolder view:childName="app:attachments">
-                <cm:name>E-kirja manused</cm:name>
+            <imap-ext:imapFolder view:childName="imap-ext:attachments">
+                <cm:name>${imap-folders.attachments}</cm:name>
                 <view:properties>
                     <imap-ext:appendBehaviour>attachmentBehaviour</imap-ext:appendBehaviour>
                 </view:properties>

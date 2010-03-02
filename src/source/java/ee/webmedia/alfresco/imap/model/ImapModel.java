@@ -8,13 +8,14 @@ import org.alfresco.service.namespace.QName;
  */
 public interface ImapModel {
     String URI = "http://alfresco.webmedia.ee/model/imap/1.0";
+    String IMAP_EXT_MODEL_PREFIX = "imap-ext";
 
     public interface Repo {
         String IMAP_PARENT = "/";
         String IMAP_ROOT = "imap-root";
-        String IMAP_SPACE = IMAP_PARENT + NamespaceService.APP_MODEL_PREFIX + ":" + IMAP_ROOT;
-        String INCOMING_SPACE = IMAP_SPACE + "/" + NamespaceService.APP_MODEL_PREFIX + ":" + "incoming";
-        String ATTACHMENT_SPACE =  IMAP_SPACE + "/" + NamespaceService.APP_MODEL_PREFIX + ":" + "attachments";
+        String IMAP_SPACE = IMAP_PARENT + IMAP_EXT_MODEL_PREFIX + ":" + IMAP_ROOT;
+        String INCOMING_SPACE = IMAP_SPACE + "/" + IMAP_EXT_MODEL_PREFIX + ":" + "incoming";
+        String ATTACHMENT_SPACE =  IMAP_SPACE + "/" + IMAP_EXT_MODEL_PREFIX + ":" + "attachments";
     }
 
     interface Types {

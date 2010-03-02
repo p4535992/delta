@@ -2,19 +2,23 @@ package ee.webmedia.alfresco.common.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.Serializable;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
+import ee.webmedia.alfresco.common.web.WmNode;
 
 /**
  * @author Ats Uiboupin
@@ -33,6 +37,16 @@ public interface GeneralService {
      * @throws RuntimeException if more than 1 node found
      */
     NodeRef getNodeRef(String nodeRefXPath);
+
+    /**
+     * Search for NodeRef with an XPath expression from given store.
+     *
+     * @param nodeRefXPath child association names separated with forward slashes, in the form of <code>/foo:bar/{pingNamespaceUri}pong</code>
+     * @param storeRef Reference to store
+     * @return NodeRef, {@code null} if node not found
+     * @throws RuntimeException if more than 1 node found
+     */
+    NodeRef getNodeRef(String nodeRefXPath, StoreRef storeRef);
 
     ChildAssociationRef getLastChildAssocRef(String nodeRefXPath);
 
@@ -72,6 +86,13 @@ public interface GeneralService {
      */
     void setPropertiesIgnoringSystem(Map<QName, Serializable> properties, NodeRef nodeRef);
 
+    Map<QName, Serializable> getPropertiesIgnoringSystem(Map<String, Object> nodeProps);
+
+    /**
+     * For each property value of {@code FileWithContentType} class, save file content to repository and replace property value with {@link ContentData} object.
+     */
+    void savePropertiesFiles(Map<QName, Serializable> props);
+
     /**
      * @return return and remove value from request map that was put there by
      *         {@link WMUIProperty#saveExistingValue4ComponentGenerator(FacesContext, Node, String)} for component generators to be able to use existing value
@@ -84,7 +105,7 @@ public interface GeneralService {
      * @return dorect primary parent node if it has givent parentType, null otherwise
      */
     Node getParentWithType(NodeRef childRef, QName parentType);
-
+    
     /**
      * @param node
      * @param property
@@ -94,10 +115,36 @@ public interface GeneralService {
     boolean isExistingPropertyValueEqualTo(Node node, final QName property, final Object equalityTestValue);
 
     /**
+     * Return default property values defined in model.
+     * @param className type or aspect
+     * @return
+     */
+    Map<QName, Serializable> getDefaultProperties(QName className);
+
+    LinkedHashSet<QName> getDefaultAspects(QName className);
+
+    /**
+     * Construct an anonymous type that combines all definitions of the specified type, aspects and mandatory aspects
+     *
+     * @param type the type to start with 
+     * @return the anonymous type definition
+     */
+    TypeDefinition getAnonymousType(QName type);
+
+    void saveAddedAssocs(Node node);
+
+    /**
      * @param nodeRef
      * @return node according to nodeRef from repo, filling properties and aspects
      */
     Node fetchNode(NodeRef nodeRef);
+
+    /**
+     * @param type - node type
+     * @param props - initial properties or null
+     * @return new WmNode with given type and properties (aspects are set based on model)
+     */
+    WmNode createNewUnSaved(QName type, Map<QName, Serializable> props);
 
     /**
      * Searches ancestor with specified type. Will go up in hierarchy until found.

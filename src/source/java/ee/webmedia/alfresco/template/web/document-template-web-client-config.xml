@@ -17,10 +17,20 @@
             <action>dialog:addDocumentTemplate</action>
             <action-listener>#{AddDocumentTemplateDialog.startEmail}</action-listener>
          </action>
+         <action id="template_add_new_system">
+            <permissions>
+               <permission allow="true">CreateChildren</permission>
+            </permissions>
+            <label-id>template_add_new_system_template</label-id>
+            <image>/images/icons/template_add.gif</image>
+            <action>dialog:addDocumentTemplate</action>
+            <action-listener>#{AddDocumentTemplateDialog.startSystem}</action-listener>
+         </action>
 
          <action-group id="template_list_actions">
             <action idref="template_add_new_doc" />
             <action idref="template_add_new_email" />
+            <action idref="template_add_new_system" />
          </action-group>
       </actions>
 
@@ -40,7 +50,7 @@
          <show-property name="docTempl:comment" display-label-id="template_comment" styleClass="expand5-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>
-   <config evaluator="aspect-name" condition="docTempl:docType">
+   <config evaluator="aspect-name" condition="docTempl:documentTemplate">
       <property-sheet>
          <show-property name="docTempl:docTypeId" display-label-id="template_document_type" converter="ee.webmedia.alfresco.document.type.web.DocumentTypeConverter"
             component-generator="SearchGenerator" pickerCallback="#{DocumentTypeDialog.searchUsedDocTypes}" dialogTitleId="templates_docType_popup" />

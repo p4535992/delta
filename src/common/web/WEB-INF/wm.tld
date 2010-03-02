@@ -29,13 +29,6 @@
          <rtexprvalue>true</rtexprvalue>
          <description>Selects the menu item, which should be marked as active.</description>
       </attribute>
-      
-      <attribute>
-         <name>id</name>
-         <required>true</required>
-         <rtexprvalue>true</rtexprvalue>
-         <description>ID for the menu, must be unique within the page!</description>
-      </attribute>
    </tag>
 
    <tag>
@@ -145,9 +138,13 @@
          <description>Path to bean object where a Map with name properties exists. It's used to construct the value binding</description>
       </attribute>
       <attribute>
-         <name>props</name>
+         <name>propsGeneration</name>
          <rtexprvalue>true</rtexprvalue>
-         <description>Comma separated list of map key names which point to List of values. Component will create one column for each field.</description>
+         <description>Comma-separated list of property names. 
+         Each property name may have additional options appended, separated by "¤". &lt;br&gt;
+         The first option after property name must be component generator name. It may be left empty, then TextFieldGenerator is used. &lt;br&gt;
+         The following options after component generator name are set as component's attributes, these must be in the format attributeName=attributeValue.
+      </description>
       </attribute>
       <attribute>
          <name>titles</name>
@@ -169,11 +166,50 @@
          <rtexprvalue>true</rtexprvalue>
          <description>Dialog title id.</description>
       </attribute>
-      <attribute>
-         <name>propTypes</name>
-         <rtexprvalue>true</rtexprvalue>
-         <description>Comma separated list of propertyTypes:cssClass:classificatorNames combinations for props fields, for example "input,,classificator::selectMode".</description>
-      </attribute>
    </tag>
+
+    <tag>
+        <name>search</name>
+        <tag-class>ee.webmedia.alfresco.common.propertysheet.search.SearchTag</tag-class>
+        <body-content>empty</body-content>
+        <attribute>
+            <name>value</name>
+            <rtexprvalue>true</rtexprvalue>
+        </attribute>
+        <attribute>
+            <name>dataMultiValued</name>
+            <type>Boolean</type>
+            <description>Indicates whether user can select multiple values from search or only one (default value is FALSE).</description>
+        </attribute>
+        <attribute>
+            <name>dataMandatory</name>
+            <type>Boolean</type>
+            <description>Indicates data is mandatory (default value is TRUE).</description>
+        </attribute>
+        <attribute>
+            <name>pickerCallback</name>
+            <description>Picker callback for searching values.</description>
+            <required>true</required>
+        </attribute>
+        <attribute>
+            <name>setterCallback</name>
+            <description>Callback for setting value(s).</description>
+        </attribute>
+        <attribute>
+            <name>dialogTitleId</name>
+            <description>Sets custom title (from resource bundle) to search dialog.</description>
+        </attribute>
+        <attribute>
+            <name>editable</name>
+            <type>Boolean</type>
+            <description>Indicates whether user can manually change component value (edit html input) (default value is FALSE).</description>
+        </attribute>
+        <attribute>
+            <name>readonly</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <description>Indicates whether component value is changeable.</description>
+        </attribute>
+    </tag>
       
 </taglib>

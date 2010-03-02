@@ -8,48 +8,62 @@
    <!-- MINU TÖÖÜLESANDED JA DOKUMENDID -->
    <item title="Minu tööülesanded ja dokumendid">
       <outcome>myalfresco</outcome>
+      <action-listener>#{MyTasksBean.setupMyTasks}</action-listener>
       <subitems>
          <dropdown title="Minu ülesanded" expanded="true">
             <submenu-id>my-tasks-submenu</submenu-id>
             <subitems>
-               <item title="Täitmiseks">
-                  <outcome>myalfresco</outcome>
+               <item id="assignmentTasks" title="Täitmiseks">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupAssignmentTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}assignmentTask</processor>
                </item>
-               <item title="Teadmiseks">
-                  <outcome>myalfresco</outcome>
+               <item id="informationTasks" title="Teadmiseks">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupInformationTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}informationTask</processor>
                </item>
-               <item title="Arvamuse andmiseks">
-                  <outcome>myalfresco</outcome>
+               <item id="opinionTasks" title="Arvamuse andmiseks">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupOpinionTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}opinionTask</processor>
                </item>
-               <item title="Kooskõlastamiseks">
-                  <outcome>myalfresco</outcome>
+               <item id="reviewTasks" title="Kooskõlastamiseks">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupReviewTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}reviewTask</processor>
                </item>
-               <item title="Digitaalseks allkirjastamiseks">
-                  <outcome>myalfresco</outcome>
+               <item id="signatureTasks" title="Digitaalseks allkirjastamiseks">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupSignatureTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}signatureTask</processor>
                </item>
                <item title="Menetluses">
                   <outcome>dialog:userWorkingDocumentsSearchResultsDialog</outcome>
                   <action-listener>#{UserWorkingDocumentsSearchResultsDialog.setup}</action-listener>
                </item>
-               <item title="Registreerimiseks" document-manager="true">
-                  <outcome>myalfresco</outcome>
+               <item id="forRegisteringList" title="Registreerimiseks" document-manager="true">
+                  <outcome>dialog:forRegisteringListDialog</outcome>
+                   <action-listener>#{ForRegisteringListDialog.setup}</action-listener>
                </item>
                <dropdown title="Saabunud dokumendid" document-manager="true" expanded="true">
                   <submenu-id>received-documents-submenu</submenu-id>
                   <subitems>
                      <item title="Sissetulevad e-kirjad">
-                        <outcome>dialog:documentListDialog</outcome>
-                        <action-listener>#{DocumentListDialog.showIncomingEmails}</action-listener>
+                        <outcome>dialog:incomingEmailListDialog</outcome>
+                        <action-listener>#{IncomingEmailListDialog.setup}</action-listener>
                      </item>
                      <item title="E-kirja manused">
                         <outcome>dialog:attachmentListDialog</outcome>
                          <action-listener>#{AttachmentListDialog.init}</action-listener>
                      </item>
                      <item title="Veateated">
-                        <outcome>dialog:errorMessages</outcome>
+                        <outcome>dialog:dvkCorruptListDialog</outcome>
+                        <action-listener>#{DvkCorruptListDialog.init}</action-listener>
                      </item>
                      <item title="Skaneeritud dokumendid">
-                        <outcome>myalfresco</outcome>
+                        <outcome>dialog:scannedDocsListDialog</outcome>
+                         <action-listener>#{ScannedDocsListDialog.init}</action-listener>
                      </item>
                      <item title="DVK dokumendid">
                         <outcome>dialog:dvkDocumentListDialog</outcome>
@@ -74,7 +88,7 @@
                   <outcome>dialog:documentSearchDialog</outcome>
                </item>
                <item title="Tööülesanded">
-                  <outcome>myalfresco</outcome>
+                  <outcome>dialog:taskSearchDialog</outcome>
                </item>
             </subitems>
          </dropdown>
@@ -98,9 +112,13 @@
             <outcome>dialog:functionsListDialog</outcome>
             <action-listener>#{MenuBean.updateTree}</action-listener>
          </dropdown>
-         <item title="Arhivaalide loetelu">
-            <outcome>myalfresco</outcome>
-         </item>
+         <dropdown title="Arhivaalide loetelu" browse="true">
+             <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}archivals</xpath>
+             <store>workspace://ArchivalsStore</store>
+             <submenu-id>document-register</submenu-id>
+             <outcome>dialog:archivedFunctionsListDialog</outcome>
+             <action-listener>#{MenuBean.updateTree}</action-listener>
+         </dropdown>
       </subitems>
    </item>
 
@@ -127,16 +145,16 @@
             <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
          </item>
          <item title="Minu lemmikud">
-            <outcome>myalfresco</outcome>
+            <outcome>dialog:favoritesDocumentListDialog</outcome>
          </item>
          <dropdown title="Seaded" expanded="true">
             <submenu-id>settings-submenu</submenu-id>
             <subitems>
                <item title="Teavitused meilile">
-                  <outcome>myalfresco</outcome>
+                  <outcome>dialog:notificationDialog</outcome>
                </item>
                <item title="Eemaloleku seadistus">
-                  <outcome>myalfresco</outcome>
+                  <outcome>dialog:substituteListDialog</outcome>
                </item>
             </subitems>
          </dropdown>
@@ -162,6 +180,9 @@
          <item title="Registrid">
             <outcome>dialog:registerListDialog</outcome>
          </item>
+         <item title="Terviktöövood">
+            <outcome>dialog:compoundWorkflowDefinitionListDialog</outcome>
+         </item>
          <item title="Mallid">
             <outcome>dialog:documentTemplateListDialog</outcome>
          </item>
@@ -170,6 +191,9 @@
          </item>
          <item title="Organisatsiooni struktuur">
             <outcome>dialog:orgstructureListDialog</outcome>
+         </item>
+         <item title="Tähtsad teated">
+            <outcome>dialog:notificationListDialog</outcome>
          </item>
          <item title="Süsteemiinfo">
             <outcome>dialog:showSystemInfo</outcome>

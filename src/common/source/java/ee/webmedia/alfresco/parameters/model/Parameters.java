@@ -26,6 +26,8 @@ public enum Parameters {
     EMPLOYEE_REG_ORGANISATION_ID("employeeRegOrganisationId"),
     // Default sender email value when sending out a document
     DOC_SENDER_EMAIL("docSenderEmail"),
+    // Default sender email value when sending out a task
+    TASK_SENDER_EMAIL("taskSenderEmail"),
     // Maximum total size of attachments when sending out a document
     MAX_ATTACHED_FILE_SIZE("maxAttachedFilesSize"),
     /** Leaving letter */
@@ -41,7 +43,27 @@ public enum Parameters {
     DEPUTY_HEAD_OF_THE_ADM_DEPT_ON_MAINTENANCE("deputyHeadOfTheAdmDeptOnMaintenance"),
     OFFICIALS_DIRECT_MANAGER("officialsDirectManager"),
     OFFICIAL_ON_PERSONNEL_DEPARTMENT("officialOnPersonnelDepartment"),
-    VACATION_ORDER_LEGAL_BASIS("vacationOrderLegalBasis");
+    // START: of procurement parameters (riigihanke läbiviimise taotlus)
+    PROCUREMENT_LEGAL_BASIS("procurementLegalBasis"),
+    PROCUREMENT_OBJECT_CLASS_CODE("procurementObjectClassCode"),
+    PROCUREMENT_TENDER_DATA("procurementTenderData"),
+    PROCUREMENT_EVALUATION_CRITERIA("procurementEvaluationCriteria"),
+    PROCUREMENT_QUALIFICATION_TERMS_FOR_TENDERS("procurementQualificationTermsForTenders"),
+    // END: of procurement parameters (riigihanke läbiviimise taotlus)
+    // START: errandOrderAbroad (välisLähetuse taotlus)
+    ERRAND_ORDER_LEGAL_BASIS_FOR_OFFICIALS("errandOrderLegalBasisForOfficials"),
+    ERRAND_ORDER_LEGAL_BASIS_FOR_SUPPORT_STAFF("errandOrderLegalBasisForSupportStaff"),
+    // END: errandOrderAbroad (välisLähetuse taotlus)
+    VACATION_ORDER_LEGAL_BASIS("vacationOrderLegalBasis"), 
+    WELCOME_TEXT("welcomeText"),
+    VOLUME_DESTRUCTION_PERIOD("volumeDestructionPeriod"),
+    EMAIL_FOR_SUBSTITUTE_SUBJECT("emailForSubstituteSubject"),
+    TASK_DUE_DATE_NOTIFICATION_TIME("taskDueDateNotificationTime"),
+    TASK_DUE_DATE_NOTIFICATION_DAYS("taskDueDateNotificationDays"),
+    VOLUME_DISPOSITION_DATE_NOTIFICATION_DAYS("volumeDispositionDateNotificationDays"),
+    ACCESS_RESTRICTION_END_DATE_NOTIFICATION_DAYS("accessRestrictionEndDateNotificationDays"),
+    ASSIGN_RESPONSIBILITY_INSTRUCTION("assignResponsibilityInstruction"),
+    DAYS_FOR_SUBSTITUTION_TASKS_CALC("daysForSubstitutionTasksCalc");
 
     private String xPath;
     private String parameterName;

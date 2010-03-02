@@ -102,6 +102,11 @@ public class CaseServiceImpl implements CaseService {
     }
 
     @Override
+    public void saveAddedAssocs(Node caseNode) {
+        generalService.saveAddedAssocs(caseNode);
+    }
+
+    @Override
     public Case createCase(NodeRef volumeRef) {
         Case theCase = new Case();
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();

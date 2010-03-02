@@ -6,7 +6,7 @@
             icon="/images/icons/users_large.gif" title-id="users" show-ok-button="false" />
 
          <dialog name="userDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/user-details-dialog.jsp" managed-bean="UserDetailsDialog"
-            icon="/images/icons/user_console_large.gif" title-id="user_data" show-ok-button="true" />
+            icon="/images/icons/user_console_large.gif" title-id="user_data" actions-config-id="user_actions" />
 
          <dialog name="permissionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-list-dialog.jsp" managed-bean="PermissionsListDialog"
             icon="/images/icons/users_large.gif" title-id="manage_invited_users" actions-config-id="browse_actions_permissions" />
@@ -31,9 +31,19 @@
             </params>
          </action>
 
+          <action id="user_add_substitute">
+              <label-id>substitute_add_value</label-id>
+              <image>/images/icons/versioned_properties.gif</image>
+              <action-listener>#{UserDetailsDialog.addNewValue}</action-listener>
+          </action>
+
          <action-group id="browse_actions_permissions">
             <action idref="permissions_add" />
          </action-group>
+
+          <action-group id="user_actions">
+              <action idref="user_add_substitute"/>
+          </action-group>
 
       </actions>
    </config>

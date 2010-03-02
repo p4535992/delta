@@ -25,6 +25,21 @@
 <%-- Breadcrumb area --%>
 <%-- Designed to support a variable height breadcrumb --%>
 <%-- Breadcrumb component --%>
+<%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
+<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
+<%--
 <a:panel id="breadcrumb">
    <a:breadcrumb value="#{NavigationBean.location}" />
 </a:panel>
+--%>
+
+<a:actionLink actionListener="#{MenuBean.addShortcut}" value="#{msg.shortcut_add}" rendered="#{MenuBean.shortcutAddable gt 0}" showLink="false" image="/images/icons/add_item.gif" styleClass="right" />
+<a:actionLink actionListener="#{MenuBean.removeShortcut}" value="#{msg.shortcut_remove}" rendered="#{MenuBean.shortcutAddable lt 0}" showLink="false" image="/images/icons/delete.gif" styleClass="right" />
+
+<f:verbatim>
+<ul id="breadcrumb">
+</f:verbatim>
+   <h:panelGroup binding="#{MenuBean.breadcrumb}" />
+<f:verbatim>
+   </ul>
+</f:verbatim>

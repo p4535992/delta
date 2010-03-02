@@ -6,8 +6,15 @@
    <import resource="classpath:ee/webmedia/alfresco/document/type/document-type-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/permissions/permissions-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/search/document-search-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/associations/associations-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/sendout/send-out-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/forum/forum-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/scanned/scanned-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/register/register-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/log/document-log-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/assignresponsibility/assignresponsibility-context.xml" />
 
-   <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+   <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap">
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/document/model/documentCommonModel.xml</value>
@@ -49,12 +56,17 @@
       <property name="registerService" ref="RegisterService" />
       <property name="seriesService" ref="SeriesService" />
       <property name="volumeService" ref="VolumeService" />
-      <property name="searchService" ref="SearchService" />
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="contentService" ref="ContentService" />
+      <property name="fileService" ref="FileService" />
+      <property name="signatureService" ref="SignatureService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="documentLogService" ref="DocumentLogService" />
+      <property name="userService" ref="UserService" />
+      <property name="organizationStructureService" ref="OrganizationStructureService" />
+      <property name="sendOutService" ref="SendOutService" />
       <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
-      <property name="defaultStore" value="${spaces.store}"/>
-      <property name="incomingEmailPath" value="${imap.config.home.rootPath}/app:incoming"/>
+      <property name="incomingEmailPath" value="${imap.config.home.rootPath}/imap-ext:incoming"/>
    </bean>
 
    <bean id="DocumentService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -82,6 +94,16 @@
       <property name="organizationStructureService" ref="OrganizationStructureService" />
    </bean>
 
+   <bean id="abstractDocChildCreator" abstract="true" parent="propertiesModifierCallback">
+      <property name="nodeService" ref="NodeService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandApplicantAbroadPropertiesModifierCallback" parent="abstractDocChildCreator" />
+
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandDocDomesticPropertiesModifierCallback" parent="abstractDocChildCreator" />
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.TrainingDocChildCreator" parent="abstractDocChildCreator" />
+
    <bean id="documentDraftsSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="name" value="documentDraftsSpacesBootstrap" />
@@ -95,27 +117,6 @@
                <prop key="path">/</prop>
                <prop key="location">ee/webmedia/alfresco/document/bootstrap/drafts.xml</prop>
                <prop key="messages">ee/webmedia/alfresco/document/bootstrap/drafts-bootstrap</prop>
-            </props>
-         </list>
-      </property>
-   </bean>
-
-   <bean id="sendOutParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
-      <property name="moduleId" value="simdhs" />
-      <property name="name" value="sendOutParametersBootstrap" />
-      <property name="sinceVersion" value="1.3.1.4" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="parametersSpacesBootstrap" />
-         </list>
-      </property>
-      <property name="importer" ref="spacesBootstrap" />
-      <property name="bootstrapViews">
-         <list>
-            <props>
-               <prop key="path">/param:parameters</prop>
-               <prop key="location">ee/webmedia/alfresco/document/sendout/bootstrap/sendOut-parameters.xml</prop>
             </props>
          </list>
       </property>
@@ -191,30 +192,5 @@ DaoAuthenticationProvider.authenticate()
         </property>
     </bean>
  -->
- 
-   <bean id="sendOutService" class="ee.webmedia.alfresco.document.sendout.service.SendOutServiceImpl">
-      <property name="nodeService" ref="NodeService" />
-      <property name="generalService" ref="GeneralService" />
-      <property name="emailService" ref="CommonEmailService" />
-      <property name="addressbookService" ref="AddressbookService" />
-      <property name="dvkService" ref="DvkService" />
-      <property name="parametersService" ref="ParametersService" />
-      <property name="documentTypeService" ref="DocumentTypeService" />
-      <property name="fileFolderService" ref="FileFolderService" />
-   </bean>
-
-   <bean id="SendOutService" class="org.springframework.aop.framework.ProxyFactoryBean">
-      <property name="proxyInterfaces">
-         <list>
-            <value>ee.webmedia.alfresco.document.sendout.service.SendOutService</value>
-         </list>
-      </property>
-      <property name="target" ref="sendOutService" />
-      <property name="interceptorNames">
-         <list>
-            <idref bean="commonTransactionInterceptor" />
-         </list>
-      </property>
-   </bean>
 
 </beans>

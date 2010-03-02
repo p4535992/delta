@@ -56,6 +56,7 @@ public class MenuItem implements Serializable {
     private String actionListener;
     @XStreamOmitField
     private Map<String, String> params;
+    private String processor;
 
     @XStreamOmitField
     private static final String ACTION_CONTEXT = "actionContext";
@@ -88,6 +89,10 @@ public class MenuItem implements Serializable {
     }
 
     public UIComponent createComponent(FacesContext context, String id, UserService userService) {
+        return createComponent(context, id, false, userService);
+    }
+    
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, boolean createChildren) {
         return createComponent(context, id, false, userService);
     }
 
@@ -144,7 +149,7 @@ public class MenuItem implements Serializable {
             if (actionDef.Evaluator != null) {
                 ActionInstanceEvaluator evaluator =
                         (ActionInstanceEvaluator) application.createComponent(UIActions.COMPONENT_ACTIONEVAL);
-                FacesHelper.setupComponentId(context, evaluator, null);
+                FacesHelper.setupComponentId(context, evaluator, id + "-evaluator");
                 evaluator.setEvaluator(actionDef.Evaluator);
                 evaluator.setValueBinding(ATTR_VALUE, application.createValueBinding("#{" + ACTION_CONTEXT + "}"));
 
@@ -194,7 +199,7 @@ public class MenuItem implements Serializable {
         }
 
         MenuItemWrapper wrap = (MenuItemWrapper) application.createComponent(MenuItemWrapper.class.getCanonicalName());
-        FacesHelper.setupComponentId(context, wrap, null);
+        FacesHelper.setupComponentId(context, wrap, id + "-wrapper");
         wrap.setPlain(true);
         @SuppressWarnings("unchecked")
         List<UIComponent> children = wrap.getChildren();
@@ -305,6 +310,12 @@ public class MenuItem implements Serializable {
     
     public void setParams(Map<String, String> params) {
         this.params = params;
+    }
+    public String getProcessor() {
+        return processor;
+    }
+    public void setProcessor(String processor) {
+        this.processor = processor;
     }
 
 }

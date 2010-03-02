@@ -35,7 +35,7 @@ public interface MenuService {
      * @param menuItemId the id of menuitem that gets passed to processor callback, or {@code null} if all root menuitems are passed to processor callback
      * @param processor
      */
-    void addProcessor(String menuItemId, MenuItemProcessor processor);
+    void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce);
 
     public interface MenuItemProcessor {
 
@@ -68,5 +68,13 @@ public interface MenuService {
      * When a menu update is needed, this method invalidates beans menu configurations so it's reloaded from MenuService 
      */
     void menuUpdated();
+
+    void processTasks(Menu menu);
+
+    List<String> getShortcuts();
+
+    void addShortcut(String shortcut);
+
+    void removeShortcut(String shortcut);
 
 }

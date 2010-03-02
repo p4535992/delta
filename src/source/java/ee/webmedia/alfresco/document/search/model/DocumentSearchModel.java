@@ -2,15 +2,28 @@ package ee.webmedia.alfresco.document.search.model;
 
 import org.alfresco.service.namespace.QName;
 
+/**
+ * @author Alar Kvell
+ */
 public interface DocumentSearchModel {
     String URI = "http://alfresco.webmedia.ee/model/document/search/1.0";
     String PREFIX = "docsearch:";
+
+    public interface Repo {
+        final static String FILTERS_PARENT = "/";
+        final static String FILTERS_SPACE = FILTERS_PARENT + PREFIX + "documentSearchFilters";
+    }
 
     interface Types {
         QName FILTER = QName.createQName(URI, "filter");
     }
 
+    interface Assocs {
+        QName FILTER = QName.createQName(URI, "filter");
+    }
+
     interface Props {
+        QName NAME = QName.createQName(URI, "name");
         QName INPUT = QName.createQName(URI, "input");
         QName DOCUMENT_TYPE = QName.createQName(URI, "documentType");
         QName FUNCTION = QName.createQName(URI, "function");
@@ -42,10 +55,20 @@ public interface DocumentSearchModel {
         QName SIGNER_JOB_TITLE = QName.createQName(URI, "signerJobTitle");
         QName KEYWORDS = QName.createQName(URI, "keywords");
         QName STORAGE_TYPE = QName.createQName(URI, "storageType");
+        QName SEND_MODE = QName.createQName(URI, "sendMode");
         QName COST_MANAGER = QName.createQName(URI, "costManager");
+        QName APPLICANT_NAME = QName.createQName(URI, "applicantName");
+        QName ERRAND_BEGIN_DATE_BEGIN = QName.createQName(URI, "errandBeginDateBegin");
+        QName ERRAND_BEGIN_DATE_END = QName.createQName(URI, "errandBeginDateEnd");
+        QName ERRAND_END_DATE_BEGIN = QName.createQName(URI, "errandEndDateBegin");
+        QName ERRAND_END_DATE_END = QName.createQName(URI, "errandEndDateEnd");
+        QName ERRAND_COUNTRY = QName.createQName(URI, "errandCountry");
+        QName ERRAND_COUNTY = QName.createQName(URI, "errandCounty");
+        QName ERRAND_CITY = QName.createQName(URI, "errandCity");
         QName RESPONSIBLE_NAME = QName.createQName(URI, "responsibleName");
         QName CO_RESPONSIBLES = QName.createQName(URI, "coResponsibles");
         QName CONTACT_PERSON = QName.createQName(URI, "contactPerson");
+        QName PROCUREMENT_TYPE = QName.createQName(URI, "procurementType");
         QName OUTPUT = QName.createQName(URI, "output");
     }
 

@@ -1,0 +1,9 @@
+<alfresco-config>
+
+   <config evaluator="node-type" condition="asr:assignResponsibility">
+      <property-sheet>
+         <show-property name="asr:ownerName" display-label-id="assign_responsibility_to" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{AssignResponsibilityBean.setOwner}" dialogTitleId="users_search_title" />
+      </property-sheet>
+   </config>
+
+</alfresco-config>

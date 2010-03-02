@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0"
+           xmlns:cm="http://www.alfresco.org/model/content/1.0"
+           xmlns:doccom="http://alfresco.webmedia.ee/model/document/common/1.0">
+    
+   <cm:folder view:childName="doccom:scannedDocs">
+      <view:acl view:inherit="false">
+         <view:ace view:access="ALLOWED">
+            <view:authority>GROUP_EVERYONE</view:authority>
+             <!-- TODO: add correct permissions -->
+            <view:permission>DocumentListBrowse</view:permission>
+         </view:ace>
+      </view:acl>
+   </cm:folder>
+</view:view>

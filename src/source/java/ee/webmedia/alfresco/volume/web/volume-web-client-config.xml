@@ -16,9 +16,20 @@
             </params>
          </action>
 
+          <action id="volume_archive">
+              <evaluator>ee.webmedia.alfresco.volume.web.evaluator.VolumeClosedActionEvaluator</evaluator>
+              <label-id>volume_archive</label-id>
+              <image>/images/icons/versioned_properties.gif</image>
+              <action-listener>#{VolumeDetailsDialog.archive}</action-listener>
+          </action>
+         
          <action-group id="browse_actions_volume">
             <action idref="volume_add_new" />
          </action-group>
+
+          <action-group id="volume_actions">
+              <action idref="volume_archive"/>
+          </action-group>
 
       </actions>
       <dialogs>
@@ -27,7 +38,7 @@
          </dialog>
 
          <dialog name="volumeDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/volume/web/volume-details-dialog.jsp" managed-bean="VolumeDetailsDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="volume_details" show-ok-button="true">
+            icon="/images/icons/versioned_properties_large.gif" title-id="volume_details" show-ok-button="true" actions-config-id="volume_actions">
             <buttons>
                <button id="close-button" label-id="close" action="#{VolumeDetailsDialog.close}" disabled="#{VolumeDetailsDialog.closed}" />
             </buttons>
@@ -37,15 +48,17 @@
 
    <config evaluator="node-type" condition="vol:volume">
       <property-sheet>
-         <show-property name="vol:volumeMark" display-label-id="volume_volumeMark" readOnlyIf="vol:status=suletud" />
-         <show-property name="vol:title" display-label-id="volume_title" readOnlyIf="vol:status=suletud" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="vol:volumeType" display-label-id="volume_volumeType" classificatorName="volumeType" component-generator="ClassificatorSelectorGenerator" readOnlyIf="vol:status=suletud" />
-         <show-property name="vol:containsCases" display-label-id="volume_containsCases" component-generator="CheckboxGenerator" readOnlyIf="vol:status=suletud" />
-         <show-property name="vol:description" display-label-id="volume_description" readOnlyIf="vol:status=suletud" styleClass="expand5-200" component-generator="TextAreaGenerator"/>
-         <show-property name="vol:validFrom" display-label-id="volume_validFrom" readOnlyIf="vol:status=suletud" />
-         <show-property name="vol:validTo" display-label-id="volume_validTo" readOnlyIf="vol:status=suletud" />
+         <show-property name="vol:volumeMark" display-label-id="volume_volumeMark" readOnlyIf="vol:status=suletud||hävitatud" />
+         <show-property name="vol:title" display-label-id="volume_title" readOnlyIf="vol:status=suletud||hävitatud" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="vol:volumeType" display-label-id="volume_volumeType" classificatorName="volumeType" component-generator="ClassificatorSelectorGenerator" readOnlyIf="vol:status=suletud||hävitatud" />
+         <show-property name="vol:containsCases" display-label-id="volume_containsCases" component-generator="CheckboxGenerator" readOnlyIf="vol:status=suletud||hävitatud" />
+         <show-property name="vol:description" display-label-id="volume_description" readOnlyIf="vol:status=suletud||hävitatud" styleClass="expand5-200" component-generator="TextAreaGenerator"/>
+         <show-property name="vol:validFrom" display-label-id="volume_validFrom" readOnlyIf="vol:status=suletud||hävitatud" />
+         <show-property name="vol:validTo" display-label-id="volume_validTo" readOnlyIf="vol:status=suletud||hävitatud" />
          <show-property name="vol:status" display-label-id="series_status" read-only="true" classificatorName="docListUnitStatus" component-generator="ClassificatorSelectorGenerator" />
-         <show-property name="vol:dispositionDate" display-label-id="volume_dispositionDate" />
+         <show-property name="vol:dispositionDate" display-label-id="volume_dispositionDate" readOnlyIf="vol:status=hävitatud"/>
+         <show-property name="vol:archivingNote" display-label-id="volume_archive_note" readOnlyIf="vol:status=hävitatud"/>
+         <show-property name="vol:sendToDestruction" display-label-id="volume_sendToDestruction" />
       </property-sheet>
    </config>
 </alfresco-config>

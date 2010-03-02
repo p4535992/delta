@@ -121,7 +121,100 @@
             <action-listener>#{DocumentSendOutDialog.loadDocument}</action-listener>
             <params><param name="documentNodeRef">#{DialogManager.bean.node.nodeRef}</param></params>
          </action>
-				 
+
+         <action id="document_errandOrderApplicant_add">
+            <label-id>document_errand_addApplicant</label-id>
+            <tooltip-id>document_errand_addApplicant_tooltip</tooltip-id>
+            <image>/images/icons/add_user.gif</image>
+            <action-listener>#{MetadataBlockBean.addApplicant}</action-listener>
+         </action>
+
+         <action id="document_errandOrderApplicant_remove">
+            <label-id>document_errand_deleteApplicant</label-id>
+            <tooltip-id>document_errand_deleteApplicant_tooltip</tooltip-id>
+            <image>/images/icons/remove_user.gif</image>
+            <action-listener>#{MetadataBlockBean.removeApplicant}</action-listener>
+         </action>
+
+         <action id="document_errandsAbroad_add">
+            <label-id>document_errand_applicantBlock_orderBlock_addErrand</label-id>
+            <tooltip-id>document_errand_applicantBlock_orderBlock_addErrand_tooltip</tooltip-id>
+            <image>/images/icons/add_item.gif</image>
+            <action-listener>#{MetadataBlockBean.addErrand}</action-listener>
+         </action>
+
+         <action id="document_errandsAbroad_remove">
+            <label-id>document_errand_applicantBlock_orderBlock_removeErrand</label-id>
+            <tooltip-id>document_errand_applicantBlock_orderBlock_removeErrand_tooltip</tooltip-id>
+            <image>/images/icons/remove_item.gif</image>
+            <action-listener>#{MetadataBlockBean.removeErrand}</action-listener>
+         </action>
+
+         <action-group id="document_errandOrderApplicant">
+            <action idref="document_errandOrderApplicant_remove" />
+            <action idref="document_errandOrderApplicant_add" />
+         </action-group>
+
+         <action-group id="document_errandsAbroad">
+            <action idref="document_errandsAbroad_remove" />
+            <action idref="document_errandsAbroad_add" />
+         </action-group>
+
+         <action id="document_proceeding_stop">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ProceedingStopActionEvaluator</evaluator>
+            <label-id>document_proceeding_stop</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.toggleProceeding}</action-listener>
+         </action>
+
+         <action id="document_proceeding_continue">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ProceedingContinueActionEvaluator</evaluator>
+            <label-id>document_proceeding_continue</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.toggleProceeding}</action-listener>
+         </action>
+
+          <action id="document_end">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.EndDocumentEvaluator</evaluator>
+            <label-id>document_end</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.endDocument}</action-listener>
+         </action>
+
+         <action id="document_reopen">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ReopenDocumentEvaluator</evaluator>
+            <label-id>document_reopen</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.reopenDocument}</action-listener>
+         </action>
+
+          <action id="document_delete">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.DeleteDocumentEvaluator</evaluator>
+            <label-id>document_delete</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDialog.deleteDocument}</action-listener>
+         </action>
+
+          <action id="document_favorites_add">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.AddFavoritesDocumentEvaluator</evaluator>
+            <label-id>document_favorites_add</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{FavoritesDocumentListDialog.add}</action-listener>
+            <params>
+               <param name="nodeRef">#{DocumentDialog.node.nodeRef}</param>
+            </params>
+         </action>
+
+          <action id="document_favorites_remove">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.RemoveFavoritesDocumentEvaluator</evaluator>
+            <label-id>document_favorites_remove</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{FavoritesDocumentListDialog.remove}</action-listener>
+            <params>
+               <param name="nodeRef">#{DocumentDialog.node.nodeRef}</param>
+            </params>
+         </action>
+
          <action-group id="document_actions">
             <action idref="document_copy" />
             <action idref="word_file_from_document" />
@@ -129,6 +222,15 @@
             <action idref="document_createReply" />
             <action idref="document_createFollowUp" />
             <action idref="document_send_out" />
+            <action idref="create_forum_node_override" />
+            <action idref="discuss_node_override" />
+            <action idref="document_proceeding_stop" />
+            <action idref="document_proceeding_continue" />
+            <action idref="document_end"/>
+            <action idref="document_reopen"/>
+            <action idref="document_delete"/>
+            <action idref="document_favorites_add"/>
+            <action idref="document_favorites_remove"/>
          </action-group>
 
         <action-group id="document_more_actions">
@@ -162,6 +264,9 @@
 
          <dialog name="unsentDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="UnsentDocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_list" show-ok-button="false" />
+
+         <dialog name="favoritesDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="FavoritesDocumentListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_myFavorites" show-ok-button="false" />
       </dialogs>
    </config>
 </alfresco-config>

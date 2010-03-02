@@ -49,6 +49,15 @@
             </property>
          </properties>
       </type>
+      
+      <type name="doctype:selector">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="doctype:selected">
+            <type>d:text</type>
+            </property>
+         </properties>
+      </type>
 
    </types>
 

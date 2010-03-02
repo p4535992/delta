@@ -4,7 +4,11 @@ import java.io.Serializable;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.cmr.model.FileExistsException;
+import org.alfresco.service.cmr.model.FileNotFoundException;
+import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.NavigationBean;
 import org.alfresco.web.bean.repository.Node;
@@ -13,6 +17,8 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * @author Dmitri Melnikov
@@ -25,10 +31,22 @@ public class FileBlockBean implements Serializable {
     private NavigationBean navigationBean;
     private List<File> files;
     private NodeRef nodeRef;
+    
+    public void toggleActive(ActionEvent event) {
+        NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+        getFileService().toggleActive(fileNodeRef);
+        restore(); // refresh the files list
+    }
+
+    public void transformToPdf(ActionEvent event) {
+        NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+        getFileService().transformToPdf(nodeRef);
+        restore(); // refresh the files list
+    }
 
     public void init(Node node) {
         this.nodeRef = node.getNodeRef();
-        files = getFileService().getAllFiles(nodeRef);
+        restore();
         // Alfresco's AddContentDialog.saveContent uses
         // navigationBean.getCurrentNodeId() for getting the folder to save to
         navigationBean.setCurrentNodeId(node.getId());
@@ -42,6 +60,20 @@ public class FileBlockBean implements Serializable {
 
     public void restore() {
         files = getFileService().getAllFiles(nodeRef);
+    }
+    
+    public boolean moveAllFiles(NodeRef toRef) {
+        try {
+            fileService.moveAllFiles(nodeRef, toRef);
+            return true;
+        } catch (DuplicateChildNodeNameException e) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "add_file_existing_file", e.getName());
+        } catch (FileExistsException e) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "add_file_existing_file", e.getName());
+        } catch (FileNotFoundException e) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_not_found");
+        }
+        return false;
     }
 
     /**

@@ -524,7 +524,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
     * 
     * @return IGridDataModel 
     */
-   private IGridDataModel getDataModel()
+   public IGridDataModel getDataModel()
    {
       if (this.dataModel == null)
       {
@@ -906,7 +906,12 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
                     .getWrappedFacesEvent();
             int eventRowIndex = ((FacesEventWrapper) event).getRowIndex();
             int currentRowIndex = getRowIndex();
-            setRowIndex(eventRowIndex);
+            // Romet: UIGenericPicker.PickerEvent is broadcasted also when row is deleted,
+            // so we would get index out of bounds exception without this check.
+            // Probably there should be better way to handle this.
+            if (getDataModel().size() > eventRowIndex) {
+                setRowIndex(eventRowIndex);
+            }
             try
             {
               originalEvent.getComponent().broadcast(originalEvent);

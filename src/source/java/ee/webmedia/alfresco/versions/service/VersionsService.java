@@ -33,8 +33,9 @@ public interface VersionsService {
      * Updates the version if the node is unlocked. 
      * Sets VersionsModel.Props.VersionLockable.LOCKED property of the VersionsModel.Aspects.VERSION_LOCKABLE aspect to true. 
      * @param nodeRef
+     * @param filename TODO
      */
-    void updateVersion(NodeRef nodeRef);
+    void updateVersion(NodeRef nodeRef, String filename);
     
     /**
      * Returns the value of the VersionsModel.Props.VersionLockable.LOCKED property if the node has VersionsModel.Aspects.VERSION_LOCKABLE aspect.

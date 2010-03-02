@@ -2,8 +2,6 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <import resource="classpath:ee/webmedia/alfresco/addressbook/addressbook-dvk-context.xml" />
-
    <bean id="addressbookModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
       <property name="models">
          <list>
@@ -23,7 +21,6 @@
       <property name="searchService" ref="SearchService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="authorityService" ref="AuthorityService" />
-      <property name="dvkService" ref="DvkService" />
       <property name="store" value="${spaces.store}" />
       <property name="searchFields">
          <set>
@@ -34,6 +31,11 @@
 <!-- The following value must remain in TK project -->
 <!-- <value>ab:orgCode</value> -->
             <value>ab:orgAcronym</value>
+         </set>
+      </property>
+      <property name="contactGroupSearchFields">
+         <set>
+            <value>ab:groupName</value>
          </set>
       </property>
    </bean>

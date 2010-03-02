@@ -512,7 +512,7 @@ a.action {
 	TABLES
 	******************************/
 th {
-	font-size: 11px;
+	font-size: 12px;
 	font-weight: bold;
 	border-bottom: 1px dotted #cacfd3;
 }
@@ -526,7 +526,7 @@ tr.recordSetRow td,tr.recordSetRow td span,tr.recordSetRowAlt td,tr.recordSetRow
 }
 
 tr.recordSetRowAlt,.odd {
-	background: #f9f9f9;
+	background: #efefef;/*#f9f9f9;*/
 }
 
 tr.task td:first-child a:first-child {
@@ -789,6 +789,10 @@ input.medium {
 	width: 153px;
 }
 
+.multiE > thead > tr > th {
+	padding-right: 6px;
+}
+
 input.spacing-top {
 	margin-top: 5px;
 }
@@ -859,8 +863,28 @@ input.medium {
 	line-height: 20px;
 }
 
+.add-catering {
+	background: url("../images/icons/cutlery.png") no-repeat;
+	line-height: 20px;
+}
+
+.add-expense {
+	background: url("../images/icons/money_euro.png") no-repeat;
+	line-height: 20px;
+}
+
 .delete {
 	background: url("../images/icons/delete.gif") no-repeat;
+	line-height: 20px;
+}
+
+.cancel-task {
+	background: url("../images/icons/cancel_workflow.gif") no-repeat;
+	line-height: 20px;
+}
+
+.finish-task {
+	background: url("../images/icons/completed_workflow_item.gif") no-repeat;
 	line-height: 20px;
 }
 
@@ -902,8 +926,15 @@ table.recipient th {
 }
 */
 
-#metadata-panel td input, #metadata-panel td textarea, #file-upload td textarea {
+#metadata-panel td input, #metadata-panel td textarea, #file-upload td textarea, .subPropSheet > tbody > tr > td > input {
 	width: 300px;
+}
+.subPropertySheetTR td input, .subPropertySheetTR td textarea, .subPropertySheetTR td textarea {
+	width: 300px !importaint;
+}
+
+.subPropertySheetTR .propertiesLabel + td > input {
+	width: 300px !important;
 }
 
 #metadata-panel td td input {
@@ -978,6 +1009,14 @@ table.recipient td {
 	width: 170px !important;
 }
 
+.recipient.tasks thead tr th {
+   border-bottom: 0px none;
+}
+
+.recipient.tasks tbody td {
+	height: 20px;
+}
+
 .icon-link {
 	cursor: pointer;
 }
@@ -992,6 +1031,10 @@ table.recipient td {
 
 .margin-left-4 {
 	margin-left: 4px;
+}
+
+.margin-right-4 {
+	margin-right: 4px;
 }
 
 .overflow-wrapper {
@@ -1492,9 +1535,110 @@ DIV.modalpopup-footer P.action {
 	display: none !important;
 }
 
+.subPropertySheetTD span {
+	float: right;
+}
+.subPropertySheetTD table {
+	clear: right;
+}
+
 .incomingLetter > span {
 	color: #1E4975 !important;	
 }
 .outgoingLetter > span {
 	color: green !important;	
+}
+/* FORUMS */
+
+.new-post-bubble {
+	border: 1px solid #1B86CD;
+	 
+}
+
+.reply-to-bubble {
+	border: 1px solid #1B86CD; 
+}
+
+.bubble-header-contents {
+	border: 5px solid #fff;
+	background-color: #f1f1f1;
+}
+
+.reply-to-bubble .bubble-header-contents {
+	background-color: #f1f1f1;
+}
+
+.bubble-creator-name {
+	font-weight: bold;
+	border-bottom: 1px solid #ccc;
+	margin-bottom: 5px;
+	position: relative;
+}
+
+.new-post-bubble td,
+.reply-to-bubble td {
+	padding: 10px;
+}
+
+.bubble-header-contents td {
+	padding: 3px 0;
+}
+
+.bubble-actions {
+	position: absolute;
+	right: 0px;
+	top: -1px;
+}
+
+.center {
+	text-align: center;
+}
+
+/* WORKFLOW */
+
+.workflow-row td {
+	border-top: 10px solid #fff;
+	background-color: #F7F7F7;
+}
+
+.workflow-task-details {
+	padding-top: 0 !important;
+}
+
+.workflow-task-details * {
+	font-size: 12px !important;
+}
+
+.workflow-task-details td {
+	padding-top: 0 !important;
+	padding-bottom: 0 !important;
+}
+
+
+.task-details-resolution,
+.workflow-resolution td {
+	padding: 5px 5px 10px;
+	background-color: #F7F7F7;
+	border-bottom: 2px solid #ccc;
+	margin-bottom: 5px;
+}
+
+.workflow-details > td {
+	padding-bottom: 20px;
+}
+
+.workflow-details.last > td {
+	padding-bottom: 0px;
+}
+
+.up4px {
+	vertical-align: -4px;
+}
+
+.bold {
+	font-weight: bold;
+}
+
+TH A.header-wrap {
+   white-space: normal !important;
 }

@@ -48,8 +48,8 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
 
         Collections.sort(classificators);
         ClassificatorValue defaultOrExistingValue = null;
-        String existingValue = null;
-        if (!multiValued) {
+        String existingValue = boundValue instanceof String ? (String)boundValue : null;
+        if (!multiValued && existingValue == null) {
             existingValue = getGeneralService().getExistingRepoValue4ComponentGenerator();
         }
         for (ClassificatorValue classificator : classificators) {

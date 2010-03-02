@@ -3,6 +3,11 @@
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
    <import resource="classpath:ee/webmedia/alfresco/common/propertysheet/common-propertysheet-context.xml"/>
+   
+   <bean id="sessionContext" class="ee.webmedia.alfresco.common.web.SessionContext" scope="session">
+   
+   </bean>
+   
    <!--
       Overrides 'global-properties' bean defined in
       alfresco/WEB-INF/classes/alfresco/core-services-context.xml
@@ -118,6 +123,8 @@
       <property name="searchService" ref="SearchService" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="fileFolderService" ref="FileFolderService" />
+      <property name="contentService" ref="ContentService" />
+      <property name="mimetypeService" ref="MimetypeService" />
    </bean>
    
    <bean id="GeneralService" class="org.springframework.aop.framework.ProxyFactoryBean">

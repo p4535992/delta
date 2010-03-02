@@ -4,13 +4,13 @@
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
 
 <a:panel id="add-authority-search" styleClass="column panel-50" label="#{msg.select_users_groups}">
-   <a:genericPicker id="picker" filters="#{PermissionsAddDialog.usersGroupsFilters}" queryCallback="#{PermissionsAddDialog.searchUsersGroups}" actionListener="#{PermissionsAddDialog.addAuthorities}" />
+   <a:genericPicker id="picker" filters="#{DialogManager.bean.usersGroupsFilters}" queryCallback="#{DialogManager.bean.searchUsersGroups}" actionListener="#{DialogManager.bean.addAuthorities}" />
 </a:panel>
 
 <a:panel id="add-authority-list" styleClass="column panel-50" label="#{msg.selected_users_groups}">
 
-   <h:dataTable value="#{PermissionsAddDialog.authorities}" var="row" rowClasses="selectedItemsRow,selectedItemsRowAlt" styleClass="selectedItems"
-      headerClass="selectedItemsHeader" cellspacing="0" cellpadding="4" rendered="#{PermissionsAddDialog.authorities.rowCount != 0}">
+   <h:dataTable value="#{DialogManager.bean.authorities}" var="row" rowClasses="selectedItemsRow,selectedItemsRowAlt" styleClass="selectedItems"
+      headerClass="selectedItemsHeader" cellspacing="0" cellpadding="4" rendered="#{DialogManager.bean.authorities.rowCount != 0}">
       <h:column>
          <f:facet name="header">
             <h:outputText value="#{msg.name}" />
@@ -19,12 +19,12 @@
          <h:outputText value="#{row.name}" />
       </h:column>
       <h:column>
-         <a:actionLink actionListener="#{PermissionsAddDialog.removeAuthority}" image="/images/icons/delete.gif" value="#{msg.remove}" showLink="false"
+         <a:actionLink actionListener="#{DialogManager.bean.removeAuthority}" image="/images/icons/delete.gif" value="#{msg.remove}" showLink="false"
             style="padding-left:6px" />
       </h:column>
    </h:dataTable>
 
-   <a:panel id="no-items" rendered="#{PermissionsAddDialog.authorities.rowCount == 0}">
+   <a:panel id="no-items" rendered="#{DialogManager.bean.authorities.rowCount == 0}">
       <h:outputText id="no-items-msg" value="#{msg.no_selected_items}" />
    </a:panel>
 

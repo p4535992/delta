@@ -38,6 +38,10 @@ import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.notification.model.NotificationModel;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
+
 /**
  * Bean implementation for the "Delete Content" dialog
  *
@@ -131,6 +135,7 @@ public class DeleteContentDialog extends BaseDialogBean
       String fileConfirmMsg = null;
 
       Node document = this.browseBean.getDocument();
+      String documentName = document.getName();
 
       if(document.getType().equals(ContentModel.TYPE_MULTILINGUAL_CONTAINER))
       {
@@ -147,6 +152,14 @@ public class DeleteContentDialog extends BaseDialogBean
           fileConfirmMsg = Application.getMessage(FacesContext.getCurrentInstance(),
               "delete_translation_confirm");
       }
+      else if (document.getType().equals(WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION)) {
+          fileConfirmMsg = MessageUtil.getMessage("delete_compound_workflow_confirm");
+          documentName = (String)document.getProperties().get(WorkflowCommonModel.Props.NAME);
+      }
+      else if (document.getType().equals(NotificationModel.Types.GENERAL_NOTIFICATION)) {
+          fileConfirmMsg = MessageUtil.getMessage("notification_delete_notification_confirm");
+          documentName = (String)document.getProperties().get(WorkflowCommonModel.Props.NAME);
+      }
       else
       {
           String strHasMultipleParents = this.parameters.get("hasMultipleParents");
@@ -162,9 +175,24 @@ public class DeleteContentDialog extends BaseDialogBean
           }
       }
 
-      return MessageFormat.format(fileConfirmMsg,
-            new Object[] {document.getName()});
+      return MessageFormat.format(fileConfirmMsg, new Object[] {documentName});
    }
+   
+   @Override
+    public String getContainerTitle() {
+       String title = null;
+       Node document = this.browseBean.getDocument();
+       
+       if (document.getType().equals(NotificationModel.Types.GENERAL_NOTIFICATION)) {
+           title = MessageUtil.getMessage("notification_delete_notification");
+       }
+       else if (document.getType().equals(WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION)) {
+           title = MessageUtil.getMessage("delete_compound_workflow_confirm");
+       }
+       
+        return title;
+    }
+   
 
    /**
    * @param multilingualContentService the Multilingual Content Service to set

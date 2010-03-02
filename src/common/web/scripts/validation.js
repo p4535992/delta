@@ -17,6 +17,27 @@ function informUser(control, message, showMessage)
 }
 
 /**
+ * Try to validate value set by picker. If value of picker is not set, then check if value has been set manually.
+ * @return true if value has been set
+ * @author Ats Uiboupin
+ */
+function validateSearchMandatory(control, message, showMessage) {
+   if (control.value == null || control.value.length == 0) {
+      var hiddenIn = $jQ(control);
+      var inputs = hiddenIn.prev().find("tbody tr td input");
+      if(null != inputs.get(0)) {
+         var manualValue = inputs.val().trim();
+         if (manualValue != null && manualValue.length != 0) {
+            return true; // value set manually
+         }
+      }
+   } else {
+      return true; // value set using picker
+   }
+   informUser(control, message, showMessage);
+   return false;
+}
+/**
  * Ensures the value of the 'control' is not null or 0.
  *
  * @return true if the mandatory validation passed

@@ -6,6 +6,8 @@
 
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
+<%@ page import="org.alfresco.web.app.Application"%>
+<%@ page import="javax.faces.context.FacesContext"%>
 
 <f:verbatim>
 <div id="aoscModal-container-modalpopup" class="modalpopup modalwrap">
@@ -41,18 +43,33 @@
 
 <script type="text/javascript">
 var volumeContainsCases = true;
+var registerButtonPressed = false;
 $jQ(document).ready(function(){
    relocateRadioButtons();
    clearCaseSelectionInputs();
 
-   $jQ('#' + escapeId4JQ('dialog:finish-button') + ', #' + escapeId4JQ('dialog:document_register_button')).bind("click", function(e){
+   $jQ('#' + escapeId4JQ('dialog:documentRegisterButton')).bind("click", function(e){
+      registerButtonPressed = true;
+      var finishButton = $jQ('#' + escapeId4JQ('dialog:finish-button'));
+      if(finishButton.attr('disabled')) {
+         alert("<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("document_mandatory_fields_are_empty")%>");
+         return false;
+      }
+      return proccessSubmitOrRegisterButton();
+   });
+
+   $jQ('#' + escapeId4JQ('dialog:finish-button')).bind("click", function(e){
+      return proccessSubmitOrRegisterButton();
+   });
+
+   function proccessSubmitOrRegisterButton() {
       if(!volumeContainsCases || isCaseAssigned()){
-         volumeContainsCases = true;
-         return true; // case selected, proceed
+          volumeContainsCases = true;
+          return true; // case selected, proceed
       }
       requestVolumeContainsCases();// ajax call. Based on input show case selection modal
       return false; // case not selected
-    });
+   }
 
    var class_selectCase = "aoscModal-selectCase";
    var class_newCase = "aoscModal-newCase";
@@ -126,7 +143,11 @@ $jQ(document).ready(function(){
    
    function realSubmit(){
       if(isCaseAssigned()){
-         $jQ('#' + escapeId4JQ('dialog:finish-button')).click();
+         if(registerButtonPressed) {
+        	$jQ('#' + escapeId4JQ('dialog:documentRegisterButton')).click();
+         } else {
+            $jQ('#' + escapeId4JQ('dialog:finish-button')).click();
+         }
          return true; // case selected
       } else {
          return false;
@@ -150,7 +171,9 @@ $jQ(document).ready(function(){
    }
 
    function clearCaseSelectionInputs(){
-      var newCaseInput = $jQ(".aoscModal-newCase.assignCaseInput").val("");
+      var newCaseInputElem = $jQ(".aoscModal-newCase.assignCaseInput");
+      newCaseInputElem.html(""); // jsf sets inner html not value attribute, that might cause troubles
+      var newCaseInput = newCaseInputElem.val("");
       var selectCaseInput = $jQ(".aoscModal-selectCase");
       if(selectCaseInput != null){
          $jQ(selectCaseInput).val($jQ('option:first', selectCaseInput).val());
@@ -171,10 +194,15 @@ $jQ(document).ready(function(){
       var xml = ajaxResponse.responseXML.documentElement;
       if(xml.getAttribute('volume-selection-changed') == "true" && xml.getAttribute('contains-cases') == "true"){
          volumeContainsCases = true;
+         clearCaseSelectionInputs();
          showModal('aoscModal-container-modalpopup');
       } else {
          volumeContainsCases = false;
-         $jQ('#' + escapeId4JQ('dialog:finish-button')).click();
+         if(registerButtonPressed) {
+         	$jQ('#' + escapeId4JQ('dialog:documentRegisterButton')).click();
+         } else {
+            $jQ('#' + escapeId4JQ('dialog:finish-button')).click();
+         }
       }
    }
    

@@ -1,0 +1,9 @@
+<alfresco-config>
+   <config>
+       <dialogs>
+          <dialog name="forRegisteringListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp"
+                  managed-bean="ForRegisteringListDialog" show-ok-button="false"
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" />
+      </dialogs>
+   </config>
+</alfresco-config>

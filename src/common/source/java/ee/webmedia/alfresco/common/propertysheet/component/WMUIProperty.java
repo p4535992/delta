@@ -1,15 +1,13 @@
 package ee.webmedia.alfresco.common.propertysheet.component;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
-import javax.faces.component.NamingContainer;
 import javax.faces.component.html.HtmlOutputText;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.IComponentGenerator;
-import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -22,12 +20,13 @@ import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
  * 
  * @author Ats Uiboupin
  */
-public class WMUIProperty extends UIProperty implements NamingContainer, CustomAttributes {
+public class WMUIProperty extends UIProperty implements CustomAttributes {
 
     public static final String LABEL_STYLE_CLASS = "labelStyleClass";
     public static final String REPO_NODE = "__repo_node";
     protected Map<String, String> propertySheetItemAttributes;
 
+    @Override
     protected IComponentGenerator getComponentGenerator(FacesContext context, String componentGeneratorName) {
         IComponentGenerator compGenerator = FacesHelper.getComponentGenerator(context, componentGeneratorName);
         // add all attributes from property-sheet/show-property element if current generator supports custom attributes
@@ -38,22 +37,13 @@ public class WMUIProperty extends UIProperty implements NamingContainer, CustomA
         return compGenerator;
     }
 
-    protected void saveExistingValue4ComponentGenerator(FacesContext context, Node node, String propertyName) {
-        // subclasses can save value of existing property (for example to context) based on 
-        // propertyName and value corresponding to propertyName from node properties.
-        @SuppressWarnings("unchecked")
-        Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
-        requestMap.put(REPO_NODE, new Object[] {node, propertyName});
-    }
-
     // START: getters / setters
     @Override
     public Map<String, String> getCustomAttributes() {
         if (propertySheetItemAttributes == null) {
-            return Collections.emptyMap();
-        } else {
-            return Collections.unmodifiableMap(propertySheetItemAttributes);
+            propertySheetItemAttributes = new HashMap<String, String>(0);
         }
+        return propertySheetItemAttributes;
     }
 
     @Override

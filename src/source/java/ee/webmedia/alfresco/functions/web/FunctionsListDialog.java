@@ -18,7 +18,7 @@ public class FunctionsListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
     private transient FunctionsService functionsService;
-    private List<Function> functions;
+    protected List<Function> functions;
 
     @Override
     public void init(Map<String, String> params) {
@@ -49,7 +49,7 @@ public class FunctionsListDialog extends BaseDialogBean {
     }
 
     // START: private methods
-    private void loadFunctions() {
+    protected void loadFunctions() {
         functions = getFunctionsService().getAllFunctions();
         Collections.sort(functions);
     }

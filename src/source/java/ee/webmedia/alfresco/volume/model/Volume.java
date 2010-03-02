@@ -1,14 +1,17 @@
 package ee.webmedia.alfresco.volume.model;
 
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Date;
 
+import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
+import org.apache.commons.lang.time.DateUtils;
 
 @AlfrescoModelType(uri = VolumeModel.URI)
 public class Volume implements Serializable, Comparable<Volume> {
@@ -108,6 +111,11 @@ public class Volume implements Serializable, Comparable<Volume> {
 
     public void setNode(Node node) {
         this.node = node;
+    }
+
+    public boolean isDisposed() {
+        return DocListUnitStatus.DESTROYED.getValueName().equals(status) ||
+                (dispositionDate != null && dispositionDate.after(DateUtils.truncate(new Date(), Calendar.DATE)));
     }
 
     @Override

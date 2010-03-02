@@ -92,7 +92,7 @@ public class DocumentTypeServiceImpl implements DocumentTypeService {
         }
         final DocumentType documentType = getDocumentType(qName);
         if(documentType==null) {
-            throw new RuntimeException("docTypeId '"+docTypeId+"' was not resolved to QName");
+            throw new RuntimeException("docType '"+qName+"' was not found in document types list");
         }
         return documentType;
     }

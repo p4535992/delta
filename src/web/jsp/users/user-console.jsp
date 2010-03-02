@@ -112,3 +112,6 @@
       style="margin-top: 20px; display: block;" />
 
 </a:panel>
+
+<h:outputText value="#{AssignResponsibilityBean.setFromOwnerUserConsole}" />
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/assignresponsibility/web/assign-responsibility.jsp" />

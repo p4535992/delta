@@ -1,0 +1,116 @@
+<alfresco-config>
+   <config>
+      <actions>
+
+         <!-- Discuss document or space e.g. jump to Forums view for this node -->
+         <action id="create_forum_node_override">
+            <permissions>
+               <permission allow="true">Collaborator</permission>
+            </permissions>
+            <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.CreateForumNodeEvaluator</evaluator>
+            <label-id>start_discussion</label-id>
+            <image>/images/icons/create_forum.gif</image>
+            <action>dialog:createDiscussion</action>
+            <action-listener>#{DialogManager.setupParameters}</action-listener>
+            <params>
+               <param name="id">#{DocumentDialog.node.id}</param>
+            </params>
+         </action>
+
+         <!-- Discuss document or space e.g. jump to Forums view for this node -->
+         <action id="discuss_node_override">
+            <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.DiscussNodeEvaluator</evaluator>
+            <label-id>discuss</label-id>
+            <image>/images/icons/forum-16.gif</image>
+            <action-listener>#{ForumsBean.discuss}</action-listener>
+            <params>
+               <param name="id">#{actionContext.id}</param>
+            </params>
+         </action>
+         
+         <action id="forum_permissions">
+            <permissions>
+               <permission allow="true">ReadPermissions</permission>
+            </permissions>
+            <label-id>manage_invited_users</label-id>
+            <image>/images/icons/invite.gif</image>
+            <action-listener>#{PermissionsListDialog.setup}</action-listener>
+            <action>dialog:permissionsListDialog</action>
+            <params>
+               <param name="nodeRef">#{ForumsBean.forumNodeRef}</param>
+               <param name="permission">DocumentFileRead</param>
+               <param name="notify">true</param>
+               <param name="alternateConfigId">forum_invite_users</param>
+            </params>
+         </action>
+         
+         <action id="invite_users">
+            <label-id>add_user_group</label-id>
+            <image>/images/icons/add_user.gif</image>
+            <action>dialog:inviteUsersDialog</action>
+            <action-listener>#{InviteUsersDialog.setup}</action-listener>
+            <params>
+               <param name="nodeRef">#{PermissionsListDialog.nodeRef}</param>
+               <param name="permission">#{PermissionsListDialog.permission}</param>
+               <param name="templateName">Kutse arutelus osalemiseks.html</param>
+            </params>
+         </action>
+         
+         <!-- Delete a Topic -->
+         <action id="delete_topic_admin">
+            <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.DeleteTopicOrForumEvaluator</evaluator>
+            <permissions>
+               <permission allow="true">Delete</permission>
+            </permissions>
+            <label-id>delete_topic</label-id>
+            <image>/images/icons/delete_topic.gif</image>
+            <action>dialog:deleteSpace</action>
+            <action-listener>#{BrowseBean.setupDeleteAction}</action-listener>
+            <params>
+               <param name="id">#{actionContext.id}</param>
+            </params>
+         </action>
+         
+         <!-- Delete a Forum space -->
+         <action id="delete_forum_admin">
+            <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.DeleteTopicOrForumEvaluator</evaluator>
+            <permissions>
+               <permission allow="true">Delete</permission>
+            </permissions>
+            <label-id>delete_forum</label-id>
+            <image>/images/icons/delete_forum.gif</image>
+            <action>dialog:deleteSpace</action>
+            <action-listener>#{BrowseBean.setupDeleteAction}</action-listener>
+            <params>
+               <param name="id">#{actionContext.id}</param>
+            </params>
+         </action>
+         
+         <!-- Actions for topics in Topic view -->
+         <action-group id="topic_actions_override">
+            <action idref="post_reply" />
+         </action-group>
+
+         <action-group id="forum_invite_users">
+            <action idref="invite_users" />
+         </action-group>
+         
+         <action-group id="forum_topic_actions">
+            <action idref="create_topic" />
+            <action idref="delete_forum_admin" />
+            <action idref="forum_permissions" />
+         </action-group>
+         
+         <action-group id="forum_post_actions">
+            <action idref="create_post" />
+            <action idref="delete_topic_admin" />
+         </action-group>
+         
+      </actions>
+      <dialogs>
+         <dialog name="inviteUsersDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-add-dialog.jsp" managed-bean="InviteUsersDialog"
+               icon="/images/icons/users_large.gif" title-id="manage_invited_users" />
+      </dialogs>
+      
+   </config>
+</alfresco-config>

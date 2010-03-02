@@ -22,7 +22,7 @@ public class DocumentTypeMenuItemProcessor implements MenuItemProcessor, Initial
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        menuService.addProcessor("documentTypes", this);
+        menuService.addProcessor("documentTypes", this, true);
     }
 
     @Override

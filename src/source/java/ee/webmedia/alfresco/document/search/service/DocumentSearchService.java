@@ -1,13 +1,19 @@
 package ee.webmedia.alfresco.document.search.service;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
+import ee.webmedia.alfresco.workflow.service.Task;
 
 /**
  * @author Alar Kvell
@@ -30,6 +36,8 @@ public interface DocumentSearchService {
      * @return list of matching documents (max 100 entries)
      */
     List<Document> searchDocumentsQuick(String searchString);
+
+    List<Document> searchDocumentsQuick(String searchValue, boolean includeCaseTitles); 
 
     /**
      * Searches for documents using a search filter.
@@ -82,4 +90,81 @@ public interface DocumentSearchService {
      */
     List<Series> searchSeriesUnit(String unit);
 
+    /**
+     * Searches documents are available for registering.
+     *
+     * @return list of documents
+     */
+    List<Document> searchDocumentsForRegistering();
+
+    /**
+     * Gets the count of documents available for registering.
+     *
+     * @return count
+     */
+    int getCountOfDocumentsForRegistering();
+    
+    /**
+     * Returns all tasks that are in progress for currently logged in user 
+     * @param taskType
+     */
+    List<Task> searchCurrentUsersTasksInProgress(QName taskType);
+    
+    /**
+     * Returns number of tasks of specified type that are assigned to currently logged in user
+     * @param taskType
+     * @return
+     */
+    int getCurrentUsersTaskCount(QName taskType);
+    
+    /**
+     * Searches for tasks using a search filter.
+     * 
+     * @param filter
+     * @return list of matching tasks
+     */
+    List<TaskInfo> searchTasks(Node filter);
+    
+    /**
+     * If due date is null, then list with due tasks is returned (dueDate < sysDate)
+     * @param dueDate
+     * @return
+     */
+    List<Task> searchTasksDueAfterDate(Date dueDate);
+
+    List<Volume> searchVolumesDispositionedAfterDate(Date dispositionDate);
+
+    /**
+     * Search for documents of type INCOMING_LETTER, where register data and number is not empty
+     * and sender's reg numbers are same.
+     * @param senderRegNumber
+     * @return list of found documents
+     */
+    List<Document> searchIncomingLetterRegisteredDocuments(String senderRegNumber);
+
+    List<Document> searchAccessRestictionEndsAfterDate(Date restrictionEndDate);
+
+    List<NodeRef> searchWorkingDocumentsByOwnerId(String ownerId);
+
+    List<NodeRef> searchNewTasksByOwnerId(String ownerId);
+
+    /**
+     * Used by ADR web service to search documents.
+     * @param beginDate
+     * @param endDate
+     * @param docType
+     * @param searchString
+     * @param accessRestrictions
+     * @return
+     */
+    List<Document> searchDocumentsADR(Date beginDate, Date endDate, QName docType, String searchString, AccessRestriction[] accessRestrictions);
+
+    /**
+     * Used by ADR web service to search document details. 
+     * @param viit
+     * @param regDate
+     * @param accessRestrictions
+     * @return
+     */
+    List<Document> searchDocumentDetailsADR(String viit, Date regDate, AccessRestriction[] accessRestrictions);
 }

@@ -13,9 +13,20 @@
 
    <types>
 
+      <type name="docsearch:documentSearchFilters">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>docsearch:documentSearchFiltersContainer</aspect>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
       <type name="docsearch:filter">
          <parent>sys:base</parent>
          <properties>
+            <property name="docsearch:name">
+               <type>d:text</type>
+            </property>
             <!-- Otsingu väljundformaat -->
             <property name="docsearch:output">
                <type>d:text</type>
@@ -123,20 +134,39 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>
-   
-            <!-- Saatmisviis (saatmise blokk) -->
-   
+            <property name="docsearch:sendMode">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
             <property name="docsearch:costManager">
                <type>d:text</type>
+               <multiple>true</multiple>
             </property>
-   
-            <!-- Taotleja -->
-            <!-- Lähetuse alguskuupäev -->
-            <!-- Lähetuse lõppkuupäev -->
-            <!-- Lähetuse riik -->
-            <!-- Lähetuse maakond -->
-            <!-- Lähetuse linnad -->
-   
+            <property name="docsearch:applicantName">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:errandBeginDateBegin">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:errandBeginDateEnd">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:errandEndDateBegin">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:errandEndDateEnd">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:errandCountry">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:errandCounty">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docsearch:errandCity">
+               <type>d:text</type>
+            </property>
             <property name="docsearch:responsibleName">
                <type>d:text</type>
             </property>
@@ -146,12 +176,34 @@
             <property name="docsearch:contactPerson">
                <type>d:text</type>
             </property>
-   
-            <!-- Hankemenetluse liik -->
-   
+            <property name="docsearch:procurementType">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+
          </properties>
       </type>
 
    </types>
+
+   <aspects>
+
+      <aspect name="docsearch:documentSearchFiltersContainer">
+         <associations>
+            <child-association name="docsearch:filter">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docsearch:filter</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+   </aspects>
 
 </model>

@@ -21,6 +21,46 @@
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+
+    <managed-bean>
+        <managed-bean-name>ClearStateNotificationHandler</managed-bean-name>
+        <managed-bean-class>ee.webmedia.alfresco.common.web.ClearStateNotificationHandler</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>
+   
+   <!-- Custom Admin Node Browser Bean -->
+   <managed-bean>
+      <description>
+         Backing bean used for the low-level Node Browser
+      </description>
+      <managed-bean-name>AdminNodeBrowseBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.web.WMAdminNodeBrowseBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>transactionService</property-name>
+         <value>#{TransactionService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>nodeService</property-name>
+         <value>#{NodeService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>dictionaryService</property-name>
+         <value>#{DictionaryService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>searchService</property-name>
+         <value>#{SearchService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>namespaceService</property-name>
+         <value>#{NamespaceService}</value>
+      </managed-property>
+      <managed-property>
+         <property-name>permissionService</property-name>
+         <value>#{PermissionService}</value>
+      </managed-property>
+   </managed-bean>
    
    <converter>
       <converter-id>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter</converter-id>

@@ -16,6 +16,10 @@
          <property-name>generalService</property-name>
          <value>#{GeneralService}</value>
       </managed-property>
+      <managed-property>
+         <property-name>userService</property-name>
+         <value>#{UserService}</value>
+      </managed-property>
    </managed-bean>
 
    <!-- ==================== [ COMPONENTS] =================================== -->

@@ -40,6 +40,8 @@ import org.alfresco.config.element.ConfigElementAdapter;
  */
 public class PropertySheetConfigElement extends ConfigElementAdapter
 {
+   private static final long serialVersionUID = 1L;
+
    public static final String CONFIG_ELEMENT_ID = "property-sheet";
    
    protected Map<String, ItemConfig> items = new LinkedHashMap<String, ItemConfig>(8, 10f);
@@ -273,29 +275,30 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
    /**
     * Inner class to represent a configured property sheet item
     */
-   public abstract class ItemConfig
+   public static abstract class ItemConfig
    {
-      private String name;
-      private String displayLabel;
-      private String displayLabelId;
-      private String converter;
-      private String componentGenerator;
-      private boolean readOnly;
-      private boolean showInViewMode = true;
-      private boolean showInEditMode = true;
-      private boolean ignoreIfMissing = true;
+      final protected String name;
+      protected String displayLabel;
+      protected String displayLabelId;
+      protected String converter;
+      protected String componentGenerator;
+      protected boolean readOnly;
+      protected boolean showInViewMode = true;
+      protected boolean showInEditMode = true;
+      protected boolean ignoreIfMissing = true;
       
+        public ItemConfig(String name) {//
+            if (name == null || name.length() == 0) {
+                throw new ConfigException("You must specify a name for a proprty sheet item");
+            }
+            this.name = name;
+        }
+
       public ItemConfig(String name, String displayLabel, String displayLabelId, 
             boolean readOnly, String converter, String inView, String inEdit, 
             String compGenerator, String ignoreIfMissing)
       {
-         // check we have a name
-         if (name == null || name.length() == 0)
-         {
-            throw new ConfigException("You must specify a name for a proprty sheet item");
-         }
-         
-         this.name = name;
+         this(name);
          this.displayLabel = displayLabel;
          this.displayLabelId = displayLabelId;
          this.readOnly = readOnly;

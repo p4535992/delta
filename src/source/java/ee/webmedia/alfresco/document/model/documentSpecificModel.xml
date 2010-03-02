@@ -6,11 +6,61 @@
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
       <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
    </imports>
 
    <namespaces>
       <namespace uri="http://alfresco.webmedia.ee/model/document/specific/1.0" prefix="docspec" />
    </namespaces>
+
+
+   <types>
+      <type name="docspec:errandOrderApplicantAbroadType"><!-- VälisLähetuse taotleja(dokument->taotleja) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandApplicant</aspect>
+            <aspect>docspec:errandOrderApplicantAbroad</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docspec:errandApplicationDomesticApplicantType"><!-- Siselähetuse taotleja(dokument->taotleja) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandApplicant</aspect>
+            <aspect>docspec:errandApplicationApplicantDomestic</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docspec:trainingApplicationApplicantType"><!-- Koolitustaotluse taotleja(dokument->taotleja) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandApplicant</aspect>
+            <aspect>docspec:errandDates</aspect>
+            <aspect>docspec:dailyAllowance</aspect>
+            <aspect>docspec:advancePayment</aspect>
+            <aspect>docspec:expenses</aspect>
+            <aspect>docspec:errandSubstituteName</aspect>
+            <aspect>docspec:errandComment</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docspec:errandsAbroadType"><!-- VälisLähetuse blokk (dokument->taotleja->lähetus) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandBlockCommon</aspect>
+            <aspect>docspec:errandBlockAbroad</aspect>
+            <aspect>docspec:dailyAllowance</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docspec:errandsDomesticType"><!-- Siselähetuse blokk (dokument->taotleja->lähetus) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandBlockCommon</aspect>
+            <aspect>docspec:errandBlockDomestic</aspect>
+         </mandatory-aspects>
+      </type>
+   </types>
 
    <aspects>
 
@@ -421,10 +471,6 @@
                <type>d:double</type>
                <mandatory enforced="false">true</mandatory>
             </property>
-            <property name="docspec:costManager">
-               <type>d:text</type>
-               <mandatory enforced="false">true</mandatory>
-            </property>
             <property name="docspec:financingSource">
                <type>d:text</type>
                <mandatory enforced="false">true</mandatory>
@@ -440,7 +486,426 @@
                <type>d:text</type>
             </property>
          </properties>
+         <mandatory-aspects>
+            <aspect>docspec:costManager</aspect>
+         </mandatory-aspects>
       </aspect>
+
+      <aspect name="docspec:procurementApplicants">
+         <properties>
+            <property name="docspec:procurementApplicantName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:procurementApplicantJobTitle">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:procurementApplicantOrgStructUnit">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <multiple>true</multiple>
+            </property>
+         </properties>
+      </aspect>
+      
+      <!-- TODO: Riigihanke läbiviimise taotluse dokumenndi tüübi aspekt -->
+      <aspect name="docspec:tenderingApplication">
+         <properties>
+            <property name="docspec:procurementType">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:procurementLegalBasis">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:procurementDesc">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:procurementSumEstimated">
+               <type>d:double</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:procurementBudgetClassification">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:procurementObjectClassCode">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:procurementTenderData">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:procurementContractDateEstimated">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:procurementOfficialResponsible">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:linkedToEuProject">
+               <type>d:boolean</type>
+            </property>
+            <property name="docspec:euProjectDesc">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:structuralAidIdOutsideProject">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:objectTechnicalDesc">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:evaluationCriteria">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:offeringEndDate">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:qualificationTermsForTenders">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:contractBeginDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:procurementNumber">
+               <type>d:text</type>
+            </property>
+         </properties>
+          <mandatory-aspects>
+            <aspect>docspec:procurementApplicants</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="docspec:trainingApplication">
+         <properties>
+            <property name="docspec:trainingName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:trainingOrganizer">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:trainingNeed">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:trainingBeginDate">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:trainingEndDate">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:trainingHours">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:trainingLocation">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+         </properties>
+         <associations>
+            <child-association name="docspec:trainingApplicationApplicants">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:trainingApplicationApplicantType</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="docspec:costManager">
+         <properties>
+            <property name="docspec:costManager">
+               <type>d:text</type>
+               <mandatory enforced="false">true</mandatory>
+            </property>
+         </properties>
+      </aspect>
+
+      <!-- VälisLähetuse ja siselähetuse DOKUMENDI ühised väljad -->
+      <aspect name="docspec:errandDoc">
+
+         <properties>
+            <!-- Ürituse toimumise aeg -->
+            <property name="docspec:eventBeginDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:eventEndDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:eventOrganizer">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <!-- lähetuse taotleja (välislähetuse ja siselähetuse puhul taotleja ühised väljad) -->
+      <aspect name="docspec:errandApplicant">
+         <properties>
+            <property name="docspec:applicantName"><!-- Taotleja -->
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="docspec:applicantJobTitle"><!-- Ametinimetus -->
+               <type>d:text</type>
+            </property>
+            <property name="docspec:applicantStructUnitName"><!-- Osakond -->
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <!-- välisLähetuse taotleja spetsiifilised väljad -->
+      <aspect name="docspec:errandOrderApplicantAbroad">
+         <properties>
+            <property name="docspec:expenditureItem"><!-- Kulukoht -->
+               <type>d:text</type>
+            </property>
+         </properties>
+         <associations>
+            <child-association name="docspec:errandsAbroad">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:errandsAbroadType</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>docspec:costManager</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <!-- siseLähetuse taotleja spetsiifilised väljad -->
+      <aspect name="docspec:errandApplicationApplicantDomestic">
+         <!-- täiendavaid välju pole lisaks välis- ja siselähetuse ühistele väljadele -->
+         <associations>
+            <child-association name="docspec:errandsDomestic">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:errandsDomesticType</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+<!--
+         <mandatory-aspects>
+            <aspect>docspec:costManager</aspect>
+         </mandatory-aspects>
+       -->
+      </aspect>
+
+      <aspect name="docspec:errandDates">
+         <properties>
+            <property name="docspec:errandBeginDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:errandEndDate">
+               <type>d:date</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <!-- LÄHETUSE BLOKI (välis- ja sise) ühised andmed -->
+      <aspect name="docspec:errandBlockCommon">
+         <properties>
+            <property name="docspec:city">
+               <type>d:text</type>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>docspec:errandDates</aspect>
+            <aspect>docspec:expenses</aspect>
+            <aspect>docspec:advancePayment</aspect>
+            <aspect>docspec:errandSubstituteName</aspect>
+            <aspect>docspec:errandComment</aspect>
+         </mandatory-aspects>
+      </aspect>
+
+   <aspect name="docspec:errandSubstituteName">
+      <properties>
+         <property name="docspec:errandSubstituteName">
+            <type>d:text</type>
+         </property>
+      </properties>
+   </aspect>
+
+   <aspect name="docspec:errandComment">
+      <properties>
+         <property name="docspec:errandComment">
+            <type>d:text</type>
+         </property>
+      </properties>
+   </aspect>
+
+   <aspect name="docspec:expenses">
+      <properties>
+         <property name="docspec:expenseType"><!-- Kulu -->
+            <type>d:text</type>
+            <mandatory>true</mandatory>
+            <multiple>true</multiple>
+         </property>
+         <property name="docspec:expenseDesc"><!-- Kirjeldus -->
+            <type>d:text</type>
+            <mandatory>true</mandatory>
+            <multiple>true</multiple>
+         </property>
+         <property name="docspec:expenseFinancingSource"><!-- Finantseerimisallikas -->
+            <type>d:text</type>
+            <mandatory>true</mandatory>
+            <multiple>true</multiple>
+         </property>
+      </properties>
+   </aspect>
+
+   <aspect name="docspec:advancePayment">
+      <properties>
+         <property name="docspec:advancePaymentSum">
+            <type>d:double</type>
+         </property>
+         <property name="docspec:advancePaymentDesc">
+            <type>d:text</type>
+            <multiple>true</multiple>
+            <default></default>
+         </property>
+      </properties>
+   </aspect>
+
+   
+      <!-- Välislähetuse lähetuse blokk (dok -> taotleja -> lähetus) -->
+      <aspect name="docspec:errandBlockAbroad">
+         <properties>
+            <property name="docspec:country">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:dailyAllowance">
+         <properties>
+            <property name="docspec:dailyAllowanceCateringCount">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:dailyAllowanceDays">
+               <type>d:int</type>
+               <mandatory>true</mandatory>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:dailyAllowanceRate">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:dailyAllowanceFinancingSource">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <multiple>true</multiple>
+            </property>
+         </properties>
+      </aspect>
+      
+      <!-- siseLähetuse lähetuse blokk (dok -> taotleja -> lähetus) -->
+      <aspect name="docspec:errandBlockDomestic">
+         <properties>
+            <property name="docspec:county">
+               <type>d:text</type>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>docspec:travelPurpose</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="docspec:travelPurpose">
+         <properties>
+            <property name="docspec:travelPurpose">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <!-- VälisLähetuse dokumendi spetsiifilised väljad -->
+      <aspect name="docspec:errandOrderAbroad">
+         <properties>
+            <property name="docspec:legalBasisForOfficials">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:legalBasisForSupportStaff">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:reportDueDate">
+               <type>d:date</type>
+            </property>
+         </properties>
+         <associations>
+            <child-association name="docspec:errandOrderApplicantsAbroad">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:errandOrderApplicantAbroadType</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>docspec:travelPurpose</aspect>
+         </mandatory-aspects>
+      </aspect>
+
+      
+      <!-- Siselähetuse dokumendi spetsiifilised väljad -->
+      <aspect name="docspec:errandApplicationDomestic">
+         <properties>
+            <property name="docspec:eventName">
+               <type>d:text</type>
+            </property>
+         </properties>
+         <associations>
+            <child-association name="docspec:errandApplicationDomesticApplicants">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:errandApplicationDomesticApplicantType</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
       
       <aspect name="docspec:contractSmitDetails">
          <properties>

@@ -3,16 +3,20 @@ package ee.webmedia.alfresco.template.service;
 import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 
 import net.sf.jooreports.openoffice.connection.OpenOfficeConnection;
 
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.model.FileFolderService;
@@ -28,6 +32,7 @@ import org.alfresco.util.TempFileProvider;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
+import org.apache.tools.ant.util.DateUtils;
 import org.springframework.util.Assert;
 
 import com.sun.star.beans.PropertyValue;
@@ -47,6 +52,8 @@ import com.sun.star.util.XSearchable;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.type.model.DocumentTypeModel;
@@ -57,7 +64,9 @@ import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
+import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
  * @author Kaarel Jõgeva
@@ -65,36 +74,38 @@ import ee.webmedia.alfresco.volume.model.VolumeModel;
 public class DocumentTemplateServiceImpl implements DocumentTemplateService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentTemplateServiceImpl.class);
-    
+
     private static final String DATE_FORMAT = "dd.MM.yyyy";
     private static final String REGEXP_PATTERN = "\\{[^\\}]+\\}";
+    private static final String SEPARATOR = ".";
 
     private GeneralService generalService;
     private NodeService nodeService;
     private FileService fileService;
     private MimetypeService mimetypeService;
     private FileFolderService fileFolderService;
+    private DocumentLogService documentLogService;
     private OpenOfficeConnection openOfficeConnection;
 
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
     static {
         templateBeanPropertyMapper = BeanPropertyMapper.newInstance(DocumentTemplate.class);
     }
-    
+
     @Override
     public void updateGeneratedFilesOnRegistration(Node document) {
         List<FileInfo> files = fileFolderService.listFiles(document.getNodeRef());
         log.debug("Found " + files.size() + "files under document " + document.getNodeRefAsString());
-        for(FileInfo file : files) {
-            if(file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.GENERATED) != null) {
+        for (FileInfo file : files) {
+            if (file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.GENERATED) != null) {
                 Map<QName, Serializable> docProp = nodeService.getProperties(document.getNodeRef());
                 ContentReader templateReader = fileFolderService.getReader(file.getNodeRef());
-                
+
                 // Set document content's mimetype and encoding from template
                 ContentWriter documentWriter = fileFolderService.getWriter(file.getNodeRef());
                 documentWriter.setMimetype(templateReader.getMimetype());
                 documentWriter.setEncoding(templateReader.getEncoding());
-                
+
                 try {
                     replace(templateReader, documentWriter, docProp);
                 } catch (Exception e) {
@@ -102,7 +113,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
                     // Clean up and inform the dialog
                     throw new RuntimeException();
                 }
-                
+
             }
         }
     }
@@ -112,7 +123,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
         QName documentTypeId = nodeService.getType(document);
         // it's OK to pick first one
         for (FileInfo fi : fileFolderService.listFiles(getRoot())) {
-            if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOC_TYPE)) {
+            if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
                 QName docQName = QName.createQName(nodeService.getProperty(fi.getNodeRef(), DocumentTemplateModel.Prop.DOCTYPE_ID).toString());
                 if (docQName.equals(documentTypeId)) {
                     return setupDocumentTemplate(fi);
@@ -124,6 +135,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
 
     /**
      * Sets the properties, adds download URL and NodeRef
+     * 
      * @param fileInfo
      * @return
      */
@@ -165,12 +177,15 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
             nodeRef = getTemplateByName(templName).getNodeRef();
         }
         log.debug("Using template: " + nodeRef);
-        
+
         ContentReader templateReader = fileFolderService.getReader(nodeRef);
-        
+
         ee.webmedia.alfresco.document.file.model.File populatedTemplate = new ee.webmedia.alfresco.document.file.model.File(fileFolderService.create(
                 documentNodeRef, name, ContentModel.TYPE_CONTENT));
-        nodeService.setProperty(populatedTemplate.getNodeRef(), ee.webmedia.alfresco.document.file.model.File.GENERATED, true); // Set generated flag so we can process it during document registration
+        nodeService.setProperty(populatedTemplate.getNodeRef(), ee.webmedia.alfresco.document.file.model.File.GENERATED, true); // Set generated flag so we can
+        // process it during document
+        // registration
+        documentLogService.addDocumentLog(documentNodeRef, I18NUtil.getMessage("document_log_status_fileAdded", new Object[] { name }));
         log.debug("Created new node: " + populatedTemplate.getNodeRef() + "\nwith name: " + name);
         // Set document content's mimetype and encoding from template
         ContentWriter documentWriter = fileFolderService.getWriter(populatedTemplate.getNodeRef());
@@ -181,36 +196,122 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
             replace(templateReader, documentWriter, docProp);
         } catch (Exception e) {
             log.error("Replacing failed!", e);
-            
-            // XXX TODO INVESTIGATE TRANSACTIONS: 
+
+            // XXX TODO INVESTIGATE TRANSACTIONS:
             // There might be some problems here. Exception should roll back the transaction and so file creations shouldn't be commited anyway.
-            
+
             // Clean up and inform the dialog
             fileFolderService.delete(populatedTemplate.getNodeRef());
             throw new RuntimeException();
         }
     }
 
-    public String getProcessedEmailTemplate(NodeRef document, NodeRef template) {
+    public String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template) {
+        String templateText = fileFolderService.getReader(template).getContentString();
+        StringBuilder sb = new StringBuilder();
+        if(templateText.indexOf("{volumeDispositionDateNotificationData}") > -1) {
+            for (Volume vol : volumes) {
+                sb.append(vol.getVolumeMark())
+                        .append(" ")
+                        .append(vol.getTitle())
+                        .append(" (")
+                        .append(DateUtils.format(vol.getDispositionDate(), DATE_FORMAT))
+                        .append(")")
+                        .append("<br>\n");
+            }
+            if(sb.length() > 0) {
+                templateText = templateText.replaceAll("\\{volumeDispositionDateNotificationData\\}", sb.toString());
+            }
+        }
+        return templateText;
+    }
+
+    @Override
+    public String getProcessedAccessRestrictionEndDateTemplate(List<Document> documents, NodeRef template) {
+        String templateText = fileFolderService.getReader(template).getContentString();
+        String endDateFormula = "{accessRestrEndDateNotificationData}";
+        if (templateText.indexOf(endDateFormula) > -1) {
+            StringBuilder sb = new StringBuilder();
+            for (Document doc : documents) {
+                if (doc.getAccessRestrictionEndDate() != null) {
+                    sb.append(doc.getRegNumber())
+                    .append(" (AK piirangu lõpp: ") // TODO - Hakkan usinaks ja liigutan tõlked välja :)
+                    .append(DateUtils.format(doc.getAccessRestrictionEndDate(), DATE_FORMAT))
+                    .append(")")
+                    .append("<br>\n");
+                }
+            }
+            if(sb.length() > 0) {
+                templateText = templateText.replaceAll("\\{accessRestrEndDateNotificationData\\}", sb.toString());
+            }
+        }
+
+        String noEndDateFormula = "{accessRestrNoEndDateNotificationData}";
+        if (templateText.indexOf(noEndDateFormula) > -1) {
+            StringBuilder sb = new StringBuilder();
+            for (Document doc : documents) {
+                if (doc.getAccessRestrictionEndDate() == null) {
+                    sb.append(doc.getRegNumber())
+                    .append(" (AK piirangu lõpp: ")
+                    .append(doc.getAccessRestrictionEndDesc())
+                    .append(")")
+                    .append("<br>\n");
+                }
+            }
+            if(sb.length() > 0) {
+                templateText = templateText.replaceAll("\\{accessRestrNoEndDateNotificationData\\}", sb.toString());
+            }
+
+        }
+
+        return templateText;
+    }
+
+    public String getProcessedEmailTemplate(LinkedHashMap<String, NodeRef> dataNodeRefs, NodeRef template) {
+
+        LinkedHashMap<String, Map<QName, Serializable>> properties = new LinkedHashMap<String, Map<QName, Serializable>>();
+        for (String group : dataNodeRefs.keySet()) {
+            properties.put(group, nodeService.getProperties(dataNodeRefs.get(group)));
+        }
+
         StringBuffer result = new StringBuffer();
-        Map<QName, Serializable> properties = nodeService.getProperties(document);
         ContentReader templateReader = fileFolderService.getReader(template);
         String templateTxt = templateReader.getContentString();
+
+        if (properties.size() == 0) {
+            return templateTxt;
+        }
+
         Pattern pattern = Pattern.compile(REGEXP_PATTERN);
         Matcher matcher = pattern.matcher(templateTxt);
+        String firstKey = Arrays.asList(properties.keySet().toArray()).get(0).toString();
+
         while (matcher.find()) {
             String formula = matcher.group();
-            String formulaResult = escapeXml(getReplaceString(formula, properties));
+            String replacement = formula;
+
+            for (String group : properties.keySet()) {
+                if (formula.startsWith("{" + group + SEPARATOR)) {
+                    replacement = getReplaceString(formula, properties.get(group));
+                    break; // don't override specific match
+                } else if (formula.indexOf(SEPARATOR) == -1) {
+                    replacement = getReplaceString(formula, properties.get(firstKey));
+                }
+
+            }
+
+            String formulaResult = escapeXml(replacement);
             matcher.appendReplacement(result, formulaResult);
         }
         matcher.appendTail(result);
         return result.toString();
     }
-    
+
     private void replace(ContentReader reader, ContentWriter writer, Map<QName, Serializable> properties) throws Exception {
 
         // create temporary file to replace from
-        File tempFromFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "." + mimetypeService.getExtension(reader.getMimetype()));
+        File tempFromFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "."
+                + mimetypeService.getExtension(reader.getMimetype()));
         // download the content from the source reader
         reader.getContent(tempFromFile);
 
@@ -245,7 +346,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
         log.debug("Temporary file size is: " + tempFromFile.length());
         XStorable storable = (XStorable) UnoRuntime.queryInterface(XStorable.class, xComponent);
         PropertyValue[] storeProps = new PropertyValue[0];
-        File tempToFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "." + mimetypeService.getExtension(reader.getMimetype()));
+        File tempToFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "."
+                + mimetypeService.getExtension(reader.getMimetype()));
 
         storable.storeToURL(toUrl(tempToFile), storeProps); // Second replacing run requires new URL
         log.debug("New URL is " + storable.getLocation() + "(old was " + url + ")");
@@ -255,44 +357,57 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
 
     private String getReplaceString(String foundPattern, Map<QName, Serializable> properties) {
         String pattern = foundPattern.substring(1, foundPattern.length() - 1);
+
+        if (pattern.contains(SEPARATOR)) {
+            pattern = pattern.substring(pattern.indexOf(SEPARATOR) + 1);
+        }
+
         for (QName key : properties.keySet()) {
             Serializable prop = properties.get(key);
             if (key.getLocalName().equals(pattern) && prop != null) {
                 log.debug("Found property from document node: " + key);
-                if (prop instanceof String && StringUtils.isNotBlank((String) prop))
-                    return (String) prop;
 
                 if (prop instanceof ArrayList<?>) {
                     List<?> list = (ArrayList<?>) prop;
                     String separator = ", ";
-
                     if (key.getLocalName().equals("recipientName"))
                         separator = "\r";
 
-                    if(list.size() > 0 && list.get(0) != null && list.get(0) instanceof Date) {
-                        List<String> dates = new ArrayList<String>(list.size());
-                        for(int i = 0; i < list.size(); i++) {
-                            dates.add(DateFormatUtils.format((Date) list.get(i), DATE_FORMAT));
+                    if (list.size() > 0 && list.get(0) != null) {
+                        List<Object> items = new ArrayList<Object>(list.size());
+                        for (int i = 0; i < list.size(); i++) {
+                            items.add(getTypeSpecificReplacement(list.get(i), foundPattern));
                         }
-                        return StringUtils.join(dates.iterator(), separator);
-                    } else if (list.size() > 0 && list.get(0) instanceof String) {
-                        if (StringUtils.isNotBlank(list.get(0).toString()))
-                            return StringUtils.join(list.iterator(), separator);
+                        return StringUtils.join(items.iterator(), separator);
                     }
-                    
                 }
-
-                if (prop instanceof Date)
-                    return DateFormatUtils.format((Date) prop, DATE_FORMAT);
-
-                if (prop instanceof Double)
-                    return ((Double) prop).toString();
-                
-                if (prop instanceof Integer)
-                    return Integer.toString(Integer.parseInt(prop.toString()));
+                String result = getTypeSpecificReplacement(prop, foundPattern);
+                if (!result.equals(foundPattern)) {
+                    return result;
+                }
             }
         }
         return checkSpecificPattern(foundPattern, properties);
+    }
+
+    private String getTypeSpecificReplacement(Object object, String foundPattern) {
+
+        if (object instanceof String && StringUtils.isNotBlank((String) object))
+            return (String) object;
+
+        if (object instanceof Date)
+            return DateFormatUtils.format((Date) object, DATE_FORMAT);
+
+        if (object instanceof Double)
+            return ((Double) object).toString();
+
+        if (object instanceof Boolean)
+            return ((Boolean) object).toString();
+
+        if (object instanceof Integer)
+            return object.toString();
+
+        return foundPattern;
     }
 
     private String checkSpecificPattern(String foundPattern, Map<QName, Serializable> properties) {
@@ -335,6 +450,24 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
             return getVacationOrderSubstitutionData(properties);
         }
 
+        if ((pattern.equals("task.activeResponsible") || pattern.equals("task.unactiveResponsible"))
+                && nodeService.hasAspect(document, WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
+            if(properties.get("active") != null) {
+                return properties.get("active").toString();
+            }
+            
+        }
+
+        if (pattern.equals("task.coResponsible") && !nodeService.hasAspect(document, WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
+            return Boolean.TRUE.toString();
+        }
+
+        if (pattern.equals("docUrl")) {
+            final ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
+            return "http://" + externalContext.getRequestHeaderMap().get("host") + externalContext.getRequestContextPath() + "/n/document/"
+                    + properties.get(ContentModel.PROP_NODE_UUID);
+        }
+
         return foundPattern;
     }
 
@@ -349,7 +482,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
         List<Date> startDate = (List<Date>) properties.get(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE);
         @SuppressWarnings("unchecked")
         List<Date> endDate = (List<Date>) properties.get(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE);
-        String until = MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_until");
+        String until = MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_until"); // FIXME - peaksin kasutama I18NUtilit
 
         List<String> substitutes = new ArrayList<String>(names.size());
         for (int i = 0; i < names.size(); i++) {
@@ -435,18 +568,17 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
         List<DocumentTemplate> templates = new ArrayList<DocumentTemplate>(templateFiles.size());
         for (FileInfo fi : templateFiles) {
             DocumentTemplate dt = setupDocumentTemplate(fi);
-            if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOC_TYPE)) {
+            if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
                 NodeRef docType = generalService.getNodeRef(DocumentTypeModel.Repo.DOCUMENT_TYPES_SPACE + "/" + dt.getDocTypeId());
                 if (docType != null) {
                     dt.setDocTypeName((String) nodeService.getProperty(docType, DocumentTypeModel.Props.NAME));
-                    templates.add(dt);
                 }
-            }
-            /** Email templates do not have TEMPLATE_DOC_TYPE aspect */
-            else {
+            } else if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_EMAIL)) {
                 dt.setDocTypeName("");
-                templates.add(dt);
+            } else {
+                dt.setDocTypeName(dt.getDocTypeId().getLocalName());
             }
+            templates.add(dt);
         }
         return templates;
     }
@@ -472,13 +604,13 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
     public List<DocumentTemplate> getEmailTemplates() {
         List<DocumentTemplate> result = new ArrayList<DocumentTemplate>();
         for (DocumentTemplate template : getTemplates()) {
-            if (template.getDocTypeId() == null) {
+            if (nodeService.hasAspect(template.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_EMAIL)) {
                 result.add(template);
             }
         }
         return result;
     }
-    
+
     private String escapeXml(String replaceString) {
         replaceString = replaceString.replaceAll("&", "&amp;");
         replaceString = replaceString.replaceAll("\"", "&quot;");
@@ -487,7 +619,18 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
         replaceString = replaceString.replaceAll("'", "&apos;");
         return replaceString;
     }
-    
+
+    @Override
+    public NodeRef getSystemTemplateByName(String templateName) {
+        if (StringUtils.isNotEmpty(templateName)) {
+            NodeRef template = fileFolderService.searchSimple(getRoot(), templateName);
+            if (template != null) {
+                return template;
+            }
+        }
+        throw new DocumentTemplateNotFoundException("Template with name '" + templateName + "' not found under " + getRoot());
+    }
+
     // START: getters / setters
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
@@ -507,6 +650,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
 
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
+    }
+
+    public void setDocumentLogService(DocumentLogService documentLogService) {
+        this.documentLogService = documentLogService;
     }
 
     public void setOpenOfficeConnection(OpenOfficeConnection openOfficeConnection) {

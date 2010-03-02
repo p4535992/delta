@@ -6,6 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
@@ -61,10 +62,25 @@ public class DocumentTypeDialog extends BaseDialogBean {
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
     public SelectItem[] searchUsedDocTypes(int filterIndex, String substring) {
+        return searchUsedDocTypes(substring, false);
+    }
+
+    /**
+     * Used by the property sheet as a callback. 
+     */
+    public List<SelectItem> getUsedDocTypes(FacesContext context, UIInput selectComponent) {
+        return Arrays.asList(searchUsedDocTypes(null, true));
+    }
+    
+    private SelectItem[] searchUsedDocTypes(String substring, boolean addEmptyItem) {
         final List<DocumentType> usedDocTypes = getDocumentTypeService().getAllDocumentTypes(true);
         substring = StringUtils.trimToNull(substring);
         substring = (substring !=null ? substring.toLowerCase() : null);
-        final ArrayList<SelectItem> results = new ArrayList<SelectItem>(usedDocTypes.size());
+        int size = addEmptyItem ? usedDocTypes.size() + 1 : usedDocTypes.size();
+        final ArrayList<SelectItem> results = new ArrayList<SelectItem>(size);
+        if (addEmptyItem) {
+            results.add(new SelectItem("", ""));
+        }
         for (DocumentType documentType : usedDocTypes) {
             final String name = documentType.getName();
             if(substring ==null || name.toLowerCase().contains(substring)) {

@@ -24,6 +24,7 @@ import javax.faces.validator.ValidatorException;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -44,8 +45,12 @@ import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdown;
 import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdownGenerator;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.SessionContext;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -53,7 +58,6 @@ import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.TransientProps;
-import ee.webmedia.alfresco.document.service.DocumentService.UnableToPerformException;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
@@ -65,7 +69,9 @@ import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
+import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
@@ -89,7 +95,9 @@ public class MetadataBlockBean implements Serializable {
     private transient SeriesService seriesService;
     private transient VolumeService volumeService;
     private transient CaseService caseService;
+    private transient SessionContext sessionContext;
     private transient DocLockService docLockService;
+    private transient GeneralService generalService;
     private transient DocumentTemplateService documentTemplateService;
     private transient ParametersService parametersService;
     private transient UIPropertySheet propertySheet;
@@ -101,10 +109,11 @@ public class MetadataBlockBean implements Serializable {
     private DateFormat dateFormat;
     private String documentTypeName;
     private String selectedCaseRefNum;
+    private String originalVolumeRef;
+    private String originalLocationId;
 
     /** timeOut in seconds how often lock should be refreshed to avoid expiring */
     private Integer lockRefreshTimeout;
-    private String originalVolumeRef;
 
     public MetadataBlockBean() {
         String datePattern = Application.getMessage(FacesContext.getCurrentInstance(), "date_pattern");
@@ -118,13 +127,22 @@ public class MetadataBlockBean implements Serializable {
         sb.append("</div>");
         return sb.toString();
     }
+    
+    public void setApplicantName(String userName, Node applicantNode) {
+        Map<QName, Serializable> personProps = getPersonProps(userName);
+        
+        Map<String, Object> props = applicantNode.getProperties();
+        props.put(DocumentSpecificModel.Props.APPLICANT_NAME.toString(), UserUtil.getPersonFullName1(personProps));
+        props.put(DocumentSpecificModel.Props.APPLICANT_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
+        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        props.put(DocumentSpecificModel.Props.APPLICANT_STRUCT_UNIT_NAME.toString(), orgstructName);
+    }
 
-    public void setCostManager(String userName) {
-        NodeRef person = getPersonService().getPerson(userName);
-        Map<QName, Serializable> personProps = getNodeService().getProperties(person);
-
-        Map<String, Object> docProps = document.getProperties();
-        docProps.put(DocumentSpecificModel.Props.COST_MANAGER.toString(), UserUtil.getPersonFullName1(personProps));
+    public void setErrandSubstituteName(String userName, Node applicantNode) {
+        Map<QName, Serializable> personProps = getPersonProps(userName);
+        
+        Map<String, Object> docProps = applicantNode.getProperties();
+        docProps.put(DocumentSpecificModel.Props.ERRAND_SUBSTITUTE_NAME.toString(), UserUtil.getPersonFullName1(personProps));
     }
 
     private String getAddressbookOrgOrName(NodeRef nodeRef) {
@@ -160,8 +178,7 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public void setResponsible(String userName) {
-        NodeRef person = getPersonService().getPerson(userName);
-        Map<QName, Serializable> personProps = getNodeService().getProperties(person);
+        Map<QName, Serializable> personProps = getPersonProps(userName);
 
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.RESPONSIBLE_NAME.toString(), UserUtil.getPersonFullName1(personProps));
@@ -179,9 +196,12 @@ public class MetadataBlockBean implements Serializable {
         docProps.put(DocumentSpecificModel.Props.RAPPORTEUR_NAME.toString(), getAddressbookOrgOrName(new NodeRef(nodeRefStr)));
     }
 
+    public void setOwnerCurrentUser() {
+        setOwner(AuthenticationUtil.getRunAsUser());
+    }
+    
     public void setOwner(String userName) {
-        NodeRef person = getPersonService().getPerson(userName);
-        Map<QName, Serializable> personProps = getNodeService().getProperties(person);
+        Map<QName, Serializable> personProps = getPersonProps(userName);
 
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentCommonModel.Props.OWNER_ID.toString(), personProps.get(ContentModel.PROP_USERNAME));
@@ -193,18 +213,28 @@ public class MetadataBlockBean implements Serializable {
         docProps.put(DocumentCommonModel.Props.OWNER_PHONE.toString(), personProps.get(ContentModel.PROP_TELEPHONE));
     }
 
-    public void setWhom(String userName) {
+    private Map<QName, Serializable> getPersonProps(String userName) {
         NodeRef person = getPersonService().getPerson(userName);
         Map<QName, Serializable> personProps = getNodeService().getProperties(person);
+        return personProps;
+    }
+
+    public void setWhom(String userName) {
+        Map<QName, Serializable> personProps = getPersonProps(userName);
 
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.WHOM_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         docProps.put(DocumentSpecificModel.Props.WHOM_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
     }
 
+    public void setProcurementOfficialResponsible(String userName) {
+        Map<QName, Serializable> personProps = getPersonProps(userName);
+        Map<String, Object> docProps = document.getProperties();
+        docProps.put(DocumentSpecificModel.Props.PROCUREMENT_OFFICIAL_RESPONSIBLE.toString(), UserUtil.getPersonFullName1(personProps));
+    }
+    
     public void setSigner(String userName) {
-        NodeRef person = getPersonService().getPerson(userName);
-        Map<QName, Serializable> personProps = getNodeService().getProperties(person);
+        Map<QName, Serializable> personProps = getPersonProps(userName);
 
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentCommonModel.Props.SIGNER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
@@ -212,8 +242,7 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public void setDeliverer(String userName) {
-        NodeRef person = getPersonService().getPerson(userName);
-        Map<QName, Serializable> personProps = getNodeService().getProperties(person);
+        Map<QName, Serializable> personProps = getPersonProps(userName);
 
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.DELIVERER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
@@ -223,8 +252,7 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public void setReceiver(String userName) {
-        NodeRef person = getPersonService().getPerson(userName);
-        Map<QName, Serializable> personProps = getNodeService().getProperties(person);
+        Map<QName, Serializable> personProps = getPersonProps(userName);
 
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.RECEIVER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
@@ -234,13 +262,22 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public List<String> setVacationSubstitute(String userName) {
-        NodeRef person = getPersonService().getPerson(userName);
-        Map<QName, Serializable> personProps = getNodeService().getProperties(person);
+        Map<QName, Serializable> personProps = getPersonProps(userName);
 
-        List<String> list = new ArrayList<String>();
+        List<String> list = new ArrayList<String>(3);
         list.add(UserUtil.getPersonFullName1(personProps));
         list.add(null);
         list.add(null);
+        return list;
+    }
+    
+    public List<String>  setProcurementApplicantName(String userName) {
+        Map<QName, Serializable> personProps = getPersonProps(userName);
+        List<String> list = new ArrayList<String>(3);
+        list.add(UserUtil.getPersonFullName1(personProps));
+        list.add((String) personProps.get(ContentModel.PROP_JOBTITLE));
+        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        list.add(orgstructName);
         return list;
     }
 
@@ -470,7 +507,7 @@ public class MetadataBlockBean implements Serializable {
                 if (StringUtils.isNotBlank(sb.toString())) {
                     props.put("{temp}vacationChangeText", sb.toString());
                 }
-
+                
                 StringBuilder table = new StringBuilder("<table cellspacing='0' cellpadding='0' class='recipient padding'><thead><tr><th>");
                 table.append(MessageUtil.getMessage(context, "document_vacationSubstitute2"));
                 table.append("</th><th>").append(MessageUtil.getMessage(context, "from"));
@@ -580,6 +617,111 @@ public class MetadataBlockBean implements Serializable {
         }
     }
 
+    public void removeApplicant(ActionEvent event) {
+        final QName applicantAssoc = getApplicantAssoc();
+        final Node docNode = getParentNode(event);
+        final String assocIndexParam = ActionUtil.getParam(event, SubPropertySheetItem.PARAM_ASSOC_INDEX);
+        final int assocIndex = Integer.parseInt(assocIndexParam);
+        docNode.removeChildAssociations(applicantAssoc, assocIndex);
+    }
+
+    /**
+     * Add applicant childNode to errand(abroad/domestic) document 
+     * @param event
+     */
+    public void addApplicant(ActionEvent event) {
+        final Node docNode = getParentNode(event);
+        final WmNode newApplicant = getGeneralService().createNewUnSaved(getApplicantType(), null);
+        log.debug("adding new Applicant to document.\n\tdocNodeRef=" + docNode.getNodeRefAsString() //
+                + "\n\tnewApplicantRef=" + newApplicant.getNodeRefAsString());
+        docNode.addChildAssociations(getApplicantAssoc(), newApplicant);
+        addErrand(newApplicant);
+    }
+
+    public void removeErrand(ActionEvent event) {
+        final Node applicantNode = getParentNode(event);
+        final String assocIndexParam = ActionUtil.getParam(event, SubPropertySheetItem.PARAM_ASSOC_INDEX);
+        final int assocIndex = Integer.parseInt(assocIndexParam);
+        log.debug("removing errand (assocIndex=" + assocIndex + ") from applicant. ApplicantNodeRef=" + applicantNode.getNodeRefAsString());
+        applicantNode.removeChildAssociations(getErrandAssocType(applicantNode), assocIndex);
+    }
+
+    public void addErrand(ActionEvent event) {
+        final Node applicantNode = getParentNode(event);
+        addErrand(applicantNode);
+    }
+
+    private void addErrand(final Node applicantNode) {
+        final QName errandType = getErrandType(applicantNode);
+        if(errandType == null) {
+            return;
+        }
+        final WmNode newErrand = getGeneralService().createNewUnSaved(errandType, null);
+        log.debug("adding new errand to applicant.\n\tapplicantNodeRef=" + applicantNode.getNodeRefAsString() //
+                + "\n\tnewApplicantRef=" + newErrand.getNodeRefAsString());
+        applicantNode.addChildAssociations(getErrandAssocType(applicantNode), newErrand);
+    }
+
+    private Node getParentNode(ActionEvent event) {
+        final String nodeKeyInSessionContext = ActionUtil.getParam(event, SubPropertySheetItem.PARAM_PARENT_PROP_SHEET_NODE);
+        final SessionContext sessionContext = getSessionContext();
+        return (Node) sessionContext.get(nodeKeyInSessionContext);
+    }
+    
+    private QName getApplicantType() {
+        final QName applicantType;
+        if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType())) {
+            applicantType = DocumentSpecificModel.Types.ERRAND_ORDER_APPLICANT_ABROAD;
+        } else if (DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(document.getType())) {
+            applicantType = DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE;
+        } else if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(document.getType())) {
+            applicantType = DocumentSpecificModel.Types.TRAINING_APPLICATION_APPLICANT_TYPE;
+        } else {
+            throw new RuntimeException("Unimplemented adding applicant to document with type '" + document.getType() + "'");
+        }
+        return applicantType;
+    }
+
+    private QName getApplicantAssoc() {
+        final QName applicantAssoc;
+        if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType())) {
+            applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD;
+        } else if (DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(document.getType())) {
+            applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS;
+        } else if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(document.getType())) {
+            applicantAssoc = DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS;
+        } else {
+            throw new RuntimeException("Unimplemented adding applicant to document with type '" + document.getType() + "'");
+        }
+        return applicantAssoc;
+    }
+    
+    private QName getErrandAssocType(final Node applicantNode) {
+        final QName errandAssocType;
+        if (DocumentSpecificModel.Types.ERRAND_ORDER_APPLICANT_ABROAD.equals(applicantNode.getType())) {
+            errandAssocType = DocumentSpecificModel.Assocs.ERRAND_ABROAD;
+        } else if (DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE.equals(applicantNode.getType())) {
+            errandAssocType = DocumentSpecificModel.Assocs.ERRAND_DOMESTIC;
+        } else {
+            throw new RuntimeException("Unimplemented adding errand to applicant with type '" + applicantNode.getType() + "'");
+        }
+        return errandAssocType;
+    }
+    
+    private QName getErrandType(final Node applicantNode) {
+        final QName errandType;
+        if (DocumentSpecificModel.Types.ERRAND_ORDER_APPLICANT_ABROAD.equals(applicantNode.getType())) {
+            errandType = DocumentSpecificModel.Types.ERRAND_ABROAD_TYPE;
+        } else if (DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE.equals(applicantNode.getType())) {
+            errandType = DocumentSpecificModel.Types.ERRANDS_DOMESTIC_TYPE;
+        } else if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(document.getType())) {
+            return null; // trainingApplication document has applicant block, but not errand
+        } else {
+            throw new RuntimeException("Unimplemented adding errand to applicant with type '" + applicantNode.getType() + "'");
+        }
+        return errandType;
+    }
+
     /**
      * Query callback method executed by the component generated by {@link RelatedDropdown} or {@link RelatedDropdownGenerator}.
      * This method is part of the contract to the {@link RelatedDropdownGenerator}, it is up to the backing bean
@@ -596,7 +738,7 @@ public class MetadataBlockBean implements Serializable {
         @SuppressWarnings("unchecked")
         List<UIComponent> selectOptions = selectComponent.getChildren();
         selectOptions.clear();
-        
+
         /** Handle filled in data */
         Map<String, Object> props = document.getProperties();
         String nodeRef = (String) props.get(TransientProps.FUNCTION_NODEREF);
@@ -605,9 +747,9 @@ public class MetadataBlockBean implements Serializable {
             filled = getFunctionsService().getFunctionByNodeRef(nodeRef);
             functions.add(0, filled);
         }
-        
+
         for (Function function : functions) {
-            // skip the duplicate (when filled is open), 
+            // skip the duplicate (when filled is open),
             if (function != filled && function.getNodeRef().toString().equals(nodeRef)) {
                 continue;
             }
@@ -650,7 +792,7 @@ public class MetadataBlockBean implements Serializable {
         @SuppressWarnings("unchecked")
         List<UIComponent> selectOptions = selectComponent.getChildren();
         selectOptions.clear();
-        
+
         /** Handle filled in data */
         Map<String, Object> props = document.getProperties();
         String nodeRef = (String) props.get(TransientProps.SERIES_NODEREF);
@@ -659,9 +801,9 @@ public class MetadataBlockBean implements Serializable {
             filled = getSeriesService().getSeriesByNodeRef(nodeRef);
             allSeries.add(0, filled);
         }
-        
+
         for (Series series : allSeries) {
-            // skip the duplicate (when filled is open), 
+            // skip the duplicate (when filled is open),
             if (series != filled && series.getNode().getNodeRefAsString().equals(nodeRef)) {
                 continue;
             }
@@ -697,7 +839,7 @@ public class MetadataBlockBean implements Serializable {
         @SuppressWarnings("unchecked")
         List<UIComponent> selectOptions = selectComponent.getChildren();
         selectOptions.clear();
-        
+
         /** Handle filled in data */
         Map<String, Object> props = document.getProperties();
         String nodeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
@@ -706,7 +848,7 @@ public class MetadataBlockBean implements Serializable {
             filled = getVolumeService().getVolumeByNodeRef(nodeRef);
             volumes.add(0, filled);
         }
-        
+
         for (Volume volume : volumes) {
             // skip the duplicate (when filled is open),
             if (volume != filled && volume.getNode().getNodeRefAsString().equals(nodeRef)) {
@@ -792,6 +934,7 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public void init(NodeRef nodeRef, boolean created) {
+        newCaseHtmlInput = null;// this field might have been reinitialized by browser, when last action before creating new doc was saving under new case
         document = getDocumentService().getDocument(nodeRef);
         inEditMode = created;
         if (!created) {// only create lock for existing doc
@@ -803,6 +946,11 @@ public class MetadataBlockBean implements Serializable {
         afterModeChange();
         final Map<String, Object> props = document.getProperties();
         originalVolumeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
+        originalLocationId = getLocationId(props);
+    }
+
+    private String getLocationId(final Map<String, Object> props) {
+        return (String) props.get(TransientProps.FUNCTION_NODEREF) + (String) props.get(TransientProps.SERIES_NODEREF) + (String) props.get(TransientProps.VOLUME_NODEREF);
     }
 
     public void reset() {
@@ -813,14 +961,15 @@ public class MetadataBlockBean implements Serializable {
         documentTypeName = null;
         selectedCaseRefNum = null;
         originalVolumeRef = null;
+        originalLocationId = null;
         newCaseHtmlInput = null;
     }
-    
+
     public void saveAndRegister() {
         save();
-        registerDocument(new ActionEvent(getPropertySheet())); // XXX - random event object, it's not used
+        registerDocument(null);
         // We need to refresh the propertySheetgrid
-        propertySheet.getChildren().clear();
+        clearPropertySheet();
         afterModeChange();
     }
 
@@ -839,7 +988,17 @@ public class MetadataBlockBean implements Serializable {
         inEditMode = true;
         lockOrUnlockIfNeeded(inEditMode);
         propertySheet.setMode(getMode());
-        propertySheet.getChildren().clear();
+        clearPropertySheet();
+        DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
+        documentTypeName = documentType != null ? documentType.getName() : null;
+        afterModeChange();
+    }
+    
+    public void viewDocument(Node doc) {
+        document = doc;
+        inEditMode = false;
+        propertySheet.setMode(getMode());
+        clearPropertySheet();
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
         documentTypeName = documentType != null ? documentType.getName() : null;
         afterModeChange();
@@ -851,18 +1010,27 @@ public class MetadataBlockBean implements Serializable {
         }
         if (validate()) {
             createOrSelectCase();
-            document = getDocumentService().updateDocument(document);
-            inEditMode = false;
+            try {
+                document = getDocumentService().updateDocument(document);
+                inEditMode = false;
+            } catch (UnableToPerformException e) {
+                MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
+            }
             lockOrUnlockIfNeeded(inEditMode);
             reloadTransientProperties();
             propertySheet.setMode(getMode());
-            propertySheet.getChildren().clear();
+            clearPropertySheet();
             afterModeChange();
             final Map<String, Object> props = document.getProperties();
             originalVolumeRef = (String) props.get(TransientProps.VOLUME_NODEREF); // user might not leave view, but return and want to save again
         }
     }
-    
+
+    public void clearPropertySheet() {
+        propertySheet.getChildren().clear();
+        propertySheet.getClientValidations().clear();
+    }
+
     private boolean validate() throws ValidatorException {
         NodeRef functionRef = null;
         NodeRef seriesRef = null;
@@ -882,7 +1050,7 @@ public class MetadataBlockBean implements Serializable {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_validationMsg_mandatory_functionSeriesVolume");
             return false;
         }
-        
+
         final List<String> messages = new ArrayList<String>(4);
         if (DocListUnitStatus.CLOSED.equals(getFunctionsService().getFunctionByNodeRef(functionRef).getStatus())) {
             messages.add("document_validationMsg_closed_function");
@@ -899,13 +1067,18 @@ public class MetadataBlockBean implements Serializable {
             }
             return false;
         }
-            
+
         return validateCase(volumeRef);
     }
 
     private boolean validateCase(NodeRef volumeRef) {
         final Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
         if (volume.isContainsCases()) {
+            if(StringUtils.equals(originalLocationId, getLocationId(document.getProperties()))) {
+                return true; // location has not changed
+            }
+            log.debug("originalLocationId="+originalLocationId);
+            log.debug("new     LocationId="+getLocationId(document.getProperties()));
             NodeRef caseNodeRef = null;
             try {
                 caseNodeRef = new NodeRef(selectedCaseRefNum);
@@ -917,7 +1090,7 @@ public class MetadataBlockBean implements Serializable {
                 // invalid nodeRef
             }
             final String newCaseTitle = (String) newCaseHtmlInput.getValue();
-            if (caseNodeRef == null && StringUtils.isBlank(newCaseTitle) && originalVolumeRef == null) {
+            if (caseNodeRef == null && StringUtils.isBlank(newCaseTitle)) {
                 // client-side validation should already prevent it, but just to make sure:
                 MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_validationMsg_mandatory_case");
                 return false;
@@ -933,10 +1106,11 @@ public class MetadataBlockBean implements Serializable {
         final String volumeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
         final NodeRef volumeNodeRef = new NodeRef(volumeRef);
         final Volume volume = getVolumeService().getVolumeByNodeRef(volumeNodeRef);
-        if (StringUtils.equals(volumeRef, originalVolumeRef)){
+        if (StringUtils.equals(volumeRef, originalVolumeRef)) {
             // no need to create case nor put value of original case to props(already set when initialized)
         } else if (volume.isContainsCases()) {
             final String newCaseTitle = (String) newCaseHtmlInput.getValue();
+            newCaseHtmlInput.setValue(null); // reset value(otherwise might cause troubles later, when creating new doc right after this doc has been saved)
             final NodeRef caseNodeRef;
             if (StringUtils.isNotBlank(newCaseTitle)) {
                 final Case newCase = getCaseService().createCase(volumeNodeRef);
@@ -964,7 +1138,7 @@ public class MetadataBlockBean implements Serializable {
         inEditMode = false;
         lockOrUnlockIfNeeded(inEditMode);
         propertySheet.setMode(getMode());
-        propertySheet.getChildren().clear();
+        clearPropertySheet();
         reloadTransientProperties();
         afterModeChange();
     }
@@ -1030,7 +1204,7 @@ public class MetadataBlockBean implements Serializable {
             document = getDocumentService().registerDocument(document);
             getDocumentTemplateService().updateGeneratedFilesOnRegistration(document);
         } catch (UnableToPerformException e) {
-            MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "document_errorMsg_register_initialDocNotRegistered");
+            MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
         }
     }
 
@@ -1043,7 +1217,8 @@ public class MetadataBlockBean implements Serializable {
         final String volumeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
         Boolean selectedVolumeContainsCases = null;
         boolean volumeSelectionChanged = false;
-        if(!StringUtils.equals(volumeRef, originalVolumeRef)) {
+        log.debug("originalVolumeRef=" + originalVolumeRef + "\nnew noderef      =" + volumeRef + "");
+        if (!StringUtils.equals(volumeRef, originalVolumeRef)) {
             volumeSelectionChanged = true;
             if (volumeRef != null) {
                 volumeNodeRef = new NodeRef(volumeRef);
@@ -1057,7 +1232,7 @@ public class MetadataBlockBean implements Serializable {
         FacesContext context = FacesContext.getCurrentInstance();
         ResponseWriter out = context.getResponseWriter();
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>" //
-                + "<volume-info volume-selection-changed='"+volumeSelectionChanged+"' contains-cases='" + selectedVolumeContainsCases + "' />";
+                + "<volume-info volume-selection-changed='" + volumeSelectionChanged + "' contains-cases='" + selectedVolumeContainsCases + "' />";
         out.write(xml);
         log.debug("returning XML: " + xml);
     }
@@ -1112,7 +1287,7 @@ public class MetadataBlockBean implements Serializable {
         final NodeRef docRef = document.getNodeRef();
         synchronized (document) { // to avoid extending lock after unlock(save/cancel)
             if (mustLock4Edit) {
-                if (lockService.createLockIfFree(docRef) == LockStatus.LOCK_OWNER) {
+                if (lockService.setLockIfFree(docRef) == LockStatus.LOCK_OWNER) {
                     return true;
                 }
                 log.debug("Lock can't be created");
@@ -1124,12 +1299,89 @@ public class MetadataBlockBean implements Serializable {
         }
         return false;
     }
-    
+
     public DocumentType getDocumentType() {
         return getDocumentTypeService().getDocumentType(document.getType());
     }
 
+    /**
+     * Called when a new (not yet saved) document is set to be a reply or a follow up to some base document
+     * and is filled with some properties of the base document. 
+     * @param nodeRef to the base document
+     */
+    public void updateFollowUpOrReplyProperties(NodeRef nodeRef) {
+        setOwnerCurrentUser();
+        setDocumentName(nodeRef);
+        getDocumentService().setTransientProperties(document, getDocumentService().getAncestorNodesByDocument(nodeRef));
+        updateAccessRestrictionProperties(document.getProperties().get(TransientProps.SERIES_NODEREF));
+        //FIXME: miks originalVolumeRef üle kirjutatakse teise dokumendi volRef'iga?
+        originalVolumeRef = (String) document.getProperties().get(TransientProps.VOLUME_NODEREF);
+    }
+
+    private void setDocumentName(NodeRef nodeRef) {
+        Map<String, Object> docProps = document.getProperties();
+        docProps.put(DocumentCommonModel.Props.DOC_NAME.toString(), getNodeService().getProperty(nodeRef, DocumentCommonModel.Props.DOC_NAME));
+    }
+
+    // START: snapshot logic
+    public Snapshot createSnapshot() {
+        return new Snapshot(this);
+    }
+
+    public void restoreSnapshot(Snapshot snapshot) {
+        snapshot.restoreState(this);
+    }
+
+    public static class Snapshot implements Serializable{
+        private static final long serialVersionUID = 1L;
+        
+        private Node document;
+        private boolean inEditMode;
+        private DateFormat dateFormat;
+        private String documentTypeName;
+        private String selectedCaseRefNum;
+        private String originalVolumeRef;
+        private String originalLocationId;
+
+        private Snapshot(MetadataBlockBean bean) {
+            this.document = bean.document;
+            this.inEditMode = bean.inEditMode;
+            this.dateFormat = bean.dateFormat;
+            this.documentTypeName = bean.documentTypeName;
+            this.selectedCaseRefNum = bean.selectedCaseRefNum;
+            this.originalVolumeRef = bean.originalVolumeRef;
+            this.originalLocationId = bean.originalLocationId;
+        }
+
+        private void restoreState(MetadataBlockBean bean) {
+            bean.document = this.document;
+            bean.inEditMode = this.inEditMode;
+            bean.dateFormat = this.dateFormat;
+            bean.documentTypeName = this.documentTypeName;
+            bean.selectedCaseRefNum = this.selectedCaseRefNum;            
+            bean.originalVolumeRef = this.originalVolumeRef;
+            bean.originalLocationId = this.originalLocationId;
+        }
+    }
+    // END: snapshot logic
+
     // START: getters / setters
+
+    protected SessionContext getSessionContext() {
+        if (sessionContext == null) {
+            sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);
+        }
+        return sessionContext;
+    }
+
+    public GeneralService getGeneralService() {
+        if (generalService == null) {
+            generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(GeneralService.BEAN_NAME);
+        }
+        return generalService;
+    }
 
     public DocLockService getDocLockService() {
         if (docLockService == null) {
@@ -1149,6 +1401,16 @@ public class MetadataBlockBean implements Serializable {
 
     public boolean isInEditMode() {
         return inEditMode;
+    }
+
+    public boolean isShowStorageType() {
+        if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType()) //
+                || DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(document.getType()) //
+                || DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(document.getType())
+                || DocumentSubtypeModel.Types.TENDERING_APPLICATION.equals(document.getType())) {
+            return false; // value of StorageType should always be DIGITAL
+        }
+        return true;
     }
 
     public UIPropertySheet getPropertySheet() {

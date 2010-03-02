@@ -31,19 +31,19 @@ public class SendInfo implements Serializable {
     }
 
     public Object getRecipient() {
-        return node.getProperties().get(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.SEND_INFO_RECIPIENT.getLocalName());
+        return node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_RECIPIENT);
     }
 
     public Object getSendDateTime() {
-        return node.getProperties().get(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME.getLocalName());
+        return node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME);
     }
 
     public Object getSendMode() {
-        return node.getProperties().get(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.SEND_INFO_SEND_MODE.getLocalName());
+        return node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE);
     }
 
     public Object getSendStatus() {
-        return node.getProperties().get(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.SEND_INFO_SEND_STATUS.getLocalName());
+        return node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS);
     }
 
 }

@@ -23,16 +23,17 @@ public class AttachmentListDialog extends BaseDialogBean {
 
     private transient ImapServiceExt imapServiceExt;
     private transient GeneralService generalService;
-    private FileService fileService;
+    private transient FileService fileService;
+
+    private List<File> files;
 
     public void init(ActionEvent event) {
         readFiles();
     }
-    
+
     @Override
     public void restored() {
         readFiles();
-        super.restored();
     }
 
     private void readFiles() {
@@ -41,16 +42,14 @@ public class AttachmentListDialog extends BaseDialogBean {
         files = getFileService().getAllFilesExcludingDigidocSubitems(node.getNodeRef());
     }
 
-    private List<File> files;
+    public List<File> getFiles() {
+        return files;
+    }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // Finish button is always hidden
         return null;
-    }
-
-    public void setImapServiceExt(ImapServiceExt imapServiceExt) {
-        this.imapServiceExt = imapServiceExt;
     }
 
     public ImapServiceExt getImapServiceExt() {
@@ -61,10 +60,6 @@ public class AttachmentListDialog extends BaseDialogBean {
         return imapServiceExt;
     }
 
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
     public GeneralService getGeneralService() {
         if (generalService == null) {
             generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(
@@ -73,20 +68,12 @@ public class AttachmentListDialog extends BaseDialogBean {
         return generalService;
     }
 
-    public void setFileService(FileService fileService) {
-        this.fileService = fileService;
-    }
-
     public FileService getFileService() {
         if (fileService == null) {
             fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(
                     FacesContext.getCurrentInstance()).getBean(FileService.BEAN_NAME);
         }
         return fileService;
-    }
-
-    public List<File> getFiles() {
-        return files;
     }
 
     public Node getNode() {

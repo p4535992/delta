@@ -38,6 +38,11 @@ public class DocumentTemplateListDialog extends BaseDialogBean {
         // not used
         return null;
     }
+    
+    @Override
+    public Object getActionsContext() {
+        return null;
+    }
 
     protected DocumentTemplateService getDocumentTemplateService() {
         if (documentTemplateService == null) {

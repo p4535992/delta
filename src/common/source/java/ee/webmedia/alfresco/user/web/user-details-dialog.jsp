@@ -13,4 +13,7 @@
 
 </a:panel>
 
-<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/substitute/web/substitute-list-dialog.jsp" />
+
+<h:outputText value="#{AssignResponsibilityBean.setFromOwnerUserDetails}" />
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/assignresponsibility/web/assign-responsibility.jsp" />

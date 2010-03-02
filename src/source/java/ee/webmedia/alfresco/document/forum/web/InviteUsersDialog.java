@@ -1,0 +1,142 @@
+package ee.webmedia.alfresco.document.forum.web;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+
+import org.alfresco.model.ContentModel;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.cxf.common.util.StringUtils;
+import org.springframework.web.jsf.FacesContextUtils;
+
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.email.service.EmailException;
+import ee.webmedia.alfresco.email.service.EmailService;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.template.service.DocumentTemplateNotFoundException;
+import ee.webmedia.alfresco.template.service.DocumentTemplateService;
+import ee.webmedia.alfresco.user.model.Authority;
+import ee.webmedia.alfresco.user.web.PermissionsAddDialog;
+import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
+
+public class InviteUsersDialog extends PermissionsAddDialog {
+    private static final long serialVersionUID = 1L;
+    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(InviteUsersDialog.class);
+    
+    private transient EmailService emailService;
+    private transient DocumentTemplateService templateService;
+    private transient ParametersService parametersService;
+    
+    private String templateName;
+    
+    @Override
+    public void setup(ActionEvent event) {
+        templateName = ActionUtil.getParam(event, "templateName");
+        super.setup(event);
+    }
+    
+    @Override
+    public void init(Map<String, String> params) {
+        super.init(params);
+    }
+    
+    @Override
+    protected String finishImpl(FacesContext context, String outcome) throws Throwable {
+        if(templateName != null) {
+            notifySelectedUsers();
+        } else {
+            MessageUtil.addErrorMessage(context, "forum_template_not_specified");
+        }
+        return super.finishImpl(context, outcome);
+    }
+    
+    private void notifySelectedUsers() {
+        @SuppressWarnings("unchecked")
+        List<Authority> auth = (List<Authority>) getAuthorities().getWrappedData();
+        List<String> toEmails = new ArrayList<String>(auth.size());
+        List<String> toNames = new ArrayList<String>(auth.size());
+        String fromEmail = getParametersService().getStringParameter(Parameters.TASK_SENDER_EMAIL);
+        if(StringUtils.isEmpty(fromEmail)) {
+            log.debug("Sending invitation to discussion failed, task sender email is not configured!");
+            return;
+        }
+        
+        final List<ChildAssociationRef> parentAssocs = getNodeService().getParentAssocs(getNodeRef()); // Get the parent document
+        NodeRef documentNodeRef = parentAssocs.get(0).getParentRef();
+        String subject = MessageUtil.getMessage(FacesContext.getCurrentInstance(), "forum_invited_to_subject", getNodeService().getProperty(documentNodeRef, DocumentCommonModel.Props.DOC_NAME));
+        if(templateName == null) {
+            log.debug("Sending invitation to discussion failed, template to be used is not specified!");
+            return;
+        }
+        NodeRef templateNodeRef;
+        try {
+            templateNodeRef = getDocumentTemplateService().getSystemTemplateByName(templateName);
+        } catch (DocumentTemplateNotFoundException e) {
+            log.debug("Sending invitation to discussion failed, template missing!", e);
+            // Ignore, because sending a message is a bonus across the system
+            return;
+        }
+        LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
+        nodeRefs.put("default", documentNodeRef);
+        String content = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, templateNodeRef);
+        
+        for(Authority a : auth) {
+            final Map<String, Object> props = getUserService().getUser(a.getAuthority()).getProperties();
+            if(props.get(ContentModel.PROP_EMAIL) != null) {
+                toEmails.add(props.get(ContentModel.PROP_EMAIL).toString());
+                toNames.add(getUserService().getUserFullName(a.getAuthority()));
+            }
+        }
+        
+        try {
+            emailService.sendEmail(toEmails, toNames, fromEmail, subject, content, true, null, null, false, null);
+        } catch (EmailException e) {
+            log.debug("Sending invitation to discussion failed, error sending out email!", e);
+            return;
+        }
+    }
+    
+    
+    protected EmailService getEmailService() {
+        if (emailService == null) {
+            emailService = (EmailService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(EmailService.BEAN_NAME);
+        }
+        return emailService;
+    }
+
+    public void setEmailService(EmailService emailService) {
+        this.emailService = emailService;
+    }
+
+    public void setTemplateService(DocumentTemplateService templateService) {
+        this.templateService = templateService;
+    }
+    
+    protected DocumentTemplateService getDocumentTemplateService() {
+        if (templateService == null) {
+            templateService = (DocumentTemplateService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(DocumentTemplateService.BEAN_NAME);
+        }
+        return templateService;
+    }
+
+    public void setParametersService(ParametersService parametersService) {
+        this.parametersService = parametersService;
+    }
+    
+    protected ParametersService getParametersService() {
+        if (parametersService == null) {
+            parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(ParametersService.BEAN_NAME);
+        }
+        return parametersService;
+    }
+}

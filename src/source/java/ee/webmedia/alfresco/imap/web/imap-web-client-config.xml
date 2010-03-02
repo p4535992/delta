@@ -1,9 +1,12 @@
 <alfresco-config>
    <config>
        <dialogs>
+          <dialog name="incomingEmailListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp"
+                  managed-bean="IncomingEmailListDialog" show-ok-button="false"
+            icon="/images/icons/details_large.gif" title-id="document_list" />
           <dialog name="attachmentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/imap/web/attachment-list-dialog.jsp"
                   managed-bean="AttachmentListDialog" show-ok-button="false"
             icon="/images/icons/details_large.gif" title-id="imap_attachments_list" />
-      </dialogs>       
+      </dialogs>
    </config>
 </alfresco-config>

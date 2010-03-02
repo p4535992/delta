@@ -68,6 +68,8 @@ public class PageTag extends TagSupport
       "/scripts/jquery/jquery.textarea-expander.js",
       "/scripts/jquery/jquery.tooltip.js",
       "/scripts/jquery/jquery.hoverIntent.js",
+      "/scripts/jquery/jquery.textmetrix.js",
+      "/scripts/jquery/jquery.autocomplete.js",
       // menu javascript
       "/scripts/menu.js",
       // webdav javascript
@@ -94,6 +96,7 @@ public class PageTag extends TagSupport
    {
       "/css/main.css",
       "/css/picker.css",
+      "/scripts/jquery/jquery.autocomplete.css",
       "/css/styles.css"
    };
 

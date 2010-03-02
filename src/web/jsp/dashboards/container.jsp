@@ -33,6 +33,8 @@
 <%@ page import="org.alfresco.web.app.Application" %>
 <%@ page import="org.alfresco.web.ui.common.PanelGenerator" %>
 <%@ page import="javax.faces.context.FacesContext" %>
+<%@ page import="org.alfresco.web.app.servlet.FacesHelper" %>
+<%@ page import="ee.webmedia.alfresco.menu.ui.MenuBean" %>
 
 <r:page titleId="title_my_alfresco">
 
@@ -42,6 +44,9 @@
 
                // set locale for JSF framework usage
                fc.getViewRoot().setLocale(Application.getLanguage(fc));
+
+       MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(fc, MenuBean.BEAN_NAME);
+       menuBean.resetClickedId();
    %>
    
    <%-- load a bundle of properties with I18N strings --%>
@@ -62,7 +67,18 @@
          
          <a:panel id="content">
          
-         <%-- Content removed --%>
+         <%-- Breadcrumb --%>
+         <%@ include file="../parts/breadcrumb.jsp"%>
+         
+         <a:panel id="titlebar">
+            <h2 class="title-icon">
+               <h:graphicImage id="dialog-logo" url="/images/icons/default_avatar.png" />
+               <h:outputText value="#{MyTasksBean.dialogTitle}" escape="false" />
+            </h2>
+         </a:panel>
+
+         <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/my-task-list-dialog.jsp" />
+         <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/notification/web/notification-active-list-dialog.jsp" />
          
          <%-- Details --%>
          <f:subview id="dash-body">

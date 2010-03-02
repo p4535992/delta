@@ -13,6 +13,7 @@ import org.alfresco.repo.security.permissions.impl.PermissionServiceImpl;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.namespace.NamespaceService;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.user.service.UserService;
@@ -23,6 +24,7 @@ public abstract class BaseDynamicAuthority implements DynamicAuthority, Initiali
     protected PermissionServiceImpl permissionServiceImpl;
     protected NodeService nodeService;
     protected DictionaryService dictionaryService;
+    protected NamespaceService namespaceService;
     protected AuthorityService authorityService;
     protected UserService userService;
     protected ModelDAO modelDAO;
@@ -72,6 +74,10 @@ public abstract class BaseDynamicAuthority implements DynamicAuthority, Initiali
 
     public void setDictionaryService(DictionaryService dictionaryService) {
         this.dictionaryService = dictionaryService;
+    }
+
+    public void setNamespaceService(NamespaceService namespaceService) {
+        this.namespaceService = namespaceService;
     }
 
     public void setAuthorityService(AuthorityService authorityService) {

@@ -1,20 +1,5 @@
 package ee.webmedia.alfresco.functions.service;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-
-import org.alfresco.service.cmr.dictionary.DictionaryService;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
-import org.alfresco.web.bean.repository.TransientNode;
-
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.functions.model.Function;
@@ -23,6 +8,20 @@ import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
+import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.web.bean.repository.TransientNode;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 public class FunctionsServiceImpl implements FunctionsService {
 
@@ -40,8 +39,11 @@ public class FunctionsServiceImpl implements FunctionsService {
 
     @Override
     public List<Function> getAllFunctions() {
-        NodeRef root = getFunctionsRoot();
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root, RegexQNamePattern.MATCH_ALL, FunctionsModel.Associations.FUNCTION);
+        return getFunctions(getFunctionsRoot());
+    }
+
+    public List<Function> getFunctions(NodeRef functionsRoot) {
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(functionsRoot, RegexQNamePattern.MATCH_ALL, FunctionsModel.Associations.FUNCTION);
         List<Function> functions = new ArrayList<Function>(childRefs.size());
         for (ChildAssociationRef childRef : childRefs) {
             functions.add(getFunctionByNodeRef(childRef.getChildRef()));
@@ -153,5 +155,6 @@ public class FunctionsServiceImpl implements FunctionsService {
     public void setSeriesService(SeriesService seriesService) {
         this.seriesService = seriesService;
     }
+
     // END: getters / setters
 }

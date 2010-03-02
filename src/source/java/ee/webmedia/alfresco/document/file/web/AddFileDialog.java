@@ -48,11 +48,9 @@ public class AddFileDialog extends AddContentDialog {
     private transient FileService fileService;
     private transient DocumentService documentService;
 
-    private boolean attachmentSelected = false;
-    private NodeRef attachmentNodeRef;
-    private String attachmentName;
-    //private List<SelectItem> attachments;
-
+    private boolean isFileSelected = false;
+    private NodeRef selectedFileNodeRef;
+    private String selectedFileName;
 
     @Override
     public void start(ActionEvent event) {
@@ -60,17 +58,18 @@ public class AddFileDialog extends AddContentDialog {
     }
 
     public String reset() {
-        attachmentSelected = false;
-        attachmentName = null;
+        isFileSelected = false;
+        selectedFileNodeRef = null;
+        selectedFileName = null;
         return removeUploadedFile();
     }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         try {
-            if (attachmentSelected) {
+            if (isFileSelected) {
                 NodeRef documentNodeRef = new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId());
-                this.createdNode = imapServiceExt.addAttachmentToDocument(fileName, attachmentNodeRef, documentNodeRef);
+                this.createdNode = getFileService().addFileToDocument(selectedFileName, selectedFileNodeRef, documentNodeRef);
             } else {
                 outcome = super.finishImpl(context, outcome);
             }
@@ -78,6 +77,8 @@ public class AddFileDialog extends AddContentDialog {
             addVersionModifiedAspect(this.createdNode);
             NodeRef document = getNodeService().getPrimaryParent(this.createdNode).getParentRef();
             getDocumentService().updateSearchableFiles(document);
+            getDocumentService().getDocumentLogService().addDocumentLog(document,
+                    MessageUtil.getMessage(context, "document_log_status_fileAdded", new Object[] { getFileName() }));
             return outcome;
         } catch (FileExistsException e) {
             isFinished = false;
@@ -96,7 +97,13 @@ public class AddFileDialog extends AddContentDialog {
     }
 
     public void setFileNameWithoutExtension(String name) {
-        setFileName(name + "." + FilenameUtils.getExtension(getFileName()));
+        String fileName = name + "." + FilenameUtils.getExtension(getFileName());
+        if (isFileSelected) {
+            selectedFileName = fileName;
+        }
+        else {
+            setFileName(fileName);
+        }
     }
     
     private void addVersionModifiedAspect(NodeRef nodeRef) {
@@ -120,8 +127,8 @@ public class AddFileDialog extends AddContentDialog {
 
     @Override
     public String getFileName() {
-        if (attachmentSelected) {
-            return attachmentName;
+        if (isFileSelected) {
+            return selectedFileName;
         }
         else {
             return super.getFileName();
@@ -130,7 +137,7 @@ public class AddFileDialog extends AddContentDialog {
 
     @Override
     public String getFileUploadSuccessMsg() {
-        if (attachmentSelected) {
+        if (isFileSelected) {
             String msg = Application.getMessage(FacesContext.getCurrentInstance(), "file_upload_success");
             return MessageFormat.format(msg, Utils.encode(getFileName())); 
         }
@@ -139,16 +146,14 @@ public class AddFileDialog extends AddContentDialog {
         }
     }
 
-    public void attachmentSelected(ValueChangeEvent event) {
+    public void fileSelected(ValueChangeEvent event) {
         String newVal = (String) event.getNewValue();
-        Assert.notNull(newVal);
-
-        // todo: validate correct val
-
-        attachmentNodeRef = new NodeRef(newVal);
-        File file = fileService.getFile(attachmentNodeRef);
-        attachmentSelected = true;
-        attachmentName = file.getName();
+        Assert.notNull(newVal, "Node reference must be provided when file is selected.");
+        selectedFileNodeRef = new NodeRef(newVal);
+        File file = getFileService().getFile(selectedFileNodeRef);
+        Assert.notNull(file, "Selected file was not found.");
+        isFileSelected = true;
+        selectedFileName = file.getName();
     }
     
     // START: getters / setters
@@ -197,14 +202,21 @@ public class AddFileDialog extends AddContentDialog {
     }
 
     public List<SelectItem> getAttachments() {
-        //if (attachments == null) {
         List<SelectItem> attachments = new ArrayList<SelectItem>();
         List<File> files = getFileService().getAllFilesExcludingDigidocSubitems(getImapServiceExt().getAttachmentRoot());
         for (File file : files) {
             attachments.add(new SelectItem(file.getNodeRef().toString(), file.getName()));
         }
-        //}
         return attachments;        
+    }
+
+    public List<SelectItem> getScannedFiles() {
+        List<SelectItem> scannedFiles = new ArrayList<SelectItem>();
+        List<File> files = getFileService().getScannedFiles();
+        for (File file : files) {
+            scannedFiles.add(new SelectItem(file.getNodeRef().toString(), file.getName()));
+        }
+        return scannedFiles;
     }
     // END: getters / setters
 }

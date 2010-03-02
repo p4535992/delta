@@ -96,6 +96,8 @@
 
       <!-- Newer version of XStream is added from common/lib folder -->
       <delete file="${common.dir.lib.server}/xstream-1.2.2.jar" />
+      <!-- Newer version (2.4) of commons-lang is added from common/lib folder -->
+      <delete file="${common.dir.lib.server}/commons-lang-2.1.jar" />
    </target>
 
    <target name="setup-project-done">
@@ -231,15 +233,15 @@
          <exclude name="ee/webmedia/**" />
       </javac>
       <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
-         <src path="${project.dir.src}" />
-         <exclude name="ee/webmedia/**" />
-      </javac>
-      <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
          <compilerarg value="-Xlint" />
          <!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
          <compilerarg value="-Xlint:-path" />
          <src path="${common.dir.src}" />
          <include name="ee/webmedia/**" />
+      </javac>
+      <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+         <src path="${project.dir.src}" />
+         <exclude name="ee/webmedia/**" />
       </javac>
       <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
          <compilerarg value="-Xlint" />

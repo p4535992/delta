@@ -14,7 +14,7 @@ public class DocumentDraftDynamicAuthority extends BaseDynamicAuthority {
     public boolean hasAuthority(final NodeRef nodeRef, final String userName) {
         QName type = nodeService.getType(nodeRef);
         if (!dictionaryService.isSubClass(type, DocumentCommonModel.Types.DOCUMENT)) {
-            log.debug("Node is not of type 'doccom:document': type=" + type + ", refusing authority " + getAuthority());
+            log.trace("Node is not of type 'doccom:document': type=" + type + ", refusing authority " + getAuthority());
             return false;
         }
         NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();
@@ -27,7 +27,7 @@ public class DocumentDraftDynamicAuthority extends BaseDynamicAuthority {
             log.debug("Document parent is drafts folder, type=" + parentType + ", granting authority " + getAuthority());
             return true;
         }
-        log.debug("Document parent is not drafts folder, type=" + type + ", refusing authority " + getAuthority());
+        log.trace("Document parent is not drafts folder, type=" + type + ", refusing authority " + getAuthority());
         return false;
     }
 

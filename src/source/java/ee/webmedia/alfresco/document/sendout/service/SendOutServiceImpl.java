@@ -9,8 +9,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
+import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.AssociationRef;
@@ -36,6 +36,7 @@ import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocumentsImpl;
 import ee.webmedia.alfresco.dvk.service.DvkService;
+import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
@@ -206,13 +207,16 @@ public class SendOutServiceImpl implements SendOutService {
             List<ContentToSend> contentsToSend = prepareContents(document, fileNodeRefs, zipIt, zipFileName);
 
             // Send it out
-            Set<String> dvkIds = dvkService.sendDocuments(document, contentsToSend, sd);
-            dvkId = dvkIds.iterator().next();
+            dvkId = dvkService.sendDocuments(document, contentsToSend, sd);
         }
 
         // Send through email
         if (toEmails.size() > 0) {
-            emailService.sendEmail(toEmails, toNames, fromEmail, subject, content, true, document, fileNodeRefs, zipIt, zipFileName);
+            try {
+                emailService.sendEmail(toEmails, toNames, fromEmail, subject, content, true, document, fileNodeRefs, zipIt, zipFileName);
+            } catch (EmailException e) {
+                throw new RuntimeException("Document e-mail sending failed", e);
+            }
         }
 
         // Create the sendInfo nodes under the document
@@ -224,6 +228,7 @@ public class SendOutServiceImpl implements SendOutService {
             final NodeRef sendInfoRef = nodeService.createNode(document, //
                     DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Types.SEND_INFO, props).getChildRef();
             log.debug("created new sendInfo '" + sendInfoRef + "' for sent document '" + document + "'");
+            updateSearchableSendMode(document);
         }
         
         // Check if its a reply outgoing letter and update originating document info (if needed)
@@ -246,7 +251,16 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     ///// PRIVATE METHODS
-    
+
+    private void updateSearchableSendMode(NodeRef document) {
+        List<SendInfo> sendInfos = getSendInfos(document);
+        ArrayList<String> sendModes = new ArrayList<String>(sendInfos.size());
+        for (SendInfo sendInfo : sendInfos) {
+            sendModes.add((String) sendInfo.getSendMode());
+        }
+        nodeService.setProperty(document, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendModes);
+    }
+
     private List<ContentToSend> prepareContents(NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName) {
         List<ContentToSend> result = new ArrayList<ContentToSend>(); 
         if (fileNodeRefs == null || fileNodeRefs.size() == 0) {
@@ -256,7 +270,7 @@ public class SendOutServiceImpl implements SendOutService {
             ByteArrayOutputStream byteStream = generalService.getZipFileFromFiles(document, fileNodeRefs);
             ContentToSend content = new ContentToSend();
             content.setFileName(zipFileName);
-            content.setMimeType("application/zip");
+            content.setMimeType(MimetypeMap.MIMETYPE_ZIP);
             content.setInputStream(new ByteArrayInputStream(byteStream.toByteArray()));
             result.add(content);
         } else {
@@ -266,6 +280,9 @@ public class SendOutServiceImpl implements SendOutService {
                     ContentToSend content = new ContentToSend();
                     content.setFileName(fileInfo.getName());
                     content.setMimeType(reader.getMimetype());
+                    // Instead of directly setting reader.getContentInputStream into ContentToSend, we read the bytes 
+                    // and set a new ByteArrayInputStream to avoid tight coupling between ContentToSend and ContentReader
+                    // input stream life-cycle. 
                     ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
                     reader.getContent(byteStream);
                     content.setInputStream(new ByteArrayInputStream(byteStream.toByteArray()));

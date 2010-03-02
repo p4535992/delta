@@ -1,6 +1,8 @@
 package ee.webmedia.alfresco.volume.service;
 
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -9,6 +11,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.functions.service.FunctionsService;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -28,6 +34,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
+import org.springframework.util.Assert;
 
 /**
  * @author Ats Uiboupin
@@ -41,6 +48,8 @@ public class VolumeServiceImpl implements VolumeService {
     private GeneralService generalService;
     private SeriesService seriesService;
     private CaseService caseService;
+    private FunctionsService functionService;
+    private DocumentSearchService documentSearchService;
 
     @Override
     public List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef) {
@@ -201,6 +210,15 @@ public class VolumeServiceImpl implements VolumeService {
     public void setCaseService(CaseService caseService) {
         this.caseService = caseService;
     }
+
+    public void setFunctionService(FunctionsService functionService) {
+        this.functionService = functionService;
+    }
+
+    public void setDocumentSearchService(DocumentSearchService documentSearchService) {
+        this.documentSearchService = documentSearchService;
+    }
+
     // END: getters / setters
 
 }

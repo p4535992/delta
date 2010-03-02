@@ -8,4 +8,7 @@ http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/r
 ">
    <doccom:drafts view:childName="${dvk.received.folder.name}">
    </doccom:drafts>
+
+   <cm:folder view:childName="${dvk.corrupt.folder.name}">
+   </cm:folder>
 </view:view>

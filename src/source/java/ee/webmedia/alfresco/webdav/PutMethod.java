@@ -96,7 +96,7 @@ public class PutMethod extends WebDAVMethod {
         }
 
         // Update the version if the node is unlocked
-        ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().updateVersion(contentNodeInfo.getNodeRef());
+        ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().updateVersion(contentNodeInfo.getNodeRef(), contentNodeInfo.getName());
 
         // Access the content
         ContentWriter writer = fileFolderService.getWriter(contentNodeInfo.getNodeRef());

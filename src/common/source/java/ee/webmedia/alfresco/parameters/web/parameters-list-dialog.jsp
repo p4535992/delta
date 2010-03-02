@@ -11,7 +11,7 @@
 
 <a:panel id="parameters-panel" label="#{msg.parameters_list}" styleClass="panel-100">
    <a:richList id="parametersList" value="#{ParametersListDialog.parameters}" var="sParameter" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"
-      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="paramName">
+      rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="paramName" >
 
       <a:column id="paramNameCol" primary="true">
          <f:facet name="header">
@@ -31,7 +31,7 @@
          <f:facet name="header">
             <a:outputText value="#{msg.parameters_value}" />
          </f:facet>
-         <h:inputTextarea rows="1" cols="45" value="#{sParameter.paramValue}" styleClass="#{(sParameter.lastValidationSuccessful) ? '' : 'error' } expand5-200" />
+         <h:inputTextarea rows="1" cols="45" value="#{sParameter.paramValue}" styleClass="#{sParameter.paramName} #{(sParameter.lastValidationSuccessful) ? '' : 'error' } expand5-200" />
       </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

@@ -25,8 +25,9 @@
 
     if (fileUploaded == true) {
         String name = dialog.getFileName();
-        if (!dialog.isEmailTemplate() && !FilenameUtils.getExtension(name).equalsIgnoreCase("dot") ||
-             dialog.isEmailTemplate() && !FilenameUtils.getExtension(name).equalsIgnoreCase("htm") && !FilenameUtils.getExtension(name).equalsIgnoreCase("html")) {
+        // FIXME check conditions!
+        if (!dialog.isEmailTemplate() && !dialog.isSystemTemplate() && !FilenameUtils.getExtension(name).equalsIgnoreCase("dot") ||
+             (dialog.isEmailTemplate() || dialog.isSystemTemplate()) && !FilenameUtils.getExtension(name).equalsIgnoreCase("htm") && !FilenameUtils.getExtension(name).equalsIgnoreCase("html")) {
             fileUploaded = false;
             wrongFormat = true;
         }
@@ -46,7 +47,7 @@
             out.write("<img alt='' align='absmiddle' src='");
             out.write(request.getContextPath());
             out.write("/images/icons/info_icon.gif' />&nbsp;&nbsp;");
-            if (dialog.isEmailTemplate()) {
+            if (dialog.isEmailTemplate() || dialog.isSystemTemplate()) {
                 out.write(Application.getBundle(context).getString("template_wrong_file_format_email"));
             } else {
                 out.write(Application.getBundle(context).getString("template_wrong_file_format_doc"));

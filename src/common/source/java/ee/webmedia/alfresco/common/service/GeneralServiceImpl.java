@@ -1,24 +1,43 @@
 package ee.webmedia.alfresco.common.service;
 
+import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
+
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.nio.charset.Charset;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.zip.Deflater;
 
 import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.service.cmr.dictionary.AspectDefinition;
+import org.alfresco.service.cmr.dictionary.ClassDefinition;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
+import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.ContentData;
+import org.alfresco.service.cmr.repository.ContentService;
+import org.alfresco.service.cmr.repository.ContentWriter;
+import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -30,6 +49,7 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.GUID;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -37,6 +57,8 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.UnicodeE
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
+import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
@@ -52,6 +74,8 @@ public class GeneralServiceImpl implements GeneralService {
     private DictionaryService dictionaryService;
     private SearchService searchService;
     private FileFolderService fileFolderService;
+    private ContentService contentService;
+    private MimetypeService mimetypeService;
 
     @Override
     public StoreRef getStore() {
@@ -60,7 +84,11 @@ public class GeneralServiceImpl implements GeneralService {
 
     @Override
     public NodeRef getNodeRef(String nodeRefXPath) {
-        NodeRef nodeRef = nodeService.getRootNode(store);
+        return getNodeRef(nodeRefXPath, store);
+    }
+
+    public NodeRef getNodeRef(String nodeRefXPath, StoreRef storeRef) {
+        NodeRef nodeRef = nodeService.getRootNode(storeRef);
         String[] xPathParts;
 
         if (nodeRefXPath.contains("{")) {
@@ -93,14 +121,10 @@ public class GeneralServiceImpl implements GeneralService {
 
     @Override
     public Node getParentWithType(NodeRef childRef, final QName parentType) {
-        final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
-        final QName realParentType = nodeService.getType(parentRef);
-        if (parentType.equals(realParentType)) {
-            return fetchNode(parentRef);
-        }
-        return null;
+        final NodeRef parentRef = getParentNodeRefWithType(childRef, parentType);
+        return parentRef != null ? fetchNode(parentRef) : null;
     }
-    
+
     @Override
     public Node getAncestorWithType(NodeRef childRef, QName ancestorType) {
         final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
@@ -121,6 +145,16 @@ public class GeneralServiceImpl implements GeneralService {
         return equalityTestValue == null ? realValue == null : equalityTestValue.equals(realValue);
     }
 
+    @Override
+    public void saveAddedAssocs(Node node) {
+        Map<String, Map<String, AssociationRef>> addedAssocs = node.getAddedAssociations();
+        for (Map<String, AssociationRef> typedAssoc : addedAssocs.values()) {
+            for (AssociationRef assoc : typedAssoc.values()) {
+                nodeService.createAssociation(assoc.getSourceRef(), assoc.getTargetRef(), assoc.getTypeQName());
+            }
+        }
+    }
+
     /**
      * Create node from nodRef and populate it with properties and aspects
      * @param nodeRef
@@ -132,6 +166,90 @@ public class GeneralServiceImpl implements GeneralService {
         node.getAspects();
         node.getProperties();
         return node;
+    }
+
+    @Override
+    public WmNode createNewUnSaved(QName type, Map<QName, Serializable> props) {
+        Set<QName> aspects = getDefaultAspects(type);
+        props = addDefaultValues(type, aspects, props);
+        return new WmNode(/* unsaved */new NodeRef(WmNode.NOT_SAVED_STORE, GUID.generate()), type, aspects, props);
+    }
+
+    /**
+     * @param type - default values of this type are added to <code>props</code> map
+     * @param aspects 
+     * @param props map of properties
+     * @return new map if <code>props == null</code>, otherwise the same map. Result contains also default properties of given type
+     */
+    private Map<QName, Serializable> addDefaultValues(QName type, Set<QName> aspects, Map<QName, Serializable> props) {
+        return addMissingValues(props, getDefaultProperties(type));
+    }
+
+    private Map<QName, Serializable> addMissingValues(Map<QName, Serializable> primaryValues, final Map<QName, Serializable> defaultValues) {
+        if(defaultValues.size() != 0) {
+            if(primaryValues == null) {
+                primaryValues = new HashMap<QName, Serializable>();
+            }
+            for (Entry<QName, Serializable> entry : defaultValues.entrySet()) {
+                final QName key = entry.getKey();
+                if(!primaryValues.containsKey(key)) {
+                    primaryValues.put(key, entry.getValue());
+                }
+            }
+        }
+        return primaryValues;
+    }
+
+    @Override
+    public Map<QName, Serializable> getDefaultProperties(QName className) {
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        // Aspects are supposed to be in the order of most-parent ones first
+        // So children's property-overrides should overwrite parent ones
+        // Haven't tested it (we did not have any property-overrides in aspects)
+        for (QName aspect : getDefaultAspects(className)) {
+            props.putAll(getDefaultPropertiesForSingleClass(aspect));
+        }
+        props.putAll(getDefaultPropertiesForSingleClass(className));
+        return props;
+    }
+
+    private Map<QName, Serializable> getDefaultPropertiesForSingleClass(QName className) {
+        Map<QName, PropertyDefinition> propDefs = dictionaryService.getPropertyDefs(className);
+        if (propDefs == null) {
+            throw new RuntimeException("Class not found: " + className);
+        }
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        for (Map.Entry<QName, PropertyDefinition> entry : propDefs.entrySet()) {
+            PropertyDefinition propDef = entry.getValue();
+            Serializable value = (Serializable) DefaultTypeConverter.INSTANCE.convert(propDef.getDataType(), propDef.getDefaultValue());
+            if(value != null && propDef.isMultiValued()) {
+                ArrayList<Serializable> values = new ArrayList<Serializable>();
+                values.add(value);
+                value = values;
+            }
+            props.put(entry.getKey(), value);
+        }
+        return props;
+    }
+
+    @Override
+    public LinkedHashSet<QName> getDefaultAspects(QName className) {
+        ClassDefinition classDef = dictionaryService.getClass(className);
+        if (classDef == null) {
+            throw new RuntimeException("Class not found: " + className);
+        }
+        List<AspectDefinition> aspectDefs = classDef.getDefaultAspects();
+        LinkedHashSet<QName> aspects = new LinkedHashSet<QName>();
+        for (AspectDefinition aspectDef : aspectDefs) {
+            RepoUtil.getMandatoryAspects(aspectDef, aspects);
+            aspects.add(aspectDef.getName());
+        }
+        return aspects;
+    }
+
+    @Override
+    public TypeDefinition getAnonymousType(QName type) {
+        return dictionaryService.getAnonymousType(type, getDefaultAspects(type));
     }
 
     @Override
@@ -207,7 +325,17 @@ public class GeneralServiceImpl implements GeneralService {
             QName qname = QName.createQName(key);
             addToPropsIfNotSystem(qname, (Serializable) nodeProps.get(key), props);
         }
-        nodeService.addProperties(nodeRef, props);
+        nodeService.addProperties(nodeRef, getPropertiesIgnoringSystem(nodeProps));
+    }
+
+    @Override
+    public Map<QName, Serializable> getPropertiesIgnoringSystem(Map<String, Object> nodeProps) {
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        for (String key : nodeProps.keySet()) {
+            QName qname = QName.createQName(key);
+            addToPropsIfNotSystem(qname, (Serializable) nodeProps.get(key), props);
+        }
+        return props;
     }
 
     private void addToPropsIfNotSystem(QName qname, Serializable value, Map<QName, Serializable> props) {
@@ -231,7 +359,71 @@ public class GeneralServiceImpl implements GeneralService {
     }
 
     @Override
+    public void savePropertiesFiles(Map<QName, Serializable> props) {
+        for (Entry<QName, Serializable> entry : props.entrySet()) {
+            Serializable value = entry.getValue();
+            if (value instanceof FileWithContentType) {
+                FileWithContentType container = (FileWithContentType) value;
+
+                String mimetype = container.contentType.toLowerCase(); // Alfresco keeps mimetypes lowercase
+                // use container.mimeType; if our mimetype map has it, then use it; otherwise guess based on filename
+                if (MimetypeMap.MIMETYPE_BINARY.equals(mimetype) || !mimetypeService.getExtensionsByMimetype().containsKey(mimetype)) {
+                    String oldMimetype = mimetype;
+                    String fileName = container.fileName;
+                    mimetype = mimetypeService.guessMimetype(fileName);
+                    if (log.isDebugEnabled()) {
+                        log.debug("User provided mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '" + fileName + "' => '"
+                                + mimetype + "'");
+                    }
+                }
+
+                File file = container.file;
+                String encoding;
+                InputStream is = null;
+                try {
+                    is = new BufferedInputStream(new FileInputStream(file));
+                    Charset charset = mimetypeService.getContentCharsetFinder().getCharset(is, mimetype);
+                    encoding = charset.name();
+                } catch (FileNotFoundException e) {
+                    throw new RuntimeException(e);
+                } finally {
+                    try {
+                        if (is != null) {
+                            is.close();
+                        }
+                    } catch (IOException e) {
+                        // Do nothing
+                    }
+                }
+
+                ContentWriter writer = contentService.getWriter(null, null, false);
+                writer.setMimetype(mimetype);
+                writer.setEncoding(encoding);
+                writer.putContent(file);
+                ContentData contentData = writer.getContentData();
+                if (log.isDebugEnabled()) {
+                    log.debug("Saved file: " + contentData);
+                }
+                entry.setValue(contentData);
+            }
+        }
+    }
+
+    private NodeRef getParentNodeRefWithType(NodeRef childRef, QName parentType) {
+        final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
+        final QName realParentType = nodeService.getType(parentRef);
+        if (parentType.equals(realParentType)) {
+            return parentRef;
+        }
+        return null;
+    }
+
+    @Override
     public String getExistingRepoValue4ComponentGenerator() {
+        return getExistingRepoValue4ComponentGenerator(String.class);
+    }
+
+    private <T> T getExistingRepoValue4ComponentGenerator(final Class<T> requiredClasss) {
         @SuppressWarnings("unchecked")
         Map<String, Object> requestMap = FacesContext.getCurrentInstance().getExternalContext().getRequestMap();
         final Object[] nodeAndPropName = (Object[]) requestMap.get(WMUIProperty.REPO_NODE);
@@ -243,8 +435,14 @@ public class GeneralServiceImpl implements GeneralService {
         String propName = (String) nodeAndPropName[1];
         QName qName = QName.createQName(propName, namespaceService);
         final Map<String, Object> properties = node.getProperties();
-        final Object value = properties.get(qName.toString());
-        return DefaultTypeConverter.INSTANCE.convert(String.class, value);
+        Object value = properties.get(qName.toString());
+        if(value != null && StringUtils.equals(value.getClass().getCanonicalName(), ArrayList.class.getCanonicalName())){
+            final Integer valueIndex = (Integer) requestMap.get(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
+            @SuppressWarnings("unchecked")
+            List<Object> array = (List<Object>)value;
+            value = array.get(valueIndex);
+        }
+        return DefaultTypeConverter.INSTANCE.convert(requiredClasss, value);
     }
 
     @Override
@@ -312,6 +510,15 @@ public class GeneralServiceImpl implements GeneralService {
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
     }
+
+    public void setContentService(ContentService contentService) {
+        this.contentService = contentService;
+    }
+
+    public void setMimetypeService(MimetypeService mimetypeService) {
+        this.mimetypeService = mimetypeService;
+    }
+
     // END: getters / setters
 
 }

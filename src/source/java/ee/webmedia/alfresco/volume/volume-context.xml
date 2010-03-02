@@ -32,6 +32,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="seriesService" ref="SeriesService" />
       <property name="caseService" ref="CaseService" />
+      <property name="functionService" ref="FunctionsService"/>
    </bean>
 
    <bean id="VolumeService" class="org.springframework.aop.framework.ProxyFactoryBean">

@@ -29,6 +29,20 @@ function appendSelection(source, targetId)
    targetElem.val(lastToItemValue + lable);
 };
 
+/**
+ * Add autoComplete functionality to input using given values to for suggestion(allows to enter also values not given with <code>valuesArray</code>)
+ * @param inputId - id of the input component that should have autoComplete functionality based on values from <code>valuesArray</code>
+ * @param valuesArray - values to be suggested int the input
+ * @author Ats Uiboupin
+ */
+function setInputAutoCompleteArray(inputId, valuesArray){
+   var jQInput = $jQ("#"+escapeId4JQ(inputId));
+   var autoCompleter = jQInput.autocompleteArray(valuesArray, { minChars: -1, suggestAll: 1, delay: 50 });
+   jQInput.focus(function() {
+     jQInput.keydown();
+  });
+}
+
 
 $jQ(document).ready(function()
 {
@@ -56,6 +70,16 @@ $jQ(document).ready(function()
    });
    
    scrollView();
+   
+   $jQ(".review-note-trimmed-comment a").click(function() {
+	   $jQ(this).parent().css("display", "none").next().css("display", "block");
+	   return false;
+   });
+   
+   $jQ(".review-note-comment a").click(function() {
+	   $jQ(this).parent().css("display", "none").prev().css("display", "block");
+	   return false;
+   });
    
 });
 
@@ -179,3 +203,62 @@ function hideModal(){
 
 	return false;
 }
+
+var propSheetValidateBtnFn = [];
+var propSheetValidateSubmitFn = [];
+var propSheetValidateFormId = '';
+var propSheetValidateFinishId = '';
+var propSheetValidateNextId = '';
+var propSheetFinishBtnPressed = false;
+var propSheetNextBtnPressed = false;
+
+// Should be called once per property sheet. If there are multiple propertySheets on the same
+// page then the last caller overwrites formId, finishBtnId and nextBtnId, so those must be 
+// equal to all property sheets on the same page.
+function registerPropertySheetValidator(btnFn, submitFn, formId, finishBtnId, nextBtnId) {
+   propSheetValidateBtnFn.push(btnFn);
+   propSheetValidateSubmitFn.push(submitFn);
+   propSheetValidateFormId = formId;
+   propSheetValidateFinishId = finishBtnId;
+   propSheetValidateNextId = nextBtnId;
+}
+
+function processButtonState() {
+   for (var i = 0; i < propSheetValidateBtnFn.length; i++) {
+      if (typeof propSheetValidateBtnFn[i] == 'function') { 
+         propSheetValidateBtnFn[i]();
+         if (document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId).disabled == true) {
+            break;
+         }
+      }
+   }
+   if (typeof postProcessButtonState == 'function') { postProcessButtonState(); }
+}
+
+function propSheetValidateSubmit() {
+   var result = true;
+   if (propSheetFinishBtnPressed || propSheetNextBtnPressed) {
+      for (var i = 0; i < propSheetValidateSubmitFn.length; i++) {
+         if (typeof propSheetValidateSubmitFn[i] == 'function') { 
+            if (!propSheetValidateSubmitFn[i]()) {
+               result = false;
+               break;
+            }
+         }
+      }
+   }
+   propSheetFinishBtnPressed = false;
+   propSheetNextBtnPressed = false;
+   return result;
+}
+
+$jQ(document).ready(function() {
+   if (propSheetValidateBtnFn.length > 0 || propSheetValidateSubmitFn.length > 0) {
+      document.getElementById(propSheetValidateFormId).onsubmit = propSheetValidateSubmit;
+      document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId).onclick = function() { propSheetFinishBtnPressed = true; }
+      if (propSheetValidateNextId.length > 0) {
+         document.getElementById(propSheetValidateFormId + ':' + propSheetValidateNextId).onclick = function() { propSheetNextBtnPressed = true; }
+      }
+      processButtonState();
+   }
+});

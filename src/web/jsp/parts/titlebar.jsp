@@ -37,7 +37,13 @@
 
       <a:actionLink id="client-logo" value="#{ApplicationService.projectTitle}" href="/" tooltip="#{ApplicationService.projectTitle}" image="/images/logo/logo.png" showLink="false" />
       <a:actionLink id="project-name" value="#{ApplicationService.projectTitle}" href="/" tooltip="#{ApplicationService.projectTitle}" />
-
+      
+<%--      TODO remove me :)
+      <a:actionLink id="taskDue" value="Tööülesande lõpptähtaja saabumine" actionListener="#{NotificationService.processTaskDueDateNotifications}" />
+      <a:actionLink id="dispositionDue" value="Eraldamise tähtaja saabumine" actionListener="#{NotificationService.processVolumeDispositionDateNotifications}" />
+      <a:actionLink id="accessRestriction" value="AK piirangu lõppemine" actionListener="#{NotificationService.processAccessRestrictionEndDateNotifications}" />
+--%>
+      
       <a:panel id="search">
          <f:verbatim>
          <span>
@@ -55,13 +61,18 @@
                 showLink="false"
                 value="#{msg.addressbook}"
                 action="dialog:addressbookManage"
+                actionListener="#{MenuBean.resetClickedId}"
                 rendered="#{UserService.documentManager}" />
          <f:verbatim>
          </span>
          </f:verbatim>
-         <a:actionLink value="#{NavigationBean.currentUser.fullName}" showLink="true" image="/images/icons/user-console.png" action="dialog:userConsole"
-            actionListener="#{UserDetailsDialog.setupCurrentUser}" />
-         <a:actionLink id="logout" image="/images/icons/logout.png" value="#{msg.logout}" rendered="#{!NavigationBean.isGuest}"
+
+          <h:selectOneMenu id="select_user" onchange="this.form.submit();"
+                           value="#{SubstitutionBean.selectedSubstitution}" valueChangeListener="#{SubstitutionBean.substitutionSelected}">
+            <f:selectItem itemValue="" itemLabel="#{NavigationBean.currentUser.fullName}"/>
+            <f:selectItems value="#{SubstitutionBean.activeSubstitutions}"/>
+         </h:selectOneMenu>
+          <a:actionLink id="logout" image="/images/icons/logout.png" value="#{msg.logout}" rendered="#{!NavigationBean.isGuest}"
             action="#{LoginBean.logout}" immediate="true" />
          <a:actionLink id="login" image="/images/icons/login.gif" value="#{msg.login}" rendered="#{NavigationBean.isGuest}" action="#{LoginBean.logout}" />
 
@@ -77,7 +88,7 @@
 
    </a:panel>
    <a:panel id="menu">
-      <wm:menu id="primaryMenu" primary="true" activeItemId="#{MenuBean.activeItemId}" />
+      <wm:menu primary="true" activeItemId="#{MenuBean.activeItemId}" />
    </a:panel>
 </a:panel>
 <!-- End Header -->

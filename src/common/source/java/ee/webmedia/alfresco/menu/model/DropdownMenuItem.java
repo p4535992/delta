@@ -32,6 +32,7 @@ public class DropdownMenuItem extends MenuItem {
     public static final String DROPDOWN = "dropdown";
     public static final String ATTRIBUTE_XPATH = "xPath";
     public static final String ATTRIBUTE_NODEREF = "nodeRef";
+    public static final String ATTRIBUTE_STORE = "store";
     @XStreamAsAttribute
     private boolean expanded;
     @XStreamAsAttribute
@@ -46,6 +47,7 @@ public class DropdownMenuItem extends MenuItem {
     private String submenuId;
     @XStreamAlias("xpath")
     private String xPath;
+    private String store;    
     @XStreamOmitField
     private NodeRef nodeRef;
     
@@ -77,6 +79,11 @@ public class DropdownMenuItem extends MenuItem {
 
     @Override
     public UIComponent createComponent(FacesContext context, String id, UserService userService) {
+        return createComponent(context, id, userService, true);
+    }
+    
+    @Override
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, boolean createChildren) {
         if (isRestricted() && !hasPermissions(userService)) {
             return null;
         }
@@ -104,6 +111,9 @@ public class DropdownMenuItem extends MenuItem {
         if(getXPath() != null) {
             attr.put(ATTRIBUTE_XPATH, getXPath());
         }
+        if (getStore() != null) {
+            attr.put(ATTRIBUTE_STORE, getStore());
+        }
         if(getNodeRef() != null) {
             attr.put(ATTRIBUTE_NODEREF, getNodeRef());
         }
@@ -123,12 +133,14 @@ public class DropdownMenuItem extends MenuItem {
         List<UIComponent> children = wrapper.getChildren();
         children.add(link);
 
-        MenuItemWrapper childrenWrapper = (MenuItemWrapper) createChildrenComponents(context, id, userService);
-        if (childrenWrapper != null) {
-            childrenWrapper.setDropdownWrapper(false);
-            childrenWrapper.setSkinnable(isSkinnable());
-            childrenWrapper.setExpanded(isExpanded());
-            children.add(childrenWrapper);
+        if(createChildren) {
+            MenuItemWrapper childrenWrapper = (MenuItemWrapper) createChildrenComponents(context, id, userService);
+            if (childrenWrapper != null) {
+                childrenWrapper.setDropdownWrapper(false);
+                childrenWrapper.setSkinnable(isSkinnable());
+                childrenWrapper.setExpanded(isExpanded());
+                children.add(childrenWrapper);
+            }
         }
 
         return wrapper;
@@ -217,6 +229,14 @@ public class DropdownMenuItem extends MenuItem {
 
     public void setXPath(String xPath) {
         this.xPath = xPath;
+    }
+
+    public String getStore() {
+        return store;
+    }
+
+    public void setStore(String store) {
+        this.store = store;
     }
 
     public NodeRef getNodeRef() {

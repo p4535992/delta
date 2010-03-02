@@ -15,6 +15,29 @@ public class MenuItemWrapper extends SelfRenderingComponent {
     private String submenuId;
 
     @Override
+    public Object saveState(FacesContext context) {
+        Object values[] = new Object[6];
+        values[0] = super.saveState(context);
+        values[1] = dropdownWrapper;
+        values[2] = skinnable;
+        values[3] = expanded;
+        values[4] = plain;
+        values[5] = submenuId;
+        return values;
+    }
+
+    @Override
+    public void restoreState(FacesContext context, Object state) {
+        Object values[] = (Object[]) state;
+        super.restoreState(context, values[0]);
+        dropdownWrapper = (Boolean) values[1];
+        skinnable = (Boolean) values[2];
+        expanded = (Boolean) values[3];
+        plain = (Boolean) values[4];
+        submenuId = (String) values[5];
+    }
+
+    @Override
     public String getFamily() {
         return MenuItemWrapper.class.getCanonicalName();
     }

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.component.UIOutput;
@@ -18,9 +19,12 @@ import javax.faces.event.FacesEvent;
 
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
@@ -32,6 +36,10 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  */
 public class Search extends UIComponentBase {
 
+    public static final String SETTER_CALLBACK = "setterCallback";
+
+    public static final String SETTER_CALLBACK_TAKES_NODE = "setterCallbackTakesNode";
+
     public static final String SEARCH_FAMILY = Search.class.getCanonicalName();
 
     public static final String OPEN_DIALOG_KEY = "openDialog";
@@ -41,7 +49,8 @@ public class Search extends UIComponentBase {
     public static final String CONVERTER_KEY = "converter";
     public static final String PICKER_CALLBACK_KEY = "pickerCallback";
     public static final String VALUE_KEY = "value";
-//    public static final String FILLED_KEY = "filled";
+    public static final String SHOW_FILTER_KEY = "showFilter";
+    public static final String FILTERS_KEY = "filters";
 
     @Override
     public String getFamily() {
@@ -52,7 +61,7 @@ public class Search extends UIComponentBase {
     public void encodeBegin(FacesContext context) throws IOException {
         if (getChildCount() == 0) {
             createExistingComponents(context);
-            if (!isDisabled() || isEditable()) {
+            if (!isDisabled() || isEditable() || isChildOfUIRichList()) {
                 createPicker(context);
             }
         }
@@ -97,7 +106,11 @@ public class Search extends UIComponentBase {
 
         UIGenericPicker picker = (UIGenericPicker) context.getApplication().createComponent("org.alfresco.faces.GenericPicker");
         FacesHelper.setupComponentId(context, picker, "picker");
-        picker.setShowFilter(false);
+        picker.setShowFilter(getAttributes().containsKey(SHOW_FILTER_KEY) && Boolean.valueOf((String) getAttributes().get(SHOW_FILTER_KEY)));
+        if (picker.getShowFilter()) {
+            ValueBinding pickerV = context.getApplication().createValueBinding((String) getAttributes().get(FILTERS_KEY));
+            picker.setValueBinding("filters", pickerV);
+        }
         picker.setWidth(400);
         picker.setMultiSelect(isMultiValued());
         String pickerCallback = (String) getAttributes().get(PICKER_CALLBACK_KEY);
@@ -113,6 +126,7 @@ public class Search extends UIComponentBase {
             return;
         }
         FacesContext context = FacesContext.getCurrentInstance();
+
         if (isMultiValued()) {
             for (String result : results) {
                 appendRow(context, result);
@@ -122,22 +136,55 @@ public class Search extends UIComponentBase {
                 throw new RuntimeException("Single-valued property does not support multiple values");
             }
             if (results.length == 1) {
+
+                String setterCallback = getSetterCallback();
+
                 @SuppressWarnings("unchecked")
                 List<UIComponent> children = ((UIComponent) getChildren().get(0)).getChildren();
                 if (!children.isEmpty()) {
                     children.remove(0);
                 }
                 appendRow(context, results[0]);
-                
-                String setterCallback = getSetterCallback(context);
+
                 if (setterCallback != null) {
-                    MethodBinding b = getFacesContext().getApplication().createMethodBinding(setterCallback, new Class[] { String.class });
-                    b.invoke(context, new Object[] { results[0] });
+                    // first argument is always String(result from picker)
+                    // second argument can be either Object(value from RichList)
+                    // or Node(of surrounding propertySheet, that is the last argument of method binding) if setterCallbackTakesNode()
+                    final List<Class<?>> paramsTypes = new ArrayList<Class<?>>(3);
+                    final List<Object> argValues = new ArrayList<Object>(3);
+                    paramsTypes.add(String.class);
+                    argValues.add(results[0]);
+                    if (isChildOfUIRichList()) {
+                        Integer rowIndex = (Integer) getAttributes().get(Search.OPEN_DIALOG_KEY);
+                        Object rowObject = getRowObjectByIndex(rowIndex);
+                        paramsTypes.add(rowObject.getClass());
+                        argValues.add(rowObject);
+                    }
+
+                    if (setterCallbackTakesNode()) {
+                        final UIPropertySheet propSheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
+                        paramsTypes.add(Node.class);
+                        argValues.add(propSheet.getNode());
+                    }
+                    MethodBinding b = getFacesContext().getApplication().createMethodBinding(setterCallback, paramsTypes.toArray(new Class[paramsTypes.size()]));
+                    b.invoke(context, argValues.toArray());
                 }
+                
             }
         }
         getAttributes().remove(OPEN_DIALOG_KEY);
         picker.queueEvent(new UIGenericPicker.PickerEvent(picker, 1 /* ACTION_CLEAR */, 0, null, null));
+    }
+
+    public boolean isChildOfUIRichList() {
+        UIComponent comp = getParent().getParent();
+        return comp instanceof UIRichList;
+    }
+
+    private Object getRowObjectByIndex(Integer index) {
+        UIComponent comp = getParent().getParent();
+        UIRichList list = (UIRichList) comp;
+        return list.getDataModel().getRow(index);
     }
 
     protected void createExistingComponents(FacesContext context) {
@@ -162,12 +209,17 @@ public class Search extends UIComponentBase {
         @SuppressWarnings("unchecked")
         List<UIComponent> children = ((UIComponent) getChildren().get(0)).getChildren();
 
-        UIOutput component = (UIOutput) context.getApplication().createComponent(isEditable() ? ComponentConstants.JAVAX_FACES_INPUT : ComponentConstants.JAVAX_FACES_OUTPUT);
-        FacesHelper.setupComponentId(context, component, null);
+        UIOutput component = (UIOutput) context.getApplication().createComponent(
+                isEditable() ? ComponentConstants.JAVAX_FACES_INPUT : ComponentConstants.JAVAX_FACES_OUTPUT);
+        FacesHelper.setupComponentId(context, component, "row_"+rowIndex);
         setValueBinding(context, component, rowIndex);
         ComponentUtil.createAndSetConverter(context, (String) getAttributes().get(CONVERTER_KEY), component);
         if (isDisabled()) {
             ComponentUtil.setDisabledAttributeRecursively(component);
+        } else if (isEditable()) {
+            @SuppressWarnings("unchecked")
+            final Map<String, Object> attributes = component.getAttributes();
+            attributes.put("onkeyup", "processButtonState();");
         }
         children.add(component);
     }
@@ -182,7 +234,9 @@ public class Search extends UIComponentBase {
             list.add(convertedValue);
             appendRowComponent(context, list.size() - 1);
         } else {
-            setValue(context, convertedValue);
+            if (!isChildOfUIRichList()) { // only setter callback can be used with UIRichList
+                setValue(context, convertedValue);
+            }
             appendRowComponent(context, -1);
         }
     }
@@ -235,10 +289,17 @@ public class Search extends UIComponentBase {
         return list;
     }
 
-    protected String getSetterCallback(FacesContext context) {
+    private boolean setterCallbackTakesNode() {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = getAttributes();
-        return (String) attributes.get("setterCallback");
+        final Boolean takesNode = (Boolean) attributes.get(Search.SETTER_CALLBACK_TAKES_NODE);
+        return takesNode == null ? false : takesNode;
+    }
+    
+    protected String getSetterCallback() {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = getAttributes();
+        return (String) attributes.get(SETTER_CALLBACK);
     }
 
     protected boolean isDisabled() {

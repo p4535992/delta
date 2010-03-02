@@ -31,6 +31,14 @@
       </property>
    </bean>
 
+   <bean id="docSearchResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.document.search.service.document-search-messages</value>
+         </list>
+      </property>
+   </bean>
+
    <bean id="documentSearchService" class="ee.webmedia.alfresco.document.search.service.DocumentSearchServiceImpl">
       <property name="documentService" ref="DocumentService" />
       <property name="generalService" ref="GeneralService" />
@@ -38,6 +46,9 @@
       <property name="searchService" ref="SearchService" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="seriesService" ref="SeriesService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="volumeService" ref="VolumeService" />
+      <property name="parametersService" ref="ParametersService" />
    </bean>
 
    <bean id="DocumentSearchService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -50,6 +61,42 @@
       <property name="interceptorNames">
          <list>
             <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentSearchFilterService" class="ee.webmedia.alfresco.document.search.service.DocumentSearchFilterServiceImpl">
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+   </bean>
+
+   <bean id="DocumentSearchFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentSearchFilterService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentSearchFiltersSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="name" value="documentSearchFiltersSpacesBootstrap" />
+      <property name="sinceVersion" value="1.4.1.18" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/</prop>
+               <prop key="location">ee/webmedia/alfresco/document/search/bootstrap/documentSearchFilters.xml</prop>
+            </props>
          </list>
       </property>
    </bean>

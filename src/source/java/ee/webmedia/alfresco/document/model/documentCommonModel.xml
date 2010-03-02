@@ -6,6 +6,7 @@
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
       <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
+      <import uri="http://alfresco.webmedia.ee/model/workflow/common/1.0" prefix="wfc" />
    </imports>
 
    <namespaces>
@@ -17,7 +18,7 @@
       <type name="doccom:document">
          <parent>cm:folder</parent>
          <associations>
-            <association name="doccom:documentReply">
+            <association name="doccom:reply">
                <source>
                   <mandatory>false</mandatory>
                   <many>true</many>
@@ -28,7 +29,7 @@
                   <many>false</many>
                </target>
             </association>
-            <association name="doccom:documentFollowUp">
+            <association name="doccom:followUp">
                <source>
                   <mandatory>false</mandatory>
                   <many>true</many>
@@ -37,6 +38,17 @@
                   <class>doccom:document</class>
                   <mandatory>false</mandatory>
                   <many>false</many>
+               </target>
+            </association>
+            <association name="doccom:document2Document">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
                </target>
             </association>
             <child-association name="doccom:sendInfo">
@@ -50,9 +62,21 @@
                   <many>true</many>
                </target>
             </child-association>
+            <child-association name="doccom:documentLog">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>doccom:documentLog</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
          </associations>
          <mandatory-aspects>
             <aspect>doccom:common</aspect>
+            <aspect>wfc:compoundWorkflowContainer</aspect>
          </mandatory-aspects>
       </type>
 
@@ -62,6 +86,14 @@
             <aspect>doccom:documentContainer</aspect>
          </mandatory-aspects>
       </type>
+
+      <type name="doccom:metadataContainer">
+         <parent>sys:base</parent>
+      </type>
+
+       <type name="doccom:scannedDocs">
+           <parent>sys:base</parent>
+       </type>
 
       <type name="doccom:sendInfo">
          <parent>sys:base</parent>
@@ -89,10 +121,43 @@
             </property>
          </properties>
       </type>
-
+      
+      <type name="doccom:documentLog">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="doccom:createdDateTime">
+               <type>d:date</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="doccom:creatorName">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="doccom:eventDescription">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </type>
+      
    </types>
 
    <aspects>
+
+      <aspect name="doccom:favoriteContainer">
+         <associations>
+            <child-association name="doccom:favorite">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
 
       <aspect name="doccom:documentContainer">
          <associations>
@@ -136,6 +201,38 @@
                   <stored>false</stored>
                   <tokenised>true</tokenised>
                </index>
+            </property>
+            <property name="doccom:searchableSendMode">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableCostManager">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableApplicantName">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableErrandBeginDate">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableErrandEndDate">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableErrandCountry">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableErrandCounty">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableErrandCity">
+               <type>d:text</type>
+               <multiple>true</multiple>
             </property>
          </properties>
       </aspect>
@@ -197,6 +294,11 @@
             <property name="doccom:ownerId"><!-- Koostaja isikukood -->
                <type>d:text</type>
                <mandatory enforced="false">true</mandatory>
+               <index enabled="true">
+                  <atomic>true</atomic>
+                  <stored>false</stored>
+                  <tokenised>false</tokenised><!-- default was true -->
+               </index>
             </property>
             <property name="doccom:ownerJobTitle"><!-- Koostaja ametinimetus -->
                <type>d:text</type>

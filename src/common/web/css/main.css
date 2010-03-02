@@ -76,6 +76,7 @@ a:focus {
 	padding-bottom: 1px; /* may be overrridden in <a:actionlink /> declaration */
 	background: transparent no-repeat;
 	line-height: 16px;
+	height: 16px;
 }
 
 #links-panel a {
@@ -167,7 +168,7 @@ html, body {
 		#logo #client-logo {
 			float:left;
 			margin: 4px 0 0 10px;
-			padding: 32px 0 22px 182px !important;
+			padding: 32px 0 8px 182px !important;
 		}
 		
 		#logo #project-name {
@@ -460,9 +461,13 @@ html, body {
 	BREADCRUMB
 	******************************/
 
-#breadcrumb, .breadcrumb {
+ul#breadcrumb li {
+	display: inline;
+}
+
+#breadcrumb, .breadcrumb, #alt-breadcrumb {
 	margin-bottom: 10px;
-	display: none;
+/*	display: none;  */
 }
 
 .breadcrumb {
@@ -616,6 +621,10 @@ html, body {
 	right: 0;	
 }
 
+.dropdown-menu.in-title {
+	top: auto;
+}
+
 td .dropdown-menu {
 	top: auto;
 	right: 0;
@@ -632,7 +641,8 @@ td .dropdown-menu {
 	margin: 2px;
 }
 
-.extra-actions > li:first-child a img {
+/* .extra-actions > li:first-child a img { */
+.extra-actions > li a img {
 	top: 7px !important;
 }
 
@@ -718,6 +728,18 @@ td .dropdown-menu {
 .panel-100	{ width: 100%; }
 
 .min-width-360		{min-width: 360px;}
+
+.width10 {
+	width: 10%;
+}
+
+.width15 {
+	width: 15%;
+}
+
+.width30 {
+	width: 30%;
+}
 
 
 
@@ -1141,14 +1163,28 @@ input[type="checkbox"] {
 .modalpopup-content-inner table {
 	width: 100%;
 }
-	.modalpopup-content-inner table td {
-		padding: 4px 0 !important;
-	}
-	
-		.modalpopup-content-inner table td input[type="text"] {
-			width: 300px !important;
-		}
 
-	.modalpopup-content-inner table select {
-		width: 100% !important;
-	}
+.modalpopup-content-inner table td {
+	padding: 4px 0 !important;
+}
+
+.modalpopup-content-inner table td input[type="text"] {
+	width: 300px !important;
+}
+
+.modalpopup-content-inner.modalpopup-filter table td input[type="text"] {
+    width: 220px !important;
+}
+
+#task-search-panel .modalpopup-content-inner table td input[type="text"] {
+    width: 260px !important;
+}
+
+.modalpopup-content-inner table select[multiple="multiple"], 
+.modalpopup-content-inner table select[multiple] {
+	width: 100% !important;
+}
+
+.right {
+	float: right;
+}

@@ -23,11 +23,14 @@ public class File implements Serializable {
     private static final long serialVersionUID = 1L;
     public static final String URI = "http://alfresco.webmedia.ee/model/file/1.0";
     public static final QName GENERATED = QName.createQName(URI, "generated");
+    public static final QName ACTIVE = QName.createQName(URI, "active");
 
     private String name;
     private String downloadUrl;
     private String creator;
     private String modifier;
+    private String encoding;
+    private String mimeType;
     private long size;
     private Date created;
     private Date modified;
@@ -38,6 +41,8 @@ public class File implements Serializable {
     private boolean versionable;
     private SignatureItemsAndDataItems ddocItems;
     private boolean generated;
+    private boolean active;
+    private boolean isTransformableToPdf;
 
     public File() {
     }
@@ -46,6 +51,8 @@ public class File implements Serializable {
         name = fileInfo.getName();
         created = fileInfo.getCreatedDate();
         modified = fileInfo.getModifiedDate();
+        encoding = fileInfo.getContentData().getEncoding();
+        mimeType = fileInfo.getContentData().getMimetype();
         size = fileInfo.getContentData().getSize();
         nodeRef = fileInfo.getNodeRef();
         node = new Node(nodeRef);
@@ -54,6 +61,7 @@ public class File implements Serializable {
         creator = "";
         modifier = "";
         generated = fileInfo.getProperties().get(GENERATED) != null;
+        active = (fileInfo.getProperties().get(ACTIVE) == null) ? true : Boolean.parseBoolean(fileInfo.getProperties().get(ACTIVE).toString());
     }
 
     public String getName() {
@@ -127,6 +135,22 @@ public class File implements Serializable {
     public void setNode(Node node) {
         this.node = node;
     }
+    
+    public String getEncoding() {
+        return encoding;
+    }
+
+    public void setEncoding(String encoding) {
+        this.encoding = encoding;
+    }
+
+    public String getMimeType() {
+        return mimeType;
+    }
+
+    public void setMimeType(String mimeType) {
+        this.mimeType = mimeType;
+    }
 
     /**
      * @return true if this item/file is contained in digiDoc container
@@ -181,6 +205,22 @@ public class File implements Serializable {
     public void setGenerated(boolean generated) {
         this.generated = generated;
     }
+    
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    public boolean isTransformableToPdf() {
+        return isTransformableToPdf;
+    }
+
+    public void setTransformableToPdf(boolean isTransformableToPdf) {
+        this.isTransformableToPdf = isTransformableToPdf;
+    }
 
     /**
      * Used to specify icon.
@@ -194,6 +234,23 @@ public class File implements Serializable {
      */
     public String getId() {
         return nodeRef.getId();
+    }
+    
+    /* JSP is evil! */
+    public boolean isActiveAndNotDigiDoc() {
+        return isActive() && !isDigiDocItem();
+    }
+    
+    public boolean isActiveDigiDoc() {
+        return isActive() && isDigiDocItem();
+    }
+    
+    public boolean isNotActiveAndDigiDoc() {
+        return !isActive() && isDigiDocItem();
+    }
+    
+    public boolean isNotActiveAndNotDigiDoc() {
+        return !isActive() && !isDigiDocItem();
     }
 
 }

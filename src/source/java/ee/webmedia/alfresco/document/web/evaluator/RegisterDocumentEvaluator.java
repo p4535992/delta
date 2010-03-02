@@ -53,9 +53,6 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
     }
     
     public boolean evaluateAdditionalButton(Node docNode) {
-        DocumentService documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(//
-                FacesContext.getCurrentInstance()).getBean(DocumentService.BEAN_NAME);
-
         PermissionService permissionService = (PermissionService) FacesContextUtils.getRequiredWebApplicationContext(//
                 FacesContext.getCurrentInstance()).getBean("PermissionService");
         if (!permissionService.hasPermission(docNode.getNodeRef(), PermissionService.WRITE_PROPERTIES).equals(AccessStatus.ALLOWED)) {

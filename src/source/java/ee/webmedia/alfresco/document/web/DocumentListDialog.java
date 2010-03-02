@@ -34,7 +34,6 @@ public class DocumentListDialog extends BaseDocumentListDialog {
     private Volume parentVolume;
     private Case parentCase;
     private boolean quickSearch = false;
-    private boolean incomingEmails = false;
     private String searchValue;
 
     public void setup(ActionEvent event) {
@@ -47,13 +46,23 @@ public class DocumentListDialog extends BaseDocumentListDialog {
             param = ActionUtil.getParam(event, CASE_NODE_REF);
             parentCase = getCaseService().getCaseByNoderef(param);
         }
+        refreshDocuments();
+    }
+
+    private void refreshDocuments() {
         if (parentCase != null) {
             documents = getDocumentService().getAllDocumentsByCase(parentCase.getNode().getNodeRef());
         } else {// assuming that parentVolume is volume
             documents = getDocumentService().getAllDocumentsByVolume(parentVolume.getNode().getNodeRef());
         }
         Collections.sort(documents);
-        incomingEmails = false;
+    }
+
+
+    @Override
+    public void restored() {
+        // Update list data
+        refreshDocuments();
     }
 
     @Override
@@ -63,17 +72,10 @@ public class DocumentListDialog extends BaseDocumentListDialog {
         return super.cancel();
     }
 
-    public void showIncomingEmails(ActionEvent event) {
-        incomingEmails = true;
-        documents = getDocumentService().getIncomingEmails();
-    }
-
     @Override
     public String getListTitle() {
         if (quickSearch) {
             return MessageUtil.getMessage("document_search");
-        } else if (incomingEmails) {
-            return MessageUtil.getMessage("document_incoming_emails");
         } else if (parentCase != null) {
             return parentCase.getTitle();
         } else if (parentVolume != null) {
@@ -88,7 +90,6 @@ public class DocumentListDialog extends BaseDocumentListDialog {
         parentCase = null;
         documents = null;
         quickSearch = false;
-        incomingEmails = false;
     }
     // END: jsf actions/accessors
 

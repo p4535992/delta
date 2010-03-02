@@ -12,6 +12,7 @@
       <property name="permissionServiceImpl" ref="permissionServiceImpl" />
       <property name="nodeService" ref="nodeService" />
       <property name="dictionaryService" ref="dictionaryService" />
+      <property name="namespaceService" ref="namespaceService" />
       <property name="authorityService" ref="authorityService" />
       <property name="userService" ref="userService" />
       <property name="modelDAO" ref="permissionsModelDAO" />
@@ -25,10 +26,17 @@
       </property>
    </bean>
 
-   <bean class="ee.webmedia.alfresco.document.permissions.DocumentOwnerFileDynamicAuthority" parent="dynamicAuthority">
+   <bean class="ee.webmedia.alfresco.document.permissions.DocumentFileReadDynamicAuthority" parent="dynamicAuthority">
       <property name="requiredFor">
          <list>
             <value>DocumentFileRead</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
             <value>DocumentFileWrite</value>
          </list>
       </property>
@@ -54,6 +62,38 @@
       <property name="requiredFor">
          <list>
             <value>DocumentDelete</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.DocumentChildMetadataDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>DocumentChildMetadata</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.ForumDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>Forum</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.WorkflowUserDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>WorkflowUser</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.document.permissions.WorkflowOwnerDynamicAuthority" parent="dynamicAuthority">
+      <property name="requiredFor">
+         <list>
+            <value>WorkflowOwner</value>
          </list>
       </property>
    </bean>

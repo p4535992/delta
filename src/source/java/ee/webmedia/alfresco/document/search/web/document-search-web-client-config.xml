@@ -1,21 +1,40 @@
 <alfresco-config>
 
    <config>
+       <actions>
+           <action id="document_search_export_csv">
+               <label-id>document_export_csv</label-id>
+               <image>/images/icons/versioned_properties.gif</image>
+               <action-listener>#{DocumentSearchResultsDialog.exportAsCsv}</action-listener>
+           </action>
+
+           <action id="document_search_export_estonian_post">
+               <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+               <label-id>document_search_export_estonian_post</label-id>
+               <image>/images/icons/versioned_properties.gif</image>
+               <action-listener>#{DocumentSearchResultsDialog.exportEstonianPost}</action-listener>
+           </action>
+
+           <action-group id="document_search_actions">
+               <action idref="document_search_export_csv"/>
+               <action idref="document_search_export_estonian_post"/>
+           </action-group>
+       </actions>
       <dialogs>
          <dialog name="documentSearchDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-dialog.jsp" managed-bean="DocumentSearchDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_search" />
 
          <dialog name="documentSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentSearchResultsDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_search" />
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_search" actions-config-id="document_search_actions"/>
 
          <dialog name="documentSearchExtendedResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-extended-results-dialog.jsp" managed-bean="DocumentSearchResultsDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_search" />
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_search" actions-config-id="document_search_actions"/>
 
          <dialog name="documentQuickSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DocumentQuickSearchResultsDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_quick_search" show-ok-button="false" />
 
          <dialog name="todayRegisteredDocumentsSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="TodayRegisteredDocumentsSearchResultsDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" show-ok-button="false" />
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_registeredToday" show-ok-button="false" />
 
          <dialog name="userWorkingDocumentsSearchResultsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="UserWorkingDocumentsSearchResultsDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_list" show-ok-button="false" />
@@ -49,10 +68,18 @@
          <show-property name="docsearch:signerJobTitle" display-label-id="document_signerJobTitle" component-generator="TextAreaGenerator" styleClass="expand5-200 secondary" />
          <show-property name="docsearch:keywords" display-label-id="document_keywords" component-generator="ClassificatorSelectorAndTextGenerator" classificatorName="keywords" styleClass="expand5-200" />
          <show-property name="docsearch:storageType" display-label-id="document_storageType" component-generator="ClassificatorSelectorGenerator" classificatorName="storageType" />
-         <show-property name="docsearch:costManager" display-label-id="document_costManager" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:sendMode" display-label-id="document_send_mode" component-generator="ClassificatorSelectorGenerator" classificatorName="sendModeSearch" />
+         <show-property name="docsearch:costManager" display-label-id="document_costManager" component-generator="ClassificatorSelectorGenerator" classificatorName="costManager" />
+         <show-property name="docsearch:applicantName" display-label-id="document_errand_applicant" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:errandBeginDateBegin" display-label-id="document_errand_beginDate" component-generator="InlinePropertyGroupGenerator" props="docsearch:errandBeginDateBegin||styleClass=date,docsearch:errandBeginDateEnd||styleClass=date" textId="document_search_from_to" />
+         <show-property name="docsearch:errandEndDateBegin" display-label-id="document_errand_endDate" component-generator="InlinePropertyGroupGenerator" props="docsearch:errandEndDateBegin||styleClass=date,docsearch:errandEndDateEnd||styleClass=date" textId="document_search_from_to" />
+         <show-property name="docsearch:errandCountry" display-label-id="document_errand_country" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:errandCounty" display-label-id="document_errand_county" component-generator="ClassificatorSelectorGenerator" classificatorName="counties" />
+         <show-property name="docsearch:errandCity" display-label-id="document_errand_city" component-generator="TextAreaGenerator" styleClass="expand5-200" />
          <show-property name="docsearch:responsibleName" display-label-id="document_responsibleName" component-generator="TextAreaGenerator" styleClass="expand5-200" />
          <show-property name="docsearch:coResponsibles" display-label-id="document_coResponsibles" component-generator="TextAreaGenerator" styleClass="expand5-200" />
          <show-property name="docsearch:contactPerson" display-label-id="document_contactPerson" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="docsearch:procurementType" display-label-id="document_procurementType" component-generator="ClassificatorSelectorGenerator" classificatorName="procurementType" />
          <show-property name="docsearch:output" display-label-id="document_search_output" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getSearchOutput}" />
       </property-sheet>
    </config>

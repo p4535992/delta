@@ -22,5 +22,7 @@ public interface VolumeModel {
         QName TITLE = QName.createQName(URI, "title");
         QName MARK = QName.createQName(URI, "volumeMark");
         QName VALID_TO = QName.createQName(URI, "validTo");
+        QName ARCHIVING_NOTE = QName.createQName(URI, "archivingNote");
+        QName SEND_TO_DESTRUCTION = QName.createQName(URI, "sendToDestruction");
     }
 }

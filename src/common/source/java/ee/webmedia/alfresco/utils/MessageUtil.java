@@ -8,6 +8,8 @@ import javax.faces.context.FacesContext;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.ui.common.Utils;
 
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+
 /**
  * Util class that helps to I18N messages.
  * 
@@ -31,12 +33,12 @@ public class MessageUtil {
 
     /**
      * Get message from faces context.
-     *
+     * 
      * @param messageId Id of the message
      * @return message
      */
-    public static String getMessage(String messageId) {
-        return getMessage(FacesContext.getCurrentInstance(), messageId);
+    public static String getMessage(String messageId, Object... messageValuesForHolders) {
+        return getMessage(FacesContext.getCurrentInstance(), messageId, messageValuesForHolders);
     }
 
     /**
@@ -51,9 +53,8 @@ public class MessageUtil {
         final String msg = getMessage(context, messageId, messageValuesForHolders);
         Utils.addErrorMessage(msg);
     }
-    
+
     /**
-     * TODO: Alar: testi seda ja kasuta DvkBeanist olemasoleva lahenduse asemel
      * @param context
      * @param messageId
      * @param severity
@@ -70,6 +71,30 @@ public class MessageUtil {
 
     public static void addInfoMessage(FacesContext currentInstance, String string, Object... messageValuesForHolders) {
         addStatusMessage(currentInstance, string, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
+    }
+
+    /**
+     * Add statusMessage to the faces context(to be shown to the user). Message text is retrieved from message bundle based on key <code>e.getMessage()</code>
+     * and possible valuces could be set using <code>e.getMessageValuesForHolders()</code>. Severity of message is determined by <code>e.getSeverity()</code>
+     * 
+     * @param facesContext
+     * @param e - exception object used to create message
+     */
+    public static void addStatusMessage(FacesContext facesContext, UnableToPerformException e) {
+        final MessageSeverity severity = e.getSeverity();
+        final FacesMessage.Severity facesSeverity;
+        if (severity == MessageSeverity.INFO) {
+            facesSeverity = FacesMessage.SEVERITY_INFO;
+        } else if (severity == MessageSeverity.WARN) {
+            facesSeverity = FacesMessage.SEVERITY_WARN;
+        } else if (severity == MessageSeverity.ERROR) {
+            facesSeverity = FacesMessage.SEVERITY_ERROR;
+        } else if (severity == MessageSeverity.FATAL) {
+            facesSeverity = FacesMessage.SEVERITY_FATAL;
+        } else {
+            throw new RuntimeException("Unexpected severity: " + severity);
+        }
+        addStatusMessage(facesContext, e.getMessage(), facesSeverity, e.getMessageValuesForHolders());
     }
 
 }

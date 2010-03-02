@@ -1,14 +1,18 @@
 package ee.webmedia.alfresco.document.model;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -19,16 +23,36 @@ import ee.webmedia.alfresco.document.type.model.DocumentType;
 public class Document implements Serializable, Comparable<Document> {
     private static final long serialVersionUID = 1L;
 
-    private static final String LIST_SEPARATOR = ", ";
+    public static final String LIST_SEPARATOR = ", ";
+
+    public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
     private Node node;
     private DocumentType documentType;
     private List<File> files; // load lazily
+    private Map<QName, Serializable> searchableProperties;
+
+    public Document(Document source) {
+        Assert.notNull(source, "Source document is mandatory");
+        this.node = source.getNode();
+        this.documentType = source.getDocumentType();
+        this.files = source.getFiles();
+        this.searchableProperties = new HashMap<QName, Serializable>(source.getSearchableProperties());
+    }
 
     public Document(Node document, DocumentType documentType) {
         Assert.notNull(document, "Document node is mandatory");
         this.node = document;
         this.documentType = documentType;
+        this.searchableProperties = new HashMap<QName, Serializable>();
+    }
+
+    private Map<QName, Serializable> getSearchableProperties() {
+        return searchableProperties;
+    }
+
+    public void setSearchableProperty(QName property, Serializable value) {
+        getSearchableProperties().put(property, value);
     }
 
     public Node getNode() {
@@ -65,19 +89,7 @@ public class Document implements Serializable, Comparable<Document> {
     }
 
     public String getAllRecipients() {
-        @SuppressWarnings("unchecked")
-        final List<String> recipients = (List<String>) getNode().getProperties().get(DocumentCommonModel.Props.RECIPIENT_NAME);
-        if (recipients == null) {
-            return "";
-        }
-        String allRecipients = StringUtils.join(recipients.iterator(), LIST_SEPARATOR);
-        @SuppressWarnings("unchecked")
-        final List<String> additionalRecipient = (List<String>) getNode().getProperties().get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
-        if (additionalRecipient == null) {
-            return allRecipients;
-        }
-        String additional = StringUtils.join(additionalRecipient.iterator(), LIST_SEPARATOR);
-        return allRecipients + (StringUtils.isNotBlank(allRecipients) && StringUtils.isNotBlank(additional) ? LIST_SEPARATOR : "") + additional;
+        return join(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
     }
 
     public String getDocName() {
@@ -142,6 +154,10 @@ public class Document implements Serializable, Comparable<Document> {
     public String getAccessRestrictionEndDesc() {
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC);
     }
+    
+    public String getOwnerId() {
+        return (String) getNode().getProperties().get(DocumentCommonModel.Props.OWNER_ID);
+    }
 
     public String getOwnerName() {
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
@@ -171,9 +187,36 @@ public class Document implements Serializable, Comparable<Document> {
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.STORAGE_TYPE);
     }
 
+    public String getSendMode() {
+        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
+    }
+
     public String getCostManager() {
-        // Only docsub:contractSim has this property
-        return (String) getNode().getProperties().get(DocumentSpecificModel.Props.COST_MANAGER);
+        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER);
+    }
+
+    public String getApplicantName() {
+        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME);
+    }
+
+    public String getErrandBeginDate() {
+        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE);
+    }
+
+    public String getErrandEndDate() {
+        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE);
+    }
+
+    public String getErrandCountry() {
+        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY);
+    }
+
+    public String getErrandCounty() {
+        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY);
+    }
+
+    public String getErrandCity() {
+        return (String) getSearchableProperties().get(DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY);
     }
 
     public String getResponsibleName() {
@@ -188,9 +231,14 @@ public class Document implements Serializable, Comparable<Document> {
 
     public String getContactPerson() {
         // Only docsub:contractSim and docsub:contractSmit have these properties
-        return joinWithComma(DocumentSpecificModel.Props.FIRST_PARTY_CONTACT_PERSON,
+        return join(DocumentSpecificModel.Props.FIRST_PARTY_CONTACT_PERSON,
                 DocumentSpecificModel.Props.SECOND_PARTY_CONTACT_PERSON,
                 DocumentSpecificModel.Props.THIRD_PARTY_CONTACT_PERSON);
+    }
+
+    public String getProcurementType() {
+        // Only docsub:tenderingApplication has this property
+        return (String) getNode().getProperties().get(DocumentSpecificModel.Props.PROCUREMENT_TYPE);
     }
 
     // Other
@@ -200,7 +248,7 @@ public class Document implements Serializable, Comparable<Document> {
             // probably not the best idea to call service from model, but alternatives get probably too complex
             FileService fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(FileService.BEAN_NAME);
-            files = fileService.getAllFilesExcludingDigidocSubitems(getNode().getNodeRef());
+            files = fileService.getAllActiveFiles(getNode().getNodeRef());
         }
         return files;
     }
@@ -232,15 +280,66 @@ public class Document implements Serializable, Comparable<Document> {
                 .toString();
     }
 
-    private String joinWithComma(QName... props) {
+    private String join(QName... props) {
         StringBuilder result = new StringBuilder();
         for (QName prop : props) {
-            String item = (String) getNode().getProperties().get(prop);
-            if (StringUtils.isNotBlank(item)) {
-                if (result.length() > 0) {
-                    result.append(", ");
+            Object item = getNode().getProperties().get(prop);
+            if (item instanceof Collection<?>) {
+                @SuppressWarnings("unchecked")
+                Collection<String> list = (Collection<String>) item;
+                for (String textItem : list) {
+                    if (StringUtils.isNotBlank(textItem)) {
+                        if (result.length() > 0) {
+                            result.append(LIST_SEPARATOR);
+                        }
+                        result.append(textItem);
+                    }
                 }
-                result.append(item);
+            } else {
+                String textItem = (String) item;
+                if (StringUtils.isNotBlank(textItem)) {
+                    if (result.length() > 0) {
+                        result.append(LIST_SEPARATOR);
+                    }
+                    result.append(textItem);
+                }
+            }
+        }
+        return result.toString();
+    }
+
+    public static String join(Serializable propValue) {
+        StringBuilder result = new StringBuilder();
+        if (propValue == null) {
+            return "";
+        }
+        if (propValue instanceof List<?>) {
+            @SuppressWarnings("unchecked")
+            List<Serializable> list = (List<Serializable>) propValue;
+            for (Serializable value : list) {
+                String textItem = join(value);
+                if (StringUtils.isNotBlank(textItem)) {
+                    if (result.length() > 0) {
+                        result.append(LIST_SEPARATOR);
+                    }
+                    result.append(textItem);
+                }
+            }
+        } else if (propValue instanceof Date) {
+            String textItem = dateFormat.format((Date) propValue);
+            if (StringUtils.isNotBlank(textItem)) {
+                if (result.length() > 0) {
+                    result.append(LIST_SEPARATOR);
+                }
+                result.append(textItem);
+            }
+        } else if (propValue instanceof String) {
+            String textItem = (String) propValue;
+            if (StringUtils.isNotBlank(textItem)) {
+                if (result.length() > 0) {
+                    result.append(LIST_SEPARATOR);
+                }
+                result.append(textItem);
             }
         }
         return result.toString();

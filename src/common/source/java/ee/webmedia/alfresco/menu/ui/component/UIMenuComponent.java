@@ -8,6 +8,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.FacesEvent;
 
+import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.component.UIActionLink;
 
@@ -33,25 +34,48 @@ public class UIMenuComponent extends UIComponentBase {
     @Override
     public void queueEvent(FacesEvent event) {
 
+        boolean forceReset = false;
         if (event instanceof ActionEvent) {
             FacesContext context = FacesContext.getCurrentInstance();
             UIActionLink link = (UIActionLink) event.getComponent();
-            String activeId = link.getClientId(context).replaceAll("^[^0-9]*", "");
+            String clientId = link.getClientId(context);
+            String activeId = clientId.replaceAll("^[^0-9]*", "");
             @SuppressWarnings("unchecked")
             Map<String, Object> attr = link.getParent().getParent().getAttributes();
 
+            MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
             Object isPrimary = attr.get(UIMenuComponent.PRIMARY_ATTRIBUTE_KEY);
             if (isPrimary != null && Boolean.parseBoolean(isPrimary.toString())) {
-                MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
                 menuBean.setActiveItemId(activeId);
+                if(Integer.parseInt(activeId) == MenuBean.MY_TASKS_AND_DOCUMENTS_ID) {
+                    menuBean.processTaskItems();
+                }
                 if(Integer.parseInt(activeId) == MenuBean.DOCUMENT_REGISTER_ID) {
                     menuBean.collapseMenuItems(null);
                 }
             }
             
+            if(Integer.parseInt(menuBean.getActiveItemId()) == MenuBean.DOCUMENT_REGISTER_ID && link.getClientId(context).endsWith(MenuRenderer.SECONDARY_MENU_PREFIX + 0)) {
+                forceReset = true;
+            }
+
+            if(!(link.getActionListener() != null && link.getActionListener().getExpressionString() != null && link.getActionListener().getExpressionString().equals(MenuBean.UPDATE_TREE_ACTTIONLISTENER)) || forceReset) {
+                menuBean.resetStateList(); // don't reset browse items, but reset on documentsList first
+                forceReset = false;
+            }
+
+            
             // Clear the view stack, otherwise it would grow too big as the cancel button is hidden in some views
             // Later in the life-cycle the view where this action came from is added to the stack, so visible cancel buttons will function properly 
-            FacesContext.getCurrentInstance().getExternalContext().getSessionMap().put(VIEW_STACK, new Stack<String>());
+            @SuppressWarnings("unchecked")
+            Map<String, Object> sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
+            sessionMap.put(VIEW_STACK, new Stack<String>());
+
+            menuBean.setClickedId(clientId);
+
+            // let the ClearStateNotificationHandler notify all the interested listeners
+            ClearStateNotificationHandler clearStateNotificationHandler = (ClearStateNotificationHandler) FacesHelper.getManagedBean(context, ClearStateNotificationHandler.BEAN_NAME);
+            clearStateNotificationHandler.notifyClearStateListeners();
         }
         super.queueEvent(event);
     }

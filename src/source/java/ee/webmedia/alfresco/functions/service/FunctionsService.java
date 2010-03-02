@@ -22,6 +22,8 @@ public interface FunctionsService {
      */
     List<Function> getAllFunctions();
 
+    List<Function> getFunctions(NodeRef functionsRoot);
+
     List<Function> getAllFunctions(DocListUnitStatus status);
 
     /**

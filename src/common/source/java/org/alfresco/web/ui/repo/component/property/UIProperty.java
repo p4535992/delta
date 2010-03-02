@@ -28,6 +28,7 @@ import java.io.IOException;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
+import javax.faces.el.ValueBinding;
 
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
@@ -64,20 +65,23 @@ public class UIProperty extends PropertySheetItem
    /**
     * @see javax.faces.component.UIComponent#getFamily()
     */
+   @Override
    public String getFamily()
    {
       return "org.alfresco.faces.Property";
    }
 
+   @Override
    protected String getIncorrectParentMsg()
    {
       return "The property component must be nested within a property sheet component";
    }
 
+   @Override
    protected void generateItem(FacesContext context, UIPropertySheet propSheet) throws IOException
    {
       Node node = propSheet.getNode();
-      String propertyName = (String)getName();
+      String propertyName = getName();
 
       DataDictionary dd = (DataDictionary)FacesContextUtils.getRequiredWebApplicationContext(
             context).getBean(Application.BEAN_DATA_DICTIONARY);
@@ -90,11 +94,13 @@ public class UIProperty extends PropertySheetItem
          // Or, if the ignoreIfMissing flag is set to false, show the property 
          if (node.hasProperty(propertyName) || getIgnoreIfMissing() == false)
          {
-            String displayLabel = (String)getDisplayLabel();
+            String displayLabel = getDisplayLabel();
             if (displayLabel == null)
             {
                displayLabel = propertyName;
             }
+            
+            saveExistingValue4ComponentGenerator(context, node, propertyName);
             
             // generate the label and generic control
             generateLabel(context, propSheet, displayLabel);
@@ -104,12 +110,12 @@ public class UIProperty extends PropertySheetItem
          {
             // warn the user that the property was not found anywhere
             if (missingPropsLogger.isWarnEnabled())
-               missingPropsLogger.warn("Failed to find property '" + propertyName + "' for node: " + node.getNodeRef().toString());
+               missingPropsLogger.warn("Failed to find property '" + propertyName + "' for node: " + node.getNodeRefAsString());
          }
       }
       else
       {
-         String displayLabel = (String)getDisplayLabel();
+         String displayLabel = getDisplayLabel();
          if (displayLabel == null)
          {
             // try and get the repository assigned label
@@ -131,12 +137,28 @@ public class UIProperty extends PropertySheetItem
    }
    
     /**
+     * @return Returns the display label
+     */
+    @Override
+    public String getDisplayLabel() {
+        String result = super.getDisplayLabel();
+        if (result == null) {
+            ValueBinding vb = getValueBinding("displayLabel");
+            if (vb != null) {
+                result = (String) vb.getValue(getFacesContext());
+            }
+        }
+        return result;
+    }
+   
+    /**
      * subclasses can save value of existing property (for example to context) based on propertyName and value corresponding to propertyName from node properties
      * @param context
      * @param node
      * @param propertyName
      */
     protected void saveExistingValue4ComponentGenerator(FacesContext context, Node node, String propertyName) {
+        // do stuff in subclass
     }
 
    /**

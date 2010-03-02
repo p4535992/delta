@@ -7,7 +7,8 @@ package ee.webmedia.alfresco.classificator.enums;
  */
 public enum DocListUnitStatus {
     CLOSED("suletud"),
-    OPEN("avatud");
+    OPEN("avatud"),
+    DESTROYED("hävitatud");
 
     private String valueName;
 

@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
@@ -29,6 +30,7 @@ import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
+import org.springframework.util.Assert;
 
 public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(SeriesServiceImpl.class);
@@ -39,6 +41,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private GeneralService generalService;
     /** NB! not injected - use getter to obtain instance of volumeService */
     private VolumeService _volumeService;
+    private CopyService copyService;
     private BeanFactory beanFactory;
 
     @Override
@@ -96,7 +99,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         series.setFunctionNodeRef(functionNodeRef);
         return series;
     }
-    
+
     @Override
     public boolean isClosed(Node node) {
         return generalService.isExistingPropertyValueEqualTo(node, SeriesModel.Props.STATUS, DocListUnitStatus.CLOSED);
@@ -186,6 +189,10 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
+    }
+
+    public void setCopyService(CopyService copyService) {
+        this.copyService = copyService;
     }
 
     /**

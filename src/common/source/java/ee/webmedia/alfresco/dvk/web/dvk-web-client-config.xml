@@ -22,5 +22,11 @@
          </action-group>
 
       </actions>
+
+      <dialogs>
+         <dialog name="dvkCorruptListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/dvk/web/dvk-corrupt-list-dialog.jsp" managed-bean="DvkCorruptListDialog"
+            show-ok-button="false" icon="/images/icons/details_large.gif" title-id="dvkCorrupt_title" />
+      </dialogs>
+
    </config>
 </alfresco-config>

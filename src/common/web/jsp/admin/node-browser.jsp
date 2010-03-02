@@ -26,6 +26,7 @@
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
+<%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8" %>
 <%@ page isELIgnored="false" %>
@@ -82,6 +83,15 @@
                 <nobr>
                 <h:commandLink id="selectPrimaryPath" action="#{AdminNodeBrowseBean.selectPrimaryPath}">
                     <h:outputText id="primaryPath" value="#{AdminNodeBrowseBean.primaryPath}"/>
+                </h:commandLink>
+                </nobr>
+            </td>
+         </tr>
+         <tr>
+            <td><nobr><b>Short Primary Path:</b></nobr></td><td>
+                <nobr>
+                <h:commandLink id="selectPrimaryPathShort" action="#{AdminNodeBrowseBean.selectPrimaryPath}">
+                    <h:outputText id="primaryPathShort" value="#{AdminNodeBrowseBean.primaryPathShort}"/>
                 </h:commandLink>
                 </nobr>
             </td>
@@ -263,7 +273,23 @@
               <h:commandLink id="selectToNode" action="#{AdminNodeBrowseBean.selectToNode}">
                   <h:outputText value="#{assoc.targetRef}"/>
               </h:commandLink>
-              
+          </h:column>
+          <h:column>
+              <f:facet name="header">
+                  <h:outputText value="Association Type"/>
+              </f:facet>
+              <h:outputText value="#{assoc.typeQName.prefixString}"/>
+          </h:column>
+      </h:dataTable>
+      
+      <h:dataTable id="assocsFrom" border="1" value="#{AdminNodeBrowseBean.fromAssocs}" var="assoc" styleClass="nodeBrowserTable">
+          <h:column>
+              <f:facet name="header">
+                  <h:outputText value="From Node"/>
+              </f:facet>
+              <h:commandLink id="selectFromNode" action="#{AdminNodeBrowseBean.selectFromNode}">
+                  <h:outputText value="(sourceNode) #{assoc.sourceRef}"/>
+              </h:commandLink>
           </h:column>
           <h:column>
               <f:facet name="header">
@@ -274,6 +300,21 @@
       </h:dataTable>
    
       <br/>
+      <%-- FIXME: veateadete näitamise võiks ka kunagi teha
+      <a:errors message="#{DialogManager.errorMessage}" styleClass="message" errorClass="error-message" infoClass="info-message" />
+       --%>
+      <hr/>
+              <h:outputText value="Association Target NodeRef:"/>
+              <h:inputText id="targetRef" size="100" value="#{AdminNodeBrowseBean.targetRef}"/>
+      <br/>
+              <h:outputText value="Association Type QName:"/>
+              <h:selectOneMenu id="assocTypeQName" value="#{AdminNodeBrowseBean.assocTypeQName}">
+                   <f:selectItems value="#{AdminNodeBrowseBean.assocTypeQNames}"/>
+              </h:selectOneMenu>
+      <br/>
+              <h:commandButton id="submitCreateAssoc" action="#{AdminNodeBrowseBean.submitCreateAssoc}" value="submitCreateAssoc"/>
+      <hr/>
+      
       <h:outputText styleClass="mainTitle" value="Parents"/>
    
       <h:dataTable id="parents" border="1" value="#{AdminNodeBrowseBean.parents}" var="parent" styleClass="nodeBrowserTable">

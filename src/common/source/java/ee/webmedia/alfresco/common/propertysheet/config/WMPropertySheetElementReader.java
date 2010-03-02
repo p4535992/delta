@@ -8,8 +8,12 @@ import java.util.Map;
 import org.alfresco.config.ConfigElement;
 import org.alfresco.config.ConfigException;
 import org.alfresco.web.config.PropertySheetElementReader;
+import org.apache.commons.lang.StringUtils;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
+
+import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
+import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
 
 /**
  * Custom PropertySheetElementReader that also reads custom attributes from "show-property" element
@@ -17,11 +21,8 @@ import org.dom4j.Element;
  * @author Ats Uiboupin
  */
 public class WMPropertySheetElementReader extends PropertySheetElementReader {
+    public static final String ELEMENT_SUB_PROPERTY_SHEET = "subPropertySheet";
 
-    /*
-     * (non-Javadoc)
-     * @see org.alfresco.web.config.PropertySheetElementReader#parse(org.dom4j.Element)
-     */
     @Override
     public ConfigElement parse(Element element) {
         WMPropertySheetConfigElement configElement = null;
@@ -39,10 +40,14 @@ public class WMPropertySheetElementReader extends PropertySheetElementReader {
             @SuppressWarnings("unchecked")
             Iterator<Element> items = element.elementIterator();
             while (items.hasNext()) {
-                parsePropertySheetItem(configElement, items.next());
+                final Element childConfElem = items.next();
+                try {
+                    parsePropertySheetItem(configElement, childConfElem);
+                } catch (ConfigException e) {
+                    throw new ConfigException("Failed to parse xml config element '" + childConfElem + "' into object. Parent element: '" + element + "'", e);
+                }
             }
         }
-
         return configElement;
     }
 
@@ -51,30 +56,43 @@ public class WMPropertySheetElementReader extends PropertySheetElementReader {
     }
 
     protected void parsePropertySheetItem(WMPropertySheetConfigElement configElement, Element item) {
-        String propName = item.attributeValue(ATTR_NAME);
-        String label = item.attributeValue(ATTR_DISPLAY_LABEL);
-        String labelId = item.attributeValue(ATTR_DISPLAY_LABEL_ID);
-        String readOnly = item.attributeValue(ATTR_READ_ONLY);
-        String converter = item.attributeValue(ATTR_CONVERTER);
-        String inEdit = item.attributeValue(ATTR_SHOW_IN_EDIT_MODE);
-        String inView = item.attributeValue(ATTR_SHOW_IN_VIEW_MODE);
-        String compGenerator = item.attributeValue(ATTR_COMPONENT_GENERATOR);
-
+        ItemConfigVO itemConf = new ItemConfigVO(item.attributeValue(ATTR_NAME));
+        ConfigItemType configItemType;
+        if (ELEMENT_SHOW_PROPERTY.equals(item.getName())) {
+            configItemType = ConfigItemType.PROPERTY;
+            itemConf.setIgnoreIfMissing(readBooleanAttribute(ATTR_IGNORE_IF_MISSING, item, true));
+        } else if (ELEMENT_SHOW_ASSOC.equals(item.getName())) {
+            configItemType = ConfigItemType.ASSOC;
+        } else if (ELEMENT_SHOW_CHILD_ASSOC.equals(item.getName())) {
+            configItemType = ConfigItemType.CHILD_ASSOC;
+        } else if (ELEMENT_SEPARATOR.equals(item.getName())) {
+            configItemType = ConfigItemType.SEPPARATOR;
+        } else if (ELEMENT_SUB_PROPERTY_SHEET.equals(item.getName())) {
+            configItemType = ConfigItemType.SUB_PROPERTY_SHEET;
+        } else {
+            throw new IllegalArgumentException("Unknown item name: '" + item.getName() + "'");
+        }
         @SuppressWarnings("unchecked")
         List<Attribute> allAttributes = item.attributes();
         Map<String, String> attributes = new HashMap<String, String>(allAttributes.size());
         for (Attribute attribute : allAttributes) {
             attributes.put(attribute.getName(), attribute.getValue());
         }
-        if (ELEMENT_SHOW_PROPERTY.equals(item.getName())) {
-            configElement.addProperty(propName, label, labelId, readOnly, converter, inView, inEdit, compGenerator, item.attributeValue(ATTR_IGNORE_IF_MISSING), attributes);
-        } else if (ELEMENT_SHOW_ASSOC.equals(item.getName())) {
-            configElement.addAssociation(propName, label, labelId, readOnly, converter, inView, inEdit, compGenerator, attributes);
-        } else if (ELEMENT_SHOW_CHILD_ASSOC.equals(item.getName())) {
-            configElement.addChildAssociation(propName, label, labelId, readOnly, converter, inView, inEdit, compGenerator, attributes);
-        } else if (ELEMENT_SEPARATOR.equals(item.getName())) {
-            configElement.addSeparator(propName, label, labelId, inView, inEdit, compGenerator, attributes);
-        }
+        itemConf.setCustomAttributes(attributes);
+        itemConf.setDisplayLabel(item.attributeValue(ATTR_DISPLAY_LABEL));
+        itemConf.setDisplayLabelId(item.attributeValue(ATTR_DISPLAY_LABEL_ID));
+        itemConf.setConverter(item.attributeValue(ATTR_CONVERTER));
+        itemConf.setComponentGenerator(item.attributeValue(ATTR_COMPONENT_GENERATOR));
+        itemConf.setReadOnly(readBooleanAttribute(ATTR_READ_ONLY, item, false));
+        itemConf.setShowInViewMode(readBooleanAttribute(ATTR_SHOW_IN_VIEW_MODE, item, true));
+        itemConf.setShowInEditMode(readBooleanAttribute(ATTR_SHOW_IN_EDIT_MODE, item, true));
+        itemConf.setConfigItemType(configItemType);
+        configElement.addItem(itemConf);
+    }
+
+    private boolean readBooleanAttribute(String attributeName, Element item, boolean defaultValue) {
+        String strValue = item.attributeValue(attributeName);
+        return StringUtils.isBlank(strValue) ? defaultValue : Boolean.valueOf(strValue);
     }
 
 }

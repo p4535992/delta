@@ -22,6 +22,8 @@ public interface DocumentCommonModel {
         QName DOCUMENT = QName.createQName(URI, "document");
         QName DRAFTS = QName.createQName(URI, "drafts");
         QName SEND_INFO = QName.createQName(URI, "sendInfo");
+        QName DOCUMENT_LOG = QName.createQName(URI, "documentLog");
+        QName METADATA_CONTAINER = QName.createQName(URI, "metadataContainer");
     }
 
     interface Aspects {
@@ -33,13 +35,17 @@ public interface DocumentCommonModel {
         QName SIGNER = QName.createQName(URI, "signer");
         QName RECIPIENT = QName.createQName(URI, "recipient");
         QName ADDITIONAL_RECIPIENT = QName.createQName(URI, "additionalRecipient");
+        QName FAVORITE_CONTAINER = QName.createQName(URI, "favoriteContainer");
     }
 
     interface Assocs {
         QName DOCUMENT = QName.createQName(URI, "document");
-        QName DOCUMENT_REPLY = QName.createQName(URI, "documentReply");
-        QName DOCUMENT_FOLLOW_UP = QName.createQName(URI, "documentFollowUp");
+        QName DOCUMENT_REPLY = QName.createQName(URI, "reply");
+        QName DOCUMENT_FOLLOW_UP = QName.createQName(URI, "followUp");
+        QName DOCUMENT_2_DOCUMENT = QName.createQName(URI, "document2Document");
         QName SEND_INFO = QName.createQName(URI, "sendInfo");
+        QName DOCUMENT_LOG = QName.createQName(URI, "documentLog");
+        QName FAVORITE = QName.createQName(URI, "favorite");
     }
 
     interface Props {
@@ -47,6 +53,14 @@ public interface DocumentCommonModel {
         QName SERIES = QName.createQName(URI, "series");
         QName FILE_NAMES = QName.createQName(URI, "fileNames");
         QName FILE_CONTENTS = QName.createQName(URI, "fileContents");
+        QName SEARCHABLE_SEND_MODE = QName.createQName(URI, "searchableSendMode");
+        QName SEARCHABLE_COST_MANAGER = QName.createQName(URI, "searchableCostManager");
+        QName SEARCHABLE_APPLICANT_NAME = QName.createQName(URI, "searchableApplicantName");
+        QName SEARCHABLE_ERRAND_BEGIN_DATE = QName.createQName(URI, "searchableErrandBeginDate");
+        QName SEARCHABLE_ERRAND_END_DATE = QName.createQName(URI, "searchableErrandEndDate");
+        QName SEARCHABLE_ERRAND_COUNTRY = QName.createQName(URI, "searchableErrandCountry");
+        QName SEARCHABLE_ERRAND_COUNTY = QName.createQName(URI, "searchableErrandCounty");
+        QName SEARCHABLE_ERRAND_CITY = QName.createQName(URI, "searchableErrandCity");
 
         QName DOC_NAME = QName.createQName(URI, "docName");
         QName DOC_STATUS = QName.createQName(URI, "docStatus");
@@ -89,6 +103,10 @@ public interface DocumentCommonModel {
          */
         QName SEND_INFO_SEND_STATUS = QName.createQName(URI, "sendStatus");
         QName SEND_INFO_DVK_ID = QName.createQName(URI, "dvkId");
+        
+        QName CREATED_DATETIME = QName.createQName(URI, "createdDateTime");
+        QName CREATOR_NAME = QName.createQName(URI, "creatorName");
+        QName EVENT_DESCRIPTION = QName.createQName(URI, "eventDescription");
     }
 
 }

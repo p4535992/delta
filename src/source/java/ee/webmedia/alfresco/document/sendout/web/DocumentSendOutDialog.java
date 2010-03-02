@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
@@ -244,8 +245,12 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     }
 
     public void updateTemplate(ActionEvent event) {
-        String templateTxt = getDocumentTemplateService().getProcessedEmailTemplate(model.getNodeRef(), new NodeRef(model.getTemplate()));
-        model.setContent(templateTxt);
+        if (StringUtils.isNotBlank(model.getTemplate())) {
+            LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
+            nodeRefs.put("default", model.getNodeRef());
+            String templateTxt = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, new NodeRef(model.getTemplate()));
+            model.setContent(templateTxt);
+        }
     }
 
     // /// PRIVATE METHODS /////
@@ -365,7 +370,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         }
 
         result = getSendOutService().sendOut(model.getNodeRef(), names, emails, modes, model.getSenderEmail(), model.getSubject(), model.getContent(), model.getSelectedFiles(), model.isZip());
-
+        getDocumentService().getDocumentLogService().addDocumentLog(model.getNodeRef(), MessageUtil.getMessage("document_log_status_sent"));
         if (!result) {
             MessageUtil.addErrorMessage(context, "document_send_failed");
         }
@@ -373,7 +378,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         return result;
     }
 
-    private List<String> newListIfNull(List<String> list, boolean checkEmpty) {
+    public static List<String> newListIfNull(List<String> list, boolean checkEmpty) {
         List<String> result = list;
         if (result == null) {
             result = new ArrayList<String>();

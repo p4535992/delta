@@ -51,9 +51,20 @@
         <h:panelGrid id="upload_attachment_panel" columns="2" cellpadding="2" cellspacing="2" border="0" width="100%"
                      columnClasses="panelGridLabelColumn,panelGridValueColumn,panelGridRequiredImageColumn">
             <h:outputText id="out_attachment" value="#{msg.file_add_attachment_label}:" style="padding-left:8px"/>
-            <h:selectOneMenu id="roles" style="width:250px" onchange="this.form.submit();" valueChangeListener="#{DialogManager.bean.attachmentSelected}" value="">
+            <h:selectOneMenu id="select_attachment" style="width:250px" onchange="this.form.submit();" valueChangeListener="#{DialogManager.bean.fileSelected}" value="">
                 <f:selectItem itemValue="" itemLabel=""/>
                 <f:selectItems value="#{DialogManager.bean.attachments}"/>
+            </h:selectOneMenu>
+        </h:panelGrid>
+    </a:panel>
+
+    <a:panel styleClass="column  panel-100" id="scanned-file-upload" label="#{msg.file_add_scanned}">
+        <h:panelGrid id="upload_scanned_file_panel" columns="2" cellpadding="2" cellspacing="2" border="0" width="100%"
+                     columnClasses="panelGridLabelColumn,panelGridValueColumn,panelGridRequiredImageColumn">
+            <h:outputText id="out_scanned_file" value="#{msg.file_add_scanned_label}:" style="padding-left:8px"/>
+            <h:selectOneMenu id="select_scanned_file" style="width:250px" onchange="this.form.submit();" valueChangeListener="#{DialogManager.bean.fileSelected}" value="">
+                <f:selectItem itemValue="" itemLabel=""/>
+                <f:selectItems value="#{DialogManager.bean.scannedFiles}"/>
             </h:selectOneMenu>
         </h:panelGrid>
     </a:panel>
@@ -110,12 +121,11 @@
          }
       }
 
-       function attachmentValueChanged() {
-            form.submit();
-       }
-
        function isFileSelected() {
-         return document.getElementById("dialog:dialog-body:file-name").value.length != 0;
+         var filename = document.getElementById("dialog:dialog-body:file-name");
+         if (filename == null)
+            return false; 
+         return filename.value.length != 0;
        }
 
       function validate()

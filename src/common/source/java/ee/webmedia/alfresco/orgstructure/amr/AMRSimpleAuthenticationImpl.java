@@ -14,6 +14,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.ws.soap.client.SoapFaultClientException;
 
 import smit.ametnik.services.Ametnik;
+import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
 
 /**
@@ -25,6 +26,8 @@ import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
 public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenticationComponentImpl {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRSimpleAuthenticationImpl.class);
     private AMRService amrService;
+    private ApplicationService applicationService;
+    private String testEmail;
 
     public AMRSimpleAuthenticationImpl() {
         super();
@@ -51,7 +54,11 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             personProperties.put(ContentModel.PROP_USERNAME, user.getIsikukood());
             personProperties.put(ContentModel.PROP_FIRSTNAME, user.getEesnimi());
             personProperties.put(ContentModel.PROP_LASTNAME, user.getPerekonnanimi());
-            personProperties.put(ContentModel.PROP_EMAIL, user.getEmail());
+            String email = user.getEmail();
+            if (applicationService.isTest()) {
+                email = testEmail;
+            }
+            personProperties.put(ContentModel.PROP_EMAIL, email);
             personProperties.put(ContentModel.PROP_TELEPHONE, user.getKontakttelefon());
             personProperties.put(ContentModel.PROP_JOBTITLE, user.getAmetikoht());
             personProperties.put(ContentModel.PROP_ORGID, user.getYksusId());
@@ -65,6 +72,14 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
     // START: getters / setters
     public void setAmrService(AMRService amrService) {
         this.amrService = amrService;
+    }
+
+    public void setApplicationService(ApplicationService applicationService) {
+        this.applicationService = applicationService;
+    }
+
+    public void setTestEmail(String testEmail) {
+        this.testEmail = testEmail;
     }
     // END: getters / setters
 

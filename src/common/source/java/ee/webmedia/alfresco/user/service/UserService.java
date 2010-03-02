@@ -20,6 +20,15 @@ public interface UserService {
     String DOCUMENT_MANAGERS_DISPLAY_NAME = "document_managers_display_name";
     String ALFRESCO_ADMINISTRATORS_DISPLAY_NAME = "alfresco_administrators_display_name";
 
+    
+    /**
+     * Fetches the node reference, where user preferences are kept
+     * 
+     * @param userName if null, defaults to AuthenticationUtil.getRunAsUser()
+     * @return
+     */
+    NodeRef getUsersPreferenceNodeRef(String userName);
+    
     /**
      * Checks if user has administrative privileges
      * 
@@ -81,7 +90,12 @@ public interface UserService {
     List<Authority> getAuthorities(NodeRef nodeRef, String permission);
 
     /**
-     * Returns the full name of the user.
+     * Returns full name of the authenticated user
+     */
+    String getUserFullName();
+
+    /**
+     * Returns full name of the specified user.
      * 
      * @param userName
      * @return
@@ -97,10 +111,16 @@ public interface UserService {
      */
     Map<QName, Serializable> getUserProperties(String userName);
 
+    Map<QName, Serializable> getCurrentUserProperties();
+
     /**
-     * Returns the name of the authenticated user. 
+     * Returns username of the authenticated user. 
      * @return
      */
     String getCurrentUserName();
+
+    NodeRef getCurrentUser();
+
+    String getUserEmail(String userName);
 
 }

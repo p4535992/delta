@@ -13,8 +13,7 @@ public class MenuTag extends UIComponentTagBase {
     private static final String MENU_RENDERER_TYPE = MenuRenderer.class.getCanonicalName();
     private String primary;
     private String activeItemId;
-    private String id;
-
+    
     @Override
     public String getComponentType() {
         return MENU_COMPONENT_TYPE;
@@ -38,7 +37,6 @@ public class MenuTag extends UIComponentTagBase {
         super.release();
         primary = null;
         activeItemId = null;
-        id = null;
     }
 
     public void setPrimary(String primary) {
@@ -48,9 +46,4 @@ public class MenuTag extends UIComponentTagBase {
     public void setActiveItemId(String activeItemId) {
         this.activeItemId = activeItemId;
     }
-
-    public void setId(String id) {
-        this.id = id;
-    }
-
 }

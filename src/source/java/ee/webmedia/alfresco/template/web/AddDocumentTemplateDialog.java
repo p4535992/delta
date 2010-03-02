@@ -32,9 +32,17 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
     private Node docTemplateNode;
     boolean firstLoad;
     boolean emailTemplate;
+    boolean systemTemplate;
 
     public void startEmail(ActionEvent event) {
+        setSystemTemplate(false);
         setEmailTemplate(true);
+        start(event);
+    }
+    
+    public void startSystem(ActionEvent event) {
+        setEmailTemplate(false);
+        setSystemTemplate(true);
         start(event);
     }
     
@@ -46,13 +54,18 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
     
     @Override
     public void start(ActionEvent event) {
+        
         // Set the templates root space as parent node
         this.navigator.setCurrentNodeId(getGeneralService().getNodeRef(DocumentTemplateModel.Repo.TEMPLATES_SPACE).getId());
         setDocTemplateNode(TransientNode.createNew(getDictionaryService(), getDictionaryService().getType(ContentModel.TYPE_CONTENT), "",
                 new HashMap<QName, Serializable>(0)));
         docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE);
-        if (!isEmailTemplate()) {
-            docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_DOC_TYPE);
+        if(isSystemTemplate()) {
+            docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_SYSTEM);
+        } else if (isEmailTemplate()) {
+            docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_EMAIL);
+        } else {
+            docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT);
         }
         // Eagerly load the properties
         docTemplateNode.getProperties();
@@ -85,24 +98,32 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         Map<QName, Serializable> prop = new HashMap<QName, Serializable>();
         prop.put(DocumentTemplateModel.Prop.NAME, newName);
         prop.put(DocumentTemplateModel.Prop.COMMENT, templProp.get(DocumentTemplateModel.Prop.COMMENT).toString());
-        getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE, prop);
-
-        if (!isEmailTemplate()) {
-            Map<QName, Serializable> prop2 = new HashMap<QName, Serializable>();
+        
+        if(isSystemTemplate()) {
+            prop.put(DocumentTemplateModel.Prop.DOCTYPE_ID, MessageUtil.getMessage("template_system_template"));
+            getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE_SYSTEM, prop);
+        } else if(isEmailTemplate()) {
+            prop.put(DocumentTemplateModel.Prop.DOCTYPE_ID, MessageUtil.getMessage("template_email_template"));
+            getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE_EMAIL, prop);
+        } else {
             if (templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID) != null && !templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID).toString().equals("")) {
-                prop2.put(DocumentTemplateModel.Prop.DOCTYPE_ID, templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID).toString());
+                prop.put(DocumentTemplateModel.Prop.DOCTYPE_ID, templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID).toString());
             }
-            getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOC_TYPE, prop2);
+            getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT, prop);
         }
+
         reset();
         return outcome;
     }
     
     @Override
     public String getContainerTitle() {
-        if (isEmailTemplate()) {
+        if (isEmailTemplate())
             return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_add_new_email_template");
-        }
+        
+        if (isSystemTemplate())
+            return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_add_new_system_template");
+        
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_add_new_doc_template");
     }
     
@@ -110,6 +131,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         docTemplateNode = null;
         firstLoad = false;
         emailTemplate = false;
+        systemTemplate = false;
     }
 
     /**
@@ -155,5 +177,14 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
     public void setEmailTemplate(boolean emailTemplate) {
         this.emailTemplate = emailTemplate;
     }
+    
+    public boolean isSystemTemplate() {
+        return systemTemplate;
+    }
+
+    public void setSystemTemplate(boolean systemTemplate) {
+        this.systemTemplate = systemTemplate;
+    }
     // END: getters / setters
+
 }

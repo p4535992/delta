@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
+
+<beans>
+
+    <import resource="../default/imap-server-context.xml" />
+    <import resource="../../Authentication/passthru/passthru-authentication-context.xml" />
+
+    <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="ignoreUnresolvablePlaceholders" value="true" />
+        <property name="locations">
+          <list>
+             <value>classpath:alfresco/subsystems/imap/default/imap-server.properties</value>
+             <value>classpath:alfresco/subsystems/Authentication/passthru/passthru-authentication-context.properties</value>
+         </list>
+      </property>
+    </bean>
+
+    <!-- @Override ../default/imap-server-context.xml -->
+    <bean id="imapHostManager" class="ee.webmedia.alfresco.imap.ImmutableImapHostManager">
+        <property name="imapServiceExt" ref="ImapServiceExt"/>
+    </bean>
+
+    <!-- @Override ../default/imap-server-context.xml -->
+    <bean id="imapUserManager" class="org.alfresco.repo.imap.AlfrescoImapUserManager">
+        <!-- authentication service comes from passthru-authentication-context.xml -->
+        <property name="authenticationService" ref="localAuthenticationService" />
+        <property name="personService" ref="PersonService" />
+        <property name="nodeService" ref="NodeService" />
+    </bean>
+
+</beans>

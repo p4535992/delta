@@ -20,6 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import smit.ametnik.services.Ametnik;
+import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
@@ -36,6 +37,8 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     private NodeService nodeService;
     private AMRService amrService;
     private ParametersService parametersService;
+    private ApplicationService applicationService;
+    private String testEmail;
 
     /** Is this bean active? I.e. should this part of the subsystem be used? */
     private boolean active = true;
@@ -79,7 +82,11 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         properties.put(ContentModel.PROP_USERNAME, ametnik.getIsikukood());
         properties.put(ContentModel.PROP_FIRSTNAME, ametnik.getEesnimi());
         properties.put(ContentModel.PROP_LASTNAME, ametnik.getPerekonnanimi());
-        properties.put(ContentModel.PROP_EMAIL, ametnik.getEmail());
+        String email = ametnik.getEmail();
+        if (applicationService.isTest()) {
+            email = testEmail;
+        }
+        properties.put(ContentModel.PROP_EMAIL, email);
         properties.put(ContentModel.PROP_ORGID, ametnik.getYksusId());
         return person;
     }
@@ -112,6 +119,14 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     public void setParametersService(ParametersService parametersService) {
         this.parametersService = parametersService;
+    }
+
+    public void setApplicationService(ApplicationService applicationService) {
+        this.applicationService = applicationService;
+    }
+
+    public void setTestEmail(String testEmail) {
+        this.testEmail = testEmail;
     }
     // END: getters / setters
 

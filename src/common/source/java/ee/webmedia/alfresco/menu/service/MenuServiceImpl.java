@@ -7,8 +7,10 @@ import java.util.List;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.apache.log4j.Logger;
 import org.springframework.core.io.DefaultResourceLoader;
 import org.springframework.core.io.Resource;
@@ -21,7 +23,9 @@ import ee.webmedia.alfresco.menu.model.BrowseMenuItem;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
+import ee.webmedia.alfresco.menu.model.MenuModel;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
+import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * @author Kaarel Jõgeva
@@ -32,6 +36,9 @@ public class MenuServiceImpl implements MenuService {
     private String menuConfigLocation;
     private FileFolderService fileFolderService;
     private GeneralService generalService;
+    private NodeService nodeService;
+    private UserService userService;
+
     private int updateCount;
 
     private Menu menu;
@@ -42,11 +49,21 @@ public class MenuServiceImpl implements MenuService {
 
         public String menuItemId;
         public MenuItemProcessor processor;
+        public boolean runOnce;
+        public boolean isExecutable;
 
-        public ProcessorWrapper(String menuItemId, MenuItemProcessor processor) {
+        public ProcessorWrapper(String menuItemId, MenuItemProcessor processor, boolean runOnce) {
             this.menuItemId = menuItemId;
             this.processor = processor;
+            this.runOnce = runOnce;
+            this.isExecutable = true;
+            
         }
+    }
+    
+    @Override
+    public void processTasks(Menu menu) {
+        process(menu, false);
     }
     
     
@@ -86,7 +103,7 @@ public class MenuServiceImpl implements MenuService {
             xstream.processAnnotations(BrowseMenuItem.class);
 
             Menu loadedMenu = (Menu) xstream.fromXML(resource.getInputStream());
-            process(loadedMenu);
+            process(loadedMenu, true);
             menu = loadedMenu; // this is performed here at the end, atomically
 
         } catch (IOException e) {
@@ -111,8 +128,8 @@ public class MenuServiceImpl implements MenuService {
     }
 
     @Override
-    public void addProcessor(String menuItemId, MenuItemProcessor processor) {
-        processors.add(new ProcessorWrapper(menuItemId, processor));
+    public void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce) {
+        processors.add(new ProcessorWrapper(menuItemId, processor, runOnce));
     }
 
     @Override
@@ -128,14 +145,19 @@ public class MenuServiceImpl implements MenuService {
         return fileFolderService.listFolders(nodeRef).size();
     }
 
-    private void process(Menu loadedMenu) {
+    private void process(Menu loadedMenu, boolean reloaded) {
         for (ProcessorWrapper processorWrapper : processors) {
-            if (processorWrapper.menuItemId == null) {
-                for (MenuItem item : loadedMenu.getSubItems()) {
-                    processorWrapper.processor.doWithMenuItem(item);
+            if (processorWrapper.isExecutable || reloaded) {
+                if(processorWrapper.runOnce) {
+                    processorWrapper.isExecutable = false;
                 }
-            } else {
-                process(processorWrapper, loadedMenu.getSubItems());
+                if (processorWrapper.menuItemId == null) {
+                    for (MenuItem item : loadedMenu.getSubItems()) {
+                        processorWrapper.processor.doWithMenuItem(item);
+                    }
+                } else {
+                    process(processorWrapper, loadedMenu.getSubItems());
+                }
             }
         }
     }
@@ -153,6 +175,36 @@ public class MenuServiceImpl implements MenuService {
         }
     }
 
+    @Override
+    public ArrayList<String> getShortcuts() {
+        NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
+        @SuppressWarnings("unchecked")
+        ArrayList<String> shortcuts = (ArrayList<String>) nodeService.getProperty(user, MenuModel.Props.SHORTCUTS);
+        if (shortcuts == null) {
+            return new ArrayList<String>();
+        }
+        return shortcuts;
+    }
+
+    @Override
+    public void addShortcut(String shortcut) {
+        ArrayList<String> shortcuts = getShortcuts();
+        shortcuts.add(shortcut);
+        saveShortcuts(shortcuts);
+    }
+
+    @Override
+    public void removeShortcut(String shortcut) {
+        ArrayList<String> shortcuts = getShortcuts();
+        shortcuts.remove(shortcut);
+        saveShortcuts(shortcuts);
+    }
+
+    private void saveShortcuts(ArrayList<String> shortcuts) {
+        NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
+        nodeService.setProperty(user, MenuModel.Props.SHORTCUTS, shortcuts);
+    }
+
     // START: getters / setters
 
     public void setMenuConfigLocation(String menuConfigLocation) {
@@ -166,12 +218,19 @@ public class MenuServiceImpl implements MenuService {
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }
-    
+
+    public void setNodeService(NodeService nodeService) {
+        this.nodeService = nodeService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
     public void setUpdateCount(int updateCount) {
         this.updateCount = updateCount;
     }
 
-    
     // END: getters / setters
 
 }

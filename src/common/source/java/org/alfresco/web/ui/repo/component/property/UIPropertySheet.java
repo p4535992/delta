@@ -44,6 +44,7 @@ import org.alfresco.config.ConfigLookupContext;
 import org.alfresco.config.ConfigService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
@@ -56,6 +57,7 @@ import org.alfresco.web.config.PropertySheetConfigElement.SeparatorConfig;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.RepoConstants;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -71,9 +73,9 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
    
    private static Log logger = LogFactory.getLog(UIPropertySheet.class);
    private static String DEFAULT_VAR_NAME = "node";
-   private static String PROP_ID_PREFIX = "prop_";
-   private static String ASSOC_ID_PREFIX = "assoc_";
-   private static String SEP_ID_PREFIX = "sep_";
+   protected static String PROP_ID_PREFIX = "prop_";
+   protected static String ASSOC_ID_PREFIX = "assoc_";
+   protected static String SEP_ID_PREFIX = "sep_";
    
    private List<ClientValidation> validations = new ArrayList<ClientValidation>();
    private String variable;
@@ -98,6 +100,7 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
    /**
     * @see javax.faces.component.UIComponent#getFamily()
     */
+   @Override
    public String getFamily()
    {
       return UIPanel.COMPONENT_FAMILY;
@@ -106,7 +109,7 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
    /**
     * @see javax.faces.component.UIComponent#encodeBegin(javax.faces.context.FacesContext)
     */
-   @SuppressWarnings("unchecked")
+   @Override
    public void encodeBegin(FacesContext context) throws IOException
    {
       int howManyChildren = getChildren().size();
@@ -183,18 +186,27 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
       }
       
       // put the node in the session if it is not there already
-      Map sessionMap = getFacesContext().getExternalContext().getSessionMap();
-      sessionMap.put(this.variable, node);
-
-      if (logger.isDebugEnabled())
-         logger.debug("Put node into session with key '" + this.variable + "': " + node);
+      storePropSheetVariable(node);
 
       super.encodeBegin(context);
    }
 
+    /**
+     * @param node - variable to be stored
+     */
+    protected void storePropSheetVariable(Node node) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> sessionMap = getFacesContext().getExternalContext().getSessionMap();
+        sessionMap.put(this.variable, node);
+
+        if (logger.isDebugEnabled())
+           logger.debug("Put node into session with key '" + this.variable + "': " + node);
+    }
+
    /**
     * @see javax.faces.component.UIComponent#encodeBegin(javax.faces.context.FacesContext)
     */
+   @Override
    public void encodeEnd(FacesContext context) throws IOException
    {
       super.encodeEnd(context);
@@ -213,6 +225,7 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
    /**
     * @see javax.faces.component.StateHolder#restoreState(javax.faces.context.FacesContext, java.lang.Object)
     */
+   @Override
    @SuppressWarnings("unchecked")
    public void restoreState(FacesContext context, Object state)
    {
@@ -234,6 +247,7 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
    /**
     * @see javax.faces.component.StateHolder#saveState(javax.faces.context.FacesContext)
     */
+   @Override
    public Object saveState(FacesContext context)
    {
       Object values[] = new Object[11];
@@ -506,81 +520,63 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
       return this.validations;
    }
    
+    /**
+     * @param text
+     * @return text where special characters are replaced with "_" 
+     */
+    private static String replaceChars(final String text) {
+        String specialCharacters = ".,:[]()\"/\\{}";
+        return StringUtils.replaceChars(text, specialCharacters, StringUtils.repeat("_", specialCharacters.length()));
+    }
+   
    /**
-    * Renders the necessary JavaScript to enforce any constraints the properties
-    * have.
+    * Renders the necessary JavaScript to enforce any constraints the properties have.
+    * 
+    * HEAVILY REFACTORED TO SUPPORT MULTIPLE PROPERTY SHEETS ON THE SAME PAGE! General logic was moved to scripts.js file.
     * 
     * @param context FacesContext
     */
-   @SuppressWarnings("unchecked")
-   private void renderValidationScript(FacesContext context) throws IOException
-   {
+   private void renderValidationScript(FacesContext context) throws IOException {
+      final String prefix = replaceChars(getVar());
       ResponseWriter out = context.getResponseWriter();
       UIForm form = Utils.getParentForm(context, this);
          
-      // TODO: We need to encode all the JavaScript functions here 
-      //       with the client id of the property sheet so that we
-      //       can potentially add more than one property sheet to
-      //       page and have validation function correctly.
-      
       // output the validation.js script
       out.write("\n<script type='text/javascript' src='");
       out.write(context.getExternalContext().getRequestContextPath());
       out.write("/scripts/validation.js");
       out.write("'></script>\n<script type='text/javascript'>\n");
       
-      // output variable to hold flag for which submit button was pressed
-      out.write("var finishButtonPressed = false;\n");
-      out.write("var nextButtonPressed = false;\n");
-      
-      // output the validate() function
-      out.write("function validate()\n{\n   var result = true;\n   ");
-      out.write("if ((finishButtonPressed || nextButtonPressed) && (");
-      
+      // output the validateSubmit() function
+      out.write("function " + prefix + "validateSubmit() {\n");
+      out.write("   return (");
       int numberValidations = this.validations.size();
-      List<ClientValidation> realTimeValidations = 
-         new ArrayList<ClientValidation>(numberValidations);
-      
-      for (int x = 0; x < numberValidations; x++)
-      {
+      List<ClientValidation> realTimeValidations = new ArrayList<ClientValidation>(numberValidations);
+      for (int x = 0; x < numberValidations; x++) {
          ClientValidation validation = this.validations.get(x);
-         
-         if (validation.RealTimeChecking)
-         {
+         if (validation.RealTimeChecking) {
             realTimeValidations.add(validation);
          }
-         
-         renderValidationMethod(out, validation, (x == (numberValidations-1)), true);
+         renderValidationMethod(out, validation, (x == (numberValidations-1)), true, false);
       }
+      out.write(";\n}\n\n");
       
-      // return false if validation failed to stop the form submitting
-      out.write(")\n   { result = false; }\n\n");
-      out.write("   finishButtonPressed = false;\n   nextButtonPressed = false;\n");
-      out.write("   return result;\n}\n\n");
-      
-      // output the processButtonState() function (if necessary)
+      // output the validateBtn() function (if necessary)
       int numberRealTimeValidations = realTimeValidations.size();
-      if (numberRealTimeValidations > 0)
-      {
-         out.write("function processButtonState()\n{\n   if (");
-         
-         for (int x = 0; x < numberRealTimeValidations; x++)
-         {
-            renderValidationMethod(out, realTimeValidations.get(x),
-                  (x == (numberRealTimeValidations-1)), false);
+      String validateBtnFnName = "null";// argument null for javascript
+      if (numberRealTimeValidations > 0) {
+         validateBtnFnName = prefix + "validateBtn";
+         out.write("function " + validateBtnFnName + "() {\n   if (");
+         for (int x = 0; x < numberRealTimeValidations; x++) {
+            renderValidationMethod(out, realTimeValidations.get(x), (x == (numberRealTimeValidations-1)), false, true);
          }
-      
-         // disable the finish button if validation failed and 
-         // also the next button if it is present
-         
-         
-         out.write("\n   {\n      document.getElementById('");
+         // disable the finish button if validation failed and also the next button if it is present
+         out.write(" {\n      document.getElementById('");
          out.write(form.getClientId(context));
          out.write(NamingContainer.SEPARATOR_CHAR);
          out.write(getFinishButtonId());
          out.write("').disabled = true; \n");
-         if (this.nextButtonId != null && this.nextButtonId.length() > 0)
-         {
+         if (this.nextButtonId != null && this.nextButtonId.length() > 0) {
             out.write("      document.getElementById('");
             out.write(form.getClientId(context));
             out.write(NamingContainer.SEPARATOR_CHAR);
@@ -588,77 +584,35 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
             out.write("').disabled = true; \n");
          }
          out.write("   }\n");
-         
-         out.write("   else\n   {\n      document.getElementById('");
+         out.write("   else {\n      document.getElementById('");
          out.write(form.getClientId(context));
          out.write(NamingContainer.SEPARATOR_CHAR);
          out.write(getFinishButtonId());
          out.write("').disabled = false;");
-         
-         if (this.nextButtonId != null && this.nextButtonId.length() > 0)
-         {
+         if (this.nextButtonId != null && this.nextButtonId.length() > 0) {
             out.write("\n      document.getElementById('");
             out.write(form.getClientId(context));
             out.write(NamingContainer.SEPARATOR_CHAR);
             out.write(this.nextButtonId);
             out.write("').disabled = false;");
          }
+         out.write("\n   }\n}\n\n");
          
-         out.write("\n   }\n"+getPostProcessFunctionCall()+"}\n\n");
-      }
-      
-      // write out a function to initialise everything
-      out.write("function initValidation()\n{\n");
-      
-      // register the validate function as the form onsubmit handler
-      out.write("   document.getElementById('");
-      out.write(form.getClientId(context));
-      out.write("').onsubmit = validate;\n");
-      
-      // set the flag when the finish button is clicked
-      out.write("   document.getElementById('");
-      out.write(form.getClientId(context));
-      out.write(NamingContainer.SEPARATOR_CHAR);
-      out.write(getFinishButtonId());
-      out.write("').onclick = function() { finishButtonPressed = true; }\n");
-      
-      // set the flag when the finish button is clicked
-      if (this.nextButtonId != null && this.nextButtonId.length() > 0)
-      {
-         out.write("   document.getElementById('");
-         out.write(form.getClientId(context));
-         out.write(NamingContainer.SEPARATOR_CHAR);
-         out.write(this.nextButtonId);
-         out.write("').onclick = function() { nextButtonPressed = true; }\n");
-      }
-      
-      // perform an initial check at page load time (if we have any real time validations)
-      if (numberRealTimeValidations > 0)
-      {
-         out.write("   processButtonState();\n");
-      }
-      
-      // close out the init function
-      out.write("}\n\n");
-      
-      // setup init function to be called at page load time
-      out.write("window.onload=initValidation;\n");
+      } 
+      // register our validation methods so that they are called by general validation methods in scripts.js
+      out.write("registerPropertySheetValidator(" + validateBtnFnName + ", " + prefix + "validateSubmit, '" + form.getClientId(context) + "', '"
+              + getFinishButtonId() + "', '" + (this.nextButtonId != null ? this.nextButtonId : "") + "');\n");
       
       // close out the script block
       out.write("</script>\n");
    }
-   
-    /**
-     * @return Javascript as String that would call function(if such function is defined) 
-     */
-    protected String getPostProcessFunctionCall() {
-        return ""; // no postprocessing function is called after processButtonState()
-    }
 
    private void renderValidationMethod(ResponseWriter out, ClientValidation validation,
-         boolean lastMethod, boolean showMessage) throws IOException
+         boolean lastMethod, boolean showMessage, boolean useNegative) throws IOException
    {
+      if (useNegative) {
       out.write("!");
+      }
       out.write(validation.Type);
       out.write("(");
       
@@ -678,13 +632,25 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
       out.write(Boolean.toString(showMessage));
       out.write(")");
       
+      final String lineSeparator;
+      if(logger.isInfoEnabled()) {
+          lineSeparator = "\n"; //pretty print
+      } else {
+          lineSeparator = ""; //no line separator
+      }
+      
       if (lastMethod)
       {
          out.write(")");
       }
       else
       {
-         out.write(" || ");
+          if (useNegative) {
+         out.write(lineSeparator + " || ");
+      }
+          else {
+              out.write(lineSeparator + " && ");
+          }
       }
    }
    
@@ -807,34 +773,12 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
    {
       for (ItemConfig item : items)
       {
-         String id = null;
-         PropertySheetItem propSheetItem = null;
-         
-         // create the appropriate component
-         if (item instanceof PropertyConfig)
-         {
-            id = PROP_ID_PREFIX + item.getName();
-            propSheetItem = (PropertySheetItem)context.getApplication().
-                  createComponent(RepoConstants.ALFRESCO_FACES_PROPERTY);
+         Pair<PropertySheetItem, String> itemAndId = createPropertySheetItemAndId(item, context);
+         if (itemAndId == null) {
+            throw new IllegalArgumentException("Unknown ItemConfig type '" + item.getClass().getCanonicalName() + "': " + item);
          }
-         else if (item instanceof AssociationConfig)
-         {
-            id = ASSOC_ID_PREFIX + item.getName();
-            propSheetItem = (PropertySheetItem)context.getApplication().
-                  createComponent(RepoConstants.ALFRESCO_FACES_ASSOCIATION);
-         }
-         else if (item instanceof ChildAssociationConfig)
-         {
-            id = ASSOC_ID_PREFIX + item.getName();
-            propSheetItem = (PropertySheetItem)context.getApplication().
-                  createComponent(RepoConstants.ALFRESCO_FACES_CHILD_ASSOCIATION);
-         }
-         else if (item instanceof SeparatorConfig)
-         {
-            id = SEP_ID_PREFIX + item.getName();
-            propSheetItem = (PropertySheetItem)context.getApplication().
-                  createComponent(RepoConstants.ALFRESCO_FACES_SEPARATOR);
-         }
+         final String id = itemAndId.getSecond();
+         final PropertySheetItem propSheetItem = itemAndId.getFirst();
          
          // now setup the common stuff across all component types
          if (propSheetItem != null)
@@ -901,12 +845,48 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
       }
    }
    
-   /**
-    * Allow changes to be made to this propSheetItem
-    * @param propSheetItem - item to be changed
-    * @author Ats Uiboupin
-    */
-   protected void changePropSheetItem(ItemConfig item, PropertySheetItem propSheetItem) {
-      // Alfresco implementation doesn't need this, but WM subclass needs it
-   }
+    /**
+     * Allow changes to be made to this propSheetItem
+     * 
+     * @param item - configuration item
+     * @param propSheetItem - item to be changed
+     * @author Ats Uiboupin
+     */
+    protected void changePropSheetItem(ItemConfig item, PropertySheetItem propSheetItem) {
+        // Alfresco implementation doesn't need this, but WM subclass needs it
+    }
+
+    /**
+     * create the appropriate component
+     * 
+     * @param item
+     * @param context
+     * @return Pair&lt;PropertySheetItem, String&gt; or null if this class don't know how to create PropertySheetItem out of given item, and subclass should
+     *         create the PropertySheetItem and id pair
+     * @author Ats Uiboupin
+     */
+    protected Pair<PropertySheetItem, String> createPropertySheetItemAndId(ItemConfig item, FacesContext context) {
+        final String id;
+        final PropertySheetItem propSheetItem;
+        if (item instanceof PropertyConfig) {
+            id = PROP_ID_PREFIX + item.getName();
+            propSheetItem = (PropertySheetItem) context.getApplication().
+                    createComponent(RepoConstants.ALFRESCO_FACES_PROPERTY);
+        } else if (item instanceof AssociationConfig) {
+            id = ASSOC_ID_PREFIX + item.getName();
+            propSheetItem = (PropertySheetItem) context.getApplication().
+                    createComponent(RepoConstants.ALFRESCO_FACES_ASSOCIATION);
+        } else if (item instanceof ChildAssociationConfig) {
+            id = ASSOC_ID_PREFIX + item.getName();
+            propSheetItem = (PropertySheetItem) context.getApplication().
+                    createComponent(RepoConstants.ALFRESCO_FACES_CHILD_ASSOCIATION);
+        } else if (item instanceof SeparatorConfig) {
+            id = SEP_ID_PREFIX + item.getName();
+            propSheetItem = (PropertySheetItem) context.getApplication().
+                    createComponent(RepoConstants.ALFRESCO_FACES_SEPARATOR);
+        } else {
+            return null; // subclass might have a solution for this item type
+        }
+        return new Pair<PropertySheetItem, String>(propSheetItem, id);
+    }
 }
