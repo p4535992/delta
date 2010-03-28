@@ -8,7 +8,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8" %>
 <%@ page isELIgnored="false" %>
 
-<a:panel id="substitute-panel" styleClass="panel-100" label="#{msg.substitute_list}" progressive="true">
+<a:panel id="substitute-panel" styleClass="panel-100 with-pager" label="#{msg.substitute_list}" progressive="true">
 
     <a:richList id="substituteList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
                 width="100%" value="#{DialogManager.bean.substitutes}" var="r" initialSortColumn="substitutionStartDate" initialSortDescending="true" refreshOnBind="true">
@@ -47,13 +47,13 @@
         </a:column>
 
         <a:column id="actionsCol" actions="true" style="text-align:right" styleClass="actions-column">
-            <a:actionLink id="deleteLink" value="#{r.substituteName}" image="/images/icons/delete.gif" showLink="false"
-                          tooltip="#{substitute_remove}"
+            <a:actionLink id="deleteLink" value="#{msg.substitute_remove}" image="/images/icons/delete.gif" showLink="false"
+                          tooltip="#{msg.substitute_remove}"
                           actionListener="#{DialogManager.bean.deleteSubstitute}" rendered="#{!r.readOnly}">
                 <f:param name="nodeRef" value="#{r.nodeRef}"/>
             </a:actionLink>
-            <a:actionLink id="emailLink" value="#{r.substituteId}" href="mailto:#{DialogManager.bean.emailAddress[r.substituteId]}?subject=#{DialogManager.bean.emailSubject}" image="/images/icons/email_users.gif"
-                          tooltip="#{substitute_remove}" showLink="false"/>
+            <a:actionLink id="emailLink" value="#{msg.substitute_instruct}" href="mailto:#{DialogManager.bean.emailAddress[r.substituteId]}?subject=#{DialogManager.bean.emailSubject}" image="/images/icons/email_users.gif"
+                          tooltip="#{msg.substitute_instruct}" showLink="false"/>
         </a:column>
 
         <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp"/>

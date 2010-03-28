@@ -7,7 +7,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="compound-workflow-list-panel" styleClass="panel-100" label="#{msg.workflow_compound_list}" progressive="true">
+<a:panel id="compound-workflow-list-panel" styleClass="panel-100 with-pager" label="#{msg.workflow_compound_list}" progressive="true">
 
    <a:richList id="compoundWorkflowsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" value="#{CompoundWorkflowDefinitionListDialog.workflows}" var="r" initialSortColumn="name">

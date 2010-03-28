@@ -11,6 +11,7 @@ import javax.faces.component.UIParameter;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.config.Config;
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.config.ActionsConfigElement;
@@ -45,6 +46,9 @@ public class MenuItem implements Serializable {
     @XStreamAsAttribute
     private String title;
     @XStreamAsAttribute
+    @XStreamAlias("title-id")
+    private String titleId;
+    @XStreamAsAttribute
     private boolean admin;
     @XStreamAsAttribute
     @XStreamAlias("document-manager")
@@ -62,38 +66,21 @@ public class MenuItem implements Serializable {
     private static final String ACTION_CONTEXT = "actionContext";
     @XStreamOmitField
     private static final String ATTR_VALUE = "value";
+    @XStreamOmitField
+    public static final String ATTR_PLAIN_MENU_ITEM = "plainMenuItem";
 
     public MenuItem() {}
-    /**
-     * Constructor for {@link MenuItem}
-     * 
-     * @param title
-     * @param outcome
-     */
-    public MenuItem(String title, String outcome) {
-        this.title = title;
-        this.outcome = outcome;
-    }
-
-    /**
-     * Constructor for {@link MenuItem}
-     * 
-     * @param title
-     * @param outcome
-     * @param children
-     */
-    public MenuItem(String title, String outcome, List<MenuItem> children) {
-        this.title = title;
-        this.outcome = outcome;
-        this.subItems = children;
-    }
 
     public UIComponent createComponent(FacesContext context, String id, UserService userService) {
-        return createComponent(context, id, false, userService);
+        return createComponent(context, id, false, userService, false);
     }
     
     public UIComponent createComponent(FacesContext context, String id, UserService userService, boolean createChildren) {
-        return createComponent(context, id, false, userService);
+        return createComponent(context, id, false, userService, false);
+    }
+    
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, boolean createChildren, boolean plainLink) {
+        return createComponent(context, id, false, userService, true);
     }
 
     /**
@@ -103,7 +90,7 @@ public class MenuItem implements Serializable {
      * @param application Faces Application
      * @return
      */
-    public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService) {
+    public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService, boolean plainLink) {
 
         if (isRestricted() && !hasPermissions(userService)) {
             return null;
@@ -117,6 +104,10 @@ public class MenuItem implements Serializable {
 
         link.setRendererType(UIActions.RENDERER_ACTIONLINK);
         FacesHelper.setupComponentId(context, link, id);
+
+        if(getTitle() == null) {
+            setTitle(I18NUtil.getMessage(getTitleId()));
+        }
         link.setValue(getTitle());
         link.setTooltip(getTitle());
         link.setAction(new ConstantMethodBinding(getOutcome()));
@@ -197,6 +188,10 @@ public class MenuItem implements Serializable {
                 }
             }
         }
+        if (plainLink) {
+            link.getAttributes().put(ATTR_PLAIN_MENU_ITEM, Boolean.TRUE);
+            return link;
+        }
 
         MenuItemWrapper wrap = (MenuItemWrapper) application.createComponent(MenuItemWrapper.class.getCanonicalName());
         FacesHelper.setupComponentId(context, wrap, id + "-wrapper");
@@ -266,6 +261,14 @@ public class MenuItem implements Serializable {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+    
+    public String getTitleId() {
+        return titleId;
+    }
+
+    public void setTitleId(String titleId) {
+        this.titleId = titleId;
     }
 
     public String getOutcome() {

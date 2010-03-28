@@ -27,6 +27,24 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
         this.parent = parent;
     }
 
+    protected CompoundWorkflow copy() {
+        return copyImpl(new CompoundWorkflow(getNode().copy(), parent));
+    }
+
+    @Override
+    protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
+        CompoundWorkflow compoundWorkflow = (CompoundWorkflow) super.copyImpl(copy);
+        for (Workflow workflow : workflows) {
+            compoundWorkflow.workflows.add(workflow.copy(compoundWorkflow));
+        }
+        for (Workflow removedWorkflow : removedWorkflows) {
+            compoundWorkflow.removedWorkflows.add(removedWorkflow.copy(compoundWorkflow));
+        }
+        @SuppressWarnings("unchecked")
+        T result = (T) compoundWorkflow;
+        return result;
+    }
+
     public NodeRef getParent() {
         return parent;
     }

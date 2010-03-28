@@ -17,7 +17,15 @@
          </list>
       </property>
    </bean>
-
+   
+   <bean id="menuTranslationResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.menu.service.menu-structure-messages</value>
+         </list>
+      </property>
+   </bean>
+   
    <bean id="menuService" class="ee.webmedia.alfresco.menu.service.MenuServiceImpl">
       <property name="menuConfigLocation" value="classpath:ee/webmedia/alfresco/menu/service/menu-structure.xml" />
       <property name="fileFolderService" ref="FileFolderService" />

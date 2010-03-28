@@ -29,65 +29,7 @@
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
 
-<%@ page buffer="64kb" contentType="text/html;charset=UTF-8" %>
-<%@ page isELIgnored="false" %>
-
-<r:page titleId="title_topic">
-
-<f:view>
-<%-- load a bundle of properties with I18N strings --%>
-<r:loadBundle var="msg"/>
-
-<h:form acceptcharset="UTF-8" id="browse-posts">
-
-
-   <%-- Title bar --%>
-   <%@ include file="../parts/titlebar.jsp"%>
-
-   <%-- Main area --%>
-   <a:panel id="container">
-
-      <%-- Shelf --%>
-      <%@ include file="../parts/shelf.jsp"%>
-
-         <%-- Work Area --%>
-         <a:panel id="content">
-            <%-- Breadcrumb --%>
-            <%@ include file="../parts/breadcrumb.jsp"%>
-            <%-- Status and Actions --%>
-            <a:panel id="titlebar">
-               <%-- Status and Actions inner contents table --%>
-               <%-- Generally this consists of an icon, textual summary and actions for the current object --%>
-               <h2 class="title-icon">
-                  <h:graphicImage id="space-logo" url="/images/icons/#{NavigationBean.nodeProperties.icon}.gif" width="32" height="32" />
-                  <h:outputText value="#{NavigationBean.nodeProperties.name}" id="msg2" />
-               </h2>
-   
-               <a:panel id="description" rendered="#{DialogManager.currentDialog.name eq 'aboutDialog'}">
-                  <h:outputText value="#{msg.topic_info}" id="msg3" />
-               </a:panel>
-
-
-
-               <a:panel id="actions">
-               <%-- Create actions menu --%>
-               <a:menu id="createMenu" itemSpacing="4" label="#{msg.create_options}" menuStyleClass="actions-menu" styleClass="actions">
-                  <r:actions id="actions_more" value="forum_post_actions" context="#{NavigationBean.currentNode}" />
-               </a:menu>
-               </a:panel>
-               
-               </a:panel>
-               
-               <%-- Error Messages --%>
-               <%-- messages tag to show messages not handled by other specific message tags --%>
-               <a:errors message="" infoClass="statusWarningText" errorClass="statusErrorText" />
-               
-               
-               
-               
-               
-               <a:panel id="posts-panel" styleClass="column panel-90" label="#{msg.browse_posts}">
-
+<a:panel id="posts-panel" label="#{msg.browse_posts}" styleClass="with-pager">
 
 <%-- Details - Posts --%>
 <%-- Posts List --%>
@@ -168,23 +110,6 @@ rendered="#{ForumsBean.topicViewMode == 'bubble' && r.replyTo != null}">
 <a:dataPager styleClass="pager" />
 </a:richList>
 
-      </a:panel>
-<a:panel id="dialog-buttons-panel" styleClass="column panel-10 container-buttons" rendered="#{DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
-         
-         <h:commandButton actionListener="#{ForumsBean.discuss}" action="" value="#{msg.back_button}" type="submit" styleClass="wizardButton" >
-            <f:param value="#{ForumsBean.documentNodeRef.id}" name="id"/>
-         </h:commandButton> 
-      </a:panel>
-
-<f:verbatim><div class="clear"></div></f:verbatim>
-
 </a:panel>
-</a:panel>
-<%@ include file="../parts/footer.jsp"%>
 
-
-</h:form>
-
-</f:view>
-
-</r:page>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

@@ -35,12 +35,14 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
+import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
 import ee.webmedia.alfresco.notification.model.GeneralNotification;
 import ee.webmedia.alfresco.notification.model.Notification;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.template.service.DocumentTemplateNotFoundException;
+import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.service.SubstituteService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
@@ -59,8 +61,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(NotificationServiceImpl.class);
 
-    private static final String ZIP_FILENAME = I18NUtil.getMessage("notification_zip_filename");
-    private static final String ZIP_SIZE_TOO_LARGE = I18NUtil.getMessage("notification_zip_size_too_large");
     private static final String NOTIFICATION_PREFIX = "notification_";
     private static final String TEMPLATE_SUFFIX = "_template";
     private static final String SUBJECT_SUFFIX = "_subject";
@@ -73,6 +73,7 @@ public class NotificationServiceImpl implements NotificationService {
     private FileFolderService fileFolderService;
     private DocumentSearchService documentSearchService;
     private AuthorityService authorityService;
+    private SubstituteService substituteService;
     private int updateCount = 0;
 
     private static BeanPropertyMapper<GeneralNotification> generalNotificationBeanPropertyMapper;
@@ -161,7 +162,7 @@ public class NotificationServiceImpl implements NotificationService {
         try {
             sendNotification(notification, docRef, templateDataNodeRefs);
         } catch (EmailException e) {
-            log.error("Workflow event notification e-mail sending failed, ignoring and continueing", e);
+            log.error("Workflow event notification e-mail sending failed, ignoring and continuing", e);
         }
     }
 
@@ -177,7 +178,7 @@ public class NotificationServiceImpl implements NotificationService {
         try {
             sendNotification(notification, docRef, setupTemplateData(task));
         } catch (EmailException e) {
-            log.error("Workflow task event notification e-mail sending failed, ignoring and continueing", e);
+            log.error("Workflow task event notification e-mail sending failed, ignoring and continuing", e);
         }
     }
 
@@ -191,24 +192,25 @@ public class NotificationServiceImpl implements NotificationService {
         try {
             sendNotification(notification, docRef, setupTemplateData(task));
         } catch (Exception e) {
-            log.error("Workflow task event notification e-mail sending failed, ignoring and continueing", e);
+            log.error("Workflow task event notification e-mail sending failed, ignoring and continuing", e);
             return false;
         }
         return true;
     }
 
     private void sendNotification(Notification notification, NodeRef docRef, LinkedHashMap<String, NodeRef> templateDataNodeRefs) throws EmailException {
-        NodeRef systemTemplateByName = null;
-        try {
-            systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
-        } catch (DocumentTemplateNotFoundException e) {
+        NodeRef systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
+        if (systemTemplateByName == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Workflow notification email template '" + notification.getTemplateName() + "' not found, no notification email is sent");
+            }
             return; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
 
         String content = templateService.getProcessedEmailTemplate(templateDataNodeRefs, systemTemplateByName);
 
         if (notification.isAttachFiles()) {
-            long maxSize = parametersService.getLongParameter(Parameters.MAX_ATTACHED_FILE_SIZE);
+            long maxSize = parametersService.getLongParameter(Parameters.MAX_ATTACHED_FILE_SIZE) * 1024 * 1024; // Parameter is MB
             long zipSize = 0;
             List<FileInfo> files = fileFolderService.listFiles(docRef);
             List<String> fileRefs = new ArrayList<String>(files.size());
@@ -217,14 +219,16 @@ public class NotificationServiceImpl implements NotificationService {
                 File file = new File(fi);
                 zipSize += file.getSize();
                 if (zipSize > maxSize) {
-                    log.debug(ZIP_SIZE_TOO_LARGE);
-                    throw new RuntimeException(ZIP_SIZE_TOO_LARGE);
+                    String msg = "Files archive size exceeds limit configured with parameter!";
+                    log.debug(msg);
+                    throw new EmailAttachmentSizeLimitException(msg);
                 }
                 fileRefs.add(file.getNodeRef().toString());
             }
 
+            String zipName = I18NUtil.getMessage("notification_zip_filename") + ".zip";
             emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail(), notification.getSubject(), content,
-                    true, docRef, fileRefs, true, ZIP_FILENAME);
+                    true, docRef, fileRefs, true, zipName);
         } else {
             emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail(), notification.getSubject(), content,
                     true, docRef, null, false, null);
@@ -318,18 +322,38 @@ public class NotificationServiceImpl implements NotificationService {
 
     private Notification processNewTask(Task task, Notification notification) {
         if (StringUtils.isNotEmpty(task.getOwnerId())) {
+            // Check for substitutes
+            List<Substitute> substitutes = substituteService.getSubstitutes(userService.getUser(task.getOwnerId()).getNodeRef());
+            if(substitutes.size() > 0) {
+                int daysForSubstitutionTasksCalc = (int) (parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC) * 1);
+                Calendar calendar = Calendar.getInstance();
+                for(Substitute sub : substitutes) {
+                    calendar.setTime(sub.getSubstitutionEndDate());
+                    calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
+                    if(sub.getSubstitutionStartDate().before(task.getDueDate()) && calendar.getTime().after(task.getDueDate())) {
+                        notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
+                    }
+                }
+                notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 2);
+                return notification;
+            }
+            
+            // Send to system user
             if (!isSubscribed(task.getOwnerId(), NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION)) {
                 return null;
             }
             notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION);
-        } else {
-            notification.setTemplateName(getTemplate(NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 1));
-            notification.setSubject(getSubject(NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION));
-            notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
-            notification.setAttachFiles(true);
+            notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
+            return notification;
         }
+        
+        // Send to third party
+        notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 1);
+        notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
+        notification.setAttachFiles(true);
         notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
         return notification;
+        
     }
 
     /**
@@ -377,7 +401,7 @@ public class NotificationServiceImpl implements NotificationService {
                 for (Task workflowTask : workflow.getTasks()) {
                     if (StringUtils.isEmpty(workflowTask.getOwnerId())
                             || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS)) {
-                        return null;
+                        continue;
                     }
                     notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
                 }
@@ -386,7 +410,7 @@ public class NotificationServiceImpl implements NotificationService {
                 for (Task workflowTask : workflow.getTasks()) {
                     if (StringUtils.isEmpty(workflowTask.getOwnerId()) || !Status.FINISHED.equals(workflowTask.getStatus())
                             || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS)) {
-                        return null;
+                        continue;
                     }
                     notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
                 }
@@ -402,18 +426,20 @@ public class NotificationServiceImpl implements NotificationService {
                 for (Task workflowTask : workflow.getTasks()) {
                     if (StringUtils.isEmpty(workflowTask.getOwnerId())
                             || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED)) {
-                        return null;
+                        continue;
                     }
-                    notification = setupNotification(notification, NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED);
+                    notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
                 }
+                notification = setupNotification(notification, NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED);
             } else {
                 for (Task workflowTask : workflow.getTasks()) {
                     if (StringUtils.isEmpty(workflowTask.getOwnerId()) || !Status.FINISHED.equals(workflowTask.getStatus())
                             || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED)) {
-                        return null;
+                        continue;
                     }
-                    notification = setupNotification(notification, NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED);
+                    notification.addRecipient(workflowTask.getOwnerName(), workflowTask.getOwnerEmail());
                 }
+                notification = setupNotification(notification, NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED);
             }
             notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(compoundWorkflow.getOwnerId()));
             return notification;
@@ -564,8 +590,8 @@ public class NotificationServiceImpl implements NotificationService {
             try {
                 sendNotification(notification, docRef, setupTemplateData(task));
                 sentMails++;
-            } catch (Exception e) {
-                log.debug("Workflow task event notification e-mail sending failed, ignoring and continueing", e);
+            } catch (EmailException e) {
+                log.error("Workflow task event notification e-mail sending failed, ignoring and continuing", e);
             }
         }
         return sentMails;
@@ -606,10 +632,11 @@ public class NotificationServiceImpl implements NotificationService {
             return sentMails; // no doc managers available
         }
 
-        NodeRef systemTemplateByName = null;
-        try {
-            systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
-        } catch (DocumentTemplateNotFoundException e) {
+        NodeRef systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
+        if (systemTemplateByName == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Volumes disposition date notification email template '" + notification.getTemplateName() + "' not found, no notification email is sent");
+            }
             return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
 
@@ -620,7 +647,7 @@ public class NotificationServiceImpl implements NotificationService {
 
             sentMails = notification.getToEmails().size();
         } catch (EmailException e) {
-            log.debug("Volume disposition date notification e-mail sending failed, ignoring and continuing", e);
+            log.error("Volume disposition date notification e-mail sending failed, ignoring and continuing", e);
         }
         return sentMails;
     }
@@ -655,10 +682,11 @@ public class NotificationServiceImpl implements NotificationService {
 
         Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.ACCESS_RESTRICTION_END_DATE);
 
-        NodeRef systemTemplateByName = null;
-        try {
-            systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
-        } catch (DocumentTemplateNotFoundException e) {
+        NodeRef systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
+        if (systemTemplateByName == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Access restriction end date notification email template '" + notification.getTemplateName() + "' not found, no notification email is sent");
+            }
             return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
 
@@ -678,8 +706,8 @@ public class NotificationServiceImpl implements NotificationService {
                 emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail(), notification.getSubject(),
                         content,
                         true, null, null, false, null);
-            } catch (Exception e) {
-                log.debug("Access restriction due date notification e-mail sending to " + userFullName + " (" + userName + ") <"
+            } catch (EmailException e) {
+                log.error("Access restriction due date notification e-mail sending to " + userFullName + " (" + userName + ") <"
                         + userEmail + "> failed, ignoring and continuing", e);
             }
             notification.clearRecipients();
@@ -688,9 +716,11 @@ public class NotificationServiceImpl implements NotificationService {
         notification.clearRecipients();
         notification = setupNotification(notification, NotificationModel.NotificationType.ACCESS_RESTRICTION_END_DATE, 1);
 
-        try {
-            systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
-        } catch (DocumentTemplateNotFoundException e) {
+        systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
+        if (systemTemplateByName == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Access restriction end date notification email template '" + notification.getTemplateName() + "' not found, no notification email is sent");
+            }
             return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
 
@@ -702,8 +732,8 @@ public class NotificationServiceImpl implements NotificationService {
         try {
             emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail(), notification.getSubject(),
                     content, true, null, null, false, null);
-        } catch (Exception e) {
-            log.debug("Access restriction due date notification e-mail sending to document managers failed, ignoring and continuing", e);
+        } catch (EmailException e) {
+            log.error("Access restriction due date notification e-mail sending to document managers failed, ignoring and continuing", e);
         }
 
         return 0;
@@ -802,6 +832,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     public void setAuthorityService(AuthorityService authorityService) {
         this.authorityService = authorityService;
+    }
+    
+    public void setSubstituteService(SubstituteService substituteService) {
+        this.substituteService = substituteService;
     }
 
     // END: setters/getters

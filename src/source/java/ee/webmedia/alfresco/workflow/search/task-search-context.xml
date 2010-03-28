@@ -29,6 +29,7 @@
    <bean id="taskSearchFilterService" class="ee.webmedia.alfresco.workflow.search.service.TaskSearchFilterServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="userService" ref="UserService" />
    </bean>
 
    <bean id="TaskSearchFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">

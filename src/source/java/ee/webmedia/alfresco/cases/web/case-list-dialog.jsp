@@ -6,7 +6,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="case-panel" styleClass="panel-100" label="#{CaseListDialog.parent.volumeMark} #{CaseListDialog.parent.title}" progressive="true">
+<a:panel id="case-panel" styleClass="panel-100 with-pager" label="#{CaseListDialog.parent.volumeMark} #{CaseListDialog.parent.title}" progressive="true">
 
    <%-- Main List --%>
    <a:richList id="casesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -33,6 +33,9 @@
 
       <%-- show details --%>
       <a:column id="col7" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager}">
+         <f:facet name="header">
+            <h:outputText value="&nbsp;" escape="false" />
+         </f:facet>
          <a:actionLink id="col7-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:caseDetailsDialog" showLink="false"
             actionListener="#{CaseDetailsDialog.showDetails}" tooltip="#{msg.case_details_info}">
             <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />

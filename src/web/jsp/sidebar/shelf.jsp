@@ -29,7 +29,7 @@
 <%@ taglib uri="/WEB-INF/wm.tld" prefix="wm" %>
 
 
-<wm:menu primary="false" activeItemId="#{MenuBean.activeItemId}" />
+<wm:menu primary="false" />
 
 <f:verbatim><div id="shelf" class="shelf"><div class="menu"><a class="icon-link collapse" href="#" onclick="_togglePersistentMenu(event, 'shortcuts');"></f:verbatim>
 <h:outputText value="#{msg.shortcuts}" />

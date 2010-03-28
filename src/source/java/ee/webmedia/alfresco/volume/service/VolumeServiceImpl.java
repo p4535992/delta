@@ -130,7 +130,7 @@ public class VolumeServiceImpl implements VolumeService {
 
     @Override
     public boolean isClosed(Node node) {
-        return generalService.isExistingPropertyValueEqualTo(node, VolumeModel.Props.STATUS, DocListUnitStatus.CLOSED);
+        return RepoUtil.isExistingPropertyValueEqualTo(node, VolumeModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName());
     }
 
     @Override

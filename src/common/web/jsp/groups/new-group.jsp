@@ -65,7 +65,7 @@
       <h:panelGrid cellpadding="0" cellspacing="0" columns="2" columnClasses="propertiesLabel," >
 
          <h:panelGroup>
-            <h:graphicImage value="/images/icons/required_field.gif" alt="#{msg.required_field}" />
+            <f:verbatim escape="false"><span class="red">* </span></f:verbatim>
             <h:outputText value="#{msg.identifier}" />
          </h:panelGroup>
          <h:inputText id="name" value="#{DialogManager.bean.name}" size="35" maxlength="1024" validator="#{DialogManager.bean.validateGroupName}"

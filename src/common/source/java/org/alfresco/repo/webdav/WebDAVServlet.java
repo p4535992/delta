@@ -38,6 +38,7 @@ import javax.transaction.UserTransaction;
 import org.alfresco.filesys.ServerConfigurationBean;
 import org.alfresco.jlan.server.config.ServerConfigurationAccessor;
 import org.alfresco.repo.security.authentication.AuthenticationContext;
+import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.repo.tenant.TenantService;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -151,7 +152,14 @@ public class WebDAVServlet extends HttpServlet
                 WebDAVServerException error = (WebDAVServerException) e;
                 if (error.getCause() != null)
                 {
-                    logger.error(INTERNAL_SERVER_ERROR, error.getCause());
+                    if (error.getCause() instanceof AccessDeniedException)
+                    {
+                        logger.debug(error.getCause().getMessage());
+                    }
+                    else
+                    {
+                        logger.error(INTERNAL_SERVER_ERROR, error.getCause());
+                    }
                 }
 
                 if (logger.isDebugEnabled())

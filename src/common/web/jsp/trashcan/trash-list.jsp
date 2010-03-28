@@ -73,7 +73,7 @@
 </script>
 
 </f:verbatim>
-<a:panel id="trashcan-panel" styleClass="panel-100" label="#{DialogManager.bean.panelMessage}">
+<a:panel id="trashcan-panel" styleClass="panel-100 with-pager" label="#{DialogManager.bean.panelMessage}">
 
    <f:verbatim>
    <%

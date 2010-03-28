@@ -305,6 +305,12 @@ public class TaskListGenerator extends BaseComponentGenerator {
         this.dialogManager = dialogManager;
     }
 
+    @Override
+    protected String getValidateMandatoryJsFunctionName() {
+        // if needed, we could implement JS function, that performs client-side validation
+        return null;
+    }
+
     ///// PRIVATE METHODS /////
     
     private List<Integer> filterTasks(List<Task> tasks, boolean responsible) {

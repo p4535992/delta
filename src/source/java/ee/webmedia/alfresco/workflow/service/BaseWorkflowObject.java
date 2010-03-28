@@ -36,6 +36,11 @@ public abstract class BaseWorkflowObject {
         }
     }
 
+    protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
+        copy.originalProperties = RepoUtil.copyProperties(originalProperties);
+        return copy;
+    }
+
     public WmNode getNode() {
         return node;
     }
@@ -111,6 +116,10 @@ public abstract class BaseWorkflowObject {
 
     protected void setChangedProperties(Map<QName, Serializable> changedProperties) {
         originalProperties.putAll(changedProperties);
+    }
+
+    protected void clearOriginalProperties() {
+        originalProperties.clear();
     }
 
     protected String additionalToString() {

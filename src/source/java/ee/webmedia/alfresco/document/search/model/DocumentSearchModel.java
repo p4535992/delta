@@ -22,6 +22,10 @@ public interface DocumentSearchModel {
         QName FILTER = QName.createQName(URI, "filter");
     }
 
+    interface Aspects {
+        QName DOCUMENT_SEARCH_FILTERS_CONTAINER = QName.createQName(URI, "documentSearchFiltersContainer");
+    }
+
     interface Props {
         QName NAME = QName.createQName(URI, "name");
         QName INPUT = QName.createQName(URI, "input");

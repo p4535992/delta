@@ -70,6 +70,7 @@ public class PageTag extends TagSupport
       "/scripts/jquery/jquery.hoverIntent.js",
       "/scripts/jquery/jquery.textmetrix.js",
       "/scripts/jquery/jquery.autocomplete.js",
+      "/scripts/jquery/jquery.jLog-min.js",
       // menu javascript
       "/scripts/menu.js",
       // webdav javascript

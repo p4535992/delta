@@ -163,6 +163,8 @@ public class ComponentUtil {
     // public static <F extends UIComponent, T extends UIComponent> List<T> getChildrenByClass(F parentComponent, Class<T> childComponentClass) {
     // XXX: võiks toimida ka eelnev rida, aga miskipärast ei leia runtime's sobivat meetodit..peaks üle vaatama selle
     public static <F, T extends UIComponent> List<T> getChildrenByClass(F parentComponent, Class<T> childComponentClass) {
+        Assert.notNull(parentComponent, "parentComponent is not supposed to be null when searching childComponents by class '"
+                + childComponentClass.getCanonicalName() + "'");
         @SuppressWarnings("unchecked")
         List<UIComponent> children = ((UIComponent) parentComponent).getChildren();
         ArrayList<T> matchingComponents = new ArrayList<T>();
@@ -457,7 +459,7 @@ public class ComponentUtil {
 
     public static PropertyDefinition getPropertyDefinition(FacesContext context, Node node, String propName) {
         PropertyDefinition propDef = null;
-        TypeDefinition typeDef = getGeneralService().getAnonymousType(node.getType());
+        TypeDefinition typeDef = getGeneralService().getAnonymousType(node);
         if (typeDef != null) {
             Map<QName, PropertyDefinition> properties = typeDef.getProperties();
             propDef = properties.get(Repository.resolveToQName(propName));

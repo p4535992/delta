@@ -1,20 +1,23 @@
 package ee.webmedia.alfresco.imap.service;
 
-import com.icegreen.greenmail.store.FolderException;
-import com.icegreen.greenmail.store.MailFolder;
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
-import ee.webmedia.alfresco.classificator.enums.StorageType;
-import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.imap.AppendBehaviour;
-import ee.webmedia.alfresco.imap.AttachmentsFolderAppendBehaviour;
-import ee.webmedia.alfresco.imap.ImmutableFolder;
-import ee.webmedia.alfresco.imap.IncomingFolderAppendBehaviour;
-import ee.webmedia.alfresco.imap.PermissionDeniedAppendBehaviour;
-import ee.webmedia.alfresco.imap.model.ImapModel;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.Part;
+import javax.mail.internet.ContentType;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
@@ -34,28 +37,29 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.GUID;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xml.security.transforms.TransformationException;
 import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 
-import javax.mail.MessagingException;
-import javax.mail.Multipart;
-import javax.mail.Part;
-import javax.mail.internet.ContentType;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import com.icegreen.greenmail.store.FolderException;
+import com.icegreen.greenmail.store.MailFolder;
+
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.enums.StorageType;
+import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.imap.AppendBehaviour;
+import ee.webmedia.alfresco.imap.AttachmentsFolderAppendBehaviour;
+import ee.webmedia.alfresco.imap.ImmutableFolder;
+import ee.webmedia.alfresco.imap.IncomingFolderAppendBehaviour;
+import ee.webmedia.alfresco.imap.PermissionDeniedAppendBehaviour;
+import ee.webmedia.alfresco.imap.model.ImapModel;
 
 /**
  * SimDhs specific IMAP logic.
@@ -67,6 +71,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
     private ImapService imapService;
     private FileFolderService fileFolderService;
+    private DocumentLogService documentLogService;
     private NodeService nodeService;
     private ContentService contentService;
     private GeneralService generalService;
@@ -100,11 +105,15 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             properties.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.EMAIL.getValueName());
             properties.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
             properties.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
-            nodeService.addProperties(docInfo.getNodeRef(), properties);
 
-            saveAttachments(docInfo.getNodeRef(), mimeMessage, true);
+            final NodeRef docRef = docInfo.getNodeRef();
+            nodeService.addProperties(docRef, properties);
+            saveAttachments(docRef, mimeMessage, true);
 
-            return (Long) nodeService.getProperty(docInfo.getNodeRef(), ContentModel.PROP_NODE_DBID);
+            documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", "DVK") //
+                    , I18NUtil.getMessage("document_log_creator_imap"));
+
+            return (Long) nodeService.getProperty(docRef, ContentModel.PROP_NODE_DBID);
         } catch (Exception e) { //todo: improve exception handling
             throw new FolderException("Cannot save email: " + e.getMessage());
         }
@@ -150,28 +159,12 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         ContentType contentType = new ContentType(part.getContentType());
         FileInfo createdFile = fileFolderService.create(
                 folderNodeRef,
-                createAttachmentName(folderNodeRef, part.getFileName()),
+                generalService.getUniqueFileName(folderNodeRef, part.getFileName()),
                 ContentModel.TYPE_CONTENT);
         ContentWriter writer = fileFolderService.getWriter(createdFile.getNodeRef());
         writer.setMimetype(contentType.getBaseType());
         OutputStream os = writer.getContentOutputStream();
         FileCopyUtils.copy(part.getInputStream(), os);
-    }
-
-    private String createAttachmentName(NodeRef folderNodeRef, String fileName) throws MessagingException {
-        //todo: refactor this method to more appropriate place
-        int i = 1;
-        String baseName = FilenameUtils.getBaseName(fileName);
-        String extension = FilenameUtils.getExtension(fileName);
-        while (fileFolderService.searchSimple(folderNodeRef, baseName + "." + extension) != null) {
-            if (i > 1) {
-                baseName = baseName.substring(0, baseName.lastIndexOf("(") - 1);
-            }
-            baseName = baseName.concat("(" + i + ")");
-            i++;
-        }
-
-        return baseName + "." + extension;
     }
 
     //todo: should be refactored to File Converter Service
@@ -314,6 +307,10 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
     public void setImapService(ImapService imapService) {
         this.imapService = imapService;
+    }
+
+    public void setDocumentLogService(DocumentLogService documentLogService) {
+        this.documentLogService = documentLogService;
     }
 
     public void setFileFolderService(FileFolderService fileFolderService) {

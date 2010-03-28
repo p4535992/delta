@@ -76,21 +76,21 @@ function updateButtonState()
 
    <h:panelGrid styleClass="personal-details" columns="2" cellpadding="2" cellspacing="2" columnClasses="propertiesLabel,userPropertyValue">
       <h:panelGroup>
-         <h:graphicImage value="/images/icons/required_field.gif" alt="#{msg.required_field}" />
+         <f:verbatim escape="false"><span class="red">* </span></f:verbatim>
          <h:outputText value="#{msg.first_name}:" />
       </h:panelGroup>
       <h:inputText id="first-name" value="#{DialogManager.bean.firstName}" size="35" maxlength="1024" onkeyup="updateButtonState();"
          onchange="updateButtonState();" />
 
       <h:panelGroup>
-         <h:graphicImage value="/images/icons/required_field.gif" alt="#{msg.required_field}" />
+         <f:verbatim escape="false"><span class="red">* </span></f:verbatim>
          <h:outputText value="#{msg.last_name}:" />
       </h:panelGroup>
       <h:inputText id="last-name" value="#{DialogManager.bean.lastName}" size="35" maxlength="1024" onkeyup="updateButtonState();"
          onchange="updateButtonState();" />
 
       <h:panelGroup>
-         <h:graphicImage value="/images/icons/required_field.gif" alt="#{msg.required_field}" />
+         <f:verbatim escape="false"><span class="red">* </span></f:verbatim>
          <h:outputText value="#{msg.email}:" />
       </h:panelGroup>
       <h:inputText id="email" value="#{DialogManager.bean.email}" size="35" maxlength="1024" onkeyup="updateButtonState();" onchange="updateButtonState();" />

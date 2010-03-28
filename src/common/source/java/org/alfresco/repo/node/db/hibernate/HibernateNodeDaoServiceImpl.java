@@ -4641,7 +4641,10 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 // If the property is multi-valued then the output property must be a collection
                 if (currentPropertyDef != null && currentPropertyDef.isMultiValued())
                 {
-                    if (collapsedValue != null && !(collapsedValue instanceof Collection))
+                    // If value is not already collection, create list and add value into it.
+                    // There is custom change to Alfresco default implementation, so that a list with one null value ([null])
+                    // is handled correctly. Default implementation returns null, not [null] as it suppose to.
+                    if (collapsedValue == null  || !(collapsedValue instanceof Collection))
                     {
                         // Can't use Collections.singletonList: ETHREEOH-1172
                         ArrayList<Serializable> collection = new ArrayList<Serializable>(1);
@@ -4683,6 +4686,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
         // Iterate (sorted) over the map entries and extract values with the same list index
         Integer currentListIndex = Integer.MIN_VALUE;
         Iterator<Map.Entry<PropertyMapKey, NodePropertyValue>> iterator = sortedPropertyValues.entrySet().iterator();
+        boolean hasNullBeenSet = false;
         while (true)
         {
             Integer nextListIndex = null;
@@ -4705,10 +4709,15 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                         scratch,
                         localeDAO,
                         contentDataDAO);
+
                 // Store.  If there is a value already, then we must build a collection.
-                if (result == null)
+                // Alfresco default implementation doesn't add null value to the collection if it is the first item.
+                // So when the value is [null, val], then [val] is returned. hasNullBeenSet property is
+                // used to fix this problem, so that null value will be added to the start of collection.
+                if (result == null && !hasNullBeenSet)
                 {
-                    result = collapsedValue;
+                  result = collapsedValue;
+                  hasNullBeenSet = true;
                 }
                 else if (collectionResult != null)
                 {

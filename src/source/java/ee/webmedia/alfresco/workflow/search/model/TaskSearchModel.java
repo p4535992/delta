@@ -25,6 +25,10 @@ public interface TaskSearchModel {
         QName FILTER = QName.createQName(URI, "filter");
     }
 
+    interface Aspects {
+        QName TASK_SEARCH_FILTERS_CONTAINER = QName.createQName(URI, "taskSearchFiltersContainer");
+    }
+
     interface Props {
         QName NAME = QName.createQName(URI, "name");
         QName STARTED_DATE_TIME_BEGIN = QName.createQName(URI, "startedDateTimeBegin");

@@ -90,7 +90,7 @@
    
       <h:panelGrid columns="2" columnClasses="panelGridLabelColumn,panelGridValueColumn,panelGridRequiredImageColumn">
          <h:panelGroup>
-            <h:graphicImage id="img0" value="/images/icons/required_field.gif" alt="#{msg.required_field}" />
+            <f:verbatim escape="false"><span class="red">* </span></f:verbatim>
             <h:outputText id="text5" value="#{msg.name}:" />
          </h:panelGroup>
          <h:inputText id="file-name" value="#{AddContentDialog.fileName}" maxlength="1024" size="35" onkeyup="checkButtonState();" onchange="checkButtonState();" />

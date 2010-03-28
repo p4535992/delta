@@ -12,6 +12,7 @@ import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.NavigationBean;
 import org.alfresco.web.bean.repository.Node;
+import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.file.model.File;
@@ -46,6 +47,7 @@ public class FileBlockBean implements Serializable {
 
     public void init(Node node) {
         this.nodeRef = node.getNodeRef();
+        Assert.notNull(nodeRef, "nodeRef is null - node: " + node);
         restore();
         // Alfresco's AddContentDialog.saveContent uses
         // navigationBean.getCurrentNodeId() for getting the folder to save to

@@ -119,7 +119,7 @@
       </a:column>
       
       <a:column id="col1-ddoc" primary="true" rendered="#{r.activeDigiDoc}">
-         <a:panel label="#{msg.file_title}" id="ddoc-inner-panel">
+         <a:panel id="ddoc-inner-panel" styleClass="digidoc-panel">
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">
                <h:column id="col1-inner">
                   <a:actionLink id="inner-act1" value="#{v.name}" href="#{v.downloadUrl}" target="new" image="#{v.fileType16}" showLink="false"
@@ -131,7 +131,7 @@
       </a:column>
 
       <a:column id="col2-ddoc" colspan="6" rendered="#{r.activeDigiDoc}">
-         <a:panel label="#{msg.file_signatures}" id="ddoc-inner-panel2">
+         <a:panel id="ddoc-inner-panel2" styleClass="digidoc-panel">
             <h:dataTable id="siglistList" value="#{r.signatureItems}" var="v" width="100%">
                <h:column id="col2-inner">
                   <f:facet name="header">
@@ -274,7 +274,7 @@
       </a:column>
       
       <a:column id="col21-ddoc" primary="true" rendered="#{r.notActiveAndDigiDoc}">
-         <a:panel label="#{msg.file_title}" id="ddoc-inner-panel">
+         <a:panel id="ddoc-inner-panel" styleClass="digidoc-panel">
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">
                <h:column id="col21-inner">
                   <a:actionLink id="inner-act1" value="#{v.name}" href="#{v.downloadUrl}" target="new" image="#{v.fileType16}" showLink="false"
@@ -286,7 +286,7 @@
       </a:column>
 
       <a:column id="col22-ddoc" colspan="6" rendered="#{r.notActiveAndDigiDoc}">
-         <a:panel label="#{msg.file_signatures}" id="ddoc-inner-panel2">
+         <a:panel id="ddoc-inner-panel2" styleClass="digidoc-panel">
             <h:dataTable id="siglistList" value="#{r.signatureItems}" var="v" width="100%">
                <h:column id="col2-inner">
                   <f:facet name="header">

@@ -1,8 +1,11 @@
 package ee.webmedia.alfresco.common.propertysheet.classificatorselector;
 
+import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.component.UIInput;
 import javax.faces.component.UISelectItem;
@@ -48,22 +51,24 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
 
         Collections.sort(classificators);
         ClassificatorValue defaultOrExistingValue = null;
-        String existingValue = boundValue instanceof String ? (String)boundValue : null;
+        String existingValue = boundValue instanceof String ? (String) boundValue : null;
         if (!multiValued && existingValue == null) {
             existingValue = getGeneralService().getExistingRepoValue4ComponentGenerator();
         }
+        boolean isSingleValued = isSingleValued(context, multiValued); // 
         for (ClassificatorValue classificator : classificators) {
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
             selectItem.setItemLabel(classificator.getValueName());
             selectItem.setItemValue(classificator.getValueName()); // must not be null or emtpy (even if using only label)
-            if (!multiValued && ((existingValue != null && StringUtils.equals(existingValue, classificator.getValueName())) // prefer existing value..
+            if (isSingleValued && ((existingValue != null && StringUtils.equals(existingValue, classificator.getValueName())) // prefer existing value..
                     || (existingValue == null && classificator.isByDefault()))) { // .. to default value
                 component.setValue(selectItem.getItemValue()); // make the selection
                 defaultOrExistingValue = classificator;
             }
             results.add(selectItem);
         }
-        if (null == defaultOrExistingValue && !multiValued) {
+
+        if (null == defaultOrExistingValue && isSingleValued) { // don't add default selection to multivalued component
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
             selectItem.setItemLabel(MessageUtil.getMessage(context, "select_default_label"));
             selectItem.setItemValue("");

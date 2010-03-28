@@ -57,12 +57,12 @@
 	overflow: hidden;
 }
 
-#actions .actions {
-	padding-top: 8px;
+textarea {
+	width: 99% !important;
 }
 
-#content input[type=submit] {
-	background-position: 0 3px;
+#actions .actions {
+	padding-top: 8px;
 }
 
 td.actions-column {
@@ -78,9 +78,21 @@ td.actions-column {
     position: relative;
 }
 
+.title-component:hover {
+	z-index: 1000;
+}
+
 .dropdown-menu {
 	left: 0;
-	z-index: 90;
+	z-index: 999;
+}
+
+/**
+  * include this bit of css
+  */
+.elementShown
+{
+	z-index: 10000;
 }
 
 .right.dropdown-menu {
@@ -98,26 +110,29 @@ td .dropdown-menu {
 	left: auto;
 }
 
+table.table-padding td {
+	padding: 0;
+}
+
+th {
+	padding-top: 3px;
+}
+
 .propertiesLabel img {
 	margin-left: 0;
 }
 
 .propertiesLabel {
-	vertical-align: top;
+	width: auto;
 }
 
-.propertiesLabel span {
-	top: 4px;
-	position: relative;
-}
-
-tr td {
-	padding-top: 0px;
-	padding-bottom: 0px;
+.propertiesLabel + td {
+	width: 100%;
 }
 
 hr {
-	heigth: 10px;
+	margin: 0;
+	border-top: #efefef 1px solid;
 }
 
 #metadata-panel td td input {
@@ -132,16 +147,12 @@ hr {
 	width: 146px !important; 
 }
 
-.search {
-	background: url(../images/icons/search_icon.gif) 0 3px no-repeat;
-}
-
 /*
 	TITLEBAR
 	******************************/
 	
 #additional {
-	z-index: 100;
+	/*z-index: 100;*/
 }
 
 #actions {
@@ -198,10 +209,6 @@ hr {
 
 .panel-10 {
 	margin-left: -1px;
-}
-
-.panel-border {
-	padding-bottom: 40px;
 }
 
 #advanced-search-field .panel-border,

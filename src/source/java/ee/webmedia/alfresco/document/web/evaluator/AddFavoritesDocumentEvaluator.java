@@ -16,6 +16,11 @@ public class AddFavoritesDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
+        ViewStateActionEvaluator viewStateEval = new ViewStateActionEvaluator();
+        if (!viewStateEval.evaluate(docNode)) {
+            return false;
+        }
+
         FacesContext context = FacesContext.getCurrentInstance();
         DocumentService documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(//
                 context).getBean(DocumentService.BEAN_NAME);

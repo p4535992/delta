@@ -18,6 +18,9 @@ public class DatePickerConverter implements Converter {
     
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DatePickerConverter.class);
     public static SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
+    static {
+        simpleDateFormat.setLenient(false);
+    }
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) throws ConverterException {

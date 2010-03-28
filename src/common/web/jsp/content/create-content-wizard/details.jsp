@@ -90,7 +90,7 @@
 
 <h:panelGrid columns="2" cellpadding="3" cellspacing="3" border="0" columnClasses="propertiesLabel,">
    <h:panelGroup>
-      <h:graphicImage value="/images/icons/required_field.gif" alt="#{msg.required_field}" />
+      <f:verbatim escape="false"><span class="red">* </span></f:verbatim>
       <h:outputText value="#{msg.name}:"/>
    </h:panelGroup>
    <h:inputText id="file-name" value="#{WizardManager.bean.fileName}" 

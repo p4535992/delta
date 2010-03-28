@@ -40,7 +40,7 @@ function updateButtonState()
             <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" /><f:verbatim>&nbsp;</f:verbatim>
             <h:commandButton id="show-all-button" value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" />
             </a:panel>
-            <a:panel id="ab-org-panel" styleClass="column panel-50" label="#{msg.addressbook_organizations}">
+            <a:panel id="ab-org-panel" styleClass="column panel-50 with-pager" label="#{msg.addressbook_organizations}">
 
                         <a:richList id="ab-organizations-list" viewMode="details" binding="#{DialogManager.bean.orgRichList}"
                            rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -83,7 +83,7 @@ function updateButtonState()
 
                      </a:panel>
                      
-                     <a:panel id="ab-person-panel" styleClass="column panel-50" label="#{msg.addressbook_private_persons}">
+                     <a:panel id="ab-person-panel" styleClass="column panel-50 with-pager" label="#{msg.addressbook_private_persons}">
 
                         <a:richList id="ab-people-list" viewMode="details" binding="#{DialogManager.bean.peopleRichList}"
                            headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
@@ -128,7 +128,7 @@ function updateButtonState()
 
                      <a:booleanEvaluator id="search-eval" value="#{DialogManager.bean.search}">
 
-                        <a:panel id="ab-people-panel2" styleClass="panel-100" label="#{msg.addressbook_org_persons}">
+                        <a:panel id="ab-people-panel2" styleClass="panel-100 with-pager" label="#{msg.addressbook_org_persons}">
 
 
                            <a:richList id="ab-people-list2" viewMode="details" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" 

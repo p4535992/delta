@@ -15,7 +15,7 @@ public class WorkflowStoppedEvaluator extends AbstractFullAccessEvaluator {
     
     @Override
     public boolean evaluate(Object obj) {
-        return WorkflowUtil.isStatus((CompoundWorkflow)obj, Status.STOPPED) && hasFullAccess();
+        return obj != null && WorkflowUtil.isStatus((CompoundWorkflow)obj, Status.STOPPED) && hasFullAccess();
     }
     
 }

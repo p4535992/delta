@@ -7,7 +7,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="notification-list-panel" label="#{msg.notification_important_notifications}">
+<a:panel id="notification-list-panel" label="#{msg.notification_important_notifications}" styleClass="with-pager">
       <%-- Main List --%>
    <a:richList id="notifications-list" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{NotificationListDialog.notifications}" var="r" refreshOnBind="true" initialSortColumn="createdDateTime" initialSortDescending="true">

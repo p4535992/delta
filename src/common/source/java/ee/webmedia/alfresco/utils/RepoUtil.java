@@ -17,7 +17,10 @@ import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
+
+import ee.webmedia.alfresco.common.service.IClonable;
 
 /**
  * Utility class related to Alfresco repository
@@ -31,8 +34,27 @@ public class RepoUtil {
         return StringUtils.equals(TRANSIENT_PROPS_NAMESPACE, propName.getNamespaceURI()) || NamespaceService.SYSTEM_MODEL_1_0_URI.equals(propName.getNamespaceURI()) || ContentModel.PROP_NAME.equals(propName);
     }
 
+    /**
+     * @param node
+     * @param property
+     * @param testEqualityValue
+     * @return true if given node has property with given qName that equals to equalityTestValue, false otherwise
+     */
+    public static boolean isExistingPropertyValueEqualTo(Node currentNode, final QName property, final Object equalityTestValue) {
+        final Object realValue = currentNode.getProperties().get(property.toString());
+        return equalityTestValue == null ? realValue == null : equalityTestValue.equals(realValue);
+    }
+
     public static boolean isSystemAspect(QName aspectName) {
         return ContentModel.ASPECT_REFERENCEABLE.equals(aspectName);
+    }
+
+    public static Map<QName, Serializable> copyProperties(Map<QName, Serializable> props) {
+        Map<QName, Serializable> results = new HashMap<QName, Serializable>(props.size());
+        for (Entry<QName, Serializable> entry : props.entrySet()) {
+            results.put(entry.getKey(), copyProperty(entry.getValue()));
+        }
+        return results;
     }
 
     public static Map<QName, Serializable> toQNameProperties(Map<String, Object> props, boolean copy) {
@@ -82,6 +104,8 @@ public class RepoUtil {
             }
             return newList;
 
+        } else if (property instanceof IClonable) {
+            return (Serializable) ((IClonable)property).clone();
         }
         throw new RuntimeException("Copying property not supported: " + property.getClass());
     }

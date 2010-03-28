@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.Serializable;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,7 @@ import ee.sk.digidoc.factory.DigiDocFactory;
 import ee.sk.digidoc.factory.SAXDigiDocFactory;
 import ee.sk.utils.ConfigManager;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
+import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
@@ -66,36 +68,43 @@ public class SignatureServiceImpl implements SignatureService {
         }
     }
 
+    @Override
     public boolean isDigiDocContainer(NodeRef nodeRef) {
         FileInfo fileInfo = fileFolderService.getFileInfo(nodeRef);
         return isDigiDocContainer(fileInfo);
     }
 
+    @Override
     public boolean isDigiDocContainer(FileInfo fileInfo) {
         return fileInfo.getName().toLowerCase().endsWith(".ddoc") && !fileInfo.isFolder();
     }
     
-    public List<SignatureItem> getSignatureItems(NodeRef nodeRef) {
+    @Override
+    public List<SignatureItem> getSignatureItems(NodeRef nodeRef) throws SignatureException {
         SignedDoc ddoc = getSignedDoc(nodeRef);
         return getSignatureItems(nodeRef, ddoc);
     }
 
-    public List<DataItem> getDataItems(NodeRef nodeRef, boolean includeData) {
+    @Override
+    public List<DataItem> getDataItems(NodeRef nodeRef, boolean includeData) throws SignatureException {
         SignedDoc ddoc = getSignedDoc(nodeRef);
         return getDataItems(nodeRef, ddoc, includeData);
     }
 
-    public DataItem getDataItem(NodeRef nodeRef, int id, boolean includeData) {
+    @Override
+    public DataItem getDataItem(NodeRef nodeRef, int id, boolean includeData) throws SignatureException {
         SignedDoc ddoc = getSignedDoc(nodeRef);
         return getDataItem(nodeRef, ddoc, id, includeData);
     }
 
-    public SignatureItemsAndDataItems getDataItemsAndSignatureItems(NodeRef nodeRef, boolean includeData) {
+    @Override
+    public SignatureItemsAndDataItems getDataItemsAndSignatureItems(NodeRef nodeRef, boolean includeData) throws SignatureException {
         SignedDoc ddoc = getSignedDoc(nodeRef);
         return getDataItemsAndSignatureItems(ddoc, nodeRef, includeData);
     }
 
-    public SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData) {
+    @Override
+    public SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData) throws SignatureException {
         try {
             SignedDoc ddoc = getSignedDoc(inputStream);
             return getDataItemsAndSignatureItems(ddoc, null, includeData);
@@ -106,7 +115,8 @@ public class SignatureServiceImpl implements SignatureService {
         }
     }
 
-    public SignatureDigest getSignatureDigest(NodeRef nodeRef, String certHex) {
+    @Override
+    public SignatureDigest getSignatureDigest(NodeRef nodeRef, String certHex) throws SignatureException {
         try {
             return getSignatureDigest(getSignedDoc(nodeRef), certHex);
         } catch (DigiDocException e) {
@@ -114,7 +124,8 @@ public class SignatureServiceImpl implements SignatureService {
         }
     }
 
-    public SignatureDigest getSignatureDigest(List<NodeRef> selectedNodeRefs, String certHex) {
+    @Override
+    public SignatureDigest getSignatureDigest(List<NodeRef> selectedNodeRefs, String certHex) throws SignatureException {
         try {
             return getSignatureDigest(createSignedDoc(selectedNodeRefs), certHex);
         } catch (DigiDocException e) {
@@ -122,6 +133,7 @@ public class SignatureServiceImpl implements SignatureService {
         }
     }
 
+    @Override
     public NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureDigest signatureDigest, String signatureHex) {
         try {
             SignedDoc signedDoc = createSignedDoc(contents);
@@ -130,20 +142,26 @@ public class SignatureServiceImpl implements SignatureService {
             writeSignedDoc(newNodeRef, signedDoc);
             return newNodeRef;
         } catch (DigiDocException e) {
-            throw new SignatureException("Failed to add signature and write ddoc to file " + filename + ", parent = " + parent + ", contents = " + contents, e);
+            throw new SignatureRuntimeException("Failed to add signature and write ddoc to file " + filename + ", parent = " + parent + ", contents = " + contents, e);
+        } catch (SignatureException e) {
+            throw new SignatureRuntimeException("Failed to add signature and write ddoc to file " + filename + ", parent = " + parent + ", contents = " + contents, e);
         }
     }
 
+    @Override
     public void addSignature(NodeRef nodeRef, SignatureDigest signatureDigest, String signatureHex) {
         try {
             SignedDoc signedDoc = getSignedDoc(nodeRef);
             addSignature(signedDoc, signatureDigest, signatureHex);
             writeSignedDoc(nodeRef, signedDoc);
         } catch (DigiDocException e) {
-            throw new SignatureException("Failed to add signature to ddoc file, nodeRef = " + nodeRef, e);
+            throw new SignatureRuntimeException("Failed to add signature to ddoc file, nodeRef = " + nodeRef, e);
+        } catch (SignatureException e) {
+            throw new SignatureRuntimeException("Failed to add signature to ddoc file, nodeRef = " + nodeRef, e);
         }
     }
 
+    @Override
     public void writeContainer(NodeRef nodeRef, List<NodeRef> contents, SignatureDigest signatureDigest, String signatureHex) {
         try {
             SignedDoc signedDoc = createSignedDoc(contents);
@@ -151,11 +169,13 @@ public class SignatureServiceImpl implements SignatureService {
             writeSignedDoc(nodeRef, signedDoc);
             nodeService.setProperty(nodeRef, ContentModel.PROP_NAME, FilenameUtils.removeExtension((String) nodeService.getProperty(nodeRef, ContentModel.PROP_NAME)) + ".ddoc");
         } catch (DigiDocException e) {
-            throw new SignatureException("Failed to change existing doc to ddoc or add signature to ddoc file, nodeRef = " + nodeRef, e);
+            throw new SignatureRuntimeException("Failed to change existing doc to ddoc or add signature to ddoc file, nodeRef = " + nodeRef, e);
+        } catch (SignatureException e) {
+            throw new SignatureRuntimeException("Failed to change existing doc to ddoc or add signature to ddoc file, nodeRef = " + nodeRef, e);
         }
     }
 
-    private void addSignature(SignedDoc signedDoc, SignatureDigest signatureDigest, String signatureHex) throws DigiDocException {
+    private void addSignature(SignedDoc signedDoc, SignatureDigest signatureDigest, String signatureHex) throws DigiDocException, SignatureException {
         byte[] signatureBytes = SignedDoc.hex2bin(signatureHex);
         Signature sig = prepareSignature(signedDoc, signatureDigest.getCertHex());
 
@@ -172,13 +192,11 @@ public class SignatureServiceImpl implements SignatureService {
     }
 
     private SignatureDigest getSignatureDigest(SignedDoc sd, String certHex) throws DigiDocException {
-        SignatureDigest signatureDigest = new SignatureDigest();
         Signature signature = prepareSignature(sd, certHex);
         byte[] digestBytes = signature.calculateSignedInfoDigest();
-        signatureDigest.setDigestHex(SignedDoc.bin2hex(digestBytes));
-        signatureDigest.setDate(signature.getSignedProperties().getSigningTime());
-        signatureDigest.setCertHex(certHex);
-        return signatureDigest;
+        String digestHex = SignedDoc.bin2hex(digestBytes);
+        Date date = signature.getSignedProperties().getSigningTime();
+        return new SignatureDigest(digestHex, certHex, date);
     }
 
     private Signature prepareSignature(SignedDoc signedDoc, String certHex) throws DigiDocException {
@@ -213,7 +231,7 @@ public class SignatureServiceImpl implements SignatureService {
         return items;
     }
 
-    private SignedDoc getSignedDoc(NodeRef nodeRef) {
+    private SignedDoc getSignedDoc(NodeRef nodeRef) throws SignatureException {
         if (!isDigiDocContainer(nodeRef)) {
             throw new SignatureException("NodeRef is not a digidoc: " + nodeRef);
         }

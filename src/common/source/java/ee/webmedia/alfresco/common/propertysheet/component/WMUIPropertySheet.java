@@ -74,7 +74,6 @@ public class WMUIPropertySheet extends UIPropertySheet {
 
     @Override
     protected Pair<PropertySheetItem, String> createPropertySheetItemAndId(ItemConfig item, FacesContext context) {
-        // FACES_SUB_PROP_SHEET = "org.alfresco.faces.PropertySheet";
 
         final Pair<PropertySheetItem, String> propSheetItemAndId;
         if (item instanceof ItemConfigVO) {

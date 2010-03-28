@@ -15,7 +15,7 @@ public class WorkflowNewEvaluator extends AbstractFullAccessEvaluator {
     
     @Override
     public boolean evaluate(Object obj) {
-        return WorkflowUtil.isStatus((CompoundWorkflow)obj, Status.NEW) && hasFullAccess();
+        return obj != null && WorkflowUtil.isStatus((CompoundWorkflow)obj, Status.NEW) && hasFullAccess();
     }
     
 }

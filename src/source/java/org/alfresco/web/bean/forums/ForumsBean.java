@@ -68,6 +68,7 @@ import org.alfresco.web.app.context.IContextListener;
 import org.alfresco.web.app.context.UIContextService;
 import org.alfresco.web.bean.BrowseBean;
 import org.alfresco.web.bean.NavigationBean;
+import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.NodePropertyResolver;
@@ -82,12 +83,16 @@ import org.alfresco.web.ui.common.renderer.data.IRichListRenderer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
+
 /**
  * Bean providing properties and behaviour for the forums screens.
  * 
  * @author gavinc
  */
-public class ForumsBean implements IContextListener
+public class ForumsBean extends BaseDialogBean implements IContextListener
 {
    private static final long serialVersionUID = 7066410060288061436L;
    
@@ -880,8 +885,12 @@ public class ForumsBean implements IContextListener
       {
          // show the forum for the discussion
          forumNodeRef = children.get(0).getChildRef();
-         this.browseBean.clickSpace(forumNodeRef);
-         context.getApplication().getNavigationHandler().handleNavigation(context, null, "showForum");
+         forumId = forumNodeRef.getId();
+         // set the current node Id ready for page refresh
+         this.navigator.setCurrentNodeId(forumId);
+
+         // set up the dispatch context for the navigation handler
+         this.navigator.setupDispatchContext(new Node(forumNodeRef));
       }
       else
       {
@@ -1350,4 +1359,53 @@ public class ForumsBean implements IContextListener
          }
       }
    }
+
+
+    ///////////////////////////////////////////////////
+    // Converting forums to dialogs
+    //////////////////////////////////////////////////
+   
+    public String forumId;
+    
+    @Override
+    protected String finishImpl(FacesContext context, String outcome) throws Throwable {
+        // nothing to do
+        return null;
+    }
+
+    @Override
+    public String cancel() {
+        if(getForumId() != null) {
+            navigator.setCurrentNodeId(forumId);
+        }
+        return "dialog:close";
+    }
+
+    public void setupTopicNavigatorCurrentNodeId(ActionEvent event) {
+        setForumId(navigator.getCurrentNodeId());
+        navigator.setCurrentNodeId(ActionUtil.getParam(event, "id"));
+    }
+
+    @Override
+    public String getContainerTitle() {
+        if(navigator.getCurrentNode().getType().equals(ForumModel.TYPE_FORUM)) {
+            NodeRef parentNodeRef = getNodeService().getPrimaryParent(navigator.getCurrentNode().getNodeRef()).getParentRef();
+            return MessageUtil.getMessage("discussion_for", getNodeService().getProperty(parentNodeRef, DocumentCommonModel.Props.DOC_NAME).toString());
+        }
+        return navigator.getNodeProperties().get("name").toString();
+    }
+
+    @Override
+    public Object getActionsContext() {
+        return navigator.getCurrentNode();
+    }
+    
+    public String getForumId() {
+        return forumId;
+    }
+
+    public void setForumId(String forumId) {
+        this.forumId = forumId;
+    }
+
 }

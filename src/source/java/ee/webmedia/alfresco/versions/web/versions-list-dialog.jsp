@@ -7,7 +7,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="versions-panel" styleClass="panel-100" label="#{msg.versions_list}" progressive="true">
+<a:panel id="versions-panel" styleClass="panel-100 with-pager" label="#{msg.versions_list}" progressive="true">
 
    <%-- Main List --%>
    <a:richList id="versionsList" viewMode="details" pageSize="#{BrowseBean.pageSizeSpaces}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"

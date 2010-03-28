@@ -58,7 +58,7 @@
          <show-property name="vol:status" display-label-id="series_status" read-only="true" classificatorName="docListUnitStatus" component-generator="ClassificatorSelectorGenerator" />
          <show-property name="vol:dispositionDate" display-label-id="volume_dispositionDate" readOnlyIf="vol:status=hävitatud"/>
          <show-property name="vol:archivingNote" display-label-id="volume_archive_note" readOnlyIf="vol:status=hävitatud"/>
-         <show-property name="vol:sendToDestruction" display-label-id="volume_sendToDestruction" />
+         <show-property name="vol:sendToDestruction" display-label-id="volume_sendToDestruction" component-generator="SendToDestructionGenerator"/>
       </property-sheet>
    </config>
 </alfresco-config>

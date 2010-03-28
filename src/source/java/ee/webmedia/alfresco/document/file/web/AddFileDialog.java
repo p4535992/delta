@@ -29,6 +29,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -47,6 +48,7 @@ public class AddFileDialog extends AddContentDialog {
     private transient ImapServiceExt imapServiceExt;
     private transient FileService fileService;
     private transient DocumentService documentService;
+    private transient DocumentLogService documentLogService;
 
     private boolean isFileSelected = false;
     private NodeRef selectedFileNodeRef;
@@ -77,8 +79,7 @@ public class AddFileDialog extends AddContentDialog {
             addVersionModifiedAspect(this.createdNode);
             NodeRef document = getNodeService().getPrimaryParent(this.createdNode).getParentRef();
             getDocumentService().updateSearchableFiles(document);
-            getDocumentService().getDocumentLogService().addDocumentLog(document,
-                    MessageUtil.getMessage(context, "document_log_status_fileAdded", new Object[] { getFileName() }));
+            getDocumentLogService().addDocumentLog(document, MessageUtil.getMessage(context, "document_log_status_fileAdded", getFileName()));
             return outcome;
         } catch (FileExistsException e) {
             isFinished = false;
@@ -199,6 +200,14 @@ public class AddFileDialog extends AddContentDialog {
                     .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
+    }
+
+    protected DocumentLogService getDocumentLogService() {
+        if (documentLogService == null) {
+            documentLogService = (DocumentLogService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(DocumentLogService.BEAN_NAME);
+        }
+        return documentLogService;
     }
 
     public List<SelectItem> getAttachments() {

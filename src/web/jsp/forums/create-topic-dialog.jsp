@@ -62,7 +62,7 @@ if (finishButtonPressed)
 {
 finishButtonPressed = false;
 return validateName(document.getElementById("dialog:dialog-body:name"),
-unescape('</f:verbatim><a:outputText value="#{msg.validation_invalid_character}" encodeForJavaScript="true" /><f:verbatim>'),
+unescape('</f:verbatim><h:outputText value="#{msg.validation_invalid_character}" /><f:verbatim>'),
 true);
 }
 else
@@ -76,18 +76,18 @@ return true;
 
 <a:panel id="topic-properties-panel" label="#{msg.properties}">
 
-   <h:panelGrid columns="2">
+   <h:panelGrid columns="2" styleClass="table-padding" columnClasses="propertiesLabel,">
    
       <h:panelGroup>
          <f:verbatim>
          <span class="red">* </span>
          </f:verbatim>
-         <h:outputText value="#{msg.subject}:" />
+         <h:outputText value="#{msg.subject}:&nbsp;&nbsp;&nbsp;" escape="false" />
       </h:panelGroup>
       <h:inputText id="name" value="#{DialogManager.bean.name}" size="35" maxlength="1024" onkeyup="javascript:checkButtonState();"
          onchange="javascript:checkButtonState();" />   
       
-      <h:outputText value="#{msg.icon}:" />
+      <h:outputText value="#{msg.icon}:&nbsp;&nbsp;&nbsp;" escape="false" />
       <a:imagePickerRadioPanel id="space-icon" columns="6" spacing="4" value="#{DialogManager.bean.icon}" panelBorder="greyround" panelBgcolor="#F5F5F5">
          <a:listItems value="#{DialogManager.bean.icons}" />
       </a:imagePickerRadioPanel>
@@ -99,8 +99,9 @@ return true;
 
 <a:panel id="topic-message-panel" label="#{msg.message}">
          <f:verbatim>
-            <span class="red">* </span>
+            <b><span class="red">* </span>
          </f:verbatim>
          <h:outputText value="#{msg.message}:" />
+         <f:verbatim></b></f:verbatim>
    <h:inputTextarea id="message" value="#{DialogManager.bean.message}" rows="6" cols="70" onkeyup="checkButtonState();" onchange="checkButtonState();" />
 </a:panel>

@@ -24,10 +24,9 @@
  */
 package org.alfresco.web.ui.common.component;
 
-import java.io.IOException;
-import java.util.Map;
+import org.alfresco.web.ui.common.PanelGenerator;
+import org.alfresco.web.ui.common.Utils;
 
-import javax.faces.component.NamingContainer;
 import javax.faces.component.UICommand;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
@@ -35,13 +34,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
-import javax.faces.event.AbortProcessingException;
-import javax.faces.event.ActionEvent;
-import javax.faces.event.FacesEvent;
-
-import org.alfresco.web.ui.common.PanelGenerator;
-import org.alfresco.web.ui.common.Utils;
-import org.apache.myfaces.el.MethodBindingImpl;
+import java.io.IOException;
 
 /**
  * @author kevinr
@@ -49,8 +42,8 @@ import org.apache.myfaces.el.MethodBindingImpl;
 public class UIPanel extends UICommand
 {
    // ------------------------------------------------------------------------------
-   // Component Impl 
-   
+   // Component Impl
+
    /**
     * Default constructor
     */
@@ -58,7 +51,7 @@ public class UIPanel extends UICommand
    {
       setRendererType(null);
    }
-   
+
    /**
     * @see javax.faces.component.UIComponent#getFamily()
     */
@@ -66,16 +59,16 @@ public class UIPanel extends UICommand
    {
       return "org.alfresco.faces.Controls";
    }
-   
+
    /**
     * Return the UI Component to be displayed on the right of the panel title area
-    * 
+    *
     * @return UIComponent
     */
    public UIComponent getTitleComponent()
    {
       UIComponent titleComponent = null;
-      
+
       // attempt to find a component with the specified ID
       String facetsId = getFacetsId();
       if (facetsId != null)
@@ -87,8 +80,10 @@ public class UIPanel extends UICommand
             // get the 'title' facet from the component
             titleComponent = facetsComponent.getFacet("title");
          }
+      } else {
+          titleComponent = getFacet("title");
       }
-      
+
       return titleComponent;
    }
 
@@ -101,19 +96,19 @@ public class UIPanel extends UICommand
       {
          return;
       }
-      
+
       ResponseWriter out = context.getResponseWriter();
-      
+
       // determine if we have a component on the header
       UIComponent titleComponent = getTitleComponent();
-      
+
       // determine the panel id
       String panelId = this.getId();
       if(panelId == null)
       {
           panelId = "";
       }
-      
+
       // determine whether we have any adornments
       String label = getLabel();
       if (label != null)
@@ -124,14 +119,14 @@ public class UIPanel extends UICommand
       {
          this.hasAdornments = true;
       }
-      
+
       // make sure we have a default background color for the content area
       String bgcolor = getBgcolor();
       if (bgcolor == null)
       {
          bgcolor = PanelGenerator.BGCOLOR_WHITE;
       }
-      
+
       // determine if we have a bordered title area, note, we also need to have
       // the content area border defined as well
       if (getTitleBgcolor() != null && getTitleBorder() != null &&
@@ -139,7 +134,7 @@ public class UIPanel extends UICommand
       {
          this.hasBorderedTitleArea = true;
       }
-      
+
       // output first part of border table
       if (this.hasBorderedTitleArea)
       {
@@ -185,20 +180,29 @@ public class UIPanel extends UICommand
       }
 
       // Start outputting label.
-      if (label != null) 
+      if (label != null)
       {
          out.write("<h3>");
       }
-      
+
+
+       // Id of the div, that is expanded/closed.
+       String hideableDivId = panelId + "-panel-border";
       // output progressive disclosure icon in appropriate state
       // TODO: manage state of this icon via component Id!
-      if (isProgressive() == true)
+      if (isProgressive())
       {
-         out.write("<a href='#' onclick=\"");
-         String value = getClientId(context) + NamingContainer.SEPARATOR_CHAR + Boolean.toString(!isExpanded());
-         out.write(Utils.generateFormSubmit(context, this, getHiddenFieldName(context), value));
-         out.write("\">");
-         
+          // if panel is closed, write script that will close the panel in browser
+          if (!expanded) {
+              out.write("<script type=\"text/javascript\">");
+              out.write("\n$jQ(document).ready(function() {");
+              out.write("togglePanel('#" + hideableDivId + "');");
+              out.write("});");
+              out.write("</script>");
+         }
+          
+         out.write("<a onclick=\"togglePanelWithStateUpdate('#" + hideableDivId + "', '" + panelId + "', '" + context.getViewRoot().getViewId() + "');\">");
+
          /*
          if (isExpanded() == true)
          {
@@ -210,27 +214,27 @@ public class UIPanel extends UICommand
          }
          */
       }
-      
+
       // output textual label
       if (label != null)
       {
          out.write(label);    // already encoded above
       }
-      
+
       if (isProgressive() == true) {
          out.write("</a>&nbsp;&nbsp;");
       }
-      
-      if(label != null) 
+
+      if(label != null)
       {
          out.write("</h3>");
       }
-      
+
       if (this.hasAdornments)
       {
          //We don't need to add any closing elements
       }
-      
+
       // render the title component if supplied
       if (titleComponent != null)
       {
@@ -238,14 +242,14 @@ public class UIPanel extends UICommand
          Utils.encodeRecursive(context, titleComponent);
          out.write("</span>");
       }
-      
-      if (this.hasAdornments && this.isExpanded())
+
+      if (this.hasAdornments)
       {
-          out.write("<div class='panel-border'>");
+          out.write(String.format("<div id='%s' class='panel-border'>", hideableDivId));
       }
-      
+
       // if we have the titled border area, output the middle section
-      if (this.hasBorderedTitleArea && isExpanded())
+      if (this.hasBorderedTitleArea)
       {
          if (getExpandedTitleBorder() != null)
          {
@@ -278,30 +282,20 @@ public class UIPanel extends UICommand
       {
          return;
       }
-      
+
       ResponseWriter out = context.getResponseWriter();
-      
+
       // output final part of border table
-      
-      if (this.hasAdornments) 
+
+      if (this.hasAdornments)
       {
          // table-border
-         if(this.isExpanded())
-         {
-            out.write("</div>");
-         }
+         out.write("</div>");
          //table-wrapper
          out.write("</div>");
       }
-      
-      if (this.hasBorderedTitleArea && isExpanded() == false)
-      {
-         PanelGenerator.generatePanelEnd(
-               out,
-               context.getExternalContext().getRequestContextPath(),
-               getTitleBorder());
-      }
-      else if (getBorder() != null)
+
+      if (getBorder() != null)
       {
          PanelGenerator.generatePanelEnd(
                out,
@@ -316,60 +310,13 @@ public class UIPanel extends UICommand
                "");
       }
    }
-   
+
    /**
     * @see javax.faces.component.UIComponentBase#decode(javax.faces.context.FacesContext)
     */
    public void decode(FacesContext context)
    {
-      Map requestMap = context.getExternalContext().getRequestParameterMap();
-      String fieldId = getHiddenFieldName(context);
-      String value = (String)requestMap.get(fieldId);
-      
-      // we encoded the value to start with our Id
-      if (value != null && value.startsWith(getClientId(context)))
-      {
-         // we were clicked, strip out the value
-         value = value.substring(getClientId(context).length() + 1);
-         
-         // the expand/collapse icon was clicked, so toggle the state
-         ExpandedEvent event = new ExpandedEvent(this, Boolean.parseBoolean(value));
-         queueEvent(event);
-         
-         //
-         // TODO: See http://forums.java.sun.com/thread.jspa?threadID=524925&start=15&tstart=0
-         //       Bug/known issue in JSF 1.1 RI
-         //       This causes a problem where the View attempts to assign duplicate Ids
-         //       to components when createUniqueId() on UIViewRoot is called before the
-         //       render phase. This occurs in the Panel tag as it must call getComponent()
-         //       early to decide whether to allow the tag to render contents or not.
-         //
-         // context.getViewRoot().setTransient(true);
-         //
-         //       The other solution is to explicity give ALL child components of the
-         //       panel a unique Id rather than a generated one! 
-      }
-   }
-   
-   /**
-    * @see javax.faces.component.UICommand#broadcast(javax.faces.event.FacesEvent)
-    */
-   public void broadcast(FacesEvent event) throws AbortProcessingException
-   {
-      if (event instanceof ExpandedEvent)
-      {
-         // expanded event - we handle this
-         setExpanded( ((ExpandedEvent)event).State );
-         
-         if (getExpandedActionListener() != null)
-         {
-            Utils.processActionMethod(getFacesContext(), getExpandedActionListener(), (ExpandedEvent)event);
-         }
-      }
-      else
-      {
-         super.broadcast(event);
-      }
+     // Decode nothing, state of the panel is handled using AJAX calls, see PanelStateBean.
    }
 
    /**
@@ -391,7 +338,7 @@ public class UIPanel extends UICommand
       this.expandedActionListener = (MethodBinding)restoreAttachedState(context, values[9]);
       this.facetsId = (String)values[10];
    }
-   
+
    /**
     * @see javax.faces.component.StateHolder#saveState(javax.faces.context.FacesContext)
     */
@@ -399,7 +346,7 @@ public class UIPanel extends UICommand
    {
       Object values[] = new Object[] {
          super.saveState(context),
-         (isExpanded() ? Boolean.TRUE : Boolean.FALSE),
+         this.expanded,
          this.progressive,
          this.border,
          this.bgcolor,
@@ -411,27 +358,27 @@ public class UIPanel extends UICommand
          this.facetsId};
       return values;
    }
-   
-   
+
+
    // ------------------------------------------------------------------------------
-   // Strongly typed component property accessors 
-   
-   /** 
+   // Strongly typed component property accessors
+
+   /**
     * @param binding    The MethodBinding to call when expand/collapse is performed by the user.
     */
    public void setExpandedActionListener(MethodBinding binding)
    {
       this.expandedActionListener = binding;
    }
-   
-   /** 
+
+   /**
     * @return The MethodBinding to call when expand/collapse is performed by the user.
     */
    public MethodBinding getExpandedActionListener()
    {
       return this.expandedActionListener;
    }
-   
+
    /**
     * @return Returns the bgcolor.
     */
@@ -442,10 +389,10 @@ public class UIPanel extends UICommand
       {
          this.bgcolor = (String)vb.getValue(getFacesContext());
       }
-      
+
       return this.bgcolor;
    }
-   
+
    /**
     * @param bgcolor    The bgcolor to set.
     */
@@ -464,7 +411,7 @@ public class UIPanel extends UICommand
       {
          this.border = (String)vb.getValue(getFacesContext());
       }
-      
+
       return this.border;
    }
 
@@ -475,7 +422,7 @@ public class UIPanel extends UICommand
    {
       this.border = border;
    }
-   
+
    /**
     * @return Returns the bgcolor of the title area
     */
@@ -486,7 +433,7 @@ public class UIPanel extends UICommand
       {
          this.titleBgcolor = (String)vb.getValue(getFacesContext());
       }
-      
+
       return this.titleBgcolor;
    }
 
@@ -508,7 +455,7 @@ public class UIPanel extends UICommand
       {
          this.titleBorder = (String)vb.getValue(getFacesContext());
       }
-      
+
       return this.titleBorder;
    }
 
@@ -519,7 +466,7 @@ public class UIPanel extends UICommand
    {
       this.titleBorder = titleBorder;
    }
-   
+
    /**
     * @return Returns the border style of the expanded title area
     */
@@ -530,7 +477,7 @@ public class UIPanel extends UICommand
       {
          this.expandedTitleBorder = (String)vb.getValue(getFacesContext());
       }
-      
+
       return this.expandedTitleBorder;
    }
 
@@ -552,7 +499,7 @@ public class UIPanel extends UICommand
       {
          this.label = (String)vb.getValue(getFacesContext());
       }
-      
+
       return this.label;
    }
 
@@ -574,7 +521,7 @@ public class UIPanel extends UICommand
       {
          this.progressive = (Boolean)vb.getValue(getFacesContext());
       }
-      
+
       if (this.progressive != null)
       {
          return this.progressive.booleanValue();
@@ -585,7 +532,7 @@ public class UIPanel extends UICommand
          return false;
       }
    }
-   
+
    /**
     * @param progressive   The progressive display boolean to set.
     */
@@ -593,29 +540,16 @@ public class UIPanel extends UICommand
    {
       this.progressive = Boolean.valueOf(progressive);
    }
-   
+
    /**
     * Returns whether the component show allow rendering of its child components.
     */
    public boolean isExpanded()
    {
-      ValueBinding vb = getValueBinding("expanded");
-      if (vb != null)
-      {
-         this.expanded = (Boolean)vb.getValue(getFacesContext());
-      }
-      
-      if (this.expanded != null)
-      {
-         return this.expanded.booleanValue();
-      }
-      else
-      {
-         // return default
-         return true;
-      }
+      // Child components are always rendered, their expansion are handled in browser using javascript. 
+      return true;
    }
-   
+
    /**
     * Sets whether the component show allow rendering of its child components.
     * For this component we change this value if the user indicates to change the
@@ -625,7 +559,7 @@ public class UIPanel extends UICommand
    {
       this.expanded = Boolean.valueOf(expanded);
    }
-   
+
    /**
     * Get the facets component Id to use
     *
@@ -638,7 +572,7 @@ public class UIPanel extends UICommand
       {
          this.facetsId = (String)vb.getValue(getFacesContext());
       }
-      
+
       return this.facetsId;
    }
 
@@ -651,28 +585,11 @@ public class UIPanel extends UICommand
    {
       this.facetsId = facets;
    }
-   
-   
+
+
    // ------------------------------------------------------------------------------
-   // Private helpers
-   
-   /**
-    * We use a hidden field name based on the parent form component Id and
-    * the string "panel" to give a hidden field name that can be shared by all panels
-    * within a single UIForm component.
-    * 
-    * @return hidden field name
-    */
-   private String getHiddenFieldName(FacesContext fc)
-   {
-      UIForm form = Utils.getParentForm(fc, this);
-      return form.getClientId(fc) + NamingContainer.SEPARATOR_CHAR + "panel";
-   }
-   
-   
-   // ------------------------------------------------------------------------------
-   // Private members 
-   
+   // Private members
+
    // component settings
    private String border = null;
    private String bgcolor = null;
@@ -683,27 +600,9 @@ public class UIPanel extends UICommand
    private String label = null;
    private String facetsId = null;
    private MethodBinding expandedActionListener = null;
-   
+
    // component state
    private boolean hasAdornments = false;
    private boolean hasBorderedTitleArea = false;
    private Boolean expanded = Boolean.TRUE;
-   
-   
-   // ------------------------------------------------------------------------------
-   // Inner classes
-   
-   /**
-    * Class representing the an action relevant when the panel is expanded or collapsed.
-    */
-   public static class ExpandedEvent extends ActionEvent
-   {
-      public ExpandedEvent(UIComponent component, boolean state)
-      {
-         super(component);
-         State = state;
-      }
-      
-      public boolean State;
-   }
 }

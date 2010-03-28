@@ -29,12 +29,12 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
 
     @Override
     public Yksus[] getYksusByAsutusId(BigInteger asutusId) {
+        long startTime = System.currentTimeMillis();
         YksusByAsutusIdRequest request = YksusByAsutusIdRequestDocument.Factory.newInstance().addNewYksusByAsutusIdRequest();
         request.setAsutusId(asutusId);
-
         YksusByAsutusIdResponseDocument response = (YksusByAsutusIdResponseDocument) marshalSendAndReceive(request);
-        if(log.isDebugEnabled()) {
-            log.debug("getYksusByAsutusId:\n" + response);
+        if (log.isDebugEnabled()) {
+            log.debug("getYksusByAsutusId asutusId '" + asutusId + "', time " + (System.currentTimeMillis() - startTime) + " ms, responseDoc:\n" + response);
         }
         YksusByAsutusIdResponse yksusByAsutusIdResponse = response.getYksusByAsutusIdResponse();
         return yksusByAsutusIdResponse.getYksusArray();
@@ -42,12 +42,14 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
 
     @Override
     public Ametnik[] getAmetnikByAsutusId(BigInteger asutusId) {
+        long startTime = System.currentTimeMillis();
         AmetnikByAsutusIdRequest request = AmetnikByAsutusIdRequestDocument.Factory.newInstance().addNewAmetnikByAsutusIdRequest();
         request.setAsutusId(asutusId);
         request.setYksusetaAmetnikudOnly(false);
         AmetnikByAsutusIdResponseDocument responseDoc = (AmetnikByAsutusIdResponseDocument) marshalSendAndReceive(request);
-        if(log.isDebugEnabled()) {
-            log.debug("getAmetnikByAsutusId responseDoc:\n" + responseDoc);
+        if (log.isDebugEnabled()) {
+            log.debug("getAmetnikByAsutusId asutusId '" + asutusId + "', time " + (System.currentTimeMillis() - startTime) + " ms, responseDoc:\n"
+                    + responseDoc);
         }
         AmetnikByAsutusIdResponse response = responseDoc.getAmetnikByAsutusIdResponse();
         return response.getAmetnikArray();
@@ -55,11 +57,13 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
 
     @Override
     public Ametnik getAmetnikByIsikukood(String socialSecurityNr) {
+        long startTime = System.currentTimeMillis();
         AmetnikByIsikukoodRequest request = AmetnikByIsikukoodRequestDocument.Factory.newInstance().addNewAmetnikByIsikukoodRequest();
         request.setIsikukood(socialSecurityNr);
         AmetnikByIsikukoodResponseDocument responseDoc = (AmetnikByIsikukoodResponseDocument) marshalSendAndReceive(request);
-        if(log.isDebugEnabled()) {
-            log.debug("getAmetnikByIsikukood responseDoc:\n" + responseDoc);
+        if (log.isDebugEnabled()) {
+            log.debug("getAmetnikByIsikukood socialSecurityNr '" + socialSecurityNr + "', time " + (System.currentTimeMillis() - startTime)
+                    + " ms, responseDoc:\n" + responseDoc);
         }
         AmetnikByIsikukoodResponse response = responseDoc.getAmetnikByIsikukoodResponse();
         return response.getAmetnik();

@@ -62,30 +62,34 @@
       <wm:multiValueEditor 
          varName="DocumentSendOutDialog.model" 
          propsGeneration="
-          recipientName
-         ,recipientEmail
+          recipientName¤TextAreaGenerator¤styleClass=expand5-200 medium
+         ,recipientEmail¤TextAreaGenerator¤styleClass=expand5-200 medium
          ,recipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode
          "
          titles="document_name,document_email,document_send_mode" 
-         pickerCallback="#{AddressbookDialog.searchContacts}" 
-         setterCallback="#{DocumentSendOutDialog.fetchContactData}" 
-         dialogTitleId="contacts_search_title" 
+         pickerCallback="#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}"
+         preprocessCallback="#{DocumentSendOutDialog.preprocessSearchResult}"
+         setterCallback="#{DocumentSendOutDialog.fetchContactData}"
+         dialogTitleId="contacts_search_title"
+         filters="#{DocumentSendOutDialog.recipientSearchFilters}"
           />
 
       <h:panelGroup>
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_additional_recipients}" /><f:verbatim></span></f:verbatim>
       </h:panelGroup>
-      <wm:multiValueEditor 
+      <wm:multiValueEditor
          varName="DocumentSendOutDialog.model"
          propsGeneration="
-          additionalRecipientName
-         ,additionalRecipientEmail
+          additionalRecipientName¤TextAreaGenerator¤styleClass=expand5-200 medium
+         ,additionalRecipientEmail¤TextAreaGenerator¤styleClass=expand5-200 medium
          ,additionalRecipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode
          "
          titles="document_name,document_email,document_send_mode" 
-         pickerCallback="#{AddressbookDialog.searchContacts}" 
-         setterCallback="#{DocumentSendOutDialog.fetchContactData}" 
+         pickerCallback="#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}"
+         preprocessCallback="#{DocumentSendOutDialog.preprocessSearchResult}"
+         setterCallback="#{DocumentSendOutDialog.fetchContactData}"
          dialogTitleId="contacts_search_title"
+         filters="#{DocumentSendOutDialog.recipientSearchFilters}"
          />
 
       <h:panelGroup>
@@ -107,12 +111,12 @@
          <f:verbatim><span class="red">*&nbsp;</span></f:verbatim>
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_senderEmail}" /><f:verbatim></span></f:verbatim>
       </h:panelGroup>
-      <h:inputText value="#{DocumentSendOutDialog.model.senderEmail}" maxlength="1024" />
+      <h:inputTextarea value="#{DocumentSendOutDialog.model.senderEmail}" styleClass="expand5-200 long"/>
       
       <h:panelGroup>
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_send_subject}" /><f:verbatim></span></f:verbatim>
       </h:panelGroup>
-      <h:inputText value="#{DocumentSendOutDialog.model.subject}" maxlength="1024" />
+      <h:inputTextarea value="#{DocumentSendOutDialog.model.subject}" styleClass="expand5-200 long"/>
       
       <h:panelGroup>
          <f:verbatim><span class="red">*&nbsp;</span></f:verbatim>

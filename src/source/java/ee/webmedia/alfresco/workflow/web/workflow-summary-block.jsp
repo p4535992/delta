@@ -16,8 +16,12 @@
          <f:facet name="header">
             <h:outputText value="#{msg.workflow_workflow}" />
          </f:facet>
-         <a:actionLink value="#{msg.workflow_hide_task_list}" showLink="false" actionListener="#{r.toggleTaskViewVisible}" styleClass="margin-right-4" image="/images/icons/arrow_up.gif" rendered="#{r.taskViewVisible}" />
-         <a:actionLink value="#{msg.workflow_show_task_list}" showLink="false" actionListener="#{r.toggleTaskViewVisible}" styleClass="margin-right-4" image="/images/icons/arrow_down.gif" rendered="#{not r.taskViewVisible}" />
+         <a:actionLink value="#{msg.workflow_hide_task_list}" showLink="false" actionListener="#{WorkflowBlockBean.toggleTaskViewVisible}" styleClass="toggle-task-view" image="/images/icons/arrow_up.gif" rendered="#{r.taskViewVisible}">
+            <f:param name="workflowNodeRef" value="#{r.workflowRef}" />
+         </a:actionLink>
+         <a:actionLink value="#{msg.workflow_show_task_list}" showLink="false" actionListener="#{WorkflowBlockBean.toggleTaskViewVisible}" styleClass="toggle-task-view" image="/images/icons/arrow_down.gif" rendered="#{not r.taskViewVisible}">
+            <f:param name="workflowNodeRef" value="#{r.workflowRef}" />
+         </a:actionLink>
          <h:outputText id="col1-txt" value="#{r.name}" rendered="#{not r.raisedRights}" />
          <a:actionLink value="#{r.name}" action="dialog:compoundWorkflowDialog" actionListener="#{CompoundWorkflowDialog.setupWorkflow}" rendered="#{r.raisedRights}">
             <f:param value="#{r.compoundWorkflowRef}" name="nodeRef" />
@@ -120,7 +124,7 @@
                <f:facet name="header">
                   <h:outputText id="col6-task-header" value="#{msg.task_property_comment_assignmentTask}" />
                </f:facet>
-               <h:outputText value="#{t.outcome}" />
+               <h:outputText value="#{t.outcomeAndComments}" />
             </h:column>
             
             <h:column id="col7-task">
@@ -234,8 +238,8 @@
          </h:dataTable>
          
          
-         <h:dataTable id="assignmentTaskList" value="#{r.assignmentTasks}" var="t" width="100%" rowClasses="recordSetRow,recordSetRowAlt"
-            columnClasses="width10,width10,width10,width30,width10,width10,width10,width10">>
+         <h:dataTable id="assignmentTaskList" value="#{r.assignmentTasks}" rendered="#{not empty r.assignmentTasks}" var="t" width="100%" rowClasses="recordSetRow,recordSetRowAlt"
+            columnClasses="width10,width10,width10,width30,width10,width10,width10,width10" styleClass="margin-top-10">
             
             <h:column id="col1-task">
                <f:facet name="header">

@@ -7,6 +7,7 @@
    <!-- @Override different implementations in concrete projects (i.e TK) -->
    <bean id="dvkService" class="ee.webmedia.alfresco.dvk.service.DvkServiceSimImpl" parent="dvkServiceBase">
       <property name="documentService" ref="DocumentService" />
+      <property name="documentLogService" ref="DocumentLogService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
 

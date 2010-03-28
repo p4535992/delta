@@ -5,6 +5,7 @@ import java.util.List;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.springframework.web.jsf.FacesContextUtils;
@@ -30,12 +31,8 @@ public class BrowseMenuItem extends MenuItem {
     @XStreamAlias("show-children-count")
     private boolean showChildrenCount = true;
 
-    public BrowseMenuItem(String title, String outcome) {
-        super(title, outcome);
-    }
-
-    public BrowseMenuItem(String title, String outcome, List<MenuItem> children) {
-        super(title, outcome, children);
+    public BrowseMenuItem() {
+        super();
     }
     
     @Override
@@ -56,6 +53,10 @@ public class BrowseMenuItem extends MenuItem {
             ytItem.setChildrenCount(getNodeChildrenCount(context, nodeRef));
         } else {
             ytItem.setShowChildrenCount(false);
+        }
+        
+        if(getTitle() == null) {
+            setTitle(I18NUtil.getMessage(getTitleId()));
         }
         ytItem.setTitle(getTitle());
 

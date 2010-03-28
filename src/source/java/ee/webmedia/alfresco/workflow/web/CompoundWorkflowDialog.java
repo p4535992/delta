@@ -5,13 +5,16 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -36,6 +39,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     
     private transient UserService userService;
     private transient DocumentService documentService;
+    private transient DocumentLogService documentLogService;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -43,7 +47,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             try {
                 removeEmptyResponsibleTasks();
                 getWorkflowService().saveCompoundWorkflow(workflow);
-                getDocumentService().getDocumentLogService().addDocumentLog(workflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
+                if (isUnsavedWorkFlow) {
+                    getDocumentLogService().addDocumentLog(workflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
+                    isUnsavedWorkFlow = false;
+                }
                 
                 resetState();
                 return outcome;
@@ -85,10 +92,16 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         resetState();
         NodeRef compoundWorkflowDefinition = new NodeRef(ActionUtil.getParam(event, "compoundWorkflowDefinitionNodeRef"));
         NodeRef document = new NodeRef(ActionUtil.getParam(event, "documentNodeRef"));
-        workflow = getWorkflowService().getNewCompoundWorkflow(compoundWorkflowDefinition, document);
-        updateFullAccess();
+        try {
+            workflow = getWorkflowService().getNewCompoundWorkflow(compoundWorkflowDefinition, document);
+            updateFullAccess();
+            isUnsavedWorkFlow = true;
+        }
+        catch (InvalidNodeRefException e) {
+            log.warn("Failed to create a new compound workflow instance because someone has probably deleted the compound workflow definition.");
+        }
     }
-    
+
     /**
      * Action listener for JSP.
      */
@@ -98,6 +111,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             try {
                 removeEmptyResponsibleTasks();
                 workflow = getWorkflowService().saveAndStartCompoundWorkflow(workflow);
+                if (isUnsavedWorkFlow) {
+                    getDocumentLogService().addDocumentLog(workflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
+                    isUnsavedWorkFlow = false;
+                }
             }
             catch (Exception e) {
                 handleException(e, "workflow_compound_start_workflow_failed");
@@ -253,6 +270,14 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         return documentService;
     }
 
+    protected DocumentLogService getDocumentLogService() {
+        if (documentLogService == null) {
+            documentLogService = (DocumentLogService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(DocumentLogService.BEAN_NAME);
+        }
+        return documentLogService;
+    }
+
     @Override
     protected void updateFullAccess() {
         fullAccess = false;
@@ -299,6 +324,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         else if (e instanceof WorkflowActiveResponsibleTaskException) {
             log.debug("Compound workflow action failed: more than one active responsible task!", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_compound_save_failed_responsible");
+        }
+        else if(e instanceof EmailAttachmentSizeLimitException) {
+            log.debug("Compound workflow action failed: email attachment exceeded size limit set in parameter!", e);
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "notification_zip_size_too_large");
         }
         else {
             log.error("Compound workflow action failed!", e);

@@ -10,13 +10,13 @@
 
 <a:panel id="document-panel" styleClass="panel-100" label="#{DialogManager.bean.listTitle}" progressive="true">
    
-   <a:panel id="document-panel-search-results" styleClass="overflow-wrapper">   
+   <a:panel id="document-panel-search-results" styleClass="overflow-wrapper with-pager">   
    <%-- Main List --%>
    <a:richList id="documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       value="#{DialogManager.bean.documents}" var="r">
       
       <%-- Registration date --%>
-      <a:column id="col1" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col1" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.document_regDateTime}" value="regDateTime" styleClass="header" />
          </f:facet>
@@ -26,7 +26,7 @@
       </a:column>
 
       <%-- Registration number --%>
-      <a:column id="col2" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col2" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.document_regNumber}" value="regNumber" styleClass="header" />
          </f:facet>
@@ -34,7 +34,7 @@
       </a:column>
 
       <%-- Document type --%>
-      <a:column id="col3" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col3" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col3-sort" label="#{msg.document_docType}" value="documentTypeName" styleClass="header" />
          </f:facet>
@@ -42,7 +42,7 @@
       </a:column>
 
       <%-- Document status --%>
-      <a:column id="col4" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col4" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_docStatus}" value="docStatus" styleClass="header" />
          </f:facet>
@@ -50,7 +50,7 @@
       </a:column>
 
       <%-- All Recipients --%>
-      <a:column id="col5" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col5" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.document_allRecipients}" value="allRecipients" styleClass="header" />
          </f:facet>
@@ -58,7 +58,7 @@
       </a:column>
 
       <%-- Title --%>
-      <a:column id="col6" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col6" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
@@ -69,7 +69,7 @@
       </a:column>
 
       <%-- Sender registration date --%>
-      <a:column id="col7" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col7" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col7-sort" label="#{msg.document_senderRegDate}" value="senderRegDate" styleClass="header" />
          </f:facet>
@@ -79,7 +79,7 @@
       </a:column>
 
       <%-- Sender registration number --%>
-      <a:column id="col8" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col8" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col8-sort" label="#{msg.document_senderRegNumber}" value="senderRegNumber" styleClass="header" />
          </f:facet>
@@ -87,7 +87,7 @@
       </a:column>
 
       <%-- Due date 2 --%>
-      <a:column id="col9" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col9" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col9-sort" label="#{msg.document_dueDate2}" value="dueDate2" styleClass="header" />
          </f:facet>
@@ -97,7 +97,7 @@
       </a:column>
 
       <%-- Complience Date --%>
-      <a:column id="col10" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col10" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col10-sort" label="#{msg.document_complienceDate3}" value="complienceDate" styleClass="header" />
          </f:facet>
@@ -107,7 +107,7 @@
       </a:column>
 
       <%-- Access restriction --%>
-      <a:column id="col11" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col11" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col11-sort" label="#{msg.document_accessRestriction}" value="accessRestriction" styleClass="header" />
          </f:facet>
@@ -115,7 +115,7 @@
       </a:column>
 
       <%-- Access restriction reason --%>
-      <a:column id="col12" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col12" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col12-sort" label="#{msg.document_accessRestrictionReason}" value="accessRestrictionReason" styleClass="header" />
          </f:facet>
@@ -123,7 +123,7 @@
       </a:column>
 
       <%-- Access restriction begin date --%>
-      <a:column id="col13" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col13" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col13-sort" label="#{msg.document_accessRestrictionBeginDate}" value="accessRestrictionBeginDate" styleClass="header" />
          </f:facet>
@@ -133,7 +133,7 @@
       </a:column>
 
       <%-- Access restriction end date --%>
-      <a:column id="col14" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col14" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col14-sort" label="#{msg.document_accessRestrictionEndDate}" value="accessRestrictionEndDate" styleClass="header" />
          </f:facet>
@@ -143,7 +143,7 @@
       </a:column>
 
       <%-- Access restriction end description --%>
-      <a:column id="col15" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col15" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col15-sort" label="#{msg.document_accessRestrictionEndDesc}" value="accessRestrictionEndDesc" styleClass="header" />
          </f:facet>
@@ -151,7 +151,7 @@
       </a:column>
 
       <%-- Owner name --%>
-      <a:column id="col16" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col16" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col16-sort" label="#{msg.document_owner2}" value="" styleClass="header" />
          </f:facet>
@@ -159,7 +159,7 @@
       </a:column>
 
       <%-- OwnerOrgStructUnit --%>
-      <a:column id="col17" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col17" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col17-sort" label="#{msg.document_ownerOrgStructUnit}" value="ownerOrgStructUnit" styleClass="header" />
          </f:facet>
@@ -167,7 +167,7 @@
       </a:column>
 
       <%-- OwnerJobTitle --%>
-      <a:column id="col18" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col18" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col18-sort" label="#{msg.document_ownerJobTitle}" value="ownerJobTitle" styleClass="header" />
          </f:facet>
@@ -175,7 +175,7 @@
       </a:column>
 
       <%-- SignerName --%>
-      <a:column id="col19" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col19" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col19-sort" label="#{msg.document_signer}" value="signerName" styleClass="header" />
          </f:facet>
@@ -183,7 +183,7 @@
       </a:column>
 
       <%-- SignerJobTitle --%>
-      <a:column id="col20" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col20" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col20-sort" label="#{msg.document_signerJobTitle}" value="signerJobTitle" styleClass="header" />
          </f:facet>
@@ -191,7 +191,7 @@
       </a:column>
 
       <%-- Keywords --%>
-      <a:column id="col21" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col21" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col21-sort" label="#{msg.document_keywords}" value="keywords" styleClass="header" />
          </f:facet>
@@ -199,7 +199,7 @@
       </a:column>
 
       <%-- StorageType --%>
-      <a:column id="col22" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col22" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col22-sort" label="#{msg.document_storageType}" value="storageType" styleClass="header" />
          </f:facet>
@@ -207,7 +207,7 @@
       </a:column>
 
       <%-- SendMode --%>
-      <a:column id="col23" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col23" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col23-sort" label="#{msg.document_send_mode}" value="sendMode" styleClass="header" />
          </f:facet>
@@ -215,7 +215,7 @@
       </a:column>
 
       <%-- CostManager --%>
-      <a:column id="col24" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col24" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col24-sort" label="#{msg.document_costManager}" value="costManager" styleClass="header" />
          </f:facet>
@@ -223,7 +223,7 @@
       </a:column>
 
       <%-- ApplicantName --%>
-      <a:column id="col25" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col25" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col25-sort" label="#{msg.document_errand_applicant}" value="applicantName" styleClass="header" />
          </f:facet>
@@ -231,7 +231,7 @@
       </a:column>
 
       <%-- ErrandBeginDate --%>
-      <a:column id="col26" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col26" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col26-sort" label="#{msg.document_errand_beginDate}" value="errandBeginDate" styleClass="header" />
          </f:facet>
@@ -239,7 +239,7 @@
       </a:column>
 
       <%-- ErrandEndDate --%>
-      <a:column id="col27" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col27" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col27-sort" label="#{msg.document_errand_endDate}" value="errandEndDate" styleClass="header" />
          </f:facet>
@@ -247,7 +247,7 @@
       </a:column>
 
       <%-- ErrandCountry --%>
-      <a:column id="col28" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col28" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col28-sort" label="#{msg.document_errand_country}" value="errandCountry" styleClass="header" />
          </f:facet>
@@ -255,7 +255,7 @@
       </a:column>
 
       <%-- ErrandCounty --%>
-      <a:column id="col29" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col29" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col29-sort" label="#{msg.document_errand_county}" value="errandCounty" styleClass="header" />
          </f:facet>
@@ -263,7 +263,7 @@
       </a:column>
 
       <%-- ErrandCity --%>
-      <a:column id="col30" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col30" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col30-sort" label="#{msg.document_errand_city}" value="errandCity" styleClass="header" />
          </f:facet>
@@ -271,7 +271,7 @@
       </a:column>
 
       <%-- ResponsibleName --%>
-      <a:column id="col31" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col31" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col31-sort" label="#{msg.document_responsibleName}" value="responsibleName" styleClass="header" />
          </f:facet>
@@ -279,7 +279,7 @@
       </a:column>
 
       <%-- CoResponsibles --%>
-      <a:column id="col32" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col32" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col32-sort" label="#{msg.document_coResponsibles}" value="coResponsibles" styleClass="header" />
          </f:facet>
@@ -287,7 +287,7 @@
       </a:column>
 
       <%-- ContactPerson --%>
-      <a:column id="col33" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col33" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col33-sort" label="#{msg.document_contactPerson}" value="contactPerson" styleClass="header" />
          </f:facet>
@@ -295,7 +295,7 @@
       </a:column>
 
       <%-- ProcurementType --%>
-      <a:column id="col34" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col34" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col34-sort" label="#{msg.document_procurementType}" value="procurementType" styleClass="header" />
          </f:facet>

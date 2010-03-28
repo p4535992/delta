@@ -45,7 +45,8 @@ public class PropertySheetItemRenderer extends BaseRenderer
    /**
     * @see javax.faces.render.Renderer#encodeBegin(javax.faces.context.FacesContext, javax.faces.component.UIComponent)
     */
-   public void encodeBegin(FacesContext context, UIComponent component) throws IOException
+   @Override
+public void encodeBegin(FacesContext context, UIComponent component) throws IOException
    {
       if (component.isRendered() == false)
       {
@@ -60,7 +61,8 @@ public class PropertySheetItemRenderer extends BaseRenderer
    /**
     * @see javax.faces.render.Renderer#encodeChildren(javax.faces.context.FacesContext, javax.faces.component.UIComponent)
     */
-   @SuppressWarnings("unchecked")
+   @Override
+@SuppressWarnings("unchecked")
    public void encodeChildren(FacesContext context, UIComponent component) throws IOException
    {
       if (component.isRendered() == false)
@@ -92,10 +94,14 @@ public class PropertySheetItemRenderer extends BaseRenderer
          // NOTE: Replacement for the mandatory marker 
          if(count == 3)
          {
-             out.write("<span class=\"red\">*&nbsp;</span>");
+             out.write("<span class=\"no-wrap\"><span class=\"red\">*&nbsp;</span>");
          }
          // encode the label
          Utils.encodeRecursive(context, label);
+         if(count == 3)
+         {
+             out.write("</span>");
+         }
          // encode the control
          out.write("</td><td>");
          Utils.encodeRecursive(context, control);
@@ -109,7 +115,8 @@ public class PropertySheetItemRenderer extends BaseRenderer
    /**
     * @see javax.faces.render.Renderer#encodeEnd(javax.faces.context.FacesContext, javax.faces.component.UIComponent)
     */
-   public void encodeEnd(FacesContext context, UIComponent component) throws IOException
+   @Override
+public void encodeEnd(FacesContext context, UIComponent component) throws IOException
    {
       // we don't need to do anything in here
    }
@@ -117,7 +124,8 @@ public class PropertySheetItemRenderer extends BaseRenderer
    /**
     * @see javax.faces.render.Renderer#getRendersChildren()
     */
-   public boolean getRendersChildren()
+   @Override
+public boolean getRendersChildren()
    {
       return true;
    }

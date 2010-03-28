@@ -1,13 +1,10 @@
 package ee.webmedia.alfresco.substitute;
 
-import ee.webmedia.alfresco.email.service.EmailException;
-import ee.webmedia.alfresco.email.service.EmailService;
-import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.substitute.model.Substitute;
-import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
-import ee.webmedia.alfresco.template.service.DocumentTemplateService;
-import ee.webmedia.alfresco.utils.MessageUtil;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+
+import javax.faces.context.FacesContext;
+
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -19,9 +16,14 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import javax.faces.context.FacesContext;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
+import ee.webmedia.alfresco.email.service.EmailException;
+import ee.webmedia.alfresco.email.service.EmailService;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
+import ee.webmedia.alfresco.template.service.DocumentTemplateService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Notification send that send notification as email.
@@ -41,25 +43,30 @@ public class NotificationEmailSender implements SubstituteListDialog.Notificatio
 
     @Override
     public void sendNotification(Substitute substitute) {
-        if (log.isDebugEnabled()) log.debug("Sending notification email to substitute: " + substitute.getSubstituteId());
+        String substituteId = substitute.getSubstituteId();
+        if (log.isDebugEnabled()) log.debug("Sending notification email to substitute: " + substituteId);
         NodeRef templateNodeRef = getDocumentTemplateService().getSystemTemplateByName(EMAIL_TEMPLATE_NAME);
-        String emailBody = "";
-        if (templateNodeRef != null) {
-            LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
-            nodeRefs.put("default", substitute.getNodeRef());
-            emailBody = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, templateNodeRef);
+        if (templateNodeRef == null) {
+            if (log.isDebugEnabled()) {
+                log.debug("Substitute notification email template '" + EMAIL_TEMPLATE_NAME + "' not found, no notification email is sent");
+            }
+            return;
         }
 
-        NodeRef personRef = getPersonService().getPerson(substitute.getSubstituteId());
+        LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
+        nodeRefs.put("default", substitute.getNodeRef());
+        String emailBody = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, templateNodeRef);
+
+        NodeRef personRef = getPersonService().getPerson(substituteId);
         if (personRef == null) {
-            if (log.isDebugEnabled()) log.debug("Person not found, not notification email is sent");
+            if (log.isDebugEnabled()) log.debug("Person '" + substituteId + "' not found, no notification email is sent");
             return;
         }
 
         String toEmailAddress = (String) getNodeService().getProperty(personRef, ContentModel.PROP_EMAIL);
 
         if (StringUtils.isEmpty(toEmailAddress)) {
-            if (log.isDebugEnabled()) log.debug("Person doesn't have email address defined, no notification is sent.");
+            if (log.isDebugEnabled()) log.debug("Person '" + substituteId + "' doesn't have email address defined, no notification email is sent");
             return;
         }
 
@@ -79,10 +86,10 @@ public class NotificationEmailSender implements SubstituteListDialog.Notificatio
                 false,
                 null);
         } catch (EmailException ee) {
-            // just wrap it to runtime exception
-            throw new RuntimeException("Cannot send notification email", ee);
+            if (log.isDebugEnabled()) log.debug("Cannot send notification email", ee);
+            return;
         }
-        if (log.isDebugEnabled()) log.debug("Notification email sent");
+        if (log.isDebugEnabled()) log.debug("Notification email sent to person '" + substituteId + "' with email address '" + toEmailAddress + "'");
     }
 
 

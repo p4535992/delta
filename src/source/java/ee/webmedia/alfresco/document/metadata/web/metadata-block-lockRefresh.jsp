@@ -10,9 +10,9 @@
 <f:verbatim>
 <script type="text/javascript" id="metaLockRefreshScript" >
 $jQ(document).ready(function(){
-   var inEditMode = </f:verbatim><h:outputText id="textInEditMode" value="#{MetadataBlockBean.inEditMode}" /><f:verbatim>;
+   var inEditMode = '</f:verbatim><h:outputText id="textInEditMode" value="#{MetadataBlockBean.inEditMode}" /><f:verbatim>';
    if(inEditMode){
-      var clientLockRefreshFrequency = </f:verbatim><h:outputText id="textClientLockRef" value="#{MetadataBlockBean.clientLockRefreshFrequency}" /><f:verbatim>;
+      var clientLockRefreshFrequency = '</f:verbatim><h:outputText id="textClientLockRef" value="#{MetadataBlockBean.clientLockRefreshFrequency}" /><f:verbatim>';
       setTimeout(requestForLockRefresh, clientLockRefreshFrequency/3);
    }
 });

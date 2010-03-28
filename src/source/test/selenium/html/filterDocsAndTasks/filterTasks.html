@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="" />
+<title>filterTasks</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">filterTasks</td></tr>
+</thead><tbody>
+<tr>
+	<td>clickAndWait</td>
+	<td>pm0</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>sm1_1</td>
+	<td></td>
+</tr>
+<tr>
+	<td>addSelection</td>
+	<td>dialog:dialog-body:task-search-filter:prop_tasksearchx003a_taskType:tasksearchx003a_taskType</td>
+	<td>label=Allkirjastamiseks</td>
+</tr>
+<tr>
+	<td>addSelection</td>
+	<td>dialog:dialog-body:task-search-filter:prop_tasksearchx003a_taskType:tasksearchx003a_taskType</td>
+	<td>label=Arvamuse andmiseks</td>
+</tr>
+<tr>
+	<td>addSelection</td>
+	<td>dialog:dialog-body:task-search-filter:prop_tasksearchx003a_taskType:tasksearchx003a_taskType</td>
+	<td>label=Kooskõlastamiseks</td>
+</tr>
+<tr>
+	<td>addSelection</td>
+	<td>dialog:dialog-body:task-search-filter:prop_tasksearchx003a_taskType:tasksearchx003a_taskType</td>
+	<td>label=Täitmiseks</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Otsingu salvestamiseks peab olema loodava filtri nimi sisestatud.</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:searchTitle</td>
+	<td>kõik taskid (private)</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyXpathCount</td>
+	<td>//input[@id=&quot;dialog:dialog-body:toAllUsers&quot; and not(@checked)]</td>
+	<td>1</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:searchTitle</td>
+	<td>kõik taskid (private -&gt; public)</td>
+</tr>
+<tr>
+	<td>addSelection</td>
+	<td>dialog:dialog-body:task-search-filter:prop_tasksearchx003a_taskType:tasksearchx003a_taskType</td>
+	<td>label=Teadmiseks</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>dialog:dialog-body:toAllUsers</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyAttribute</td>
+	<td>dialog:dialog-body:toAllUsers@checked</td>
+	<td>checked</td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:filters</td>
+	<td>label=- Uus -</td>
+</tr>
+<tr>
+	<td>addSelection</td>
+	<td>dialog:dialog-body:task-search-filter:prop_tasksearchx003a_taskType:tasksearchx003a_taskType</td>
+	<td>label=Allkirjastamiseks</td>
+</tr>
+<tr>
+	<td>addSelection</td>
+	<td>dialog:dialog-body:task-search-filter:prop_tasksearchx003a_taskType:tasksearchx003a_taskType</td>
+	<td>label=Arvamuse andmiseks</td>
+</tr>
+<tr>
+	<td>addSelection</td>
+	<td>dialog:dialog-body:task-search-filter:prop_tasksearchx003a_taskType:tasksearchx003a_taskType</td>
+	<td>label=Kooskõlastamiseks</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:searchTitle</td>
+	<td>Aktid (public)</td>
+</tr>
+<tr>
+	<td>verifyXpathCount</td>
+	<td>//input[@id=&quot;dialog:dialog-body:toAllUsers&quot; and not(@checked)]</td>
+	<td>1</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>dialog:dialog-body:toAllUsers</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyAttribute</td>
+	<td>dialog:dialog-body:toAllUsers@checked</td>
+	<td>checked</td>
+</tr>
+<tr>
+	<td>removeSelection</td>
+	<td>dialog:dialog-body:task-search-filter:prop_tasksearchx003a_taskType:tasksearchx003a_taskType</td>
+	<td>label=Kooskõlastamiseks</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>dialog:dialog-body:toAllUsers</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:searchTitle</td>
+	<td>Aktid (public -&gt; private)</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyXpathCount</td>
+	<td>//input[@id=&quot;dialog:dialog-body:toAllUsers&quot; and not(@checked)]</td>
+	<td>1</td>
+</tr>
+<!--testi, kas filtri vahetamisel muutuvad pealkiri ja linnuke-->
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:filters</td>
+	<td>label=kõik taskid (private -&gt; public)</td>
+</tr>
+<tr>
+	<td>verifyAttribute</td>
+	<td>dialog:dialog-body:toAllUsers@checked</td>
+	<td>checked</td>
+</tr>
+<tr>
+	<td>verifyXpathCount</td>
+	<td>//input[@id=&quot;dialog:dialog-body:searchTitle&quot; and @value=&quot;kõik taskid (private -&gt; public)&quot;]</td>
+	<td>1</td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:filters</td>
+	<td>label=Aktid (public -&gt; private)</td>
+</tr>
+<tr>
+	<td>verifyXpathCount</td>
+	<td>//input[@id=&quot;dialog:dialog-body:toAllUsers&quot; and not(@checked)]</td>
+	<td>1</td>
+</tr>
+<tr>
+	<td>verifyXpathCount</td>
+	<td>//input[@id=&quot;dialog:dialog-body:searchTitle&quot; and @value=&quot;Aktid (public -&gt; private)&quot;]</td>
+	<td>1</td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:filters</td>
+	<td>label=kõik taskid (private -&gt; public)</td>
+</tr>
+<tr>
+	<td>verifyAttribute</td>
+	<td>dialog:dialog-body:toAllUsers@checked</td>
+	<td>checked</td>
+</tr>
+<!--// uut filtrit valides peaks pealkirja ja checkboxi tühjaks tegema-->
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:filters</td>
+	<td>label=- Uus -</td>
+</tr>
+<tr>
+	<td>verifyXpathCount</td>
+	<td>//input[@id=&quot;dialog:dialog-body:toAllUsers&quot; and not(@checked)]</td>
+	<td>1</td>
+</tr>
+<tr>
+	<td>verifyXpathCount</td>
+	<td>//input[@id=&quot;dialog:dialog-body:searchTitle&quot; and @value=&quot;&quot;]</td>
+	<td>1</td>
+</tr>
+<!--// kontrollime, et filtri nimi oleks täidetud-->
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Otsingu salvestamiseks peab olema loodava filtri nimi sisestatud.</td>
+	<td></td>
+</tr>
+<!--// kontrollime, et filtri nimi oleks täidetud (ka tühikud ei sobi)-->
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:searchTitle</td>
+	<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyTextPresent</td>
+	<td>Otsingu salvestamiseks peab olema loodava filtri nimi sisestatud.</td>
+	<td></td>
+</tr>
+<!--// kustutamise kontrollimiseks tekitame paar ajutist filtrit-->
+<!--// ajutine privaatne filter-->
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:searchTitle</td>
+	<td>ajutine (private)</td>
+</tr>
+<tr>
+	<td>addSelection</td>
+	<td>dialog:dialog-body:task-search-filter:prop_tasksearchx003a_taskType:tasksearchx003a_taskType</td>
+	<td>label=Teadmiseks</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyXpathCount</td>
+	<td>//input[@id=&quot;dialog:dialog-body:toAllUsers&quot; and not(@checked)]</td>
+	<td>1</td>
+</tr>
+<!--// ajutine avalik filter-->
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:filters</td>
+	<td>label=- Uus -</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:searchTitle</td>
+	<td>ajutine (public)</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>dialog:dialog-body:toAllUsers</td>
+	<td></td>
+</tr>
+<tr>
+	<td>addSelection</td>
+	<td>dialog:dialog-body:task-search-filter:prop_tasksearchx003a_taskType:tasksearchx003a_taskType</td>
+	<td>label=Kooskõlastamiseks</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:save</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyAttribute</td>
+	<td>dialog:dialog-body:toAllUsers@checked</td>
+	<td>checked</td>
+</tr>
+<!--// ajutiste filtrite kustutame -->
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:filters</td>
+	<td>label=ajutine (private)</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:delete</td>
+	<td></td>
+</tr>
+<tr>
+	<td>selectAndWait</td>
+	<td>dialog:dialog-body:filters</td>
+	<td>label=ajutine (public)</td>
+</tr>
+<tr>
+	<td>verifyAttribute</td>
+	<td>dialog:dialog-body:toAllUsers@checked</td>
+	<td>checked</td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>dialog:dialog-body:delete</td>
+	<td></td>
+</tr>
+<tr>
+	<td>verifyXpathCount</td>
+	<td>//input[@id=&quot;dialog:dialog-body:toAllUsers&quot; and not(@checked)]</td>
+	<td>1</td>
+</tr>
+
+</tbody></table>
+</body>
+</html>

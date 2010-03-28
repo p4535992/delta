@@ -13,6 +13,8 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -23,7 +25,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * @author Ats Uiboupin
  */
 public class CombinedPropReader {
-
+    private static Log missingPropsLogger = LogFactory.getLog("alfresco.missingProperties");
     public interface AttributeNames {
         String OPTIONS_SEPARATOR = "optionsSeparator";
         String PROPS_GENERATION = "propsGeneration";
@@ -110,8 +112,11 @@ public class CombinedPropReader {
                                     + dataTypeName + ", property name '" + propName + "'");
                         }
                     } else {
-                        throw new RuntimeException("Component generator name not specified and property definition not found for property name '" + propName
-                                + "'. propertiesSeparator='"+propertiesSeparator+"'; optionsSeparator='"+optionsSeparator+"' when parsing string:\n\t"+propertyDescriptionsEncoded+"\nNode\n:"+node);
+                        missingPropsLogger.warn("CombinedPropReader failed to find Property '" + propName 
+							+ "'. propertiesSeparator='" + propertiesSeparator
+							+ "'; optionsSeparator='" + optionsSeparator
+							+ "' when parsing string:\n\t" + propertyDescriptionsEncoded
+							+ "\nNode\n:"+node);
                     }
                 }
             }

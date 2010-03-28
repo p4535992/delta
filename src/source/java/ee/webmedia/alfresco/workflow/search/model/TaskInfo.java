@@ -5,22 +5,26 @@ import java.util.Date;
 
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
  * @author Erko Hansar
  */
-public class TaskInfo implements Serializable, Comparable<TaskInfo> {
+public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable {
 
     private static final long serialVersionUID = 1L;
     
     private Node task;
     private Node workflow;
     private Node document;
+    private String cssStyleClass;
     
     public TaskInfo() {
     }
@@ -161,6 +165,17 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo> {
             return ownerName.compareTo((String) taskInfo.getOwnerName());
         }
         return 0;
+    }
+
+    @Override
+    public String getCssStyleClass() {
+        if(cssStyleClass == null) {
+            final Date dueDate = (Date) task.getProperties().get(WorkflowSpecificModel.Props.DUE_DATE);
+            final Date completedDate = (Date) task.getProperties().get(WorkflowCommonModel.Props.COMPLETED_DATE_TIME);
+            final String docStyleClass = document.getType().getLocalName();
+            cssStyleClass = TaskAndDocument.getCssStyleClass(docStyleClass, completedDate, dueDate);
+        }
+        return cssStyleClass;
     }
     
 }

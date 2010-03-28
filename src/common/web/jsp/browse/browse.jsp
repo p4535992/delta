@@ -194,7 +194,7 @@
                
                <%-- Details - Spaces --%>
                      
-                     <a:panel id="spaces-panel" border="white" bgcolor="white" styleClass="panel-100"
+                     <a:panel id="spaces-panel" styleClass="panel-100 with-pager"
                               label="#{msg.browse_spaces}" progressive="true" facetsId="spaces-panel-facets"
                               expanded='#{BrowseBean.panels["spaces-panel"]}' expandedActionListener="#{BrowseBean.expandPanel}">
                      
@@ -327,7 +327,7 @@
                      
                <%-- Details - Content --%>
 
-         <a:panel id="content-panel" border="white" bgcolor="white" styleClass="panel-100" label="#{msg.browse_content}" progressive="true"
+         <a:panel id="content-panel" styleClass="panel-100 with-pager" label="#{msg.browse_content}" progressive="true"
             facetsId="content-panel-facets" expanded='#{BrowseBean.panels["content-panel"]}' expandedActionListener="#{BrowseBean.expandPanel}">
 
             <%-- Content list --%>

@@ -14,7 +14,7 @@ public interface AdrService {
     
     List<Dokument> otsiDokumendid(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev, String dokumendiLiik, String otsingusona);
 
-    List<Dokument> otsiDokumendidSamasTeemas(String viit, XMLGregorianCalendar perioodiAlgusKuupaev);
+    List<Dokument> otsiDokumendidSamasTeemas(String viit, XMLGregorianCalendar registreerimiseAeg);
 
     DokumentDetailidega dokumentDetailidega(String viit, XMLGregorianCalendar registreerimiseAeg);
 

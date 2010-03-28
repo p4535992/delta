@@ -18,6 +18,8 @@ import org.quartz.Trigger;
 
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
  * A utility bean to wrap scheduling a parameter-configurable jobs with a scheduler.<br>
@@ -132,7 +134,9 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
                 }
             }
         } catch (SchedulerException e) {
-            throw new RuntimeException(e);
+            final UnableToPerformException unableToPerformException = new UnableToPerformException(MessageSeverity.ERROR, "parameters_error_canNotReschedule");
+            unableToPerformException.setMessageValuesForHolders(new Object[] {parameterName, newValue});
+            throw unableToPerformException;
         } catch (ParseException e) {
             throw new RuntimeException("failed to parse cron expression", e);
         }

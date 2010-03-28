@@ -19,6 +19,12 @@ public class AssignmentWorkflow extends Workflow {
     }
 
     @Override
+    protected Workflow copy(CompoundWorkflow parent) {
+        // no need to copy newTaskTemplate, it is not changed ever
+        return copyImpl(new AssignmentWorkflow(getNode().copy(), parent, newTaskTemplate, newTaskClass, newTaskOutcomes));
+    }
+
+    @Override
     protected void preSave() {
         super.preSave();
         for (Task task : getTasks()) {

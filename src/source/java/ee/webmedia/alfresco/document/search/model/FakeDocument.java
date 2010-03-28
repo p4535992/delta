@@ -26,7 +26,7 @@ public class FakeDocument extends Document {
     }
 
     @Override
-    public String getDocTypeLocalName() {
+    public String getCssStyleClass() {
         return CASE;
     }
 
@@ -48,9 +48,9 @@ public class FakeDocument extends Document {
     @Override
     public String toString() {
         return "FakeDocument ["
-                + "\n\tgetDocName()=" + getDocName() + ", "
-                + "\n\tgetDocTypeLocalName()=" + getDocTypeLocalName() + ","
-                + "\n\tgetDocumentTypeName()=" + getDocumentTypeName() + "\n]";
+                + "\n\tdocName()=" + getDocName() + ", "
+                + "\n\tcssStyleClass()=" + getCssStyleClass() + ","
+                + "\n\tdocumentTypeName()=" + getDocumentTypeName() + "\n]";
     }
 
 }

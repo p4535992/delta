@@ -13,7 +13,6 @@ import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.FacesEvent;
 import javax.faces.event.PhaseId;
-import javax.faces.model.SelectItem;
 
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -40,9 +39,10 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
     public String selectionItems;
     /** String for method binding to be excecuted after selectionItems method binding is excecuted */
     public String afterSelect;
-    public static String CHANGE_MARKER = "CHANGE_MARKER";
-    public static String SCROLL_VIEW = "scrollView";
-    public static String SCROLL_VIEW_RENDERED = "scrollViewRendered";
+    public static final String CHANGE_MARKER = "CHANGE_MARKER";
+    public static final String SCROLL_VIEW = "scrollView";
+    public static final String FIRST_DECODE = "firstDecode";
+    public static final String SCROLL_VIEW_RENDERED = "scrollViewRendered";
 
     public RelatedDropdown() {
     }
@@ -55,20 +55,18 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
         final String test = requestMap.get(getFilledFieldId(context));
         if (StringUtils.equals(CHANGE_MARKER, test)) {
             final String submittedValue = (String) getSubmittedValue();
-            final String group = this.group;
-            Integer order = this.order;
             if (StringUtils.isBlank(submittedValue)) {
                 log.debug("Submitted value is empty: '" + submittedValue + "'");
             }
             queueEvent(new RelatedSelectEvent(this, group, order, submittedValue, true));
-            queueEventToRelatedComponents(submittedValue, group, order);
+            queueEventToRelatedComponents(submittedValue);
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = getAttributes();
             attributes.put(SCROLL_VIEW, Boolean.TRUE); // RelatedSelectEvent has occurred, so scroll
         }
     }
 
-    private void queueEventToRelatedComponents(final String submittedValue, final String group, final Integer order) {
+    private void queueEventToRelatedComponents(final String submittedValue) {
         final UIPropertySheet propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class, true);
         final List<? extends RelatedDropdown> relatedDropDownInstances = ComponentUtil.findInputsByClass(propertySheet, this.getClass());
         for (RelatedDropdown relatedDropdown : relatedDropDownInstances) {
@@ -80,12 +78,58 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
     public void encodeBegin(FacesContext context) throws IOException {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = getAttributes();
-        if(attributes.get(SCROLL_VIEW) != null && attributes.get(SCROLL_VIEW_RENDERED) == null) {
-            context.getResponseWriter().write("<input type=\"hidden\" name=\"scrollView\" value=\"600\" />");
-            attributes.put(SCROLL_VIEW_RENDERED, Boolean.TRUE); // otherwise there will be three items in DOM
+        if (attributes.get(SCROLL_VIEW) != null && attributes.get(SCROLL_VIEW_RENDERED) == null) {
+            context.getResponseWriter().write("<input type=\"hidden\" name=\"scrollView\" value=\"500\" />");
+            attributes.put(SCROLL_VIEW_RENDERED, Boolean.TRUE); // otherwise there will be more than one item in DOM
         }
         setOnchange(getOnChangeJS(context));
+        if ((Boolean) attributes.get(FIRST_DECODE) == null) { //
+            if(!hasSelectionItems()) {
+                initializeItemsBasedOnPreviousRelatedDropdown(context);
+            }
+            doAfterSelect(context, getSubmittedValue());
+            attributes.put(FIRST_DECODE, Boolean.FALSE);
+        }
         super.encodeBegin(context);
+    }
+
+    private boolean hasSelectionItems() {
+        @SuppressWarnings("unchecked")
+        List<UIComponent> selectOptions = getChildren();
+        if (selectOptions.size() < 1) {
+            return false;
+        } else if (selectOptions.size() == 1) {
+            final UISelectItem uiComponent = (UISelectItem) selectOptions.get(0);
+            final String itemValue = (String) uiComponent.getItemValue();
+            if (StringUtils.isBlank(itemValue)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void initializeItemsBasedOnPreviousRelatedDropdown(FacesContext context) {
+        final UIPropertySheet propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class, true);
+        final List<? extends RelatedDropdown> relatedDropDownInstances = ComponentUtil.findInputsByClass(propertySheet, this.getClass());
+        RelatedDropdown previousRelatedDD = findPreviousRelatedDropDown(relatedDropDownInstances);
+        if (previousRelatedDD != null) {
+            final String previousCompValue = (String) previousRelatedDD.getValue();
+            if (StringUtils.isNotBlank(previousCompValue)) {
+                clearValues();
+                addSelectionItems(context, previousCompValue);
+            }
+        }
+    }
+
+    private RelatedDropdown findPreviousRelatedDropDown(final List<? extends RelatedDropdown> relatedDropDownInstances) {
+        RelatedDropdown previousRelatedDD = null;
+        for (RelatedDropdown relatedDropdown : relatedDropDownInstances) {
+            final boolean groupsEqual = StringUtils.equals(relatedDropdown.group, group);
+            if (groupsEqual && relatedDropdown.order.equals(order - 1)) {
+                previousRelatedDD = relatedDropdown;
+            }
+        }
+        return previousRelatedDD;
     }
 
     @Override
@@ -93,7 +137,7 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
         FacesContext context = FacesContext.getCurrentInstance();
         if (event instanceof RelatedSelectEvent) {
             RelatedSelectEvent rEvent = (RelatedSelectEvent) event;
-            if (rEvent.doAfterSelect && StringUtils.isNotBlank(afterSelect)) {
+            if (rEvent.doAfterSelect) {
                 doAfterSelect(context, rEvent.submittedValue);
                 return;
             }
@@ -102,6 +146,10 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
                 if (rEvent.order + 1 == order) {
                     clearValues();
                     addSelectionItems(context, rEvent.submittedValue);
+                    // notify other (next) components about changed value
+                    queueEventToRelatedComponents((String) getSubmittedValue());
+                    // queue doAfterSelect()
+                    queueEvent(new RelatedSelectEvent(this, group, order, getSubmittedValue(), true));
                 } else if (rEvent.order + 1 < order) {
                     clearValues();
                 }
@@ -153,9 +201,7 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
             MethodBinding mb = context.getApplication().createMethodBinding(selectionItems,
                     new Class[] { FacesContext.class, HtmlSelectOneMenu.class, Object.class });
             try {
-                @SuppressWarnings("unchecked")
-                List<SelectItem> selectItems = (List<SelectItem>) mb.invoke(context, new Object[] { context, this, submittedValue });
-                ComponentUtil.addSelectItems(context, this, selectItems);
+                mb.invoke(context, new Object[] { context, this, submittedValue });
             } catch (ClassCastException e) {
                 throw new RuntimeException("Failed to get values for selection from '" + selectionItems + "'", e);
             }
@@ -166,6 +212,9 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
     }
 
     private void doAfterSelect(FacesContext context, Object submittedValue) {
+        if (StringUtils.isBlank(afterSelect)) {
+            return;
+        }
         if (submittedValue instanceof String) {
             MethodBinding mb = context.getApplication().createMethodBinding(afterSelect,
                     new Class[] { Object.class });

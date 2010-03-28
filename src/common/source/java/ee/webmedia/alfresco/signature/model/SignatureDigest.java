@@ -11,27 +11,22 @@ public class SignatureDigest implements Serializable {
     private String certHex;
     private Date date;
 
-    public String getDigestHex() {
-        return digestHex;
+    public SignatureDigest(String digestHex, String certHex, Date date) {
+        this.digestHex = digestHex;
+        this.certHex = certHex;
+        this.date = date;
     }
 
-    public void setDigestHex(String digestHex) {
-        this.digestHex = digestHex;
+    public String getDigestHex() {
+        return digestHex;
     }
 
     public String getCertHex() {
         return certHex;
     }
 
-    public void setCertHex(String certHex) {
-        this.certHex = certHex;
-    }
-
     public Date getDate() {
         return date;
     }
 
-    public void setDate(Date date) {
-        this.date = date;
-    }
 }

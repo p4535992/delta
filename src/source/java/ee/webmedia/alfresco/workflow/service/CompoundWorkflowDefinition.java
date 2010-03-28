@@ -18,6 +18,11 @@ public class CompoundWorkflowDefinition extends CompoundWorkflow {
         super(node, parent);
     }
 
+    @Override
+    protected CompoundWorkflowDefinition copy() {
+        return copyImpl(new CompoundWorkflowDefinition(getNode().copy(), getParent()));
+    }
+
     public String getName() {
         return getProp(WorkflowCommonModel.Props.NAME);
     }

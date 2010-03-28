@@ -23,12 +23,6 @@
          <rtexprvalue>true</rtexprvalue>
          <description>If set to true, menu is displayed as the top-level menu e.g. the menu in the header. Otherwise the appropriate sub menu is rendered.</description>
       </attribute>
-
-      <attribute>
-         <name>activeItemId</name>
-         <rtexprvalue>true</rtexprvalue>
-         <description>Selects the menu item, which should be marked as active.</description>
-      </attribute>
    </tag>
 
    <tag>
@@ -165,6 +159,16 @@
          <name>dialogTitleId</name>
          <rtexprvalue>true</rtexprvalue>
          <description>Dialog title id.</description>
+      </attribute>
+       <attribute>
+         <name>filters</name>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Filters value binding</description>
+      </attribute>
+       <attribute>
+         <name>preprocessCallback</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
       </attribute>
    </tag>
 

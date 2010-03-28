@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.signature.service;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -78,47 +77,47 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
         assertFalse(signatureService.isDigiDocContainer(nodeRefList.get(0)));
     }
 
-    public void testGetSignatureItems() {
+    public void testGetSignatureItems() throws Exception {
         List<SignatureItem> signatureItemList = signatureService.getSignatureItems(nodeRef);
         assertNotNull(signatureItemList);
         assertTrue(signatureItemList.size() >= 0);
     }
 
-    public void testGetDataItems() {
+    public void testGetDataItems() throws Exception {
         List<DataItem> dataItemList = signatureService.getDataItems(nodeRef, true);
         assertNotNull(dataItemList);
         assertTrue(dataItemList.size() > 0);
         assertNotNull(dataItemList.get(0).getData());
     }
 
-    public void testGetDataItem() {
+    public void testGetDataItem() throws Exception {
         DataItem d = signatureService.getDataItem(nodeRef, 0, true);
         assertNotNull(d);
         assertNotNull(d.getData());
     }
 
-    public void testGetSignatureDigestFromNodeRef() {
+    public void testGetSignatureDigestFromNodeRef() throws Exception {
         SignatureDigest digest = signatureService.getSignatureDigest(nodeRef, certHex);
         assertNotNull(digest);
         assertNotNull(digest.getDigestHex());
         assertEquals(40, digest.getDigestHex().length());
     }
 
-    public void testGetSignatureDigestFromNodeRefList() {
+    public void testGetSignatureDigestFromNodeRefList() throws Exception {
         SignatureDigest digest = signatureService.getSignatureDigest(nodeRefList, certHex);
         assertNotNull(digest);
         assertNotNull(digest.getDigestHex());
         assertEquals(40, digest.getDigestHex().length());
     }
 
-    public void testGetDataItemsAndSignatureItems() {
+    public void testGetDataItemsAndSignatureItems() throws Exception {
         SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(nodeRef, true);
         assertTrue(items.getDataItems().size() >= 1);
         assertTrue(items.getSignatureItems().size() >= 0);
         assertNotNull(items.getDataItems().get(0).getData());
     }
 
-    public void testGetDataItemsAndSignatureItemsFromStream() throws IOException {
+    public void testGetDataItemsAndSignatureItemsFromStream() throws Exception {
         InputStream fileInputStream = new ClassPathResource(TEST_RESOURCE_PATH + "/" + TEST_DIGIDOC).getInputStream();
         SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(fileInputStream, true);
         assertTrue(items.getDataItems().size() >= 1);

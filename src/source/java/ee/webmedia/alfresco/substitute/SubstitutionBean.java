@@ -1,11 +1,17 @@
 package ee.webmedia.alfresco.substitute;
 
-import ee.webmedia.alfresco.menu.service.MenuService;
-import ee.webmedia.alfresco.menu.ui.MenuBean;
-import ee.webmedia.alfresco.substitute.model.Substitute;
-import ee.webmedia.alfresco.substitute.service.SubstituteService;
-import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.MessageUtil;
+import java.io.IOException;
+import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ValueChangeEvent;
+import javax.faces.model.SelectItem;
+import javax.servlet.http.HttpServletRequest;
+
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.Application;
@@ -13,16 +19,12 @@ import org.alfresco.web.app.servlet.BaseServlet;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.commons.lang.StringUtils;
 
-import javax.faces.context.FacesContext;
-import javax.faces.event.ValueChangeEvent;
-import javax.faces.model.SelectItem;
-import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.Serializable;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
+import ee.webmedia.alfresco.menu.service.MenuService;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.service.SubstituteService;
+import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Bean for handling substitution selection.
@@ -71,10 +73,12 @@ public class SubstitutionBean implements Serializable {
 
     private static void redirectToHome() {
         FacesContext fc = FacesContext.getCurrentInstance();
-        fc.getApplication().getNavigationHandler().handleNavigation(fc, null, "myalfresco");
-
+        
+        MenuBean.clearViewStack(String.valueOf(MenuBean.MY_TASKS_AND_DOCUMENTS_ID), null);
         MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(fc, MenuBean.BEAN_NAME);
-        menuBean.setActiveItemId(String.valueOf(MenuBean.MY_TASKS_AND_DOCUMENTS_ID));
+        menuBean.reset();
+
+        fc.getApplication().getNavigationHandler().handleNavigation(fc, null, "myalfresco");
 
         try {
             //todo: find better solution
@@ -100,7 +104,7 @@ public class SubstitutionBean implements Serializable {
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         StringBuilder builder = new StringBuilder();
         for (Substitute subs : substitutions) {
-            builder.append("<div class=\"message\">");
+            builder.append("<div class=\"message message-red\">");
             builder.append(MessageUtil.getMessage(FacesContext.getCurrentInstance(), "substitution_message",
                     getUserService().getUserFullName(subs.getReplacedPersonUserName()),
                     dateFormat.format(subs.getSubstitutionStartDate()),

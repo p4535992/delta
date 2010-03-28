@@ -116,7 +116,7 @@ public class SignatureDocumentDetailsDialog extends DocumentDetailsDialog {
         return isDdocValid();
     }
 
-    private void getDataFilesAndSignatures() {
+    private void getDataFilesAndSignatures() throws SignatureException {
         SignatureItemsAndDataItems values = getSignatureService().getDataItemsAndSignatureItems(browseBean.getDocument().getNodeRef(), false);
         signatures = values.getSignatureItems();
         dataItems = values.getDataItems();

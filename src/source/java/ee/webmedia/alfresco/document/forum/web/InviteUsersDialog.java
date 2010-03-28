@@ -19,7 +19,6 @@ import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.template.service.DocumentTemplateNotFoundException;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.web.PermissionsAddDialog;
@@ -75,11 +74,9 @@ public class InviteUsersDialog extends PermissionsAddDialog {
             log.debug("Sending invitation to discussion failed, template to be used is not specified!");
             return;
         }
-        NodeRef templateNodeRef;
-        try {
-            templateNodeRef = getDocumentTemplateService().getSystemTemplateByName(templateName);
-        } catch (DocumentTemplateNotFoundException e) {
-            log.debug("Sending invitation to discussion failed, template missing!", e);
+        NodeRef templateNodeRef = getDocumentTemplateService().getSystemTemplateByName(templateName);
+        if (templateNodeRef == null) {
+            log.debug("Discussion invitation email template '" + templateName + "' not found, no email notification is sent");
             // Ignore, because sending a message is a bonus across the system
             return;
         }
@@ -98,7 +95,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
         try {
             emailService.sendEmail(toEmails, toNames, fromEmail, subject, content, true, null, null, false, null);
         } catch (EmailException e) {
-            log.debug("Sending invitation to discussion failed, error sending out email!", e);
+            log.error("Discussion invitation notification e-mail sending failed, ignoring and continuing", e);
             return;
         }
     }

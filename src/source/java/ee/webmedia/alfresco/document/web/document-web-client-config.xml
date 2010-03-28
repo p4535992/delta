@@ -257,13 +257,13 @@
             icon="/images/icons/details_large.gif" title-id="document_send_out" />
 
          <dialog name="outboxDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="OutboxDocumentListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" show-ok-button="false" />
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_outbox" show-ok-button="false" />
 
          <dialog name="dvkDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DvkDocumentListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" show-ok-button="false" />
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_dvk_documents" show-ok-button="false" />
 
          <dialog name="unsentDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="UnsentDocumentListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_list" show-ok-button="false" />
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_unsent_list" show-ok-button="false" />
 
          <dialog name="favoritesDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="FavoritesDocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_myFavorites" show-ok-button="false" />

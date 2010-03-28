@@ -68,6 +68,7 @@
    <bean id="documentSearchFilterService" class="ee.webmedia.alfresco.document.search.service.DocumentSearchFilterServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="userService" ref="UserService" />
    </bean>
 
    <bean id="DocumentSearchFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">

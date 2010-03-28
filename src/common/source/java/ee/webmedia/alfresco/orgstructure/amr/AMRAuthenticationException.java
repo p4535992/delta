@@ -9,6 +9,10 @@ package ee.webmedia.alfresco.orgstructure.amr;
 public class AMRAuthenticationException extends RuntimeException {
     private static final long serialVersionUID = 1L;
 
+    public AMRAuthenticationException(String msgId) {
+        super(msgId);
+    }
+
     public AMRAuthenticationException(String msgId, Throwable cause) {
         super(msgId, cause);
     }

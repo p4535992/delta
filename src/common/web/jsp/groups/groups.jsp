@@ -33,7 +33,7 @@
 </a:panel>
 
    <%-- Groups List --%>
-   <a:panel id="groups-panel" label="#{msg.groups}">
+   <a:panel id="groups-panel" label="#{msg.groups}" styleClass="with-pager">
 
       <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="#{DialogManager.bean.viewMode}" pageSize="12"
             rowStyleClass="recordSetRow" altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="name" initialSortDescending="true">
@@ -78,7 +78,7 @@
    </a:panel>
 
    <%-- Users in Group list --%>
-   <a:panel id="users-panel" label="#{msg.users}">
+   <a:panel id="users-panel" label="#{msg.users}" styleClass="with-pager">
    
       <a:richList id="users-list" binding="#{DialogManager.bean.usersRichList}" viewMode="#{DialogManager.bean.viewMode}" pageSize="12"
             rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="r" initialSortColumn="name"

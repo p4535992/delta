@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.component.UIOutput;
@@ -61,7 +60,7 @@ public class Search extends UIComponentBase {
     public void encodeBegin(FacesContext context) throws IOException {
         if (getChildCount() == 0) {
             createExistingComponents(context);
-            if (!isDisabled() || isEditable() || isChildOfUIRichList()) {
+            if (!isDisabled()) {
                 createPicker(context);
             }
         }
@@ -84,7 +83,7 @@ public class Search extends UIComponentBase {
     public void broadcast(FacesEvent event) throws AbortProcessingException {
         FacesContext context = FacesContext.getCurrentInstance();
         if (event instanceof SearchRemoveEvent) {
-            if (isDisabled() && !isEditable()) {
+            if (isDisabled()) {
                 throw new RuntimeException("Disabled component should not fire SearchRemoveEvent: " + getId());
             }
             if (isMultiValued()) {
@@ -305,7 +304,7 @@ public class Search extends UIComponentBase {
     protected boolean isDisabled() {
         return Utils.isComponentDisabledOrReadOnly(this);
     }
-
+    
     protected boolean isMultiValued() {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = getAttributes();

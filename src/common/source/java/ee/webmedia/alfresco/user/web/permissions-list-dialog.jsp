@@ -3,7 +3,7 @@
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
 
-<a:panel id="authorities-panel" label="#{msg.users_groups}">
+<a:panel id="authorities-panel" label="#{msg.users_groups}" styleClass="with-pager">
    <a:richList id="authorities-list" binding="#{PermissionsListDialog.authoritiesRichList}" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"
          styleClass="recordSet" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
          value="#{PermissionsListDialog.authorities}" var="r" initialSortColumn="name" width="100%">

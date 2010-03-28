@@ -68,8 +68,9 @@
            }
       </script>
 
-      <div id="signature-div" style="text-align: center"><object classid="clsid:8AD9C840-044E-11D1-B3E9-00805F499D93" width="400" height="80"
-         codebase="http://java.sun.com/products/plugin/autodl/jinstall-1_4_0-win.cab#Version=1,4,2,0" id="signApplet">
+      <div id="signature-div" style="text-align: center">
+      <object classid="clsid:8AD9C840-044E-11D1-B3E9-00805F499D93" width="400" height="80"
+         codebase="https://java.sun.com/update/1.6.0/jinstall-6u18-windows-i586.cab#Version=1,4,0,0" id="signApplet">
          <param name="java_code" value="SignApplet.class" />
          <param name="java_codebase" value="<%=request.getContextPath()%>/applet" />
          <param name="java_archive" value="SignApplet_sig.jar, iaikPkcs11Wrapper_sig.jar" />
@@ -92,7 +93,7 @@
          <param name="TOKEN_ID" value="" />
 
          <embed id="signApplet" type="application/x-java-applet;version=1.4" width="400" height="80"
-            pluginspage="http://java.sun.com/products/plugin/index.html#download" java_code="SignApplet.class"
+            pluginspage="http://javadl.sun.com/webapps/download/GetFile/1.6.0_18-b07/windows-i586/xpiinstall.exe" java_code="SignApplet.class"
             java_codebase="<%=request.getContextPath()%>/applet" java_archive="SignApplet_sig.jar, iaikPkcs11Wrapper_sig.jar" NAME="SignApplet" MAYSCRIPT="true"
             LANGUAGE="EST" FUNC_SET_CERT="window.processCert" FUNC_SET_SIGN="window.signDocument" FUNC_CANCEL="window.cancelDlg"
             FUNC_DRIVER_ERR="window.driverError" DEBUG_LEVEL="3"

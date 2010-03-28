@@ -84,8 +84,8 @@ public class BeanPropertyMapper<T> {
             }
 
             if (null == writer) {
-                if (!RepoUtil.isSystemProperty(qName) && log.isInfoEnabled()) {
-                    log.info("got property '" + qName + "' but didn't find corresponding setter on target class: " + mappedClass.getCanonicalName());
+                if (!RepoUtil.isSystemProperty(qName) && log.isDebugEnabled()) {
+                    log.debug("got property '" + qName + "' but didn't find corresponding setter on target class: " + mappedClass.getCanonicalName());
                 }
                 continue;
             }

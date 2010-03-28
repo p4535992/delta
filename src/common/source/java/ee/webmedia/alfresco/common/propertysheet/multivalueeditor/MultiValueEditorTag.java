@@ -38,6 +38,8 @@ public class MultiValueEditorTag extends UIComponentTag {
     private String setterCallback;
     private String dialogTitleId;
     private String titles;
+    private String filters;
+    private String preprocessCallback;
 
     public void setVarName(String varName) {
         this.varName = varName;
@@ -61,6 +63,14 @@ public class MultiValueEditorTag extends UIComponentTag {
 
     public void setTitles(String titles) {
         this.titles = titles;
+    }
+
+    public void setFilters(String filters) {
+        this.filters = filters;
+    }
+
+    public void setPreprocessCallback(String preprocessCallback) {
+        this.preprocessCallback = preprocessCallback;
     }
 
     public String getPropsGeneration() {
@@ -87,6 +97,12 @@ public class MultiValueEditorTag extends UIComponentTag {
         attributes.put(Search.PICKER_CALLBACK_KEY, pickerCallback);
         attributes.put(Search.DIALOG_TITLE_ID_KEY, dialogTitleId);
         attributes.put("setterCallback", setterCallback);
+        if (StringUtils.isNotBlank(filters)) {
+            attributes.put(MultiValueEditor.FILTERS, filters);
+        }
+        if (StringUtils.isNotBlank(preprocessCallback)) {
+            attributes.put(MultiValueEditor.PREPROCESS_CALLBACK, preprocessCallback);
+        }
     }
 
     @Override
@@ -98,6 +114,8 @@ public class MultiValueEditorTag extends UIComponentTag {
         setterCallback = null;
         dialogTitleId = null;
         titles = null;
+        filters = null;
+        preprocessCallback = null;
     }
 
 }

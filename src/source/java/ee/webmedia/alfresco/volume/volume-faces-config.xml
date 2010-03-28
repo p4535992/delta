@@ -35,4 +35,17 @@
       </managed-property>
    </managed-bean>
 
+   <managed-bean>
+      <description>
+         Bean that generates a send to destruction checkbox
+      </description>
+      <managed-bean-name>SendToDestructionGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.volume.web.SendToDestructionGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+       <managed-property>
+         <property-name>dialogManager</property-name>
+         <value>#{DialogManager}</value>
+      </managed-property>
+   </managed-bean>
+
 </faces-config>

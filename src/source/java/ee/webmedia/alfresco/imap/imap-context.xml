@@ -50,6 +50,7 @@
         <property name="fileFolderService" ref="FileFolderService"/>
         <property name="nodeService" ref="NodeService"/>
         <property name="generalService" ref="GeneralService"/>
+        <property name="documentLogService"  ref="DocumentLogService" />
     </bean>
 
     <bean id="ImapServiceExt" class="org.springframework.aop.framework.ProxyFactoryBean">

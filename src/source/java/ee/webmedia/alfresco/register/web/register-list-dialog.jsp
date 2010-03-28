@@ -7,7 +7,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="register-panel" styleClass="panel-100" label="#{msg.register_list}" progressive="true">
+<a:panel id="register-panel" styleClass="panel-100 with-pager" label="#{msg.register_list}" progressive="true">
 
    <%-- Spaces List --%>
    <a:richList id="registersList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"

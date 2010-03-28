@@ -9,24 +9,30 @@ import java.util.Map;
 import java.util.Stack;
 
 import javax.faces.application.Application;
+import javax.faces.component.StateHolder;
 import javax.faces.component.UIComponent;
-import javax.faces.component.UIOutput;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
+import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.ActionListener;
 
+import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.util.GUID;
 import org.alfresco.web.app.servlet.FacesHelper;
-import org.alfresco.web.bean.dialog.DialogState;
+import org.alfresco.web.bean.dialog.IDialogBean;
+import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
+import org.alfresco.web.config.WizardsConfigElement.WizardConfig;
 import org.alfresco.web.ui.common.ConstantMethodBinding;
 import org.alfresco.web.ui.common.component.UIActionLink;
+import org.alfresco.web.ui.common.component.UIOutputText;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
@@ -35,7 +41,7 @@ import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.menu.ui.component.MenuRenderer;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.user.web.UserDetailsDialog;
+import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -47,11 +53,15 @@ public class MenuBean implements Serializable {
 
     public static final String BEAN_NAME = "MenuBean";
     public static final String UPDATE_TREE_ACTTIONLISTENER = "#{MenuBean.updateTree}";
-    public static final int MY_TASKS_AND_DOCUMENTS_ID = 0; // XXX: this order defined in menu-structure.xml
-    public static final int DOCUMENT_REGISTER_ID = 1;
     public static final String COUNT = "count";
 
+    // XXX: this order defined in menu-structure.xml
+    public static final int MY_TASKS_AND_DOCUMENTS_ID = 0;
+    public static final int DOCUMENT_REGISTER_ID = 1;
+    public static final int CREATE_NEW_DOCUMENT = 5;
+
     private transient HtmlPanelGroup shortcutsPanelGroup;
+    private transient HtmlPanelGroup breadcrumb;
 
     private transient MenuService menuService;
     private transient GeneralService generalService;
@@ -64,44 +74,90 @@ public class MenuBean implements Serializable {
     private List<String> shortcuts;
 
     private String activeItemId = "0";
+    private String clickedId = "";
 
-    Stack<DialogState> stateList = new Stack<DialogState>();
+    private Stack<String> stateList = new Stack<String>();
 
-    public void handleState(DialogState state) {
+    public void resetBreadcrumb() {
+        stateList.clear();
+    }
+
+    public void addBreadcrumbItem(DialogConfig config) {
+        String title = "";
+
+        String beanName = config.getManagedBean();
+        Object bean = FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), beanName);
+        IDialogBean dialog = null;
+        if (bean instanceof IDialogBean) {
+            dialog = (IDialogBean) bean;
+        } else {
+            throw new AlfrescoRuntimeException("Failed to start dialog as managed bean '" + beanName +
+                    "' does not implement the required IDialogBean interface");
+        }
+
+        try {
+            if (dialog.getContainerTitle() != null) {
+                title = dialog.getContainerTitle();
+            } else if (config.getTitle() != null) {
+                title = config.getTitle();
+            } else {
+                title = MessageUtil.getMessage(config.getTitleId());
+            }
+        } catch (NullPointerException npe) {
+            // XXX is any action necessary?
+        }
+
+        addBreadcrumbItem(title);
+    }
+
+    public void addBreadcrumbItem(WizardConfig wizard) {
+        String title = "";
+        if(wizard.getTitle() != null) {
+            title = wizard.getTitle();
+        } else if (wizard.getTitleId() != null) {
+            title = MessageUtil.getMessage(wizard.getTitleId());
+        }
+
+        addBreadcrumbItem(title);
+    }
+
+    public void addBreadcrumbItem(String title) {
         int i = 0;
-        for(DialogState ds : stateList) {
-            if(ds.getConfig().getName().equals(state.getConfig().getName())) {
+        for (String listTitle : stateList) {
+            if (listTitle.equals(title)) {
                 break;
             }
             i++;
         }
         stateList.setSize(i);
-        stateList.push(state);
-    }
-    
-    @SuppressWarnings("unchecked")
-    public void resetStateList() {
-        stateList = new Stack<DialogState>();
-        List<UIComponent> children = breadcrumb.getChildren();
-        children.clear();
+        stateList.push(title);
     }
 
-    public Stack<DialogState> getStateList() {
+    public void removeBreadcrumbItem() {
+        removeBreadcrumbItems(1);
+
+    }
+
+    public void removeBreadcrumbItems(int numberToRemove) {
+        for (int i = 0; i < numberToRemove; i++) {
+            if(!stateList.isEmpty()) {
+                stateList.pop();
+            }
+        }
+    }
+
+    public Stack<String> getStateList() {
         return stateList;
     }
 
-    public void setStateList(Stack<DialogState> stateList) {
+    public void setStateList(Stack<String> stateList) {
         this.stateList = stateList;
     }
- 
-    private String clickedId = "";
-    private transient HtmlPanelGroup breadcrumb;
 
     public void setBreadcrumb(HtmlPanelGroup breadcrumb) {
         this.breadcrumb = breadcrumb;
     }
 
-    @SuppressWarnings("unchecked")
     public HtmlPanelGroup getBreadcrumb() {
         FacesContext context = FacesContext.getCurrentInstance();
         Application application = context.getApplication();
@@ -110,74 +166,52 @@ public class MenuBean implements Serializable {
             breadcrumb = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
             breadcrumb.setId("breadcrumb");
         }
-        
-        List children = breadcrumb.getChildren();
+
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = breadcrumb.getChildren();
         children.clear();
-        children.add(getActiveMainMenuItem().createComponent(FacesContext.getCurrentInstance(), "yeye" + GUID.generate(), getUserService()));
-        
+        // TODO - this would be nice to have (cannot clear view stack)
+        // children.add(getActiveMainMenuItem().createComponent(FacesContext.getCurrentInstance(), "id" + GUID.generate(), getUserService(), false, true));
+        children.add(generateText(getActiveMainMenuItem().getTitle(), false));
+
         Object[] items = stateList.toArray();
         int i = 1;
-        for(Object item : items) {
-            if(item instanceof DialogState) {
-                children.add(getSeparator(application));
-                DialogState state = (DialogState) item;
-                String title;
-                try {
-                    if(state.getDialog().getContainerTitle() != null) {
-                        title = state.getDialog().getContainerTitle();
-                    } else {
-                        title = MessageUtil.getMessage(state.getConfig().getTitleId());
-                    }
-                } catch (NullPointerException npe) {
-                    title = "";
-                }
-                UIActionLink link = generateLink(application, title, (items.length - i));
-                children.add(link);
-                i++;
+        for (Object item : items) {
+            UIComponent component = null;
+            if(items.length > i) {
+                component = generateLink(application, (String) item, (items.length - i));
+            } else {
+                component = generateText((String)item, true);
             }
+            children.add(component);
+            i++;
         }
-        
+
         return breadcrumb;
     }
 
+    /**
+     * @param title
+     * @return
+     */
+    private UIComponent generateText(String title, boolean styleClass) {
+        UIComponent component = new UIOutputText();
+        if(styleClass) {
+            component.getAttributes().put("styleClass", "breadcrumb-link");
+        }
+        ((UIOutputText) component).setValue(title);
+        return component;
+    }
+
     @SuppressWarnings("unchecked")
-    private UIActionLink generateLink(Application application, String name, int closeCount) {
+    private UIActionLink generateLink(Application application, String title, int closeCount) {
         UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
-        link.setValue(name);
-        link.setAction(new ConstantMethodBinding("dialog:close["+ closeCount +"]"));
-        link.setActionListener(application.createMethodBinding("#{MenuBean.popBreadcrumbItems}", new Class[] {javax.faces.event.ActionEvent.class}));
-        link.getAttributes().put(COUNT, closeCount +"");
+        link.setValue(title);
+        link.getAttributes().put("styleClass", "breadcrumb-link");
+        link.setAction(new ConstantMethodBinding("dialog:close[" + closeCount + "]"));
+        link.getAttributes().put(COUNT, closeCount + "");
         return link;
     }
-    
-    public void popBreadcrumbItems(ActionEvent event) {
-        int count = Integer.parseInt(event.getComponent().getAttributes().get(COUNT).toString());
-        for (int i = 0; i < count; i++) {
-            stateList.pop();
-        }
-        
-    }
-    
-    /**
-     * @param application
-     */
-    private UIComponent getSeparator(javax.faces.application.Application application) {
-        UIOutput separator = (UIOutput) application.createComponent("org.alfresco.faces.OutputText");
-        separator.setValue(" > ");
-        separator.setTransient(true);
-        return separator;
-    }
-
-    public String getClickedId() {
-        return clickedId;
-    }
-
-    public void setClickedId(String clickedId) {
-        this.clickedId = clickedId;
-    }
-
-    // END - BREADCRUMB
-    // /////////////////////////////////////////////////////////////
 
     public void processTaskItems() {
         getMenuService().processTasks(menu);
@@ -247,34 +281,36 @@ public class MenuBean implements Serializable {
             }
         }
 
-        DropdownMenuItem dd = (DropdownMenuItem) item;
-        // When XML configuration doesn't specify any children, this list will be null!
-        if (dd.getSubItems() == null) {
-            dd.setSubItems(new ArrayList<MenuItem>());
-        }
-        dd.getSubItems().clear();
-
-        // Toggle the link
-        if (dd.isExpanded()) {
-            dd.setExpanded(false);
-            return; // When hiding, we don't need to refresh children
-        }
-
-        log.debug("Fetching children for: " + dd.getTitle());
-        // Decide what outcome is needed for children and load proper data
-        List<NodeRef> children = getMenuService().openTreeItem(dd, linkNodeRef);
-        if (children != null) {
-            for (NodeRef child : children) {
-                DropdownMenuItem ddChild = new DropdownMenuItem();
-                ddChild.setActionListener(UPDATE_TREE_ACTTIONLISTENER);
-                ddChild.setNodeRef(child);
-                ddChild.setBrowse(true);
-                ddChild.setSubmenuId(lastLinkId);
-                getMenuService().setupTreeItem(ddChild, child);
-                dd.getSubItems().add(ddChild);
+        if (item instanceof DropdownMenuItem) {
+            DropdownMenuItem dd = (DropdownMenuItem) item;
+            // When XML configuration doesn't specify any children, this list will be null!
+            if (dd.getSubItems() == null) {
+                dd.setSubItems(new ArrayList<MenuItem>());
             }
+            dd.getSubItems().clear();
+
+            // Toggle the link
+            if (dd.isExpanded()) {
+                dd.setExpanded(false);
+                return; // When hiding, we don't need to refresh children
+            }
+
+            log.debug("Fetching children for: " + dd.getTitle());
+            // Decide what outcome is needed for children and load proper data
+            List<NodeRef> children = getMenuService().openTreeItem(dd, linkNodeRef);
+            if (children != null) {
+                for (NodeRef child : children) {
+                    DropdownMenuItem ddChild = new DropdownMenuItem();
+                    ddChild.setActionListener(UPDATE_TREE_ACTTIONLISTENER);
+                    ddChild.setNodeRef(child);
+                    ddChild.setBrowse(true);
+                    ddChild.setSubmenuId(lastLinkId);
+                    getMenuService().setupTreeItem(ddChild, child);
+                    dd.getSubItems().add(ddChild);
+                }
+            }
+            dd.setExpanded(true);
         }
-        dd.setExpanded(true);
 
     }
 
@@ -312,6 +348,12 @@ public class MenuBean implements Serializable {
         return this.menu;
     }
 
+    public void reset() {
+        menu = null;
+        lastLinkId = null;
+        linkNodeRef = null;        
+    }
+
     public MenuItem getActiveMainMenuItem() {
         return menu.getSubItems().get(Integer.parseInt(activeItemId));
     }
@@ -320,8 +362,38 @@ public class MenuBean implements Serializable {
         return activeItemId;
     }
 
-    public void setActiveItemId(String activeMenuId) {
-        this.activeItemId = activeMenuId;
+    public void setActiveItemId(String activeItemId) {
+        if (StringUtils.isNotBlank(activeItemId)) {
+            this.activeItemId = activeItemId;
+        }
+    }
+
+    private void setMenuItemId(String primaryId, String secondaryId) {
+        setActiveItemId(primaryId);
+        this.clickedId = secondaryId;
+    }
+
+    public static void clearViewStack(String primaryId, String secondaryId) {
+        FacesContext context = FacesContext.getCurrentInstance();
+
+        // Clear the view stack, otherwise it would grow too big as the cancel button is hidden in some views
+        // Later in the life-cycle the view where this action came from is added to the stack, so visible cancel buttons will function properly 
+        @SuppressWarnings("unchecked")
+        Map<String, Object> sessionMap = context.getExternalContext().getSessionMap();
+        sessionMap.put(UIMenuComponent.VIEW_STACK, new Stack<String>());
+
+        MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
+        menuBean.setMenuItemId(primaryId, secondaryId);
+        menuBean.resetBreadcrumb();
+
+        // let the ClearStateNotificationHandler notify all the interested listeners
+        ClearStateNotificationHandler clearStateNotificationHandler = (ClearStateNotificationHandler) FacesHelper.getManagedBean(context, ClearStateNotificationHandler.BEAN_NAME);
+        clearStateNotificationHandler.notifyClearStateListeners();
+    }
+
+    public void clearViewStack(ActionEvent event) {
+        String primaryId = ActionUtil.getParam(event, "primaryId");
+        clearViewStack(primaryId, null);
     }
 
     public void reloadMenu() {
@@ -344,7 +416,9 @@ public class MenuBean implements Serializable {
         this.linkNodeRef = linkNodeRef;
     }
 
-    // Shortcuts
+    // ========================================================================
+    // =============================== SHORTCUTS ==============================
+    // ========================================================================
 
     public List<String> getShortcuts() {
         if (shortcuts == null) {
@@ -367,7 +441,7 @@ public class MenuBean implements Serializable {
 
     private void generateShortcutLinks() {
         shortcutsPanelGroup.getChildren().clear();
-        for (Iterator<String> i = getShortcuts().iterator(); i.hasNext(); ) {
+        for (Iterator<String> i = getShortcuts().iterator(); i.hasNext();) {
             String shortcut = i.next();
             if (!generateAndAddShortcut(shortcut)) {
                 i.remove();
@@ -376,31 +450,39 @@ public class MenuBean implements Serializable {
     }
 
     private boolean generateAndAddShortcut(String shortcut) {
-      FacesContext context = FacesContext.getCurrentInstance();
-      String[] path = getPathFromShortcut(shortcut);
+        FacesContext context = FacesContext.getCurrentInstance();
+        String[] path = getPathFromShortcut(shortcut);
 
-      List<MenuItem> subItems = menu.getSubItems();
-      MenuItem item = null;
-      int index;
-      for (int i = 0; i < path.length; i++) {
-          index = Integer.parseInt(path[i]);
-          if (index >= subItems.size()) {
-              return false;
-          }
-          item = subItems.get(index);
-          subItems = item.getSubItems();
-      }
-      if (item == null) {
-          return false;
-      }
-      MenuItemWrapper component = (MenuItemWrapper) item.createComponent(context, "shortcut-" + shortcutsPanelGroup.getChildCount(), getUserService(), false);
-      component.setPlain(true);
+        List<MenuItem> subItems = menu.getSubItems();
+        MenuItem item = null;
+        int index;
+        for (int i = 0; i < path.length; i++) {
+            index = Integer.parseInt(path[i]);
+            if (index >= subItems.size()) {
+                return false;
+            }
+            item = subItems.get(index);
+            subItems = item.getSubItems();
+        }
+        if (item == null) {
+            return false;
+        }
+        MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, "shortcut-" + shortcutsPanelGroup.getChildCount(), getUserService(), false);
+        wrapper.setPlain(true);
 
-      @SuppressWarnings("unchecked")
-      List<UIComponent> children = shortcutsPanelGroup.getChildren();
-      children.add(component);
-      return true;
-  }
+        UIActionLink link = (UIActionLink) wrapper.getChildren().get(0);
+        link.addActionListener(new ShortcutClickedActionListener(shortcut));
+
+        String title = (String) link.getValue();
+        if (title.endsWith(")")) {
+            link.setValue(title.substring(0, title.lastIndexOf('(')));
+        }
+
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = shortcutsPanelGroup.getChildren();
+        children.add(wrapper);
+        return true;
+    }
 
     @SuppressWarnings("unchecked")
     public int getShortcutAddable() {
@@ -468,7 +550,7 @@ public class MenuBean implements Serializable {
         return StringUtils.join(getPathFromClickedId(), UIMenuComponent.VALUE_SEPARATOR);
     }
 
-    private String getShortcutFromPath(String[] path) {
+    private static String getShortcutFromPath(String[] path) {
         return StringUtils.join(path, UIMenuComponent.VALUE_SEPARATOR);
     }
 
@@ -477,27 +559,58 @@ public class MenuBean implements Serializable {
             return null;
         }
         List<String> path = new ArrayList<String>();
-        path.add(activeItemId);
+        if (!StringUtils.contains(clickedId, "shortcut:")) {
+            path.add(activeItemId);
+        }
         path.addAll(Arrays.asList(clickedId.replaceAll("^[^0-9]*", "").split(UIMenuComponent.VALUE_SEPARATOR)));
         return path.toArray(new String[path.size()]);
     }
 
-    private String[] getPathFromShortcut(String shortcut) {
+    private static String[] getPathFromShortcut(String shortcut) {
         return shortcut.replaceAll("^[^0-9]*", "").split(UIMenuComponent.VALUE_SEPARATOR);
     }
 
-    public void resetClickedId() {
-        clickedId = "";
-    }
+    public static class ShortcutClickedActionListener implements ActionListener, StateHolder {
 
-    public void resetClickedId(ActionEvent event) {
-        resetClickedId();
-    }
+        private String shortcut;
 
-    public void setupUserConsole(ActionEvent event) {
-        resetClickedId();
-        UserDetailsDialog userDetailsDialog = (UserDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "UserDetailsDialog");
-        userDetailsDialog.setupCurrentUser(event);
+        public ShortcutClickedActionListener() {
+            // for StateHolder
+        }
+
+        public ShortcutClickedActionListener(String shortcut) {
+            this.shortcut = shortcut;
+        }
+
+        @Override
+        public void processAction(ActionEvent actionEvent) throws AbortProcessingException {
+            MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME);
+            MenuBean.clearViewStack(getPathFromShortcut(shortcut)[0], "shortcut:sm" + shortcut);
+        }
+
+        @Override
+        public void restoreState(FacesContext context, Object state) {
+            Object values[] = (Object[]) state;
+            shortcut = (String) values[0];
+        }
+
+        @Override
+        public Object saveState(FacesContext context) {
+            Object[] values = new Object[4];
+            values[0] = shortcut;
+            return values;
+        }
+
+        @Override
+        public boolean isTransient() {
+            return false;
+        }
+
+        @Override
+        public void setTransient(boolean newTransientValue) {
+            // do nothing
+        }
+
     }
 
     // START: getters / setters

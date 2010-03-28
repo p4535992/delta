@@ -1,8 +1,5 @@
 package ee.webmedia.alfresco.document.search.web;
 
-import java.util.Map;
-import java.util.Stack;
-
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
@@ -10,7 +7,6 @@ import org.alfresco.web.app.servlet.FacesHelper;
 
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
-import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -22,22 +18,17 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
     private String searchValue;
 
     public void setup(ActionEvent event) {
-        
-        final FacesContext context = FacesContext.getCurrentInstance();
-        
+        documents = getDocumentSearchService().searchDocumentsQuick(searchValue);
+
         // Quick search must "reset the current dialog stack" and put the document list dialog as the base dialog into the stack.
         // Also in case of quick search the cancel button is not displayed (the whole button container is not rendered through 
         // container.jsp hack for DocumentListDialog). If there are more beans that need to sometimes display some buttons and sometimes
         // not. Then the hack should be refactored into new DialogManager isAnyButtonVisible method that asks this from then current 
         // bean (BaseDialogBean always returns true).
-        @SuppressWarnings("unchecked")
-        Map<String, Object> sessionMap = context.getExternalContext().getSessionMap();
-        sessionMap.put(UIMenuComponent.VIEW_STACK, new Stack<String>());
-        documents = getDocumentSearchService().searchDocumentsQuick(searchValue);
-        
-        MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
+        MenuBean.clearViewStack(String.valueOf(MenuBean.DOCUMENT_REGISTER_ID), null);
+
+        MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME);
         menuBean.collapseMenuItems(null);
-        menuBean.resetClickedId();
     }
 
     @Override

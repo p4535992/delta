@@ -7,7 +7,7 @@
 
 <a:panel id="page-controls1" styleClass="page-controls" style="font-size:9px">
    <h:outputText value="#{msg.items_per_page}" id="items-txt1" />
-   <h:selectOneMenu value="#{BrowseBean.pageSizeContentStr}" onchange="$jQ(this).parent().find('a').click();">
+   <h:selectOneMenu id="selPageSize" value="#{BrowseBean.pageSizeContentStr}" onchange="$jQ(this).parent().find('a').click();">
       <f:selectItem itemLabel="10" itemValue="10" />
       <f:selectItem itemLabel="20" itemValue="20" />
       <f:selectItem itemLabel="50" itemValue="50" />

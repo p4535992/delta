@@ -47,9 +47,6 @@ project.test=true
 # the url to log into CAS, i.e. https://cas.rutgers.edu/login
 cas.casServerUrl=https://localhost:8181/cas/
 
-# the name of the CAS client server, in the format: localhost:8080 or localhost:8443 or localhost or https://localhost:8443
-cas.clientServerName=localhost:8080
-
 # comma-separated list of usernames, who are granted administrator role at runtime
 #external.authentication.defaultAdministratorUserNames=
 
@@ -58,6 +55,11 @@ amr.service.url=http://10.203.128.32:8080/amr/services/AmrRequest
 
 # Enable session serialization filter in development
 #serializingfilter.enabled=false
+
+# This server's URL, must be exactly in the format of https://example.com:8181
+# * used when redirecting back from CAS to this server
+# * used in document links which are put in outgoing e-mails
+server.url=https://localhost:8181
 
 #
 # X-tee Configuration

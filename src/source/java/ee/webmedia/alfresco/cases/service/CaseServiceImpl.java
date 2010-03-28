@@ -58,7 +58,7 @@ public class CaseServiceImpl implements CaseService {
     
     @Override
     public boolean isClosed(Node node) {
-        return generalService.isExistingPropertyValueEqualTo(node, CaseModel.Props.STATUS, DocListUnitStatus.CLOSED);
+        return RepoUtil.isExistingPropertyValueEqualTo(node, CaseModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName());
     }
 
     @Override
@@ -143,8 +143,8 @@ public class CaseServiceImpl implements CaseService {
         }
         theCase.setVolumeNodeRef(volumeRef);
         theCase.setNode(getCaseNodeByRef(caseRef));
-        if (log.isDebugEnabled()) {
-            log.debug("Found case: " + theCase);
+        if (log.isTraceEnabled()) {
+            log.trace("Found case: " + theCase);
         }
         return theCase;
     }

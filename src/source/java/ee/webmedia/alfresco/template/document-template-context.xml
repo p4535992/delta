@@ -66,6 +66,7 @@
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="openOfficeConnection" ref="openOfficeConnection" />
+      <property name="serverUrl" value="${server.url}" /> 
    </bean>
 
    <bean id="DocumentTemplateService" class="org.springframework.aop.framework.ProxyFactoryBean">

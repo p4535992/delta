@@ -5,7 +5,7 @@
 	/*
 	TEXT
 	******************************/
-html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,textarea
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,textarea,input
 	{
 	font-family: Arial, sans-serif;
 	font-size: 12px;
@@ -14,7 +14,9 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
 }
 
 h2,h2 span {
-	font: normal 20px Georgia, 'Times New Roman', Times, serif;
+/*	font: normal 16px Georgia, 'Times New Roman', Times, serif;*/
+	font-size: 16px;
+	font-weight: normal;
 }
 
 #actions a,#actions li,#actions span {
@@ -104,6 +106,12 @@ a.action {
 		no-repeat center right;
 	color: #fff;
 	font-weight: normal;
+}
+
+#search select {
+	color: #444;
+	font-size: 11px;
+	margin-right: 5px;
 }
 
 #alfsearch_menu {
@@ -264,7 +272,7 @@ a.action {
 		
 			#sidebar > ul > li > ul > li > a,
 			#sidebar > ul > li .treeNode + .ygtvchildren .treeNode td:first-child {
-				background: url("../images/icons/expand-2.png") left center no-repeat;
+				background: url("../images/icons/expand-2.png") left 4px no-repeat;
 			}
 			#sidebar > ul > li .treeNode + .ygtvchildren .treeNode td:first-child {
 				background-position: right center;
@@ -284,11 +292,11 @@ a.action {
 			}
 			
 			#sidebar > ul > li .treeNode + .ygtvchildren .treeNode.expanded td:first-child {
-				background: url("../images/icons/collapse-2.png") right center no-repeat;
+				background: url("../images/icons/collapse-2.png") right 4px no-repeat;
 			}
 			
 			#sidebar > ul > li > ul > li.expanded > a {
-				background: url("../images/icons/collapse-2.png") left center no-repeat;
+				background: url("../images/icons/collapse-2.png") left 4px no-repeat;
 			}
 				
 		/* Level 3 */
@@ -297,7 +305,7 @@ a.action {
 			
 		}
 		#sidebar > ul > li > ul > li > ul > li > a {
-			background: url("../images/icons/expand-3.png") 10px center no-repeat;
+			background: url("../images/icons/expand-3.png") 10px 3px no-repeat;
 		}
 		
 		#sidebar > ul > li > ul > li > ul > li > a,
@@ -333,7 +341,7 @@ a.action {
 			background: url("../images/icons/collapse-3.png") right 3px no-repeat;
 		}
 		#sidebar > ul > li > ul > li > ul > li.expanded > a {
-			background: url("../images/icons/collapse-3.png") 10px center no-repeat;
+			background: url("../images/icons/collapse-3.png") 10px 3px no-repeat;
 		}
 		
 		#sidebar > ul > li .treeNode + .ygtvchildren .ygtvchildren .treeNode.expanded .treeNodeLabel,
@@ -387,6 +395,12 @@ a.action {
 .breadcrumb {
 	background: #fafafa none repeat scroll 0 0;
 	border: 1px solid #D7D9DB;
+}
+
+.breadcrumb-link {
+	background: url("../images/icons/breadcrumb-link.png") no-repeat 7px 5px;
+	padding-left: 16px;
+	font-size: 11px;
 }
 
 /*
@@ -459,10 +473,12 @@ a.action {
 .panel-wrapper h3 {
 	background: url("../images/parts/panel-wrapper-bg.png") repeat-x;
 	font-weight: bold;
+	cursor: pointer;
 }
 
 .panel-wrapper h3 a {
 	color: #000;
+	
 }
 
 .panel-border {
@@ -472,6 +488,12 @@ a.action {
 .message {
 	background: #ECFAFF;
 	border: 1px solid #99D6F9;
+	line-height: 16px;
+}
+
+.message-red {
+    background: #FFEFEF;
+	border: 1px solid #C9101A;
 	line-height: 16px;
 }
 
@@ -512,17 +534,21 @@ a.action {
 	TABLES
 	******************************/
 th {
-	font-size: 12px;
 	font-weight: bold;
 	border-bottom: 1px dotted #cacfd3;
+	padding-bottom: 5px;
 }
 
-th,th a,th span {
+th,
+th a,
+th span {
 	color: #1f426d;
 }
 
-tr.recordSetRow td,tr.recordSetRow td span,tr.recordSetRowAlt td,tr.recordSetRowAlt span,td.more-actions-column a {
-	font-size: 11px;
+tr.recordSetRow td, tr.recordSetRow td span, tr.recordSetRow td a,
+tr.recordSetRowAlt td, tr.recordSetRowAlt span, tr.recordSetRowAlt td a,
+td.more-actions-column a {
+	font-size: 12px;
 }
 
 tr.recordSetRowAlt,.odd {
@@ -554,7 +580,6 @@ tr.overdue td:first-child a:first-child {
 
 .pager {
 	color: #666 !important;
-	font-size: 11px;
 }
 
 .pager a {
@@ -571,35 +596,48 @@ tr.overdue td:first-child a:first-child {
 	text-align: center;
 }
 
+#titlebar-dialog-buttons-panel,
+#titlebar-wizard-buttons-panel {
+	float: right;
+	margin-top: -3px;
+}
+
 /*
 	GENERIC BUTTONS
 	******************************/
 input[type="submit"] {
-	background: url("../images/parts/button-active-bg.png") repeat-x;
+	background: url("../images/parts/button-submit-bg.png") repeat-x;
 	color: #fff;
 	font-weight: bold;
 	border: none;
 }
 
-input[type="submit"]:hover {
-	background: url("../images/parts/button-hover-bg.png") repeat-x;
+input[type="submit"]:hover,
+input[type="submit"]:focus {
+	background-position: 0 -23px;
 }
 
-input[type="submit"]:active,inputinput[type="submit"]:focus {
-	background: url("../images/parts/button-pressed-bg.png") repeat-x;
+input[type="submit"]:active {
+	background-position: 0 -46px;
 }
 
-input[disabled="disabled"],input[disabled],input[disabled="disabled"]:hover,input[disabled]:hover
-	{
-	background: url("../images/parts/button-deactive-bg.png") repeat-x;
+input[disabled="disabled"],
+input[disabled],
+input[disabled="disabled"]:hover,
+input[disabled]:hover {
+	background-position: 0 -69px;
 	font-weight: normal;
 }
 
-input[readonly="readonly"] {
-	background: #ddd;
+input[readonly="readonly"],
+input[readonly] {
+	background: #ddd !important; /* overrides various background images */
 	border: 1px solid #ccc;
 }
-textarea[readonly="readonly"] {
+textarea[readonly="readonly"],
+textarea[readonly],
+select[disabled="disabled"],
+select[disabled] {
 	background: #ddd;
 	border: 1px solid #ccc;
 }
@@ -726,32 +764,31 @@ textarea[readonly="readonly"] {
 }
 
 .folder {
-	background: url("../images/icons/folder-small-gray.png") no-repeat 7px
-		center;
+	background: url("../images/icons/folder-small-gray.png") no-repeat 7px center;
 }
 
 .file {
-	background: url("../images/icons/file-small-gray.png") no-repeat 7px
-		center;
+	background: url("../images/icons/file-small-gray.png") no-repeat 7px center;
 }
 
 .search {
-	background: url("../images/icons/search-small-gray.png") no-repeat 7px
-		center;
+	background: url("../images/icons/search-small-gray.png") no-repeat 7px center;
 }
 
 hr {
 	border: none;
 	border-top: 1px dotted #ccc;
-	margin: 15px 0 15px 0;
+	margin: 10px 0;
 }
 
 .propertiesLabel {
 	text-align: right;
 	font-weight: bold;
 	vertical-align: top;
-	line-height: 16px;
-	width: 10%;
+	line-height: 20px;
+	/* width: 10%; */
+	padding-top: 2px;
+	padding-bottom: 2px;
 }
 
 .secondary {
@@ -764,29 +801,41 @@ hr {
 
 .propertiesLabel + td {
 	line-height: 20px;
-	padding-left: 10px;
-	padding-top: 2px;
+	padding: 2px 10px;
+	vertical-align: bottom;
+}
+
+.propertiesLabel + td table td select {
+	vertical-align: top;
+}
+
+.propertiesLabel + td table.recipient td {
+	vertical-align: bottom;
+}
+
+.propertiesLabel + td td {
+	line-height: 20px;
+	vertical-align: top;
 }
 
 textarea {
 	width: 100%;
 }
 
-input, textarea {
-	font-family: "Arial" !important;
-	font-size: 12px !important;
-}
-
 input.text {
 	width: 320px;
 }
 
-input.small {
-	width: 100px;
+input.small, textarea.small, select.small {
+	width: 100px !important;
 }
 
-input.medium {
-	width: 153px;
+input.medium, textarea.medium, select.medium {
+	width: 153px !important;
+}
+
+input.long, textarea.long, select.long {
+	width: 300px !important;
 }
 
 .multiE > thead > tr > th {
@@ -890,7 +939,6 @@ input.medium {
 
 .search {
 	background: url("../images/icons/search_icon.gif") no-repeat;
-	line-height: 20px;
 }
 
 .pdf {
@@ -927,14 +975,40 @@ table.recipient th {
 */
 
 #metadata-panel td input, #metadata-panel td textarea, #file-upload td textarea, .subPropSheet > tbody > tr > td > input {
-	width: 300px;
+	width: 100%;/* 300px;*/
 }
 .subPropertySheetTR td input, .subPropertySheetTR td textarea, .subPropertySheetTR td textarea {
-	width: 300px !importaint;
+	width: 100%;/* 300px !important; */
 }
 
+#metadata-panel td select {
+	min-width: 300px;
+	width: auto !important;
+	width: 300px;
+}
+
+#metadata-panel .subPropertySheetTR select {
+	min-width: 100px;
+	width: auto;
+}
+
+#metadata-panel table.subPropSheet,
+#metadata-panel table:first-child {
+	width: 100%;
+}
+
+#metadata-panel table.recipient {
+	width: auto;
+}
+
+/*
 .subPropertySheetTR .propertiesLabel + td > input {
 	width: 300px !important;
+}
+*/
+
+.subPropertySheetTR > td {
+	padding-top: 15px;
 }
 
 #metadata-panel td td input {
@@ -942,11 +1016,16 @@ table.recipient th {
 }
 
 #metadata-panel input.date {
-	width: 100px;
+	width: 65px;
+	text-align: center;
 }
 
 #metadata-panel .modalpopup-content input {
 	width: auto;
+}
+
+#metadata-panel div.modalpopup-content td select {
+	width: 100% !important;
 }
 
 #send-out-panel td #editor {
@@ -961,6 +1040,10 @@ table.recipient th {
 
 #send-out-panel td td input[type="text"] {
 	width: 180px;
+}
+
+#send-out-panel td td textarea.medium {
+	width: 180px !important;
 }
 
 #send-out-panel td td select {
@@ -980,19 +1063,39 @@ img.requiredField {
 }
 
 /* style for component that enables to create new case while creating document */
-.assignCaseInput.aoscModal-newCase {
+
+#aoscModal-container {
+	padding-left: 5px;
+	padding-right: 5px;
+}
+
+#aoscModal-container table,
+.assignCaseInput {
 	width: 100%;
 }
 
-input[type="radio"].aoscModal-selectCase {
-	margin-right: 4px;
+#aoscModal-container table {
+	margin-top: 10px;
 }
+
+input[type="radio"].aoscModal-selectCase,
 input[type="radio"].aoscModal-newCase {
 	margin-right: 4px;
+	margin-bottom: 5px;
+	vertical-align: middle;
 }
+
+#aoscModal-container input[type="submit"] {
+	margin: 10px 0;
+}
+
 
 table.expand5-200 {
 	width: 100%;
+}
+
+table.table-padding td {
+	padding: 3px 0;
 }
 
 table.recipient td {
@@ -1035,6 +1138,10 @@ table.recipient td {
 
 .margin-right-4 {
 	margin-right: 4px;
+}
+
+.margin-top-10 {
+	margin-top: 10px;
 }
 
 .overflow-wrapper {
@@ -1542,11 +1649,17 @@ DIV.modalpopup-footer P.action {
 	clear: right;
 }
 
-.incomingLetter > span {
-	color: #1E4975 !important;	
+.taskOverdue span,
+.taskOverdue a {
+	color: #C11920;	
 }
-.outgoingLetter > span {
-	color: green !important;	
+.incomingLetter span,
+.incomingLetter a {
+	color: #0860B0;	
+}
+.outgoingLetter span,
+.outgoingLetter a {
+	color: #1A8922;	
 }
 /* FORUMS */
 
@@ -1617,10 +1730,14 @@ DIV.modalpopup-footer P.action {
 
 .task-details-resolution,
 .workflow-resolution td {
-	padding: 5px 5px 10px;
+	padding: 5px 25px 10px;
 	background-color: #F7F7F7;
 	border-bottom: 2px solid #ccc;
 	margin-bottom: 5px;
+}
+
+.toggle-task-view {
+	margin: 0 4px;
 }
 
 .workflow-details > td {
@@ -1629,6 +1746,15 @@ DIV.modalpopup-footer P.action {
 
 .workflow-details.last > td {
 	padding-bottom: 0px;
+}
+
+.task-sheet-buttons {
+	text-align: right;
+	display: block;
+}
+
+.task-sheet-buttons input {
+	margin-left: 5px;
 }
 
 .up4px {
@@ -1641,4 +1767,12 @@ DIV.modalpopup-footer P.action {
 
 TH A.header-wrap {
    white-space: normal !important;
+}
+
+.selectBoundWithText {
+	margin-bottom: 4px;
+}
+
+.no-wrap {
+	white-space: nowrap;
 }

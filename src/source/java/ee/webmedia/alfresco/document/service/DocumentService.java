@@ -14,6 +14,7 @@ import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
+import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -330,15 +331,13 @@ public interface DocumentService {
 
     void prepareDocumentSigning(NodeRef document);
 
+    /**
+     * @throws SignatureRuntimeException
+     */
     void finishDocumentSigning(SignatureTask task, String signatureHex);
 
-    SignatureDigest prepareDocumentDigest(NodeRef document, String certHex);
+    SignatureDigest prepareDocumentDigest(NodeRef document, String certHex) throws SignatureException;
     
-    /**
-     * @return document log service
-     */
-    DocumentLogService getDocumentLogService(); // FIXME very ugly
-
     List<Document> getFavorites();
 
     boolean isFavorite(NodeRef document);

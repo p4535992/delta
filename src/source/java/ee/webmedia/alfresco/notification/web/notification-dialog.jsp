@@ -12,7 +12,7 @@
 
 <r:propertySheetGrid value="#{NotificationDialog.userPrefsNode}" var="r" finishButtonId="dialog:finish-button">
 
-   <h:panelGrid columns="2">
+   <h:panelGrid columns="2" styleClass="table-padding">
 
       <h:selectBooleanCheckbox value="#{r.properties['{http://alfresco.webmedia.ee/model/notification/1.0}newTaskNotification']}" />
       <h:outputText value="#{msg.notification_newTaskNotification_label}" />

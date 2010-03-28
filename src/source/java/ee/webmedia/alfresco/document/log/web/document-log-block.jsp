@@ -10,7 +10,7 @@
 <a:panel id="document-block-block-panel" label="#{msg.document_log_title}" styleClass="panel-100" progressive="true" rendered="#{DocumentLogBlockBean.rendered}"
    expanded="#{DocumentLogBlockBean.expanded}" expandedActionListener="#{DocumentLogBlockBean.expandedAction}">
 
-   <a:richList id="sendOutList" viewMode="details" value="#{DocumentLogBlockBean.documentLogs}" var="r" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+   <a:richList id="logList" viewMode="details" value="#{DocumentLogBlockBean.documentLogs}" var="r" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="createdDateTime">
 
       <a:column id="col1">

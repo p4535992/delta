@@ -305,7 +305,7 @@ public class UIDialogButtons extends SelfRenderingComponent
             ComponentConstants.JAVAX_FACES_OUTPUT);
       spacingRow.setRendererType(ComponentConstants.JAVAX_FACES_TEXT);
       FacesHelper.setupComponentId(context, spacingRow, null);
-      spacingRow.setValue("<br />");
+      spacingRow.setValue("&nbsp;");
       spacingRow.getAttributes().put("escape", Boolean.FALSE);
       this.getChildren().add(spacingRow);
    }

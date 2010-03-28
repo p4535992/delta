@@ -15,6 +15,7 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.users.UsersBeanProperties;
 import org.alfresco.web.bean.users.UsersDialog;
+import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
@@ -31,13 +32,23 @@ public class UserDetailsDialog extends BaseDialogBean {
     private SubstituteListDialog substituteListDialog;
 
     private Node user;
+    public static final String NOTIFICATION_SENDER_LABEL = "NotificationSender";
 
     @Override
     public void init(Map<String, String> parameters) {
         super.init(parameters);
         substituteListDialog = new SubstituteListDialog();
         substituteListDialog.setUserNodeRef(user.getNodeRef());
+        setNotificationSender();
         substituteListDialog.refreshData();
+    }
+
+    private void setNotificationSender() {
+        SubstituteListDialog.NotificationSender notificationSender =
+                (SubstituteListDialog.NotificationSender) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), NOTIFICATION_SENDER_LABEL);
+        if (notificationSender != null) {
+            substituteListDialog.setNotificationSender(notificationSender);
+        }        
     }
 
     /*

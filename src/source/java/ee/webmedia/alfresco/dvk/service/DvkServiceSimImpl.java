@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentWriter;
@@ -21,6 +22,7 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
@@ -41,6 +43,7 @@ import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.GetSendSta
 public class DvkServiceSimImpl extends DvkServiceImpl {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DvkServiceSimImpl.class);
     private DocumentService documentService;
+    private DocumentLogService documentLogService;
     private DocumentSearchService documentSearchService;
 
     @Override
@@ -89,8 +92,9 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         props.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.DVK);
 
         final Node document = documentService.createDocument(DocumentSubtypeModel.Types.INCOMING_LETTER, dvkIncomingFolder, props);
-
-        return document.getNodeRef();
+        final NodeRef docRef = document.getNodeRef();
+        documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", "DVK"), I18NUtil.getMessage("document_log_creator_dvk"));
+        return docRef;
     }
 
     private void fillPropsFromDvkReceivedDocument(DvkReceivedDocument rd, Map<QName, Serializable> props) {
@@ -164,6 +168,10 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
+    }
+
+    public void setDocumentLogService(DocumentLogService documentLogService) {
+        this.documentLogService = documentLogService;
     }
     // END: getters / setters
 

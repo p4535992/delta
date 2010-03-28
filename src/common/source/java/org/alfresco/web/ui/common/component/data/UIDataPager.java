@@ -203,7 +203,7 @@ public class UIDataPager extends UICommand
       
       Object objType = getAttributes().get("dataPagerType");
       
-      PagerType type = PagerType.TRACKPAGE;
+        PagerType type = PagerType.STANDARD;// TRACKPAGE;
       if (objType instanceof String)
       {
          try

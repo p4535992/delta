@@ -28,7 +28,7 @@
             <value>ab:personLastName</value>
             <value>ab:orgName</value>
             <value>ab:orgAltName</value>
-<!-- The following value must remain in TK project -->
+<!-- The following value must remain in TK project, do i have to remember this every time? -->
 <!-- <value>ab:orgCode</value> -->
             <value>ab:orgAcronym</value>
          </set>

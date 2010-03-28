@@ -11,8 +11,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
+import javax.servlet.ServletContext;
 
 import net.sf.jooreports.openoffice.connection.OpenOfficeConnection;
 
@@ -34,6 +34,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.tools.ant.util.DateUtils;
 import org.springframework.util.Assert;
+import org.springframework.web.context.ServletContextAware;
 
 import com.sun.star.beans.PropertyValue;
 import com.sun.star.container.XIndexAccess;
@@ -71,7 +72,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 /**
  * @author Kaarel Jõgeva
  */
-public class DocumentTemplateServiceImpl implements DocumentTemplateService {
+public class DocumentTemplateServiceImpl implements DocumentTemplateService, ServletContextAware {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentTemplateServiceImpl.class);
 
@@ -86,6 +87,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
     private FileFolderService fileFolderService;
     private DocumentLogService documentLogService;
     private OpenOfficeConnection openOfficeConnection;
+    private String serverUrl;
+    private ServletContext servletContext;
 
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
     static {
@@ -111,7 +114,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
                 } catch (Exception e) {
                     log.error("Replacing failed!", e);
                     // Clean up and inform the dialog
-                    throw new RuntimeException();
+                    throw new RuntimeException(e);
                 }
 
             }
@@ -149,19 +152,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
     @Override
     public void populateTemplate(NodeRef documentNodeRef) throws FileNotFoundException {
 
-        log.debug("Processing document: " + documentNodeRef);
+        log.debug("Creating a file from template for document: " + documentNodeRef);
         Map<QName, Serializable> docProp = nodeService.getProperties(documentNodeRef);
-        // Set document filename's extension from template
-        String docName = FilenameUtil.stripForbiddenWindowsCharacters((String) docProp.get(DocumentCommonModel.Props.DOC_NAME));
-        int i = 1;
-        while (fileFolderService.searchSimple(documentNodeRef, docName + "." + mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD)) != null) {
-            if (i > 1) {
-                docName = docName.substring(0, docName.lastIndexOf("(") - 1);
-            }
-            docName = docName.concat(" (" + i + ")");
-            i++;
-        }
-        String name = FilenameUtil.buildFileName(docName, mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD));
+
+        String name = FilenameUtil.buildFileName((String) docProp.get(DocumentCommonModel.Props.DOC_NAME), mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD));
+        name = generalService.getUniqueFileName(documentNodeRef, name);
 
         String templName = "";
         if (docProp.get(DocumentSpecificModel.Props.TEMPLATE_NAME) != null) {
@@ -185,12 +180,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
         nodeService.setProperty(populatedTemplate.getNodeRef(), ee.webmedia.alfresco.document.file.model.File.GENERATED, true); // Set generated flag so we can
         // process it during document
         // registration
-        documentLogService.addDocumentLog(documentNodeRef, I18NUtil.getMessage("document_log_status_fileAdded", new Object[] { name }));
+        documentLogService.addDocumentLog(documentNodeRef, I18NUtil.getMessage("document_log_status_fileAdded", name));
         log.debug("Created new node: " + populatedTemplate.getNodeRef() + "\nwith name: " + name);
         // Set document content's mimetype and encoding from template
         ContentWriter documentWriter = fileFolderService.getWriter(populatedTemplate.getNodeRef());
-        documentWriter.setMimetype(templateReader.getMimetype());
-        documentWriter.setEncoding(templateReader.getEncoding());
+        documentWriter.setMimetype(MimetypeMap.MIMETYPE_WORD);
 
         try {
             replace(templateReader, documentWriter, docProp);
@@ -202,7 +196,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
 
             // Clean up and inform the dialog
             fileFolderService.delete(populatedTemplate.getNodeRef());
-            throw new RuntimeException();
+            throw new RuntimeException(e);
         }
     }
 
@@ -212,12 +206,14 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
         if(templateText.indexOf("{volumeDispositionDateNotificationData}") > -1) {
             for (Volume vol : volumes) {
                 sb.append(vol.getVolumeMark())
-                        .append(" ")
-                        .append(vol.getTitle())
-                        .append(" (")
-                        .append(DateUtils.format(vol.getDispositionDate(), DATE_FORMAT))
-                        .append(")")
-                        .append("<br>\n");
+                .append(" ")
+                .append(vol.getTitle())
+                .append(" (")
+                .append(I18NUtil.getMessage("notification_dispostition_date"))
+                .append(": ")
+                .append(DateUtils.format(vol.getDispositionDate(), DATE_FORMAT))
+                .append(")")
+                .append("<br>\n");
             }
             if(sb.length() > 0) {
                 templateText = templateText.replaceAll("\\{volumeDispositionDateNotificationData\\}", sb.toString());
@@ -234,8 +230,17 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
             StringBuilder sb = new StringBuilder();
             for (Document doc : documents) {
                 if (doc.getAccessRestrictionEndDate() != null) {
-                    sb.append(doc.getRegNumber())
-                    .append(" (AK piirangu lõpp: ") // TODO - Hakkan usinaks ja liigutan tõlked välja :)
+                    String regNr = "";
+                    if(doc.getRegNumber() != null) {
+                        regNr = doc.getRegNumber();
+                    } else {
+                        regNr = I18NUtil.getMessage("notification_document_not_registered", doc.getDocName());
+                    }
+
+                    sb.append(regNr)
+                    .append(" (")
+                    .append(I18NUtil.getMessage("notification_access_restriction_end"))
+                    .append(": ") 
                     .append(DateUtils.format(doc.getAccessRestrictionEndDate(), DATE_FORMAT))
                     .append(")")
                     .append("<br>\n");
@@ -308,51 +313,52 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
     }
 
     private void replace(ContentReader reader, ContentWriter writer, Map<QName, Serializable> properties) throws Exception {
+        long startTime = System.currentTimeMillis();
 
         // create temporary file to replace from
         File tempFromFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "."
                 + mimetypeService.getExtension(reader.getMimetype()));
-        // download the content from the source reader
+        log.debug("Copying file from contentstore to temporary file: " + tempFromFile + "\n  " + reader);
         reader.getContent(tempFromFile);
 
-        String url = toUrl(tempFromFile);
-        log.debug("Loading data from URL: " + url);
-        XComponent xComponent = loadComponent(url);
+        String tempFromFileurl = toUrl(tempFromFile);
+        log.debug("Loading file into OpenOffice from URL: " + tempFromFileurl);
+        XComponent xComponent = loadComponent(tempFromFileurl);
 
         XTextDocument xTextDocument = (XTextDocument) UnoRuntime.queryInterface(XTextDocument.class, xComponent);
-
         XSearchDescriptor xSearchDescriptor;
         XSearchable xSearchable = null;
-
         xSearchable = (XSearchable) UnoRuntime.queryInterface(XSearchable.class, xTextDocument);
-
         // You need a descriptor to set properies for Replace
         xSearchDescriptor = xSearchable.createSearchDescriptor();
         xSearchDescriptor.setPropertyValue("SearchRegularExpression", Boolean.TRUE);
         // Set the properties the replace method need
         xSearchDescriptor.setSearchString(REGEXP_PATTERN);
         XIndexAccess findAll = xSearchable.findAll(xSearchDescriptor);
-        log.debug("Found " + findAll.getCount() + " pattern matches");
+        log.debug("Processing file contents, found " + findAll.getCount() + " pattern matches");
         for (int i = 0; i < findAll.getCount(); i++) {
             Object byIndex = findAll.getByIndex(i);
             XTextRange xTextRange = (XTextRange) UnoRuntime.queryInterface(XTextRange.class, byIndex);
             xTextRange.setString(getReplaceString(xTextRange.getString(), properties));
         }
-
         XRefreshable refreshable = (XRefreshable) UnoRuntime.queryInterface(XRefreshable.class, xComponent);
         if (refreshable != null) {
             refreshable.refresh();
         }
-        log.debug("Temporary file size is: " + tempFromFile.length());
-        XStorable storable = (XStorable) UnoRuntime.queryInterface(XStorable.class, xComponent);
-        PropertyValue[] storeProps = new PropertyValue[0];
+
         File tempToFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "."
                 + mimetypeService.getExtension(reader.getMimetype()));
-
-        storable.storeToURL(toUrl(tempToFile), storeProps); // Second replacing run requires new URL
-        log.debug("New URL is " + storable.getLocation() + "(old was " + url + ")");
+        String tempToFileUrl = toUrl(tempToFile);
+        log.debug("Saving file from OpenOffice to URL: " + tempToFileUrl);
+        PropertyValue[] storeProps = new PropertyValue[1];
+        storeProps[0] = new PropertyValue();
+        storeProps[0].Name = "FilterName";
+        storeProps[0].Value = "MS Word 97"; // "Microsoft Word 97/2000/XP"
+        XStorable storable = (XStorable) UnoRuntime.queryInterface(XStorable.class, xComponent);
+        storable.storeToURL(tempToFileUrl, storeProps); // Second replacing run requires new URL
 
         writer.putContent(tempToFile);
+        log.debug("Copied file back to contentstore from temporary file: " + tempToFile + "\n  " + writer + "\nEntire replacement took " + (System.currentTimeMillis() - startTime) + " ms");
     }
 
     private String getReplaceString(String foundPattern, Map<QName, Serializable> properties) {
@@ -365,7 +371,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
         for (QName key : properties.keySet()) {
             Serializable prop = properties.get(key);
             if (key.getLocalName().equals(pattern) && prop != null) {
-                log.debug("Found property from document node: " + key);
+                if (log.isTraceEnabled()) {
+                    log.trace("Found property from document node: " + key);
+                }
 
                 if (prop instanceof ArrayList<?>) {
                     List<?> list = (ArrayList<?>) prop;
@@ -463,9 +471,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
         }
 
         if (pattern.equals("docUrl")) {
-            final ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-            return "http://" + externalContext.getRequestHeaderMap().get("host") + externalContext.getRequestContextPath() + "/n/document/"
-                    + properties.get(ContentModel.PROP_NODE_UUID);
+            return serverUrl + servletContext.getContextPath() + "/n/document/" + properties.get(ContentModel.PROP_NODE_UUID);
         }
 
         return foundPattern;
@@ -628,7 +634,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
                 return template;
             }
         }
-        throw new DocumentTemplateNotFoundException("Template with name '" + templateName + "' not found under " + getRoot());
+        return null;
     }
 
     // START: getters / setters
@@ -659,6 +665,17 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService {
     public void setOpenOfficeConnection(OpenOfficeConnection openOfficeConnection) {
         this.openOfficeConnection = openOfficeConnection;
     }
+    
+    public void setServerUrl(String serverUrl) {
+        this.serverUrl = serverUrl;
+    }
+
+    @Override
+    public void setServletContext(ServletContext servletContext) {
+        this.servletContext = servletContext;
+    }
+    
     // END: getters / setters
+
 
 }

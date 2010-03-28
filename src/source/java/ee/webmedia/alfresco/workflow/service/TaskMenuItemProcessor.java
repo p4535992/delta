@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.service;
 
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.service.namespace.QName;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -21,7 +22,9 @@ public class TaskMenuItemProcessor implements MenuItemProcessor, InitializingBea
         QName taskType = QName.createQName(menuItem.getProcessor());
 
         int count = documentSearchService.getCurrentUsersTaskCount(taskType);
-
+        if(menuItem.getTitle() == null) {
+            menuItem.setTitle(I18NUtil.getMessage(menuItem.getTitleId()));
+        }
         String title = menuItem.getTitle();
         int firstBrace = -1;
         if (title.endsWith(")")) {

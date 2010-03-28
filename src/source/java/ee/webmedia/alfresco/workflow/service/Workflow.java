@@ -20,9 +20,9 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
     private CompoundWorkflow parent;
     private List<Task> tasks = new ArrayList<Task>();
     private List<Task> removedTasks = new ArrayList<Task>();
-    private WmNode newTaskTemplate;
-    private Class<? extends Task> newTaskClass;
-    private int newTaskOutcomes;
+    protected WmNode newTaskTemplate;
+    protected Class<? extends Task> newTaskClass;
+    protected int newTaskOutcomes;
 
     protected static <T extends Workflow> T create(Class<T> workflowClass, WmNode node, CompoundWorkflow parent, WmNode newTaskTemplate,
             Class<? extends Task> newTaskClass, int newTaskOutcomes) {
@@ -44,6 +44,25 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
         this.newTaskClass = newTaskClass;
         Assert.notNull(newTaskOutcomes);
         this.newTaskOutcomes = newTaskOutcomes;
+    }
+
+    protected Workflow copy(CompoundWorkflow copyParent) {
+        // no need to copy newTaskTemplate, it is not changed ever
+        return copyImpl(new Workflow(getNode().copy(), copyParent, newTaskTemplate, newTaskClass, newTaskOutcomes));
+    }
+
+    @Override
+    protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
+        Workflow workflow = (Workflow) super.copyImpl(copy);
+        for (Task task : tasks) {
+            workflow.tasks.add(task.copy(workflow));
+        }
+        for (Task removedTask : removedTasks) {
+            workflow.removedTasks.add(removedTask.copy(workflow));
+        }
+        @SuppressWarnings("unchecked")
+        T result = (T) workflow;
+        return result;
     }
 
     protected void postCreate() {

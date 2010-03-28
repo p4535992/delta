@@ -26,6 +26,7 @@ import org.apache.log4j.Logger;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.signature.exception.SignatureException;
+import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
@@ -239,8 +240,7 @@ public class SignatureDialog extends BaseDialogBean {
             session.setAttribute("digest", signatureDigest.getDigestHex());
             session.setAttribute("operation", "FINALIZE");
         } catch (SignatureException e) {
-            log.warn(e.getMessage(), e);
-            Utils.addErrorMessage(Application.getMessage(FacesContext.getCurrentInstance(), "ddoc_signature_failed"));
+            SignatureBlockBean.addSignatureError(e);
         }
     }
 
@@ -252,9 +252,8 @@ public class SignatureDialog extends BaseDialogBean {
         if (isDigiDoc()) {
             try {
                 getSignatureService().addSignature(nodeRef, signatureDigest, signatureHex);
-            } catch (SignatureException e) {
-                log.warn(e.getMessage(), e);
-                Utils.addErrorMessage(Application.getMessage(FacesContext.getCurrentInstance(), "ddoc_signature_failed"));
+            } catch (SignatureRuntimeException e) {
+                SignatureBlockBean.addSignatureError(e);
                 return null;
             }
         } else {
@@ -263,9 +262,8 @@ public class SignatureDialog extends BaseDialogBean {
             try {
                 // update the reference to the newly created DigiDoc
                 nodeRef = getSignatureService().createContainer(parentRef, nodeRefs, filename, signatureDigest, signatureHex);
-            } catch (SignatureException e) {
-                log.warn(e.getMessage(), e);
-                Utils.addErrorMessage(Application.getMessage(FacesContext.getCurrentInstance(), "ddoc_signature_failed"));
+            } catch (SignatureRuntimeException e) {
+                SignatureBlockBean.addSignatureError(e);
                 return null;
             } catch (FileExistsException e) {
                 if (log.isDebugEnabled()) {

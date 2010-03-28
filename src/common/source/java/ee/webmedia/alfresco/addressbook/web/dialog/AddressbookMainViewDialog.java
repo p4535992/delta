@@ -200,7 +200,11 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         Map<QName, Serializable> props = getNodeService().getProperties(new NodeRef(nodeRef));
 
         String name;
-        if (getNodeService().getType(new NodeRef(nodeRef)).equals(Types.ORGANIZATION)) {
+        QName type = getNodeService().getType(new NodeRef(nodeRef));
+        if (type.equals(Types.CONTACT_GROUP)) {
+            name = (String) props.get(AddressbookModel.Props.GROUP_NAME);    
+        }
+        else if (type.equals(Types.ORGANIZATION)) {
             name = (String) props.get(AddressbookModel.Props.ORGANIZATION_NAME);
         } else {
             name = UserUtil.getPersonFullName((String) props.get(AddressbookModel.Props.PERSON_FIRST_NAME), (String) props.get(AddressbookModel.Props.PERSON_LAST_NAME));

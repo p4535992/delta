@@ -8,7 +8,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="classificators-panel" styleClass="panel-100" label="#{msg.classificators_values_list}" progressive="true">
+<a:panel id="classificators-panel" styleClass="panel-100 with-pager" label="#{msg.classificators_values_list}" progressive="true">
 
    <%-- Classificator Values List --%>
    <a:richList id="classificatorsDetailsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"

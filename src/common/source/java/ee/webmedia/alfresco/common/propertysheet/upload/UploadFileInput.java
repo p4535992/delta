@@ -16,9 +16,11 @@ import org.alfresco.web.bean.FileUploadBean;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.service.IClonable;
+
 public class UploadFileInput extends UIInput implements NamingContainer {
 
-    public static class FileWithContentType implements Serializable {
+    public static class FileWithContentType implements Serializable, IClonable {
         private static final long serialVersionUID = 1L;
 
         public File file;
@@ -29,6 +31,11 @@ public class UploadFileInput extends UIInput implements NamingContainer {
             this.file = file;
             this.contentType = contentType;
             this.fileName = fileName;
+        }
+        
+        @Override
+        public Object clone() {
+            return new FileWithContentType(file, contentType, fileName);
         }
     }
     

@@ -32,7 +32,7 @@
 </script>
 </f:verbatim>
 
-<a:panel id="users-panel" styleClass="panel-100" label="#{msg.users_list}" progressive="true">
+<a:panel id="users-panel" styleClass="panel-100 with-pager" label="#{msg.users_list}" progressive="true">
 
    
    <a:panel id="search-panel">

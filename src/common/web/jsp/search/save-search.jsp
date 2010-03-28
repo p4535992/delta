@@ -73,7 +73,7 @@
    <h:panelGrid columns="2" cellpadding="0" cellspacing="0" columnClasses="propertiesLabel,">
 
       <h:panelGroup>
-         <h:graphicImage value="/images/icons/required_field.gif" alt="#{msg.requireds_field}" />
+         <f:verbatim escape="false"><span class="red">* </span></f:verbatim>
          <h:outputText value="#{msg.name}" />
       </h:panelGroup>
       <h:inputText id="name" value="#{SearchProperties.searchName}" size="35" maxlength="1024" onkeyup="javascript:checkButtonState();"

@@ -234,6 +234,9 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>
+            <property name="doccom:searchableSubNodeProperties">
+               <type>d:text</type>
+            </property>
          </properties>
       </aspect>
 

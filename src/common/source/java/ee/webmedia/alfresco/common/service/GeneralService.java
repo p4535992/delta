@@ -87,6 +87,9 @@ public interface GeneralService {
     void setPropertiesIgnoringSystem(Map<QName, Serializable> properties, NodeRef nodeRef);
 
     Map<QName, Serializable> getPropertiesIgnoringSystem(Map<String, Object> nodeProps);
+    
+    /** the same as {@link #getPropertiesIgnoringSystem(Map)}, but different generic types*/
+    Map<QName, Serializable> getPropertiesIgnoringSys(Map<QName, Serializable> nodeProps);
 
     /**
      * For each property value of {@code FileWithContentType} class, save file content to repository and replace property value with {@link ContentData} object.
@@ -105,14 +108,6 @@ public interface GeneralService {
      * @return dorect primary parent node if it has givent parentType, null otherwise
      */
     Node getParentWithType(NodeRef childRef, QName parentType);
-    
-    /**
-     * @param node
-     * @param property
-     * @param testEqualityValue
-     * @return true if given node has property with given qName that equals to equalityTestValue, false otherwise
-     */
-    boolean isExistingPropertyValueEqualTo(Node node, final QName property, final Object equalityTestValue);
 
     /**
      * Return default property values defined in model.
@@ -130,6 +125,8 @@ public interface GeneralService {
      * @return the anonymous type definition
      */
     TypeDefinition getAnonymousType(QName type);
+
+    TypeDefinition getAnonymousType(Node node);
 
     void saveAddedAssocs(Node node);
 
@@ -163,5 +160,7 @@ public interface GeneralService {
      * @return ByteArrayOutputStream with zip file bytes
      */
     ByteArrayOutputStream getZipFileFromFiles(NodeRef document, List<String> fileNodeRefs);
+
+    String getUniqueFileName(NodeRef folder, String fileName);
 
 }

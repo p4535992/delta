@@ -1,13 +1,15 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.user.service.UserService;
+import javax.faces.context.FacesContext;
+
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 
-import javax.faces.context.FacesContext;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * UI action evaluator for validating whether reopen current document.
@@ -19,6 +21,9 @@ public class ReopenDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
+        if(node.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
+            return false;
+        }
         ViewStateActionEvaluator viewStateEval = new ViewStateActionEvaluator();
         boolean isInViewState = viewStateEval.evaluate(node);
 

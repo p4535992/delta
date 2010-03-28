@@ -53,7 +53,7 @@
    <config evaluator="aspect-name" condition="docTempl:documentTemplate">
       <property-sheet>
          <show-property name="docTempl:docTypeId" display-label-id="template_document_type" converter="ee.webmedia.alfresco.document.type.web.DocumentTypeConverter"
-            component-generator="SearchGenerator" pickerCallback="#{DocumentTypeDialog.searchUsedDocTypes}" dialogTitleId="templates_docType_popup" />
+            component-generator="SearchGenerator" pickerCallback="#{DocumentTypeDialog.searchUsedDocTypes}" dialogTitleId="templates_docType_popup" editable="false" />
       </property-sheet>
    </config>
 </alfresco-config>

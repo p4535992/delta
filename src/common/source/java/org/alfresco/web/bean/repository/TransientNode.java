@@ -304,6 +304,7 @@ public class TransientNode extends Node
    public String toString()
    {
       return "Transient node of type: " + getType() + 
-             "\nProperties: " + this.getProperties().toString();
+             "\nProperties: " + propsToString(this.getProperties());
    }
+
 }

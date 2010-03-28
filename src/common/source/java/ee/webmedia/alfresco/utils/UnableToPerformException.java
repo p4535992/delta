@@ -18,7 +18,11 @@ public class UnableToPerformException extends RuntimeException {
     }
 
     public UnableToPerformException(MessageSeverity severity, String messageKey) {
-        super(messageKey);
+        this(severity, messageKey, null);
+    }
+
+    public UnableToPerformException(MessageSeverity severity, String messageKey, Throwable cause) {
+        super(messageKey, cause);
         this.severity = severity;
         this.messageValuesForHolders = new Object[0];
     }

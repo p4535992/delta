@@ -4,26 +4,13 @@
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
 
-<f:verbatim>
-<script type="text/javascript">
-
-window.onload = pageLoaded;
-
-function pageLoaded()
-{
-   document.getElementById("wizard:finish-button").disabled = true;
-   document.getElementById("wizard:next-button").disabled = false;
-}
-</script>
-</f:verbatim>
-
-         <a:panel id="props-panel" styleClass="column panel-40" label="#{msg.addressbook_entry}">
-            <r:propertySheetGrid id="node-props" value="#{DialogManager.bean.currentNode}" columns="1" externalConfig="true" mode="view" />
+         <a:panel id="props-panel" styleClass="column panel-100" label="#{msg.addressbook_entry}">
+            <r:propertySheetGrid id="node-props" value="#{DialogManager.bean.currentNode}" columns="1" externalConfig="true" mode="view" labelStyleClass="propertiesLabel" />
          </a:panel>
 
          <a:booleanEvaluator value="#{DialogManager.bean.showChildren}">
 
-            <a:panel id="people-panel" styleClass="column panel-60" label="#{msg.addressbook_org_person}">
+            <a:panel id="people-panel" styleClass="column panel-100 with-pager" label="#{msg.addressbook_org_person}">
 
                <a:richList id="people-list" viewMode="details" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
                   value="#{DialogManager.bean.orgPeople}" var="r" initialSortColumn="name" initialSortDescending="false" width="100%">

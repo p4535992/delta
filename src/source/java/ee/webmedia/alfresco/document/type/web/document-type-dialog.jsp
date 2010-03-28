@@ -7,7 +7,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="documenttype-panel" label="#{msg.document_types}" styleClass="panel-100">
+<a:panel id="documenttype-panel" label="#{msg.document_types}" styleClass="panel-100 with-pager">
    <a:richList id="documentTypeList" value="#{DialogManager.bean.documentTypes}" var="type" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"
       rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="name">
 

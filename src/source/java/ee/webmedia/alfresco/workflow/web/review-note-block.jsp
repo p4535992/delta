@@ -7,7 +7,7 @@
 <%@ page isELIgnored="false"%>
 
 <a:panel id="review-note-block" rendered="#{WorkflowBlockBean.reviewNoteBlockRendered}" label="#{msg.workflow_task_review_notes}" progressive="true"
-   expanded="false">
+   expanded="false" styleClass="with-pager">
    <a:richList id="reviewNoteList" viewMode="details" value="#{WorkflowBlockBean.finishedReviewTasks}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="completedDateTime" initialSortDescending="false">
 

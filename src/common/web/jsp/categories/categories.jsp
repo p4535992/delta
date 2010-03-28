@@ -32,7 +32,7 @@
       <a:breadcrumb value="#{DialogManager.bean.location}" />
    </a:panel>
    
-      <a:panel id="categories-panel" label="#{msg.items}">
+      <a:panel id="categories-panel" label="#{msg.items}" styleClass="with-pager">
 
          <a:richList id="categories-list"  viewMode="#{DialogManager.bean.viewMode}" pageSize="15" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
             value="#{DialogManager.bean.categories}" binding="#{DialogManager.bean.categoriesRichList}" var="r" initialSortColumn="name" initialSortDescending="true">

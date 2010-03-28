@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -40,6 +42,7 @@ import org.alfresco.service.cmr.repository.ContentService;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
@@ -48,6 +51,8 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.text.StrBuilder;
+import org.hibernate.StaleObjectStateException;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.cases.model.CaseModel;
@@ -77,6 +82,7 @@ import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
+import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -122,9 +128,10 @@ public class DocumentServiceImpl implements DocumentService {
     private String incomingEmailPath;
 
     // doesn't need to be synchronized, because it is not modified during runtime
-    private Map<QName/* nodeType/nodeAspect */, PropertiesModifierCallback> creationPropertiesModifierCallbacks = new LinkedHashMap<QName, PropertiesModifierCallback>();
+    private final Map<QName/* nodeType/nodeAspect */, PropertiesModifierCallback> creationPropertiesModifierCallbacks = new LinkedHashMap<QName, PropertiesModifierCallback>();
 
     private static final String REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX = "-1";
+    private static final DateFormat userDateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     @Override
     public Node getDocument(NodeRef nodeRef) {
@@ -145,6 +152,10 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public Node createDocument(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties) {
+        return createDocument(documentTypeId, parentRef, properties, false);
+    }
+    
+    private Node createDocument(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties, boolean withoutPropModifyingCallbacks) {
 
         // XXX do we need to check if document type is used?
         if (!dictionaryService.isSubClass(documentTypeId, DocumentCommonModel.Types.DOCUMENT)) {
@@ -166,14 +177,16 @@ public class DocumentServiceImpl implements DocumentService {
 
         NodeRef document = nodeService.createNode(parentRef, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT //
                 , documentTypeId, properties).getChildRef();
-        
+
         final Node documentNode = getDocument(document);
         // first iterate over callbacks to be able to predict in which order callbacks will be called (that is registration order).
-        for (QName callbackAspect : creationPropertiesModifierCallbacks.keySet()) {
-            for (QName docAspect : aspects) {
-                if (dictionaryService.isSubClass(docAspect, callbackAspect)) {
-                    PropertiesModifierCallback callback = creationPropertiesModifierCallbacks.get(docAspect);
-                    callback.doWithNode(documentNode);
+        if (!withoutPropModifyingCallbacks) {
+            for (QName callbackAspect : creationPropertiesModifierCallbacks.keySet()) {
+                for (QName docAspect : aspects) {
+                    if (dictionaryService.isSubClass(docAspect, callbackAspect)) {
+                        PropertiesModifierCallback callback = creationPropertiesModifierCallbacks.get(docAspect);
+                        callback.doWithNode(documentNode);
+                    }
                 }
             }
         }
@@ -332,11 +345,15 @@ public class DocumentServiceImpl implements DocumentService {
             docProps.put(DocumentCommonModel.Props.FILE_NAMES.toString(), getSearchableFileNames(docNodeRef));
             docProps.put(DocumentCommonModel.Props.FILE_CONTENTS.toString(), getSearchableFileContents(docNodeRef));
         }
+        if (docNode.hasAspect(DocumentSpecificModel.Aspects.COMPLIENCE)) {
+            Date complienceDate = (Date) docProps.get(DocumentSpecificModel.Props.COMPLIENCE_DATE);
+            if (complienceDate != null) {
+                docProps.put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
+            }
+        }
         docProps.putAll(getSearchableOtherProps(docNode));
 
         saveChildNodes(docNode);
-
-        nodeService.setProperty(docNodeRef, ContentModel.PROP_NAME, docProps.get(DocumentCommonModel.Props.DOC_NAME.toString()).toString());
 
         // add any associations added in the UI
         generalService.saveAddedAssocs(docNode);
@@ -393,15 +410,22 @@ public class DocumentServiceImpl implements DocumentService {
                         if (!baseVol.getNodeRefAsString().equals(volumeNodeRef)) {
                             throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp");
                         }
+                        if (isRegistered(baseRef)) {
+                            registerDocument(docNode, false);
+                        }
                     }
                 }
             } catch (UnableToPerformException e) {
                 throw e;
-            } catch (Exception e) {
+            } catch (StaleObjectStateException e) {
                 log.error("Failed to move document to volumes folder", e);
-                throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp");
+                throw new UnableToPerformException(MessageSeverity.ERROR, e.getMessage(), e);// NOT translated - occurs sometimes while debugging
+            } catch (RuntimeException e) {
+                log.error("Failed to move document to volumes folder", e);
+                throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp", e);
             }
         }
+        makeChildNodesSearchable(docNodeRef);
         return getDocument(docNodeRef);
     }
 
@@ -458,6 +482,11 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
+    private void makeChildNodesSearchable(final NodeRef docRef) {
+        String childProps = getChildNodesPropsForIndexing(docRef, new StringBuilder()).toString();
+        nodeService.setProperty(docRef, DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES, childProps);
+    }
+
     private Node saveChildNode(Node docNode, Node applicantNode, final QName assocTypeAndNameQName, final List<Node> applicants, int i) {
         if (applicantNode instanceof WmNode) {
             WmNode wmNode = (WmNode) applicantNode;
@@ -471,6 +500,59 @@ public class DocumentServiceImpl implements DocumentService {
             }
         }
         return null;
+    }
+
+    private StringBuilder getChildNodesPropsForIndexing(NodeRef parentRef, StringBuilder sb) {
+        final List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef);
+        for (ChildAssociationRef childAssocRef : childAssocs) {
+            if (DocumentSpecificModel.URI.equals(childAssocRef.getQName().getNamespaceURI())) {
+                final NodeRef childRef = childAssocRef.getChildRef();
+                combineChildAssocProps(childRef, sb);
+                getChildNodesPropsForIndexing(childRef, sb.append("\n"));
+            }
+        }
+        return sb;
+    }
+
+    private void combineChildAssocProps(NodeRef nodeRef, StringBuilder sb) {
+        final Map<QName, Serializable> nonSysProps = generalService.getPropertiesIgnoringSys(nodeService.getProperties(nodeRef));
+        for (Entry<QName, Serializable> entry : nonSysProps.entrySet()) {
+            final String propVal;
+            final Serializable value = entry.getValue();
+            if (value instanceof Date) {
+                propVal = userDateFormat.format(value);
+            } else if (value instanceof List<?>) {
+                final StrBuilder sb2 = new StrBuilder();
+                for (Object singleValue : (List<?>) value) {
+                    sb2.append(DefaultTypeConverter.INSTANCE.convert(String.class, singleValue) + "\n");
+                }
+                propVal = sb2.toString();
+            } else {
+                propVal = DefaultTypeConverter.INSTANCE.convert(String.class, value);
+            }
+            sb.append(propVal + "\n");
+        }
+    }
+
+    /**
+     * Create copies of childAssociations from originalParentRef that have namespace equal to {@link DocumentSpecificModel#URI} and adds them to copyParentRef.
+     */
+    private void copyChildAssocs(NodeRef originalParentRef, NodeRef copyParentRef) {
+        final List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(originalParentRef);
+        for (ChildAssociationRef childAssocRef : childAssocs) {
+            if (DocumentSpecificModel.URI.equals(childAssocRef.getQName().getNamespaceURI())) {
+                final NodeRef childCopyRef = copyChildAssoc(childAssocRef, copyParentRef);
+                copyChildAssocs(childAssocRef.getChildRef(), childCopyRef);
+            }
+        }
+    }
+
+    private NodeRef copyChildAssoc(ChildAssociationRef originalAssocRef, NodeRef parentRef) {
+        final NodeRef originalRef = originalAssocRef.getChildRef();
+        final Map<QName, Serializable> originalProps = generalService.getPropertiesIgnoringSys(nodeService.getProperties(originalRef));
+        final QName nodeTypeQName = nodeService.getType(originalRef);
+        return nodeService.createNode(parentRef, originalAssocRef.getTypeQName() //
+                , originalAssocRef.getQName(), nodeTypeQName, originalProps).getChildRef();
     }
 
     @Override
@@ -658,7 +740,8 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public Node copyDocument(NodeRef nodeRef) {
         Node doc = getDocument(nodeRef);
-        Node copiedDoc = createDocument(doc.getType());
+        // create document without calling propertiesModifierCallbacks
+        Node copiedDoc = createDocument(doc.getType(), null, null, true);
 
         // PROPERTIES
         for (Map.Entry<String, Object> prop : doc.getProperties().entrySet()) {
@@ -666,6 +749,9 @@ public class DocumentServiceImpl implements DocumentService {
                 copiedDoc.getProperties().put(prop.getKey(), prop.getValue());
             }
         }
+        
+        // CHILD ASSOCIATIONS (RECURSIVELY)
+        copyChildAssocs(nodeRef, copiedDoc.getNodeRef());
 
         // ANCESTORS
         setTransientProperties(copiedDoc, getAncestorNodesByDocument(doc.getNodeRef()));
@@ -770,12 +856,19 @@ public class DocumentServiceImpl implements DocumentService {
         return assocInfos;
     }
     
+    /*
+     * NOTE: association with case is defined differently
+     */
     public void deleteAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef, QName assocQName) {
         if(assocQName == null) {
             assocQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
         }
         log.debug("Deleting " + assocQName + " association from document " + sourceNodeRef + " that points to " + targetNodeRef);
-        nodeService.removeAssociation(targetNodeRef, sourceNodeRef, assocQName);
+        if(assocQName.equals(CaseModel.Associations.CASE_DOCUMENT)) {
+            nodeService.removeAssociation(targetNodeRef, sourceNodeRef, assocQName);
+        } else {
+            nodeService.removeAssociation(sourceNodeRef, targetNodeRef, assocQName);
+        }
     }
 
     @Override
@@ -865,7 +958,7 @@ public class DocumentServiceImpl implements DocumentService {
             return;
         }
         if (log.isDebugEnabled()) {
-            log.debug("Setting task owner from " + getDocumentOwner(document) + " to " + userName + " - " + document);
+            log.debug("Setting document owner from " + getDocumentOwner(document) + " to " + userName + " - " + document);
         }
         Map<QName, Serializable> personProps = userService.getUserProperties(userName);
         Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
@@ -901,6 +994,11 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public boolean isRegistered(Node docNode) {
         final String existingRegNr = (String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER.toString());
+        return StringUtils.isNotBlank(existingRegNr);
+    }
+
+    public boolean isRegistered(NodeRef docRef) {
+        final String existingRegNr = (String) nodeService.getProperty(docRef, DocumentCommonModel.Props.REG_NUMBER);
         return StringUtils.isNotBlank(existingRegNr);
     }
     
@@ -1009,12 +1107,12 @@ public class DocumentServiceImpl implements DocumentService {
             }
             if (!documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
                 props.put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
-                documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_proceedingFinish"), I18NUtil
-                        .getMessage("document_log_creator_dhs"));
+                documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
+                        , I18NUtil.getMessage("document_log_creator_dhs"));
             } else {
                 if (StringUtils.isNotBlank((String) props.get("{temp}logging"))) {
-                    documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"), I18NUtil
-                            .getMessage("document_log_creator_dhs"));
+                    documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered") //
+                            , I18NUtil.getMessage("document_log_creator_dhs"));
                 } else {
                     documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
                 }
@@ -1211,7 +1309,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
     
     @Override
-    public SignatureDigest prepareDocumentDigest(NodeRef document, String certHex) {
+    public SignatureDigest prepareDocumentDigest(NodeRef document, String certHex) throws SignatureException {
         SignatureDigest signatureDigest = null;
         NodeRef existingDdoc = checkExistingDdoc(document);
         if (existingDdoc != null) {
@@ -1231,7 +1329,7 @@ public class DocumentServiceImpl implements DocumentService {
         return nodeRefs;
     }
 
-	@Override
+    @Override
     public void finishDocumentSigning(final SignatureTask task, final String signatureHex) {
         final NodeRef document = task.getParent().getParent().getParent();
         final String filename = generateDdocFilename(document);
@@ -1252,7 +1350,7 @@ public class DocumentServiceImpl implements DocumentService {
         }, AuthenticationUtil.getSystemUserName());
         workflowService.finishInProgressTask(task, 1);
     }
-	
+
 	private NodeRef checkExistingDdoc(NodeRef document) {
 	    List<File> files = fileService.getAllActiveFiles(document);
         if (files.size() == 1) {
@@ -1576,7 +1674,9 @@ public class DocumentServiceImpl implements DocumentService {
         for (String word : words) {
             if (nodeProp instanceof List<?>) {
                 boolean found = false;
-                for (String nodeListItem : (List<String>) nodeProp) {
+                @SuppressWarnings("unchecked")
+                List<String> nodePropList = (List<String>) nodeProp;
+                for (String nodeListItem : nodePropList) {
                     if (StringUtils.containsIgnoreCase(nodeListItem, word)) {
                         found = true;
                         break;
@@ -1657,11 +1757,6 @@ public class DocumentServiceImpl implements DocumentService {
 
     public void setWorkflowService(WorkflowService workflowService) {
         this.workflowService = workflowService;
-    }
-
-    @Override
-    public DocumentLogService getDocumentLogService() { // XXX bad
-        return documentLogService;
     }
 
     public void setDocumentLogService(DocumentLogService documentLogService) {

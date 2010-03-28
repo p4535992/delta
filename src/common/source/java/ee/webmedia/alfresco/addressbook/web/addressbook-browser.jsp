@@ -25,7 +25,7 @@ function setAddressbookDiv(id){
                <h:commandButton id="show-all-button" value="#{msg.show_all}" action="#{AddressbookDialog.showAll}" />
             </a:panel>
                         <a:panel id="ab-first-column" styleClass="column panel-33">
-                        <a:panel id="_org-panel" label="#{msg.addressbook_organizations}">
+                        <a:panel id="_org-panel" label="#{msg.addressbook_organizations}" styleClass="with-pager">
 
                         <a:actionLink id="add-org-button" value="#{msg.addressbook_add_org}" image="/images/icons/add_user.gif" showLink="false"
                            action="wizard:addressbookAddOrg" />
@@ -76,7 +76,7 @@ function setAddressbookDiv(id){
                      
                      <a:booleanEvaluator id="search-eval" value="#{AddressbookDialog.search}">
 
-                        <a:panel id="people-panel2" label="#{msg.addressbook_org_persons}">
+                        <a:panel id="people-panel2" label="#{msg.addressbook_org_persons}" styleClass="with-pager">
                            <a:actionLink value="#{msg.addressbook_add_org_person}" image="/images/icons/add_user.gif" showLink="false"
                               action="wizard:addressbookAddOrgPerson" actionListener="#{AddressbookOrgPersonWizard.setupEntryOrg}">
                               <f:param name="org" value="#{AddressbookDialog.currentNode.nodeRef}" />
@@ -123,7 +123,7 @@ function setAddressbookDiv(id){
                      
                      </a:panel>
                      
-                     <a:panel id="person-panel" styleClass="column panel-33" label="#{msg.addressbook_private_persons}">
+                     <a:panel id="person-panel" styleClass="column panel-33 with-pager" label="#{msg.addressbook_private_persons}">
                         <a:actionLink value="#{msg.addressbook_add_person}" image="/images/icons/add_user.gif" showLink="false"
                            action="wizard:addressbookAddPerson" />
 

@@ -7,9 +7,16 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<%-- just a placeholder for dynamically generated panels --%>
-<h:panelGroup binding="#{CompoundWorkflowDialog.panelGroup}" />
-
-<a:booleanEvaluator value="#{CompoundWorkflowDialog.workflow.status == 'lõpetatud'}">
+<a:booleanEvaluator value="#{empty CompoundWorkflowDialog.workflow}">
+   <f:verbatim><div class="message"><strong></f:verbatim><h:outputText value="#{msg.workflow_compound_not_found}" /><f:verbatim></strong></div></f:verbatim>
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
+</a:booleanEvaluator>
+
+<a:booleanEvaluator value="#{not empty CompoundWorkflowDialog.workflow}">
+   <%-- just a placeholder for dynamically generated panels --%>
+   <h:panelGroup binding="#{CompoundWorkflowDialog.panelGroup}" />
+   
+   <a:booleanEvaluator value="#{CompoundWorkflowDialog.workflow.status == 'lõpetatud'}">
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
+   </a:booleanEvaluator>
 </a:booleanEvaluator>

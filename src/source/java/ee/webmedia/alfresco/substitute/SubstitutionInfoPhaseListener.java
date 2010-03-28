@@ -27,7 +27,6 @@ public class SubstitutionInfoPhaseListener implements PhaseListener {
 
    public void beforePhase(PhaseEvent event)
    {
-       if (log.isDebugEnabled()) log.debug("SubstitutionInfoPhaseListener#beforePhase started");
        SubstitutionBean subBean = (SubstitutionBean) FacesHelper.getManagedBean(event.getFacesContext(), SubstitutionBean.BEAN_NAME);
        SubstitutionInfo subInfo = subBean.getSubstitutionInfo();
        SubstitutionInfoHolder.setSubstitutionInfo(subInfo);
@@ -36,7 +35,6 @@ public class SubstitutionInfoPhaseListener implements PhaseListener {
            if (log.isDebugEnabled()) log.debug("Set RunAsUser to " + substitutionUserName);
            AuthenticationUtil.setRunAsUser(substitutionUserName);
        }
-       if (log.isDebugEnabled()) log.debug("SubstitutionInfoPhaseListener#beforePhase completed");
    }
 
    public PhaseId getPhaseId()

@@ -7,7 +7,7 @@
 <%@ page isELIgnored="false"%>
       
       <%-- regNumber --%>
-      <a:column id="col1" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col1" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.document_regNumber}" value="regNumber" styleClass="header" />
          </f:facet>
@@ -15,7 +15,7 @@
       </a:column>
       
       <%-- Registration date --%>
-      <a:column id="col2" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col2" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.document_regDateTime}" value="regDateTime" styleClass="header" />
          </f:facet>
@@ -25,7 +25,7 @@
       </a:column>
       
       <%-- Document type --%>
-      <a:column id="col3" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col3" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col3-sort" label="#{msg.document_docType}" value="documentTypeName" styleClass="header" />
          </f:facet>
@@ -33,7 +33,7 @@
       </a:column>
       
       <%-- Sender/owner --%>
-      <a:column id="col4" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col4" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
@@ -41,7 +41,7 @@
       </a:column>
       
       <%-- All Recipients --%>
-      <a:column id="col5" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col5" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.document_allRecipients}" value="allRecipients" styleClass="header" />
          </f:facet>
@@ -49,23 +49,23 @@
       </a:column>
 
       <%-- Title --%>
-      <a:column id="col6" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col6" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
          <a:actionLink id="col6-text" value="#{r.docName}" action="dialog:document" tooltip="#{msg.document_details_info}"
-            showLink="false" actionListener="#{DocumentDialog.open}" rendered="#{r.docTypeLocalName ne 'case'}" >
+            showLink="false" actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass ne 'case'}" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
          <!-- if row item is not document, but case, create link to documents list of case (row item is subclass of Document, to be shown as listItem in document list) -->
          <a:actionLink id="col6-link2docList" value="#{r.docName}" action="dialog:documentListDialog" tooltip="#{msg.document_search_caseLink_tooltip}"
-            showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{r.docTypeLocalName == 'case'}" >
+            showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{r.cssStyleClass == 'case'}" >
             <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
       </a:column>
 
       <%-- DueDate --%>
-      <a:column id="col7" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col7" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col7-sort" label="#{msg.document_dueDate}" value="dueDate" styleClass="header" />
          </f:facet>
@@ -75,7 +75,7 @@
       </a:column>
 
       <%-- Complience Date --%>
-      <a:column id="col9" primary="true" styleClass="#{r.docTypeLocalName}" >
+      <a:column id="col9" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">
             <a:sortLink id="col9-sort" label="#{msg.document_complienceDate}" value="complienceDate" styleClass="header" />
          </f:facet>
@@ -85,7 +85,7 @@
       </a:column>
 
       <%-- Files --%>
-      <a:column id="col10" primary="true">
+      <a:column id="col10" primary="true" styleClass="doc-list-actions">
          <f:facet name="header">
             <h:outputText id="col10-header" value="#{msg.document_allFiles}" styleClass="header" />
          </f:facet>

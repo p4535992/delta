@@ -90,8 +90,7 @@ public interface DocumentTemplateService {
      * Fetches template NodeRef for system templates that are specified by file name
      * 
      * @param templateName file name (e.g. foobar.html)
-     * @return template NodeRef
-     * @throws DocumentTemplateNotFoundException
+     * @return template template NodeRef or {@code null} if template not found
      */
     NodeRef getSystemTemplateByName(String templateName);
 

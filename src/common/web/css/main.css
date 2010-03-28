@@ -15,12 +15,17 @@ input {
 	margin: 0;
 	padding: 0;
 	vertical-align: baseline;
-		
+}
+
+input[type="text"],
+textarea,
+select {
+	border: 1px solid #ccc;
 }
 
 body {
 	line-height: 1;
-	color: black;
+	color: #2D2C2D;
 	background: white;
 }
 
@@ -72,11 +77,22 @@ a:focus {
 }
 
 .icon-link {
-	padding-left: 20px !important;
+	padding-left: 20px;
 	padding-bottom: 1px; /* may be overrridden in <a:actionlink /> declaration */
 	background: transparent no-repeat;
 	line-height: 16px;
 	height: 16px;
+}
+
+.doc-list-actions .icon-link {
+	padding-left: 16px;
+	background-position: center;
+	margin: 0 1px;
+}
+
+.doc-list-actions img {
+	padding: 2px 5px;
+	margin: 0 1px;
 }
 
 #links-panel a {
@@ -103,38 +119,38 @@ html, body {
 #header {
 	width: 100%;
 	height: 95px;
-	z-index: 100;
+	/*z-index: 100;*/
 }
 
 #search {
-	z-index: 95;
+	/*z-index: 95;*/
 }
 
 #menu li {
-	z-index:94;
+	/*z-index:94;*/
 }
 
 #container {
 	position: relative;
 	width: 100%;
 	padding-bottom: 50px;
-	z-index: 1;
+	/*z-index: 1;*/
 }
 
 #content {
 	margin-left: 0;
-	padding: 15px;
+	padding: 10px 5px;
 }
 
 #sidebar + #content {
-	margin-left: 240px;
+	margin-left: 217px;
 }
 
 #sidebar {
 	float: left;
 	clear: left;
-	width: 220px;
-	padding: 10px;
+	width: 207px;
+	padding: 10px 5px;
 }
 
 #footer {
@@ -183,7 +199,6 @@ html, body {
 			top:20px;
 			height: 21px;
 			padding-right: 260px;
-			z-index: 100;
 		}
 		
 			#search > a, 
@@ -264,7 +279,7 @@ html, body {
 	MENU
 	******************************/
 #menu {
-	z-index: 95;
+	/*z-index: 95;*/
 }
 
 	#menu > ul {
@@ -290,6 +305,7 @@ html, body {
 		line-height: 12px;
 		width: 180px;
 		text-align: center;
+		z-index: 10;
 	}
 	
 		#menu li.dropdown li,
@@ -483,23 +499,23 @@ ul#breadcrumb li {
 	position: relative;
 	padding: 10px 10px 0;
 	margin-bottom: 15px;
-	z-index: 90;
+	/*z-index: 90;*/
 }
 
 	#titlebar h2,
 	#titlebar-search h2 {
 		margin-bottom: 10px;
-		padding: 0 100px 0 40px;
+		padding: 0 100px 0 28px;
 	}
 	
 		#titlebar h2 img,
 		#titlebar-search h2 img,
 		#titlebar h2 a {
 			position:absolute;
-			width:32px;
-			height:32px;
+			width: 20px;
+			height: 20px;
 			left:10px;
-			top: 7px;
+			top: 9px;
 		}
 		
 		#description {
@@ -576,6 +592,10 @@ ul#breadcrumb li {
 	display: block !important;
 }
 
+.dropdown-menu {
+	z-index: 1;
+}
+
 .dropdown-menu li,
 .actions-menu li {
 	position: relative;
@@ -623,6 +643,7 @@ ul#breadcrumb li {
 
 .dropdown-menu.in-title {
 	top: auto;
+	right: 0;
 }
 
 td .dropdown-menu {
@@ -663,7 +684,7 @@ td .dropdown-menu {
 }
 
 	.panel-wrapper h3 {
-		padding: 7px 10px;
+		padding: 7px 5px;
 	}
 	
 		.panel-wrapper h3 img {
@@ -680,13 +701,18 @@ td .dropdown-menu {
 		margin: -22px 5px 0 0;
 	}
 	
-		.panel-wrapper .title-component a {
-			margin-left: 5px;
+		.panel-wrapper .title-component a,
+		.panel-wrapper .title-component a img {
+			margin-left: 4px;
 		}
-
+		
 .panel-border {
 	position: relative;
-	padding: 10px 15px 20px;
+	padding: 5px 5px 7px;
+}
+
+.with-pager .panel-border {
+	padding-bottom: 30px;
 }
 
 .message {
@@ -758,18 +784,18 @@ tr.recordSetRow td {
 	}
 	
 	tr td {
-		padding: 4px;
+		/*padding: 4px;*/
 	}
 	
 	tr td td {
-		padding: 4px 0; 
+		/* padding: 4px 0; */ 
 	}
 
 	tr.recordSetRow td,
 	tr.recordSetRowAlt td {
-		padding: 7px 2px;
+		padding: 3px;
 		vertical-align: top;
-		line-height: 18px;
+		line-height: 14px;
 	}
 
 	tr.task td:first-child a:first-child img {
@@ -789,9 +815,18 @@ td.actions-column * {
 	td.actions-column img {
 		padding: 0 1px;
 	}
-	
+
 .propertiesLabel {
-	min-width: 150px;
+	width: 125px;
+}
+
+.propertiesLabel,
+.propertiesLabel span {
+	white-space: nowrap;
+}
+
+.propertiesLabel span.wrap {
+	white-space: normal;
 }
 
 /* PAGE CONTROLS */
@@ -1094,7 +1129,7 @@ td.actions-column * {
 	position: absolute;
 	padding-right: 1%;
 	margin-top: -16px;
-	z-index: 200;
+	/*z-index: 200;*/
 }
 
 #space-actions .actions-menu li {
@@ -1145,7 +1180,7 @@ td.actions-column * {
 input[type="checkbox"] {
 	margin-right: 5px;
 	vertical-align: middle;
-	width: 10px !important;
+	width: 16px !important;
 }
 
 .error {

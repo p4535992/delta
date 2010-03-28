@@ -341,7 +341,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     // ========================================================================
 
     @Override
-    public CompoundWorkflowDefinition saveCompoundWorkflowDefinition(CompoundWorkflowDefinition compoundWorkflowDefinition) {
+    public CompoundWorkflowDefinition saveCompoundWorkflowDefinition(CompoundWorkflowDefinition compoundWorkflowDefinitionOriginal) {
+        CompoundWorkflowDefinition compoundWorkflowDefinition = compoundWorkflowDefinitionOriginal.copy();
         checkCompoundWorkflow(compoundWorkflowDefinition, true, Status.NEW); // XXX check at the beginning...
         requireStatusUnchanged(compoundWorkflowDefinition);
 
@@ -359,7 +360,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public CompoundWorkflow saveCompoundWorkflow(CompoundWorkflow compoundWorkflow) {
+    public CompoundWorkflow saveCompoundWorkflow(CompoundWorkflow compoundWorkflowOriginal) {
+        CompoundWorkflow compoundWorkflow = compoundWorkflowOriginal.copy();
         WorkflowEventQueue queue = getNewEventQueue();
         saveCompoundWorkflow(queue, compoundWorkflow);
         if (log.isDebugEnabled()) {
@@ -466,7 +468,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public void saveInProgressTask(Task task) throws WorkflowChangedException {
+    public void saveInProgressTask(Task taskOriginal) throws WorkflowChangedException {
+        Task task = taskOriginal.copy();
         // check status==IN_PROGRESS, owner==currentUser
         requireInProgressCurrentUser(task);
         requireStatusUnchanged(task);
@@ -480,7 +483,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public void finishInProgressTask(Task task, int outcomeIndex) throws WorkflowChangedException {
+    public void finishInProgressTask(Task taskOriginal, int outcomeIndex) throws WorkflowChangedException {
+        Task task = taskOriginal.copy();
         if (outcomeIndex < 0 || outcomeIndex >= task.getOutcomes()) {
             throw new RuntimeException("outcomeIndex '" + outcomeIndex + "' out of bounds for " + task);
         }
@@ -523,10 +527,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public CompoundWorkflow saveAndStartCompoundWorkflow(CompoundWorkflow nodeRef) {
+    public CompoundWorkflow saveAndStartCompoundWorkflow(CompoundWorkflow compoundWorkflowOriginal) {
+        CompoundWorkflow compoundWorkflow = compoundWorkflowOriginal.copy();
         WorkflowEventQueue queue = getNewEventQueue();
-        saveCompoundWorkflow(queue, nodeRef);
-        return startCompoundWorkflow(queue, nodeRef.getNode().getNodeRef());
+        saveCompoundWorkflow(queue, compoundWorkflow);
+        return startCompoundWorkflow(queue, compoundWorkflow.getNode().getNodeRef());
     }
 
     @Override
@@ -555,10 +560,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public CompoundWorkflow saveAndFinishCompoundWorkflow(CompoundWorkflow nodeRef) {
+    public CompoundWorkflow saveAndFinishCompoundWorkflow(CompoundWorkflow compoundWorkflowOriginal) {
+        CompoundWorkflow compoundWorkflow = compoundWorkflowOriginal.copy();
         WorkflowEventQueue queue = getNewEventQueue();
-        saveCompoundWorkflow(queue, nodeRef);
-        return finishCompoundWorkflow(queue, nodeRef.getNode().getNodeRef());
+        saveCompoundWorkflow(queue, compoundWorkflow);
+        return finishCompoundWorkflow(queue, compoundWorkflow.getNode().getNodeRef());
     }
 
     @Override
@@ -569,24 +575,28 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private CompoundWorkflow finishCompoundWorkflow(WorkflowEventQueue queue, NodeRef nodeRef) {
         CompoundWorkflow compoundWorkflow = getCompoundWorkflow(nodeRef);
-        checkCompoundWorkflow(compoundWorkflow, Status.IN_PROGRESS);
-
-        setStatus(queue, compoundWorkflow, Status.FINISHED);
-        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-            if (isStatus(workflow, Status.NEW, Status.IN_PROGRESS)) {
-                setStatus(queue, workflow, Status.FINISHED);
-
-                for (Task task : workflow.getTasks()) {
-                    if (isStatus(task, Status.NEW, Status.IN_PROGRESS)) {
-                        setTaskFinishedManualOutcome(queue, task);
+        if (checkCompoundWorkflow(compoundWorkflow, Status.IN_PROGRESS, Status.FINISHED) == Status.FINISHED) {
+            if (log.isDebugEnabled()) {
+                log.debug("CompoundWorkflow is already finished, finishing is not performed, saved as is: " + compoundWorkflow);
+            }
+        } else {
+            setStatus(queue, compoundWorkflow, Status.FINISHED);
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                if (isStatus(workflow, Status.NEW, Status.IN_PROGRESS)) {
+                    setStatus(queue, workflow, Status.FINISHED);
+    
+                    for (Task task : workflow.getTasks()) {
+                        if (isStatus(task, Status.NEW, Status.IN_PROGRESS)) {
+                            setTaskFinishedManualOutcome(queue, task);
+                        }
                     }
                 }
             }
-        }
-        stepAndCheck(queue, compoundWorkflow, Status.FINISHED);
-        boolean changed = saveCompoundWorkflow(queue, compoundWorkflow, null);
-        if (log.isDebugEnabled()) {
-            log.debug("Finished " + compoundWorkflow);
+            stepAndCheck(queue, compoundWorkflow, Status.FINISHED);
+            boolean changed = saveCompoundWorkflow(queue, compoundWorkflow, null);
+            if (log.isDebugEnabled()) {
+                log.debug("Finished " + compoundWorkflow);
+            }
         }
 
         // also check repo status
@@ -598,10 +608,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public CompoundWorkflow saveAndStopCompoundWorkflow(CompoundWorkflow nodeRef) {
+    public CompoundWorkflow saveAndStopCompoundWorkflow(CompoundWorkflow compoundWorkflowOriginal) {
+        CompoundWorkflow compoundWorkflow = compoundWorkflowOriginal.copy();
         WorkflowEventQueue queue = getNewEventQueue();
-        saveCompoundWorkflow(queue, nodeRef);
-        return stopCompoundWorkflow(queue, nodeRef.getNode().getNodeRef());
+        saveCompoundWorkflow(queue, compoundWorkflow);
+        return stopCompoundWorkflow(queue, compoundWorkflow.getNode().getNodeRef());
     }
 
     @Override
@@ -612,43 +623,48 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private CompoundWorkflow stopCompoundWorkflow(WorkflowEventQueue queue, NodeRef nodeRef) {
         CompoundWorkflow compoundWorkflow = getCompoundWorkflow(nodeRef);
-        checkCompoundWorkflow(compoundWorkflow, Status.IN_PROGRESS);
-
-        setStatus(queue, compoundWorkflow, Status.STOPPED);
-        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-            if (isStatus(workflow, Status.IN_PROGRESS)) {
-                setStatus(queue, workflow, Status.STOPPED);
-
-                for (Task task : workflow.getTasks()) {
-                    if (isStatus(task, Status.IN_PROGRESS)) {
-                        setStatus(queue, task, Status.STOPPED);
-                    } else if (isStatus(task, Status.NEW)) {
-                        task.setStoppedDateTime(queue.getNow());
-                    }
-                }
-            } else if (isStatus(workflow, Status.NEW)) {
-                workflow.setStoppedDateTime(queue.getNow());
+        if (checkCompoundWorkflow(compoundWorkflow, Status.IN_PROGRESS, Status.FINISHED) == Status.FINISHED) {
+            if (log.isDebugEnabled()) {
+                log.debug("CompoundWorkflow is already finished, stopping is not performed, saved as is: " + compoundWorkflow);
             }
-        }
-        stepAndCheck(queue, compoundWorkflow, Status.STOPPED);
-        boolean changed = saveCompoundWorkflow(queue, compoundWorkflow, null);
-        if (log.isDebugEnabled()) {
-            log.debug("Stopped " + compoundWorkflow);
+        } else {
+            setStatus(queue, compoundWorkflow, Status.STOPPED);
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                if (isStatus(workflow, Status.IN_PROGRESS)) {
+                    setStatus(queue, workflow, Status.STOPPED);
+    
+                    for (Task task : workflow.getTasks()) {
+                        if (isStatus(task, Status.IN_PROGRESS)) {
+                            setStatus(queue, task, Status.STOPPED);
+                        } else if (isStatus(task, Status.NEW)) {
+                            task.setStoppedDateTime(queue.getNow());
+                        }
+                    }
+                } else if (isStatus(workflow, Status.NEW)) {
+                    workflow.setStoppedDateTime(queue.getNow());
+                }
+            }
+            stepAndCheck(queue, compoundWorkflow, Status.STOPPED);
+            boolean changed = saveCompoundWorkflow(queue, compoundWorkflow, null);
+            if (log.isDebugEnabled()) {
+                log.debug("Stopped " + compoundWorkflow);
+            }
         }
 
         // also check repo status
         CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
-        checkCompoundWorkflow(freshCompoundWorkflow, Status.STOPPED);
+        checkCompoundWorkflow(freshCompoundWorkflow, Status.STOPPED, Status.FINISHED);
         checkActiveResponsibleAssignmentTasks(freshCompoundWorkflow.getParent());
         handleEvents(queue);
         return freshCompoundWorkflow;
     }
 
     @Override
-    public CompoundWorkflow saveAndContinueCompoundWorkflow(CompoundWorkflow nodeRef) {
+    public CompoundWorkflow saveAndContinueCompoundWorkflow(CompoundWorkflow compoundWorkflowOriginal) {
+        CompoundWorkflow compoundWorkflow = compoundWorkflowOriginal.copy();
         WorkflowEventQueue queue = getNewEventQueue();
-        saveCompoundWorkflow(queue, nodeRef);
-        return continueCompoundWorkflow(queue, nodeRef.getNode().getNodeRef());
+        saveCompoundWorkflow(queue, compoundWorkflow);
+        return continueCompoundWorkflow(queue, compoundWorkflow.getNode().getNodeRef());
     }
 
     @Override
@@ -659,26 +675,30 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private CompoundWorkflow continueCompoundWorkflow(WorkflowEventQueue queue, NodeRef nodeRef) {
         CompoundWorkflow compoundWorkflow = getCompoundWorkflow(nodeRef);
-        checkCompoundWorkflow(compoundWorkflow, Status.STOPPED);
-
-        setStatus(queue, compoundWorkflow, Status.IN_PROGRESS);
-        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-            if (isStatus(workflow, Status.STOPPED)) {
-                setStatus(queue, workflow, Status.IN_PROGRESS);
-
-                for (Task task : workflow.getTasks()) {
-                    if (isStatus(task, Status.STOPPED)) {
-                        setStatus(queue, task, Status.IN_PROGRESS);
-                    }
-                    task.setStoppedDateTime(null);            
-                }
+        if (checkCompoundWorkflow(compoundWorkflow, Status.STOPPED, Status.FINISHED) == Status.FINISHED) {
+            if (log.isDebugEnabled()) {
+                log.debug("CompoundWorkflow is already finished, continuing is not performed, saved as is: " + compoundWorkflow);
             }
-            workflow.setStoppedDateTime(null);            
-        }
-        stepAndCheck(queue, compoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
-        boolean changed = saveCompoundWorkflow(queue, compoundWorkflow, null);
-        if (log.isDebugEnabled()) {
-            log.debug("Continued " + compoundWorkflow);
+        } else {
+            setStatus(queue, compoundWorkflow, Status.IN_PROGRESS);
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                if (isStatus(workflow, Status.STOPPED)) {
+                    setStatus(queue, workflow, Status.IN_PROGRESS);
+    
+                    for (Task task : workflow.getTasks()) {
+                        if (isStatus(task, Status.STOPPED)) {
+                            setStatus(queue, task, Status.IN_PROGRESS);
+                        }
+                        task.setStoppedDateTime(null);            
+                    }
+                }
+                workflow.setStoppedDateTime(null);            
+            }
+            stepAndCheck(queue, compoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
+            boolean changed = saveCompoundWorkflow(queue, compoundWorkflow, null);
+            if (log.isDebugEnabled()) {
+                log.debug("Continued " + compoundWorkflow);
+            }
         }
 
         // also check repo status
@@ -714,7 +734,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public CompoundWorkflow saveAndCopyCompoundWorkflow(CompoundWorkflow compoundWorkflow) {
+    public CompoundWorkflow saveAndCopyCompoundWorkflow(CompoundWorkflow compoundWorkflowOriginal) {
+        CompoundWorkflow compoundWorkflow = compoundWorkflowOriginal.copy();
         WorkflowEventQueue queue = getNewEventQueue();
         if (!isStatus(compoundWorkflow, Status.FINISHED)) {
             saveCompoundWorkflow(queue, compoundWorkflow);
@@ -756,6 +777,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private static void reset(BaseWorkflowObject object) {
         object.getNode().updateNodeRef(null);
+        object.clearOriginalProperties();
         for (Entry<String, Object> prop : object.getNode().getProperties().entrySet()) {
             QName key = QName.createQName(prop.getKey());
             if (key.equals(WorkflowCommonModel.Props.STATUS)) {

@@ -8,6 +8,7 @@ import org.alfresco.web.bean.content.DeleteContentDialog;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -19,6 +20,7 @@ public class DeleteFileDialog extends DeleteContentDialog {
     private static final long serialVersionUID = 1L;
 
     private transient DocumentService documentService;
+    private transient DocumentLogService documentLogService;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
@@ -30,8 +32,7 @@ public class DeleteFileDialog extends DeleteContentDialog {
         super.finishImpl(context, outcome);
         
         if(file != null && file.getType().equals(DocumentCommonModel.Types.DOCUMENT)) {
-            getDocumentService().getDocumentLogService().addDocumentLog(document,
-                    MessageUtil.getMessage(context, "document_log_status_fileDeleted", new Object[] { file.getName() }));
+            getDocumentLogService().addDocumentLog(document, MessageUtil.getMessage(context, "document_log_status_fileDeleted", file.getName()));
             getDocumentService().updateSearchableFiles(document);
         }
         
@@ -51,4 +52,13 @@ public class DeleteFileDialog extends DeleteContentDialog {
         }
         return documentService;
     }
+
+    protected DocumentLogService getDocumentLogService() {
+        if (documentLogService == null) {
+            documentLogService = (DocumentLogService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(DocumentLogService.BEAN_NAME);
+        }
+        return documentLogService;
+    }
+
 }

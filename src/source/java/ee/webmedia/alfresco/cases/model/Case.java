@@ -6,6 +6,8 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
@@ -28,6 +30,7 @@ public class Case implements Serializable, Comparable<Case> {
     @AlfrescoModelProperty(isMappable = false)
     private Node node;
 
+    // START: methods that operate VO properties
     public String getTitle() {
         return title;
     }
@@ -59,7 +62,14 @@ public class Case implements Serializable, Comparable<Case> {
     public void setNode(Node node) {
         this.node = node;
     }
-    
+    // END: methods that operate VO properties
+
+    // START: methods that operate on node, not on VO properties
+    public boolean isClosed() {
+        return RepoUtil.isExistingPropertyValueEqualTo(node, CaseModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName());
+    }
+    // END: methods that operate on node, not on VO properties
+
     @Override
     public int compareTo(Case other) {
         if (StringUtils.equals(getTitle(), other.getTitle())) {
@@ -71,7 +81,7 @@ public class Case implements Serializable, Comparable<Case> {
         }
         return getTitle().compareTo(other.getTitle());
     }
-
+    
     @Override
     public String toString() {
         return new StringBuilder("Case:").append("\n\ttitle = " + title).append("\n\tstatus = " + status).toString();

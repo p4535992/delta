@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -58,6 +59,7 @@ import org.alfresco.web.bean.generator.BaseComponentGenerator;
  */
 public class Node implements Serializable, NamespacePrefixResolverProvider
 {
+   private static final org.apache.commons.logging.Log logger = org.apache.commons.logging.LogFactory.getLog(Node.class);
    private static final long serialVersionUID = 3544390322739034170L;
 
    protected NodeRef nodeRef;
@@ -505,6 +507,7 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
    /**
     * Override Object.toString() to provide useful debug output
     */
+   @Override
    public String toString()
    {
       if (getServiceRegistry().getNodeService() != null)
@@ -512,7 +515,7 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
          if (getServiceRegistry().getNodeService().exists(nodeRef))
          {
             return "Node Type: " + getType() + 
-                   "\nNode Properties: " + this.getProperties().toString() + 
+                   "\nNode Properties: " + propsToString(this.getProperties()) + 
                    "\nNode Aspects: " + this.getAspects().toString();
          }
          else
@@ -534,7 +537,20 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
       }
       return this.services;
    }
-   
+
+    protected String propsToString(final Map<String, Object> props) {
+        if (logger.isDebugEnabled()) {
+            final Set<Entry<String, Object>> entrySet = props.entrySet();
+            final StringBuilder sb = new StringBuilder("[");
+            for (Iterator<Entry<String, Object>> iterator = entrySet.iterator(); iterator.hasNext();) {
+                Entry<String, Object> entry = iterator.next();
+                sb.append("\n\t" + entry.getKey() + "\t= " + entry.getValue() + (iterator.hasNext() ? ", " : ""));
+            }
+            return sb.append("\n]").toString();
+        }
+        return props.toString();
+    }
+
    public NamespacePrefixResolver getNamespacePrefixResolver()
    {
       return getServiceRegistry().getNamespaceService();

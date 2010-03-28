@@ -6,7 +6,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="functions-panel" styleClass="panel-100" label="#{msg.functions_list}" progressive="true">
+<a:panel id="functions-panel" styleClass="panel-100 with-pager" label="#{msg.functions_list}" progressive="true">
 
    <%-- Main List --%>
    <a:richList id="functionsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -50,6 +50,9 @@
 
       <%-- Details actions column --%>
       <a:column id="col5" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager}" >
+         <f:facet name="header">
+            <h:outputText value="&nbsp;" escape="false" />
+         </f:facet>
          <a:actionLink id="col5-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:functionsDetailsDialog" showLink="false"
             actionListener="#{FunctionsDetailsDialog.select}" tooltip="#{msg.functions_details_info}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />

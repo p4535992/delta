@@ -45,8 +45,7 @@
                // set locale for JSF framework usage
                fc.getViewRoot().setLocale(Application.getLanguage(fc));
 
-       MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(fc, MenuBean.BEAN_NAME);
-       menuBean.resetClickedId();
+       MenuBean.clearViewStack(String.valueOf(MenuBean.MY_TASKS_AND_DOCUMENTS_ID), null);
    %>
    
    <%-- load a bundle of properties with I18N strings --%>

@@ -90,6 +90,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     
     protected CompoundWorkflow workflow;
     protected boolean fullAccess;
+    protected boolean isUnsavedWorkFlow;
 
     @Override
     public void init(Map<String, String> parameters) {
@@ -140,7 +141,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
 
     @Override
     public boolean getFinishButtonDisabled() {
-        return false;
+        return workflow == null;
     }
     
     /**
@@ -411,8 +412,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         workflow = null;
         panelGroup = null;
         sortedTypes = null;
+        isUnsavedWorkFlow = false;
     }
-    
+
     protected TreeMap<String, QName> getSortedTypes() {
         if (sortedTypes == null) {
             sortedTypes = new TreeMap<String, QName>();
@@ -434,6 +436,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         Application application = FacesContext.getCurrentInstance().getApplication();
         
         panelGroup.getChildren().clear();
+        
+        if (workflow == null) {
+            return;
+        }
         
         updateFullAccess();
         ensureResponsibleTaskExists();
@@ -669,5 +675,5 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }            
         }        
     }
-    
+
 }

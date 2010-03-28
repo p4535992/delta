@@ -58,7 +58,7 @@
 </f:verbatim>
       
       <%-- Users List --%> 
-      <a:panel id="users-panel" label="#{msg.users}">
+      <a:panel id="users-panel" label="#{msg.users}" styleClass="with-pager">
          <f:verbatim>
          <%
          PanelGenerator.generatePanelStart(out, request.getContextPath(), "message", "#ffffcc");

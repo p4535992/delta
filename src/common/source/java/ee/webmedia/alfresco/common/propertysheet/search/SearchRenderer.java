@@ -106,8 +106,9 @@ public class SearchRenderer extends BaseRenderer {
                 throw new RuntimeException("UIComponent not supported: " + component.getClass().getCanonicalName());
             }
         }
-        if ((list == null || picker == null) && (!search.isDisabled() || search.isEditable())) {
-            throw new RuntimeException("Child UIComponent is missing for "+component.getClass().getSimpleName()+" component wit id '"+component.getId()+"'. list="+list+"; picker="+picker);
+        if ((list == null || picker == null) && (!search.isDisabled())) {
+            throw new RuntimeException("Child UIComponent is missing for " + component.getClass().getSimpleName() //
+                    + " component wit id '" + component.getId() + "'. list=" + list + "; picker=" + picker);
         }
 
         if (search.isMultiValued()) {
@@ -132,7 +133,7 @@ public class SearchRenderer extends BaseRenderer {
         out.write("\"/>");
     }
 
-    protected void renderMultiValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
+    private void renderMultiValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
         out.write("<table class=\"recipient\" cellpadding=\"0\" cellspacing=\"0\"><tbody>");
 
         @SuppressWarnings("unchecked")
@@ -155,7 +156,7 @@ public class SearchRenderer extends BaseRenderer {
         renderPicker(context, out, search, picker);
     }
 
-    protected void renderSingleValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
+    private void renderSingleValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
         out.write("<table class=\"recipient\" cellpadding=\"0\" cellspacing=\"0\"");
         // There have been added some html for specifically displaying this component in UIRichList:
         // full column width is used and all cells are aligned to right.
@@ -178,30 +179,28 @@ public class SearchRenderer extends BaseRenderer {
             }
             out.write(">");
             Utils.encodeRecursive(context, child);
-            out.write("</td><td ");
-            if (search.isChildOfUIRichList())  {
-                out.write("style=\"text-align: right;\"");
-            }
-            out.write(">");
-            renderRemoveLink(context, out, search, i);
             out.write("</td>");
-
+            if(isRemoveLinkRendered(search)) {
+                out.write("<td ");
+                if (search.isChildOfUIRichList())  {
+                    out.write("style=\"text-align: right;\"");
+                }
+                out.write(">");
+                renderRemoveLink(context, out, search, i);
+                out.write("</td>");
+            }
         }
         out.write("<td ");
-        out.write("style=\"text-align: right;\"");
+        //out.write("style=\"text-align: right;\"");
         out.write(">");
         renderPicker(context, out, search, picker);
         out.write("</td></tr></tbody></table>");
     }
 
-    protected void renderRemoveLink(FacesContext context, ResponseWriter out, Search search, int index) throws IOException {
-        // don't render removing link
-        if (search.isDisabled() && !search.isEditable()) {
-            return;
-        }
-        if (!search.isMultiValued() && ((search.isEmpty() || search.isMandatory()) || (!search.isEmpty() || search.isEditable()))) {
-            return;
-        }
+    /**
+     * Before calling this method, verify that remove link is needed/allowed with SearchRenderer.isRemoveLinkRendered()
+     */
+    private void renderRemoveLink(FacesContext context, ResponseWriter out, Search search, int index) throws IOException {
         out.write("<a class=\"icon-link delete\" onclick=\"");
         out.write(Utils //
                 .generateFormSubmit(context, search, getActionId(context, search), REMOVE_ROW_ACTION + ACTION_SEPARATOR + index));
@@ -209,8 +208,23 @@ public class SearchRenderer extends BaseRenderer {
         out.write("</a>");
     }
 
-    protected void renderPicker(FacesContext context, ResponseWriter out, Search search, UIGenericPicker picker) throws IOException {
-        if(search.isDisabled() && !search.isEditable()) {
+    /**
+     * @param search
+     */
+    private boolean isRemoveLinkRendered(Search search) {
+        // don't render removing link
+        if (search.isDisabled()) {
+            return false;
+        }
+        if (!search.isMultiValued()) {
+            return false;
+        }
+        
+        return true;
+    }
+
+    private void renderPicker(FacesContext context, ResponseWriter out, Search search, UIGenericPicker picker) throws IOException {
+        if(search.isDisabled()) {
             return;
         }
         out.write("<a class=\"icon-link margin-left-4 search\" onclick=\"");
@@ -252,22 +266,20 @@ public class SearchRenderer extends BaseRenderer {
         }
     }
 
-     private static int getRowIndex(Search search) {
+    private static int getRowIndex(Search search) {
         UIComponent comp = search.getParent().getParent();
         if (comp instanceof UIRichList) {
             UIRichList list = (UIRichList) comp;
             return list.getRowIndex();
         }
-        else {
-            return -1;
-        }
+        return -1;
     }
 
-    protected String getDialogId(FacesContext context, UIComponent component) {
+    private String getDialogId(FacesContext context, UIComponent component) {
         return component.getClientId(context) + "_popup";
     }
 
-    protected String getActionId(FacesContext context, UIComponent component) {
+    private String getActionId(FacesContext context, UIComponent component) {
         return component.getClientId(context) + "_action";
     }
 

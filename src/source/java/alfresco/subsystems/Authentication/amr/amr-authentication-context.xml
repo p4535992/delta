@@ -24,6 +24,8 @@
       <property name="amrService" ref="AmrService" />
       <property name="nodeService" ref="nodeService" />
       <property name="personService" ref="personService" />
+      <property name="namespacePrefixResolver" ref="namespaceService" />
+      <property name="authorityService" ref="authorityService" />
       <property name="transactionService" ref="transactionService" />
       <property name="defaultAdministratorUserNameList" value="${external.authentication.defaultAdministratorUserNames}" />
       <property name="allowGuestLogin" value="false" />

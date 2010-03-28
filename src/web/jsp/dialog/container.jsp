@@ -74,6 +74,11 @@
             <% if(!isNull) { %>
             <%-- Status and Actions --%>
             <a:panel id="titlebar">
+            
+               <a:panel id="titlebar-dialog-buttons-panel" styleClass="titlebar-buttons" rendered="#{DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
+                  <r:dialogButtons id="titlebar-dialog-buttons" styleClass="wizardButton" />
+               </a:panel>
+            
                <%-- Status and Actions inner contents table --%>
                <%-- Generally this consists of an icon, textual summary and actions for the current object --%>
                <h2 class="title-icon">
@@ -92,7 +97,8 @@
             
 
             <a:panel id="actions">
-            <f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible or DialogManager.moreActionsId != null}">
+            <%--<f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible or DialogManager.moreActionsId != null}"> --%>
+            <f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
                <f:verbatim>
                <ul class="actions-menu extra-actions">
                </f:verbatim>
@@ -164,7 +170,7 @@
                         <r:actions id="more_actions_menu_items" value="#{DialogManager.moreActionsId}" context="#{DialogManager.actionsContext}"/>
                      </a:menu>--%>
                   </f:subview>
-                  <f:subview id="empty-main-actions-subview" rendered="#{DialogManager.currentDialog.name eq 'manageGroups' and empty DialogManager.bean.groups}">
+                  <f:subview id="empty-main-actions-subview" rendered="#{not (DialogManager.currentDialog.name eq 'manageGroups' and not empty DialogManager.bean.groups or DialogManager.currentDialog.name ne 'manageGroups') and (DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false)}">
                      <h:outputText value="&nbsp;" escape="false" style="line-height:20px;" />
                   </f:subview>
                </a:panel>
@@ -218,19 +224,12 @@
          
             <f:subview id="dialog-body">
 
-               <a:panel id="container-content-buttons" styleClass="column panel-90" rendered="#{DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
-                  <jsp:include page="<%=Application.getDialogManager().getPage() %>" />
-               </a:panel>
-
-               <a:panel id="container-content" styleClass="column panel-100" rendered="#{!(DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups'  && GroupsDialog.group ne null))}">
+               <a:panel id="container-content" styleClass="column panel-100">
                   <jsp:include page="<%=Application.getDialogManager().getPage() %>" />
                </a:panel>
 
             </f:subview>
 
-            <a:panel id="dialog-buttons-panel" styleClass="column panel-10 container-buttons" rendered="#{DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
-               <r:dialogButtons id="dialog-buttons" styleClass="wizardButton" />
-            </a:panel>
 
       <f:verbatim><div class="clear"></div></f:verbatim>
       <% } %>

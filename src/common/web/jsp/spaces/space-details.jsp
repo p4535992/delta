@@ -151,7 +151,7 @@
          </f:facet>
       </h:panelGroup> 
       <a:panel label="#{msg.rules}" id="rules-panel" facetsId="dialog:dialog-body:rules-panel-facets" progressive="true"
-         expanded='#{DialogManager.bean.panels["rules-panel"]}' expandedActionListener="#{DialogManager.bean.expandPanel}" styleClass="pager-panel">
+         expanded='#{DialogManager.bean.panels["rules-panel"]}' expandedActionListener="#{DialogManager.bean.expandPanel}" styleClass="with-pager">
          <a:richList id="rulesList" viewMode="details" value="#{RulesDialog.rules}" var="r" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
             width="100%" pageSize="10" initialSortColumn="title" initialSortDescending="true">
 

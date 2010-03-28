@@ -7,7 +7,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="volume-panel" border="white" bgcolor="white" styleClass="panel-100" label="#{VolumeListDialog.parent.seriesIdentifier} #{VolumeListDialog.parent.title}" progressive="true">
+<a:panel id="volume-panel" styleClass="panel-100 with-pager" label="#{VolumeListDialog.parent.seriesIdentifier} #{VolumeListDialog.parent.title}" progressive="true">
 
    <%-- Main List --%>
    <a:richList id="volumesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -76,6 +76,9 @@
 
       <%-- show details --%>
       <a:column id="col7" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager}" >
+         <f:facet name="header">
+            <h:outputText value="&nbsp;" escape="false" />
+         </f:facet>
          <a:actionLink id="col7-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:volumeDetailsDialog" showLink="false"
             actionListener="#{VolumeDetailsDialog.showDetails}" tooltip="#{msg.volume_details_info}">
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />

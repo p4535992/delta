@@ -7,23 +7,24 @@ function scrollView() {
 /**
  * @return input string where ":" and "." are escaped, so that the result could be used by jQuery
  */
-function escapeId4JQ(idToEscape)
-{
+function escapeId4JQ(idToEscape) {
    return idToEscape.replace(/:/g, "\\:").replace(/\./g, "\\.");
 }
 
+function disableAndRemoveButton(buttonId) {
+   var finishButton = $jQ('#' + escapeId4JQ(buttonId));
+   finishButton.remove();
+}
 /**
  * append selection of source element to the element with id ending with "toItemIdSuffix" and beginning with the same id prefix as selectBox
  * @author Ats Uiboupin
  */
-function appendSelection(source, targetId)
-{
+function appendSelection(source, targetId) {
    var appendSepparator = ', ';
    var targetElem = $jQ("#" + escapeId4JQ(targetId));
    var lable = $jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected').text(); // using label not value!
    var lastToItemValue = targetElem.val();
-   if (lastToItemValue.length != 0)
-   {
+   if (lastToItemValue.length != 0) {
       lastToItemValue = lastToItemValue + appendSepparator;
    }
    targetElem.val(lastToItemValue + lable);
@@ -46,6 +47,32 @@ function setInputAutoCompleteArray(inputId, valuesArray){
 
 $jQ(document).ready(function()
 {
+	var lastActiveInput = null;
+	
+	$jQ("input").focus(function() {
+		lastActiveInput = $jQ(this);
+	});
+	
+	$jQ("form").submit(function(e) {
+		if(lastActiveInput != null) {
+			if(lastActiveInput.attr("type") == "submit") {
+				return true;
+			}
+			
+			// Check special cases
+			// modal popups
+			if(lastActiveInput.parents('.modalpopup-content-inner').length > 0) {
+				lastActiveInput.parent().parent().closest("td").children(".search").click(); // hack to override clearFormhiddenParams function. Works with mouse but not with click()...
+				lastActiveInput.next().click();
+			} else if(lastActiveInput.attr("id") == $jQ("form").attr("name") + ":quickSearch") { // quick search
+				$jQ('#search.panel input[id$=quickSearchBtn]').click();
+				return true;
+			}
+				
+			return false; // otherwise return false, users don't want to lose their data :)
+		}
+	});
+	
    /**
     * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
     * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX) 
@@ -140,6 +167,7 @@ function applySize(e, field)
    var formId = document.forms[0].name;
    document.forms[formId][formId+':act'].value= formId + ':' + field;
    document.forms[formId].submit();
+
    return false;
 }
 
@@ -178,8 +206,6 @@ function showModal(target, size){
 }
 
 $jQ(document).ready(function(){
-	$jQ(".modalwrap").click(function(){ positionDialog() });
-	$jQ(".modalwrap").find(":radio, :checkbox, select").change(function(){ positionDialog() });
    $jQ(".modalwrap select option").tooltip();
 });
 
@@ -262,3 +288,32 @@ $jQ(document).ready(function() {
       processButtonState();
    }
 });
+
+function togglePanel(divId) {
+    $jQ(divId).toggle();
+}
+
+function togglePanelWithStateUpdate(divId, panelId, viewName) {
+    togglePanel(divId);
+    updateState(divId, panelId, viewName);
+}
+
+function updateState(divId, panelId, viewName) {
+    var uri = getContextPath() + '/ajax/invoke/PanelStateBean.updatePanelState?panelId=' + panelId +
+              '&panelState=' + $jQ(divId).is(":visible") + '&viewName=' + viewName;
+    YAHOO.util.Connect.asyncRequest("GET", uri,
+    {
+        success: requestUpdatePanelStateSuccess
+        ,failure: requestUpdatePanelStateFailure
+    }, null);
+}
+
+function requestUpdatePanelStateSuccess(ajaxResponse) {
+   var xml = ajaxResponse.responseXML.documentElement;
+   // Set new value to view state, so when form is submitted next time, correct state is restored.
+   document.getElementById("javax.faces.ViewState").value = xml.getAttribute('view-state');
+}
+
+function requestUpdatePanelStateFailure(ajaxResponse) {
+    $jQ.log("Updating panel status in server side failed");
+}

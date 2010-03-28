@@ -43,8 +43,9 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
     @Override
     protected void transformInternal(ContentReader reader, ContentWriter writer, TransformationOptions options) throws Exception {
         if (log.isTraceEnabled()) {
-            log.trace("Starting the transformation process.");
+            log.trace("Starting the transformation process\nReader: " + reader + "\nWriter: " + writer);
         }
+        long startTime = System.currentTimeMillis();
         InputStream is = null;
         try {
             StringBuilder text = new StringBuilder();
@@ -59,14 +60,14 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
             // add the data into the original writer
             writer.putContent(text.toString());
             if (log.isDebugEnabled()) {
-                log.debug("Finished transformation, produced " + text.length() + " characters of text");
+                log.debug("Finished DigiDoc transformation, produced " + text.length() + " characters of text, time " + (System.currentTimeMillis() - startTime) + " ms");
             }
             if (log.isTraceEnabled()) {
                 log.trace("Index data:\n" + text.toString());
             }
         } catch (SignatureException e) {
             if (log.isDebugEnabled()) {
-                log.debug("Exception caught, rethrowing as ContentIOException");
+                log.debug("Exception caught, rethrowing as ContentIOException:\n" + e.getMessage());
             }
             throw new ContentIOException("Failed to parse ddoc file", e);
         } catch (Exception e) {
@@ -82,9 +83,8 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
         if (!SignatureService.DIGIDOC_MIMETYPE.equals(sourceMimetype) ||
                 !MimetypeMap.MIMETYPE_TEXT_PLAIN.equals(targetMimetype)) {
             return false;
-        } else {
-            return true;
         }
+        return true;
     }
 
     private void transformSignatureItem(StringBuilder text, SignatureItem signatureItem) {
@@ -114,13 +114,17 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
         ContentReader dataItemReader = getTempContentReader(dataItem);
         ContentTransformer transformer = contentService.getTransformer(dataItemReader.getMimetype(), MimetypeMap.MIMETYPE_TEXT_PLAIN);
         if (dataItemReader.exists() && transformer != null) {
-            transformer.transform(dataItemReader, dataItemWriter);
-            ContentReader r = dataItemWriter.getReader();
-            if (r.exists()) {
-                String content = r.getContentString();
-                if (content != null) {
-                    text.append(content + "\n");
+            try {
+                transformer.transform(dataItemReader, dataItemWriter);
+                ContentReader r = dataItemWriter.getReader();
+                if (r.exists()) {
+                    String content = r.getContentString();
+                    if (content != null) {
+                        text.append(content + "\n");
+                    }
                 }
+            } catch (ContentIOException e) {
+                log.debug("Transformation failed, ignoring and continuing\n" + dataItem, e);
             }
         }
     }

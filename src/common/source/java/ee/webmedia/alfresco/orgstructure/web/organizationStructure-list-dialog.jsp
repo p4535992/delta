@@ -7,8 +7,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="orgstructs-panel" border="white" bgcolor="white" styleClass="panel-100" label="#{msg.orgstructs_list}" progressive="true"
-   facetsId="orgstructs-panel-facets">
+<a:panel id="orgstructs-panel" styleClass="panel-100 with-pager" label="#{msg.orgstructs_list}" progressive="true" facetsId="orgstructs-panel-facets">
 
    <%-- Main List --%>
    <a:richList id="orgstructsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet" headerStyleClass="recordSetHeader"

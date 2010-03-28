@@ -10,6 +10,7 @@ import java.util.TreeMap;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import ee.webmedia.alfresco.utils.MessageUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.GUID;
 import org.alfresco.web.app.Application;
@@ -18,6 +19,7 @@ import org.alfresco.web.app.context.UIContextService;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
@@ -94,7 +96,10 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         String validationMessage;
         final Set<String> messages = new HashSet<String>(3);
-        int defaultCheckBox = 0; 
+        int defaultCheckBox = 0;
+
+        Set<String> distinctValues = new HashSet<String>();
+        Set<String> duplicatedValues = new HashSet<String>();
         for (ClassificatorValue classificatorValue : classificatorValues) {
             if (classificatorValue.isByDefault()) {
                 defaultCheckBox++;
@@ -102,11 +107,27 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
             if ((validationMessage = classificatorValue.validate()) != null) {
                 messages.add(validationMessage);
             }
+
+            // check for duplicated values
+            String valueName = classificatorValue.getValueName();
+            if (distinctValues.contains(valueName)) {
+                duplicatedValues.add(valueName);
+            }
+            else {
+                distinctValues.add(valueName);
+            }
         }
+
+        boolean hasErrors = false;
+        if (duplicatedValues.size() > 0) {
+            MessageUtil.addErrorMessage(context, "classificator_duplicated_value", StringUtils.join(duplicatedValues, ", "));
+            hasErrors = true;
+        }
+
         if (defaultCheckBox > 1) {
             messages.add("classificator_value_validation_bydefault");
         }
-        if (messages.size() > 0) {
+        if (hasErrors || messages.size() > 0) {
             for (String message : messages) {
                 Utils.addErrorMessage(Application.getMessage(context, message));
             }
@@ -163,9 +184,17 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
      */
     public void removeValue(ActionEvent event) {
         String ref = ActionUtil.getParam(event, "nodeRef");
-        originalValues.remove(ref);
-        classificatorValues.remove(getClassificatorValueByNodeRef(ref));
-        getClassificatorService().removeClassificatorValueByNodeRef(selectedClassificator, ref);
+
+        ClassificatorValue classificatorValue = getClassificatorValueByNodeRef(ref);
+        classificatorValues.remove(classificatorValue);
+        if (originalValues.containsKey(ref)) {
+            originalValues.remove(ref);
+            getClassificatorService().removeClassificatorValueByNodeRef(selectedClassificator, ref);
+        }
+        else {
+            addedClassificators.remove(classificatorValue);
+        }
+
         if (log.isDebugEnabled()) {
             log.debug("Classificator value with nodeRef = " + ref + " deleted.");
         }

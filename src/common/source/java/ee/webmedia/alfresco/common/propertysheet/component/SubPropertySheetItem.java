@@ -319,7 +319,11 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
     }
 
     private UIComponent createSubPropertySheetWrapper(UIPropertySheet outerPropSheet, Node subPropSheetNode, FacesContext context) {
+        @SuppressWarnings("unchecked")
+        final List<UIComponent> subPropSheetChildren = getChildren();
+
         final UINamingContainer uiNamingContainer = new UINamingContainer();
+        subPropSheetChildren.add(uiNamingContainer);
         FacesHelper.setupComponentId(context, uiNamingContainer, "uiNamingContainer" + subPropSheetCounter);
 
         final String titleLabelId = getCustomAttributes().get(ATTR_TITLE_LABEL_ID);
@@ -329,42 +333,36 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
         final String parentUIPanelLabel = parentUIPanel.getLabel();
         log.debug("debugBuffer:\n" + debugBuffer);
 
+        @SuppressWarnings("unchecked")
+        final List<UIComponent> namingContainerChildren = uiNamingContainer.getChildren();
+
         UIPanel subPropSheetWrapper = new UIPanel();
+        namingContainerChildren.add(subPropSheetWrapper);
         FacesHelper.setupComponentId(context, subPropSheetWrapper, "subPropSheetWrapper");
-        subPropSheetWrapper.setLabel(MessageUtil.getMessage(context, titleLabelId, parentUIPanelLabel, subPropSheetCounter != null ? subPropSheetCounter + 1
-                : null));
+        subPropSheetWrapper.setLabel(MessageUtil.getMessage(context, titleLabelId, parentUIPanelLabel //
+                , subPropSheetCounter != null ? subPropSheetCounter + 1 : null));
 
         final String actionGroupId = getCustomAttributes().get(ATTR_ACTIONS_GROUP_ID);
         @SuppressWarnings("unchecked")
         final List<UIComponent> wrapperChildren = subPropSheetWrapper.getChildren();
 
         if (outerPropSheet.inEditMode()) {
-            final HtmlPanelGroup subPropSheetActionsWrapper = buildActionGroup(context, actionGroupId, subPropSheetNode);
-            wrapperChildren.add(subPropSheetActionsWrapper);
+            final UIComponent subPropSheetActionsWrapper = buildActionGroup(context, actionGroupId, subPropSheetNode);
+            @SuppressWarnings("unchecked")
+            final Map<String, UIComponent> facets = subPropSheetWrapper.getFacets();
+            facets.put("title", subPropSheetActionsWrapper);
         }
 
         if (subPropSheetNode != null) {
             wrapperChildren.add(createSubPropertySheet(outerPropSheet, subPropSheetNode, context));
         }
-        @SuppressWarnings("unchecked")
-        final List<UIComponent> namingContainerChildren = uiNamingContainer.getChildren();
-        namingContainerChildren.add(subPropSheetWrapper);
-
-        @SuppressWarnings("unchecked")
-        final List<UIComponent> subPropSheetChildren = getChildren();
-        subPropSheetChildren.add(uiNamingContainer);
-
-        // @SuppressWarnings("unchecked")
-        // final Map<String, UIComponent> facets = subPropSheetWrapper.getFacets();
-        // final String actionsClientId = subPropSheetActionsWrapper.getClientId(context);
-        // facets.put(actionsClientId, subPropSheetActionsWrapper);
 
         return uiNamingContainer;
     }
 
     private UIPropertySheet createSubPropertySheet(UIPropertySheet outerPropSheet, Node subPropSheetNode, FacesContext context) {
         int assocIndex = subPropSheetCounter;
-        final WMUIPropertySheet childProperySheet = new WMUIPropertySheet();// TODO: PropertySheetGridTag.getcomponent()
+        final WMUIPropertySheet childProperySheet = (WMUIPropertySheet) context.getApplication().createComponent("org.alfresco.faces.PropertySheet");
         FacesHelper.setupComponentId(context, childProperySheet, SUB_PROP_SHEET_ID_PREFIX + assocIndex);
         childProperySheet.setNode(subPropSheetNode);
         // copy defaults from parent propertySheet

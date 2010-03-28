@@ -8,7 +8,7 @@
    </lifecycle>
 
    <managed-bean>
-      <managed-bean-name>NotificationEmailSender</managed-bean-name>
+      <managed-bean-name>NotificationSender</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.substitute.NotificationEmailSender</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
     </managed-bean>
@@ -25,7 +25,7 @@
       <managed-bean-scope>session</managed-bean-scope>
       <managed-property>
          <property-name>notificationSender</property-name>
-         <value>#{NotificationEmailSender}</value>
+         <value>#{NotificationSender}</value>
       </managed-property>
    </managed-bean>
 </faces-config>

@@ -45,7 +45,6 @@ public class MenuRenderer extends BaseRenderer {
         boolean primary = ((Boolean) menuComponent.getAttributes().get(UIMenuComponent.PRIMARY_ATTRIBUTE_KEY));
 
         String activeItemId = menuBean.getActiveItemId();
-        menuBean.setActiveItemId(activeItemId);
 
         if (primary) {
             renderPrimary(context, activeItemId, menu, component);
@@ -164,7 +163,7 @@ public class MenuRenderer extends BaseRenderer {
         String id = PRIMARY_MENU_PREFIX;
         for (MenuItem item : menuItems) {
             if (activeItemid.equals(Integer.toString(i))) {
-                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService());
+                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), false);
                 if (menuItem != null)
                     children.add(menuItem);
             } else if (item instanceof DropdownMenuItem) { // Only the drop-down item in primary menu needs the DocumentTypeService

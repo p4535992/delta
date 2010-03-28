@@ -15,7 +15,7 @@
    </f:facet>
 </h:panelGroup>
 
-<a:panel id="assocs-block-panel" label="#{msg.document_assocsBlockBean_panelTitle}" styleClass="panel-100" progressive="true"
+<a:panel id="assocs-block-panel" label="#{msg.document_assocsBlockBean_panelTitle}" styleClass="panel-100 with-pager" progressive="true"
    expanded="#{AssocsBlockBean.expanded}" expandedActionListener="#{AssocsBlockBean.expandedAction}" facetsId="dialog:dialog-body:assocs-panel-facets">
 
    <a:richList id="assocsList" viewMode="details" value="#{AssocsBlockBean.docAssocInfos}" var="r" rowStyleClass="recordSetRow"
@@ -60,6 +60,9 @@
                <f:param name="documentRef" value="#{AssocsBlockBean.document.nodeRef}"/>
          </a:actionLink>
       </a:column>
+
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
+      <a:dataPager id="pager1" styleClass="pager" />
 
    </a:richList>
 

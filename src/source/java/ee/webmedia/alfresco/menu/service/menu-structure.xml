@@ -6,113 +6,113 @@
 <menu>
 
    <!-- MINU TÖÖÜLESANDED JA DOKUMENDID -->
-   <item title="Minu tööülesanded ja dokumendid">
+   <item title-id="menu_my_tasks_and_documents">
       <outcome>myalfresco</outcome>
       <action-listener>#{MyTasksBean.setupMyTasks}</action-listener>
       <subitems>
-         <dropdown title="Minu ülesanded" expanded="true">
+         <dropdown title-id="menu_my_tasks" expanded="true">
             <submenu-id>my-tasks-submenu</submenu-id>
             <subitems>
-               <item id="assignmentTasks" title="Täitmiseks">
+               <item id="assignmentTasks" title-id="menu_for_assignment">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupAssignmentTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}assignmentTask</processor>
                </item>
-               <item id="informationTasks" title="Teadmiseks">
+               <item id="informationTasks" title-id="menu_for_information">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupInformationTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}informationTask</processor>
                </item>
-               <item id="opinionTasks" title="Arvamuse andmiseks">
+               <item id="opinionTasks" title-id="menu_for_opinion">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupOpinionTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}opinionTask</processor>
                </item>
-               <item id="reviewTasks" title="Kooskõlastamiseks">
+               <item id="reviewTasks" title-id="menu_for_review">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupReviewTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}reviewTask</processor>
                </item>
-               <item id="signatureTasks" title="Digitaalseks allkirjastamiseks">
+               <item id="signatureTasks" title-id="menu_for_signature">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupSignatureTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}signatureTask</processor>
                </item>
-               <item title="Menetluses">
+               <item title-id="menu_working_documents">
                   <outcome>dialog:userWorkingDocumentsSearchResultsDialog</outcome>
                   <action-listener>#{UserWorkingDocumentsSearchResultsDialog.setup}</action-listener>
                </item>
-               <item id="forRegisteringList" title="Registreerimiseks" document-manager="true">
+               <item id="forRegisteringList" title-id="menu_for_registering" document-manager="true">
                   <outcome>dialog:forRegisteringListDialog</outcome>
                    <action-listener>#{ForRegisteringListDialog.setup}</action-listener>
                </item>
-               <dropdown title="Saabunud dokumendid" document-manager="true" expanded="true">
+               <dropdown title-id="menu_received_documents" document-manager="true" expanded="true">
                   <submenu-id>received-documents-submenu</submenu-id>
                   <subitems>
-                     <item title="Sissetulevad e-kirjad">
+                     <item title-id="menu_incoming_emails">
                         <outcome>dialog:incomingEmailListDialog</outcome>
                         <action-listener>#{IncomingEmailListDialog.setup}</action-listener>
                      </item>
-                     <item title="E-kirja manused">
+                     <item title-id="menu_email_attachments">
                         <outcome>dialog:attachmentListDialog</outcome>
                          <action-listener>#{AttachmentListDialog.init}</action-listener>
                      </item>
-                     <item title="Veateated">
+                     <item title-id="menu_dvk_error_messages">
                         <outcome>dialog:dvkCorruptListDialog</outcome>
                         <action-listener>#{DvkCorruptListDialog.init}</action-listener>
                      </item>
-                     <item title="Skaneeritud dokumendid">
+                     <item title-id="menu_scanned_documents">
                         <outcome>dialog:scannedDocsListDialog</outcome>
                          <action-listener>#{ScannedDocsListDialog.init}</action-listener>
                      </item>
-                     <item title="DVK dokumendid">
+                     <item title-id="menu_dvk_documents">
                         <outcome>dialog:dvkDocumentListDialog</outcome>
                         <action-listener>#{DvkDocumentListDialog.setup}</action-listener>
                      </item>
                   </subitems>
                </dropdown>
-               <item title="Saatmata dokumendid" document-manager="true">
+               <item title-id="menu_unsent_documents" document-manager="true">
                   <outcome>dialog:unsentDocumentListDialog</outcome>
                   <action-listener>#{UnsentDocumentListDialog.setup}</action-listener>
                </item>
-               <item title="Saatmisel dokumendid" document-manager="true">
+               <item title-id="menu_outbox_documents" document-manager="true">
                   <outcome>dialog:outboxDocumentListDialog</outcome>
                   <action-listener>#{OutboxDocumentListDialog.setup}</action-listener>
                </item>
             </subitems>
          </dropdown>
-         <dropdown title="Otsing" expanded="true">
+         <dropdown title-id="menu_search" expanded="true">
             <submenu-id>queries-submenu</submenu-id>
             <subitems>
-               <item title="Dokumendid">
+               <item title-id="menu_documents">
                   <outcome>dialog:documentSearchDialog</outcome>
                </item>
-               <item title="Tööülesanded">
+               <item title-id="menu_tasks">
                   <outcome>dialog:taskSearchDialog</outcome>
                </item>
             </subitems>
          </dropdown>
-         <item title="Osakonna töödokumendid">
+         <item title-id="menu_department_documents">
             <outcome>myalfresco</outcome>
          </item>
-         <item title="Minu dokumentide loetelu">
+         <item title-id="menu_my_documents">
             <outcome>dialog:mySeriesListDialog</outcome>
          </item>
       </subitems>
    </item>
 
    <!-- DOKUMENDIREGISTER -->
-   <item title="Dokumendiregister">
+   <item title-id="menu_document_register">
       <outcome>dialog:todayRegisteredDocumentsSearchResultsDialog</outcome>
       <action-listener>#{TodayRegisteredDocumentsSearchResultsDialog.setup}</action-listener>
       <subitems>
-         <dropdown title="Dokumentide loetelu" browse="true">
+         <dropdown title-id="menu_document_list" browse="true">
             <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}documentList</xpath>
             <submenu-id>document-register</submenu-id>
             <outcome>dialog:functionsListDialog</outcome>
             <action-listener>#{MenuBean.updateTree}</action-listener>
          </dropdown>
-         <dropdown title="Arhivaalide loetelu" browse="true">
+         <dropdown title-id="menu_archivals_list" browse="true">
              <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}archivals</xpath>
              <store>workspace://ArchivalsStore</store>
              <submenu-id>document-register</submenu-id>
@@ -123,37 +123,37 @@
    </item>
 
    <!-- KONTAKT -->
-   <item title="Kontakt" document-manager="true">
+   <item title-id="menu_contact" document-manager="true">
       <outcome>dialog:addressbookManage</outcome>
       <subitems>
-         <item title="Kontaktide haldus">
+         <item title-id="menu_contact_management">
             <outcome>dialog:addressbookManage</outcome>
          </item>
-         <item title="Kontaktgruppide haldus">
+         <item title-id="menu_contact_group_management">
             <outcome>dialog:addressbookManageContactGroups</outcome>
          </item>
       </subitems>
    </item>
 
    <!-- MINA -->
-   <item title="Mina">
+   <item title-id="menu_me">
       <outcome>dialog:userConsole</outcome>
       <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
       <subitems>
-         <item title="Minu profiil">
+         <item title-id="menu_my_profile">
             <outcome>dialog:userConsole</outcome>
             <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
          </item>
-         <item title="Minu lemmikud">
+         <item title-id="menu_my_favourites">
             <outcome>dialog:favoritesDocumentListDialog</outcome>
          </item>
-         <dropdown title="Seaded" expanded="true">
+         <dropdown title-id="menu_settings" expanded="true">
             <submenu-id>settings-submenu</submenu-id>
             <subitems>
-               <item title="Teavitused meilile">
+               <item title-id="menu_notifications_to_email">
                   <outcome>dialog:notificationDialog</outcome>
                </item>
-               <item title="Eemaloleku seadistus">
+               <item title-id="menu_leave_configuration">
                   <outcome>dialog:substituteListDialog</outcome>
                </item>
             </subitems>
@@ -162,54 +162,54 @@
    </item>
 
    <!-- ADMINISTRATOR -->
-   <item title="Administraator" admin="true">
+   <item title-id="menu_administrator" admin="true">
       <outcome>dialog:userListDialog</outcome>
       <subitems>
-         <item title="Kasutajate haldus">
+         <item title-id="menu_user_management">
             <outcome>dialog:userListDialog</outcome>
          </item>
-         <item title="Kasutajagruppide haldus">
+         <item title-id="menu_user_group_management">
             <outcome>dialog:manageGroups</outcome>
          </item>
-         <item title="Klassifikaatorid">
+         <item title-id="menu_classificators">
             <outcome>dialog:classificatorListDialog</outcome>
          </item>
-         <item title="Parameetrid">
+         <item title-id="menu_parameters">
             <outcome>dialog:parametersListDialog</outcome>
          </item>
-         <item title="Registrid">
+         <item title-id="menu_registers">
             <outcome>dialog:registerListDialog</outcome>
          </item>
-         <item title="Terviktöövood">
+         <item title-id="menu_compoundworkflows">
             <outcome>dialog:compoundWorkflowDefinitionListDialog</outcome>
          </item>
-         <item title="Mallid">
+         <item title-id="menu_templates">
             <outcome>dialog:documentTemplateListDialog</outcome>
          </item>
-         <item title="Dokumendi liigid">
+         <item title-id="menu_document_types">
             <outcome>dialog:documentTypeDialog</outcome>
          </item>
-         <item title="Organisatsiooni struktuur">
+         <item title-id="menu_organization_structure">
             <outcome>dialog:orgstructureListDialog</outcome>
          </item>
-         <item title="Tähtsad teated">
+         <item title-id="menu_important_notifications">
             <outcome>dialog:notificationListDialog</outcome>
          </item>
-         <item title="Süsteemiinfo">
+         <item title-id="menu_system_information">
             <outcome>dialog:showSystemInfo</outcome>
          </item>
-         <item title="Node'ide sirvija">
+         <item title-id="menu_node_browser">
             <outcome>dialog:showNodeBrowser</outcome>
          </item>
       </subitems>
    </item>
 
    <!-- ALUSTA UUT DOKUMENTI -->
-   <dropdown id="documentTypes" title="Alusta uut dokumenti" skinnable="true" temporary="true">
+   <dropdown id="documentTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">
       <submenu-id>new-document-submenu</submenu-id>
       <subitems>
-         <dropdown title="Akt" hover="true">
-            <submenu-id>akt-submenu</submenu-id>
+         <dropdown title-id="menu_instrument" hover="true">
+            <submenu-id>instrument-submenu</submenu-id>
             <subitems>
                <item>
                   <outcome>docsub:instrumentOfDeliveryAndReceipt</outcome>
@@ -225,8 +225,8 @@
          <item>
             <outcome>docsub:managementsOrder</outcome>
          </item>
-         <dropdown title="Kiri" hover="true">
-            <submenu-id>kiri-submenu</submenu-id>
+         <dropdown title-id="menu_letter" hover="true">
+            <submenu-id>letter-submenu</submenu-id>
             <subitems>
                <item>
                   <outcome>docsub:incomingLetter</outcome>
@@ -236,8 +236,8 @@
                </item>
             </subitems>
          </dropdown>
-         <dropdown title="Käskkiri" hover="true">
-            <submenu-id>kaskkiri-submenu</submenu-id>
+         <dropdown title-id="menu_order" hover="true">
+            <submenu-id>order-submenu</submenu-id>
             <subitems>
                <item>
                   <outcome>docsub:chancellorsOrder</outcome>
@@ -265,8 +265,8 @@
          <item>
             <outcome>docsub:licence</outcome>
          </item>
-         <dropdown title="Majasisene taotlus" hover="true">
-            <submenu-id>majasisene-taotlus-submenu</submenu-id>
+         <dropdown title-id="menu_internal_application" hover="true">
+            <submenu-id>internal-application-submenu</submenu-id>
             <subitems>
             <item>
                <outcome>docsub:trainingApplication</outcome>

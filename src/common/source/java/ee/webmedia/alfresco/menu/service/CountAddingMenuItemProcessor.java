@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.menu.service;
 
+import org.alfresco.i18n.I18NUtil;
+
 import ee.webmedia.alfresco.menu.model.MenuItem;
 
 /**
@@ -11,6 +13,9 @@ import ee.webmedia.alfresco.menu.model.MenuItem;
 public abstract class CountAddingMenuItemProcessor implements MenuService.MenuItemProcessor {
     @Override
     final public void doWithMenuItem(MenuItem menuItem) {
+        if(menuItem.getTitle() == null) {
+            menuItem.setTitle(I18NUtil.getMessage(menuItem.getTitleId()));
+        }
         String title = menuItem.getTitle();
 
         int firstBrace = -1;

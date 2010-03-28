@@ -9,7 +9,7 @@
 <%@ page isELIgnored="false"%>
 <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/ajax/yahoo/dom/dom-min.js"> </script>
 
-<a:panel id="parameters-panel" label="#{msg.parameters_list}" styleClass="panel-100">
+<a:panel id="parameters-panel" label="#{msg.parameters_list}" styleClass="panel-100 with-pager">
    <a:richList id="parametersList" value="#{ParametersListDialog.parameters}" var="sParameter" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"
       rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="paramName" >
 
@@ -27,7 +27,7 @@
          <a:outputText id="paramTypeOT" value="#{msg[sParameter.typeMsg]}" />
       </a:column>
 
-      <a:column id="paramValCol" style="text-align: right">
+      <a:column id="paramValCol">
          <f:facet name="header">
             <a:outputText value="#{msg.parameters_value}" />
          </f:facet>

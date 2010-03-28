@@ -105,12 +105,10 @@ public class RegisterServiceImpl implements RegisterService {
     public Node createRegister() {
         // Set the default values
         Map<QName, Serializable> prop = new HashMap<QName, Serializable>();
-        int id = getMaxRegisterId() + 1;
-        prop.put(RegisterModel.Prop.ID, id);
         prop.put(RegisterModel.Prop.COUNTER, DEFAULT_COUNTER_INITIAL_VALUE);
         prop.put(RegisterModel.Prop.ACTIVE, Boolean.TRUE);
         TransientNode transientNode = new TransientNode( //
-                RegisterModel.Types.REGISTER, QName.createQName(RegisterModel.URI, Integer.toString(id)).toString(), prop);
+                RegisterModel.Types.REGISTER, QName.createQName(RegisterModel.URI, "temp").toString(), prop);
         transientNode.getProperties();
         return transientNode;
     }
@@ -120,7 +118,8 @@ public class RegisterServiceImpl implements RegisterService {
         // Check if node is new or it is being updated
         Map<String, Object> prop = register.getProperties();
         if (!nodeService.exists(register.getNodeRef())) {
-            final Integer regId = (Integer) prop.get(RegisterModel.Prop.ID);
+            Integer regId = getMaxRegisterId() + 1;
+            prop.put(RegisterModel.Prop.ID.toString(), regId);
             createSequence(regId);
             nodeService.createNode(getRoot(), RegisterModel.Assoc.REGISTER,
                     QName.createQName(RegisterModel.URI, regId.toString()), RegisterModel.Types.REGISTER, //

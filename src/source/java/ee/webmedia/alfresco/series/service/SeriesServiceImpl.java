@@ -102,7 +102,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
 
     @Override
     public boolean isClosed(Node node) {
-        return generalService.isExistingPropertyValueEqualTo(node, SeriesModel.Props.STATUS, DocListUnitStatus.CLOSED);
+        return RepoUtil.isExistingPropertyValueEqualTo(node, SeriesModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName());
     }
 
     @Override

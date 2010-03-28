@@ -16,11 +16,12 @@ import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 
-public class Document implements Serializable, Comparable<Document> {
+public class Document implements Serializable, Comparable<Document>, CssStylable {
     private static final long serialVersionUID = 1L;
 
     public static final String LIST_SEPARATOR = ", ";
@@ -67,8 +68,13 @@ public class Document implements Serializable, Comparable<Document> {
         return documentType != null ? documentType.getName() : null;
     }
 
-    public String getDocTypeLocalName() {
+    private String getDocTypeLocalName() {
         return documentType.getId().getLocalName();
+    }
+    
+    @Override
+    public String getCssStyleClass() {
+        return getDocTypeLocalName();
     }
 
     // Basic properties that are used in document-list-dialog.jsp

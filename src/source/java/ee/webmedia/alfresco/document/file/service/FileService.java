@@ -25,7 +25,7 @@ public interface FileService {
      * @return
      */
     List<File> getAllFiles(NodeRef nodeRef);
-
+    
     /**
      * @param nodeRef
      * @return list of all files(including digidoc container, but witout digidocitems of container)

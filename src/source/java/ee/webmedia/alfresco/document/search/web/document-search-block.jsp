@@ -19,14 +19,14 @@
          <h:commandButton id="quickSearchBtn2" value="#{msg.search}" type="submit" actionListener="#{DocumentDialog.search.setup}" />
       </a:panel>
 
-      <a:panel id="docsearch-results-panel" styleClass="panel-100" label="#{msg.search}" progressive="true" rendered="#{DocumentDialog.search.count > 0}">
+      <a:panel id="docsearch-results-panel" styleClass="panel-100 with-pager" label="#{msg.search}" progressive="true" rendered="#{DocumentDialog.search.count > 0}">
          <a:richList id="documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
             altRowStyleClass="recordSetRowAlt" width="100%" value="#{DocumentDialog.search.documents}" var="r" refreshOnBind="true" >
 
             <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog-columns.jsp" />
 
             <%-- iconLink to document details --%>
-            <a:column id="col-actions" actions="true" styleClass="actions-column2 #{r.docTypeLocalName}">
+            <a:column id="col-actions" actions="true" styleClass="actions-column2 #{r.cssStyleClass}">
                <a:actionLink id="col-actions-act1" value="#{r.docName}" image="/images/icons/document-followup.png" showLink="false"
                   actionListener="#{DocumentDialog.addFollowUpHandler}" tooltip="#{msg.document_search_add_followup}" rendered="#{not DocumentDialog.showDocsAndCasesAssocs}" >
                   <f:param name="nodeRef" value="#{r.node.nodeRef}" />
@@ -37,12 +37,12 @@
                </a:actionLink>
 <%-- Start assocs that must be saved when clicked --%>               
                <a:actionLink id="col-actions-addAssocDoc" value="#{r.docName}" image="/images/icons/import.png" showLink="false"
-                  actionListener="#{DocumentDialog.addAssocDocHandler}" tooltip="#{msg.document_assocAdd}" rendered="#{(r.docTypeLocalName != 'case') and ('true' == DocumentDialog.showDocsAndCasesAssocs)}" >
+                  actionListener="#{DocumentDialog.addAssocDocHandler}" tooltip="#{msg.document_assocAdd}" rendered="#{(r.cssStyleClass != 'case') and ('true' == DocumentDialog.showDocsAndCasesAssocs)}" >
                   <f:param name="nodeRef" value="#{r.node.nodeRef}" />
                </a:actionLink>
 
                <a:actionLink id="col-actions-addAssocDoc2Case" value="#{r.docName}" image="/images/icons/import.png" showLink="false"
-                  actionListener="#{DocumentDialog.addAssocDoc2CaseHandler}" tooltip="#{msg.document_assocAdd}" rendered="#{(DocumentDialog.showDocsAndCasesAssocs == 'true') and (r.docTypeLocalName == 'case')}" >
+                  actionListener="#{DocumentDialog.addAssocDoc2CaseHandler}" tooltip="#{msg.document_assocAdd}" rendered="#{(DocumentDialog.showDocsAndCasesAssocs == 'true') and (r.cssStyleClass == 'case')}" >
                   <f:param name="nodeRef" value="#{r.node.nodeRef}" />
                </a:actionLink>
 <%-- End assocs that must be saved when clicked --%>               

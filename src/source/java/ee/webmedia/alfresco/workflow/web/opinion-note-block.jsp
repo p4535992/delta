@@ -6,7 +6,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 <a:panel id="opinion-note-block" rendered="#{WorkflowBlockBean.opinionNoteBlockRendered}" label="#{msg.workflow_task_opinion_opinions}" progressive="true"
-   expanded="false">
+   expanded="false" styleClass="with-pager">
    <a:richList id="opinionNoteList" viewMode="details" value="#{WorkflowBlockBean.finishedOpinionTasks}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="completedDateTime" initialSortDescending="false">
 

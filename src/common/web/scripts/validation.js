@@ -46,7 +46,7 @@ function validateMandatory(control, message, showMessage)
 {
    var result = true;
    
-   if (control.value == null || control.value.length == 0)
+   if (control.value == null || jQuery.trim(control.value).length == 0)
    {
       informUser(control, message, showMessage);
       result = false;
@@ -130,8 +130,9 @@ function validateIsNumber(control, message, showMessage)
 function validateStringLength(control, min, max, message, showMessage)
 {
    var result = true;
-   
-   if (control.value.length < min || control.value.length > max)
+
+   var controlValLength = jQuery.trim(control.value).length;
+   if (controlValLength < min || controlValLength > max)
    {
       informUser(control, message, showMessage);
       result = false;

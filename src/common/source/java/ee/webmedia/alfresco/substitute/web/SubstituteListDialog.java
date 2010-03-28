@@ -128,7 +128,9 @@ public class SubstituteListDialog extends BaseDialogBean {
                 addRequiredFieldValidationError(context, "substitute_enddate");
             }
 
-            if (substitute.getSubstitutionStartDate() != null && substitute.getSubstitutionStartDate().after(substitute.getSubstitutionEndDate())) {
+            if (substitute.getSubstitutionStartDate() != null
+                    && substitute.getSubstitutionEndDate() != null
+                    && substitute.getSubstitutionStartDate().after(substitute.getSubstitutionEndDate())) {
                 isValid = false;
                 MessageUtil.addErrorMessage(context, "substitute_start_after_end");
             }

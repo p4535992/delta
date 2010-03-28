@@ -9,6 +9,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.component.html.HtmlPanelGroup;
@@ -24,6 +25,7 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor.MultiValueEditorEvent;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -41,9 +43,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * @author Alar Kvell
  */
 public class MultiValueEditor extends UIComponentBase {
-    protected static final String PROPERTY_SHEET_VAR = "propertySheetVar";
-
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MultiValueEditor.class);
+
+    protected static final String PROPERTY_SHEET_VAR = "propertySheetVar";
+    protected static final String PREPROCESS_CALLBACK = "preprocessCallback";
+    protected static final String FILTERS = "filters";
 
     public static final String MULTI_VALUE_EDITOR_FAMILY = MultiValueEditor.class.getCanonicalName();
     public static final String ADD_LABEL_ID = "addLabelId";
@@ -79,9 +83,19 @@ public class MultiValueEditor extends UIComponentBase {
         picker.setWidth(400);
         picker.setMultiSelect(true);
         String pickerCallback = getPickerCallback();
-        MethodBinding b = getFacesContext().getApplication().createMethodBinding(pickerCallback, new Class[] { int.class, String.class });
+        Application application = getFacesContext().getApplication();
+        MethodBinding b = application.createMethodBinding(pickerCallback, new Class[] { int.class, String.class });
         picker.setQueryCallback(b);
+
+        String filters = (String) getAttributes().get(FILTERS);
+        if (StringUtils.isNotBlank(filters)) {
+            ValueBinding filtersBind = context.getApplication().createValueBinding(filters);
+            picker.setValueBinding(FILTERS, filtersBind);
+            picker.setShowFilter(true);
+        }
+
         picker.addActionListener(new PickerFinishActionListener());
+
         children.add(picker);
     }
 
@@ -109,14 +123,21 @@ public class MultiValueEditor extends UIComponentBase {
         int rowIndex = Integer.parseInt((String) getAttributes().get(Search.OPEN_DIALOG_KEY));
         log.debug("Selected rowIndex=" + rowIndex + ", adding results: " + StringUtils.join(results, ", "));
 
+        String preprocessCallback = (String) getAttributes().get(PREPROCESS_CALLBACK);
+        if (StringUtils.isNotBlank(preprocessCallback)) {
+            MethodBinding preprocessBind = getFacesContext().getApplication().createMethodBinding(preprocessCallback, new Class[] { String[].class, Integer.class});
+            results = (String[]) preprocessBind.invoke(context, new Object[] { results, picker.getFilterIndex()});            
+        }
+
+
         List<String> propNames = getPropNames();
         List<List<Object>> columnLists = new ArrayList<List<Object>>(propNames.size());
         for (String propName : propNames) {
             columnLists.add(getList(context, propName));
         }
         UIPropertySheet propertySheet = null;
+        String setterCallback = (String) getAttributes().get(Search.SETTER_CALLBACK);
         for (int i = 0; i < results.length; i++) {
-            String setterCallback = (String) getAttributes().get(Search.SETTER_CALLBACK);
             MethodBinding b = getFacesContext().getApplication().createMethodBinding(setterCallback, new Class[] { String.class });
             @SuppressWarnings("unchecked")
             List<Object> rowList = (List<Object>) b.invoke(context, new Object[] { results[i] });
@@ -150,6 +171,7 @@ public class MultiValueEditor extends UIComponentBase {
         for (List<Object> columnList : columnLists) {
             log.debug("Column list=" + columnList);
         }
+
         getAttributes().remove(Search.OPEN_DIALOG_KEY);
         picker.queueEvent(new UIGenericPicker.PickerEvent(picker, 1 /* ACTION_CLEAR */, 0, null, null));
     }

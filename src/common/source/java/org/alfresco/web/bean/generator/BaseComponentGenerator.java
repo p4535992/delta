@@ -29,6 +29,7 @@ import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttri
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALDIATION_DISABLED;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
+import static org.apache.commons.lang.StringUtils.isNotBlank;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
@@ -142,7 +143,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
          // to have a parent to get the correct id
          item.getChildren().add(component);
 
-         if (!Boolean.parseBoolean(getCustomAttributes().get(OUTPUT_TEXT))) {
+         if (!isCreateOutputText()) {
              // setup the component for mandatory validation if necessary
              setupMandatoryPropertyIfNecessary(context, propertySheet, item, propertyDef, component);
 
@@ -195,14 +196,14 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
 
       return component;
    }
-   
+
     protected void processCustomAttributes(UIComponent component) {
         String styleClass = getCustomAttributes().get(STYLE_CLASS);
-        if (org.apache.commons.lang.StringUtils.isNotBlank(styleClass)) {
+        if (isNotBlank(styleClass)) {
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = component.getAttributes();
             final String existingStyleClass = (String) attributes.get(STYLE_CLASS);
-            if (org.apache.commons.lang.StringUtils.isNotBlank(existingStyleClass)) {
+            if (isNotBlank(existingStyleClass)) {
                 logger.warn("component already has existing styleclass set from code ("+existingStyleClass+"), adding styleclass also from property-sheet: "+styleClass);
                 attributes.put(STYLE_CLASS, existingStyleClass+" "+styleClass);
             } else {
@@ -223,7 +224,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             return;
         }
         String mandatoryIfValue = (propertySheetItemAttributes != null ? propertySheetItemAttributes.get(MandatoryIfValidator.ATTR_MANDATORY_IF) : null);
-        if (org.apache.commons.lang.StringUtils.isNotBlank(mandatoryIfValue)) {
+        if (isNotBlank(mandatoryIfValue)) {
             MandatoryIfValidator validator = new MandatoryIfValidator(mandatoryIfValue);
             component.addValidator(validator);
             if (logger.isDebugEnabled()) {
@@ -249,7 +250,6 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             }
             if (getForceMandatoryAttribute() && component instanceof UIInput) {
                 UIInput uiInput = (UIInput) component;
-                setupMandatoryMarker(context, item);
                 setupMandatoryValidation(context, propertySheet, item, component, true, null);
                 uiInput.addValidator(new ForcedMandatoryValidator());
             }
@@ -258,7 +258,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
 
     protected boolean getForceMandatoryAttribute() {
         String strAttr = getCustomAttributes().get(ATTR_FORCED_MANDATORY);
-        if(org.apache.commons.lang.StringUtils.isNotBlank(strAttr)) {
+        if(isNotBlank(strAttr)) {
             return Boolean.valueOf(strAttr.trim());
         }
         return false;
@@ -275,7 +275,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     private void setReadOnlyBasedOnExpressionIfNessesary(UIComponent component, PropertySheetItem item, FacesContext context, UIPropertySheet propertySheet) {
         if (item instanceof CustomAttributes) {
             String expression = ((CustomAttributes) item).getCustomAttributes().get(READONLY_IF);
-            if (org.apache.commons.lang.StringUtils.isNotBlank(expression)) {
+            if (isNotBlank(expression)) {
                 boolean isReadonly = checkCustomPropertyExpression(context, propertySheet, expression, READONLY_IF, item.getName());
                 if (isReadonly) {
                     ComponentUtil.setDisabledAttributeRecursively(component);
@@ -290,19 +290,27 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
      * 
      * @param context
      * @param propertySheet
-     * @param expression
+     * @param expression := <code>propertyPath + ("=" | "!=") + staticValue1 + ( "||" + staticValue ) *</code><br>
+     * <code>propertyPath := "parent." * + propName</code> <br>
+     * <code>propName</code> - qName of the property to be evaluated
      * @param fieldName
      * @param itemName
-     * @return true, if someProperty value from node matches at least one of the given static values
+     * @return true, if expression evaluates to true based on property value from node. <br>
+     * If using equals sign "=" then true will be returned if property value matches at least one of the given static values. <br>
+     * If using negotation "!=" then true will be returned if none of the given static values match actual property value.
      */
     protected boolean checkCustomPropertyExpression(FacesContext context, UIPropertySheet propertySheet, String expression, String fieldName, String itemName) {
-        boolean result = false;
         final String errMsg = fieldName + " must be defined as 'somePrefix:someProperty=someValue||otherValue'";
         String[] split = expression.split("=");
         if (split.length != 2) {
             throw new IllegalArgumentException(errMsg);
         }
-        String propPath = split[0];        
+        String propPath = split[0];
+        boolean checkNotEqual = false;
+        if (propPath.endsWith("!")) {
+            checkNotEqual = true;
+            propPath = propPath.substring(0, propPath.length() - 1);
+        }
         String valueExpression = split[1];
         // try to figure out the node and the property, that should be inspected
         final Pair<Node, String> propNameAndNode = getBaseNodeAndPropName(propertySheet, expression, propPath); //FIXME: propertySheet.getVar() peaks juba viitama õigele nodele
@@ -316,38 +324,54 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         }
         Object objectValue = propNode.getProperties().get(propDef.getName());
         String actualValue = DefaultTypeConverter.INSTANCE.convert(String.class, objectValue);
-        String[] possibleValues = valueExpression.split("\\|\\|");
-        for (String possibleValue : possibleValues) {
-            if (possibleValue.equals(actualValue)) {
-                result = true;
+        String[] expressionValues = valueExpression.split("\\|\\|");
+        boolean result = checkNotEqual ? true : false;
+        for (String expressionValue : expressionValues) {
+            if (expressionValue.equals(actualValue)) {
+                result = !result;
                 break;
             }
         }
         return result;
     }
     
-   protected void saveExistingValue4ComponentGenerator(FacesContext context, Node node, String propertyName) {
-       // subclasses can save value of existing property (for example to context) based on 
-       // propertyName and value corresponding to propertyName from node properties.
-       @SuppressWarnings("unchecked")
-       Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
-       requestMap.put(REPO_NODE, new Object[] {node, propertyName});
-   }
+    protected void saveExistingValue4ComponentGenerator(FacesContext context, Node node, String propertyName) {
+        // subclasses can save value of existing property (for example to context) based on
+        // propertyName and value corresponding to propertyName from node properties.
+        @SuppressWarnings("unchecked")
+        Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
+        requestMap.put(REPO_NODE, new Object[] { node, propertyName });
+    }
 
-   private Integer getValueIndexInMultivaluedProperty(FacesContext context) {
-       @SuppressWarnings("unchecked")
-       Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
-       final Integer valueIndex = (Integer) requestMap.get(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
-       return valueIndex;
-   }
+    private Integer getValueIndexInMultivaluedProperty(FacesContext context) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
+        return (Integer) requestMap.get(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
+    }
 
-   private boolean isChildFromGeneratorsWrapper() {
-       final String valueIndexStr = getCustomAttributes().get(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
-       if(org.apache.commons.lang.StringUtils.isNotBlank(valueIndexStr)) {
-           return true;
-       }
-       return false;
-   }
+    /**
+     * @return true if this componentGenerator is generated by another componentGenerator(for example by InlinePropertyGroupGenerator or MultiValueEditor)
+     */
+    private boolean isChildFromGeneratorsWrapper() {
+        final String valueIndexStr = getCustomAttributes().get(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
+        if (isNotBlank(valueIndexStr)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Multivalued property should be treated as single valued property for components
+     * that get bound to single value of multivalued property - for example a component in multivalueeditor
+     */
+    protected boolean isSingleValued(FacesContext context, boolean multiValuedProperty) {
+        boolean isSingleValued = !multiValuedProperty;
+        if (multiValuedProperty) {
+            final Integer valueIndexInMultivaluedProperty = getValueIndexInMultivaluedProperty(context);
+            isSingleValued = null != valueIndexInMultivaluedProperty && valueIndexInMultivaluedProperty >= 0;
+        }
+        return isSingleValued;
+    }
 
     protected boolean isValidationDisabled() {
         return Boolean.valueOf(getCustomAttributes().get(VALDIATION_DISABLED));
@@ -421,7 +445,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     final String id = getDefaultId(item);
     if (item instanceof UIProperty)
       {
-         if ((propertySheet.inEditMode() || this instanceof GeneratorsWrapper) && !Boolean.parseBoolean(getCustomAttributes().get(OUTPUT_TEXT)))
+         if ((propertySheet.inEditMode() || this instanceof GeneratorsWrapper) && !isCreateOutputText())
          {
             // use the standard component in edit mode
             component = generate(context, id);
@@ -440,6 +464,10 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
       
       return component;
    }
+
+    protected boolean isCreateOutputText() {
+        return Boolean.parseBoolean(getCustomAttributes().get(OUTPUT_TEXT));
+    }
    
    /**
     * Creates the converter with the given id and adds it to the component.
@@ -635,8 +663,9 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
    {
       // only setup validations if the property sheet is in edit mode,
       // validation is enabled and the property is declared as mandatory
-      if (propertySheet.inEditMode() && propertySheet.isValidationEnabled() &&
-          propertyDef != null && propertyDef.isMandatory())
+        if (propertySheet.inEditMode() && propertySheet.isValidationEnabled() &&
+                (getForceMandatoryAttribute()
+                || (propertyDef != null && propertyDef.isMandatory())))
       {
          setupMandatoryValidation(context, propertySheet, property, component, false, null);
          setupMandatoryMarker(context, property);
@@ -708,7 +737,9 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             MessageFormat.format(msg, new Object[] {item.getResolvedDisplayLabel()}));
       
       // add the validation case to the property sheet
-      propertySheet.addClientValidation(new ClientValidation(getValidateMandatoryJsFunctionName(),
+      final String validateMandatoryJsFunctionName = getValidateMandatoryJsFunctionName();
+      if(isNotBlank(validateMandatoryJsFunctionName))
+         propertySheet.addClientValidation(new ClientValidation(validateMandatoryJsFunctionName,
             params, realTimeChecking));
    }
 

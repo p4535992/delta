@@ -19,7 +19,7 @@ public abstract class MultiSelectConverterBase implements Converter {
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) throws ConverterException {
-        throw new RuntimeException("Not implemented");
+        throw new RuntimeException("Not implemented converting value '" + value + "' to object");
     }
 
     @Override

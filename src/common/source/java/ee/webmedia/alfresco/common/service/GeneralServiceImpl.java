@@ -54,6 +54,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.UnicodeExtraFieldPolicy;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
@@ -137,12 +138,6 @@ public class GeneralServiceImpl implements GeneralService {
         }
         return getAncestorWithType(parentRef, ancestorType);
         
-    }
-
-    @Override
-    public boolean isExistingPropertyValueEqualTo(Node currentNode, final QName property, final Object equalityTestValue) {
-        final Object realValue = currentNode.getProperties().get(property.toString());
-        return equalityTestValue == null ? realValue == null : equalityTestValue.equals(realValue);
     }
 
     @Override
@@ -253,6 +248,11 @@ public class GeneralServiceImpl implements GeneralService {
     }
 
     @Override
+    public TypeDefinition getAnonymousType(Node node) {
+        return dictionaryService.getAnonymousType(node.getType(), node.getAspects());
+    }
+
+    @Override
     public ChildAssociationRef getLastChildAssocRef(String nodeRefXPath) {
         ChildAssociationRef ref = null;
         String[] xPathParts = StringUtils.split(nodeRefXPath, '/');
@@ -311,10 +311,7 @@ public class GeneralServiceImpl implements GeneralService {
 
     @Override
     public void setPropertiesIgnoringSystem(Map<QName, Serializable> properties, NodeRef nodeRef) {
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        for (QName qName : properties.keySet()) {
-            addToPropsIfNotSystem(qName, properties.get(qName), props);
-        }
+        Map<QName, Serializable> props = getPropertiesIgnoringSys(properties);
         nodeService.addProperties(nodeRef, props);
     }
 
@@ -337,6 +334,17 @@ public class GeneralServiceImpl implements GeneralService {
         }
         return props;
     }
+    
+    @Override
+    public Map<QName, Serializable> getPropertiesIgnoringSys(Map<QName, Serializable> nodeProps) {
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        for (QName key : nodeProps.keySet()) {
+            addToPropsIfNotSystem(key, nodeProps.get(key), props);
+        }
+        return props;
+    }
+
+
 
     private void addToPropsIfNotSystem(QName qname, Serializable value, Map<QName, Serializable> props) {
         // ignore system and contentModel properties
@@ -484,6 +492,22 @@ public class GeneralServiceImpl implements GeneralService {
             }
         }
         return byteStream;
+    }
+
+    @Override
+    public String getUniqueFileName(NodeRef folder, String fileName) {
+        String baseName = FilenameUtils.getBaseName(fileName);
+        String extension = FilenameUtils.getExtension(fileName);
+        if (StringUtils.isBlank(extension)) {
+            extension = MimetypeMap.EXTENSION_BINARY;
+        }
+        String suffix = "";
+        int i = 1;
+        while (fileFolderService.searchSimple(folder, baseName + suffix + "." + extension) != null) {
+            suffix = " (" + i + ")";
+            i++;
+        }
+        return baseName + suffix + "." + extension;
     }
 
     // START: getters / setters

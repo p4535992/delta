@@ -6,6 +6,9 @@ import java.util.Date;
 import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+
 import junit.framework.Assert;
 import junit.framework.AssertionFailedError;
 
@@ -48,11 +51,16 @@ public class DvkSendDocumentsImpl implements DvkSendDocuments {
     @Override
     public void validateOutGoing() {
         try {
+            Assert.assertNotNull("LetterSenderDocSignDate must be given", getLetterSenderDocSignDate());
+            Assert.assertNotNull("LetterSenderDocNr must be given", getLetterSenderDocNr());
+        } catch (AssertionFailedError e) {
+            log.debug("Object that was validated: '" + ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE) + "'");
+            throw new UnableToPerformException(MessageSeverity.ERROR, "dvk_send_error_notRegistered", e);
+        }
+        try {
             Assert.assertNotNull("SenderOrgName must be given", getSenderOrgName());
             Assert.assertNotNull("SenderRegNr must be given", getSenderRegNr());
             Assert.assertNotNull("SenderEmail must be given", getSenderEmail());
-            Assert.assertNotNull("LetterSenderDocSignDate must be given", getLetterSenderDocSignDate());
-            Assert.assertNotNull("LetterSenderDocNr must be given", getLetterSenderDocNr());
             Assert.assertNotNull("RecipientsRegNrs must be given", getRecipientsRegNrs());
             Assert.assertTrue("There have to be at least one recipient", getRecipientsRegNrs().size()>0);
         } catch (AssertionFailedError e) {

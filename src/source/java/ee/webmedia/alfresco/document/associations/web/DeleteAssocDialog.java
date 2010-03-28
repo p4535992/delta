@@ -10,6 +10,7 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.content.DeleteContentDialog;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -26,6 +27,17 @@ public class DeleteAssocDialog extends DeleteContentDialog {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DeleteAssocDialog.class);
     
     @Override
+    public void init(Map<String, String> parameters) {
+        super.init(parameters);
+    }
+    
+    private void reset() {
+        document = null;
+        nodeRef = null;
+        caseNodeRef = null;
+    }
+
+    @Override
     protected String getErrorMessageId() {
         return "document_deleteAssocDialog_deleteAssocError";
     }
@@ -37,12 +49,15 @@ public class DeleteAssocDialog extends DeleteContentDialog {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) {
-        NodeRef target = (caseNodeRef == null) ? nodeRef : caseNodeRef;
         try {
-            getDocumentService().deleteAssoc(document, target, null);
+            if (caseNodeRef != null) {
+                getDocumentService().deleteAssoc(document, caseNodeRef, CaseModel.Associations.CASE_DOCUMENT);
+            } else {
+                getDocumentService().deleteAssoc(document, nodeRef, null);
+            }
         } catch (Exception e) {
             log.error("Deleting association failed!", e);
-            throw new RuntimeException(e.getMessage());
+            throw new RuntimeException(e);
         }
         return null;
     }
@@ -53,6 +68,7 @@ public class DeleteAssocDialog extends DeleteContentDialog {
     }
     
     public void setupAssoc(ActionEvent event) {
+        reset();
         
         document = new NodeRef(ActionUtil.getParam(event, "documentRef"));
 

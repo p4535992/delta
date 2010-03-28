@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.simdhs;
 
+import org.alfresco.web.ui.common.component.data.IGridDataModel;
 import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.common.component.data.UISortLink;
@@ -41,7 +42,8 @@ public class RichListDataReader implements DataReader {
     @Override
     public List<List<String>> getDataRows(UIRichList list, FacesContext fc) {
         List<List<String>> data = new ArrayList<List<String>>();
-        while (list.isDataAvailable()) {
+        list.setRowIndex(0);
+        for (int i=1; i<list.getDataModel().size(); i++) {
             list.nextRow();
             data.add(getDataRow(fc, getColumnsToExport(list)));
         }

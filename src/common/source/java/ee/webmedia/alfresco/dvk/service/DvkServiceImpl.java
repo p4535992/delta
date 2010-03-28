@@ -36,7 +36,9 @@ import ee.webmedia.alfresco.dvk.model.DvkReceivedDocumentImpl;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.XmlUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.xtee.client.service.DhlXTeeService;
 import ee.webmedia.xtee.client.service.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.service.DhlXTeeService.MetainfoHelper;
@@ -90,9 +92,10 @@ public abstract class DvkServiceImpl implements DvkService {
         for (Node orgNode : organizations) {
             final Map<String, Object> oProps = orgNode.getProperties();
             String orgCode = (String) oProps.get(AddressbookModel.Props.ORGANIZATION_CODE.toString());
-            if (sendingOptions.containsKey(orgCode)) {
-                oProps.put(AddressbookModel.Props.DVK_CAPABLE.toString(), Boolean.TRUE);
-                addressbookService.updateNode(orgNode);
+            final boolean dvkCapable = sendingOptions.containsKey(orgCode);
+            oProps.put(AddressbookModel.Props.DVK_CAPABLE.toString(), dvkCapable);
+            addressbookService.updateNode(orgNode);
+            if (dvkCapable) {
                 dvkCapableOrgs++;
             }
         }
@@ -329,8 +332,11 @@ public abstract class DvkServiceImpl implements DvkService {
     public String sendDocuments(NodeRef document, Collection<ContentToSend> contentsToSend, final DvkSendDocuments sd) {
         final Collection<String> recipientsRegNrs = sd.getRecipientsRegNrs();
         if (contentsToSend.size() == 0 || recipientsRegNrs.size() == 0) {
-            throw new IllegalArgumentException("To send files using DVK you must have at least one file and recipient(contentsToSend='"
-                    + contentsToSend + "', recipientsRegNrs='" + recipientsRegNrs + "')");
+            if (log.isDebugEnabled()) {
+                log.debug("To send files using DVK you must have at least one file and recipient(contentsToSend='" //
+                        + contentsToSend + "', recipientsRegNrs='" + recipientsRegNrs + "')");
+            }
+            throw new UnableToPerformException(MessageSeverity.ERROR, "dvk_send_error_notEnoughData");
         }
         final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
                 new SimDhsSendDocumentsCallback(sd), new SendDocumentsRequestCallback() {

@@ -98,6 +98,10 @@ public class WmNode extends TransientNode {
         }
     }
 
+    public WmNode copy() {
+        return new WmNode(getNodeRef(), getType(), getProperties(), getAspects());
+    }
+
     public void updateNodeRef(NodeRef nodeRef) {
         this.nodeRef = nodeRef;
         this.id = nodeRef == null ? null : nodeRef.getId();

@@ -21,19 +21,21 @@
  * FLOSS exception.  You should have recieved a copy of the text describing 
  * the FLOSS exception, and it is also available here: 
  * http://www.alfresco.com/legal/licensing"
---%><%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
+--%>
+<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
          
 <%-- Group Path Breadcrumb --%>
-<a:panel id="groups-breadcrumb" styleClass="breadcrumb">
-   <a:breadcrumb value="#{DialogManager.bean.location}" />
-</a:panel>
+   <a:panel id="groups-breadcrumb" styleClass="breadcrumb">     
+       <a:breadcrumb value="#{DialogManager.bean.location}" />     
+    </a:panel>
+
 
    <%-- Groups List --%>
-   <a:panel id="groups-panel" label="#{msg.groups}" rendered="#{not empty DialogManager.bean.groups}">
+   <a:panel id="groups-panel" label="#{msg.groups}" styleClass="with-pager" rendered="#{not empty DialogManager.bean.groups}">
 
       <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="details" pageSize="12" rowStyleClass="recordSetRow"
          altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="id">
@@ -71,7 +73,7 @@
    </a:panel>
 
    <%-- Users in Group list --%>
-   <a:panel id="users-panel" label="#{msg.users}" rendered="#{not empty DialogManager.bean.users}">
+   <a:panel id="users-panel" label="#{msg.users}" styleClass="with-pager" rendered="#{not empty DialogManager.bean.users}">
    
       <a:richList id="users-list" binding="#{DialogManager.bean.usersRichList}" viewMode="details" pageSize="12" rowStyleClass="recordSetRow"
          altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="r" initialSortColumn="name">

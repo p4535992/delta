@@ -6,7 +6,6 @@
    <script type="text/javascript">
       $jQ(document).ready(function(){
          var finishButton = $jQ('#' + escapeId4JQ('dialog:finish-button'));
-         finishButton.next().remove();
          finishButton.remove();
       });
    </script>

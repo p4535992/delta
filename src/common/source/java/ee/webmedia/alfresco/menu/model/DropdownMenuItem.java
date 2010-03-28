@@ -6,6 +6,7 @@ import java.util.Map;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ConstantMethodBinding;
@@ -56,27 +57,6 @@ public class DropdownMenuItem extends MenuItem {
         super();
     }
 
-    /**
-     * Constructor for {@link DropdownMenuItem}
-     * 
-     * @param title
-     * @param outcome
-     */
-    public DropdownMenuItem(String title, String outcome) {
-        super(title, outcome);
-    }
-
-    /**
-     * Constructor for {@link MenuItem}
-     * 
-     * @param title
-     * @param outcome
-     * @param children
-     */
-    public DropdownMenuItem(String title, String outcome, List<MenuItem> children) {
-        super(title, outcome, children);
-    }
-
     @Override
     public UIComponent createComponent(FacesContext context, String id, UserService userService) {
         return createComponent(context, id, userService, true);
@@ -98,7 +78,12 @@ public class DropdownMenuItem extends MenuItem {
         UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
         link.setRendererType(UIActions.RENDERER_ACTIONLINK);
         FacesHelper.setupComponentId(context, link, id);
+
+        if(getTitle() == null) {
+            setTitle(I18NUtil.getMessage(getTitleId()));
+        }
         link.setValue(getTitle());
+        
         link.setTooltip(getTitle());
         link.setAction(new ConstantMethodBinding(getOutcome()));
         if (StringUtils.isNotBlank(getActionListener())) {
@@ -121,10 +106,10 @@ public class DropdownMenuItem extends MenuItem {
         if(isBrowse()) {
             // avoid setting on-click
         } else if (isTemporary()) {
-            link.setOnclick("_toggleMenu(event, '" + getSubmenuId() + "')");
+            link.setOnclick("_toggleMenu(event, '" + getSubmenuId() + "'); return false;");
         } else if (isHover()) {
             attr.put("styleClass", "dropdown-hover");
-            link.setHref("#");
+            link.setOnclick("return false;");
         } else {
             link.setOnclick("_togglePersistentMenu(event, '" + getSubmenuId() + "')");
         }

@@ -187,7 +187,7 @@ public class DeleteContentDialog extends BaseDialogBean
            title = MessageUtil.getMessage("notification_delete_notification");
        }
        else if (document.getType().equals(WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION)) {
-           title = MessageUtil.getMessage("delete_compound_workflow_confirm");
+           title = MessageUtil.getMessage("delete_compound_workflow");
        }
        
         return title;

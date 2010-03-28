@@ -8,7 +8,7 @@
 
 <h:outputText escape="false" value="#{SubstitutionBean.substitutionMessages}"/>
 
-<a:panel id="assignment-tasks-panel" styleClass="panel-100" label="#{msg.task_list_assignment_title}" progressive="true" rendered="#{not empty MyTasksBean.assignmentTasks}">
+<a:panel id="assignment-tasks-panel" styleClass="panel-100 with-pager" label="#{msg.task_list_assignment_title}" progressive="true" rendered="#{not empty MyTasksBean.assignmentTasks}">
 
    <%-- Main List --%>
    <a:richList id="assignment-task-list" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -22,7 +22,7 @@
 
 </a:panel>
 
-<a:panel id="information-tasks-panel" styleClass="panel-100" label="#{msg.task_list_information_title}" progressive="true" rendered="#{not empty MyTasksBean.informationTasks}">
+<a:panel id="information-tasks-panel" styleClass="panel-100 with-pager" label="#{msg.task_list_information_title}" progressive="true" rendered="#{not empty MyTasksBean.informationTasks}">
 
    <%-- Main List --%>
    <a:richList id="information-task-list" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -36,7 +36,7 @@
 
 </a:panel>
 
-<a:panel id="opinion-tasks-panel" styleClass="panel-100" label="#{msg.task_list_opinion_title}" progressive="true" rendered="#{not empty MyTasksBean.opinionTasks}">
+<a:panel id="opinion-tasks-panel" styleClass="panel-100 with-pager" label="#{msg.task_list_opinion_title}" progressive="true" rendered="#{not empty MyTasksBean.opinionTasks}">
 
    <%-- Main List --%>
    <a:richList id="opinion-task-list" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -50,13 +50,13 @@
 
 </a:panel>
 
-<a:panel id="review-tasks-panel" styleClass="panel-100" label="#{msg.task_list_review_title}" progressive="true" rendered="#{not empty MyTasksBean.reviewTasks}">
+<a:panel id="review-tasks-panel" styleClass="panel-100 with-pager" label="#{msg.task_list_review_title}" progressive="true" rendered="#{not empty MyTasksBean.reviewTasks}">
 
    <%-- Main List --%>
    <a:richList id="review-task-list" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{MyTasksBean.reviewTasks}"  var="r">
 
-      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-min-columns.jsp" />
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="review-pager" styleClass="pager" />
@@ -64,13 +64,13 @@
 
 </a:panel>
 
-<a:panel id="signature-tasks-panel" styleClass="panel-100" label="#{msg.task_list_signature_title}" progressive="true"  rendered="#{not empty MyTasksBean.signatureTasks}">
+<a:panel id="signature-tasks-panel" styleClass="panel-100 with-pager" label="#{msg.task_list_signature_title}" progressive="true"  rendered="#{not empty MyTasksBean.signatureTasks}">
 
    <%-- Main List --%>
    <a:richList id="signature-task-list" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{MyTasksBean.signatureTasks}"  var="r">
 
-      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-columns.jsp" />
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-min-columns.jsp" />
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="signature-pager" styleClass="pager" />
@@ -79,3 +79,4 @@
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-cancel-button.jsp" />

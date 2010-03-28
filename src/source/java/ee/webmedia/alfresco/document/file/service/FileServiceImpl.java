@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.document.file.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
@@ -32,6 +31,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.user.service.UserService;
 
@@ -67,6 +67,7 @@ public class FileServiceImpl implements FileService {
         return getAllFiles(nodeRef, false, false);
     }
     
+    @Override
     public List<File> getAllFiles(NodeRef nodeRef) {
         return getAllFiles(nodeRef, true, false);
     }
@@ -76,10 +77,6 @@ public class FileServiceImpl implements FileService {
         List<FileInfo> fileInfos = fileFolderService.listFiles(nodeRef);
         for (FileInfo fi : fileInfos) {
             File item = createFile(fi);
-//            if(true) {
-//                log.debug("test return");
-//                return new ArrayList<File>();
-//            }
             boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());
             item.setDigiDocContainer(isDdoc);
             item.setTransformableToPdf(isTransformableToPdf(fi.getContentData()));
@@ -89,12 +86,18 @@ public class FileServiceImpl implements FileService {
             if (isDdoc && includeDigidocSubitems && permissionService.hasPermission(item.getNodeRef(), PermissionService.READ_CONTENT).equals(AccessStatus.ALLOWED)) {
                 // hack: add another File to display nested tables in JSP.
                 // this "item2" should be exactly after the "item" in the list
-                File item2 = new File();
-                item2.setDdocItems(signatureService.getDataItemsAndSignatureItems(item.getNodeRef(), false));
-                item2.setDigiDocItem(true);
-                item2.setActive(item.isActive());
-                if (item.isActive() || !onlyActive) {
-                    files.add(item2);
+                try {
+                    File item2 = new File();
+                    item2.setDdocItems(signatureService.getDataItemsAndSignatureItems(item.getNodeRef(), false));
+                    item2.setDigiDocItem(true);
+                    item2.setActive(item.isActive());
+                    if (item.isActive() || !onlyActive) {
+                        files.add(item2);
+                    }
+                } catch (SignatureException e) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Unable to parse DigiDoc file '" + item.getName() + "':\n" + e.getMessage());
+                    }
                 }
             }
         }
@@ -160,7 +163,7 @@ public class FileServiceImpl implements FileService {
         String filename = (String) nodeService.getProperty(file, ContentModel.PROP_NAME);
         FileInfo createdFile = fileFolderService.create(
                 parent,
-                getAvailableFilename(parent, FilenameUtils.removeExtension(filename), ".pdf"),
+                generalService.getUniqueFileName(parent, FilenameUtils.removeExtension(filename) + ".pdf"),
                 ContentModel.TYPE_CONTENT);
 
         ContentWriter writer = fileFolderService.getWriter(createdFile.getNodeRef());
@@ -192,23 +195,13 @@ public class FileServiceImpl implements FileService {
         return createdFile;
     }
 
-    // check if base+ext name is available, if not add a suffix to base
-    private String getAvailableFilename(NodeRef folderNodeRef, String base, String ext) {
-        int i = 1;
-        String prefix = "";
-        while (fileFolderService.searchSimple(folderNodeRef, base + prefix + ext) != null) {
-            prefix = "-"  + i++;
-        }
-        return base + prefix + ext;
-    }
-
     @Override
     public void moveAllFiles(NodeRef fromRef, NodeRef toRef) throws FileNotFoundException {
         List<FileInfo> fileInfos = fileFolderService.listFiles(fromRef);
         for (FileInfo fileInfo : fileInfos) {
             try {
                 fileFolderService.move(fileInfo.getNodeRef(), toRef, null);
-                documentLogService.addDocumentLog(toRef, I18NUtil.getMessage("document_log_status_fileAdded", new Object[] { fileInfo.getName() } ));
+                documentLogService.addDocumentLog(toRef, I18NUtil.getMessage("document_log_status_fileAdded", fileInfo.getName()));
             } catch (DuplicateChildNodeNameException e) {
                 log.warn("Move failed. File '" + fileInfo.getName() + "' already exists");
                 throw e;

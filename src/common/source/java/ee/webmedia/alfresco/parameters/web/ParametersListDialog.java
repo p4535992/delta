@@ -14,6 +14,8 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.parameters.model.Parameter;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 public class ParametersListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -42,7 +44,11 @@ public class ParametersListDialog extends BaseDialogBean {
                 Utils.addErrorMessage(Application.getMessage(context, message));
             }
         } else {
-            getParametersService().updateParameters(parameters);
+            try {
+                getParametersService().updateParameters(parameters);
+            } catch (UnableToPerformException e) {
+                MessageUtil.addStatusMessage(context, e);
+            }
         }
 
         // We need to stay on the same dialog

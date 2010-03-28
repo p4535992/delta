@@ -6,7 +6,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="contactgroup-panel" styleClass="panel-100" label="#{msg.groups}" progressive="true">
+<a:panel id="contactgroup-panel" styleClass="panel-100 with-pager" label="#{msg.groups}" progressive="true">
 
    <%-- Main List --%>
    <a:richList id="contactgroup-list" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"

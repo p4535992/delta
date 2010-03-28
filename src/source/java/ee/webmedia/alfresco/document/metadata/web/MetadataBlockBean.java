@@ -26,6 +26,7 @@ import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.LockStatus;
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.PersonService;
@@ -44,7 +45,6 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdown;
 import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdownGenerator;
@@ -127,7 +127,14 @@ public class MetadataBlockBean implements Serializable {
         sb.append("</div>");
         return sb.toString();
     }
-    
+
+    public void setCostManager(String userName) {
+        Map<QName, Serializable> personProps = getPersonProps(userName);
+        
+        Map<String, Object> docProps = document.getProperties();
+        docProps.put(DocumentSpecificModel.Props.COST_MANAGER.toString(), UserUtil.getPersonFullName1(personProps));
+    }
+
     public void setApplicantName(String userName, Node applicantNode) {
         Map<QName, Serializable> personProps = getPersonProps(userName);
         
@@ -261,6 +268,21 @@ public class MetadataBlockBean implements Serializable {
         docProps.put(DocumentSpecificModel.Props.RECEIVER_STRUCT_UNIT.toString(), orgstructName);
     }
 
+    public void setSender(String nodeRefStr) {
+        NodeRef nodeRef = new NodeRef(nodeRefStr);
+
+        String name = "";
+        Map<QName, Serializable> props = getNodeService().getProperties(nodeRef);
+        if (AddressbookModel.Types.ORGANIZATION.equals(getNodeService().getType(nodeRef))) {
+            name = (String) props.get(AddressbookModel.Props.ORGANIZATION_NAME);
+        } else {
+            name = UserUtil.getPersonFullName((String) props.get(AddressbookModel.Props.PERSON_FIRST_NAME), (String) props
+                    .get(AddressbookModel.Props.PERSON_LAST_NAME));
+        }
+
+        document.getProperties().put(DocumentSpecificModel.Props.SENDER_DETAILS_NAME.toString(), name);
+    }
+
     public List<String> setVacationSubstitute(String userName) {
         Map<QName, Serializable> personProps = getPersonProps(userName);
 
@@ -304,6 +326,7 @@ public class MetadataBlockBean implements Serializable {
     }
 
     protected void afterModeChange() {
+        resetNewCaseHtmlInput();
         Map<String, Object> props = document.getProperties();
         if (!inEditMode) {
 
@@ -394,14 +417,6 @@ public class MetadataBlockBean implements Serializable {
                 String whomName = (String) props.get(DocumentSpecificModel.Props.WHOM_NAME);
                 String whomJobTitle = (String) props.get(DocumentSpecificModel.Props.WHOM_JOB_TITLE);
                 props.put("whomNameAndJobTitle", joinStringAndStringWithParentheses(whomName, whomJobTitle));
-            }
-
-            if (document.hasAspect(DocumentSpecificModel.Aspects.COMPLIENCE)) {
-                Date complienceDate = (Date) props.get(DocumentSpecificModel.Props.COMPLIENCE_DATE);
-                if (complienceDate != null) {
-                    props.put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
-                    getNodeService().setProperty(document.getNodeRef(), DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.FINISHED.getValueName());
-                }
             }
 
             if (document.hasAspect(DocumentCommonModel.Aspects.SIGNER)) {
@@ -739,36 +754,22 @@ public class MetadataBlockBean implements Serializable {
         List<UIComponent> selectOptions = selectComponent.getChildren();
         selectOptions.clear();
 
-        /** Handle filled in data */
         Map<String, Object> props = document.getProperties();
-        String nodeRef = (String) props.get(TransientProps.FUNCTION_NODEREF);
-        Function filled = null;
-        if (StringUtils.isNotBlank(nodeRef)) {
-            filled = getFunctionsService().getFunctionByNodeRef(nodeRef);
-            functions.add(0, filled);
-        }
+        String selectedNodeRef = (String) props.get(TransientProps.FUNCTION_NODEREF);
+        boolean foundSelected = false;
 
         for (Function function : functions) {
-            // skip the duplicate (when filled is open),
-            if (function != filled && function.getNodeRef().toString().equals(nodeRef)) {
-                continue;
-            }
-            // don't check if filled is closed
-            if (function != filled || DocListUnitStatus.OPEN.equals(function.getStatus())) {
-                List<Series> allSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, document.getType());
-                if (allSeries.size() == 0) {
+            if (DocListUnitStatus.OPEN.equals(function.getStatus())) {
+                List<Series> openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, document.getType());
+                if (openSeries.size() == 0) {
                     continue;
                 }
             }
-            UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-            selectItem.setItemLabel(function.getMark() + " " + function.getTitle());
-            selectItem.setItemValue(function.getNodeRef().toString());
-            selectOptions.add(selectItem);
+            final String itemLabel = function.getMark() + " " + function.getTitle();
+            final String itemNodeRef = function.getNodeRef().toString();
+            foundSelected = addSelectItem(itemLabel, itemNodeRef, selectComponent, selectedNodeRef, foundSelected, context);
         }
-        UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-        selectItem.setItemLabel("");
-        selectItem.setItemValue("");
-        selectOptions.add(0, selectItem);
+        addDefaultItemIfNeeded(context, selectComponent, foundSelected);
     }
 
     /**
@@ -785,6 +786,7 @@ public class MetadataBlockBean implements Serializable {
     public void findAllSeries(FacesContext context, HtmlSelectOneMenu selectComponent, Object submittedValue) {
         String sVal = (String) submittedValue;
         if (StringUtils.isBlank(sVal)) {
+            selectComponent.setDisabled(true);
             return;
         }
         final NodeRef functionNodeRef = new NodeRef(sVal);
@@ -793,29 +795,15 @@ public class MetadataBlockBean implements Serializable {
         List<UIComponent> selectOptions = selectComponent.getChildren();
         selectOptions.clear();
 
-        /** Handle filled in data */
         Map<String, Object> props = document.getProperties();
-        String nodeRef = (String) props.get(TransientProps.SERIES_NODEREF);
-        Series filled = null;
-        if (StringUtils.isNotBlank(nodeRef)) {
-            filled = getSeriesService().getSeriesByNodeRef(nodeRef);
-            allSeries.add(0, filled);
-        }
-
+        String selectedNodeRef = (String) props.get(TransientProps.SERIES_NODEREF);
+        boolean foundSelected = false;
         for (Series series : allSeries) {
-            // skip the duplicate (when filled is open),
-            if (series != filled && series.getNode().getNodeRefAsString().equals(nodeRef)) {
-                continue;
-            }
-            UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-            selectItem.setItemLabel(series.getSeriesIdentifier() + " " + series.getTitle());
-            selectItem.setItemValue(series.getNode().getNodeRef().toString());
-            selectOptions.add(selectItem);
+            final String itemLabel = series.getSeriesIdentifier() + " " + series.getTitle();
+            final String itemNodeRef = series.getNode().getNodeRef().toString();
+            foundSelected = addSelectItem(itemLabel, itemNodeRef, selectComponent, selectedNodeRef, foundSelected, context);
         }
-        UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-        selectItem.setItemLabel("");
-        selectItem.setItemValue("");
-        selectOptions.add(0, selectItem);
+        addDefaultItemIfNeeded(context, selectComponent, foundSelected);
     }
 
     /**
@@ -832,6 +820,7 @@ public class MetadataBlockBean implements Serializable {
     public void findAllVolumes(FacesContext context, HtmlSelectOneMenu selectComponent, Object submittedValue) {
         String sVal = (String) submittedValue;
         if (StringUtils.isBlank(sVal)) {
+            selectComponent.setDisabled(true);
             return;
         }
         final NodeRef seriesNodeRef = new NodeRef(sVal);
@@ -840,29 +829,52 @@ public class MetadataBlockBean implements Serializable {
         List<UIComponent> selectOptions = selectComponent.getChildren();
         selectOptions.clear();
 
-        /** Handle filled in data */
         Map<String, Object> props = document.getProperties();
-        String nodeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
-        Volume filled = null;
-        if (StringUtils.isNotBlank(nodeRef)) {
-            filled = getVolumeService().getVolumeByNodeRef(nodeRef);
-            volumes.add(0, filled);
-        }
+        String selectedNodeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
+        boolean foundSelected = false;
 
         for (Volume volume : volumes) {
-            // skip the duplicate (when filled is open),
-            if (volume != filled && volume.getNode().getNodeRefAsString().equals(nodeRef)) {
-                continue;
-            }
-            UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-            selectItem.setItemLabel(volume.getVolumeMark() + " " + volume.getTitle());
-            selectItem.setItemValue(volume.getNode().getNodeRef().toString());
-            selectOptions.add(selectItem);
+            final String itemLabel = volume.getVolumeMark() + " " + volume.getTitle();
+            final String itemNodeRef = volume.getNode().getNodeRef().toString();
+            foundSelected = addSelectItem(itemLabel, itemNodeRef, selectComponent, selectedNodeRef, foundSelected, context);
         }
+        addDefaultItemIfNeeded(context, selectComponent, foundSelected);
+    }
+
+    private boolean addSelectItem(String itemLabel, String itemValue, HtmlSelectOneMenu selectComponent //
+            , String selectedValue, boolean foundSelected, FacesContext context) {
+        @SuppressWarnings("unchecked")
+        List<UIComponent> selectOptions = selectComponent.getChildren();
         UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-        selectItem.setItemLabel("");
-        selectItem.setItemValue("");
-        selectOptions.add(0, selectItem);
+        selectItem.setItemLabel(itemLabel);
+        selectItem.setItemValue(itemValue);
+        if (StringUtils.equals(itemValue, selectedValue)) {
+            foundSelected = true;
+            selectComponent.setSubmittedValue(selectedValue);
+            selectComponent.setValue(selectedValue);
+        }
+        selectOptions.add(selectItem);
+        return foundSelected;
+    }
+
+    private void addDefaultItemIfNeeded(FacesContext context, HtmlSelectOneMenu selectComponent, boolean foundSelected) {
+        @SuppressWarnings("unchecked")
+        List<UIComponent> selectOptions = selectComponent.getChildren();
+        if (selectOptions.size() == 1) {
+            final UIComponent uiComponent = selectOptions.get(0);
+            if (uiComponent instanceof UISelectItem) {
+                UISelectItem selectItem = (UISelectItem) uiComponent;
+                final Object value = selectItem.getItemValue();
+                selectComponent.setSubmittedValue(value);
+                selectComponent.setValue(value);
+            }
+        } else if (!foundSelected) {
+            UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
+            selectItem.setItemLabel("");
+            selectItem.setItemValue("");
+            selectOptions.add(0, selectItem);
+            selectComponent.setValue("");
+        }
     }
 
     protected String generateNameAndEmailTable(List<String> names, List<String> emails) {
@@ -934,7 +946,6 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public void init(NodeRef nodeRef, boolean created) {
-        newCaseHtmlInput = null;// this field might have been reinitialized by browser, when last action before creating new doc was saving under new case
         document = getDocumentService().getDocument(nodeRef);
         inEditMode = created;
         if (!created) {// only create lock for existing doc
@@ -962,7 +973,7 @@ public class MetadataBlockBean implements Serializable {
         selectedCaseRefNum = null;
         originalVolumeRef = null;
         originalLocationId = null;
-        newCaseHtmlInput = null;
+        resetNewCaseHtmlInput();
     }
 
     public void saveAndRegister() {
@@ -1005,28 +1016,37 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public void save() {
+        log.debug("save: docNodeRef=" + document.getNodeRefAsString());
         if (!inEditMode) {
             throw new RuntimeException("Document metadata block is not in edit mode");
         }
         if (validate()) {
             createOrSelectCase();
             try {
+                log.debug("save: doc NodeRef=" + document.getNodeRefAsString());
                 document = getDocumentService().updateDocument(document);
                 inEditMode = false;
             } catch (UnableToPerformException e) {
+                if (log.isDebugEnabled()) {
+                    log.warn("failed to save: " + e.getMessage());
+                }
                 MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
+                return;
+            } finally {
+                lockOrUnlockIfNeeded(inEditMode);
+                reloadTransientProperties();
             }
-            lockOrUnlockIfNeeded(inEditMode);
-            reloadTransientProperties();
             propertySheet.setMode(getMode());
             clearPropertySheet();
             afterModeChange();
             final Map<String, Object> props = document.getProperties();
             originalVolumeRef = (String) props.get(TransientProps.VOLUME_NODEREF); // user might not leave view, but return and want to save again
+            originalLocationId = getLocationId(props);
         }
     }
 
     public void clearPropertySheet() {
+        resetNewCaseHtmlInput();
         propertySheet.getChildren().clear();
         propertySheet.getClientValidations().clear();
     }
@@ -1047,6 +1067,9 @@ public class MetadataBlockBean implements Serializable {
             // invalid nodeRef
         }
         if (volumeRef == null) {
+            if (log.isDebugEnabled()) {
+                log.warn("validation failed: document_validationMsg_mandatory_functionSeriesVolume");
+            }
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_validationMsg_mandatory_functionSeriesVolume");
             return false;
         }
@@ -1063,39 +1086,53 @@ public class MetadataBlockBean implements Serializable {
         }
         if (messages.size() > 0) {
             for (String message : messages) {
+                if (log.isDebugEnabled()) {
+                    log.warn("validation failed: " + message);
+                }
                 MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), message);
             }
             return false;
         }
-
         return validateCase(volumeRef);
     }
 
     private boolean validateCase(NodeRef volumeRef) {
+        log.debug("validate: case not mandatory or case selected? docNodeRef=" + document.getNodeRefAsString());
         final Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
         if (volume.isContainsCases()) {
-            if(StringUtils.equals(originalLocationId, getLocationId(document.getProperties()))) {
+            final Map<String, Object> docProps = document.getProperties();
+            if(StringUtils.equals(originalLocationId, getLocationId(docProps))) {
                 return true; // location has not changed
             }
             log.debug("originalLocationId="+originalLocationId);
-            log.debug("new     LocationId="+getLocationId(document.getProperties()));
+            log.debug("new     LocationId="+getLocationId(docProps));
             NodeRef caseNodeRef = null;
             try {
                 caseNodeRef = new NodeRef(selectedCaseRefNum);
                 if (DocListUnitStatus.CLOSED.equals(getCaseService().getCaseByNoderef(caseNodeRef).getStatus())) {
+                    if (log.isDebugEnabled()) {
+                        log.warn("validation failed: document_validationMsg_closed_case");
+                    }
                     MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_validationMsg_closed_case");
                     return false;
                 }
             } catch (Exception e) {
                 // invalid nodeRef
             }
-            final String newCaseTitle = (String) newCaseHtmlInput.getValue();
-            if (caseNodeRef == null && StringUtils.isBlank(newCaseTitle)) {
-                // client-side validation should already prevent it, but just to make sure:
+            final String newCaseTitle = getNewCaseTitle();
+            if (caseNodeRef == null && StringUtils.isBlank(newCaseTitle) && !StringUtils.equals(getLocationId(docProps), originalLocationId)) {
+                // client-side validation should prevent it at some cases, but sometimes not:
+                if (log.isDebugEnabled()) {
+                    log.warn("validation failed: document_validationMsg_mandatory_case");
+                }
                 MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_validationMsg_mandatory_case");
                 return false;
             } else if (caseNodeRef != null && StringUtils.isNotBlank(newCaseTitle)) {
-                throw new RuntimeException("specified selected name of new case '" + newCaseTitle + "' and selected existing case '" + caseNodeRef + "'");
+                final String msg = "specified selected name of new case '" + newCaseTitle + "' and selected existing case '" + caseNodeRef + "'";
+                if (log.isDebugEnabled()) {
+                    log.warn("validation failed: " + msg + "; docNodeRef=" + document.getNodeRefAsString());
+                }
+                throw new RuntimeException(msg);
             }
         }
         return true;
@@ -1109,8 +1146,8 @@ public class MetadataBlockBean implements Serializable {
         if (StringUtils.equals(volumeRef, originalVolumeRef)) {
             // no need to create case nor put value of original case to props(already set when initialized)
         } else if (volume.isContainsCases()) {
-            final String newCaseTitle = (String) newCaseHtmlInput.getValue();
-            newCaseHtmlInput.setValue(null); // reset value(otherwise might cause troubles later, when creating new doc right after this doc has been saved)
+            final String newCaseTitle = getNewCaseTitle();
+            resetNewCaseHtmlInput(); // reset value(otherwise might cause troubles later, when creating new doc right after this doc has been saved)
             final NodeRef caseNodeRef;
             if (StringUtils.isNotBlank(newCaseTitle)) {
                 final Case newCase = getCaseService().createCase(volumeNodeRef);
@@ -1164,7 +1201,9 @@ public class MetadataBlockBean implements Serializable {
                 final List<Case> casesOfVolume = getCaseService().getAllCasesByVolume(volumeRef);
                 final List<SelectItem> selectItems = new ArrayList<SelectItem>(casesOfVolume.size());
                 for (Case case1 : casesOfVolume) {
-                    selectItems.add(new SelectItem(case1.getNode().getNodeRefAsString(), case1.getTitle()));
+                    if(!case1.isClosed()) {
+                        selectItems.add(new SelectItem(case1.getNode().getNodeRefAsString(), case1.getTitle()));
+                    }
                 }
                 selectItems.add(0, new SelectItem("[defaultSelection]", ""));
                 return selectItems;
@@ -1179,6 +1218,16 @@ public class MetadataBlockBean implements Serializable {
 
     public HtmlInputTextarea getNewCaseHtmlInput() {
         return newCaseHtmlInput;
+    }
+
+    private void resetNewCaseHtmlInput() {
+        if (newCaseHtmlInput != null) {
+            newCaseHtmlInput.setValue(null);
+        }
+    }
+
+    private String getNewCaseTitle() {
+        return (String) newCaseHtmlInput.getValue();
     }
 
     /** @param event from jsp */
@@ -1204,7 +1253,12 @@ public class MetadataBlockBean implements Serializable {
             document = getDocumentService().registerDocument(document);
             getDocumentTemplateService().updateGeneratedFilesOnRegistration(document);
         } catch (UnableToPerformException e) {
+            if (log.isDebugEnabled()) {
+                log.warn("failed to register: " + e.getMessage());
+            }
             MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
+        } catch (NodeLockedException e) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_registerDoc_error_docLocked");
         }
     }
 
@@ -1217,7 +1271,7 @@ public class MetadataBlockBean implements Serializable {
         final String volumeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
         Boolean selectedVolumeContainsCases = null;
         boolean volumeSelectionChanged = false;
-        log.debug("originalVolumeRef=" + originalVolumeRef + "\nnew noderef      =" + volumeRef + "");
+        log.debug("originalVolumeRef=" + originalVolumeRef + "\n new noderef      =" + volumeRef + "");
         if (!StringUtils.equals(volumeRef, originalVolumeRef)) {
             volumeSelectionChanged = true;
             if (volumeRef != null) {
@@ -1291,6 +1345,9 @@ public class MetadataBlockBean implements Serializable {
                     return true;
                 }
                 log.debug("Lock can't be created");
+                if (log.isDebugEnabled()) {
+                    log.warn("failed to lock: document_validation_alreadyLocked");
+                }
                 MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "document_validation_alreadyLocked");
                 inEditMode = false; // don't allow going to editMode
                 return false;
@@ -1313,9 +1370,10 @@ public class MetadataBlockBean implements Serializable {
         setOwnerCurrentUser();
         setDocumentName(nodeRef);
         getDocumentService().setTransientProperties(document, getDocumentService().getAncestorNodesByDocument(nodeRef));
-        updateAccessRestrictionProperties(document.getProperties().get(TransientProps.SERIES_NODEREF));
-        //FIXME: miks originalVolumeRef üle kirjutatakse teise dokumendi volRef'iga?
-        originalVolumeRef = (String) document.getProperties().get(TransientProps.VOLUME_NODEREF);
+        final Map<String, Object> docProps = document.getProperties();
+        updateAccessRestrictionProperties(docProps.get(TransientProps.SERIES_NODEREF));
+        originalVolumeRef = (String) docProps.get(TransientProps.VOLUME_NODEREF);
+        originalLocationId = getLocationId(docProps);
     }
 
     private void setDocumentName(NodeRef nodeRef) {

@@ -7,7 +7,7 @@
 <%@ page isELIgnored="false"%>
 
 <%-- Users in Group list --%>
-<a:panel id="group-contacts-panel" styleClass="panel-100" label="#{msg.addressbook_contactgroup_contacts}" progressive="true" >
+<a:panel id="group-contacts-panel" styleClass="panel-100 with-pager" label="#{msg.addressbook_contactgroup_contacts}" progressive="true" >
 
    <a:richList id="group-contacts-list" viewMode="details" binding="#{DialogManager.bean.usersRichList}" pageSize="#{BrowseBean.pageSizeContent}"
       rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.groupContacts}" var="r" initialSortColumn="name">

@@ -29,6 +29,9 @@ public interface AddressbookModel {
     interface Props {
         QName PERSON_FIRST_NAME = QName.createQName(AddressbookModel.URI, "personFirstName");
         QName PERSON_LAST_NAME = QName.createQName(AddressbookModel.URI, "personLastName");
+        QName PERSON_ID = QName.createQName(AddressbookModel.URI, "personId");
+        QName JOB_NAME = QName.createQName(AddressbookModel.URI, "jobName");
+        QName PHONE = QName.createQName(AddressbookModel.URI, "phone");
         QName ORGANIZATION_NAME = QName.createQName(AddressbookModel.URI, "orgName");
         QName ORGANIZATION_CODE = QName.createQName(AddressbookModel.URI, "orgCode");
         QName DVK_CAPABLE = QName.createQName(AddressbookModel.URI, "dvkCapable");

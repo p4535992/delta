@@ -5,6 +5,7 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.wizard.BaseWizardBean;
 import org.alfresco.web.ui.common.Utils;
@@ -58,6 +59,11 @@ public abstract class AddressbookEntryWizard extends BaseWizardBean {
             entry = getAddressbookService().getEmptyNode(type);
         }
         setAdd(true);
+    }
+
+    @Override
+    public String getCancelButtonLabel() {
+        return Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_cancel");
     }
 
     // ------------------------------------------------------------------------------

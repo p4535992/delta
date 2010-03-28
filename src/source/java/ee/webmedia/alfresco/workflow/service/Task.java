@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.workflow.service;
 
 import java.io.Serializable;
+import java.util.Calendar;
 import java.util.Date;
 
 import javax.faces.context.FacesContext;
@@ -11,8 +12,11 @@ import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.NodePropertyResolver;
 import org.alfresco.web.bean.repository.Repository;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -20,7 +24,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 /**
  * @author Alar Kvell
  */
-public class Task extends BaseWorkflowObject implements Serializable, Comparable<Task> {
+public class Task extends BaseWorkflowObject implements Serializable, Comparable<Task>, CssStylable {
     private static final long serialVersionUID = 1L;
 
     public static enum Action {
@@ -35,6 +39,8 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
     private int outcomes;
     private int outcomeIndex = -1;
     private Action action = Action.NONE;
+
+    private String cssStyleClass;
 
     protected static <T extends Task> T create(Class<T> taskClass, WmNode taskNode, Workflow taskParent, int outcomes) {
         try {
@@ -53,6 +59,33 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         this.outcomes = outcomes;
 
         node.addPropertyResolver(PROP_RESOLUTION, resolutionPropertyResolver);
+    }
+
+    protected Task copy(Workflow copyParent) {
+        return copyImpl(new Task(getNode().copy(), copyParent, outcomes));
+    }
+
+    protected Task copy() {
+        return copy(parent);
+    }
+
+    @Override
+    protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
+        Task task = (Task) super.copyImpl(copy);
+        task.outcomeIndex = outcomeIndex;
+        task.action = action;
+        @SuppressWarnings("unchecked")
+        T result = (T) task;
+        return result;
+    }
+
+    public void setCssStyleClass(String cssStyleClass) {
+        this.cssStyleClass = cssStyleClass;
+    }
+
+    @Override
+    public String getCssStyleClass() {
+        return cssStyleClass;
     }
 
     public Workflow getParent() {
@@ -97,6 +130,19 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
 
     public String getOutcome() {
         return getProp(WorkflowCommonModel.Props.OUTCOME);
+    }
+
+    public String getOutcomeAndComments() {
+        final String outcome = getOutcome();
+        final String comment = getComment();
+        if(StringUtils.isNotBlank(comment)) {
+            String outcomeAndComment = outcome + ": "+comment;
+            if(outcomeAndComment.length() > 150) {
+                outcomeAndComment = outcomeAndComment.substring(0, 150) + "...";
+            }
+            return outcomeAndComment;
+        }
+        return outcome;
     }
 
     protected void setOutcome(String outcome, int outcomeIndex) {
@@ -221,7 +267,9 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         // Set completedOverdue value which is used in task search
         boolean completedOverdue = false;
         if (getCompletedDateTime() != null && getDueDate() != null) {
-            completedOverdue = getCompletedDateTime().after(getDueDate());
+            Date completedDay = DateUtils.truncate(getCompletedDateTime(), Calendar.DATE);
+            Date dueDay = DateUtils.truncate(getDueDate(), Calendar.DATE);
+            completedOverdue = completedDay.after(dueDay);
         }
         setProp(WorkflowSpecificModel.Props.COMPLETED_OVERDUE, completedOverdue);
         

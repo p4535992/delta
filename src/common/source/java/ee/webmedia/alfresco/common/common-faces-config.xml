@@ -27,6 +27,12 @@
         <managed-bean-class>ee.webmedia.alfresco.common.web.ClearStateNotificationHandler</managed-bean-class>
         <managed-bean-scope>session</managed-bean-scope>
     </managed-bean>
+
+    <managed-bean>
+        <managed-bean-name>PanelStateBean</managed-bean-name>
+        <managed-bean-class>org.alfresco.web.bean.ajax.PanelStateBean</managed-bean-class>
+        <managed-bean-scope>request</managed-bean-scope>
+    </managed-bean>
    
    <!-- Custom Admin Node Browser Bean -->
    <managed-bean>

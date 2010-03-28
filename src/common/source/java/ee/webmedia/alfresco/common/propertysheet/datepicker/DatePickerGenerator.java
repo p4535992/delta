@@ -58,10 +58,17 @@ public class DatePickerGenerator extends BaseComponentGenerator {
     @Override
     protected void setupConverter(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, PropertyDefinition propertyDef,
             UIComponent component) {
+        // Check for a valid date, when user can actually change it.
+        if (propertySheet.inEditMode() && !Utils.isComponentDisabledOrReadOnly(component)) {
+            setupValidDateConstraint(context, propertySheet, property, component);
+        }
         ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
     }
 
     protected void setupValidDateConstraint(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property, UIComponent component) {
+        if (isCreateOutputText()) {
+            return;
+        }
         List<String> params = new ArrayList<String>(2);
 
         // add the value parameter
@@ -78,7 +85,7 @@ public class DatePickerGenerator extends BaseComponentGenerator {
         propertySheet.addClientValidation(new ClientValidation("validateDate",
                 params, true));
     }
-    
+
     @Override
     protected void setupMandatoryValidation(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, UIComponent component,
             boolean realTimeChecking, String idSuffix) {
@@ -87,11 +94,6 @@ public class DatePickerGenerator extends BaseComponentGenerator {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
         attributes.put("onchange", "processButtonState();");
-
-        // Check for a valid date, when user can actually change it.
-        if (propertySheet.inEditMode() && !Utils.isComponentDisabledOrReadOnly(component)) {
-            setupValidDateConstraint(context, propertySheet, item, component);
-        }
     }
 
 }

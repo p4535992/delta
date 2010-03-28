@@ -34,8 +34,8 @@
 </f:verbatim>
 <h:panelGrid id="aoscModal-newCase-controls">
          <h:outputText id="aoscModal-newCase-lbl" value="#{msg.document_aoscModal_newCaseLabel}" styleClass="aoscModal-newCase" />
-         <h:inputTextarea id="newCaseName" binding="#{MetadataBlockBean.newCaseHtmlInput}" styleClass="aoscModal-newCase assignCaseInput expand15-200" readonly="readonly" />
-         <h:commandButton id="confirmCaseSelectionBtn" onclick="realSubmit()" value="#{msg.confirm}" disabled="true" />
+         <h:inputTextarea id="newCaseName" binding="#{MetadataBlockBean.newCaseHtmlInput}" styleClass="aoscModal-newCase assignCaseInput expand20-200" readonly="readonly" />
+         <h:commandButton id="confirmCaseSelectionBtn" value="#{msg.confirm}" disabled="true" />
 </h:panelGrid>
 <f:verbatim>
 </div>
@@ -47,6 +47,7 @@ var registerButtonPressed = false;
 $jQ(document).ready(function(){
    relocateRadioButtons();
    clearCaseSelectionInputs();
+   replaceConfirmCaseBtnOnclick();
 
    $jQ('#' + escapeId4JQ('dialog:documentRegisterButton')).bind("click", function(e){
       registerButtonPressed = true;
@@ -61,6 +62,15 @@ $jQ(document).ready(function(){
    $jQ('#' + escapeId4JQ('dialog:finish-button')).bind("click", function(e){
       return proccessSubmitOrRegisterButton();
    });
+
+   function replaceConfirmCaseBtnOnclick() {
+      var confirmCaseBtn = $jQ('#' + escapeId4JQ('dialog:dialog-body:confirmCaseSelectionBtn'));
+      confirmCaseBtn.removeAttr("onclick"); // remove generated onclick attribute value to avoid confusion, as it will be replaced
+      confirmCaseBtn.unbind('click'); // remove jsf generated function call from DOM
+      confirmCaseBtn.click(function() {
+         realSubmit();
+      });
+   }
 
    function proccessSubmitOrRegisterButton() {
       if(!volumeContainsCases || isCaseAssigned()){
@@ -150,6 +160,8 @@ $jQ(document).ready(function(){
          }
          return true; // case selected
       } else {
+         // Assertion: code should normally not reach here - if it does, smth is probably wrong with code
+         alert("<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("document_validationMsg_mandatory_case")%>");
          return false;
       }
    }
@@ -208,6 +220,7 @@ $jQ(document).ready(function(){
    
    function requestVolumeContainsCasesRefreshFailure(ajaxResponse) {
       // alert("response: "+ajaxResponse.responseText); //XXX: mida veaolukorras teha võiks?
+      $jQ.log("request: volumeContainsCases - failure: "+ajaxResponse.responseText);
    }
    
 </script>

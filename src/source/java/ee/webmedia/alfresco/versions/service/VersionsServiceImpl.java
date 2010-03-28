@@ -79,8 +79,8 @@ public class VersionsServiceImpl implements VersionsService {
                 // check the flag as true to prevent creation of new versions until the node is unlocked in UnlockMethod 
                 setVersionLockableAspect(nodeRef, true);
                 // log the event
-                documentLogService.addDocumentLog(nodeService.getPrimaryParent(nodeRef).getParentRef(), I18NUtil.getMessage("document_log_status_fileChanged",
-                        new Object[] { filename }));
+                documentLogService.addDocumentLog(nodeService.getPrimaryParent(nodeRef).getParentRef() //
+                        , I18NUtil.getMessage("document_log_status_fileChanged", filename));
             }
         }
     }

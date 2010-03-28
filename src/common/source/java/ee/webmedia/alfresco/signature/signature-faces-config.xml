@@ -88,4 +88,10 @@
       </managed-property>
    </managed-bean>
 
+   <managed-bean>
+      <managed-bean-name>SignatureBlockBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.signature.web.SignatureBlockBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
 </faces-config>

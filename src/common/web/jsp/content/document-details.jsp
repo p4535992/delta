@@ -155,7 +155,7 @@
 
    <a:panel label="#{msg.related_translations}" id="related-translation-panel" progressive="true"
       expanded='#{DialogManager.bean.panels["related-translation-panel"]}' expandedActionListener="#{DialogManager.bean.expandPanel}"
-      styleClass="nodeWorkflowInfoTitle pager-panel">
+      styleClass="nodeWorkflowInfoTitle with-pager">
 
 
       <%-- list of translations --%>
@@ -257,7 +257,7 @@
 
 
 <a:panel label="#{msg.version_history}" id="version-history-panel" progressive="true" rendered="#{DialogManager.bean.versionable && !NavigationBean.isGuest}"
-   expanded='#{DialogManager.bean.panels["version-history-panel"]}' expandedActionListener="#{DialogManager.bean.expandPanel}" styleClass="pager-panel">
+   expanded='#{DialogManager.bean.panels["version-history-panel"]}' expandedActionListener="#{DialogManager.bean.expandPanel}" styleClass="with-pager">
 
    <a:richList id="versionHistoryList" viewMode="details" value="#{DialogManager.bean.versionHistory}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" pageSize="10" initialSortColumn="versionDate" initialSortDescending="true">

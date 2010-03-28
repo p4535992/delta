@@ -11,7 +11,7 @@
 
    <%-- Spaces List --%>
    <a:richList id="registersList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{DialogManager.bean.templates}" var="r" initialSortColumn="name">
+      width="100%" value="#{DialogManager.bean.templates}" var="r" initialSortColumn="name" styleClass="with-pager">
       
       <%-- Primary column for the name --%>
       <a:column id="col1" primary="true">
@@ -51,7 +51,8 @@
          </a:actionLink>
       </a:column>
 
-      
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
+      <a:dataPager id="pager" styleClass="pager" />      
    </a:richList>
   
 </a:panel>

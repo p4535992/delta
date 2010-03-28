@@ -83,7 +83,7 @@ return true;
 <tr>
 <td align="middle">
 </f:verbatim>
-<h:graphicImage value="/images/icons/required_field.gif" alt="#{msg.required_field}" />
+<f:verbatim escape="false"><span class="red">* </span></f:verbatim>
 <f:verbatim>
 </td>
 <td>

@@ -130,8 +130,8 @@
 
    <config evaluator="node-type" condition="wfc:compoundWorkflow">
       <property-sheet>
-         <show-property name="wfc:ownerName" read-only="true" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}"
-            setterCallback="#{CompoundWorkflowDialog.setWorkfowOwner}" editableIf="wfc:status=uus||teostamisel||peatatud||teostamata" /> 
+         <show-property name="wfc:ownerName" editable="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}"
+            setterCallback="#{CompoundWorkflowDialog.setWorkfowOwner}" readOnlyIf="wfc:status!=uus||teostamisel||peatatud||teostamata" /> 
       </property-sheet>
    </config>
 
@@ -163,31 +163,31 @@
 
    <config evaluator="node-type" condition="wfs:signatureWorkflow">
       <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="signatureWorkflow_tasks" />
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="signatureWorkflow_tasks" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:opinionWorkflow">
       <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="opinionWorkflow_tasks" />
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="opinionWorkflow_tasks" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:reviewWorkflow">
       <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="reviewWorkflow_tasks" />
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="reviewWorkflow_tasks" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:informationWorkflow">
       <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="informationWorkflow_tasks" />
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="informationWorkflow_tasks" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:assignmentWorkflow">
       <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks" responsible="true" />
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="assignmentWorkflow_tasks" responsible="true" />
          <show-property name="{temp}workflowTasksCo" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks_co" />
       </property-sheet>
    </config>

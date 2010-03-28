@@ -12,7 +12,6 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandButton;
 import javax.faces.component.html.HtmlCommandLink;
-import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -37,11 +36,15 @@ import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
+import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
+import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSummaryItem;
@@ -112,7 +115,7 @@ public class WorkflowBlockBean implements Serializable {
         finishedReviewTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.REVIEW_TASK);
         finishedOpinionTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.OPINION_TASK);
         signatureTask = null;
-        workflowSummaryItems = getWorkflowSummaryItems();
+        workflowSummaryItems = null;
         // rebuild the whole task panel
         constructTaskPanelGroup();
     }
@@ -175,9 +178,13 @@ public class WorkflowBlockBean implements Serializable {
         } else if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
             if (outcomeIndex == 1) {
                 signatureTask = (SignatureTask) task;
-                getDocumentService().prepareDocumentSigning(document);
-                fileBlockBean.restore();
-                showModal();
+                try {
+                    getDocumentService().prepareDocumentSigning(document);
+                    fileBlockBean.restore();
+                    showModal();
+                } catch (UnableToPerformException e) {
+                    MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
+                }
                 return;
             }
         }
@@ -269,8 +276,9 @@ public class WorkflowBlockBean implements Serializable {
             showModal(signatureDigest.getDigestHex());
             signatureTask.setSignatureDigest(signatureDigest);
         } catch (SignatureException e) {
-            log.warn(e.getMessage(), e);
+            SignatureBlockBean.addSignatureError(e);
             closeModal();
+            signatureTask = null;
         }
     }
 
@@ -286,13 +294,8 @@ public class WorkflowBlockBean implements Serializable {
         } catch (WorkflowChangedException e) {
             log.debug("Finishing signature task failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
-        } catch (SignatureException e) {
-            log.warn(e.getMessage(), e);
-            String additionalInfo = "";
-            if (e.getCause() != null && StringUtils.isNotEmpty(e.getCause().getMessage())) {
-                additionalInfo = ": " + e.getCause().getMessage();
-            }
-            Utils.addErrorMessage(MessageUtil.getMessage("ddoc_signature_failed") + additionalInfo);
+        } catch (SignatureRuntimeException e) {
+            SignatureBlockBean.addSignatureError(e);
         } catch (FileExistsException e) {
             if (log.isDebugEnabled()) {
                 log.debug("Failed to create ddoc, file with same name already exists, parentRef = " + document, e);
@@ -360,10 +363,10 @@ public class WorkflowBlockBean implements Serializable {
             sheet.getAttributes().put("columns", 1);
             panel.getChildren().add(sheet);
 
-            HtmlPanelGrid panelGrid = new HtmlPanelGrid();
+            HtmlPanelGroup panelGrid = new HtmlPanelGroup();
+            panelGrid.setStyleClass("task-sheet-buttons");
             // panel grid with a column for every button
-            panelGrid.setColumns(myTask.getOutcomes());
-
+            
             // save button used only for some task types
             if (WorkflowSpecificModel.Types.OPINION_TASK.equals(taskType) ||
                     WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)) {
@@ -376,7 +379,6 @@ public class WorkflowBlockBean implements Serializable {
                 saveButton.getAttributes().put(ATTRIB_INDEX, index);
 
                 panelGrid.getChildren().add(saveButton);
-                panelGrid.setColumns(myTask.getOutcomes() + 1);
             }
 
             // the outcome buttons
@@ -415,7 +417,6 @@ public class WorkflowBlockBean implements Serializable {
                 delegateButton.getChildren().add(param);
 
                 panelGrid.getChildren().add(delegateButton);
-                panelGrid.setColumns(myTask.getOutcomes() + 1);
             }
 
             panel.getChildren().add(panelGrid);
@@ -467,20 +468,19 @@ public class WorkflowBlockBean implements Serializable {
     public List<WorkflowSummaryItem> getWorkflowSummaryItems() {
         if (workflowSummaryItems == null) {
             workflowSummaryItems = new ArrayList<WorkflowSummaryItem>();
+            List<Workflow> workflows = WorkflowUtil.getVisibleWorkflows(getCompoundWorkflows());
+    
+            for (Workflow workflow : workflows) {
+                WorkflowSummaryItem workflowSummaryItem = new WorkflowSummaryItem(workflow);
+                workflowSummaryItem.setRaisedRights(checkRights(workflow));
+                workflowSummaryItems.add(workflowSummaryItem);
+                WorkflowSummaryItem workflowSummaryItemTaskView = new WorkflowSummaryItem(workflow);
+                workflowSummaryItemTaskView.setTaskView(true);
+                workflowSummaryItems.add(workflowSummaryItemTaskView);
+            }
+    
+            Collections.sort(workflowSummaryItems);
         }
-        workflowSummaryItems.clear();
-        List<Workflow> workflows = WorkflowUtil.getVisibleWorkflows(getCompoundWorkflows());
-
-        for (Workflow workflow : workflows) {
-            WorkflowSummaryItem workflowSummaryItem = new WorkflowSummaryItem(workflow);
-            workflowSummaryItem.setRaisedRights(checkRights(workflow));
-            workflowSummaryItems.add(workflowSummaryItem);
-            WorkflowSummaryItem workflowSummaryItemTaskView = new WorkflowSummaryItem(workflow);
-            workflowSummaryItemTaskView.setTaskView(true);
-            workflowSummaryItems.add(workflowSummaryItemTaskView);
-        }
-
-        Collections.sort(workflowSummaryItems);
         return workflowSummaryItems;
     }
 
@@ -493,6 +493,15 @@ public class WorkflowBlockBean implements Serializable {
 
     public void setWorkflowSummaryItems(List<WorkflowSummaryItem> workflowSummaryItems) {
         this.workflowSummaryItems = workflowSummaryItems;
+    }
+    
+    public void toggleTaskViewVisible(ActionEvent event) {
+        NodeRef workflowNodeRef = new NodeRef(ActionUtil.getParam(event, "workflowNodeRef"));
+        for(WorkflowSummaryItem item : getWorkflowSummaryItems()) {
+            if(item.getWorkflowRef().equals(workflowNodeRef)) {
+                item.toggleTaskViewVisible(event);
+            }
+        }
     }
 
     // START: getters / setters

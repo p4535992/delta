@@ -4,6 +4,7 @@ import java.util.Map;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
+import javax.faces.convert.Converter;
 import javax.faces.el.MethodBinding;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
@@ -22,6 +23,9 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * <li>{@code pickerCallback} (mandatory) - callback which returns search results for a given input (JSF {@link MethodBinding}). For method signature and
  * description, see {@link AddUsersDialog#pickerCallback(int, String)}</li>
  * <li>{@code dialogTitleId} (optional) - search popup dialog's title message ID</li>
+ * <li>{@code editable} (optional - default true if property is not multivalued, false otherwise) - should values be only specified using picker (editable =
+ * false) or in addition to picker should component value be editable by typing arbitary value(editable = true) <br>
+ * NB! note that for multivalued component you must also implement {@link Converter#getAsObject(FacesContext, UIComponent, String)}</li>
  * </ul>
  * 
  * @author Alar Kvell
@@ -29,7 +33,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 public class SearchGenerator extends BaseComponentGenerator {
 
     private static final String EDITABLE_IF = "editableIf";
-    
+
     @Override
     public UIComponent generate(FacesContext context, String id) {
         UIComponent component = context.getApplication().createComponent(Search.SEARCH_FAMILY);
@@ -43,15 +47,15 @@ public class SearchGenerator extends BaseComponentGenerator {
             UIComponent component) {
 
         if (propertyDef == null) {
-            throw new RuntimeException("Unable to create Search component for property '"+item.getName()
-                    +"' - property definition not found on node: " + propertySheet.getNode());
+            throw new RuntimeException("Unable to create Search component for property '" + item.getName()
+                    + "' - property definition not found on node: " + propertySheet.getNode());
         } else if (propertyDef.isProtected()) {
-            throw new RuntimeException("Unable to create Search component for property '"+item.getName()
-                    +"' - property definition is protected. Node: " + propertySheet.getNode());
+            throw new RuntimeException("Unable to create Search component for property '" + item.getName()
+                    + "' - property definition is protected. Node: " + propertySheet.getNode());
         }
 
         super.setupProperty(context, propertySheet, item, propertyDef, component);
-        
+
         if (!(component instanceof Search)) {
             return;
         }
@@ -73,15 +77,9 @@ public class SearchGenerator extends BaseComponentGenerator {
         addValueFromCustomAttributes(Search.DIALOG_TITLE_ID_KEY, attributes);
         addValueFromCustomAttributes(Search.SETTER_CALLBACK, attributes);
         addValueFromCustomAttributes(Search.SETTER_CALLBACK_TAKES_NODE, attributes, Boolean.class);
-        if (getCustomAttributes().containsKey("editable")) {
-            addValueFromCustomAttributes("editable", attributes, Boolean.class);
-        } else if (getCustomAttributes().containsKey(EDITABLE_IF)) {
-            String expression = getCustomAttributes().get(EDITABLE_IF);
-            boolean isEditable = checkCustomPropertyExpression(context, propertySheet, expression, EDITABLE_IF, item.getName());
-            attributes.put("editable", !propertySheet.isReadOnly() && isEditable);
-        }
         addValueFromCustomAttributes(Search.SHOW_FILTER_KEY, attributes);
         addValueFromCustomAttributes(Search.FILTERS_KEY, attributes);
+        setEditableAttribute(context, propertySheet, item, propertyDef, attributes);
     }
 
     @Override
@@ -92,11 +90,12 @@ public class SearchGenerator extends BaseComponentGenerator {
     }
 
     @Override
-    protected void setupMandatoryValidation(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, UIComponent component, boolean realTimeChecking, String idSuffix) {
+    protected void setupMandatoryValidation(FacesContext context, UIPropertySheet propertySheet //
+            , PropertySheetItem item, UIComponent component, boolean realTimeChecking, String idSuffix) {
         // set realtime validation to true
         super.setupMandatoryValidation(context, propertySheet, item, component, true, idSuffix);
     }
-    
+
     @Override
     protected String getValidateMandatoryJsFunctionName() {
         return "validateSearchMandatory";
@@ -113,6 +112,27 @@ public class SearchGenerator extends BaseComponentGenerator {
             } else {
                 ComponentUtil.createAndSetConverter(context, property.getConverter(), component);
             }
+        }
+    }
+
+    private void setEditableAttribute(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,
+            Map<String, Object> attributes) {
+        if (getCustomAttributes().containsKey("editable")) {
+            addValueFromCustomAttributes("editable", attributes, Boolean.class);
+        } else {
+            final boolean editable;
+            if (getCustomAttributes().containsKey(EDITABLE_IF)) {
+                String expression = getCustomAttributes().get(EDITABLE_IF);
+                boolean isEditable = checkCustomPropertyExpression(context, propertySheet, expression, EDITABLE_IF, item.getName());
+                editable = !propertySheet.isReadOnly() && isEditable;
+            } else {
+                if (propertyDef.isMultiValued()) {
+                    editable = false; // default: can't type to input if property is multivalued, must search from picker
+                } else {
+                    editable = true; // default: can type to input or search from picker
+                }
+            }
+            attributes.put("editable", editable);
         }
     }
 

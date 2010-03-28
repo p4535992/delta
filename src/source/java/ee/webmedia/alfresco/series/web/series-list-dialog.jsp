@@ -7,7 +7,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="series-panel" border="white" bgcolor="white" styleClass="panel-100" label="#{SeriesListDialog.function.mark} #{SeriesListDialog.function.title}" progressive="true">
+<a:panel id="series-panel" styleClass="panel-100 with-pager" label="#{SeriesListDialog.function.mark} #{SeriesListDialog.function.title}" progressive="true">
 
    <%-- Main List --%>
    <a:richList id="seriesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -50,6 +50,9 @@
 
       <%-- show details --%>
       <a:column id="col5" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager}" >
+         <f:facet name="header">
+            <h:outputText value="&nbsp;" escape="false" />
+         </f:facet>
          <a:actionLink id="col5-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:seriesDetailsDialog" showLink="false"
             actionListener="#{SeriesDetailsDialog.showDetails}" tooltip="#{msg.series_details_info}">
             <f:param name="seriesNodeRef" value="#{r.node.nodeRef}" />

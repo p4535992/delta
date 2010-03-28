@@ -154,6 +154,22 @@ public class GroupsDialog extends BaseDialogBean
       return Application.getMessage(FacesContext.getCurrentInstance(), MSG_CLOSE);
    }
    
+//   @Override
+//    public String getActionsConfigId() {
+//        if(this.group == null) { // default
+//            return "group_actions";
+//        } else if(this.group.equals(UserService.ALFRESCO_ADMINISTRATORS_DISPLAY_NAME) || this.group.equals(UserService.DOCUMENT_MANAGERS_GROUP)) {
+//            return "base_group_inline_actions";
+//        } else {
+//            return "group_inline_actions_subgroup";
+//        }
+//    }
+//   
+//   @Override
+//    public String getMoreActionsConfigId() {
+//       return ""; // disable more actions context menu
+//    }
+   
    @Override
     public String cancel() {
         setCurrentGroup(null, Application.getMessage(FacesContext.getCurrentInstance(), MSG_ROOT_GROUPS));
@@ -636,7 +652,8 @@ public class GroupsDialog extends BaseDialogBean
       /**
        * @see java.lang.Object#toString()
        */
-      public String toString()
+      @Override
+    public String toString()
       {
          return this.Label;
       }
@@ -681,7 +698,7 @@ public class GroupsDialog extends BaseDialogBean
          return this.authority;
       }
       
-      private String name;
-      private String authority;
+      private final String name;
+      private final String authority;
    }
 }

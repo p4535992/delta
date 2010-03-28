@@ -1,7 +1,16 @@
 package ee.webmedia.alfresco.simdhs.servlet;
 
-import ee.webmedia.alfresco.document.web.DocumentDialog;
-import ee.webmedia.alfresco.menu.ui.MenuBean;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.StringTokenizer;
+
+import javax.faces.application.NavigationHandler;
+import javax.faces.context.FacesContext;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -14,16 +23,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
 
-import javax.faces.application.NavigationHandler;
-import javax.faces.context.FacesContext;
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Stack;
-import java.util.StringTokenizer;
+import ee.webmedia.alfresco.document.web.DocumentDialog;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
 
 /**
  * Servlet allowing external URL access to various global JSF views in the Web Client.
@@ -86,8 +87,6 @@ public class ExternalAccessServlet extends BaseServlet {
         FacesContext fc = FacesHelper.getFacesContext(req, res, getServletContext());
         ServiceRegistry serviceRegistry = getServiceRegistry(getServletContext());
 
-        // as we are potentially coming in from an external app reset the view stack
-        clearViewStack(fc);
 
         if (OUTCOME_DOCUMENT.equals(outcome)) {
             String currentNodeId = args[0];
@@ -103,8 +102,7 @@ public class ExternalAccessServlet extends BaseServlet {
             }
 
             // select correct menu
-            MenuBean menuBean = (MenuBean)FacesHelper.getManagedBean(fc, MenuBean.BEAN_NAME);
-            menuBean.setActiveItemId(String.valueOf(MenuBean.DOCUMENT_REGISTER_ID));            
+            MenuBean.clearViewStack(String.valueOf(MenuBean.DOCUMENT_REGISTER_ID), null);
 
             // open document dialog            
             DocumentDialog dialog = (DocumentDialog) FacesHelper.getManagedBean(fc, DocumentDialog.BEAN_NAME);
@@ -126,11 +124,4 @@ public class ExternalAccessServlet extends BaseServlet {
         return args;
     }
 
-    private void clearViewStack(FacesContext fc) {
-        Stack viewStack = (Stack) fc.getExternalContext().getSessionMap().get(VIEW_STACK);
-        if (viewStack != null) {
-            viewStack.clear();
-            if (logger.isDebugEnabled()) logger.debug("Cleared view stack");
-        }
-    }
 }

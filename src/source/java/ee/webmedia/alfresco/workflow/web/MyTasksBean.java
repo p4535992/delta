@@ -26,9 +26,17 @@ public class MyTasksBean extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "MyTasksBean";
+    public static final String LIST_ASSIGNMENT = "assignment";
+    public static final String LIST_INFORMATION = "information";
+    public static final String LIST_OPINION = "opinion";
+    public static final String LIST_REVIEW = "review";
+    public static final String LIST_SIGNATURE = "signature";
 
     private String dialogTitle = getParametersService().getStringParameter(Parameters.WELCOME_TEXT);
     private String listTitle = "";
+    private boolean filterTasks = true;
+    private boolean lessColumns = true;
+    private String specificList;
 
     private List<TaskAndDocument> tasks;
     private List<TaskAndDocument> assignmentTasks;
@@ -40,14 +48,29 @@ public class MyTasksBean extends BaseDialogBean {
     transient private ParametersService parametersService;
     transient private DocumentService documentService;
     transient private DocumentSearchService documentSearchService;
-    
-    
+
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // nothing to do here
         return null;
     }
     
+    @Override
+    public void restored() {
+        if(specificList.equals(LIST_ASSIGNMENT)) {
+            tasks = getAssignmentTasks();
+        } else if(specificList.equals(LIST_INFORMATION)) {
+            tasks = getInformationTasks();
+        } else if(specificList.equals(LIST_OPINION)) {
+            tasks = getOpinionTasks();
+        } else if(specificList.equals(LIST_REVIEW)) {
+            tasks = getReviewTasks();
+        } else if (specificList.equals(LIST_SIGNATURE)) {
+            tasks = getSignatureTasks();
+        }
+        super.restored();
+    }
+
     @Override
     public String getContainerTitle() {
         return dialogTitle;
@@ -61,23 +84,22 @@ public class MyTasksBean extends BaseDialogBean {
         signatureTasks = null;
         tasks = null;
         dialogTitle = getParametersService().getStringParameter(Parameters.WELCOME_TEXT);
+        filterTasks = true;
+        specificList = null;
     }
 
     public void setupMyTasks(ActionEvent event) {
-        assignmentTasks = filterTasksByDate(getAssignmentTasks());
-        informationTasks = filterTasksByDate(getInformationTasks());
-        opinionTasks = filterTasksByDate(getOpinionTasks());
-        reviewTasks = filterTasksByDate(getReviewTasks());
-        signatureTasks = filterTasksByDate(getSignatureTasks());
         dialogTitle = getParametersService().getStringParameter(Parameters.WELCOME_TEXT);
+        filterTasks = true;
     }
 
     private List<TaskAndDocument> filterTasksByDate(List<TaskAndDocument> tasks) {
-        Date tomorrow = Calendar.getInstance().getTime();
+        Date today = Calendar.getInstance().getTime();
+
         List<TaskAndDocument> filteredTasks = new ArrayList<TaskAndDocument>(tasks.size());
         for (TaskAndDocument task : tasks) {
             final Date dueDate = task.getTask().getDueDate();
-            if (dueDate != null && dueDate.before(tomorrow)) {
+            if (dueDate != null && dueDate.before(today)) {
                 filteredTasks.add(task);
             }
         }
@@ -86,6 +108,9 @@ public class MyTasksBean extends BaseDialogBean {
 
     public void setupAssignmentTasks(ActionEvent event) {
         reset();
+        setSpecificList(LIST_ASSIGNMENT);
+        filterTasks = false;
+        lessColumns = false;
         tasks = getAssignmentTasks();
         dialogTitle = MessageUtil.getMessage("assignmentWorkflow");
         listTitle = MessageUtil.getMessage("task_list_assignment_title");
@@ -93,6 +118,9 @@ public class MyTasksBean extends BaseDialogBean {
 
     public void setupInformationTasks(ActionEvent event) {
         reset();
+        setSpecificList(LIST_INFORMATION);
+        filterTasks = false;
+        lessColumns = false;
         tasks = getInformationTasks();
         dialogTitle = MessageUtil.getMessage("informationWorkflow");
         listTitle = MessageUtil.getMessage("task_list_information_title");
@@ -100,6 +128,9 @@ public class MyTasksBean extends BaseDialogBean {
 
     public void setupOpinionTasks(ActionEvent event) {
         reset();
+        setSpecificList(LIST_OPINION);
+        filterTasks = false;
+        lessColumns = false;
         tasks = getOpinionTasks();
         dialogTitle = MessageUtil.getMessage("opinionWorkflow");
         listTitle = MessageUtil.getMessage("task_list_opinion_title");
@@ -107,6 +138,9 @@ public class MyTasksBean extends BaseDialogBean {
 
     public void setupReviewTasks(ActionEvent event) {
         reset();
+        setSpecificList(LIST_REVIEW);
+        filterTasks = false;
+        lessColumns = true;
         tasks = getReviewTasks();
         dialogTitle = MessageUtil.getMessage("reviewWorkflow");
         listTitle = MessageUtil.getMessage("task_list_review_title");
@@ -114,56 +148,68 @@ public class MyTasksBean extends BaseDialogBean {
 
     public void setupSignatureTasks(ActionEvent event) {
         reset();
+        setSpecificList(LIST_SIGNATURE);
+        filterTasks = false;
+        lessColumns = true;
         tasks = getSignatureTasks();
         dialogTitle = MessageUtil.getMessage("signatureWorkflow");
         listTitle = MessageUtil.getMessage("task_list_signature_title");
     }
 
     public List<TaskAndDocument> getTasks() {
-        if(tasks == null) {
+        if (tasks == null) {
             tasks = new ArrayList<TaskAndDocument>();
         }
         return tasks;
     }
 
     public List<TaskAndDocument> getAssignmentTasks() {
-//        if (assignmentTasks == null) {
-            assignmentTasks = getDocumentService().getTasksWithDocuments(
-                    getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.ASSIGNMENT_TASK));
-//        }
+        assignmentTasks = getDocumentService().getTasksWithDocuments(
+                getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.ASSIGNMENT_TASK));
 
+        if(filterTasks) {
+            return filterTasksByDate(assignmentTasks);
+        }
         return assignmentTasks;
     }
 
     public List<TaskAndDocument> getInformationTasks() {
-//        if (informationTasks == null) {
-            informationTasks = getDocumentService().getTasksWithDocuments(
-                    getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.INFORMATION_TASK));
-//        }
+        informationTasks = getDocumentService().getTasksWithDocuments(
+                getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.INFORMATION_TASK));
+
+        if(filterTasks) {
+            return filterTasksByDate(informationTasks);
+        }
         return informationTasks;
     }
 
     public List<TaskAndDocument> getOpinionTasks() {
-//        if (opinionTasks == null) {
-            opinionTasks = getDocumentService().getTasksWithDocuments(
-                    getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.OPINION_TASK));
-//        }
+        opinionTasks = getDocumentService().getTasksWithDocuments(
+                getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.OPINION_TASK));
+
+        if(filterTasks) {
+            return filterTasksByDate(opinionTasks);
+        }
         return opinionTasks;
     }
 
     public List<TaskAndDocument> getReviewTasks() {
-//        if (reviewTasks == null) {
-            reviewTasks = getDocumentService().getTasksWithDocuments(
-                    getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.REVIEW_TASK));
-//        }
+        reviewTasks = getDocumentService().getTasksWithDocuments(
+                getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.REVIEW_TASK));
+
+        if(filterTasks) {
+            return filterTasksByDate(reviewTasks);
+        }
         return reviewTasks;
     }
 
     public List<TaskAndDocument> getSignatureTasks() {
-//        if (signatureTasks == null) {
-            signatureTasks = getDocumentService().getTasksWithDocuments(
-                    getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.SIGNATURE_TASK));
-//        }
+        signatureTasks = getDocumentService().getTasksWithDocuments(
+                getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.SIGNATURE_TASK));
+
+        if(filterTasks) {
+            return filterTasksByDate(signatureTasks);
+        }
         return signatureTasks;
     }
 
@@ -215,6 +261,18 @@ public class MyTasksBean extends BaseDialogBean {
 
     public void setDialogTitle(String dialogTitle) {
         this.dialogTitle = dialogTitle;
+    }
+    
+    public boolean isLessColumns() {
+        return lessColumns;
+    }
+    
+    public String getSpecificList() {
+        return specificList;
+    }
+
+    public void setSpecificList(String specificList) {
+        this.specificList = specificList;
     }
 
     // END: getters/setters

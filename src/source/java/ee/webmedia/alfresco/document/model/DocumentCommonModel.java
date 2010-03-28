@@ -107,6 +107,9 @@ public interface DocumentCommonModel {
         QName CREATED_DATETIME = QName.createQName(URI, "createdDateTime");
         QName CREATOR_NAME = QName.createQName(URI, "creatorName");
         QName EVENT_DESCRIPTION = QName.createQName(URI, "eventDescription");
+
+        /** holds non-system properties of childnodes (childNodes, that are defined in DocumentSubTypeModel) for searching */
+        QName SEARCHABLE_SUB_NODE_PROPERTIES = QName.createQName(URI, "searchableSubNodeProperties");
     }
 
 }
