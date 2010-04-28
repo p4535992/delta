@@ -29,7 +29,7 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.classificator_value_order}" value="order" styleClass="header" />
          </f:facet>
-         <h:inputText id="col2-in-txt" value="#{clValue.orderText}" size="1" styleClass="#{(clValue.lastOrderValidationSuccess) ? '' : 'error' }" />
+         <h:inputText id="col2-in-txt" value="#{clValue.orderText}" size="1" styleClass="#{(clValue.lastOrderValidationSuccess) ? '' : 'error ' }small" />
       </a:column>
 
       <%-- byDefault column --%>
@@ -57,7 +57,7 @@
          <f:facet name="header">
             <h:outputText id="col5-sort" value="#{msg.classificator_value_remove}" />
          </f:facet>
-         <a:actionLink id="col5-act1" value="#{clValue.valueName}" image="/images/icons/delete.gif" showLink="false" tooltip="#{msg.classificator_value_remove}"
+         <a:actionLink id="col5-act1" value="#{msg.classificator_value_remove}" image="/images/icons/delete.gif" showLink="false"
             actionListener="#{DialogManager.bean.removeValue}" rendered="#{!clValue.readOnly}">
             <f:param name="nodeRef" value="#{clValue.nodeRef}" />
          </a:actionLink>
@@ -68,3 +68,21 @@
    </a:richList>
 
 </a:panel>
+<f:verbatim>
+<script type="text/javascript">
+$jQ("input[type='text'].error").each(function (index, domEle) {
+   var val = domEle.value;
+   if(val == "") {
+      var input = $jQ(domEle);
+      input.keyup(function(event) {
+          var newValue = $jQ(this).val();
+          if(newValue.length > 0){
+             input.removeClass("error");
+          } else {
+             input.addClass("error");
+          }
+      });
+   }
+});
+</script>
+</f:verbatim>

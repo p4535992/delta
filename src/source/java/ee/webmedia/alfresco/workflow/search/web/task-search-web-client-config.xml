@@ -33,17 +33,17 @@
             filters="#{TaskSearchDialog.ownerSearchFilters}" showFilter="true" />
          <show-property name="tasksearch:creatorName" display-label-id="task_search_creator" component-generator="SearchGenerator"
             pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{TaskSearchDialog.processCreatorSearchResults}" dialogTitleId="users_search_title" />
-         <show-property name="tasksearch:organizationName" display-label-id="task_search_organization" component-generator="TextAreaGenerator" styleClass="expand5-200" />
-         <show-property name="tasksearch:jobTitle" display-label-id="task_search_job_title" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="tasksearch:organizationName" display-label-id="task_search_organization" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         <show-property name="tasksearch:jobTitle" display-label-id="task_search_job_title" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="tasksearch:dueDateTimeBegin" display-label-id="task_search_dueDateTime" component-generator="InlinePropertyGroupGenerator"
             props="tasksearch:dueDateTimeBegin||styleClass=date,tasksearch:dueDateTimeEnd||styleClass=date" textId="task_search_from_to" />
          <show-property name="tasksearch:onlyResponsible" display-label-id="task_search_only_responsible" />
          <show-property name="tasksearch:completedDateTimeBegin" display-label-id="task_search_completedDateTime" component-generator="InlinePropertyGroupGenerator"
             props="tasksearch:completedDateTimeBegin||styleClass=date,tasksearch:completedDateTimeEnd||styleClass=date" textId="task_search_from_to" />
-         <show-property name="tasksearch:comment" display-label-id="task_search_comment" component-generator="TextAreaGenerator" styleClass="expand5-200" />
-         <show-property name="tasksearch:resolution" display-label-id="task_search_resolution" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="tasksearch:comment" display-label-id="task_search_comment" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         <show-property name="tasksearch:resolution" display-label-id="task_search_resolution" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="tasksearch:status" display-label-id="task_search_status" component-generator="GeneralSelectorGenerator" selectionItems="#{TaskSearchDialog.getTaskStatuses}" />
-         <show-property name="tasksearch:completedOverdue" display-label-id="task_search_completed_overdue" />
+         <show-property name="tasksearch:completedOverdue" display-label-id="task_search_completed_overdue" labelStyleClass="wrap" />
          <show-property name="tasksearch:stoppedDateTimeBegin" display-label-id="task_search_stoppedDateTime" component-generator="InlinePropertyGroupGenerator"
             props="tasksearch:stoppedDateTimeBegin||styleClass=date,tasksearch:stoppedDateTimeEnd||styleClass=date" textId="task_search_from_to" />
       </property-sheet>

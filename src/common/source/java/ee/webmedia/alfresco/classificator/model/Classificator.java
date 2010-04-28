@@ -4,6 +4,8 @@ import java.io.Serializable;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
+import com.thoughtworks.xstream.annotations.XStreamOmitField;
+
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
@@ -13,9 +15,11 @@ public class Classificator implements Serializable {
     private static final long serialVersionUID = 1L;
 
     private String name;
+    @XStreamOmitField
     private boolean addRemoveValues;
     
     @AlfrescoModelProperty(isMappable = false)
+    @XStreamOmitField
     private NodeRef nodeRef;
 
     public String getName() {

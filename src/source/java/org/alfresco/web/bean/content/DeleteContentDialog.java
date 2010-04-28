@@ -157,7 +157,9 @@ public class DeleteContentDialog extends BaseDialogBean
           documentName = (String)document.getProperties().get(WorkflowCommonModel.Props.NAME);
       }
       else if (document.getType().equals(NotificationModel.Types.GENERAL_NOTIFICATION)) {
+          // FIXME: kaarel - see küll õige koht ei tohiks olla.. pigem DeleteFileDialog'is
           fileConfirmMsg = MessageUtil.getMessage("notification_delete_notification_confirm");
+          // FIXME: kaarel - mis on tähtsa teate kustutamisel pistmist töövoogudega?
           documentName = (String)document.getProperties().get(WorkflowCommonModel.Props.NAME);
       }
       else

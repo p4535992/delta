@@ -6,6 +6,7 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
@@ -35,8 +36,12 @@ public class FileBlockBean implements Serializable {
     
     public void toggleActive(ActionEvent event) {
         NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        getFileService().toggleActive(fileNodeRef);
-        restore(); // refresh the files list
+        try {
+            getFileService().toggleActive(fileNodeRef);
+            restore(); // refresh the files list
+        } catch (NodeLockedException e) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_inactive_toggleFailed");
+        }
     }
 
     public void transformToPdf(ActionEvent event) {

@@ -45,6 +45,10 @@ public class UIMenuComponent extends UIComponentBase {
                     menuBean.collapseMenuItems(null);
                 }
             }
+
+            if(Integer.parseInt(menuBean.getActiveItemId()) == MenuBean.MY_TASKS_AND_DOCUMENTS_ID) {
+                menuBean.processTaskItems(); // When user registers a doc, changes must reflect in admin session.
+            }
             
             // Links defined in menu-structure.xml have XPath
             boolean forceReset = link.getAttributes().get(DropdownMenuItem.ATTRIBUTE_XPATH) != null;

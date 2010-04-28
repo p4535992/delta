@@ -1636,8 +1636,8 @@ window.DP_jQuery = jQuery;
 })(jQuery);
 
 jQuery(document).ready(function() {
-	jQuery("input.date").not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '' });
-	jQuery("input.sysdate").not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', defaultDate: +7 });
+	jQuery("input.date").not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '' }).click(function() {jQuery(this).blur();});
+	jQuery("input.sysdate").not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', defaultDate: +7 }).click(function() {jQuery(this).blur();});
 });
 
 /* Estonian initialisation for the jQuery UI date picker plugin. */

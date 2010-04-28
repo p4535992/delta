@@ -13,6 +13,7 @@ import javax.faces.component.UIOutput;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.UIViewRoot;
 import javax.faces.component.ValueHolder;
+import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
 import javax.faces.el.ValueBinding;
@@ -274,12 +275,34 @@ public class ComponentUtil {
         List<UIComponent> children = component.getChildren();
         children.clear();
         children.addAll(generateSelectItems(context, selectItems));
+        setHtmlSelectManyListboxSize(component, selectItems);
+    }
+
+    /**
+     * Sets the listbox size (if is listbox) so that size is 1 .. 4
+     * @param component
+     * @param selectItems
+     */
+    public static void setHtmlSelectManyListboxSize(UIComponent component, List<?> selectItems) {
+        if(component instanceof HtmlSelectManyListbox) {
+            int itemCount = selectItems.size();
+
+            if(itemCount > 4) {
+                itemCount = 4;
+            }
+            if(itemCount < 1) {
+                itemCount = 1;
+            }
+
+            ((HtmlSelectManyListbox) component).setSize(itemCount);
+        }
     }
 
     public static void addSelectItems(FacesContext context, UIComponent component, List<SelectItem> selectItems) {
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
         children.addAll(generateSelectItems(context, selectItems));
+        setHtmlSelectManyListboxSize(component, selectItems);
     }
 
     public static List<UISelectItem> generateSelectItems(FacesContext context, List<SelectItem> selectItems) {
@@ -380,14 +403,14 @@ public class ComponentUtil {
 
         UIComponent component = componentPropVO.getComponentGenerator(context).generateAndAdd(context, propertySheet, fakeItem);
 
-        if (component instanceof UIInput) {
+        if (component instanceof UIOutput) {
             final String converterName = customAttributes.get(JSF_CONVERTER);
             if (StringUtils.isNotBlank(converterName)) {
                 try {// XXX: pm võiks külge panna ka property tüübi järgi mingid default converterid(a la double tüübi puhul DoubleConverter), et ei peaks käsitsi attribuute lisama
                     @SuppressWarnings("unchecked")
                     final Class<Converter> converterClass = (Class<Converter>) Class.forName(converterName);
                     final Converter converter = converterClass.newInstance();
-                    ((UIInput)component).setConverter(converter);
+                    ((UIOutput)component).setConverter(converter);
                 } catch (Exception e) {
                     throw new RuntimeException("Can't initialize converter with class name '" + converterName + "' while creating property '" + propName + "'", e);
                 }

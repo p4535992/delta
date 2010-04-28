@@ -205,8 +205,6 @@ function validateDate(control, message, showMessage)
    }
    
    var result = true;
-   // Should be set from DatePickerGenerator...
-   showMessage = true;
     
    // http://www.regexlib.com/REDetails.aspx?regexp_id=762
    var pattern = 

@@ -25,6 +25,7 @@ import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.util.URLEncoder;
+import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.util.Assert;
 
@@ -128,10 +129,10 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public void transformActiveFilesToPdf(NodeRef nodeRef) {
-        List<File> files = getAllActiveFiles(nodeRef);
+    public void transformActiveFilesToPdf(NodeRef document) {
+        List<File> files = getAllActiveFiles(document);
         for (File file : files) {
-            if (generatePdf(file.getNodeRef(), nodeRef) != null) {
+            if (generatePdf(document, file.getNodeRef()) != null) {
                 toggleActive(file.getNodeRef());
             }
         }
@@ -149,49 +150,46 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public void transformToPdf(NodeRef nodeRef) {
-        generatePdf(nodeRef, nodeService.getPrimaryParent(nodeRef).getParentRef());
+    public void transformToPdf(NodeRef file) {
+        generatePdf(nodeService.getPrimaryParent(file).getParentRef(), file);
     }
 
-    private FileInfo generatePdf(NodeRef file, NodeRef parent) {
+    private FileInfo generatePdf(NodeRef parent, NodeRef file) {
         ContentReader reader = fileFolderService.getReader(file);
         if (MimetypeMap.MIMETYPE_PDF.equals(reader.getMimetype())) {
             return null;
         }
-        long startTime = System.currentTimeMillis();
-
         String filename = (String) nodeService.getProperty(file, ContentModel.PROP_NAME);
+        return transformToPdf(parent, reader, filename);
+    }
+
+    @Override
+    public FileInfo transformToPdf(NodeRef parent, ContentReader reader, String filename) {
+        ContentWriter writer = contentService.getWriter(null, null, false);
+        writer.setMimetype(MimetypeMap.MIMETYPE_PDF);
+        ContentTransformer transformer = contentService.getTransformer(reader.getMimetype(), writer.getMimetype());
+        if (transformer == null) {
+            log.debug("No transformation available from '" + reader.getMimetype() + "' to '" + writer.getMimetype() + "', skipping PDF file creation");
+            return null;
+        }
+        try {
+            long startTime = System.currentTimeMillis();
+            transformer.transform(reader, writer);
+            if (log.isDebugEnabled()) {
+                log.debug("Transformed file to PDF, time " + (System.currentTimeMillis() - startTime) + " ms, filename=" + filename + ", size="
+                        + reader.getSize() + " bytes, mimeType=" + reader.getMimetype() + ", encoding=" + reader.getEncoding() + ", PDF size=" + writer.getSize() + " bytes");
+            }
+        } catch (ContentIOException e) {
+            log.debug("Failed to transform file to PDF, filename=" + filename + ", size=" + reader.getSize() + ", mimeType=" + reader.getMimetype()
+                    + ", encoding=" + reader.getEncoding(), e);
+            return null;
+        }
+
         FileInfo createdFile = fileFolderService.create(
                 parent,
                 generalService.getUniqueFileName(parent, FilenameUtils.removeExtension(filename) + ".pdf"),
                 ContentModel.TYPE_CONTENT);
-
-        ContentWriter writer = fileFolderService.getWriter(createdFile.getNodeRef());
-        writer.setMimetype(MimetypeMap.MIMETYPE_PDF);
-        ContentTransformer transformer = contentService.getTransformer(reader.getMimetype(), writer.getMimetype());
-        
-        boolean failed = false;
-        if (transformer == null) {
-            failed = true;
-        } else {
-            try {
-                transformer.transform(reader, writer);
-                if (log.isDebugEnabled()) {
-                    log.debug("Transformed file to PDF, time " + (System.currentTimeMillis() - startTime) + " ms, filename=" + filename + ", size="
-                            + reader.getSize() + " bytes, mimeType=" + reader.getMimetype() + ", encoding=" + reader.getEncoding() + ", PDF size=" + writer.getSize() + " bytes");
-                }
-            } catch (ContentIOException e) {
-                log.debug("Failed to transform file to PDF, filename=" + filename + ", size=" + reader.getSize() + ", mimeType=" + reader.getMimetype()
-                        + ", encoding=" + reader.getEncoding() + ", nodeRef=" + file, e);
-                failed = true;
-            }
-        }
-        
-        if (failed) {
-            // remove the created file
-            fileFolderService.delete(createdFile.getNodeRef());
-            return null;
-        }
+        nodeService.setProperty(createdFile.getNodeRef(), ContentModel.PROP_CONTENT, writer.getContentData());
         return createdFile;
     }
 
@@ -251,6 +249,11 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String generateURL(NodeRef nodeRef) {
+        if (!generalService.getStore().equals(nodeRef.getStoreRef())) {
+            String name = fileFolderService.getFileInfo(nodeRef).getName();
+            return DownloadContentServlet.generateDownloadURL(nodeRef, name);
+        }
+
         // calculate a WebDAV URL for the given node
         StringBuilder path = new StringBuilder("/").append(WebDAVServlet.WEBDAV_PREFIX);
 

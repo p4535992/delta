@@ -66,6 +66,9 @@ public class DeleteTopicDialog extends DeleteSpaceDialog
    {
       // find out what the parent type of the node being deleted 
       Node node = this.browseBean.getActionSpace();
+      if(node == null) {
+          node = this.navigator.getCurrentNode();
+      }
       ChildAssociationRef assoc = this.getNodeService().getPrimaryParent(node.getNodeRef());
       if (assoc != null)
       {

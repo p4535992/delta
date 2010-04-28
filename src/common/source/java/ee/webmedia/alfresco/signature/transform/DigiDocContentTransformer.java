@@ -14,6 +14,7 @@ import org.alfresco.service.cmr.repository.TransformationOptions;
 import org.apache.log4j.Logger;
 import org.springframework.util.FileCopyUtils;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
@@ -108,7 +109,7 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
         // create the writer
         ContentWriter dataItemWriter = contentService.getTempWriter();
         dataItemWriter.setMimetype(MimetypeMap.MIMETYPE_TEXT_PLAIN);
-        dataItemWriter.setEncoding("UTF-8");
+        dataItemWriter.setEncoding(AppConstants.CHARSET);
 
         // create the reader and get the transformer
         ContentReader dataItemReader = getTempContentReader(dataItem);

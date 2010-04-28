@@ -16,7 +16,6 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
 
 import ee.webmedia.alfresco.common.propertysheet.search.Search.SearchRemoveEvent;
-import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -32,6 +31,7 @@ public class SearchRenderer extends BaseRenderer {
     protected static final String ACTION_SEPARATOR = ";";
     protected static final String REMOVE_ROW_ACTION = "removeRow";
     public static final String OPEN_DIALOG_ACTION = "openDialog";
+    public static final String CLOSE_DIALOG_ACTION = "closeDialog";
 
     public static final String SEARCH_MSG = "search";
     public static final String DELETE_MSG = "delete";
@@ -58,15 +58,16 @@ public class SearchRenderer extends BaseRenderer {
             action = value;
         }
 
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = component.getAttributes();
         if (action.equals(REMOVE_ROW_ACTION)) {
             component.queueEvent(new SearchRemoveEvent(component, index));
         } else if (action.equals(OPEN_DIALOG_ACTION)) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> attributes = component.getAttributes();
             attributes.put(Search.OPEN_DIALOG_KEY, index);
-            @SuppressWarnings("unchecked")
-            Map<String, Object> requestMapExt = context.getExternalContext().getRequestMap();
-            requestMapExt.put(MandatoryIfValidator.DISABLE_VALIDATION, Boolean.TRUE);
+            Utils.setRequestValidationDisabled(context);
+        } else if (action.equals(CLOSE_DIALOG_ACTION)) {
+            attributes.remove(Search.OPEN_DIALOG_KEY);
+            Utils.setRequestValidationDisabled(context);
         } else {
             throw new RuntimeException("Unknown action: " + action);
         }
@@ -108,7 +109,7 @@ public class SearchRenderer extends BaseRenderer {
         }
         if ((list == null || picker == null) && (!search.isDisabled())) {
             throw new RuntimeException("Child UIComponent is missing for " + component.getClass().getSimpleName() //
-                    + " component wit id '" + component.getId() + "'. list=" + list + "; picker=" + picker);
+                    + " component with id '" + component.getId() + "'. list=" + list + "; picker=" + picker);
         }
 
         if (search.isMultiValued()) {
@@ -157,13 +158,7 @@ public class SearchRenderer extends BaseRenderer {
     }
 
     private void renderSingleValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
-        out.write("<table class=\"recipient\" cellpadding=\"0\" cellspacing=\"0\"");
-        // There have been added some html for specifically displaying this component in UIRichList:
-        // full column width is used and all cells are aligned to right.
-        if (search.isChildOfUIRichList()) {
-            out.write(" width=\"100%\"");
-        }
-        out.write("><tbody><tr >");
+        out.write("<table class=\"recipient\" cellpadding=\"0\" cellspacing=\"0\"><tbody><tr>");
 
         @SuppressWarnings("unchecked")
         List<UIComponent> children = list.getChildren();
@@ -173,26 +168,16 @@ public class SearchRenderer extends BaseRenderer {
                 continue;
             }
 
-            out.write("<td ");
-            if (search.isChildOfUIRichList())  {
-                out.write("style=\"text-align: right;\" width=\"80%\"");
-            }
-            out.write(">");
+            out.write("<td>");
             Utils.encodeRecursive(context, child);
             out.write("</td>");
             if(isRemoveLinkRendered(search)) {
-                out.write("<td ");
-                if (search.isChildOfUIRichList())  {
-                    out.write("style=\"text-align: right;\"");
-                }
-                out.write(">");
+                out.write("<td>");
                 renderRemoveLink(context, out, search, i);
                 out.write("</td>");
             }
         }
-        out.write("<td ");
-        //out.write("style=\"text-align: right;\"");
-        out.write(">");
+        out.write("<td>");
         renderPicker(context, out, search, picker);
         out.write("</td></tr></tbody></table>");
     }
@@ -228,23 +213,31 @@ public class SearchRenderer extends BaseRenderer {
             return;
         }
         out.write("<a class=\"icon-link margin-left-4 search\" onclick=\"");
-        out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ";" + getRowIndex(search)));
+        out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ACTION_SEPARATOR + getRowIndex(search)));
         out.write("return showModal('");
         out.write(getDialogId(context, search));
         out.write("');\" title=\"" + Application.getMessage(context, SEARCH_MSG) + "\">");
-        out.write(Application.getMessage(context, SEARCH_MSG));
+        // out.write(Application.getMessage(context, SEARCH_MSG));
         out.write("</a>");
+
+        Integer openDialog = (Integer) search.getAttributes().get(Search.OPEN_DIALOG_KEY);
+        if (openDialog != null) {
+            out.write("<div id=\"overlay\" style=\"display: block;\"></div>");
+        }
 
         out.write("<div id=\"");
         out.write(getDialogId(context, search));
-        out.write("\" class=\"modalpopup modalwrap\">");
-        out.write("<div class=\"modalpopup-header clear\"><h1>");
+        out.write("\" class=\"modalpopup modalwrap\"");
+        if (openDialog != null) {
+            out.write(" style=\"display: block;\"");
+        }
+        out.write("><div class=\"modalpopup-header clear\"><h1>");
 
         String searchMessage = (String) search.getAttributes().get(Search.DIALOG_TITLE_ID_KEY);
         out.write(Application.getMessage(context, searchMessage != null ? searchMessage : SEARCH_MSG));
 
         out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"");
-        out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), ""));
+        out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), CLOSE_DIALOG_ACTION));
         out.write(Utils.generateFormSubmit(context, picker, picker.getClientId(context), "1" /* ACTION_CLEAR */));
         out.write("\">");
         out.write(Application.getMessage(context, CLOSE_WINDOW_MSG));
@@ -254,11 +247,10 @@ public class SearchRenderer extends BaseRenderer {
 
         out.write("</div></div></div>");
 
-        Integer openDialog = (Integer) search.getAttributes().get(Search.OPEN_DIALOG_KEY);
         if (openDialog != null) {
             search.getAttributes().remove(Search.OPEN_DIALOG_KEY);
             out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
-            out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ";" + openDialog));
+            out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ACTION_SEPARATOR + openDialog));
             out.write("showModal('");
             out.write(getDialogId(context, search));
             out.write("');");

@@ -13,7 +13,7 @@
     <a:richList id="substituteList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
                 width="100%" value="#{DialogManager.bean.substitutes}" var="r" initialSortColumn="substitutionStartDate" initialSortDescending="true" refreshOnBind="true">
 
-        <a:column id="substituteNameCol" style="text-align:right">
+        <a:column id="substituteNameCol">
             <f:facet name="header">
                 <a:sortLink id="substituteNameSort" label="#{msg.substitute_name}" value="substituteName" styleClass="header" />
             </f:facet>
@@ -28,25 +28,31 @@
                     />
         </a:column>
 
-        <a:column id="substitutionStartDateCol" style="text-align:right">
+        <a:column id="substitutionStartDateCol">
             <f:facet name="header">
                 <a:sortLink id="substitutionStartDateSort" label="#{msg.substitute_startdate}" value="substitutionStartDate" styleClass="header" />
             </f:facet>
-            <h:inputText id="substitutionStartDate" value="#{r.substitutionStartDate}" styleClass="date" disabled="#{r.readOnly}">
+            <h:inputText id="substitutionStartDateInput" value="#{r.substitutionStartDate}" styleClass="date" rendered="#{!r.readOnly}">
                 <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter"/>
             </h:inputText>
+            <h:outputText id="substitutionStartDateOutput" value="#{r.substitutionStartDate}" rendered="#{r.readOnly}">
+                <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter"/>
+            </h:outputText>
         </a:column>
 
-        <a:column id="substitutionEndDateCol" style="text-align:right">
+        <a:column id="substitutionEndDateCol">
             <f:facet name="header">
                 <a:sortLink id="substitutionEndDateSort" label="#{msg.substitute_enddate}" value="substitutionEndDate" styleClass="header" />                
             </f:facet>
-            <h:inputText id="substitutionEndDate" value="#{r.substitutionEndDate}" styleClass="date" disabled="#{r.readOnly}">
+            <h:inputText id="substitutionEndDateInput" value="#{r.substitutionEndDate}" styleClass="date" rendered="#{!r.readOnly}">
                 <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter"/>
             </h:inputText>
+            <h:outputText id="substitutionEndDateOutput" value="#{r.substitutionEndDate}" rendered="#{r.readOnly}">
+                <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter"/>
+            </h:outputText>
         </a:column>
 
-        <a:column id="actionsCol" actions="true" style="text-align:right" styleClass="actions-column">
+        <a:column id="actionsCol" actions="true" styleClass="actions-column">
             <a:actionLink id="deleteLink" value="#{msg.substitute_remove}" image="/images/icons/delete.gif" showLink="false"
                           tooltip="#{msg.substitute_remove}"
                           actionListener="#{DialogManager.bean.deleteSubstitute}" rendered="#{!r.readOnly}">

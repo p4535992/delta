@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.web.jsf.FacesContextUtils;
@@ -24,7 +23,6 @@ public class AssocsBlockBean implements Serializable {
     private transient DocumentService documentService;
     private Node document;
     private List<DocAssocInfo> docAssocInfos;
-    private boolean expanded = false;
 
     public void init(Node node) {
         reset();
@@ -39,21 +37,12 @@ public class AssocsBlockBean implements Serializable {
     public void reset() {
         document = null;
         docAssocInfos = null;
-        expanded = false;
-    }
-
-    public void expandedAction(ActionEvent event) {
-        this.expanded = !this.expanded;
     }
 
     // START: getters / setters
 
     public Node getDocument() {
         return document;
-    }
-
-    public boolean isExpanded() {
-        return expanded;
     }
 
     public List<DocAssocInfo> getDocAssocInfos() {

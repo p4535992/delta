@@ -15,7 +15,7 @@
       <%-- Identifikaator --%>
       <a:column id="col1">
          <f:facet name="header">
-            <a:sortLink label="#{msg.identifier}" value="ab:groupName" mode="case-insensitive" />
+            <a:sortLink label="#{msg.addressbook_group_name}" value="ab:groupName" mode="case-insensitive" />
          </f:facet>
          <f:facet name="small-icon">
          <a:actionLink id="col1-act1" value="#{r['ab:groupName']}" image="/images/icons/users.gif" showLink="false" action="dialog:addressbookManageContacts" actionListener="#{ContactGroupContactsDialog.clickGroup}" styleClass="inlineAction" >

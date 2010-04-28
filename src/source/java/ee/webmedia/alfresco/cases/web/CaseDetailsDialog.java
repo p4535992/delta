@@ -14,6 +14,8 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Form backing component for cases details page
@@ -27,6 +29,7 @@ public class CaseDetailsDialog extends BaseDialogBean {
     private static final String PARAM_CASE_NODEREF = "caseNodeRef";
     private transient CaseService caseService;
     private Case currentEntry;
+    private boolean newCase;
 
     @Override
     public void init(Map<String, String> params) {
@@ -35,8 +38,14 @@ public class CaseDetailsDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        getCaseService().saveOrUpdate(currentEntry);
-        resetFields();
+        try {
+            getCaseService().saveOrUpdate(currentEntry);
+            resetFields();
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(context, e);
+            outcome = null;
+            isFinished = false;
+        }
         return outcome;
     }
 
@@ -50,12 +59,13 @@ public class CaseDetailsDialog extends BaseDialogBean {
     public void showDetails(ActionEvent event) {
         String caseRef = ActionUtil.getParam(event, PARAM_CASE_NODEREF);
         currentEntry = getCaseService().getCaseByNoderef(caseRef);
-        if(null==currentEntry) {
+        if (null == currentEntry) {
             throw new RuntimeException("Didn't find currentEntry");
         }
     }
 
     public void addNewCase(ActionEvent event) {
+        newCase = true;
         NodeRef caseRef = new NodeRef(ActionUtil.getParam(event, PARAM_VOLUME_NODEREF));
         // create new node for currentEntry
         currentEntry = getCaseService().createCase(caseRef);
@@ -64,9 +74,9 @@ public class CaseDetailsDialog extends BaseDialogBean {
     public Node getCurrentNode() {
         return currentEntry.getNode();
     }
-    
+
     public String close() {
-        if(currentEntry.getNode() instanceof TransientNode) {
+        if (currentEntry.getNode() instanceof TransientNode) {
             return null;
         }
         if (!isClosed()) {
@@ -80,10 +90,15 @@ public class CaseDetailsDialog extends BaseDialogBean {
         return caseService.isClosed(getCurrentNode());
     }
 
+    public boolean isNew() {
+        return newCase;
+    }
+
     // END: jsf actions/accessors
 
     private void resetFields() {
         currentEntry = null;
+        newCase = false;
     }
 
     // START: getters / setters

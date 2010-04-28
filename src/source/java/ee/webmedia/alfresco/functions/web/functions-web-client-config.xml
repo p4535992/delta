@@ -12,8 +12,32 @@
             <action>dialog:functionsDetailsDialog</action>
          </action>
 
+         <action id="docList_export">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>docList_export</label-id>
+            <action-listener>#{FunctionsListDialog.export}</action-listener>
+            <style-class>ui-helper-hidden docList_export</style-class>
+         </action>
+
+         <action id="docList_export_confirm">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>docList_export</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <onclick>confirmExport()</onclick>
+         </action>
+
+         <action id="docList_import">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>docList_import</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <action>dialog:documentListImportDialog</action>
+         </action>
+
          <action-group id="browse_actions_functions">
             <action idref="function_add_new" />
+            <action idref="docList_export" />
+            <action idref="docList_export_confirm" />
+            <action idref="docList_import" />
          </action-group>
 
       </actions>
@@ -26,9 +50,12 @@
          <dialog name="functionsDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/functions-details-dialog.jsp" managed-bean="FunctionsDetailsDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="functions_details_title" show-ok-button="true">
             <buttons>
-               <button id="close-button" label-id="close" action="#{FunctionsDetailsDialog.close}" disabled="#{FunctionsDetailsDialog.closed}" />
+               <button id="close-button" label-id="function_close" action="#{FunctionsDetailsDialog.close}" disabled="#{FunctionsDetailsDialog.closed}" />
             </buttons>
          </dialog>
+
+         <dialog name="documentListImportDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/docList-import-dialog.jsp" managed-bean="DocumentListImportDialog"
+            icon="/images/icons/add_content_large.gif" title-id="docList_import" description-id="import_docList_desc" />
 
       </dialogs>
    </config>
@@ -38,8 +65,8 @@
          <show-property name="fn:type" display-label-id="function_type" classificatorName="functionType" component-generator="ClassificatorSelectorGenerator"
             readOnlyIf="fn:status=suletud" />
          <show-property name="fn:mark" display-label-id="function_mark" readOnlyIf="fn:status=suletud" />
-         <show-property name="fn:title" display-label-id="function_title" readOnlyIf="fn:status=suletud" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="fn:description" display-label-id="function_description" readOnlyIf="fn:status=suletud" styleClass="expand5-200"
+         <show-property name="fn:title" display-label-id="function_title" readOnlyIf="fn:status=suletud" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="fn:description" display-label-id="function_description" readOnlyIf="fn:status=suletud" styleClass="expand19-200"
             component-generator="TextAreaGenerator" mandatory="false"/>
          <show-property name="fn:status" display-label-id="function_status" read-only="true" classificatorName="docListUnitStatus"
             component-generator="ClassificatorSelectorGenerator" />

@@ -13,6 +13,10 @@
       More information: http://wiki.alfresco.com/wiki/Packaging_And_Deploying_Extensions#JSF_configuration_files
     -->
 
+   <lifecycle>
+      <phase-listener>ee.webmedia.alfresco.common.listener.StatisticsPhaseListener</phase-listener>
+   </lifecycle>
+
    <managed-bean>
       <description>
          Bean that generates a date picker component

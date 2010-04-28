@@ -7,6 +7,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.validator.Validator;
 import javax.faces.validator.ValidatorException;
 
+import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.apache.commons.lang.StringUtils;
 
@@ -24,6 +25,10 @@ public class ForcedMandatoryValidator implements Validator {
 
     @Override
     public void validate(FacesContext context, UIComponent component, Object value) throws ValidatorException {
+        if (Utils.isRequestValidationDisabled(context)) {
+            return; // we don't want to validate before for example Search component is starting searching
+        }
+        
         UIInput input = (UIInput) component;
         if (!isFilled(input)) {
             UIProperty thisUIProperty = ComponentUtil.getAncestorComponent(component, UIProperty.class, true);

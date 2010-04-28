@@ -14,6 +14,7 @@ import org.springframework.core.io.ClassPathResource;
 import ee.sk.digidoc.SignedDoc;
 import ee.sk.digidoc.factory.DigiDocFactory;
 import ee.sk.digidoc.factory.SAXDigiDocFactory;
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
@@ -26,7 +27,7 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
     public static final String TEST_DIGIDOC = "digidocTestEnvironment.ddoc";
     public static final String TEST_CERTHEX = "cert.hex";
     
-    public static final String TEST_ENCODING1 = "UTF-8";
+    public static final String TEST_ENCODING1 = AppConstants.CHARSET;
     public static final String TEST_DATA1 = "abcdef";
     
     private SignatureService signatureService;
@@ -62,7 +63,7 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
         fileInputStream.close();
 
         // Write DigiDoc to nodeRef
-        ContentWriter writer = contentCreator.getContentWriter(nodeRef, "UTF-8", SignatureService.DIGIDOC_MIMETYPE);
+        ContentWriter writer = contentCreator.getContentWriter(nodeRef, AppConstants.CHARSET, SignatureService.DIGIDOC_MIMETYPE);
         OutputStream os = writer.getContentOutputStream();
         signedDoc.writeToStream(os);
         os.close();

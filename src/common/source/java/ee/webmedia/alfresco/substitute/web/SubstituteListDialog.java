@@ -218,6 +218,7 @@ public class SubstituteListDialog extends BaseDialogBean {
 
     public void addNewValue(ActionEvent event) {
         Substitute newSubstitute = new Substitute();
+        newSubstitute.setValid(false);
         // set the temporary random unique ID to be used in the UI form
         newSubstitute.setNodeRef(new NodeRef(newSubstitute.hashCode() + "", event.hashCode() + "", GUID.generate()));
         substitutes.add(newSubstitute);

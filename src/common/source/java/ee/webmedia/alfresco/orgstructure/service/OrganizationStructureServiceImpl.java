@@ -52,9 +52,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         for (Yksus yksus : yksusArray) {
             orgStructures.add(yksusToOrganizationStructure(yksus));
         }
-        if (orgStructures.size() < 1) {
-            throw new RuntimeException("Failed to receive organizations");
-        }
         Set<QName> childNodeTypeQnames = new HashSet<QName>();
         childNodeTypeQnames.add(OrganizationStructureModel.Assocs.ORGSTRUCT);
         String orgStructXPath = OrganizationStructureModel.Repo.SPACE;

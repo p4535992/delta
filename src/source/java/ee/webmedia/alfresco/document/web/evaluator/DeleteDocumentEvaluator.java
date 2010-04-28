@@ -1,12 +1,9 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.user.service.UserService;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 
-import javax.faces.context.FacesContext;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * UI action evaluator for validating whether user can delete current document.

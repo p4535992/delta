@@ -7,7 +7,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="document-template-panel" styleClass="panel-100" label="#{msg.templates}" progressive="true">
+<a:panel id="document-template-panel" styleClass="panel-100 with-pager" label="#{msg.templates}" progressive="true">
 
    <%-- Spaces List --%>
    <a:richList id="registersList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
@@ -19,9 +19,9 @@
             <a:sortLink id="col1-sort" label="#{msg.template_name_doc}" value="name" mode="case-insensitive" />
          </f:facet>
          <f:facet name="small-icon">
-            <a:actionLink id="col1-act1" value="#{r.name}" tooltip="#{msg.template_download}" image="/images/icons/template.gif" showLink="false" href="#{r.downloadUrl}" />
+            <a:actionLink id="col1-act1" value="#{r.name}" tooltip="#{msg.template_download}" image="/images/icons/template.gif" showLink="false" href="#{r.downloadUrl}" target="new" />
          </f:facet>
-         <a:actionLink id="col1-act2" value="#{r.name}" tooltip="#{msg.template_download}" href="#{r.downloadUrl}" />
+         <a:actionLink id="col1-act2" value="#{r.name}" tooltip="#{msg.template_download}" href="#{r.downloadUrl}" target="new" />
       </a:column>
 
       <%-- Comment column --%>

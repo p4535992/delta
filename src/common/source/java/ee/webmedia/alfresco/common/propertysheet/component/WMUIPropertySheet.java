@@ -6,6 +6,8 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
+import javax.faces.el.MethodBinding;
+import javax.faces.el.ReferenceSyntaxException;
 import javax.faces.el.ValueBinding;
 
 import org.alfresco.util.Pair;
@@ -60,11 +62,20 @@ public class WMUIPropertySheet extends UIPropertySheet {
             if (item instanceof CustomAttributes) {
                 String show = ((CustomAttributes) item).getCustomAttributes().get(SHOW);
                 if (show != null) {
-                    ValueBinding vb = context.getApplication().createValueBinding(show);
-                    Boolean value = (Boolean) vb.getValue(context);
-                    if (value != null && !value) {
+                    Boolean showItem = null;
+                    try { // first try method that takes propertySheet as an argument ...
+                        MethodBinding mb = context.getApplication().createMethodBinding(show,
+                                new Class[] { UIPropertySheet.class });
+                        showItem = (Boolean) mb.invoke(context, new Object[] { this });
+                    } catch (ReferenceSyntaxException e) {
+                        // ... if first method failed, try ValueBinding
+                        ValueBinding vb = context.getApplication().createValueBinding(show);
+                        showItem = (Boolean) vb.getValue(context);
+                    }
+                    if (showItem != null && !showItem) {
                         continue;
                     }
+
                 }
             }
             filteredItems.add(item);

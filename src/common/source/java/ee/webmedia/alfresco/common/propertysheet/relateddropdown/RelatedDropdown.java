@@ -40,9 +40,7 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
     /** String for method binding to be excecuted after selectionItems method binding is excecuted */
     public String afterSelect;
     public static final String CHANGE_MARKER = "CHANGE_MARKER";
-    public static final String SCROLL_VIEW = "scrollView";
     public static final String FIRST_DECODE = "firstDecode";
-    public static final String SCROLL_VIEW_RENDERED = "scrollViewRendered";
 
     public RelatedDropdown() {
     }
@@ -62,7 +60,6 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
             queueEventToRelatedComponents(submittedValue);
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = getAttributes();
-            attributes.put(SCROLL_VIEW, Boolean.TRUE); // RelatedSelectEvent has occurred, so scroll
         }
     }
 
@@ -78,10 +75,6 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
     public void encodeBegin(FacesContext context) throws IOException {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = getAttributes();
-        if (attributes.get(SCROLL_VIEW) != null && attributes.get(SCROLL_VIEW_RENDERED) == null) {
-            context.getResponseWriter().write("<input type=\"hidden\" name=\"scrollView\" value=\"500\" />");
-            attributes.put(SCROLL_VIEW_RENDERED, Boolean.TRUE); // otherwise there will be more than one item in DOM
-        }
         setOnchange(getOnChangeJS(context));
         if ((Boolean) attributes.get(FIRST_DECODE) == null) { //
             if(!hasSelectionItems()) {

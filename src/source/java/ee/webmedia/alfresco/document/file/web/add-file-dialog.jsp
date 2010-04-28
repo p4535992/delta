@@ -87,7 +87,7 @@
             <f:verbatim escape="false"><span class="red">* </span></f:verbatim>
             <h:outputText id="text5" value="#{msg.name}:" />
          </h:panelGroup>
-         <h:inputText id="file-name" value="#{DialogManager.bean.fileNameWithoutExtension}" maxlength="1024" size="35" onkeyup="checkButtonState();" onchange="checkButtonState();" />
+         <h:inputTextarea id="file-name" value="#{DialogManager.bean.fileNameWithoutExtension}" styleClass="expand19-200" onkeyup="checkButtonState();" onchange="checkButtonState();" />
       </h:panelGrid>
    
    </a:panel>

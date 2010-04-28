@@ -72,12 +72,24 @@ public class MenuBean implements Serializable {
     private String lastLinkId;
     private NodeRef linkNodeRef;
     private List<String> shortcuts;
-
     private String activeItemId = "0";
     private String clickedId = "";
-
     private Stack<String> stateList = new Stack<String>();
+    private String scrollToAnchor;
+    private String scrollToY;
 
+    
+    /**
+     * Watch out for a gotcha moment! If event comes from ActionLink or CommandButton,
+     * handleNavigation is called for a second time and it resets this setting!
+     *
+     * @param anchor ID of the HTML element in the form of "#my-panel"
+     */
+    public void scrollToAnchor(String anchor) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        context.getApplication().getNavigationHandler().handleNavigation(context, null, anchor);
+    }
+    
     public void resetBreadcrumb() {
         stateList.clear();
     }
@@ -124,7 +136,7 @@ public class MenuBean implements Serializable {
     public void addBreadcrumbItem(String title) {
         int i = 0;
         for (String listTitle : stateList) {
-            if (listTitle.equals(title)) {
+            if (i < 3 && listTitle.equals(title)) { // i < 3, left side menu provides functionality for backwards navigation.
                 break;
             }
             i++;
@@ -262,7 +274,7 @@ public class MenuBean implements Serializable {
                     ((DropdownMenuItem) item).setExpanded(true); // Mark our trail
                 }
                 item = item.getSubItems().get(Integer.parseInt(step));
-            } else if (path.length > 1) { // if necessary, fetch children
+            } else if (path.length > 1 && item instanceof DropdownMenuItem) { // if necessary, fetch children
                 DropdownMenuItem dropdownItem = ((DropdownMenuItem) item);
                 NodeRef nr = dropdownItem.getNodeRef();
                 if (nr == null) {
@@ -648,6 +660,22 @@ public class MenuBean implements Serializable {
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public String getScrollToAnchor() {
+        return scrollToAnchor;
+    }
+
+    public void setScrollToAnchor(String scrollToAnchor) {
+        this.scrollToAnchor = scrollToAnchor;
+    }
+
+    public String getScrollToY() {
+        return scrollToY;
+    }
+
+    public void setScrollToY(String scrollToY) {
+        this.scrollToY = scrollToY;
     }
 
     // END: getters / setters

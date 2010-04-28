@@ -174,6 +174,9 @@ public class WorkflowSummaryItem implements Serializable, Comparable<WorkflowSum
     }
 
     public String getResolution() {
+        if(resolution == null) {
+            return "";
+        }
         return resolution;
     }
 

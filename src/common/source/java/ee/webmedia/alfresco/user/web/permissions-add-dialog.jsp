@@ -10,7 +10,7 @@
 <a:panel id="add-authority-list" styleClass="column panel-50" label="#{msg.selected_users_groups}">
 
    <h:dataTable value="#{DialogManager.bean.authorities}" var="row" rowClasses="selectedItemsRow,selectedItemsRowAlt" styleClass="selectedItems"
-      headerClass="selectedItemsHeader" cellspacing="0" cellpadding="4" rendered="#{DialogManager.bean.authorities.rowCount != 0}">
+      headerClass="selectedItemsHeader" cellspacing="0" cellpadding="4" rendered="#{DialogManager.bean.authorities.rowCount != 0}" width="100%">
       <h:column>
          <f:facet name="header">
             <h:outputText value="#{msg.name}" />
@@ -19,8 +19,7 @@
          <h:outputText value="#{row.name}" />
       </h:column>
       <h:column>
-         <a:actionLink actionListener="#{DialogManager.bean.removeAuthority}" image="/images/icons/delete.gif" value="#{msg.remove}" showLink="false"
-            style="padding-left:6px" />
+         <a:actionLink actionListener="#{DialogManager.bean.removeAuthority}" image="/images/icons/delete.gif" value="#{msg.remove}" showLink="false"/>
       </h:column>
    </h:dataTable>
 

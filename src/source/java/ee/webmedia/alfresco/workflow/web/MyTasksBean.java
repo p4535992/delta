@@ -37,6 +37,7 @@ public class MyTasksBean extends BaseDialogBean {
     private boolean filterTasks = true;
     private boolean lessColumns = true;
     private String specificList;
+    private int pageSize = 10;
 
     private List<TaskAndDocument> tasks;
     private List<TaskAndDocument> assignmentTasks;
@@ -54,16 +55,16 @@ public class MyTasksBean extends BaseDialogBean {
         // nothing to do here
         return null;
     }
-    
+
     @Override
     public void restored() {
-        if(specificList.equals(LIST_ASSIGNMENT)) {
+        if (specificList.equals(LIST_ASSIGNMENT)) {
             tasks = getAssignmentTasks();
-        } else if(specificList.equals(LIST_INFORMATION)) {
+        } else if (specificList.equals(LIST_INFORMATION)) {
             tasks = getInformationTasks();
-        } else if(specificList.equals(LIST_OPINION)) {
+        } else if (specificList.equals(LIST_OPINION)) {
             tasks = getOpinionTasks();
-        } else if(specificList.equals(LIST_REVIEW)) {
+        } else if (specificList.equals(LIST_REVIEW)) {
             tasks = getReviewTasks();
         } else if (specificList.equals(LIST_SIGNATURE)) {
             tasks = getSignatureTasks();
@@ -74,6 +75,10 @@ public class MyTasksBean extends BaseDialogBean {
     @Override
     public String getContainerTitle() {
         return dialogTitle;
+    }
+
+    public boolean isTitlebarRendered() {
+        return getContainerTitle().length() > 0;
     }
 
     private void reset() {
@@ -167,7 +172,7 @@ public class MyTasksBean extends BaseDialogBean {
         assignmentTasks = getDocumentService().getTasksWithDocuments(
                 getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.ASSIGNMENT_TASK));
 
-        if(filterTasks) {
+        if (filterTasks) {
             return filterTasksByDate(assignmentTasks);
         }
         return assignmentTasks;
@@ -177,7 +182,7 @@ public class MyTasksBean extends BaseDialogBean {
         informationTasks = getDocumentService().getTasksWithDocuments(
                 getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.INFORMATION_TASK));
 
-        if(filterTasks) {
+        if (filterTasks) {
             return filterTasksByDate(informationTasks);
         }
         return informationTasks;
@@ -187,7 +192,7 @@ public class MyTasksBean extends BaseDialogBean {
         opinionTasks = getDocumentService().getTasksWithDocuments(
                 getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.OPINION_TASK));
 
-        if(filterTasks) {
+        if (filterTasks) {
             return filterTasksByDate(opinionTasks);
         }
         return opinionTasks;
@@ -197,7 +202,7 @@ public class MyTasksBean extends BaseDialogBean {
         reviewTasks = getDocumentService().getTasksWithDocuments(
                 getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.REVIEW_TASK));
 
-        if(filterTasks) {
+        if (filterTasks) {
             return filterTasksByDate(reviewTasks);
         }
         return reviewTasks;
@@ -207,7 +212,7 @@ public class MyTasksBean extends BaseDialogBean {
         signatureTasks = getDocumentService().getTasksWithDocuments(
                 getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.SIGNATURE_TASK));
 
-        if(filterTasks) {
+        if (filterTasks) {
             return filterTasksByDate(signatureTasks);
         }
         return signatureTasks;
@@ -215,6 +220,41 @@ public class MyTasksBean extends BaseDialogBean {
 
     public String getListTitle() {
         return listTitle;
+    }
+    
+    public boolean isAssignmentPagerVisible() {
+        if(filterTasks && getAssignmentTasks().size() > pageSize) {
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean isInformationPagerVisible() {
+        if(filterTasks && getInformationTasks().size() > pageSize) {
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean isSignaturePagerVisible() {
+        if(filterTasks && getSignatureTasks().size() > pageSize) {
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean isReviewPagerVisible() {
+        if(filterTasks && getReviewTasks().size() > pageSize) {
+            return true;
+        }
+        return false;
+    }
+    
+    public boolean isOpinionPagerVisible() {
+        if(filterTasks && getOpinionTasks().size() > pageSize) {
+            return true;
+        }
+        return false;
     }
 
     // START: getters/setters
@@ -262,17 +302,21 @@ public class MyTasksBean extends BaseDialogBean {
     public void setDialogTitle(String dialogTitle) {
         this.dialogTitle = dialogTitle;
     }
-    
+
     public boolean isLessColumns() {
         return lessColumns;
     }
-    
+
     public String getSpecificList() {
         return specificList;
     }
 
     public void setSpecificList(String specificList) {
         this.specificList = specificList;
+    }
+
+    public int getPageSize() {
+        return pageSize;
     }
 
     // END: getters/setters

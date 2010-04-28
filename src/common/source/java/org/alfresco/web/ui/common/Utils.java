@@ -95,6 +95,8 @@ public final class Utils extends StringUtils
    
    private static final Log logger = LogFactory.getLog(Utils.class);
    
+   private static final String REQUEST_VALID_CONV_DISABLED = "REQUEST_VALID_CONV_DISABLED";
+   
    /**
     * Private constructor
     */
@@ -148,6 +150,7 @@ public final class Utils extends StringUtils
     * 
     * @throws IOException
     */
+   @SuppressWarnings("unchecked")
    public static void encodeRecursive(FacesContext context, UIComponent component)
       throws IOException
    {
@@ -279,6 +282,7 @@ public final class Utils extends StringUtils
          }
       }
       
+      buf.append("setPageScrollY();");
       buf.append("document.forms['");
       buf.append(formClientId);
       buf.append("'].submit();");
@@ -1059,4 +1063,17 @@ public final class Utils extends StringUtils
       query.append(term);
       query.append("*");
    }
+   
+   public static void setRequestValidationDisabled(FacesContext context) {
+       @SuppressWarnings("unchecked")
+       Map<String, Object> requestMapExt = context.getExternalContext().getRequestMap();
+       requestMapExt.put(REQUEST_VALID_CONV_DISABLED, Boolean.TRUE);
+   }
+   
+   public static boolean isRequestValidationDisabled(FacesContext context) {
+       @SuppressWarnings("unchecked")
+       Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
+       return (Boolean.TRUE == requestMap.get(REQUEST_VALID_CONV_DISABLED));
+   }
+   
 }

@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.file.web;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.content.DeleteContentDialog;
@@ -29,13 +30,16 @@ public class DeleteFileDialog extends DeleteContentDialog {
         if (file != null) {
             document = getNodeService().getPrimaryParent(file.getNodeRef()).getParentRef();
         }
-        super.finishImpl(context, outcome);
-        
-        if(file != null && file.getType().equals(DocumentCommonModel.Types.DOCUMENT)) {
-            getDocumentLogService().addDocumentLog(document, MessageUtil.getMessage(context, "document_log_status_fileDeleted", file.getName()));
-            getDocumentService().updateSearchableFiles(document);
+        try {
+            super.finishImpl(context, outcome);
+            
+            if(file != null && file.getType().equals(DocumentCommonModel.Types.DOCUMENT)) {
+                getDocumentLogService().addDocumentLog(document, MessageUtil.getMessage(context, "document_log_status_fileDeleted", file.getName()));
+                getDocumentService().updateSearchableFiles(document);
+            }
+        } catch (NodeLockedException e) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_delete_error_locked");
         }
-        
         return outcome;
     }
 

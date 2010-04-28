@@ -131,5 +131,53 @@
          <param:value></param:value>
       </view:properties>
    </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:docPropLicenceDocName">
+      <view:properties>
+         <param:value>Luba</param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:docPropTenderingApplicationDocName">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+
+   <param:stringParameter view:childName="param:docPropErrandApplicationDomesticDocName">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:docPropErrandOrderAbroadDocName">
+      <view:properties>
+         <param:value></param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:docPropManagementsOrderDocName">
+      <view:properties>
+         <param:value>Juhtkonna korraldus</param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:docPropVacationOrderDocName">
+      <view:properties>
+         <param:value>Puhkuse avaldus</param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:docPropVacationOrderLegalBasisName">
+      <view:properties>
+         <param:value>Avaliku teenistuse seaduse § 45 lõigete 1 ja 2, § 65 ja § 108 punkti 2  alusel</param:value>
+      </view:properties>
+   </param:stringParameter>
+   
+   <param:stringParameter view:childName="param:docPropChancellorsOrderSignerName">
+      <view:properties>
+         <param:value>Märt Kraft</param:value>
+      </view:properties>
+   </param:stringParameter>
 
 </view:view>

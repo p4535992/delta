@@ -7,9 +7,6 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:booleanEvaluator id="searchBlockEvaluator" value="#{DocumentDialog.showSearchBlock}">
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-block.jsp" />
-</a:booleanEvaluator>
 <a:booleanEvaluator id="workflowBlockEvaluator" value="#{DocumentDialog.meta.inEditMode == false}">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-block.jsp" />
 </a:booleanEvaluator>
@@ -29,4 +26,7 @@
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/log/web/document-log-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/review-note-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/opinion-note-block.jsp" />
+<a:booleanEvaluator id="searchBlockEvaluator" value="#{DocumentDialog.showSearchBlock}">
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/search/web/document-search-block.jsp" />
+</a:booleanEvaluator>
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/associations/web/assocs-block.jsp" />

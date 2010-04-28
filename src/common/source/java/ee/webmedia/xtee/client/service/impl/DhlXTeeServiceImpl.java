@@ -216,7 +216,9 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             }
             this.dhlDocumentsMap = new HashMap<String, ReceivedDocument>();
             for (DhlDokumentType dhlDokument : receivedDocuments) {
-                log.debug("received dhlDokument : " + dhlDokument + "'");
+                if(log.isTraceEnabled()) {
+                    log.trace("received dhlDokument : " + dhlDokument + "'");
+                }
                 Metainfo metainfo = dhlDokument.getMetainfo();
                 MetainfoHelper metaInfoHelper = new MetainfoHelper(metainfo);
                 String dhlId = metaInfoHelper.getDhlId();
@@ -362,7 +364,9 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
         try {
             final XTeeMessage<InstitutionArrayType> response = send(new XmlBeansXTeeMessage<GetSendingOptionsV2RequestType>(request)//
                     , GET_SENDING_OPTIONS, GET_SENDING_OPTIONS_VERSION);
-            log.trace("excecution result#1 response:\t" + ToStringBuilder.reflectionToString(response) + "'");
+            if (log.isTraceEnabled()) {
+                log.trace("excecution result#1 response:\t" + ToStringBuilder.reflectionToString(response) + "'");
+            }
             InstitutionArrayType responseContent = response.getContent();
             List<InstitutionType> orgList = responseContent.getAsutusList();
             log.debug(orgList.size() + " organisations can use DVK");
@@ -635,15 +639,6 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             signedDoc.setFormat(SignedDoc.FORMAT_DIGIDOC_XML);
             signedDoc.setVersion(SignedDoc.VERSION_1_3);
             signedDoc.setDataFileArray(dataFiles);
-            XmlCursor cursor = signedDoc.newCursor();
-            cursor.toParent();
-            XmlObject object = cursor.getObject();
-            log.debug("0&&&&&&&&&&&&&&&&&&&:::\nlocalName=" + object.getDomNode().getLocalName() + "\nnamespaceURI=" + object.getDomNode().getNamespaceURI()
-                    + "1&&&&&&&&&&&&&&&&&&&");
-            log.debug("1&&&&&&&&&&&&&&&&&&&cursor.getObject():::\n" + object + "\n1&&&&&&&&&&&&&&&&&&&");
-            // cursor.setAttributeText(new QName("xmlns"), "http://www.sk.ee/DigiDoc/v1.3.0#");
-            // log.debug("2&&&&&&&&&&&&&&&&&&&cursor.getObject():::\n"+cursor.getObject()+"\n2&&&&&&&&&&&&&&&&&&&");
-            cursor.dispose();
             return dataFiles;
         }
 
@@ -667,8 +662,9 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
                     IOUtils.copy(is, bos);
                 } catch (IOException e) {
                     throw new RuntimeException("Failed to get input to the file to be sent", e);
+                } finally {
+                    IOUtils.closeQuietly(is);
                 }
-                IOUtils.closeQuietly(is);
                 byte[] fileContent = bos.toByteArray();
 
                 dataFile.setSize(BigDecimal.valueOf(fileContent.length));
@@ -723,7 +719,9 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
     private static <T extends XmlObject> T getTypeFromXml(String inputXml, Class<T> responseClass) {
         try {
             SchemaType sType = (SchemaType) responseClass.getField("type").get(null);
-            log.debug("Starting to parse '" + inputXml + "' to class: " + responseClass.getCanonicalName());
+            if(log.isTraceEnabled()) {
+                log.trace("Starting to parse '" + inputXml + "' to class: " + responseClass.getCanonicalName());
+            }
             XmlOptions replaceRootNameOpts = new XmlOptions().setLoadReplaceDocumentElement(new QName("xml-fragment"));
             final String xmlFragment = XmlObject.Factory.parse(inputXml, replaceRootNameOpts).toString();
             @SuppressWarnings("unchecked")
@@ -742,9 +740,8 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
     private static <T> List<T> getTypeFromGzippedAndEncodedSoapArray(InputStream inputStream, Class<T> responseClass) {
         SchemaType unencodedType = null;
         try {
-            log.debug("field=" + responseClass.getField("type"));
             unencodedType = (SchemaType) responseClass.getField("type").get(null);
-            log.debug("value=" + unencodedType);
+            log.debug("unencodedType=" + unencodedType);
         } catch (Exception e) {
             throw new RuntimeException("Failed to get value of '" + responseClass.getCanonicalName() + ".type' to get corresponding SchemaType object: ", e);
         }
@@ -756,7 +753,9 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
         try {
             responseString = "<root>" + responseString + "</root>";
             XmlOptions options = new XmlOptions();
-            log.trace("Starting to parse '" + responseString + "' to class: " + responseClass.getCanonicalName() + "\n\n");
+            if(log.isTraceEnabled()) {
+                log.trace("Starting to parse '" + responseString + "' to class: " + responseClass.getCanonicalName() + "\n\n");
+            }
             XmlObject xmlObject = XmlObject.Factory.parse(responseString, options);
             XmlCursor cursor = xmlObject.newCursor();
             cursor.toFirstChild();
@@ -768,7 +767,9 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             int i = 0;
             do {
                 currentXmlObject = cursor.getObject();
-                log.debug(i++ + " Token type: '" + cursor.currentTokenType() + "', text:\n" + currentXmlObject + "\n\n");
+                if(log.isTraceEnabled()) {
+                    log.trace(i++ + " Token type: '" + cursor.currentTokenType() + "', text:\n" + currentXmlObject + "\n\n");
+                }
                 @SuppressWarnings("unchecked")
                 T resultItem = (T) XmlObject.Factory.parse(cursor.getDomNode(), options);
                 result.add(resultItem);

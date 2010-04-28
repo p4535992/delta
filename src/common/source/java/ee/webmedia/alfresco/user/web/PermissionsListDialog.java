@@ -27,7 +27,9 @@ public class PermissionsListDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        throw new RuntimeException("Finish button is not used");
+        // finish button is not used
+        return null; // but in case someone clicks finish button twice on the previous dialog,
+                     // then silently ignore it and stay on the same page
     }
 
     @Override

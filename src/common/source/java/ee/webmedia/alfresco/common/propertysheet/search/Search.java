@@ -60,7 +60,7 @@ public class Search extends UIComponentBase {
     public void encodeBegin(FacesContext context) throws IOException {
         if (getChildCount() == 0) {
             createExistingComponents(context);
-            if (!isDisabled()) {
+            if (!isDisabled() || isChildOfUIRichList()) {
                 createPicker(context);
             }
         }

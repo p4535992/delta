@@ -5,8 +5,8 @@
 <f:verbatim>
    <script type="text/javascript">
       $jQ(document).ready(function(){
-         var finishButton = $jQ('#' + escapeId4JQ('dialog:finish-button'));
-         finishButton.remove();
+         disableAndRemoveButton('dialog:finish-button');
+         disableAndRemoveButton('dialog:finish-button-2');
       });
    </script>
 </f:verbatim>

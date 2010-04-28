@@ -27,7 +27,6 @@
          ,/WEB-INF/classes/ee/webmedia/alfresco/signature/signature-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/addressbook/addressbook-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/menu/menu-faces-config.xml
-         ,/WEB-INF/classes/ee/webmedia/alfresco/parameters/parameters-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/classificator/classificator-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/orgstructure/organizationStructure-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/document/document-faces-config.xml
@@ -153,6 +152,11 @@
    </filter>
 
    <filter>
+      <filter-name>RequestControlFilter</filter-name>
+      <filter-class>ee.webmedia.alfresco.common.filter.RequestControlFilter</filter-class>
+   </filter>
+
+   <filter>
       <filter-name>SerializingFilter</filter-name>
       <filter-class>org.alfresco.repo.web.filter.beans.BeanProxyFilter</filter-class>
       <init-param>
@@ -189,6 +193,10 @@
    <!-- ========== Filter mappings ========== -->
 
    <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/uploadFileServlet</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
       <filter-name>SerializingFilter</filter-name>
       <url-pattern>/uploadFileServlet</url-pattern>
    </filter-mapping>
@@ -214,6 +222,10 @@
    </filter-mapping>
 
    <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/download/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
       <filter-name>SerializingFilter</filter-name>
       <url-pattern>/download/*</url-pattern>
    </filter-mapping>
@@ -239,6 +251,10 @@
    </filter-mapping>
 
    <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/d/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
       <filter-name>SerializingFilter</filter-name>
       <url-pattern>/d/*</url-pattern>
    </filter-mapping>
@@ -264,6 +280,10 @@
    </filter-mapping>
 
    <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/ddc/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
       <filter-name>SerializingFilter</filter-name>
       <url-pattern>/ddc/*</url-pattern>
    </filter-mapping>
@@ -289,6 +309,10 @@
    </filter-mapping>
 
    <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/navigate/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
       <filter-name>SerializingFilter</filter-name>
       <url-pattern>/navigate/*</url-pattern>
    </filter-mapping>
@@ -314,6 +338,10 @@
    </filter-mapping>
 
    <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/n/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
       <filter-name>SerializingFilter</filter-name>
       <url-pattern>/n/*</url-pattern>
    </filter-mapping>
@@ -338,6 +366,10 @@
       <url-pattern>/n/*</url-pattern>
    </filter-mapping>
 
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/ajax/*</url-pattern>
+   </filter-mapping>
    <filter-mapping>
       <filter-name>SerializingFilter</filter-name>
       <url-pattern>/ajax/*</url-pattern>
@@ -363,6 +395,10 @@
       <url-pattern>/ajax/*</url-pattern>
    </filter-mapping>
    
+   <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/faces/*</url-pattern>
+   </filter-mapping>
    <filter-mapping>
       <filter-name>SerializingFilter</filter-name>
       <url-pattern>/faces/*</url-pattern>
@@ -419,15 +455,17 @@
    </filter-mapping>
 
    <filter-mapping>
+      <filter-name>RequestControlFilter</filter-name>
+      <url-pattern>/webdav/*</url-pattern>
+   </filter-mapping>
+   <filter-mapping>
       <filter-name>SerializingFilter</filter-name>
       <url-pattern>/webdav/*</url-pattern>
    </filter-mapping>
-   <!-- siia pole vist vaja?
    <filter-mapping>
       <filter-name>RequestContext Filter</filter-name>
       <url-pattern>/faces/*</url-pattern>
    </filter-mapping>
-    -->
    <filter-mapping>
       <filter-name>WebDAV Authentication Filter</filter-name>
       <url-pattern>/webdav/*</url-pattern>

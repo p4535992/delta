@@ -54,20 +54,22 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                     }
                 }
 
-                // Change document owner 
-                if (event.getType() == WorkflowEventType.CREATED) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Active responsible task created, setting document ownerId to " + task.getOwnerId());
-                    }
-                    documentService.setDocumentOwner(task.getParent().getParent().getParent(), task.getOwnerId());
-                } else {
-                    @SuppressWarnings("unchecked")
-                    Map<QName, Serializable> props = (Map<QName, Serializable>) event.getExtras()[0];
-                    if (props.containsKey(WorkflowCommonModel.Props.OWNER_ID)) {
+                // Change document owner
+                if(task.getOwnerId() != null) {
+                    if (event.getType() == WorkflowEventType.CREATED) {
                         if (log.isDebugEnabled()) {
-                            log.debug("Active responsible task ownerId updated, setting document ownerId to" + task.getOwnerId());
+                            log.debug("Active responsible task created, setting document ownerId to " + task.getOwnerId());
                         }
                         documentService.setDocumentOwner(task.getParent().getParent().getParent(), task.getOwnerId());
+                    } else {
+                        @SuppressWarnings("unchecked")
+                        Map<QName, Serializable> props = (Map<QName, Serializable>) event.getExtras()[0];
+                        if (props.containsKey(WorkflowCommonModel.Props.OWNER_ID)) {
+                            if (log.isDebugEnabled()) {
+                                log.debug("Active responsible task ownerId updated, setting document ownerId to" + task.getOwnerId());
+                            }
+                            documentService.setDocumentOwner(task.getParent().getParent().getParent(), task.getOwnerId());
+                        }
                     }
                 }
             }

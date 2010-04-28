@@ -23,6 +23,7 @@ public class DeleteAssocDialog extends DeleteContentDialog {
     private NodeRef document;
     private NodeRef nodeRef;
     private NodeRef caseNodeRef;
+    private boolean source;
     
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DeleteAssocDialog.class);
     
@@ -53,7 +54,11 @@ public class DeleteAssocDialog extends DeleteContentDialog {
             if (caseNodeRef != null) {
                 getDocumentService().deleteAssoc(document, caseNodeRef, CaseModel.Associations.CASE_DOCUMENT);
             } else {
-                getDocumentService().deleteAssoc(document, nodeRef, null);
+                if(source) {
+                    getDocumentService().deleteAssoc(nodeRef, document, null);
+                } else {
+                    getDocumentService().deleteAssoc(document, nodeRef, null);
+                }
             }
         } catch (Exception e) {
             log.error("Deleting association failed!", e);
@@ -80,6 +85,11 @@ public class DeleteAssocDialog extends DeleteContentDialog {
         String nodeRefString = ActionUtil.getParam(event, "nodeRef");
         if(!(nodeRefString == null || nodeRefString.equals("null"))) {
             nodeRef =  new NodeRef(nodeRefString);
+        }
+        
+        String sourceNode = ActionUtil.getParam(event, "source");
+        if(!(sourceNode == null || sourceNode.equals("null"))) {
+            source = Boolean.parseBoolean(sourceNode);
         }
     }
     

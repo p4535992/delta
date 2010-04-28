@@ -82,9 +82,9 @@ public interface DocumentTemplateService {
     /**
      * Scans generated Word documents and replaces patterns which are relevant to registration of the document
      * 
-     * @param document node that is being registered
+     * @param nodeRef nodeRef that is being registered
      */
-    void updateGeneratedFilesOnRegistration(Node document);
+    void updateGeneratedFilesOnRegistration(NodeRef nodeRef);
 
     /**
      * Fetches template NodeRef for system templates that are specified by file name

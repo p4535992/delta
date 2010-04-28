@@ -24,8 +24,7 @@
  */
 package org.alfresco.web.ui.common.component;
 
-import org.alfresco.web.ui.common.PanelGenerator;
-import org.alfresco.web.ui.common.Utils;
+import java.io.IOException;
 
 import javax.faces.component.UICommand;
 import javax.faces.component.UIComponent;
@@ -34,7 +33,9 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
-import java.io.IOException;
+
+import org.alfresco.web.ui.common.PanelGenerator;
+import org.alfresco.web.ui.common.Utils;
 
 /**
  * @author kevinr
@@ -192,15 +193,6 @@ public class UIPanel extends UICommand
       // TODO: manage state of this icon via component Id!
       if (isProgressive())
       {
-          // if panel is closed, write script that will close the panel in browser
-          if (!expanded) {
-              out.write("<script type=\"text/javascript\">");
-              out.write("\n$jQ(document).ready(function() {");
-              out.write("togglePanel('#" + hideableDivId + "');");
-              out.write("});");
-              out.write("</script>");
-         }
-          
          out.write("<a onclick=\"togglePanelWithStateUpdate('#" + hideableDivId + "', '" + panelId + "', '" + context.getViewRoot().getViewId() + "');\">");
 
          /*
@@ -245,7 +237,13 @@ public class UIPanel extends UICommand
 
       if (this.hasAdornments)
       {
-          out.write(String.format("<div id='%s' class='panel-border'>", hideableDivId));
+          out.write("<div id='"+hideableDivId+"' class='panel-border'");
+          if (!expanded) {
+              out.write(" style=\"display:none;\"");
+          }
+          out.write(">");
+          
+          
       }
 
       // if we have the titled border area, output the middle section

@@ -6,6 +6,9 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
+<%@page import="org.alfresco.web.app.Application"%>
+<%@page import="javax.faces.context.FacesContext"%>
+
 <a:panel id="functions-panel" styleClass="panel-100 with-pager" label="#{msg.functions_list}" progressive="true">
 
    <%-- Main List --%>
@@ -64,3 +67,14 @@
    </a:richList>
 
 </a:panel>
+
+<f:verbatim>
+   <script type="text/javascript">
+      function confirmExport(){
+         var res = confirm('<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("docList_export_confirmProceed")%>');
+         if(res){
+            $jQ('.docList_export').click();
+         }
+      }
+   </script>
+</f:verbatim>

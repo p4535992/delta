@@ -46,7 +46,7 @@
 
 			// find content length and box width
 			var vlen = e.value.length, ewidth = e.offsetWidth;
-			if (vlen != e.valLength || ewidth != e.boxWidth) {
+			if (vlen != e.valLength || ewidth != e.boxWidth || (jQuery.browser.msie && !jQuery.fn.TextAreaExpander.ieInitialized)) {
 
 				if (hCheck && (vlen < e.valLength || ewidth != e.boxWidth)) e.style.height = "0px";
 				var h = Math.max(e.expandMin, Math.min(e.scrollHeight, e.expandMax));
@@ -85,11 +85,19 @@
 
 		return this;
 	};
+	
+	jQuery.fn.TextAreaExpander.ieInitialized = false;
 
 })(jQuery);
 
 
 // initialize all expanding textareas
 jQuery(document).ready(function() {
-	jQuery("textarea[class*=expand]").TextAreaExpander();
+	var expanders = jQuery("textarea[class*=expand]");
+	expanders.TextAreaExpander();
+   if(jQuery.browser.msie) {
+      // trigger size recalculation if IE, because e.scrollHeight may be inaccurate before keyup() is called
+      expanders.keyup();
+      jQuery.fn.TextAreaExpander.ieInitialized = true;
+   }
 });

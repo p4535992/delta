@@ -10,3 +10,4 @@ window.onload = function()
 }
 </script>
 </f:verbatim>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-wizard-next-button.jsp" />

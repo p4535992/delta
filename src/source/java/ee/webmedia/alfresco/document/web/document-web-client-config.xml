@@ -6,8 +6,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator</evaluator>
             <label-id>document_registerDoc</label-id>
             <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{MetadataBlockBean.registerDocument}</action-listener>
-            <action>dialog:document</action>
+            <action-listener>#{DocumentDialog.registerDocument}</action-listener>
          </action>
 
          <action id="word_file_from_document">
@@ -25,6 +24,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.CopyDocumentActionEvaluator</evaluator>
             <label-id>document_copy</label-id>
             <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
             <action-listener>#{DocumentDialog.copy}</action-listener>
          </action>
 
@@ -32,6 +32,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.ReplyNodeTypeEvaluator</evaluator>
             <label-id>document_addReply</label-id>
             <image>/images/icons/versioned_properties.gif</image>
+			<action>#{DocumentDialog.action}</action>
             <action-listener>#{DocumentDialog.createReply}</action-listener>
          </action>
 
@@ -39,6 +40,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.FollowUpNodeTypeEvaluator</evaluator>
             <label-id>document_addFollowUp</label-id>
             <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
             <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
          </action>
          
@@ -47,6 +49,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.TenderingApplicationNodeTypeEvaluator</evaluator>
             <label-id>document_type_tenderingApplication</label-id>
             <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
             <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
             <params>
                <param name="documentType">tenderingApplication</param>
@@ -57,6 +60,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.LetterOrTenderingApplicationNodeTypeEvaluator</evaluator>
             <label-id>document_type_incomingLetter</label-id>
             <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
             <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
             <params>
                <param name="documentType">incomingLetter</param>
@@ -67,6 +71,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.LetterOrTenderingApplicationNodeTypeEvaluator</evaluator>
             <label-id>document_type_outgoingLetter</label-id>
             <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
             <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
             <params>
                <param name="documentType">outgoingLetter</param>
@@ -77,6 +82,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractSimNodeTypeEvaluator</evaluator>
             <label-id>document_type_contractSim</label-id>
             <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
             <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
             <params>
                <param name="documentType">contractSim</param>
@@ -87,6 +93,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractSmitNodeTypeEvaluator</evaluator>
             <label-id>document_type_contractSim</label-id>
             <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
             <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
             <params>
                <param name="documentType">contractSmit</param>
@@ -97,6 +104,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractSimOrSmitNodeTypeEvaluator</evaluator>
             <label-id>document_type_report</label-id>
             <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
             <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
             <params>
                <param name="documentType">report</param>
@@ -107,6 +115,7 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractSimOrSmitNodeTypeEvaluator</evaluator>
             <label-id>document_type_instrumentOfDeliveryAndReceipt</label-id>
             <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
             <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
             <params>
                <param name="documentType">instrumentOfDeliveryAndReceipt</param>
@@ -117,7 +126,7 @@
             <evaluator>ee.webmedia.alfresco.document.sendout.web.SendOutActionEvaluator</evaluator>
             <label-id>document_send_out</label-id>
             <image>/images/icons/versioned_properties.gif</image>
-            <action>dialog:documentSendOutDialog</action>
+            <action>#{DocumentSendOutDialog.init}</action>
             <action-listener>#{DocumentSendOutDialog.loadDocument}</action-listener>
             <params><param name="documentNodeRef">#{DialogManager.bean.node.nodeRef}</param></params>
          </action>

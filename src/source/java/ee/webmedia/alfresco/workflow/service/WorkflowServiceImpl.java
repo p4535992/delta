@@ -802,7 +802,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
     }
 
-    private int getActiveResponsibleAssignmentTasks(NodeRef document) {
+    @Override
+    public int getActiveResponsibleAssignmentTasks(NodeRef document) {
         int counter = 0;
         for (CompoundWorkflow compoundWorkflow : getCompoundWorkflows(document)) {
             if (!isStatus(compoundWorkflow, Status.NEW, Status.IN_PROGRESS, Status.STOPPED)) {

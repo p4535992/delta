@@ -12,12 +12,14 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
- * Form backing bean for Document list
+ * Form backing bean for Document list. <br>
+ * <br>
+ * This Class has logic of two diferent, but similar versions of documents(when parent is volume or case). <br>
+ * Reason is that we don't have to worry about what the parent of document in jsp files.
  * 
  * @author Ats Uiboupin
  */
@@ -33,8 +35,6 @@ public class DocumentListDialog extends BaseDocumentListDialog {
     // one of the following should always be null(depending of whether it is directly under volume or under case, that is under volume)
     private Volume parentVolume;
     private Case parentCase;
-    private boolean quickSearch = false;
-    private String searchValue;
 
     public void setup(ActionEvent event) {
         final Map<String, String> parameterMap = ((UIActionLink) event.getSource()).getParameterMap();
@@ -46,23 +46,17 @@ public class DocumentListDialog extends BaseDocumentListDialog {
             param = ActionUtil.getParam(event, CASE_NODE_REF);
             parentCase = getCaseService().getCaseByNoderef(param);
         }
-        refreshDocuments();
+        restored();
     }
 
-    private void refreshDocuments() {
+    @Override
+    public void restored() {
         if (parentCase != null) {
             documents = getDocumentService().getAllDocumentsByCase(parentCase.getNode().getNodeRef());
         } else {// assuming that parentVolume is volume
             documents = getDocumentService().getAllDocumentsByVolume(parentVolume.getNode().getNodeRef());
         }
         Collections.sort(documents);
-    }
-
-
-    @Override
-    public void restored() {
-        // Update list data
-        refreshDocuments();
     }
 
     @Override
@@ -74,9 +68,7 @@ public class DocumentListDialog extends BaseDocumentListDialog {
 
     @Override
     public String getListTitle() {
-        if (quickSearch) {
-            return MessageUtil.getMessage("document_search");
-        } else if (parentCase != null) {
+        if (parentCase != null) {
             return parentCase.getTitle();
         } else if (parentVolume != null) {
             return parentVolume.getVolumeMark() + " " + parentVolume.getTitle();
@@ -84,13 +76,7 @@ public class DocumentListDialog extends BaseDocumentListDialog {
             return "";
         }
     }
-    
-    private void resetFields() {
-        parentVolume = null;
-        parentCase = null;
-        documents = null;
-        quickSearch = false;
-    }
+
     // END: jsf actions/accessors
 
     // START: getters / setters

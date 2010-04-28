@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.addressbook.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +37,7 @@ import org.apache.lucene.queryParser.QueryParser;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Assocs;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
+import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * @author Keit Tehvan
@@ -159,12 +161,11 @@ public class AddressbookServiceImpl implements AddressbookService {
     }
     
     private List<Node> executeSearch(String searchCriteria, Set<QName> fields) {
-        if (StringUtils.isBlank(searchCriteria)) {
-            return Collections.emptyList();
-        }
-
-        StringBuilder query = new StringBuilder();
+        List<NodeRef> nodeRefs = null;
+        final ResultSet searchResult;
         if (StringUtils.isNotBlank(searchCriteria)) {
+
+            StringBuilder query = new StringBuilder();
             for (StringTokenizer t = new StringTokenizer(searchCriteria.trim(), " "); t.hasMoreTokens(); /**/) {
                 String term = QueryParser.escape(t.nextToken());
                 for (QName field : fields) {
@@ -173,21 +174,42 @@ public class AddressbookServiceImpl implements AddressbookService {
                     query.append("@").append(fieldEscaped).append(":\"*").append(term).append("*\" ");
                 }
             }
+            searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, query.toString());
+        } else {
+            if (fields == contactGroupSearchFields) {
+                // get all contact groups under addressBook
+                final List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(getAddressbookNodeRef(), new HashSet<QName>(Arrays
+                        .asList(Types.CONTACT_GROUP)));
+                nodeRefs = new ArrayList<NodeRef>(childAssocs.size());
+                for (ChildAssociationRef childAssociationRef : childAssocs) {
+                    nodeRefs.add(childAssociationRef.getChildRef());
+                }
+                searchResult = null;
+            } else if (fields == searchFields) {
+                // search for persons(directly under addressBook) and organizations and persons under organizations
+                final String personsQuery = SearchUtil.generateQuery(searchCriteria, AddressbookModel.Types.PRIV_PERSON, Collections.<QName> emptySet());
+                final String orgQuery = SearchUtil.generateQuery(searchCriteria, AddressbookModel.Types.ORGANIZATION, Collections.<QName> emptySet());
+                final String orgPersonQuery = SearchUtil.generateQuery(searchCriteria, AddressbookModel.Types.ORGPERSON, Collections.<QName> emptySet());
+                searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, SearchUtil.joinQueryPartsOr(Arrays.asList(personsQuery, orgQuery,
+                        orgPersonQuery)));
+            } else {
+                throw new IllegalArgumentException("searchCriteria can't be blank when searching from following addressbook fields:\n\t" + fields);
+            }
         }
-
-        ResultSet searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, query.toString());
-        List<NodeRef> nodeRefs = null;
-        try {
-            nodeRefs = searchResult.getNodeRefs();
-        } finally {
-            searchResult.close();
+        if (searchResult != null) {
+            try {
+                nodeRefs = searchResult.getNodeRefs();
+            } finally {
+                searchResult.close();
+            }
         }
-
+        @SuppressWarnings("null")
+        // nodeRefs shouldn't be null here as it is initialized based on searchResult when searching 
+        // or directly set in when getting all contact groups under addressBook
         List<Node> result = new ArrayList<Node>(nodeRefs.size());
         for (NodeRef nodeRef : nodeRefs) {
             result.add(getNode(nodeRef));
         }
-
         return result;
     }
 

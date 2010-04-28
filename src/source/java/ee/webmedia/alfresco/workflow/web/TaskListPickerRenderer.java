@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class TaskListPickerRenderer extends BaseRenderer {
 
-    //private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(TaskListPickerRenderer.class);
-    
     @SuppressWarnings("unchecked")
     @Override
     public void decode(FacesContext context, UIComponent component) {
@@ -42,6 +40,10 @@ public class TaskListPickerRenderer extends BaseRenderer {
 
         if (value.startsWith(SearchRenderer.OPEN_DIALOG_ACTION + ";")) {
             picker.getAttributes().put(Search.OPEN_DIALOG_KEY, value.substring((SearchRenderer.OPEN_DIALOG_ACTION + ";").length()));
+            Utils.setRequestValidationDisabled(context);
+        } else if (value.startsWith(SearchRenderer.CLOSE_DIALOG_ACTION)) {
+            picker.getAttributes().remove(Search.OPEN_DIALOG_KEY);
+            Utils.setRequestValidationDisabled(context);
         } else {
             throw new RuntimeException("Unknown action: " + value);
         }
@@ -53,11 +55,18 @@ public class TaskListPickerRenderer extends BaseRenderer {
         UIGenericPicker picker = (UIGenericPicker)component.getChildren().get(0);
 
         ResponseWriter out = context.getResponseWriter();
-        out.write("<div id=\"" + TaskListGenerator.getDialogId(context, picker) + "\" class=\"modalpopup modalwrap\">");
-        out.write("<div class=\"modalpopup-header clear\"><h1>");
+        String openDialog = (String) picker.getAttributes().get(Search.OPEN_DIALOG_KEY);
+        if (openDialog != null) {
+            out.write("<div id=\"overlay\" style=\"display: block;\"></div>");
+        }
+        out.write("<div id=\"" + TaskListGenerator.getDialogId(context, picker) + "\" class=\"modalpopup modalwrap\"");
+        if (openDialog != null) {
+            out.write(" style=\"display: block;\"");
+        }
+        out.write("><div class=\"modalpopup-header clear\"><h1>");
         out.write(MessageUtil.getMessage(SearchRenderer.SEARCH_MSG));
         out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"");
-        out.write(ComponentUtil.generateFieldSetter(context, picker, TaskListGenerator.getActionId(context, picker), ""));
+        out.write(ComponentUtil.generateFieldSetter(context, picker, TaskListGenerator.getActionId(context, picker), SearchRenderer.CLOSE_DIALOG_ACTION));
         out.write(Utils.generateFormSubmit(context, picker, picker.getClientId(context), "1" /* ACTION_CLEAR */));
         out.write("\">");
         out.write(MessageUtil.getMessage(SearchRenderer.CLOSE_WINDOW_MSG));

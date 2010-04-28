@@ -26,6 +26,7 @@ package org.alfresco.web.bean.forums;
 
 import java.io.Serializable;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
@@ -41,12 +42,16 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.context.UIContextService;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.bean.spaces.CreateSpaceDialog;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.UIListItem;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Bean implementation of the "Create Topic Dialog".
@@ -73,6 +78,16 @@ public class CreateTopicDialog extends CreateSpaceDialog
       this.spaceType = ForumModel.TYPE_TOPIC.toString();
       this.message = null;
    }
+   
+   @Override
+    public List<UIListItem> getIcons() {
+        List<UIListItem> icons = super.getIcons();
+        for(UIListItem icon : icons) {
+            icon.setLabel(MessageUtil.getMessage("forum_icon_" + icon.getValue()));
+        }
+        
+        return icons;
+    }
 
    @Override
    protected String finishImpl(FacesContext context, String outcome) throws Exception
@@ -127,7 +142,13 @@ public class CreateTopicDialog extends CreateSpaceDialog
       //this.browseBean.clickSpace(this.createdNode);
       // set the current node Id ready for page refresh
       this.navigator.setCurrentNodeId(this.createdNode.getId());
-
+      
+      // Set the forum id if it was created automagically
+      ForumsBean forumsBean = (ForumsBean) FacesHelper.getManagedBean(context, "ForumsBean");
+      if(forumsBean.getForumId() == null) {
+          forumsBean.setForumId(this.getNodeService().getPrimaryParent(this.createdNode).getParentRef().getId());
+      }
+      
       // set up the dispatch context for the navigation handler
       this.navigator.setupDispatchContext(new Node(this.createdNode));
 

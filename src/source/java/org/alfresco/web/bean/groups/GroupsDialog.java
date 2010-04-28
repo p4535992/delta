@@ -59,6 +59,8 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.utils.MessageUtil;
+
 /**
  * Backing Bean for the Groups Management pages.
  * 
@@ -151,8 +153,16 @@ public class GroupsDialog extends BaseDialogBean
    @Override
    public String getCancelButtonLabel() 
    {
-      return Application.getMessage(FacesContext.getCurrentInstance(), MSG_CLOSE);
+      return Application.getMessage(FacesContext.getCurrentInstance(), "back_button");
    }
+   
+   @Override
+    public String getContainerTitle() {
+       if(group != null) {
+           return MessageUtil.getMessage("groups_management_subgroup", authService.getAuthorityDisplayName(group));
+       }
+       return MessageUtil.getMessage("groups_management");
+    }
    
 //   @Override
 //    public String getActionsConfigId() {

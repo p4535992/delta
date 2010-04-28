@@ -103,7 +103,7 @@
                <ul class="actions-menu extra-actions">
                </f:verbatim>
                
-               <%-- View Filters --%>
+               <%-- View Filters --%> 
                <f:subview id="filters-panel" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups'}">
                   <f:verbatim>
                   <li>
@@ -121,18 +121,18 @@
                <f:subview id="more-actions-panel">
                <%-- TODO: uncomment this when dropdown menu is ok (see next TODO) --%>
                <%--<f:subview id="more-actions-panel" rendered="#{DialogManager.moreActionsId != null and DialogManager.currentDialog.name ne 'document'}">--%>
-                  <f:verbatim>
-                  <li>
-                  </f:verbatim>
+               <f:subview id="more-actions-panel-sub1" rendered="#{DialogManager.moreActionsId ne ''}">
+                  <f:verbatim><li></f:verbatim>
                      <a:menu id="more_actions_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
                         label="#{DialogManager.moreActionsMenuLabel}" image="/images/icons/arrow-down.png" 
                         rendered="#{DialogManager.moreActionsId ne ''}">
                         <r:actions id="more_actions_menu_items" value="#{DialogManager.moreActionsId}" context="#{DialogManager.actionsContext}" />
                      </a:menu>
-                  <f:verbatim>
-                  </li>
-                  <li>
-                  </f:verbatim>   
+                  <f:verbatim></li></f:verbatim>
+               </f:subview>
+               
+               <f:subview id="more-actions-panel-sub2" rendered="#{DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
+                  <f:verbatim><li></f:verbatim>
                      <a:menu id="workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
                         label="#{DocumentDialog.workflow.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
                         rendered="#{DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
@@ -142,9 +142,8 @@
                               --%>
                         <r:actions id="workflow_menu_items" value="#{DocumentDialog.workflow.workflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
                      </a:menu>
-                  <f:verbatim>
-                  </li>
-                  </f:verbatim>
+               <f:verbatim></li></f:verbatim>
+               </f:subview>
                </f:subview>
                
                <f:verbatim>
@@ -230,8 +229,153 @@
 
             </f:subview>
 
+      <a:panel id="footer-titlebar">
+            
+               <a:panel id="footer-titlebar-dialog-buttons-panel" styleClass="titlebar-buttons" rendered="#{DialogManager.OKButtonVisible || (DialogManager.currentDialog.name eq 'manageGroups' && GroupsDialog.group ne null)}">
+                  <r:dialogButtons id="footer-titlebar-dialog-buttons" styleClass="wizardButton" />
+               </a:panel>
+            
+               <%-- Status and Actions inner contents table --%>
+               <%-- Generally this consists of an icon, textual summary and actions for the current object --%>
+               <h2 class="title-icon">
+                  <a:actionLink id="footer-doc-logo1" value="#{DialogManager.bean.name}" href="#{DialogManager.bean.url}" target="new"
+                     image="#{DialogManager.bean.document.properties.fileType32}" showLink="false"
+                     rendered="#{DialogManager.currentDialog.name eq 'showDocDetails'}" />
+                  <h:graphicImage id="footer-dialog-logo" url="#{DialogManager.icon}"
+                     rendered="#{DialogManager.currentDialog.name ne 'showDocDetails'}" />
+                  <h:outputText value="#{DialogManager.title}" />
+               </h2>
+            
+            <a:panel id="footer-description" rendered="#{DialogManager.currentDialog.name eq 'aboutDialog'}">
+               <h:outputText value="#{DialogManager.subTitle}" />
+               <h:outputText value="#{DialogManager.description}" />
+            </a:panel>
+            
 
-      <f:verbatim><div class="clear"></div></f:verbatim>
+            <a:panel id="footer-actions">
+            <%--<f:subview id="footer-extra-actions" rendered="#{DialogManager.filterListVisible or DialogManager.moreActionsId != null}"> --%>
+            <f:subview id="footer-extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
+               <f:verbatim>
+               <ul class="actions-menu extra-actions">
+               </f:verbatim>
+               
+               <%-- View Filters --%>
+               <f:subview id="footer-filters-panel" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups'}">
+                  <f:verbatim>
+                  <li>
+                  </f:verbatim>
+                     <a:modeList itemSpacing="0" iconColumnWidth="0" selectedStyleClass="selected" menu="true"
+                        styleClass="dropdown-menu no-icon right" menuImage="/images/icons/arrow-down.png" value="#{DialogManager.bean.filterMode}"
+                        actionListener="#{DialogManager.bean.filterModeChanged}">
+                        <a:listItems value="#{DialogManager.bean.filterItems}" />
+                     </a:modeList>
+                  <f:verbatim>
+                  </li>
+                 </f:verbatim>
+               </f:subview>
+               
+               <f:subview id="footer-more-actions-panel">
+               <%-- TODO: uncomment this when dropdown menu is ok (see next TODO) --%>
+               <%--<f:subview id="footer-more-actions-panel" rendered="#{DialogManager.moreActionsId != null and DialogManager.currentDialog.name ne 'document'}">--%>
+                  <f:verbatim>
+                  <li>
+                  </f:verbatim>
+                     <a:menu id="footer-more_actions_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
+                        label="#{DialogManager.moreActionsMenuLabel}" image="/images/icons/arrow-down.png" 
+                        rendered="#{DialogManager.moreActionsId ne ''}">
+                        <r:actions id="footer-more_actions_menu_items" value="#{DialogManager.moreActionsId}" context="#{DialogManager.actionsContext}" />
+                     </a:menu>
+                  <f:verbatim>
+                  </li>
+                  <li>
+                  </f:verbatim>   
+                     <a:menu id="footer-workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
+                        label="#{DocumentDialog.workflow.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
+                        rendered="#{DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
+                        <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
+                             UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
+                             return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
+                              --%>
+                        <r:actions id="footer-workflow_menu_items" value="#{DocumentDialog.workflow.workflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
+                     </a:menu>
+                  <f:verbatim>
+                  </li>
+                  </f:verbatim>
+               </f:subview>
+               
+               <f:verbatim>
+               </ul>
+               </f:verbatim>
+               </f:subview>
+               
+               <%-- Main actions --%> 
+               <a:panel id="footer-main-actions-panel" rendered="#{DialogManager.actionsId != null}">
+                  <f:subview id="footer-not-empty-main-actions-subview" rendered="#{DialogManager.currentDialog.name eq 'manageGroups' and not empty DialogManager.bean.groups or DialogManager.currentDialog.name ne 'manageGroups'}">
+                     <a:menu id="footer-main_actions_list" label="#{msg.more_actions}" styleClass="actions" menuStyleClass="actions-menu">
+                        <r:actions id="footer-main_actions_list_items" rendered="#{DialogManager.actionsAsMenu == false}" value="#{DialogManager.actionsId}"
+                           context="#{DialogManager.actionsContext}" />
+                     </a:menu>
+   
+                     <a:menu id="footer-main_actions_menu" rendered="#{DialogManager.actionsAsMenu == true}" itemSpacing="4" image="/images/icons/arrow-down.png"
+                        menuStyleClass="" style="white-space: nowrap" label="#{DialogManager.actionsMenuLabel}">
+                        <r:actions id="footer-main_actions_menu_items" value="#{DialogManager.actionsId}" context="#{DialogManager.actionsContext}" />
+                     </a:menu>
+                     <%-- TODO: position the menu correctly to the left alongside the buttons --%>
+                     <%--<a:menu id="footer-more_actions_menu" rendered="#{DialogManager.moreActionsId != null and DialogManager.currentDialog.name eq 'document'}" style="white-space:nowrap" menuStyleClass="dropdown-menu"
+                        label="#{DialogManager.moreActionsMenuLabel}" image="/images/icons/arrow-down.png">
+                        <r:actions id="footer-more_actions_menu_items" value="#{DialogManager.moreActionsId}" context="#{DialogManager.actionsContext}"/>
+                     </a:menu>--%>
+                  </f:subview>
+                  <f:subview id="footer-empty-main-actions-subview" rendered="#{not (DialogManager.currentDialog.name eq 'manageGroups' and not empty DialogManager.bean.groups or DialogManager.currentDialog.name ne 'manageGroups') and (DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false)}">
+                     <h:outputText value="&nbsp;" escape="false" style="line-height:20px;" />
+                  </f:subview>
+               </a:panel>
+               
+               
+               <%-- Space Actions --%>
+               <a:panel id="footer-space-details-actions-panel" rendered="#{DialogManager.currentDialog.name eq 'showSpaceDetails' && DialogManager.bean.space != null}">
+                  <a:menu id="footer-spaceActionsMenu" label="#{msg.more_actions}" styleClass="actions" menuStyleClass="actions-menu">
+                     <r:actions id="footer-actions_space" value="space_details_actions" context="#{DialogManager.bean.space}" />
+                  </a:menu>
+               </a:panel>
+
+               <%-- Document Actions --%>
+               <a:panel id="footer-document-details-actions-panel" rendered="#{DialogManager.currentDialog.name eq 'showDocDetails' && DialogManager.bean.document != null}" >
+                  <a:menu id="footer-documentActionsMenu" label="#{msg.more_actions}" styleClass="actions" menuStyleClass="actions-menu">
+                     <r:actions id="footer-actions_doc" value="doc_details_actions" context="#{DialogManager.bean.document}" />
+                  </a:menu>
+               </a:panel>
+
+            </a:panel>
+
+            <a:panel id="footer-additional" rendered="#{DialogManager.navigationVisible or DialogManager.viewListVisible}">
+               <%-- Navigation --%>
+               <a:panel id="footer-nav-panel" rendered="#{DialogManager.navigationVisible}">
+                  <a:actionLink id="footer-act-prev" value="#{msg.previous_item}" showLink="false" image="/images/icons/nav-prev.png"
+                     actionListener="#{DialogManager.bean.previousItem}" action="#{DialogManager.bean.getOutcome}" padding="5">
+                     <f:param name="id" value="#{DialogManager.bean.currentItemId}" />
+                  </a:actionLink>
+
+                  <h:graphicImage url="/images/icons/nav_file.gif" width="24" height="24" alt="" />
+
+                  <a:actionLink id="footer-act-next" value="#{msg.next_item}" image="/images/icons/nav-next.png" showLink="false"
+                     actionListener="#{DialogManager.bean.nextItem}" action="#{DialogManager.bean.getOutcome}" padding="5">
+                     <f:param name="id" value="#{DialogManager.bean.currentItemId}" />
+                  </a:actionLink>
+               </a:panel>
+               
+               <%-- View Mode --%>
+               <a:panel id="footer-views-panel" rendered="#{DialogManager.viewListVisible and DialogManager.currentDialog.name ne 'manageGroups'}">
+                  <a:modeList iconColumnWidth="0" selectedStyleClass="selected" menu="true" styleClass="dropdown-menu right no-icon"
+                     menuImage="/images/icons/arrow-down.png" value="#{DialogManager.bean.viewMode}" actionListener="#{DialogManager.bean.viewModeChanged}">
+                     <a:listItems value="#{DialogManager.bean.viewItems}" />
+                  </a:modeList>
+               </a:panel>
+               
+            </a:panel>
+         </a:panel>
+         <f:verbatim><div class="clear"></div></f:verbatim>
+      
       <% } %>
       </a:panel>
    </a:panel>

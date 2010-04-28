@@ -2,7 +2,9 @@ package ee.webmedia.alfresco.document.file.service;
 
 import java.util.List;
 
+import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
+import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.document.file.model.File;
@@ -81,6 +83,8 @@ public interface FileService {
     void transformActiveFilesToPdf(NodeRef nodeRef);
 
     void transformToPdf(NodeRef nodeRef);
+
+    FileInfo transformToPdf(NodeRef parent, ContentReader reader, String filename);
 
     /**
      * @param nodeRef

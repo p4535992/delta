@@ -57,8 +57,8 @@ public class UIDataPager extends UICommand
    private static final String FIRST_PAGE = "first_page";
    private static final String MSG_PAGEINFO = "page_info";
    
-   private static final int VISIBLE_PAGE_RANGE = 3;
-   private static final int AMOUNT_FIRST_PAGES = 7;
+   private static final int VISIBLE_PAGE_RANGE = 2;
+   private static final int AMOUNT_FIRST_PAGES = 2;
   
    // ------------------------------------------------------------------------------
    // Construction 
@@ -153,10 +153,10 @@ public class UIDataPager extends UICommand
       }
       if (getAttributes().get("styleClass") != null)
       {
-         buf.append(" class=")
+         buf.append(" class=\"")
             .append(getAttributes().get("styleClass"));
       }
-      buf.append('>');
+      buf.append("\">");
 
       /*
       // output Page X of Y text
@@ -203,7 +203,7 @@ public class UIDataPager extends UICommand
       
       Object objType = getAttributes().get("dataPagerType");
       
-        PagerType type = PagerType.STANDARD;// TRACKPAGE;
+        PagerType type = PagerType.TRACKPAGE;
       if (objType instanceof String)
       {
          try
@@ -225,7 +225,7 @@ public class UIDataPager extends UICommand
             encodeType1(buf, currentPage, pageCount);
             break;
          case TRACKPAGE:
-            encodeType3(buf, currentPage, pageCount);
+            encodeType2(buf, currentPage, pageCount);
             break;
          default:
             encodeType3(buf, currentPage, pageCount);
@@ -450,7 +450,10 @@ public class UIDataPager extends UICommand
 	   }
 	   else
 	   {
-	      createClicableDigitForPage(0, buf);
+	       if(currentPage > VISIBLE_PAGE_RANGE)
+	       {
+	          createClicableDigitForPage(0, buf);
+	       }
 	      number = generateClickableDigitForPageCurrent(currentPage, pageCount, buf, currentPage > VISIBLE_PAGE_RANGE + 1, (currentPage + 1 + VISIBLE_PAGE_RANGE) < pageCount);
 	   }
 	   
@@ -656,12 +659,4 @@ public class UIDataPager extends UICommand
        public int Page = 0;
    }
    
-   
-   /**
-    * Enumeration of the available Data Pager display types see ETWOONE-389
-    */
-   private enum PagerType
-   {
-      STANDARD, DECADES, TRACKPAGE
-   }
 }

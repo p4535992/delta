@@ -49,11 +49,11 @@
                <dropdown title-id="menu_received_documents" document-manager="true" expanded="true">
                   <submenu-id>received-documents-submenu</submenu-id>
                   <subitems>
-                     <item title-id="menu_incoming_emails">
+                     <item id="incomingEmails" title-id="menu_incoming_emails">
                         <outcome>dialog:incomingEmailListDialog</outcome>
                         <action-listener>#{IncomingEmailListDialog.setup}</action-listener>
                      </item>
-                     <item title-id="menu_email_attachments">
+                     <item id="emailAttachments" title-id="menu_email_attachments">
                         <outcome>dialog:attachmentListDialog</outcome>
                          <action-listener>#{AttachmentListDialog.init}</action-listener>
                      </item>

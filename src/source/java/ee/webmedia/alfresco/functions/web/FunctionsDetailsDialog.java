@@ -26,6 +26,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
     private transient MenuService menuService;
     
     private Function function;
+    private boolean newFunction;
     
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -62,6 +63,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
      * @param event
      */
     public void addNewFunction(ActionEvent event) {
+        newFunction = true;
         function = getFunctionsService().createFunction();
     }
 
@@ -89,7 +91,11 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
         final boolean closed = DocListUnitStatus.CLOSED.equals(currentStatus);
         return closed;
     }
-    
+
+    public boolean isNew() {
+        return newFunction;
+    }
+
     public Node getCurrentNode() {
         return function.getNode();
     }
@@ -97,6 +103,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
     // START: private methods
     private void resetData() {
         function = null;
+        newFunction = false;
     }
     // END: private methods
 

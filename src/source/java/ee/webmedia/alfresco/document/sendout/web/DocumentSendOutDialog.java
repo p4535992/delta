@@ -16,31 +16,28 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
-import ee.webmedia.alfresco.addressbook.service.AddressbookService;
-import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader;
-import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
-import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
-import ee.webmedia.alfresco.common.propertysheet.search.Search;
-import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
-import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.UserUtil;
 import org.alfresco.model.ContentModel;
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileInfo;
+import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.web.app.AlfrescoNavigationHandler;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
-import org.alfresco.web.ui.common.component.UIGenericPicker;
-import org.alfresco.web.ui.common.component.UIPanel;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.EmailValidator;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
@@ -55,16 +52,18 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.web.DocumentDialog;
+import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
-
-import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROP_GENERATOR_DESCRIPTORS;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Bean for sending out document dialog.
@@ -86,7 +85,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     private transient ClassificatorService classificatorService;
     private transient ParametersService parametersService;
     private transient DocumentTemplateService documentTemplateService;
-    private transient SendOutService sendOutService;    
+    private transient SendOutService sendOutService;
     private transient SignatureService signatureService;
     private transient FileService fileService;
     private transient AddressbookService addressbookService;
@@ -103,11 +102,16 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (validate(context)) {
-            boolean success = sendOut(context);
+            boolean success = false;
+            try {
+                success = sendOut(context);
+            } catch (NodeLockedException e) {
+                MessageUtil.addErrorMessage(context, "document_sendOut_error_docLocked");
+            }
             if (success) {
                 resetState();
                 // Does not work as intended. Will display the normal error message "error_dialog" first and only then the info message.
-                //MessageUtil.addStatusMessage(context, "Saatmine onnestus!", FacesMessage.SEVERITY_INFO);
+                // MessageUtil.addStatusMessage(context, "Saatmine onnestus!", FacesMessage.SEVERITY_INFO);
                 return outcome;
             }
         }
@@ -139,20 +143,35 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     private static final int USERS_FILTER = 0;
     private static final int USER_GROUPS_FILTER = 1;
     private static final int CONTACTS_FILTER = 2;
-    private static final int CONTACT_GROUPS_FILTER = 2;
+    private static final int CONTACT_GROUPS_FILTER = 3;
+
     public SelectItem[] getRecipientSearchFilters() {
-        return new SelectItem[]{
+        return new SelectItem[] {
                 new SelectItem(USERS_FILTER, MessageUtil.getMessage("task_owner_users")),
                 new SelectItem(USER_GROUPS_FILTER, MessageUtil.getMessage("task_owner_usergroups")),
                 new SelectItem(CONTACTS_FILTER, MessageUtil.getMessage("task_owner_contacts")),
-                new SelectItem(CONTACT_GROUPS_FILTER, MessageUtil.getMessage("task_owner_contactgroups"))
-        };
+                new SelectItem(CONTACT_GROUPS_FILTER, MessageUtil.getMessage("task_owner_contactgroups")) };
+    }
+
+    public String init() {
+        DocumentDialog dialog = (DocumentDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DocumentDialog.BEAN_NAME);
+        if (!getNodeService().exists(dialog.getNode().getNodeRef())) {
+            return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
+        }
+        return "dialog:documentSendOutDialog";
     }
 
     @SuppressWarnings("unchecked")
     public void loadDocument(ActionEvent event) {
         resetState();
-        Node node = getDocumentService().getDocument(new NodeRef(ActionUtil.getParam(event, "documentNodeRef")));
+        Node node = null;
+        try {
+            node = getDocumentService().getDocument(new NodeRef(ActionUtil.getParam(event, "documentNodeRef")));
+        } catch (InvalidNodeRefException e) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            MessageUtil.addErrorMessage(context, "document_sendOut_error_docDeleted");
+            return;
+        }
         model = new SendOutModel();
         model.setNodeRef(node.getNodeRef());
         boolean ddocExists = false;
@@ -192,7 +211,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             }
         }
         model.setDefaultSendMode(defaultSendMode);
-        
+
         List<String> names = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME), false);
         List<String> emails = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL), false);
         String contractName = (String) props.get(DocumentSpecificModel.Props.SECOND_PARTY_NAME);
@@ -297,8 +316,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         QName type = getNodeService().getType(new NodeRef(nodeRef));
         if (type.equals(ContentModel.TYPE_PERSON)) {
             result = getPersonData(nodeRef);
-        }
-        else {
+        } else {
             result = addressbookDialog.getContactData(nodeRef);
         }
         result.add(model.getDefaultSendMode());
@@ -312,16 +330,20 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                 // Replace user name with reference to the person node
                 NodeRef nodeRef = getPersonService().getPerson(result);
                 processedResult.add(nodeRef.toString());
-            }
-            else if (filterIndex == USER_GROUPS_FILTER) {
+            } else if (filterIndex == USER_GROUPS_FILTER) {
                 // Add all users contained in user group and replace user names with reference to the person node
                 Set<String> auths = getAuthorityService().getContainedAuthorities(AuthorityType.USER, result, true);
                 for (String auth : auths) {
                     NodeRef nodeRef = getPersonService().getPerson(auth);
                     processedResult.add(nodeRef.toString());
                 }
-            }
-            else {
+            } else if (filterIndex == CONTACT_GROUPS_FILTER) {
+                // Add all users contain in user group
+                List<AssociationRef> assocs = getNodeService().getTargetAssocs(new NodeRef(result), RegexQNamePattern.MATCH_ALL);
+                for (AssociationRef assoc : assocs) {
+                    processedResult.add(assoc.getTargetRef().toString());
+                }
+            } else {
                 processedResult.add(result);
             }
         }
@@ -576,7 +598,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     protected FileService getFileService() {
         if (fileService == null) {
             fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(FileService.BEAN_NAME);
+                    .getBean(FileService.BEAN_NAME);
         }
         return fileService;
     }
@@ -670,7 +692,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             return files;
         }
 
-        public void setFiles(SortedMap<String /*fileName*/, String /*noderef*/> files) {
+        public void setFiles(SortedMap<String /* fileName */, String /* noderef */> files) {
             this.files = files;
         }
 

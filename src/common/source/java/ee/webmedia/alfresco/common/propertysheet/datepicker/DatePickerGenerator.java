@@ -84,16 +84,17 @@ public class DatePickerGenerator extends BaseComponentGenerator {
         // add the validation case to the property sheet
         propertySheet.addClientValidation(new ClientValidation("validateDate",
                 params, true));
+        
+        // add event handler to kick off real time checks
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = component.getAttributes();
+        attributes.put("onchange", "processButtonState();");
     }
 
     @Override
     protected void setupMandatoryValidation(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, UIComponent component,
             boolean realTimeChecking, String idSuffix) {
         super.setupMandatoryValidation(context, propertySheet, item, component, true, idSuffix);
-        // add event handler to kick off real time checks
-        @SuppressWarnings("unchecked")
-        Map<String, Object> attributes = component.getAttributes();
-        attributes.put("onchange", "processButtonState();");
     }
 
 }

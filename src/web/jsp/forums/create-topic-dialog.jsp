@@ -103,5 +103,5 @@ return true;
          </f:verbatim>
          <h:outputText value="#{msg.message}:" />
          <f:verbatim></b></f:verbatim>
-   <h:inputTextarea id="message" value="#{DialogManager.bean.message}" rows="6" cols="70" onkeyup="checkButtonState();" onchange="checkButtonState();" />
+   <h:inputTextarea id="message" value="#{DialogManager.bean.message}" rows="6" cols="70" onkeyup="checkButtonState();" onchange="checkButtonState();" styleClass="expand100-250 margin-top-10" />
 </a:panel>

@@ -1,9 +1,13 @@
 package ee.webmedia.alfresco.classificator.service;
 
 import java.io.Serializable;
+import java.io.Writer;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -15,16 +19,20 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
 
+import com.thoughtworks.xstream.XStream;
+
 import ee.webmedia.alfresco.classificator.model.Classificator;
+import ee.webmedia.alfresco.classificator.model.ClassificatorExportVO;
 import ee.webmedia.alfresco.classificator.model.ClassificatorModel;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.classificator.model.ClassificatorExportVO.ClassificatorValueState;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 public class ClassificatorServiceImpl implements ClassificatorService {
-    
+
     private static final Log log = LogFactory.getLog(ClassificatorServiceImpl.class);
-    
+
     private static BeanPropertyMapper<Classificator> classificatorBeanPropertyMapper;
     private static BeanPropertyMapper<ClassificatorValue> classificatorValueBeanPropertyMapper;
 
@@ -32,10 +40,9 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         classificatorBeanPropertyMapper = BeanPropertyMapper.newInstance(Classificator.class);
         classificatorValueBeanPropertyMapper = BeanPropertyMapper.newInstance(ClassificatorValue.class);
     }
-    
+
     private GeneralService generalService;
     private NodeService nodeService;
-
 
     @Override
     public List<Classificator> getAllClassificators() {
@@ -53,12 +60,60 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         }
         return classificators;
     }
-    
+
+    private List<ClassificatorExportVO> getAllClassificatorsToExport() {
+        final List<Classificator> allClassificators = getAllClassificators();
+        final List<ClassificatorExportVO> exportClassificators = new ArrayList<ClassificatorExportVO>(allClassificators.size());
+        for (Classificator classificator : allClassificators) {
+            if (classificator.isAddRemoveValues()) {
+                final List<ClassificatorValue> allClassificatorValues = getAllClassificatorValues(classificator);
+                final ClassificatorExportVO clExport = new ClassificatorExportVO(classificator, allClassificatorValues);
+                exportClassificators.add(clExport);
+            }
+        }
+        return exportClassificators;
+    }
+
+    @Override
+    public void exportClassificators(Writer writer) {
+        final List<ClassificatorExportVO> allClassificatorsToExport = getAllClassificatorsToExport();
+        // final List<Classificator> allClassificatorsToExport = getAllClassificatorsToExport();
+        XStream xstream = new XStream();
+        xstream.processAnnotations(ClassificatorExportVO.class);
+        // xstream.processAnnotations(Classificator.class);
+        xstream.processAnnotations(ClassificatorValue.class);
+        xstream.toXML(allClassificatorsToExport, writer);
+    }
+
+    @Override
+    public void importClassificators(Collection<ClassificatorExportVO> changedClassificators) {
+        for (ClassificatorExportVO classificatorExportVO : changedClassificators) {
+            final Map<String, ClassificatorValueState> valuesByName = classificatorExportVO.getValuesByName();
+            final Set<Entry<String, ClassificatorValueState>> entrySet = valuesByName.entrySet();
+            for (Entry<String, ClassificatorValueState> entry : entrySet) {
+                final ClassificatorValueState classificatorValueState = valuesByName.get(entry.getKey());
+                if (classificatorValueState.isChanged()) {
+                    final ClassificatorValue previousValue = classificatorValueState.getPreviousValue();
+                    if (previousValue != null) {
+                        removeClassificatorValue(classificatorExportVO, previousValue);
+                    }
+                    final ClassificatorValue newValue = classificatorValueState.getNewValue();
+                    if (newValue != null) {
+                        addClassificatorValue(classificatorExportVO, newValue);
+                    } else {
+                        log.debug("removed classificatorValue '" + previousValue.getValueName() //
+                                + "' from classificator '" + classificatorExportVO.getName() + "'");
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     public Classificator getClassificatorByNodeRef(String ref) {
         return getClassificatorByNodeRef(new NodeRef(ref));
     }
-    
+
     @Override
     public Classificator getClassificatorByNodeRef(NodeRef nodeRef) {
         Classificator cl = new Classificator();
@@ -66,19 +121,20 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         classificatorBeanPropertyMapper.toObject(nodeService.getProperties(nodeRef), cl);
         return cl;
     }
-    
+
     @Override
     public Classificator getClassificatorByName(String name) {
         String xpath = "/" + ClassificatorModel.NAMESPACE_PREFFIX + ClassificatorModel.Types.CLASSIFICATOR_ROOT.getLocalName() + "/"
                 + ClassificatorModel.NAMESPACE_PREFFIX + ISO9075.encode(name);
         NodeRef classifNodeRef = generalService.getNodeRef(xpath);
-        Assert.notNull(classifNodeRef, "Unknown classificator '"+name+"'");
+        Assert.notNull(classifNodeRef, "Unknown classificator '" + name + "'");
         return getClassificatorByNodeRef(classifNodeRef);
     }
 
     @Override
     public List<ClassificatorValue> getAllClassificatorValues(Classificator classificator) {
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(classificator.getNodeRef(), ClassificatorModel.Associations.CLASSIFICATOR_VALUE, RegexQNamePattern.MATCH_ALL);  
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(classificator.getNodeRef(), ClassificatorModel.Associations.CLASSIFICATOR_VALUE,
+                RegexQNamePattern.MATCH_ALL);
         List<ClassificatorValue> classificatorValues = new ArrayList<ClassificatorValue>(childRefs.size());
         for (ChildAssociationRef childRef : childRefs) {
             ClassificatorValue clv = new ClassificatorValue();
@@ -91,19 +147,19 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         }
         return classificatorValues;
     }
-    
+
     @Override
     public List<ClassificatorValue> getActiveClassificatorValues(Classificator classificator) {
         List<ClassificatorValue> allClassificatorValues = getAllClassificatorValues(classificator);
         List<ClassificatorValue> activeClassificatorValues = new ArrayList<ClassificatorValue>(allClassificatorValues.size());
         for (ClassificatorValue classificatorValue : allClassificatorValues) {
-            if(classificatorValue.isActive()) {
+            if (classificatorValue.isActive()) {
                 activeClassificatorValues.add(classificatorValue);
             }
         }
         return activeClassificatorValues;
     }
-    
+
     @Override
     public void removeClassificatorValue(Classificator classificator, ClassificatorValue classificatorValue) {
         nodeService.removeChild(classificator.getNodeRef(), classificatorValue.getNodeRef());
@@ -125,7 +181,7 @@ public class ClassificatorServiceImpl implements ClassificatorService {
             log.debug("Node (" + nodeRef + ") removed.");
         }
     }
-    
+
     @Override
     public NodeRef addClassificatorValue(Classificator classificator, ClassificatorValue classificatorValue) {
         Map<QName, Serializable> properties = classificatorValueBeanPropertyMapper.toProperties(classificatorValue);
@@ -138,7 +194,7 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         }
         return assoc.getChildRef();
     }
-    
+
     // START: getters / setters
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;

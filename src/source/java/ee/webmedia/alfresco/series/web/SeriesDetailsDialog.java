@@ -28,6 +28,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     private transient SeriesService seriesService;
     private transient MenuService menuService;
     private Series series;
+    private boolean newSeries;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -63,6 +64,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     }
 
     public void addNewSeries(ActionEvent event) {
+        newSeries = true;
         NodeRef funcNodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_FUNCTION_NODEREF));
         // create new node for series
         series = getSeriesService().createSeries(funcNodeRef);
@@ -92,10 +94,15 @@ public class SeriesDetailsDialog extends BaseDialogBean {
         return seriesService.isClosed(getCurrentNode());
     }
 
+    public boolean isNew() {
+        return newSeries;
+    }
+
     // END: jsf actions/accessors
 
     private void resetFields() {
         series = null;
+        newSeries = false;
     }
 
     // START: getters / setters

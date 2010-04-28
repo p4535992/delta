@@ -175,7 +175,7 @@ public class WebDAVServlet extends HttpServlet
                 }
                 else
                 {
-                    response.sendError(error.getHttpStatusCode());
+                    sendErrorResponse(response, error);
                 }
             }
             else
@@ -201,6 +201,10 @@ public class WebDAVServlet extends HttpServlet
                 logger.debug(request.getMethod() + " took " + duration + "ms to execute");
             }
         }
+    }
+
+    protected void sendErrorResponse(HttpServletResponse response, WebDAVServerException error) throws IOException {
+        response.sendError(error.getHttpStatusCode());
     }
 
     /**

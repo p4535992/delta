@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.common.propertysheet.validator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.component.StateHolder;
@@ -14,6 +13,7 @@ import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.validator.ValidatorException;
 
+import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
@@ -26,7 +26,6 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
 
     private static final String MESSAGE_ID = "common_propertysheet_validator_mandatoryIf";
     public static final String ATTR_MANDATORY_IF = "mandatoryIf";
-    public static final String DISABLE_VALIDATION = "DISABLE_MANDATORY_IF_VALIDATOR";
     private static final List<String> SELECT_VALUES_INDICATING_MANDATORY = Arrays.asList("Jah", "true", "yes", "AK");
 
     private String otherPropertyName;
@@ -45,7 +44,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
 
     @Override
     public void validate(FacesContext context, UIComponent component, Object value) throws ValidatorException {
-        if (isValidationDisabled(context)) {
+        if (Utils.isRequestValidationDisabled(context)) {
             return; // we don't want to validate before for example Search component is starting searching
         }
 
@@ -100,12 +99,6 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
     @Override
     public void setTransient(boolean newTransientValue) {
         this._transient = newTransientValue;
-    }
-
-    private boolean isValidationDisabled(FacesContext context) {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
-        return (Boolean.TRUE == requestMap.get(DISABLE_VALIDATION));
     }
 
     private boolean isOtherFilledAndMandatory(UIInput propertyInput) {

@@ -1,21 +1,5 @@
 package ee.webmedia.alfresco.simdhs;
 
-import ee.webmedia.alfresco.utils.ComponentUtil;
-import org.alfresco.web.app.Application;
-import org.alfresco.web.ui.common.component.data.UIColumn;
-import org.alfresco.web.ui.common.component.data.UIRichList;
-import org.alfresco.web.ui.common.component.data.UISortLink;
-import org.apache.commons.lang.CharUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
-import org.springframework.util.Assert;
-
-import javax.faces.component.UICommand;
-import javax.faces.component.UIComponent;
-import javax.faces.component.UIParameter;
-import javax.faces.component.ValueHolder;
-import javax.faces.context.FacesContext;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
@@ -32,6 +16,20 @@ import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 import java.util.Set;
+
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+import javax.servlet.http.HttpServletResponse;
+
+import org.alfresco.web.app.Application;
+import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.commons.lang.CharUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
+import org.springframework.util.Assert;
+
+import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Export JSF lists as CSV file. Data is read using {@link ee.webmedia.alfresco.simdhs.DataReader}.
@@ -53,7 +51,7 @@ public class CSVExporter {
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
     
     private static final char CSV_QUOTE = '"';
-    private static final String CHARSET = "UTF-8";
+    private static final String CHARSET = AppConstants.CHARSET;
     private static final char SEPARATOR = ';';
     private static final char[] CSV_SEARCH_CHARS = new char[] {SEPARATOR, CSV_QUOTE, CharUtils.CR, CharUtils.LF};
 

@@ -12,8 +12,9 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class UserWorkingDocumentsSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
 
+    /** @param event */
     public void setup(ActionEvent event) {
-        documents = getDocumentSearchService().searchUserWorkingDocuments();
+        restored();
     }
 
     @Override
@@ -21,4 +22,8 @@ public class UserWorkingDocumentsSearchResultsDialog extends BaseDocumentListDia
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_myWorkingDocuments");
     }
 
+    @Override
+    public void restored() {
+        documents = getDocumentSearchService().searchUserWorkingDocuments();
+    }
 }

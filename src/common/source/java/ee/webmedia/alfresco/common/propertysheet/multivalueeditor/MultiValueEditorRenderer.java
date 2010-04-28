@@ -48,10 +48,12 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             return;
         }
 
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = component.getAttributes();
         if (value.startsWith(SearchRenderer.OPEN_DIALOG_ACTION + ";")) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> attributes = component.getAttributes();
             attributes.put(Search.OPEN_DIALOG_KEY, value.substring((SearchRenderer.OPEN_DIALOG_ACTION + ";").length()));
+        } else if (value.equals(SearchRenderer.CLOSE_DIALOG_ACTION)) {
+            attributes.remove(Search.OPEN_DIALOG_KEY);
         } else {
             throw new RuntimeException("Unknown action: " + value);
         }
@@ -203,7 +205,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                         out.write("return showModal('");
                         out.write(getDialogId(context, multiValueEditor));
                         out.write("');\">");
-                        out.write(Application.getMessage(context, SearchRenderer.SEARCH_MSG));
+                        //out.write(Application.getMessage(context, SearchRenderer.SEARCH_MSG));
                         out.write("</a>");
 
                     }
@@ -216,16 +218,24 @@ public class MultiValueEditorRenderer extends BaseRenderer {
     }
 
     protected void renderPicker(FacesContext context, ResponseWriter out, UIComponent multiValueEditor, UIGenericPicker picker) throws IOException {
+        String openDialog = (String) multiValueEditor.getAttributes().get(Search.OPEN_DIALOG_KEY);
+        if (openDialog != null) {
+            out.write("<div id=\"overlay\" style=\"display: block;\"></div>");
+        }
+
         out.write("<div id=\"");
         out.write(getDialogId(context, multiValueEditor));
-        out.write("\" class=\"modalpopup modalwrap\">");
-        out.write("<div class=\"modalpopup-header clear\"><h1>");
+        out.write("\" class=\"modalpopup modalwrap\"");
+        if (openDialog != null) {
+            out.write(" style=\"display: block;\"");
+        }
+        out.write("><div class=\"modalpopup-header clear\"><h1>");
 
         String searchMessage = (String) multiValueEditor.getAttributes().get(Search.DIALOG_TITLE_ID_KEY);
         out.write(Application.getMessage(context, searchMessage != null ? searchMessage : SearchRenderer.SEARCH_MSG));
 
         out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"");
-        out.write(ComponentUtil.generateFieldSetter(context, multiValueEditor, getActionId(context, multiValueEditor), ""));
+        out.write(ComponentUtil.generateFieldSetter(context, multiValueEditor, getActionId(context, multiValueEditor), SearchRenderer.CLOSE_DIALOG_ACTION));
         out.write(Utils.generateFormSubmit(context, picker, picker.getClientId(context), "1" /* ACTION_CLEAR */));
         out.write("\">");
         out.write(Application.getMessage(context, SearchRenderer.CLOSE_WINDOW_MSG));
@@ -235,7 +245,6 @@ public class MultiValueEditorRenderer extends BaseRenderer {
 
         out.write("</div></div></div>");
 
-        String openDialog = (String) multiValueEditor.getAttributes().get(Search.OPEN_DIALOG_KEY);
         if (openDialog != null) {
             multiValueEditor.getAttributes().remove(Search.OPEN_DIALOG_KEY);
             out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");

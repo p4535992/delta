@@ -35,8 +35,8 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
 
     private static String PROP_RESOLUTION = "{temp}resolution";
 
-    private Workflow parent;
-    private int outcomes;
+    private final Workflow parent;
+    private final int outcomes;
     private int outcomeIndex = -1;
     private Action action = Action.NONE;
 
@@ -136,7 +136,8 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         final String outcome = getOutcome();
         final String comment = getComment();
         if(StringUtils.isNotBlank(comment)) {
-            String outcomeAndComment = outcome + ": "+comment;
+            String outcomeWithSeparator = (StringUtils.isNotBlank(outcome)) ? (outcome + ": ") : "";
+            String outcomeAndComment = outcomeWithSeparator + comment;
             if(outcomeAndComment.length() > 150) {
                 outcomeAndComment = outcomeAndComment.substring(0, 150) + "...";
             }
@@ -244,7 +245,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
     }
 
     // returns task's resolution if present or workflow's resolution otherwise
-    private NodePropertyResolver resolutionPropertyResolver = new NodePropertyResolver() {
+    private final NodePropertyResolver resolutionPropertyResolver = new NodePropertyResolver() {
         private static final long serialVersionUID = 1L;
 
         @Override

@@ -31,7 +31,7 @@
             <a:sortLink id="col3-header" label="#{msg.workflow_file}" value="file" styleClass="header" />
          </f:facet>
          <%-- TODO actually point to a file --%>
-         <a:actionLink value="#{msg.workflow_task_opinion_file}" image="/images/icons/attachment.gif" showLink="false" href="#{r.fileDownloadUrl}" rendered="#{not empty r.fileDownloadUrl}" />
+         <a:actionLink value="#{msg.workflow_task_opinion_file}" image="/images/icons/attachment.gif" showLink="false" href="#{r.fileDownloadUrl}" target="new" rendered="#{not empty r.fileDownloadUrl}" />
       </a:column>
 
       <a:column id="col4" style="width: 60%;">

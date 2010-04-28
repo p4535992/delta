@@ -64,4 +64,9 @@
       </property>
    </bean>
 
+   <!-- START: web beans: -->
+
+   <bean id="DocumentListImportDialog" class="ee.webmedia.alfresco.functions.web.DocumentListImportDialog" scope="session" />
+
+   <!-- END: web beans: -->
 </beans>

@@ -20,6 +20,7 @@
    <import resource="classpath:ee/webmedia/alfresco/register/register-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/template/document-template-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/versions/versions-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/webdav/webdav-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/imap/imap-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/email/email-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/substitute/substitute-context.xml" />

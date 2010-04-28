@@ -1,19 +1,20 @@
 package ee.webmedia.alfresco.simdhs;
 
-import org.alfresco.web.ui.common.component.data.IGridDataModel;
-import org.alfresco.web.ui.common.component.data.UIColumn;
-import org.alfresco.web.ui.common.component.data.UIRichList;
-import org.alfresco.web.ui.common.component.data.UISortLink;
-import org.apache.log4j.Logger;
-import org.springframework.util.Assert;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.faces.component.UICommand;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIParameter;
 import javax.faces.component.ValueHolder;
 import javax.faces.context.FacesContext;
-import java.util.ArrayList;
-import java.util.List;
+
+import org.alfresco.web.ui.common.component.data.IGridDataModel;
+import org.alfresco.web.ui.common.component.data.UIColumn;
+import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.alfresco.web.ui.common.component.data.UISortLink;
+import org.apache.log4j.Logger;
+import org.springframework.util.Assert;
 
 /**
  * Reads data directly from rich list data model.
@@ -42,12 +43,23 @@ public class RichListDataReader implements DataReader {
     @Override
     public List<List<String>> getDataRows(UIRichList list, FacesContext fc) {
         List<List<String>> data = new ArrayList<List<String>>();
-        list.setRowIndex(0);
-        for (int i=1; i<list.getDataModel().size(); i++) {
-            list.nextRow();
-            data.add(getDataRow(fc, getColumnsToExport(list)));
+        list.setRowIndex(-1);
+        final List<UIColumn> columnsToExport = getColumnsToExport(list);
+        while (list.isAbsoluteDataAvailable()) {
+            list.increment();
+            data.add(getDataRow(fc, columnsToExport));
         }
         return data;
+    }
+
+    private List<String> getDataFromRow(Object row, List<UIColumn> columnsToExport) {
+        for (UIColumn uiColumn : columnsToExport) {
+            System.out.println(row);
+//            row.getClass().getMethods()
+//            uiColumn.get
+        }
+        // TODO Auto-generated method stub
+        return null;
     }
 
     @SuppressWarnings("unchecked")

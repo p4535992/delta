@@ -100,6 +100,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
             if (results != null) {
                 List<UIComponent> children = component.getChildren();
                 children.addAll(results);
+                ComponentUtil.setHtmlSelectManyListboxSize(component, results);
             }
         }
     }

@@ -71,7 +71,7 @@
 
             <doctype:documentType view:childName="docsub:internalApplication">
                <view:properties>
-                  <doctype:name>Majasisene taotlus/avaldus</doctype:name>
+                  <doctype:name>Majasisene kiri/taotlus/avaldus</doctype:name>
                   <doctype:used>true</doctype:used>
                </view:properties>
             </doctype:documentType>
@@ -79,13 +79,13 @@
             <doctype:documentType view:childName="docsub:chancellorsOrder">
                <view:properties>
                   <doctype:name>Kantsleri käskkiri</doctype:name>
-                  <doctype:used>true</doctype:used>
+                  <doctype:used>false</doctype:used>
                </view:properties>
             </doctype:documentType>
 
             <doctype:documentType view:childName="docsub:ministersOrder">
                <view:properties>
-                  <doctype:name>Ministri käskkiri</doctype:name>
+                  <doctype:name>Põhitegevuse käskkiri</doctype:name>
                   <doctype:used>true</doctype:used>
                </view:properties>
             </doctype:documentType>

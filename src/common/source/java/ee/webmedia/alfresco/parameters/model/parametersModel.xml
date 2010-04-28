@@ -39,6 +39,10 @@
                <type>d:any</type>
                <mandatory>true</mandatory>
             </property>
+            <property name="param:nextFireTime" >
+                <type>d:datetime</type>
+                <mandatory>false</mandatory>
+            </property>
          </properties>
       </type>
 

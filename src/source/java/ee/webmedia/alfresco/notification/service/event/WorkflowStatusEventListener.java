@@ -45,7 +45,7 @@ public class WorkflowStatusEventListener implements WorkflowEventListener, Initi
     }
 
     private void refreshMenuTaskCount(WorkflowEvent event) {
-        if(((Task)event.getObject()).getOwnerId().equals(AuthenticationUtil.getRunAsUser())) {
+        if(((Task)event.getObject()).getOwnerId() != null && ((Task)event.getObject()).getOwnerId().equals(AuthenticationUtil.getRunAsUser())) {
             // Let's assume that this never gets called from a job, and there is an existing context :)
             FacesContext context = FacesContext.getCurrentInstance();
             if(context != null) {

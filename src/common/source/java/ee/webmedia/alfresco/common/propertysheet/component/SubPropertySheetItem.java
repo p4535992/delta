@@ -84,7 +84,6 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
     /** noderef to property sheet node where that actionLink is located */
     public static final String PARAM_CURRENT_PROP_SHEET_NODE = "currentNodeRef";
     /** noderef to property sheet node that surrounds that actionLink is located */
-    public static final String PARAM_PARENT_PROP_SHEET_NODE = "sourceNodeRef";
     public static final String SUB_PROP_SHEET_ID_PREFIX = "subPropSheet_";
 
     private static final String ACTION_ADD_SUFFIX = "_add";
@@ -115,7 +114,7 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
     protected String getIncorrectParentMsg() {
         return "The property component must be nested within a property sheet component";
     }
-
+    
     @Override
     protected void generateItem(FacesContext context, UIPropertySheet outerPropSheet) throws IOException {
         parentPropSheetNode = outerPropSheet.getNode();
@@ -197,9 +196,10 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
 
     @Override
     public Object saveState(FacesContext context) {
-        Object[] state = new Object[2];
+        Object[] state = new Object[3];
         state[0] = super.saveState(context);
         state[1] = getCustomAttributes();
+        state[2] = getParentPropSheetNode();
         return state;
     }
 
@@ -210,6 +210,7 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
         @SuppressWarnings("unchecked")
         Map<String, String> customAttributes = (Map<String, String>) state[1];
         setCustomAttributes(customAttributes);
+        parentPropSheetNode = (Node) state[2];
     }
 
     public QName getAssocTypeQName() {
@@ -217,6 +218,10 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
             assocTypeQName = resoveToQName(getCustomAttributes().get(ATTR_ASSOC_NAME));
         }
         return assocTypeQName;
+    }
+
+    public Node getParentPropSheetNode() {
+        return parentPropSheetNode;
     }
 
     private HtmlPanelGroup buildActionGroup(FacesContext context, final String actionGroupId, Node subPropSheetNode) {
@@ -232,7 +237,6 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
         final ActionsConfigElement actionsConfig = (ActionsConfigElement)
                 config.getConfigElement(ActionsConfigElement.CONFIG_ELEMENT_ID);
         final ActionGroup actionGroup = actionsConfig.getActionGroup(actionGroupId);
-        final String nodeKeyInSessionContext = parentPropSheetNode.getNodeRefAsString();
         // needed if no actions to be shown)
         for (String actionId : actionGroup) {
             ActionDefinition actionDef = actionsConfig.getActionDefinition(actionId);
@@ -255,16 +259,11 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
             @SuppressWarnings("unchecked")
             List<UIComponent> parameters = link.getChildren();
 
-            UIParameter parentPropSheetParam = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
-            parentPropSheetParam.setName(PARAM_PARENT_PROP_SHEET_NODE);
-            parentPropSheetParam.setValue(nodeKeyInSessionContext);
-
             UIParameter assocIndexParam = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
             assocIndexParam.setName(PARAM_ASSOC_INDEX);
             assocIndexParam.setValue(subPropSheetCounter);
 
             parameters.add(assocIndexParam);
-            parameters.add(parentPropSheetParam);
             if (subPropSheetNode != null) { // subPropSheetNode == null if there are no subPropertySheets, but we want to still show "addNew" button
                 UIParameter subPropSheetParam = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
                 subPropSheetParam.setName(PARAM_CURRENT_PROP_SHEET_NODE);

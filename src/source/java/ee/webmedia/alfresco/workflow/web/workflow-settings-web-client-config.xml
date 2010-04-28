@@ -18,8 +18,8 @@
 
    <config evaluator="aspect-name" condition="wfs:commonWorkflow" >
       <property-sheet>
-         <show-property name="wfs:description" component-generator="TextAreaGenerator" styleClass="expand5-200" />
-         <show-property name="wfs:resolution" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="wfs:description" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         <show-property name="wfs:resolution" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
    </config>
 

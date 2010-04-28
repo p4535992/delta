@@ -1,7 +1,19 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+
+import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.springframework.web.jsf.FacesContextUtils;
+
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
@@ -9,16 +21,6 @@ import ee.webmedia.alfresco.simdhs.CSVExporter;
 import ee.webmedia.alfresco.simdhs.DataReader;
 import ee.webmedia.alfresco.simdhs.RichListDataReader;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import org.alfresco.web.ui.common.component.data.UIRichList;
-import org.springframework.web.jsf.FacesContextUtils;
-
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
 
 /**
  * @author Alar Kvell
@@ -30,8 +32,25 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
 
     private transient SendOutService sendOutService;
 
-    public void setup(List<Document> documents) {
-        this.documents = documents;
+    private Node searchFilter;
+    private String dialogOutcome;
+
+    public String setup(Node filter) {
+        this.searchFilter = filter;
+        restored();
+        return dialogOutcome;
+    }
+
+    @Override
+    public void restored() {
+        documents = getDocumentSearchService().searchDocuments(searchFilter);
+        String dialog = "documentSearchResultsDialog";
+        if (DocumentSearchDialog.OUTPUT_EXTENDED.equals(searchFilter.getProperties().get(DocumentSearchModel.Props.OUTPUT))) {
+            dialog = "documentSearchExtendedResultsDialog";
+            documents = getDocumentService().processExtendedSearchResults(documents, searchFilter);
+        }
+        dialogOutcome = dialog;
+        super.restored();
     }
 
     @Override
@@ -39,12 +58,14 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_search_results");
     }
 
+    /** @param event */
     public void exportAsCsv(ActionEvent event) {
         DataReader dataReader = new RichListDataReader();
         CSVExporter exporter = new CSVExporter(dataReader);
         exporter.export("documentList");
     }
 
+    /** @param event */
     public void exportEstonianPost(ActionEvent event) {
         CSVExporter exporter = new CSVExporter(new EstonianPostExportDataReader());
         exporter.setOrderInfo(0, false);
@@ -82,4 +103,5 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         }
         return sendOutService;
     }
+
 }

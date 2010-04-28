@@ -11,18 +11,15 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
-import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.utils.ActionUtil;
 
 public class SearchBlockBean implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -66,7 +63,7 @@ public class SearchBlockBean implements Serializable {
         newAssoc.put(node.getNodeRefAsString(), assocInfo);
         addedAssociations.put(assocType.toString(), newAssoc);
         show = false;
-        return getDocumentService().getDocAssocInfo(assocInfo, false);
+        return getDocumentService().getDocAssocInfo(assocInfo, true);
     }
 
     // START: snapshot logic

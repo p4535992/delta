@@ -7,6 +7,10 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
+
+<%@page import="ee.webmedia.alfresco.series.web.SeriesDetailsDialog"%>
+<%@page import="org.alfresco.web.app.servlet.FacesHelper"%>
+<%@page import="javax.faces.context.FacesContext"%>
 <a:panel id="metadata-panel" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
    <r:propertySheetGrid id="ser-metatada" value="#{SeriesDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" />
 </a:panel>
@@ -14,30 +18,17 @@
 <f:verbatim>
 <script type="text/javascript">
 
-   var postProcessButtonStateBound = false;
    function postProcessButtonState(){
-      var finBtnId = "dialog:finish-button";
-      var closeBtnId = "dialog:close-button";
       var status = "</f:verbatim><h:outputText value="#{SeriesDetailsDialog.currentNode.properties['{http://alfresco.webmedia.ee/model/series/1.0}status']}" /><f:verbatim>";
-      var closeBtn = $jQ("#"+escapeId4JQ(closeBtnId));
-      if(!postProcessButtonStateBound) {
-         closeBtn.bind("click", function(e){
-            nextButtonPressed = true;
-            return validate();
-   	     });
-         postProcessButtonStateBound = true;
-      }
-
-      var finishBtn = $jQ("#"+escapeId4JQ(finBtnId));
-      var finishDisabled = finishBtn.attr("disabled");
-      if(finishDisabled){
-         closeBtn.attr("disabled", finishDisabled);
-      } else {
-         if(status != "suletud"){
-         	closeBtn.attr("disabled", finishDisabled);
-         }
-      }
+      processFnSerVolCaseCloseButton(status);
    }
 </script>
 </f:verbatim>
-
+<%
+   final boolean isNew = ((SeriesDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "SeriesDetailsDialog")).isNew();
+   if(isNew) {
+%>
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-close-button.jsp" />
+<%
+   }
+%>

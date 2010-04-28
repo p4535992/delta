@@ -1,19 +1,27 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
+import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -23,6 +31,7 @@ import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.Task.Action;
 import ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.CommentEvent;
 
@@ -36,10 +45,40 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     private static final long serialVersionUID = 1L;
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(CompoundWorkflowDialog.class);
-    
+
     private transient UserService userService;
     private transient DocumentService documentService;
     private transient DocumentLogService documentLogService;
+    private DocumentDialog documentDialog;
+
+    private Boolean activeResponsibleAssignedInRepo;
+
+    private static final List<QName> knownWorkflowTypes = Arrays.asList(//
+            WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW
+            , WorkflowSpecificModel.Types.OPINION_WORKFLOW
+            , WorkflowSpecificModel.Types.REVIEW_WORKFLOW
+            , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW
+            , WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
+            );
+
+    /**
+     * @param propSheet
+     * @return true if "{temp}workflowTasks" property should be shown on given propertySheet
+     */
+    public boolean showAssignmentWorkflowWorkflowTasks(UIPropertySheet propSheet) {
+        if (isUnsavedWorkFlow) {
+            return !isActiveResponsibleAssigned(); // show only if none of the workflows has active responsibility tasks
+        }
+        final int index = (Integer) propSheet.getAttributes().get("workFlowIndex");
+        final Workflow workflow2 = getWorkflow().getWorkflows().get(index);
+        final List<Task> tasks = workflow2.getTasks();
+        for (Task task : tasks) {
+            if (WorkflowUtil.isActiveResponsible(task)) {
+                return true; // this workflow has at least one active responsibility task
+            }
+        }
+        return false; // this workflow has no active responsibility tasks
+    }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -51,22 +90,19 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                     getDocumentLogService().addDocumentLog(workflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
                     isUnsavedWorkFlow = false;
                 }
-                
                 resetState();
                 return outcome;
-            }
-            catch (Exception e) {
-                if (e instanceof WorkflowChangedException) {
-                    log.debug("Compound workflow action failed: data changed!", e);
-                    MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_compound_save_failed");
-                }
-                else if (e instanceof WorkflowActiveResponsibleTaskException) {
-                    log.debug("Compound workflow action failed: more than one active responsible task!", e);
-                    MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_compound_save_failed_responsible");
-                }
-                else {
-                    throw e;
-                }
+            } catch (NodeLockedException e) {
+                log.debug("Compound workflow action failed: document locked!", e);
+                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_compound_save_failed_docLocked");
+            } catch (WorkflowChangedException e) {
+                log.debug("Compound workflow action failed: data changed!", e);
+                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_compound_save_failed");
+            } catch (WorkflowActiveResponsibleTaskException e) {
+                log.debug("Compound workflow action failed: more than one active responsible task!", e);
+                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_compound_save_failed_responsible");
+            } catch (Exception e) {
+                throw e;
             }
         }
         super.isFinished = false;
@@ -91,13 +127,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     public void setupNewWorkflow(ActionEvent event) {
         resetState();
         NodeRef compoundWorkflowDefinition = new NodeRef(ActionUtil.getParam(event, "compoundWorkflowDefinitionNodeRef"));
-        NodeRef document = new NodeRef(ActionUtil.getParam(event, "documentNodeRef"));
+        NodeRef document = getDocumentDialog().getNode().getNodeRef();
         try {
             workflow = getWorkflowService().getNewCompoundWorkflow(compoundWorkflowDefinition, document);
             updateFullAccess();
             isUnsavedWorkFlow = true;
-        }
-        catch (InvalidNodeRefException e) {
+        } catch (InvalidNodeRefException e) {
             log.warn("Failed to create a new compound workflow instance because someone has probably deleted the compound workflow definition.");
         }
     }
@@ -115,8 +150,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                     getDocumentLogService().addDocumentLog(workflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
                     isUnsavedWorkFlow = false;
                 }
-            }
-            catch (Exception e) {
+                getDocumentDialog().reopenDocument(event);
+            } catch (Exception e) {
                 handleException(e, "workflow_compound_start_workflow_failed");
             }
             updatePanelGroup();
@@ -126,13 +161,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     /**
      * Action listener for JSP.
      */
-    public void stopWorkflow(ActionEvent event) {
+    public void stopWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("stopWorkflow");
         try {
             removeEmptyResponsibleTasks();
             workflow = getWorkflowService().saveAndStopCompoundWorkflow(workflow);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             handleException(e, "workflow_compound_stop_workflow_failed");
         }
         updatePanelGroup();
@@ -141,13 +175,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     /**
      * Action listener for JSP.
      */
-    public void continueWorkflow(ActionEvent event) {
+    public void continueWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("continueWorkflow");
         try {
             removeEmptyResponsibleTasks();
             workflow = getWorkflowService().saveAndContinueCompoundWorkflow(workflow);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             handleException(e, "workflow_compound_continue_workflow_failed");
         }
         updatePanelGroup();
@@ -156,13 +189,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     /**
      * Action listener for JSP.
      */
-    public void finishWorkflow(ActionEvent event) {
+    public void finishWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("finishWorkflow");
         try {
             removeEmptyResponsibleTasks();
             workflow = getWorkflowService().saveAndFinishCompoundWorkflow(workflow);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             handleException(e, "workflow_compound_finish_workflow_failed");
         }
         updatePanelGroup();
@@ -171,14 +203,13 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     /**
      * Action listener for JSP.
      */
-    public void copyWorkflow(ActionEvent event) {
+    public void copyWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("copyWorkflow");
         if (validate(FacesContext.getCurrentInstance())) {
             try {
                 removeEmptyResponsibleTasks();
                 workflow = getWorkflowService().saveAndCopyCompoundWorkflow(workflow);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 handleException(e, "workflow_compound_copy_workflow_failed");
             }
             updatePanelGroup();
@@ -195,13 +226,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             getWorkflowService().deleteCompoundWorkflow(workflow.getNode().getNodeRef());
             resetState();
             return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             handleException(e, "workflow_compound_delete_workflow_failed");
             return null;
         }
     }
-    
+
     /**
      * Callback method for workflow owner Search component.
      */
@@ -209,12 +239,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         workflow.setOwnerId(username);
         workflow.setOwnerName(getUserService().getUserFullName(username));
     }
-    
+
     @Override
     public Object getActionsContext() {
         return getWorkflow();
     }
-    
+
     /**
      * Action listener for JSP.
      */
@@ -247,14 +277,14 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         task.setComment(comment);
         updatePanelGroup();
     }
-    
-    ///// PROTECTED & PRIVATE METHODS /////
-    
+
+    // /// PROTECTED & PRIVATE METHODS /////
+
     @Override
     protected String getConfigArea() {
         return null;
     }
-    
+
     protected UserService getUserService() {
         if (userService == null) {
             userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(UserService.BEAN_NAME);
@@ -278,6 +308,13 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         return documentLogService;
     }
 
+    public DocumentDialog getDocumentDialog() {
+        if (documentDialog == null) {
+            documentDialog = (DocumentDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DocumentDialog.BEAN_NAME);
+        }
+        return documentDialog;
+    }
+
     @Override
     protected void updateFullAccess() {
         fullAccess = false;
@@ -296,7 +333,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             throw new RuntimeException("Unknown user rights! Please check the condition rules in code!");
         }
     }
-    
+
     private boolean hasTask(String user, boolean responsible) {
         for (Workflow block : workflow.getWorkflows()) {
             for (Task task : block.getTasks()) {
@@ -320,16 +357,16 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         if (e instanceof WorkflowChangedException) {
             log.debug("Compound workflow action failed: data changed!", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_compound_save_failed");
-        }
-        else if (e instanceof WorkflowActiveResponsibleTaskException) {
+        } else if (e instanceof WorkflowActiveResponsibleTaskException) {
             log.debug("Compound workflow action failed: more than one active responsible task!", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_compound_save_failed_responsible");
-        }
-        else if(e instanceof EmailAttachmentSizeLimitException) {
+        } else if (e instanceof EmailAttachmentSizeLimitException) {
             log.debug("Compound workflow action failed: email attachment exceeded size limit set in parameter!", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "notification_zip_size_too_large");
-        }
-        else {
+        } else if (e instanceof NodeLockedException) {
+            log.debug("Compound workflow action failed: document is locked!", e);
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), new String[] { failMsg, "document_error_docLocked" });
+        } else {
             log.error("Compound workflow action failed!", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), failMsg);
         }
@@ -337,11 +374,29 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
 
     private boolean validate(FacesContext context) {
         boolean valid = true;
+        boolean activeResponsibleAssignedInSomeWorkFlow = false;
+        // boolean missingOwnerAssibnment = false;
+        boolean missingOwnerAssignment = false;
+        Set<String> missingOwnerMessageKeys = null;
         for (Workflow block : workflow.getWorkflows()) {
+            boolean foundOwner = false;
+            QName blockType = block.getNode().getType();
+            // isActiveResponsible check needs to be done only for ASSIGNMENT_WORKFLOW
+            boolean activeResponsibleAssigneeNeeded = blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)
+                    && !activeResponsibleAssignedInSomeWorkFlow && !isActiveResponsibleAssigned(false);
+            boolean activeResponsibleAssigneeAssigned = !activeResponsibleAssigneeNeeded;
             for (Task task : block.getTasks()) {
+                if (activeResponsibleAssigneeNeeded && StringUtils.isNotBlank(task.getOwnerName()) && WorkflowUtil.isActiveResponsible(task)) {
+                    activeResponsibleAssignedInSomeWorkFlow = true;
+                    activeResponsibleAssigneeAssigned = true;
+                    missingOwnerAssignment = false;
+                }
+                if (!foundOwner) {
+                    foundOwner = StringUtils.isNotBlank(task.getOwnerName());
+                }
                 if (task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
                     if (Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE))) {
-                        // both fields must be empty or filled 
+                        // both fields must be empty or filled
                         if (StringUtils.isBlank(task.getOwnerName()) != (task.getDueDate() == null)) {
                             valid = false;
                             String taskOwnerMsg = MessageUtil.getMessage(block.getNode().getType().getLocalName() + "_tasks");
@@ -349,8 +404,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                             break;
                         }
                     }
-                }
-                else {
+                } else {
                     QName taskType = task.getNode().getType();
                     // only name is required for information tasks
                     if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
@@ -374,8 +428,61 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                     }
                 }
             }
+            if (activeResponsibleAssigneeNeeded && !activeResponsibleAssigneeAssigned) {
+                missingOwnerAssignment = true;
+                if (!foundOwner) {
+                    valid = false;
+                    final String missingOwnerMessageKey = getMissingOwnerMessageKey(blockType);
+                    if (missingOwnerMessageKeys == null) {
+                        missingOwnerMessageKeys = new HashSet<String>(2);
+                    }
+                    missingOwnerMessageKeys.add(missingOwnerMessageKey);
+                }
+                continue;
+            }
+            if (!foundOwner) {
+                String missingOwnerMsgKey = getMissingOwnerMessageKey(blockType);
+                if (missingOwnerMsgKey != null) {
+                    MessageUtil.addErrorMessage(context, missingOwnerMsgKey);
+                    valid = false;
+                }
+            }
         }
+        if (missingOwnerAssignment) {
+            valid = false;
+            MessageUtil.addErrorMessage(context, "workflow_save_error_missingOwner_assignmentWorkflow1");
+        } else if (missingOwnerMessageKeys != null) {
+            for (String msgKey : missingOwnerMessageKeys) {
+                MessageUtil.addErrorMessage(context, msgKey);
+            }
+        }
+
         return valid;
+    }
+
+    private boolean isActiveResponsibleAssigned() {
+        return isActiveResponsibleAssigned(true);
+    }
+
+    public boolean isActiveResponsibleAssigned(boolean useCache) {
+        if (activeResponsibleAssignedInRepo == null || !useCache) {
+            activeResponsibleAssignedInRepo = 0 < getWorkflowService().getActiveResponsibleAssignmentTasks(workflow.getParent());
+        }
+        return activeResponsibleAssignedInRepo;
+    }
+
+    @Override
+    protected void resetState() {
+        super.resetState();
+        activeResponsibleAssignedInRepo = null;
+    }
+
+    private String getMissingOwnerMessageKey(QName blockType) {
+        String missingOwnerMsgKey = null;
+        if (knownWorkflowTypes.contains(blockType)) {
+            missingOwnerMsgKey = "workflow_save_error_missingOwner_" + blockType.getLocalName();
+        }
+        return missingOwnerMsgKey;
     }
 
 }

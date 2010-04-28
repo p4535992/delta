@@ -25,9 +25,11 @@
 package org.alfresco.web.ui.common.renderer;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 
 import javax.faces.application.FacesMessage;
+import javax.faces.application.FacesMessage.Severity;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
@@ -57,7 +59,8 @@ public class ErrorsRenderer extends BaseRenderer
          return;
       }
       
-      Iterator messages = context.getMessages();
+      @SuppressWarnings("unchecked")
+      Iterator<FacesMessage> messages = context.getMessages();
       if (messages.hasNext())
       {
          ResponseWriter out = context.getResponseWriter();
@@ -65,8 +68,21 @@ public class ErrorsRenderer extends BaseRenderer
          String styleClass = (String)component.getAttributes().get("styleClass");
          String errorClass = (String)component.getAttributes().get("errorClass");
          String infoClass = (String)component.getAttributes().get("infoClass");
-         String message = (String)component.getAttributes().get("message");
-         
+         Severity maxSeverity = FacesMessage.SEVERITY_INFO;
+         final ArrayList<FacesMessage> facesMessages = new ArrayList<FacesMessage>();
+         while (messages.hasNext()) {
+             FacesMessage fm = messages.next();
+             facesMessages.add(fm);
+             final Severity severity = fm.getSeverity();
+             if(maxSeverity == null || maxSeverity.compareTo(severity)<0) {
+                 maxSeverity = severity;
+             }
+        }
+         messages = facesMessages.iterator();
+         String message = ""; // no additional text for messages with info severity
+         if(maxSeverity.compareTo(FacesMessage.SEVERITY_ERROR) >= 0) {
+             message = (String)component.getAttributes().get("message");             
+         }
          if (message == null)
          {
             // because we are using the standard messages component value binding
@@ -104,7 +120,7 @@ public class ErrorsRenderer extends BaseRenderer
             
             while (messages.hasNext())
             {
-               FacesMessage fm = (FacesMessage)messages.next();
+               FacesMessage fm = messages.next();
                out.write("<li");
                renderMessageAttrs(fm, out, errorClass, infoClass);
                out.write(">");
@@ -126,7 +142,7 @@ public class ErrorsRenderer extends BaseRenderer
             
             while (messages.hasNext())
             {
-               FacesMessage fm = (FacesMessage)messages.next();
+               FacesMessage fm = messages.next();
                out.write("<div style='margin-bottom: 3px;'");
                renderMessageAttrs(fm, out, errorClass, infoClass);
                out.write(">");

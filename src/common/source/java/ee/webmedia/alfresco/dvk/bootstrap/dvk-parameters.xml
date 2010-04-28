@@ -5,7 +5,7 @@
 >
    <param:intParameter view:childName="param:dvkReceiveDocumentsNumber">
       <view:properties>
-         <param:value>50</param:value>
+         <param:value>1</param:value>
       </view:properties>
    </param:intParameter>
 

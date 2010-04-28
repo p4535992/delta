@@ -11,6 +11,11 @@
 	top: 1px;
 }
 
+a.button {
+	position: relative;
+	top: 12px;
+}
+
 #alfsearch_menu ul li {
 	margin: 0; 
 }
@@ -51,18 +56,26 @@
 	*************************************************************************/
 /* *************************************************************************/
 
+input[type="submit"] {
+	overflow: auto;
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
 #content,
 .column,
 .panel-column {
 	overflow: hidden;
 }
 
-textarea {
-	width: 99% !important;
-}
-
 #actions .actions {
 	padding-top: 8px;
+}
+
+#actions ul li,
+#footer-actions ul li {
+	display: inline;
+	float: none;
 }
 
 td.actions-column {
@@ -87,12 +100,16 @@ td.actions-column {
 	z-index: 999;
 }
 
-/**
-  * include this bit of css
-  */
-.elementShown
-{
-	z-index: 10000;
+#menu li.dropdown {
+	z-index: 10001
+}
+.on-top {
+  z-index: 1000;
+}
+
+.extra-actions > li > a {
+	padding-top: 0;
+	padding-bottom: 6px;
 }
 
 .right.dropdown-menu {
@@ -116,6 +133,10 @@ table.table-padding td {
 
 th {
 	padding-top: 3px;
+}
+
+.multiE th {
+	padding-top: 0px;
 }
 
 .propertiesLabel img {
@@ -155,10 +176,6 @@ hr {
 	/*z-index: 100;*/
 }
 
-#actions {
-	margin-bottom: 5px;
-}
-
 .extra-actions > li:first-child > a,
 .extra-actions > li:first-child > span > a {
 	padding-top: 0px;
@@ -167,6 +184,10 @@ hr {
 
 .dropdown-menu > span {
 	position: relative;
+	top: 8px;
+}
+
+.dropdown-menu.in-title > span {
 	top: 5px;
 }
 
@@ -183,12 +204,28 @@ hr {
 		padding-left: 22px;
 	}
 
-.dropdown-menu li {
-	min-width: 120px;
+.dropdown-menu li a {
+	width: auto;
 }
 
-.dropdown-menu a {
-	min-width: 140px;
+.extra-actions ul.dropdown-menu {
+	padding: 2px 0px 11px 3px;
+}
+
+.panel-wrapper .title-component .dropdown-menu a {
+	margin-left: 0;
+}
+
+.propertiesLabel {
+	line-height: 16px;
+}
+
+.propertiesLabel + td {
+	line-height: 16px;
+}
+
+.overflow-wrapper {
+	padding-bottom: 20px;
 }
 
 /*
@@ -208,6 +245,10 @@ hr {
 }
 
 .panel-10 {
+	margin-left: -1px;
+}
+
+.panel-35-f {
 	margin-left: -1px;
 }
 
@@ -269,10 +310,39 @@ hr {
 .icon-link {
 	zoom: 1;
 }
+/*
 .extra-actions a {
     padding: 0 6px 6px 22px;
 }
+*/
 
 .ie7-workflow DIV.panel-border {
   position: static !important;
+}
+
+.task-sheet-buttons {
+	margin-left: 133px;
+}
+
+#container-content #send-out-panel  table.recipient {
+	width: 100%;
+}
+
+#document-search-panel .inline-property-group input,
+#task-search-panel .inline-property-group input {
+	vertical-align: top !important;
+}
+
+
+#aoscModal-container-modalpopup {
+	height: 200px;
+}
+
+.subPropertySheetTR table {
+	width: auto !important;
+}
+
+.subPropertySheetTR div:first-child {
+	float: left;
+	overflow: visible;
 }

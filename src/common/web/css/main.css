@@ -3,7 +3,7 @@
 	*************************************************************************/
 /* *************************************************************************/
 
-html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,form,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td {
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,form,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,textarea,tfoot,thead,tr,th,td,select {
 	margin: 0;
 	padding: 0;
 	border: 0;
@@ -20,7 +20,7 @@ input {
 input[type="text"],
 textarea,
 select {
-	border: 1px solid #ccc;
+	border: 1px solid #888;
 }
 
 body {
@@ -305,7 +305,7 @@ html, body {
 		line-height: 12px;
 		width: 180px;
 		text-align: center;
-		z-index: 10;
+		z-index: 10000;
 	}
 	
 		#menu li.dropdown li,
@@ -495,49 +495,62 @@ ul#breadcrumb li {
 	******************************/
 	
 #titlebar,
-#titlebar-search {
+#titlebar-search,
+#footer-titlebar {
 	position: relative;
 	padding: 10px 10px 0;
-	margin-bottom: 15px;
+	margin-bottom: 10px;
 	/*z-index: 90;*/
 }
 
+#footer-titlebar {
+	visibility: hidden; /* show only when necessary */
+}
+
 	#titlebar h2,
-	#titlebar-search h2 {
+	#titlebar-search h2,
+	#footer-titlebar h2 {
 		margin-bottom: 10px;
 		padding: 0 100px 0 28px;
 	}
 	
 		#titlebar h2 img,
 		#titlebar-search h2 img,
-		#titlebar h2 a {
+		#titlebar h2 a,
+		#footer-titlebar h2 img,
+		#footer-titlebar h2 a {
 			position:absolute;
 			width: 20px;
 			height: 20px;
 			left:10px;
-			top: 9px;
+			top: 7px;
 		}
 		
-		#description {
+		#description,
+		#footer-description {
 			margin-bottom: 10px;
 		}
 	
 
-	#additional {
+	#additional,
+	#footer-additional {
 		position: absolute;
 		top: 10px;
 		right: 10px;
 	}
 	
-		#additional > a {
+		#additional > a
+		#footer-additional > a {
 			margin-left: 10px;
 		}
 		
-		#additional span > img {
+		#additional span > img,
+		#footer-additional span > img {
 			vertical-align: -3px;
 		}
 		
-		#additional span.icon-link {
+		#additional span.icon-link
+		#foooter-additional span.icon-link {
 			margin-left: 10px;
 		}  
 	
@@ -545,30 +558,40 @@ ul#breadcrumb li {
 	ACTIONS
 	******************************/
 
-#actions {
+#actions,
+#footer-actions {
 	overflow: visible;
-	margin-bottom: 10px;
 }
 
- 	#actions .actions {
+ 	#actions .actions,
+ 	#footer-actions .actions {
  		float: left;
 		padding: 7px 0;
 		margin-right: 10px;
 		display: none;
 	}
 	
-	#actions > span {
+	#actions > span,
+	#footer-actions > span {
 		float:left;
 		margin-right:10px;
 		padding:7px 0;
 	}
 	
-	#actions ul {
+	#actions ul,
+	#footer-actions ul {
 		overflow: auto;
 	}
 	
-		#actions ul li {
+		#actions ul li,
+		#footer-actions ul li {
 			float: left;
+			margin-bottom: 5px;
+		}
+		
+		#actions ul.extra-actions li,
+		#footer-actions ul.extra-actions li {
+			margin-bottom: 0;
 		}
 	
 	.wizard-steps li {
@@ -587,8 +610,6 @@ ul#breadcrumb li {
 	
 
 .actions-menu {
-	position: relative;
-	top: 3px;
 	display: block !important;
 }
 
@@ -599,8 +620,13 @@ ul#breadcrumb li {
 .dropdown-menu li,
 .actions-menu li {
 	position: relative;
-	margin: 0 1px;
+	margin-right: 2px;
 }
+
+.extra-actions li {
+	margin: 0 0 0 2px;
+}
+
 	.dropdown-menu a,
 	.dropdown-menu .disabled,
 	.actions-menu a {
@@ -662,6 +688,10 @@ td .dropdown-menu {
 	margin: 2px;
 }
 
+.dropdown-menu.in-title li {
+	margin: 0;
+}
+
 /* .extra-actions > li:first-child a img { */
 .extra-actions > li a img {
 	top: 7px !important;
@@ -677,6 +707,10 @@ td .dropdown-menu {
 .panel-column {
 	float: left;
 	margin-right: 1%;
+}
+
+#container-content {
+	float: none;
 }
 
 .panel-wrapper {
@@ -763,6 +797,10 @@ td .dropdown-menu {
 	width: 15%;
 }
 
+.width25 {
+	width: 25%;
+}
+
 .width30 {
 	width: 30%;
 }
@@ -839,6 +877,7 @@ td.actions-column * {
 	}
 	
 	.page-controls select {
+		min-width: 20px !important;
 		margin-left: 4px;
 	}
 	
@@ -902,7 +941,17 @@ td.actions-column * {
 	GENERIC BUTTONS
 	******************************/
 	input[type="submit"] {
-		padding: 3px;
+		/*padding: 3px;*/
+		padding: 1px 20px;
+		border: none;
+		background-color: #253967;
+		font-weight: bold;
+		line-height: 12px;
+		font-size: 12px;
+		overflow: visible;
+		cursor: pointer;
+		height /*\**/: 20px\9
+		
 	}
 	
 	input[type="submit"]:first-child {
@@ -1222,4 +1271,8 @@ input[type="checkbox"] {
 
 .right {
 	float: right;
+}
+
+table.generic-picker td {
+	padding: 4px 0;
 }

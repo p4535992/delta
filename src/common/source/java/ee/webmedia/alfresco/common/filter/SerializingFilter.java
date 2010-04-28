@@ -5,6 +5,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.servlet.FilterChain;
@@ -164,7 +165,7 @@ public class SerializingFilter implements DependencyInjectedFilter, Initializing
         @Override
         @SuppressWarnings("unchecked")
         public Enumeration getAttributeNames() {
-            Set<String> names = attributes.keySet();
+            Set<String> names = new HashSet(attributes.keySet());
             for (Enumeration e = super.getAttributeNames(); e.hasMoreElements();) {
                 names.add((String) e.nextElement());
             }

@@ -63,7 +63,15 @@ public enum Parameters {
     VOLUME_DISPOSITION_DATE_NOTIFICATION_DAYS("volumeDispositionDateNotificationDays"),
     ACCESS_RESTRICTION_END_DATE_NOTIFICATION_DAYS("accessRestrictionEndDateNotificationDays"),
     ASSIGN_RESPONSIBILITY_INSTRUCTION("assignResponsibilityInstruction"),
-    DAYS_FOR_SUBSTITUTION_TASKS_CALC("daysForSubstitutionTasksCalc");
+    DAYS_FOR_SUBSTITUTION_TASKS_CALC("daysForSubstitutionTasksCalc"),
+    DOC_PROP_LICENCE_DOC_NAME("docPropLicenceDocName"),
+    DOC_PROP_TENDERING_APPLICATION_DOC_NAME("docPropTenderingApplicationDocName"),
+    DOC_PROP_ERRAND_ORDER_ABROAD_DOC_NAME("docPropErrandOrderAbroadDocName"),
+    DOC_PROP_ERRAND_APPLICATION_DOMESTIC_DOC_NAME("docPropErrandApplicationDomesticDocName"),
+    DOC_PROP_MANAGEMENTS_ORDER_DOC_NAME("docPropManagementsOrderDocName"), 
+    DOC_PROP_VACATION_ORDER_DOC_NAME("docPropVacationOrderDocName"),
+    DOC_PROP_VACATION_ORDER_LEGAL_BASIS_NAME("docPropVacationOrderLegalBasisName"),
+    DOC_PROP_CHANCELLORS_ORDER_SIGNER_NAME("docPropChancellorsOrderSignerName");
 
     private String xPath;
     private String parameterName;

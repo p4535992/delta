@@ -400,7 +400,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
       setRowIndex(rowIndex + 1);
       return getDataModel().getRow(this.rowIndex);
    }
-   
+
    /**
     * Sort the dataset using the specified sort parameters
     * 
@@ -466,6 +466,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
          _rowStates.clear();
       }
       int rowCount = getDataModel().size();
+      this.absoluteRwCount = rowCount;
       // if a page size is specified, then we use that
       int pageSize = getPageSize();
       if (pageSize != -1 && pageSize != 0)
@@ -1246,6 +1247,26 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
             evh.setValid(_valid);
             evh.setSubmittedValue(_submittedValue);
         }
+    }
+
+    // additional methods for exporting all data rows(not just visible rows) that are used by RichListDataReader
+    private int absoluteRwCount;
+    public boolean isAbsoluteDataAvailable() {
+        if (this.rowIndex + 1 < this.absoluteRwCount) {
+            return true;
+        }
+        // Reset rowIndex, so that footer components wouldn't have last row index inside their id
+        setRowIndex(-1);
+        return false;
+    }
+
+    public void increment() {
+        if (rowIndex + 1 == getDataModel().size()) {
+            logger.warn("max rowindex '" + rowIndex + "' was already set");
+            return;
+        }
+        // increment row count and get next row
+        setRowIndex(rowIndex + 1);
     }
 
 }

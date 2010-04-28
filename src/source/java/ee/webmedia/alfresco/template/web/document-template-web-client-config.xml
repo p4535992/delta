@@ -47,7 +47,7 @@
    <config evaluator="aspect-name" condition="docTempl:template" replace="true">
       <property-sheet>
          <show-property name="docTempl:name" display-label-id="template_name" />
-         <show-property name="docTempl:comment" display-label-id="template_comment" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="docTempl:comment" display-label-id="template_comment" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>
    <config evaluator="aspect-name" condition="docTempl:documentTemplate">

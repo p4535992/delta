@@ -34,7 +34,7 @@
 <a:panel id="add-user-list" styleClass="column panel-50" label="#{msg.selected_users}">
 
    <h:dataTable value="#{DialogManager.bean.usersDataModel}" var="row" rowClasses="selectedItemsRow,selectedItemsRowAlt" styleClass="selectedItems"
-      headerClass="selectedItemsHeader" cellspacing="0" cellpadding="4" rendered="#{DialogManager.bean.usersDataModel.rowCount != 0}">
+      headerClass="selectedItemsHeader" cellspacing="0" cellpadding="4" rendered="#{DialogManager.bean.usersDataModel.rowCount != 0}" width="100%">
       <h:column>
          <f:facet name="header">
             <h:outputText value="#{msg.name}" />
@@ -42,8 +42,7 @@
          <h:outputText value="#{row.name}" />
       </h:column>
       <h:column>
-         <a:actionLink actionListener="#{DialogManager.bean.removeUserSelection}" image="/images/icons/delete.gif" value="#{msg.remove}" showLink="false"
-            style="padding-left:6px" />
+         <a:actionLink actionListener="#{DialogManager.bean.removeUserSelection}" image="/images/icons/delete.gif" value="#{msg.remove}" showLink="false" />
       </h:column>
    </h:dataTable>
 

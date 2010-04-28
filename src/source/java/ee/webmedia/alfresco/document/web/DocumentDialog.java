@@ -23,6 +23,7 @@ import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
@@ -54,6 +55,8 @@ import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
@@ -61,6 +64,7 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
  */
 public class DocumentDialog extends BaseDialogBean implements ClearStateNotificationHandler.ClearStateListener {
     private static final long serialVersionUID = 1L;
+    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentDialog.class);
 
     public static final String BEAN_NAME = "DocumentDialog";
 
@@ -88,8 +92,16 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     private DocumentLogBlockBean documentLogBlockBean;
     private boolean isDraft;
     private boolean showDocsAndCasesAssocs;
+    private boolean skipInit;
 
     private Node node;
+
+    public String action() {
+        if (!getNodeService().exists(getNode().getNodeRef())) {
+            return getDefaultCancelOutcome();
+        }
+        return "dialog:document";
+    }
 
     /**
      * Should be called only when the document was received from DVK.
@@ -115,6 +127,13 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             getDocumentTemplateService().populateTemplate(new NodeRef(ActionUtil.getParam(event, PARAM_DOCUMENT_NODE_REF)));
         } catch (FileNotFoundException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), ERR_TEMPLATE_NOT_FOUND);
+        } catch (InvalidNodeRefException e) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            MessageUtil.addErrorMessage(context, "document_createWordFile_error_docDeleted");
+            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            return;
+        } catch (NodeLockedException e) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_createWordFile_error_docLocked");
         } catch (RuntimeException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), ERR_TEMPLATE_PROCESSING_FAILED);
         }
@@ -145,15 +164,23 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         }
     }
 
-    public void copy(ActionEvent event) {
+    public void copy(@SuppressWarnings("unused") ActionEvent event) {
         if (node == null)
             throw new RuntimeException("No current document");
-
-        node = getDocumentService().copyDocument(node.getNodeRef());
-        setupAction(true);
+        try {
+            Node newNode = getDocumentService().copyDocument(node.getNodeRef());
+            createSnapshot();
+            skipInit = true;
+            node = newNode;
+            setupAction(true);
+        } catch (InvalidNodeRefException e) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            MessageUtil.addErrorMessage(context, "document_copy_error_docDeleted");
+            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+        }
     }
 
-    public void endDocument(ActionEvent event) {
+    public void endDocument(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(node, "No current document");
         getDocumentService().endDocument(node.getNodeRef());
         // refresh metadata block
@@ -161,14 +188,14 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         documentLogBlockBean.restore();
     }
 
-    public void reopenDocument(ActionEvent event) {
+    public void reopenDocument(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(node, "No current document");
         getDocumentService().reopenDocument(node.getNodeRef());
         // refresh metadata block
         metadataBlockBean.init(node.getNodeRef(), isDraft);
     }
 
-    public void deleteDocument(ActionEvent event) {
+    public void deleteDocument(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(node, "No current document");
         try {
             getDocumentService().deleteDocument(node.getNodeRef());
@@ -177,6 +204,12 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             return;
         } catch (NodeLockedException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_delete_error_docLocked");
+            return;
+        } catch (InvalidNodeRefException e) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            MessageUtil.addErrorMessage(context, "document_delete_error_docDeleted");
+            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            return;
         }
         reset();
         // go back
@@ -185,20 +218,26 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         navigationHandler.handleNavigation(fc, null, getDefaultCancelOutcome());
     }
 
-    public void toggleProceeding(ActionEvent event) {
+    public void toggleProceeding(@SuppressWarnings("unused") ActionEvent event) {
         if (node == null)
             throw new RuntimeException("No current document");
 
         String status = (String) node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString());
         String errMsg = null;
+        final boolean stop = DocumentStatus.WORKING.equals(status);
         try {
-            if (DocumentStatus.WORKING.equals(status)) {
+            if (stop) {
                 errMsg = "document_proceeding_stop_error_docLocked";
                 getDocumentService().stopDocumentPreceedingAndUpdateStatus(node.getNodeRef());
             } else if (DocumentStatus.STOPPED.equals(status)) {
                 errMsg = "document_proceeding_continue_error_docLocked";
                 getDocumentService().continueDocumentPreceedingAndUpdateStatus(node.getNodeRef());
             }
+        } catch (InvalidNodeRefException e) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            MessageUtil.addErrorMessage(context, "document_proceeding_" + (stop ? "stop" : "continue") + "_error_docDeleted");
+            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            return;
         } catch (NodeLockedException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), errMsg);
         }
@@ -211,6 +250,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         if (node == null)
             throw new RuntimeException("No current document");
 
+        createSnapshot();
+        this.skipInit = true;
         QName followUp = null;
         QName type = node.getType();
         if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(type) ||
@@ -225,14 +266,21 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } else {
             throw new RuntimeException("FollowUp not possible for document of type " + type);
         }
-        node = getDocumentService().createFollowUp(followUp, node.getNodeRef());
-        setupAction(true);
+        try {
+            node = getDocumentService().createFollowUp(followUp, node.getNodeRef());
+            setupAction(true);
+        } catch (InvalidNodeRefException e) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            MessageUtil.addErrorMessage(context, "document_addFollowUp_error_docDeleted");
+        }
     }
 
-    public void createReply(ActionEvent event) {
+    public void createReply(@SuppressWarnings("unused") ActionEvent event) {
         if (node == null)
             throw new RuntimeException("No current document");
 
+        createSnapshot();
+        this.skipInit = true;
         QName replyType = null;
         if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(node.getType())) {
             replyType = DocumentSubtypeModel.Types.OUTGOING_LETTER;
@@ -241,9 +289,13 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } else {
             throw new RuntimeException("Reply not possible for document of type " + node.getType());
         }
-
-        node = getDocumentService().createReply(replyType, node.getNodeRef());
-        setupAction(true);
+        try {
+            node = getDocumentService().createReply(replyType, node.getNodeRef());
+            setupAction(true);
+        } catch (InvalidNodeRefException e) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            MessageUtil.addErrorMessage(context, "document_addReply_error_docDeleted");
+        }
     }
 
     public void setupAction(boolean mode) {
@@ -276,6 +328,10 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     @Override
     public void init(Map<String, String> params) {
+        if (skipInit) {
+            skipInit = false;
+            return;
+        }
         super.init(params);
         metadataBlockBean.init(node.getNodeRef(), isDraft);
         if (isFromDVK() || isFromIncoming()) {
@@ -296,12 +352,19 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     @Override
     public void restored() {
-        if (!restoreSnapshot()) {
-            fileBlockBean.restore();
-            sendOutBlockBean.restore();
-            assocsBlockBean.restore();
-            documentLogBlockBean.restore();
-            workflowBlockBean.restore();
+        try {
+            final boolean snapshotRestored = restoreSnapshot();
+            if (!snapshotRestored) {
+                fileBlockBean.restore();
+                sendOutBlockBean.restore();
+                assocsBlockBean.restore();
+                documentLogBlockBean.restore();
+                workflowBlockBean.restore();
+            }
+        } catch (UnableToPerformException e) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            // no need to add statusMessage, as it is already added
+            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
         }
     }
 
@@ -348,6 +411,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         documentLogBlockBean.reset();
         isDraft = false;
         showDocsAndCasesAssocs = false;
+        skipInit = false;
     }
 
     public void saveAndRegisterContinue() {
@@ -366,6 +430,18 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         // just register if not an incoming letter or no similar documents found
         if (!searchBlockBean.isFoundSimilar()) {
             metadataBlockBean.saveAndRegister();
+            isDraft = false;
+        }
+    }
+
+    public void registerDocument(ActionEvent event) {
+        try {
+            metadataBlockBean.registerDocument(event);
+            documentLogBlockBean.restore();
+        } catch (InvalidNodeRefException e) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            MessageUtil.addErrorMessage(context, "document_registerDoc_error_docDeleted");
+            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
         }
     }
 
@@ -471,7 +547,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         searchBlockBean.setIncludeCaseTitles(false);
     }
 
-    public void searchDocsAndCases(ActionEvent event) {
+    public void searchDocsAndCases(@SuppressWarnings("unused") ActionEvent event) {
         this.showDocsAndCasesAssocs = true;
         searchBlockBean.init(metadataBlockBean.getDocument());
         searchBlockBean.setIncludeCaseTitles(true);
@@ -514,22 +590,46 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     // restores DocumentDialog to previous state (if needed)
+    /**
+     * restores DocumentDialog to previous state if needed - meaning that node is null or doesn't exist.
+     * 
+     * @return false if there was no need to restore document(node was not null and it still existed in repository). <br>
+     *         true if node was restored.
+     * @throws UnableToPerformException if node should have been restored(because node is null or doesn't exist anymore), but non of the documents in snapshots
+     *             stack were not applicable for restoring.
+     */
     private boolean restoreSnapshot() {
         // if there's a node, then current DocumentDialog has not been closed
         // so we shouldn't restore snapshot
-        if (node == null && !snapshots.empty()) {
+        final boolean nodeDeleted = node != null && !getNodeService().exists(node.getNodeRef());
+        final boolean mustRestore = node == null || nodeDeleted;
+        if (mustRestore) {
+            if (snapshots.empty()) {
+                throw new UnableToPerformException(MessageSeverity.INFO, "document_restore_error_stackEmpty");
+            }
+            if (nodeDeleted) {
+                MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "document_restore_error_docDeleted");
+            }
             snapshots.pop().restoreState(this);
-
-            // just re-init other beans
-            fileBlockBean.init(node);
-            sendOutBlockBean.init(node);
-            typeBlockBean.init();
-            assocsBlockBean.init(node);
-            workflowBlockBean.init(node.getNodeRef());
-            documentLogBlockBean.init(node);
-            return true;
+            boolean recursivelyRestored = false;
+            if (node == null || !getNodeService().exists(node.getNodeRef())) {
+                recursivelyRestored = restoreSnapshot();
+            }
+            if (!recursivelyRestored) {
+                log.debug("didn't restore document snapshot recursively");
+                // node exists, just re-init other beans as well
+                fileBlockBean.init(node);
+                sendOutBlockBean.init(node);
+                typeBlockBean.init();
+                assocsBlockBean.init(node);
+                workflowBlockBean.init(node.getNodeRef());
+                documentLogBlockBean.init(node);
+            } else {
+                log.debug("restored document snapshot recursively");
+            }
+            return true; // restored from snapshot
         }
-        return false;
+        return false; // not restored
     }
 
     @Override
@@ -543,12 +643,14 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         private Node node;
         private boolean isDraft;
         private boolean showDocsAndCasesAssocs;
+        private boolean skipInit;
         private MetadataBlockBean.Snapshot metadataSnapshot;
         private SearchBlockBean.Snapshot searchSnapshot;
 
         private Snapshot(DocumentDialog dialog) {
             this.node = dialog.node;
             this.isDraft = dialog.isDraft;
+            this.skipInit = dialog.skipInit;
             this.showDocsAndCasesAssocs = dialog.showDocsAndCasesAssocs;
             metadataSnapshot = dialog.metadataBlockBean.createSnapshot();
             searchSnapshot = dialog.searchBlockBean.createSnapshot();
@@ -557,6 +659,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         private void restoreState(DocumentDialog dialog) {
             dialog.node = this.node;
             dialog.isDraft = this.isDraft;
+            dialog.skipInit = this.skipInit;
             dialog.showDocsAndCasesAssocs = this.showDocsAndCasesAssocs;
             dialog.metadataBlockBean.restoreSnapshot(metadataSnapshot);
             dialog.searchBlockBean.restoreSnapshot(searchSnapshot);

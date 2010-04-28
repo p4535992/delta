@@ -200,8 +200,12 @@ public class RichListRenderer extends BaseRenderer
                out.write("<th");
                outputAttribute(out, column.getAttributes().get("width"), "width");
                outputAttribute(out, column.getAttributes().get("style"), "style");
-               String columnClass = (String)column.getAttributes().get("styleClass");
-               outputAttribute(out, columnClass != null ? columnClass : headerClass, "class");
+//               String columnClass = (String)column.getAttributes().get("styleClass");
+               // XXX "styleClass" is not used because if it contains valuebinding that references richlist var,
+               // then richlist var does not exist yet in request scope
+               // and if propertysheet puts a var with the same name into session scope and does not clean it up,
+               // then we get a PropertyNotFoundException
+               outputAttribute(out, headerClass, "class");
                out.write('>');
                
                // output the header facet if any

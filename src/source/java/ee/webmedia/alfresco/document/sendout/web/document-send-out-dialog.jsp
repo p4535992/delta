@@ -62,9 +62,9 @@
       <wm:multiValueEditor 
          varName="DocumentSendOutDialog.model" 
          propsGeneration="
-          recipientName¤TextAreaGenerator¤styleClass=expand5-200 medium
-         ,recipientEmail¤TextAreaGenerator¤styleClass=expand5-200 medium
-         ,recipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode
+          recipientName¤TextAreaGenerator¤styleClass=expand19-200 medium
+         ,recipientEmail¤TextAreaGenerator¤styleClass=expand19-200 medium
+         ,recipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=small
          "
          titles="document_name,document_email,document_send_mode" 
          pickerCallback="#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}"
@@ -80,9 +80,9 @@
       <wm:multiValueEditor
          varName="DocumentSendOutDialog.model"
          propsGeneration="
-          additionalRecipientName¤TextAreaGenerator¤styleClass=expand5-200 medium
-         ,additionalRecipientEmail¤TextAreaGenerator¤styleClass=expand5-200 medium
-         ,additionalRecipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode
+          additionalRecipientName¤TextAreaGenerator¤styleClass=expand19-200 medium
+         ,additionalRecipientEmail¤TextAreaGenerator¤styleClass=expand19-200 medium
+         ,additionalRecipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=small
          "
          titles="document_name,document_email,document_send_mode" 
          pickerCallback="#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}"
@@ -108,15 +108,15 @@
       <h:selectBooleanCheckbox value="#{DocumentSendOutDialog.model.zip}" />
       
       <h:panelGroup>
-         <f:verbatim><span class="red">*&nbsp;</span></f:verbatim>
-         <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_senderEmail}" /><f:verbatim></span></f:verbatim>
+         <f:verbatim><span class="no-wrap"><span class="red">*&nbsp;</span></f:verbatim>
+         <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_senderEmail}" /><f:verbatim></span></span></f:verbatim>
       </h:panelGroup>
-      <h:inputTextarea value="#{DocumentSendOutDialog.model.senderEmail}" styleClass="expand5-200 long"/>
+      <h:inputTextarea value="#{DocumentSendOutDialog.model.senderEmail}" styleClass="expand19-200 long"/>
       
       <h:panelGroup>
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_send_subject}" /><f:verbatim></span></f:verbatim>
       </h:panelGroup>
-      <h:inputTextarea value="#{DocumentSendOutDialog.model.subject}" styleClass="expand5-200 long"/>
+      <h:inputTextarea value="#{DocumentSendOutDialog.model.subject}" styleClass="expand19-200 long"/>
       
       <h:panelGroup>
          <f:verbatim><span class="red">*&nbsp;</span></f:verbatim>

@@ -8,8 +8,25 @@
             <action-listener>#{ClassificatorDetailsDialog.addNewValue}</action-listener>
          </action>
 
+         <action id="classificator_export">
+            <label-id>classificators_export</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{ClassificatorListDialog.export}</action-listener>
+         </action>
+
+         <action id="classificator_import">
+            <label-id>classificators_import</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <action>dialog:classificatorsImport</action>
+         </action>
+
          <action-group id="browse_classificator_values">
             <action idref="classificator_add_value" />
+         </action-group>
+
+         <action-group id="classificators_actions">
+            <action idref="classificator_export" />
+            <action idref="classificator_import" />
          </action-group>
 
       </actions>
@@ -17,11 +34,15 @@
 
       <dialogs>
 
-         <dialog name="classificatorListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificator-list-dialog.jsp" managed-bean="ClassificatorListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="classificators_title" show-ok-button="false" />
+         <dialog name="classificatorListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificator-list-dialog.jsp"
+            managed-bean="ClassificatorListDialog" icon="/images/icons/versioned_properties_large.gif" title-id="classificators_title" show-ok-button="false"
+            actions-config-id="classificators_actions" />
 
          <dialog name="classificatorDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificator-details-dialog.jsp"
             managed-bean="ClassificatorDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="classificators_title" show-ok-button="true" />
+
+         <dialog name="classificatorsImport" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificators-import-dialog.jsp" managed-bean="ClassificatorsImportDialog"
+            icon="/images/icons/add_content_large.gif" title-id="classificators_import" description-id="import_classificators_desc" />
 
       </dialogs>
    </config>

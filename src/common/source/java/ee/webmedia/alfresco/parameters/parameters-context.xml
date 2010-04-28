@@ -87,4 +87,14 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
    </bean>
    <!-- END: beans related to scheduling jobs using Parameters -->
 
+   <!-- START: web beans: -->
+
+   <bean id="ParametersListDialog" class="ee.webmedia.alfresco.parameters.web.ParametersListDialog" scope="session" >
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+
+   <bean id="ParametersImportDialog" class="ee.webmedia.alfresco.parameters.web.ParametersImportDialog" scope="session" />
+
+   <!-- END: web beans: -->
+
 </beans>

@@ -133,11 +133,11 @@ public class GeneralServiceImpl implements GeneralService {
         if (ancestorType.equals(realParentType)) {
             return fetchNode(parentRef);
         }
-        if(realParentType.equals(ContentModel.TYPE_STOREROOT)) {
+        if (realParentType.equals(ContentModel.TYPE_STOREROOT)) {
             return null;
         }
         return getAncestorWithType(parentRef, ancestorType);
-        
+
     }
 
     @Override
@@ -150,8 +150,19 @@ public class GeneralServiceImpl implements GeneralService {
         }
     }
 
+    @Override
+    public void saveRemovedChildAssocs(Node node) {
+        Map<String, Map<String, ChildAssociationRef>> removedChildAssocs = node.getRemovedChildAssociations();
+        for (Map<String, ChildAssociationRef> typedAssoc : removedChildAssocs.values()) {
+            for (ChildAssociationRef assoc : typedAssoc.values()) {
+                nodeService.removeChild(assoc.getParentRef(), assoc.getChildRef());
+            }
+        }
+    }
+
     /**
      * Create node from nodRef and populate it with properties and aspects
+     * 
      * @param nodeRef
      * @return
      */
@@ -172,7 +183,7 @@ public class GeneralServiceImpl implements GeneralService {
 
     /**
      * @param type - default values of this type are added to <code>props</code> map
-     * @param aspects 
+     * @param aspects
      * @param props map of properties
      * @return new map if <code>props == null</code>, otherwise the same map. Result contains also default properties of given type
      */
@@ -181,13 +192,13 @@ public class GeneralServiceImpl implements GeneralService {
     }
 
     private Map<QName, Serializable> addMissingValues(Map<QName, Serializable> primaryValues, final Map<QName, Serializable> defaultValues) {
-        if(defaultValues.size() != 0) {
-            if(primaryValues == null) {
+        if (defaultValues.size() != 0) {
+            if (primaryValues == null) {
                 primaryValues = new HashMap<QName, Serializable>();
             }
             for (Entry<QName, Serializable> entry : defaultValues.entrySet()) {
                 final QName key = entry.getKey();
-                if(!primaryValues.containsKey(key)) {
+                if (!primaryValues.containsKey(key)) {
                     primaryValues.put(key, entry.getValue());
                 }
             }
@@ -217,7 +228,7 @@ public class GeneralServiceImpl implements GeneralService {
         for (Map.Entry<QName, PropertyDefinition> entry : propDefs.entrySet()) {
             PropertyDefinition propDef = entry.getValue();
             Serializable value = (Serializable) DefaultTypeConverter.INSTANCE.convert(propDef.getDataType(), propDef.getDefaultValue());
-            if(value != null && propDef.isMultiValued()) {
+            if (value != null && propDef.isMultiValued()) {
                 ArrayList<Serializable> values = new ArrayList<Serializable>();
                 values.add(value);
                 value = values;
@@ -334,7 +345,7 @@ public class GeneralServiceImpl implements GeneralService {
         }
         return props;
     }
-    
+
     @Override
     public Map<QName, Serializable> getPropertiesIgnoringSys(Map<QName, Serializable> nodeProps) {
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
@@ -343,8 +354,6 @@ public class GeneralServiceImpl implements GeneralService {
         }
         return props;
     }
-
-
 
     private void addToPropsIfNotSystem(QName qname, Serializable value, Map<QName, Serializable> props) {
         // ignore system and contentModel properties
@@ -444,10 +453,10 @@ public class GeneralServiceImpl implements GeneralService {
         QName qName = QName.createQName(propName, namespaceService);
         final Map<String, Object> properties = node.getProperties();
         Object value = properties.get(qName.toString());
-        if(value != null && StringUtils.equals(value.getClass().getCanonicalName(), ArrayList.class.getCanonicalName())){
+        if (value != null && StringUtils.equals(value.getClass().getCanonicalName(), ArrayList.class.getCanonicalName())) {
             final Integer valueIndex = (Integer) requestMap.get(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
             @SuppressWarnings("unchecked")
-            List<Object> array = (List<Object>)value;
+            List<Object> array = (List<Object>) value;
             value = array.get(valueIndex);
         }
         return DefaultTypeConverter.INSTANCE.convert(requiredClasss, value);
@@ -530,7 +539,7 @@ public class GeneralServiceImpl implements GeneralService {
     public void setDictionaryService(DictionaryService dictionaryService) {
         this.dictionaryService = dictionaryService;
     }
-    
+
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
     }

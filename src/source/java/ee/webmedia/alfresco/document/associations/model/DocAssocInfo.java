@@ -16,6 +16,7 @@ public class DocAssocInfo implements Serializable {
     private String type;
     private String title;
     private AssocType assocType;
+    private boolean source;
     //
     private NodeRef nodeRef;
 
@@ -45,6 +46,14 @@ public class DocAssocInfo implements Serializable {
         this.assocType = assocType;
     }
 
+    public boolean isSource() {
+        return source;
+    }
+    
+    public void setSource(boolean source) {
+        this.source = source;
+    }
+
     public NodeRef getNodeRef() {
         return nodeRef;
     }
@@ -67,7 +76,7 @@ public class DocAssocInfo implements Serializable {
 
     @Override
     public String toString() {
-        return "DocAssocInfo [assocType=" + assocType + ", caseNodeRef=" + caseNodeRef + ", nodeRef=" + nodeRef + ", title=" + title + ", type=" + type + "]";
+        return "DocAssocInfo [assocType=" + assocType + ", caseNodeRef=" + caseNodeRef + ", nodeRef=" + nodeRef + ", title=" + title + ", type=" + type + ", source=" + source + "]";
     }
 
 }

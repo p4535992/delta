@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import ee.webmedia.alfresco.common.web.WmNode;
+
 public class Notification implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -88,7 +90,9 @@ public class Notification implements Serializable {
 
     @Override
     public String toString() {
-        return "Notification [attachFiles=" + attachFiles + ", senderEmail=" + senderEmail + ", subject=" + subject + ", templateName=" + templateName
-                + ", toEmails=" + toEmails + ", toNames=" + toNames + "]";
+        return WmNode.toString(this) + "[\n  toEmails=" + WmNode.toString(getToEmails()) + "\n  toNames=" + WmNode.toString(getToNames()) + "\n  templateName="
+                + getTemplateName() + "\n  senderEmail=" + getSenderEmail() + "\n  subject=" + getSubject() + "\n  attachFiles=" + isAttachFiles()
+                + "\n  failOnError=" + isFailOnError() + "\n]";
     }
+
 }

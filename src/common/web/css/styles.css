@@ -16,7 +16,7 @@ html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abb
 h2,h2 span {
 /*	font: normal 16px Georgia, 'Times New Roman', Times, serif;*/
 	font-size: 16px;
-	font-weight: normal;
+	font-weight: bold;
 }
 
 #actions a,#actions li,#actions span {
@@ -42,6 +42,18 @@ a {
 a:hover,a:focus {
 	text-decoration: underline;
 	color: #0860b0;
+}
+a.button:focus, a.button:hover {
+	text-decoration: none;
+}
+
+a.button {
+	padding:3px;
+}
+
+#aoscModal-container a.button {
+	position: relative;
+	top: 12px;
 }
 
 #menu li,#menu a {
@@ -406,18 +418,22 @@ a.action {
 /*
 	TITLEBAR
 	******************************/
-#titlebar,#titlebar-search {
+#titlebar,
+#titlebar-search,
+#footer-titlebar {
 	border: 1px solid #d7d9db;
 	background: #f1f1f1;
 }
 
-#actions .actions {
+#actions .actions,
+#footer-actions .actions {
 	font-weight: bold;
 	color: black;
 	text-decoration: none;
 }
 
-#actions>span {
+#actions > span,
+#footer-actions > span{
 	font-weight: bold;
 }
 
@@ -533,15 +549,22 @@ a.action {
 /*
 	TABLES
 	******************************/
-th {
+th,
+td span.th {
 	font-weight: bold;
 	border-bottom: 1px dotted #cacfd3;
+	padding: 0 2px;
 	padding-bottom: 5px;
+}
+
+tr.th td {
+	border: none;
 }
 
 th,
 th a,
-th span {
+th span,
+td span.th {
 	color: #1f426d;
 }
 
@@ -565,6 +588,10 @@ tr.overdue td:first-child a {
 
 tr.overdue td:first-child a:first-child {
 	background: url("../images/icons/bullet-red.png") no-repeat;
+}
+
+tr.row-highlight {
+	background-color: #E8EFFF;
 }
 
 /* PAGE CONTROLS */
@@ -597,34 +624,47 @@ tr.overdue td:first-child a:first-child {
 }
 
 #titlebar-dialog-buttons-panel,
-#titlebar-wizard-buttons-panel {
+#titlebar-wizard-buttons-panel,
+#footer-titlebar-dialog-buttons-panel,
+#footer-titlebar-wizard-buttons-panel {
 	float: right;
-	margin-top: -3px;
+	margin-top: -1px;
+}
+
+.dialog-button {
+	margin-left: 5px;
+}
+
+.dialog-button.primary {
+	margin-right: 5px;
 }
 
 /*
 	GENERIC BUTTONS
 	******************************/
-input[type="submit"] {
+input[type="submit"]
+, a.button {
 	background: url("../images/parts/button-submit-bg.png") repeat-x;
 	color: #fff;
 	font-weight: bold;
 	border: none;
 }
 
-input[type="submit"]:hover,
-input[type="submit"]:focus {
+input[type="submit"]:hover, input[type="submit"]:focus
+, a.button:hover, a.button:focus{
 	background-position: 0 -23px;
 }
 
-input[type="submit"]:active {
+input[type="submit"]:active
+, a.button:active {
 	background-position: 0 -46px;
 }
 
 input[disabled="disabled"],
 input[disabled],
 input[disabled="disabled"]:hover,
-input[disabled]:hover {
+input[disabled]:hover,
+a.button.disabled {
 	background-position: 0 -69px;
 	font-weight: normal;
 }
@@ -632,14 +672,14 @@ input[disabled]:hover {
 input[readonly="readonly"],
 input[readonly] {
 	background: #ddd !important; /* overrides various background images */
-	border: 1px solid #ccc;
+	border: 1px solid #888;
 }
 textarea[readonly="readonly"],
 textarea[readonly],
 select[disabled="disabled"],
 select[disabled] {
 	background: #ddd;
-	border: 1px solid #ccc;
+	border: 1px solid #888;
 }
 
 /*
@@ -787,8 +827,8 @@ hr {
 	vertical-align: top;
 	line-height: 20px;
 	/* width: 10%; */
-	padding-top: 2px;
-	padding-bottom: 2px;
+	padding-top: 3px;
+	padding-bottom: 3px;
 }
 
 .secondary {
@@ -801,21 +841,43 @@ hr {
 
 .propertiesLabel + td {
 	line-height: 20px;
-	padding: 2px 10px;
-	vertical-align: bottom;
+	padding: 3px 10px;
+	/*vertical-align: bottom;*/
+	vertical-align: middle;
 }
 
-.propertiesLabel + td table td select {
-	vertical-align: top;
+#container-content select, #container-content textarea {
+	height: 19px;
+	line-height: 19px;
+	vertical-align: middle;
+}
+
+#container-content select {
+	min-height: 19px; 
+}
+
+#container-content select[multiple="multiple"], #container-content select[multiple] {
+	height: auto;
+}
+
+#container-content input[type="text"] {
+	height: 17px;
+	padding-top: 2px;
+}
+
+.propertiesLabel + td table td select,
+.propertiesLabel + td table td textarea {
+	vertical-align: middle;
 }
 
 .propertiesLabel + td table.recipient td {
-	vertical-align: bottom;
+	vertical-align: middle;
 }
 
-.propertiesLabel + td td {
+.propertiesLabel + td td,
+.propertiesLabel + td td span input {
 	line-height: 20px;
-	vertical-align: top;
+	vertical-align: middle;
 }
 
 textarea {
@@ -826,60 +888,73 @@ input.text {
 	width: 320px;
 }
 
-input.small, textarea.small, select.small {
-	width: 100px !important;
+span.tiny input, input.tiny, textarea.tiny, select.tiny {
+	width: 30px !important;
+	min-width: 30px !important;
 }
 
-input.medium, textarea.medium, select.medium {
-	width: 153px !important;
+span.small input, input.small, textarea.small, select.small {
+	width: 80px !important;
+	min-width: 80px !important;
 }
 
-input.long, textarea.long, select.long {
-	width: 300px !important;
+span.medium input, input.medium, textarea.medium, select.medium {
+	width: 200px !important;/*153px !important;*/
+	min-width: 200px !important;
+}
+
+span.long input, input.long, textarea.long, select.long {
+	width: 400px !important;
 }
 
 .multiE > thead > tr > th {
 	padding-right: 6px;
 }
 
+.multiE {
+	margin-bottom: 5px;
+}
+
+table.multiE td {
+	padding-bottom: 3px;
+	padding-top: 3px;
+}
+
 input.spacing-top {
 	margin-top: 5px;
 }
 
-input.date {
-	background:#FFFFFF url(../images/icons/ico_cal.gif) no-repeat scroll right 35%;
-	cursor:pointer;
+.suggest-wrapper {
+	background:#FFFFFF url(../images/icons/ui-menu.png) no-repeat scroll right 2px;
 	padding-right:18px;
-	width:120px;
-	border: 1px solid #ccc;
+	cursor:pointer;
+	border: 1px solid #888888;
+	height: 19px;
+	display: block;
 }
+
+.suggest-wrapper input.suggest {
+	background: transparent;	
+	border: none;
+}
+
 
 input.readonly {
 	background-color: #ddd;
 }
 
+.center {
+	text-align: center;
+}
+
 input.inline {
 	border: none;
-	border-bottom: solid 1px #ccc;
+	border-bottom: solid 1px #888;
 }
 textarea.inline {
 	border: none;
-	border-bottom: solid 1px #ccc;
+	border-bottom: solid 1px #888;
 /* TODO: lisa triibuline taust, mis kujutaks ridu */
-}
-
-textarea.inline {
-	border: none;
-	border-bottom: solid 1px #ccc;
-	/* TODO: lisa triibuline taust, mis kujutaks ridu */
-}
-
-input.small {
-	width: 50px !important;
-}
-
-input.medium {
-	width: 100px !important;
 }
 
 .remove-person {
@@ -974,20 +1049,27 @@ table.recipient th {
 }
 */
 
-#metadata-panel td input, #metadata-panel td textarea, #file-upload td textarea, .subPropSheet > tbody > tr > td > input {
-	width: 100%;/* 300px;*/
-}
-.subPropertySheetTR td input, .subPropertySheetTR td textarea, .subPropertySheetTR td textarea {
-	width: 100%;/* 300px !important; */
-}
-
-#metadata-panel td select {
-	min-width: 300px;
-	width: auto !important;
-	width: 300px;
+#container-content td input[type="text"], 
+#container-content td textarea, 
+.subPropSheet > tbody > tr > td > input[type="text"],
+.subPropertySheetTR td input[type="text"], 
+.subPropertySheetTR td textarea {
+	width: 398px;
+	padding-left: 2px;
+	padding-right: 2px
 }
 
-#metadata-panel .subPropertySheetTR select {
+#container-content td select {
+	min-width: 170px;
+	height: 22px;
+	font-size: 12px;
+}
+
+#container-content #pref-panel td select {
+	min-width: 170px;
+}
+
+#container-content .subPropertySheetTR select {
 	min-width: 100px;
 	width: auto;
 }
@@ -997,7 +1079,7 @@ table.recipient th {
 	width: 100%;
 }
 
-#metadata-panel table.recipient {
+#container-content table.recipient {
 	width: auto;
 }
 
@@ -1011,20 +1093,31 @@ table.recipient th {
 	padding-top: 15px;
 }
 
-#metadata-panel td td input {
-	width: 100%;
+#container-content td td input[type="text"] {
+/*	width: 400px;*/
 }
 
-#metadata-panel input.date {
-	width: 65px;
+input.date,
+input.disabled-date {
+	background:#FFFFFF url(../images/icons/ico_cal.gif) no-repeat scroll right 35%;
+	cursor:pointer;
+	padding-right:18px !important;
+	width:65px !important;
 	text-align: center;
 }
 
-#metadata-panel .modalpopup-content input {
+input.disabled-date {
+	background: none;
+	padding-right: 9px;
+	padding-left: 9px;
+}
+
+
+#container-content .modalpopup-content input {
 	width: auto;
 }
 
-#metadata-panel div.modalpopup-content td select {
+#container-content div.modalpopup-content td select[multiple="multiple"] {
 	width: 100% !important;
 }
 
@@ -1035,11 +1128,11 @@ table.recipient th {
 
 #send-out-panel td input[type="text"],
 #send-out-panel td select {
-	width: 300px;
+	width: px;
 }
 
 #send-out-panel td td input[type="text"] {
-	width: 180px;
+	width: 180px !important;
 }
 
 #send-out-panel td td textarea.medium {
@@ -1089,8 +1182,11 @@ input[type="radio"].aoscModal-newCase {
 	margin: 10px 0;
 }
 
+#aoscModal-container-modalpopup {
+	height: 170px;
+}
 
-table.expand5-200 {
+table.expand19-200 {
 	width: 100%;
 }
 
@@ -1099,7 +1195,6 @@ table.table-padding td {
 }
 
 table.recipient td {
-	padding: 0;
 	padding-right: 6px;
 }
 
@@ -1109,7 +1204,7 @@ table.recipient td {
 }
 
 .recipient.cells2 textarea {
-	width: 170px !important;
+	width: 197px !important;
 }
 
 .recipient.tasks thead tr th {
@@ -1146,7 +1241,7 @@ table.recipient td {
 
 .overflow-wrapper {
 	overflow-y: scroll;
-	margin-bottom: 10px;
+	margin-bottom: 20px;
 }
 
 .overflow-wrapper th, 
@@ -1478,7 +1573,7 @@ table.recipient td {
 	position: fixed;
 	top: 0;
 	left: 0;
-	z-index: 999;
+	z-index: 100000 !important;
 	width: 100%;
 	height: 100%;
 	background: #808080;
@@ -1491,9 +1586,11 @@ DIV.modalwrap {
 	position: fixed;
 	top: 50%;
 	left: 50%;
-	z-index: 1000;
-	width: 450px;
-	margin: 0 0 0 -225px;
+	z-index: 100000 !important;
+	/*width: 450px;*/
+	width: 500px;
+	height: 406px;
+	margin: -203px 0 0 -250px;
 	padding: 0;
 	text-align: left;
 }
@@ -1558,7 +1655,7 @@ DIV.modalpopup-content * {
 	font-size: 13px;
 }
 DIV.modalpopup-content {
-	min-height: 200px;
+	/*min-height: 200px;*/
 	max-height: 470px;
 	overflow: auto;
 	overflow-y: auto;
@@ -1567,7 +1664,8 @@ DIV.modalpopup-content {
 	border-width: 4px 0;
 }
 DIV.modalpopup-content-inner {
-	padding: 3px 15px 11px;
+	/*padding: 3px 15px 11px;*/
+	padding: 11px 15px;
 }
 DIV.modalpopup-content TABLE.form TH {
 	width: 25%;
@@ -1651,7 +1749,8 @@ DIV.modalpopup-footer P.action {
 
 .taskOverdue span,
 .taskOverdue a {
-	color: #C11920;	
+	/*color: #C11920;*/
+	color: red;	
 }
 .incomingLetter span,
 .incomingLetter a {
@@ -1709,6 +1808,93 @@ DIV.modalpopup-footer P.action {
 
 /* WORKFLOW */
 
+/*******************/
+
+.compound-workflow-table {
+	width: 100%;
+}
+
+.workflow-table {
+	width: 99%;
+}
+
+.task-table {
+	width: 99%;
+}
+                 
+
+#workflow-summary-panel table {
+	
+	border-collapse: collapse;
+}
+
+#workflow-summary-panel .compound-workflow-table {
+
+}
+
+.compound-workflow-table .header td {
+	font-weight: bold;
+	border-top: 2px solid #ccc;
+}
+
+#workflow-summary-panel .compound-workflow-table > tbody {
+	background-color: #F0F0F0;
+}
+
+#workflow-summary-panel .compound-workflow-table > tbody tr.compound-details td {	
+	border-bottom: 1px solid #ccc;
+}
+
+#workflow-summary-panel .compound-workflow-table > tbody td {
+	padding: 5px;
+}
+
+.workflow-table {
+	padding: 10px 15px 0;
+	margin: 10px;
+}
+
+.workflow-table tbody .workflow-header td {
+	border-bottom: 1px solid #ccc;
+	padding-bottom: 7px;
+	line-height: 18px;
+}
+
+.workflow-table .toggle-tasks.expanded {
+	background: transparent url("../images/icons/arrow_up.gif") no-repeat;
+}
+
+.workflow-table .toggle-tasks {
+	background: transparent url("../images/icons/arrow_down.gif") no-repeat;
+}
+
+.workflow-table .workflow-conf {
+	font-weight: bold;
+	margin: 0 10px 0 6px;
+}
+
+.workflow-table td table {
+	margin-top: 10px 0 12px;
+}	
+
+.task-table {
+	margin: 10px 4px;
+}
+
+.task-table td {
+	padding: 0;
+	line-height: 18px;
+
+}
+
+.task-table tr:first-child td {
+	font-weight: bold;
+	border-bottom: 1px dotted #cacfd3;
+	padding: 0 2px;
+}
+
+/*******************/
+/*
 .workflow-row td {
 	border-top: 10px solid #fff;
 	background-color: #F7F7F7;
@@ -1747,10 +1933,10 @@ DIV.modalpopup-footer P.action {
 .workflow-details.last > td {
 	padding-bottom: 0px;
 }
-
+*/
 .task-sheet-buttons {
-	text-align: right;
 	display: block;
+	margin: 10px 0 0 130px;
 }
 
 .task-sheet-buttons input {
@@ -1770,9 +1956,30 @@ TH A.header-wrap {
 }
 
 .selectBoundWithText {
-	margin-bottom: 4px;
+	margin-bottom: 6px;
 }
 
 .no-wrap {
 	white-space: nowrap;
+}
+
+#assign-responsibility-panel input[type=text] {
+	width: 200px !important;
+}
+
+#assign-responsibility-panel .panel-border > input {
+	display: inline;
+	float: right;
+}
+
+#add-authority-search table.generic-picker select {
+	min-width: 165px;
+}
+
+.workflow-task-block .propertiesLabel {
+	width: 125px;
+}
+
+.workflow-task-block .propertiesLabel + td {
+	width: auto;
 }

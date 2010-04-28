@@ -20,7 +20,6 @@ public class FavoritesDocumentListDialog extends BaseDocumentListDialog {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
-        documents = getDocumentService().getFavorites();
         restored();
     }
 

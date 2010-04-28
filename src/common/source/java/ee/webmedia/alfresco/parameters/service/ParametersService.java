@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.parameters.service;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.List;
 
 import ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean;
@@ -8,16 +9,19 @@ import ee.webmedia.alfresco.parameters.model.Parameter;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 
 /**
- * Class to retrieve user-configurable parameters 
+ * Class to retrieve user-configurable parameters
+ * 
  * @author Ats Uiboupin
  */
 public interface ParametersService {
-	
+
     String BEAN_NAME = "ParametersService";
-    
-    public interface ParameterChangedCallback{
+
+    public interface ParameterChangedCallback {
         void doWithParameter(Serializable serializable);
     }
+
+    Parameter<?> getParameter(Parameters parameter);
     
     /**
      * @param <T> - Type of requiredClazz
@@ -41,7 +45,9 @@ public interface ParametersService {
     /**
      * @param parameters - parameters to be updated to the repository
      */
-    void updateParameters(List<Parameter<?>> parameters);
+    void updateParameters(Collection<Parameter<?>> parameters);
+
+    void updateParameter(Parameter<?> parameter);
 
     void addParameterChangeListener(String paramName, ParameterChangedCallback callback);
 

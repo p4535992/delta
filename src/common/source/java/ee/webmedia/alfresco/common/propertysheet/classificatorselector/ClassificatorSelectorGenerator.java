@@ -1,11 +1,8 @@
 package ee.webmedia.alfresco.common.propertysheet.classificatorselector;
 
-import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import javax.faces.component.UIInput;
 import javax.faces.component.UISelectItem;

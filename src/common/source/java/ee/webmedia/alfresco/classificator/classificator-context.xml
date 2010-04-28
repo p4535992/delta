@@ -61,5 +61,11 @@
          </list>
       </property>
    </bean>
+   <!-- END: beans related to scheduling jobs using Parameters -->
 
+   <!-- START: web beans: -->
+
+   <bean id="ClassificatorsImportDialog" class="ee.webmedia.alfresco.classificator.web.ClassificatorsImportDialog" scope="session" />
+
+   <!-- END: web beans: -->
 </beans>

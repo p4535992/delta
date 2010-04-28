@@ -30,6 +30,7 @@ import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
@@ -227,11 +228,9 @@ public class NotificationServiceImpl implements NotificationService {
             }
 
             String zipName = I18NUtil.getMessage("notification_zip_filename") + ".zip";
-            emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail(), notification.getSubject(), content,
-                    true, docRef, fileRefs, true, zipName);
+            sendEmail(notification, content, docRef, fileRefs, true, zipName);
         } else {
-            emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail(), notification.getSubject(), content,
-                    true, docRef, null, false, null);
+            sendEmail(notification, content, docRef);
         }
     }
 
@@ -624,12 +623,11 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
     private int sendVolumesDispositionDateNotifications(List<Volume> volumesDispositionedAfterDate) {
-        int sentMails = 0;
         Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.VOLUME_DISPOSITION_DATE);
         notification = addDocumentManagersAsRecipients(notification);
         
         if(notification.getToEmails() == null || notification.getToEmails().isEmpty()) {
-            return sentMails; // no doc managers available
+            return 0; // no doc managers available
         }
 
         NodeRef systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
@@ -642,14 +640,12 @@ public class NotificationServiceImpl implements NotificationService {
 
         String content = templateService.getProcessedVolumeDispositionTemplate(volumesDispositionedAfterDate, systemTemplateByName);
         try {
-            emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail(), notification.getSubject(), content,
-                    true, null, null, false, null);
-
-            sentMails = notification.getToEmails().size();
+            sendEmail(notification, content, null);
+            return notification.getToEmails().size();
         } catch (EmailException e) {
             log.error("Volume disposition date notification e-mail sending failed, ignoring and continuing", e);
+            return 0;
         }
-        return sentMails;
     }
 
     @Override
@@ -703,9 +699,7 @@ public class NotificationServiceImpl implements NotificationService {
             content = templateService.getProcessedAccessRestrictionEndDateTemplate(userDocuments, systemTemplateByName);
 
             try {
-                emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail(), notification.getSubject(),
-                        content,
-                        true, null, null, false, null);
+                sendEmail(notification, content, null);
             } catch (EmailException e) {
                 log.error("Access restriction due date notification e-mail sending to " + userFullName + " (" + userName + ") <"
                         + userEmail + "> failed, ignoring and continuing", e);
@@ -730,8 +724,7 @@ public class NotificationServiceImpl implements NotificationService {
         content = templateService.getProcessedAccessRestrictionEndDateTemplate(documents, systemTemplateByName);
 
         try {
-            emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail(), notification.getSubject(),
-                    content, true, null, null, false, null);
+            sendEmail(notification, content, null);
         } catch (EmailException e) {
             log.error("Access restriction due date notification e-mail sending to document managers failed, ignoring and continuing", e);
         }
@@ -794,6 +787,18 @@ public class NotificationServiceImpl implements NotificationService {
         }
         String message = I18NUtil.getMessage(messageKey);
         return (message != null) ? message : messageKey;
+    }
+
+    private void sendEmail(Notification notification, String content, NodeRef docRef) throws EmailException {
+        sendEmail(notification, content, docRef, null, false, null);
+    }
+
+    private void sendEmail(Notification notification, String content, NodeRef docRef, List<String> fileRefs, boolean zipIt, String zipName) throws EmailException {
+        if (log.isDebugEnabled()) {
+            log.debug("Sending notification e-mail\nnotification=" + notification + "\ncontent=" + WmNode.toString(content) + "\ndocRef=" + docRef
+                    + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipName);
+        }
+        emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail(), notification.getSubject(), content, true, docRef, fileRefs, zipIt, zipName);
     }
 
     // START: setters/getters

@@ -34,6 +34,7 @@ import ee.sk.digidoc.SignedProperties;
 import ee.sk.digidoc.factory.DigiDocFactory;
 import ee.sk.digidoc.factory.SAXDigiDocFactory;
 import ee.sk.utils.ConfigManager;
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
@@ -311,7 +312,7 @@ public class SignatureServiceImpl implements SignatureService {
     private void writeSignedDoc(NodeRef nodeRef, SignedDoc document) throws DigiDocException {
         ContentWriter writer = fileFolderService.getWriter(nodeRef);
         writer.setMimetype(SignatureService.DIGIDOC_MIMETYPE);
-        writer.setEncoding("UTF-8");
+        writer.setEncoding(AppConstants.CHARSET);
         OutputStream os = writer.getContentOutputStream();
         document.writeToStream(os);
         try {

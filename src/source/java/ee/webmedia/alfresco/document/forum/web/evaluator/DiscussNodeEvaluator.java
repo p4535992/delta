@@ -12,7 +12,9 @@ import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
+import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 
 /**
@@ -29,6 +31,8 @@ public class DiscussNodeEvaluator extends BaseActionEvaluator {
     @Override
     public boolean evaluate(Node node) {
         boolean result = false;
+        GeneralService generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(GeneralService.BEAN_NAME);
+        node = generalService.fetchNode(node.getNodeRef()); // refresh the node, because dialog caches it, and sub dialogs change props/aspects
 
         if (node.hasAspect(ForumModel.ASPECT_DISCUSSABLE)) {
             NodeService nodeService = Repository.getServiceRegistry(

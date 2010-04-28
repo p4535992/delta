@@ -48,7 +48,7 @@
                </a:actionLink>
             </f:facet>
             <f:facet name="header">
-               <a:sortLink label="#{msg.identifier}" value="id" mode="case-insensitive" styleClass="header"/>
+               <a:sortLink label="#{msg.addressbook_group_name}" value="id" mode="case-insensitive" styleClass="header"/>
             </f:facet>
             <a:actionLink value="#{r.displayName}" actionListener="#{DialogManager.bean.clickGroup}">
                <f:param name="id" value="#{r.id}" />

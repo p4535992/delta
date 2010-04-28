@@ -20,6 +20,7 @@ public class Substitute implements Serializable {
     private String substituteId;
     private Date substitutionStartDate;
     private Date substitutionEndDate;
+    private boolean valid = true;
 
     @AlfrescoModelProperty(isMappable = false)
     private NodeRef nodeRef;
@@ -109,7 +110,15 @@ public class Substitute implements Serializable {
         this.substitutionEndDate = substitutionEndDate;
     }
 
+    public void setValid(boolean valid) {
+        this.valid = valid;
+    }
+
     public boolean isReadOnly() {
+        if (!valid) {
+            return false;
+        }
+
         if (substitutionEndDate == null) return false;
 
         Date currentDate = DateUtils.truncate(new Date(), Calendar.DATE);

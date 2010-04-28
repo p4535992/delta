@@ -44,10 +44,11 @@ public class SignatureAppletModalComponent extends UIOutputText {
     {
        if (!isRendered() || StringUtils.isBlank(getOperation())) return;
        ResponseWriter out = context.getResponseWriter();
-       
+
+       out.write("<div id=\"overlay\" style=\"display: block;\"></div>");
        out.write("<div id=\"");
        out.write(getDialogId(context));
-       out.write("\" class=\"modalpopup modalwrap\">");
+       out.write("\" class=\"modalpopup modalwrap\" style=\"display: block; height: 143px;\">");
        out.write("<div class=\"modalpopup-header clear\"><h1>");
        out.write(org.alfresco.web.app.Application.getMessage(context, "task_title_signatureTask"));
        out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"return cancelSign();\">");

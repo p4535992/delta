@@ -24,6 +24,7 @@
          <input type="radio" name="existingOrNew" id="aoscModal-selectCase-radio" value="aoscModal-selectCase-radio" class="aoscModal-selectCase" />
 </f:verbatim>
 <h:panelGrid>
+      <h:inputHidden id="caseAssignmentNeeded" value="#{MetadataBlockBean.caseAssignmentNeeded}" ></h:inputHidden>
       <a:outputText id="aoscModal-selectCase-lbl" value="#{msg.document_aoscModal_existingCaseLabel}" styleClass="aoscModal-selectCase" />
       <h:selectOneMenu value="" id="aoscModal-selectCase" valueChangeListener="#{MetadataBlockBean.caseOfVolumeSelected}" styleClass="aoscModal-selectCase assignCaseInput" >
          <f:selectItems value="#{MetadataBlockBean.casesOfSelectedVolume}" />
@@ -35,23 +36,21 @@
 <h:panelGrid id="aoscModal-newCase-controls">
          <h:outputText id="aoscModal-newCase-lbl" value="#{msg.document_aoscModal_newCaseLabel}" styleClass="aoscModal-newCase" />
          <h:inputTextarea id="newCaseName" binding="#{MetadataBlockBean.newCaseHtmlInput}" styleClass="aoscModal-newCase assignCaseInput expand20-200" readonly="readonly" />
-         <h:commandButton id="confirmCaseSelectionBtn" value="#{msg.confirm}" disabled="true" />
 </h:panelGrid>
 <f:verbatim>
 </div>
 </div>
 
 <script type="text/javascript">
-var volumeContainsCases = true;
 var registerButtonPressed = false;
+var checksDone = false;
 $jQ(document).ready(function(){
-   relocateRadioButtons();
+   initHtmlElements();
    clearCaseSelectionInputs();
-   replaceConfirmCaseBtnOnclick();
 
+   var finishButton = $jQ('#' + escapeId4JQ('dialog:finish-button') + ", "+'#' + escapeId4JQ('dialog:finish-button-2'));
    $jQ('#' + escapeId4JQ('dialog:documentRegisterButton')).bind("click", function(e){
       registerButtonPressed = true;
-      var finishButton = $jQ('#' + escapeId4JQ('dialog:finish-button'));
       if(finishButton.attr('disabled')) {
          alert("<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("document_mandatory_fields_are_empty")%>");
          return false;
@@ -59,26 +58,33 @@ $jQ(document).ready(function(){
       return proccessSubmitOrRegisterButton();
    });
 
-   $jQ('#' + escapeId4JQ('dialog:finish-button')).bind("click", function(e){
+   finishButton.bind("click", function(e){
       return proccessSubmitOrRegisterButton();
    });
 
-   function replaceConfirmCaseBtnOnclick() {
-      var confirmCaseBtn = $jQ('#' + escapeId4JQ('dialog:dialog-body:confirmCaseSelectionBtn'));
-      confirmCaseBtn.removeAttr("onclick"); // remove generated onclick attribute value to avoid confusion, as it will be replaced
-      confirmCaseBtn.unbind('click'); // remove jsf generated function call from DOM
-      confirmCaseBtn.click(function() {
-         realSubmit();
-      });
-   }
-
+   /**
+    * @return true, if case is selected, false otherwise
+    */ 
    function proccessSubmitOrRegisterButton() {
-      if(!volumeContainsCases || isCaseAssigned()){
-          volumeContainsCases = true;
-          return true; // case selected, proceed
+      if(isCaseAssignmentNeeded()){
+         clearCaseSelectionInputs();
+         if(propSheetValidateSubmit()){
+            showModal('aoscModal-container-modalpopup');
+         }
+         checksDone = true;
+         return false;
+      } else {
+         if(!checksDone){
+            checksDone = true;
+            if(registerButtonPressed) {
+               $jQ('#' + escapeId4JQ('dialog:documentRegisterButton')).click();
+            } else {
+               $jQ('#' + escapeId4JQ('dialog:finish-button')).click();
+            }
+            propSheetFinishBtnPressed = true;
+         }
+         return true;
       }
-      requestVolumeContainsCases();// ajax call. Based on input show case selection modal
-      return false; // case not selected
    }
 
    var class_selectCase = "aoscModal-selectCase";
@@ -120,8 +126,28 @@ $jQ(document).ready(function(){
 
 });
 
+   function initHtmlElements(){
+	  createConfirmCaseSelectionBtn();
+      relocateRadioButtons();
+   }
+
+   function createConfirmCaseSelectionBtn(){
+      var lastRow = $jQ('.aoscModal-newCase.assignCaseInput').parent().parent();
+      // can't use button, as it will behave diferently for some reason with IE(at least with IE8): 
+      // statusbar will go to completed state before process application phase is completed(for example because of breakpoint at MetadataBlockBean#save())
+      // and later page is reloaded without any indications on statusbar
+      var confirmCaseSelectionBtn = $jQ('<a id="confirmCaseSelectionBtn" href="#" class="button disabled" >Kinnita</a>');
+      confirmCaseSelectionBtn.click(function(e){
+         if(confirmCaseSelectionBtn.hasClass("disabled")){
+            return false;
+         }
+         realSubmit();
+      });
+      confirmCaseSelectionBtn.insertAfter(lastRow);
+      confirmCaseSelectionBtn.wrapAll("<tr style='height:35px'/>").wrapAll("<td/>");
+   }
+
    function relocateRadioButtons(){
-      //TODO: nupud õigetesse kohtadesse
       // relocate selectCase radiobutton
       var selectCaseRadio = $jQ("input[type='radio'].aoscModal-selectCase");
       selectCaseRadio.insertBefore("span.aoscModal-selectCase");
@@ -129,6 +155,7 @@ $jQ(document).ready(function(){
       var newCaseRadio = $jQ("input[type='radio'].aoscModal-newCase");
       newCaseRadio.insertBefore("span.aoscModal-newCase");
    }
+
    function isCaseAssigned(){
       var selectCaseVal = $jQ(".aoscModal-selectCase option:selected").text();
       var assigned;
@@ -141,6 +168,7 @@ $jQ(document).ready(function(){
       }
       return assigned;
    }
+
    function isEmptyValue(value){
       value = $jQ.trim(value);
       var defaultSelection = "[defaultSelection]";
@@ -173,11 +201,11 @@ $jQ(document).ready(function(){
    }
 
    function setCaseAssigned(selected){
-      var confirmCaseBtn = $jQ('#' + escapeId4JQ('dialog:dialog-body:confirmCaseSelectionBtn'));
+      var confirmCaseBtn = $jQ('#confirmCaseSelectionBtn');
       if(selected){
-         confirmCaseBtn.removeAttr("disabled");
+         confirmCaseBtn.removeClass("disabled");
       } else {
-         confirmCaseBtn.attr("disabled", "disabled");
+         confirmCaseBtn.addClass("disabled");
          clearCaseSelectionInputs();
       }
    }
@@ -192,35 +220,9 @@ $jQ(document).ready(function(){
       }
       $jQ("input[name='existingOrNew']").removeAttr("checked");
    }
-   
-   function requestVolumeContainsCases() {
-      YAHOO.util.Connect.asyncRequest("GET", getContextPath() + '/ajax/invoke/MetadataBlockBean.volumeContainsCasesClientHandler', 
-            { 
-               success: requestVolumeContainsCasesRefreshSuccess
-               ,failure: requestVolumeContainsCasesRefreshFailure
-            }, 
-            null);
-   }
 
-   function requestVolumeContainsCasesRefreshSuccess(ajaxResponse) {
-      var xml = ajaxResponse.responseXML.documentElement;
-      if(xml.getAttribute('volume-selection-changed') == "true" && xml.getAttribute('contains-cases') == "true"){
-         volumeContainsCases = true;
-         clearCaseSelectionInputs();
-         showModal('aoscModal-container-modalpopup');
-      } else {
-         volumeContainsCases = false;
-         if(registerButtonPressed) {
-         	$jQ('#' + escapeId4JQ('dialog:documentRegisterButton')).click();
-         } else {
-            $jQ('#' + escapeId4JQ('dialog:finish-button')).click();
-         }
-      }
-   }
-   
-   function requestVolumeContainsCasesRefreshFailure(ajaxResponse) {
-      // alert("response: "+ajaxResponse.responseText); //XXX: mida veaolukorras teha võiks?
-      $jQ.log("request: volumeContainsCases - failure: "+ajaxResponse.responseText);
+   function isCaseAssignmentNeeded(){
+      return !isCaseAssigned() && "true" == $jQ('#' + escapeId4JQ('dialog:dialog-body:caseAssignmentNeeded')).val();
    }
    
 </script>

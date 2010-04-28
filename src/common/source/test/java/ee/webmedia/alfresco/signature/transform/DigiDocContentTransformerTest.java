@@ -13,6 +13,7 @@ import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.TransformationOptions;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 
 public class DigiDocContentTransformerTest extends AbstractContentTransformerTest {
@@ -22,15 +23,18 @@ public class DigiDocContentTransformerTest extends AbstractContentTransformerTes
 
     private DigiDocContentTransformer transformer;
 
+    @Override
     public void setUp() throws Exception {
         super.setUp();
         transformer = (DigiDocContentTransformer) ctx.getBean("transformer.DigiDocContent");
     }
 
+    @Override
     protected ContentTransformer getTransformer(String sourceMimetype, String targetMimetype) {
         return transformer;
     }
 
+    @Override
     public void testSetUp() throws Exception {
         assertNotNull(transformer);
     }
@@ -43,12 +47,12 @@ public class DigiDocContentTransformerTest extends AbstractContentTransformerTes
     public void testDigiDocToText() throws Exception {
         ContentReader contentReader = new FileContentReader(new File(TEST_RESOURCE_PATH, TEST_DIGIDOC));
         contentReader.setMimetype(SignatureService.DIGIDOC_MIMETYPE);
-        contentReader.setEncoding("UTF-8");
+        contentReader.setEncoding(AppConstants.CHARSET);
 
         File output = File.createTempFile("digiDocTest", ".txt");
         ContentWriter contentWriter = new FileContentWriter(output);
         contentWriter.setMimetype(MimetypeMap.MIMETYPE_TEXT_PLAIN);
-        contentWriter.setEncoding("UTF-8");
+        contentWriter.setEncoding(AppConstants.CHARSET);
 
         transformer.transform(contentReader, contentWriter);
 

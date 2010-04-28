@@ -104,27 +104,11 @@
 
       <%-- Details --%>
       <a:errors message="#{WizardManager.errorMessage}" styleClass="message" errorClass="error-message" infoClass="info-message" />
-      <a:panel id="wizard-column-wrapper" styleClass="column-wrapper">
-         <a:panel id="wizard-step-body" label="#{WizardManager.stepTitle}" styleClass="column panel-90">
-            <f:verbatim>
-            <p class="wizard-step-description">
-            </f:verbatim>
-               <h:outputText value="#{WizardManager.stepDescription}" />
-            <f:verbatim>
-            </p>
-            </f:verbatim>
-
+      <a:panel id="container-content" styleClass="column-wrapper">
+         <a:panel id="wizard-step-body" label="#{WizardManager.stepTitle}" styleClass="panel-100">
             <f:subview id="wizard-body">
                <jsp:include page="<%=Application.getWizardManager().getPage() %>" />
             </f:subview>
-
-            <f:verbatim>
-            <p class="wizard-step-instructions">
-            </f:verbatim>
-               <h:outputText value="#{WizardManager.stepInstructions}" />
-            <f:verbatim>
-            </p>
-            </f:verbatim>
          </a:panel>
          
       </a:panel>

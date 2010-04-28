@@ -13,6 +13,7 @@ import org.alfresco.web.bean.ajax.NavigatorPluginBean;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
@@ -32,6 +33,15 @@ public class MenuRenderer extends BaseRenderer {
 
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
+        // Prepare scrolling info
+        MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
+        if(StringUtils.isBlank(menuBean.getScrollToY()) || !menuBean.getScrollToY().equals("0")) {
+            String scrollToY = (String) context.getExternalContext().getRequestParameterMap().get("scrollToY");
+            menuBean.setScrollToY(scrollToY);
+        } else {
+            menuBean.setScrollToY(null);
+        }
+        
         writeScripts(context);
         context.getResponseWriter().write("<ul>");
     }
@@ -101,6 +111,27 @@ public class MenuRenderer extends BaseRenderer {
             out.write("setCollapseUrl('" + AJAX_URL_START + ".nodeCollapsed?');\n");
             out.write("setNodeSelectedHandler('treeNodeSelected');\n");
             out.write("</script>\n");
+            
+            MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
+            
+            if(StringUtils.isNotEmpty(menuBean.getScrollToAnchor())) {
+                StringBuilder sb = new StringBuilder("<script type=\"text/javascript\">")
+                .append("$jQ(document).ready(function(){")
+                .append("window.location=\"")
+                .append(menuBean.getScrollToAnchor())
+                .append("\"});")
+                .append("</script>");
+                
+                out.write(sb.toString());
+            } else if(StringUtils.isNotEmpty(menuBean.getScrollToY())) {
+                StringBuilder sb = new StringBuilder("<script type=\"text/javascript\">")
+                .append("$jQ(document).ready(function(){")
+                .append("$jQ(window).scrollTop(")
+                .append(menuBean.getScrollToY())
+                .append(")\n});")
+                .append("</script>");
+                out.write(sb.toString());
+            }
 
             requestMap.put(TREE_SCRIPTS_WRITTEN, Boolean.TRUE);
         }

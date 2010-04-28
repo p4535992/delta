@@ -561,7 +561,6 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
    
    
     protected boolean allChildAssociationsByAssocTypeRetrieved = false;
-    private Map<String/* assocTypeQName */, List<String /* nodeRef */>> allRemovedChildAssociationsByAssocType;
     private Map<String/* assocTypeQName */, List<Node>> allChildAssociationsByAssocType;
 
     /**
@@ -710,15 +709,29 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
     }
 
     private void addRemovedChildAssociation(QName assocTypeQName, String nodeRefAsString) {
-        if (allRemovedChildAssociationsByAssocType == null) {
-            allRemovedChildAssociationsByAssocType = new HashMap<String, List<String>>();
+        final Map<String/* assocTypeQName */, Map<String/* childRef */, ChildAssociationRef>> removedChildAssociations = getRemovedChildAssociations();
+        Map<String, ChildAssociationRef> removedChidAssocsByRef = removedChildAssociations.get(assocTypeQName.toString());
+        if (removedChidAssocsByRef == null) {
+            removedChidAssocsByRef = new HashMap<String, ChildAssociationRef>(3);
+            removedChildAssociations.put(assocTypeQName.toString(), removedChidAssocsByRef);
         }
-        List<String> removedNodesOfAssoc = allRemovedChildAssociationsByAssocType.get(assocTypeQName.toString());
-        if (removedNodesOfAssoc == null) {
-            removedNodesOfAssoc = new ArrayList<String>(5);
-            allRemovedChildAssociationsByAssocType.put(assocTypeQName.toString(), removedNodesOfAssoc);
+        ChildAssociationRef childAssoc = new DeleteChildAssociationRef(assocTypeQName,
+                getNodeRef(), new NodeRef(nodeRefAsString));
+        removedChidAssocsByRef.put(nodeRefAsString, childAssoc);
+
+    }
+
+    static class DeleteChildAssociationRef extends ChildAssociationRef {
+        private static final long serialVersionUID = 1L;
+
+        public DeleteChildAssociationRef(QName assocTypeQName, NodeRef parentRef, NodeRef childRef) {
+            super(assocTypeQName, parentRef, null, childRef);
         }
-        removedNodesOfAssoc.add(nodeRefAsString);
+
+        @Override
+        public QName getQName() {
+            throw new RuntimeException("Returning QName of DeleteChildAssociationRef is unimplemented");
+        }
     }
 
 }

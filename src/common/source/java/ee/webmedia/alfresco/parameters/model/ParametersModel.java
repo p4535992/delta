@@ -29,6 +29,7 @@ public interface ParametersModel {
          */
         public interface Parameter {
             QName VALUE = QName.createQName(ParametersModel.URI, "value");
+            QName NEXT_FIRE_TIME = QName.createQName(ParametersModel.URI, "nextFireTime");
         }
 
     }

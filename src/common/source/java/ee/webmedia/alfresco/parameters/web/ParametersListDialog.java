@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
@@ -14,6 +15,9 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.parameters.model.Parameter;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.simdhs.CSVExporter;
+import ee.webmedia.alfresco.simdhs.DataReader;
+import ee.webmedia.alfresco.simdhs.RichListDataReader;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
@@ -27,6 +31,11 @@ public class ParametersListDialog extends BaseDialogBean {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
+        restored();
+    }
+
+    @Override
+    public void restored() {
         parameters = getParametersService().getAllParameters();
     }
 
@@ -65,6 +74,18 @@ public class ParametersListDialog extends BaseDialogBean {
     @Override
     public boolean getFinishButtonDisabled() {
         return false;
+    }
+
+    /** @param event */
+    public void exportAsCsv(ActionEvent event) {
+        DataReader dataReader = new RichListDataReader();
+        CSVExporter exporter = new CSVExporter(dataReader);
+        exporter.export("parametersList");
+    }
+
+    @Override
+    public Object getActionsContext() {
+        return null;
     }
 
     // START: getters / setters

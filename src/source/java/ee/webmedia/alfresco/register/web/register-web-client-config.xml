@@ -32,7 +32,7 @@
          <show-property name="reg:counter" read-only="true" display-label-id="register_counter" />
          <show-property name="reg:prefix" display-label-id="register_prefix" />
          <show-property name="reg:suffix" display-label-id="register_suffix" />
-         <show-property name="reg:comment" display-label-id="register_comment" styleClass="expand5-200" />
+         <show-property name="reg:comment" display-label-id="register_comment" styleClass="expand19-200" />
          <show-property name="reg:active" display-label-id="register_active" />
       </property-sheet>
    </config>

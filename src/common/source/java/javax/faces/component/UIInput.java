@@ -35,6 +35,8 @@ import javax.faces.event.ValueChangeListener;
 import javax.faces.render.Renderer;
 import javax.faces.validator.Validator;
 
+import org.alfresco.web.ui.common.Utils;
+
 import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 
 /**
@@ -372,18 +374,28 @@ public class UIInput
 
         Object convertedValue = getConvertedValue(context, submittedValue);
 
-        if (!isValid()) return;
+        boolean reqValidDisabled = Utils.isRequestValidationDisabled(context);
+        
+        if (!isValid() && !reqValidDisabled) 
+            return;
 
-        validateValue(context, convertedValue);
+        if (isValid()) 
+            validateValue(context, convertedValue);
 
-        if (!isValid()) return;
+        if (!isValid() && !reqValidDisabled) 
+            return;
 
-        Object previousValue = getValue();
-        setValue(convertedValue);
-        setSubmittedValue(null);
-        if (compareValues(previousValue, convertedValue))
-        {
-            queueEvent(new ValueChangeEvent(this, previousValue, convertedValue));
+        if (isValid()) {
+            Object previousValue = getValue();
+            setValue(convertedValue);
+            setSubmittedValue(null);
+            if (compareValues(previousValue, convertedValue))
+            {
+                queueEvent(new ValueChangeEvent(this, previousValue, convertedValue));
+            }
+        }
+        else {
+            setValid(true);
         }
     }
 
@@ -429,14 +441,16 @@ public class UIInput
         }
         catch (ConverterException e)
         {
-            FacesMessage facesMessage = e.getFacesMessage();
-            if (facesMessage != null)
-            {
-                context.addMessage(getClientId(context), facesMessage);
-            }
-            else
-            {
-                _MessageUtils.addErrorMessage(context, this, CONVERSION_MESSAGE_ID,new Object[]{getId()});
+            if (!Utils.isRequestValidationDisabled(context)) {
+                FacesMessage facesMessage = e.getFacesMessage();
+                if (facesMessage != null)
+                {
+                    context.addMessage(getClientId(context), facesMessage);
+                }
+                else
+                {
+                    _MessageUtils.addErrorMessage(context, this, CONVERSION_MESSAGE_ID,new Object[]{getId()});
+                }
             }
             setValid(false);
         }

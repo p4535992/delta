@@ -6,6 +6,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+import ee.webmedia.alfresco.parameters.model.Parameter;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
@@ -13,7 +14,6 @@ import org.alfresco.util.AbstractTriggerBean;
 import org.quartz.CronTrigger;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 
 import ee.webmedia.alfresco.parameters.model.Parameters;
@@ -43,7 +43,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
     private String parameterFormat;
     private String cron;
     private long repeatInterval = 0;
-    private int repeatCount = SimpleTrigger.REPEAT_INDEFINITELY;
+    private int repeatCount = PersistentTrigger.REPEAT_INDEFINITELY;
     private long startDelay = 0;
     private Trigger trigger;
     private boolean fireAtStartup;
@@ -92,16 +92,17 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
     @Override
     public Trigger getTrigger() throws ParseException {
         if (cron == null) {
-            SimpleTrigger trigger = new SimpleTrigger(getBeanName(), Scheduler.DEFAULT_GROUP);
+            PersistentTrigger trigger = new PersistentTrigger(getBeanName(), Scheduler.DEFAULT_GROUP, parameterName, parametersService);
             long startDelayInMillis = 0;
             if (startDelay > 0) { // ignore fireAtStartup if startDelay is defined 
                 startDelayInMillis = this.startDelay;
             } else if (!fireAtStartup) {
-                startDelayInMillis = repeatInterval;
+                startDelayInMillis = getStartDelay();
             }
+            if (log.isDebugEnabled()) log.debug(String.format(String.format("Start delay for parameter=%s is %d", parameterName, startDelayInMillis)));
             trigger.setStartTime(new Date(System.currentTimeMillis() + startDelayInMillis));
             trigger.setRepeatCount(repeatCount);
-            trigger.setRepeatInterval(this.repeatInterval);
+            trigger.setRepeatInterval(repeatInterval);
             return trigger;
         } else {
             trigger = new CronTrigger(getBeanName(), Scheduler.DEFAULT_GROUP, cron);
@@ -110,9 +111,32 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
         return trigger;
     }
 
+    public long getStartDelay() {
+        return AuthenticationUtil.runAs(new RunAsWork<Long>() {
+            @Override
+            public Long doWork() throws Exception {
+                Date startTime;
+                Parameter param = parametersService.getParameter(Parameters.get(parameterName));
+                if (param.getNextFireTime() != null) {
+                    if (log.isDebugEnabled()) log.debug("Got next fire time from parameter: " + param.getNextFireTime());
+                    startTime = param.getNextFireTime();
+                }
+                else {
+                    startTime = new Date(System.currentTimeMillis() + repeatInterval);
+                    if (log.isDebugEnabled()) log.debug("Storing next fire time to parameter: " + startTime);
+                    param.setNextFireTime(startTime);
+                    parametersService.updateParameter(param);
+                }
+                long delay = startTime.getTime() - System.currentTimeMillis();
+                return delay > 0 ? delay : 0;
+            }
+        }, AuthenticationUtil.getSystemUserName());
+    }
+
     private void reschedule(String newValue) {
         Scheduler scheduler = getScheduler();
         String thisTriggerName = getBeanName();
+        if (log.isDebugEnabled()) log.debug(String.format("Rescheduling trigger=%s to value=%s", thisTriggerName, newValue));
         try {
             for (String triggerGroupName : scheduler.getTriggerGroupNames()) {
                 String[] triggerNames = scheduler.getTriggerNames(triggerGroupName);
@@ -123,10 +147,15 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
                         resolveSchedule(newValue);
                         if (trigger instanceof CronTrigger) {
                             ((CronTrigger) trigger).setCronExpression(cron);
-                        } else if (trigger instanceof SimpleTrigger) {
-                            final SimpleTrigger sTrigger = (SimpleTrigger) trigger;
+                        } else if (trigger instanceof PersistentTrigger) {
+                            final PersistentTrigger sTrigger = (PersistentTrigger) trigger;
                             trigger.setStartTime(new Date(System.currentTimeMillis() + repeatInterval));
                             sTrigger.setRepeatInterval(repeatInterval);
+
+                            // persist next fire time to repository
+                            Parameter parameter = parametersService.getParameter(Parameters.get(parameterName));
+                            parameter.setNextFireTime(trigger.getStartTime());
+                            parametersService.updateParameter(parameter);
                         }
                         scheduler.rescheduleJob(triggerName, triggerGroupName, trigger);
                         info(trigger, newValue, false);

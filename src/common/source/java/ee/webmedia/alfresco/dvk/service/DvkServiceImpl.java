@@ -116,7 +116,7 @@ public abstract class DvkServiceImpl implements DvkService {
     public Collection<String> receiveDocuments() {
         final long maxReceiveDocumentsNr = parametersService.getLongParameter(Parameters.DVK_MAX_RECEIVE_DOCUMENTS_NR);
         NodeRef dvkIncomingFolder = generalService.getNodeRef(receivedDvkDocumentsPath);
-        log.debug("Starting to receive documents(max " + maxReceiveDocumentsNr + " documents at the time)");
+        log.info("Starting to receive documents(max " + maxReceiveDocumentsNr + " documents at the time)");
         final Set<String> receiveDocuments = new HashSet<String>();
         Collection<String> lastReceiveDocuments;
         Collection<String> lastFailedDocuments;
@@ -133,7 +133,7 @@ public abstract class DvkServiceImpl implements DvkService {
             }
             countServiceCalls++;
         } while (lastReceiveDocuments.size() >= maxReceiveDocumentsNr);
-        log.debug("received " + receiveDocuments.size() + " documents from dvk with " + countServiceCalls + " DVK service calls");
+        log.info("received " + receiveDocuments.size() + " documents from dvk with " + countServiceCalls + " DVK service calls");
         if (lastFailedDocuments.size() != 0) {
             log.error("failed to receive " + lastFailedDocuments.size() + " documents from dvk with "
                     + countServiceCalls + " DVK service calls: " + lastFailedDocuments);
@@ -165,7 +165,7 @@ public abstract class DvkServiceImpl implements DvkService {
                 receiveFaileddDocumentIds.add(dhlId);
             }
         }
-        log.info("received " + receivedDocumentIds.size() + " documents: " + receivedDocumentIds);
+        log.debug("received " + receivedDocumentIds.size() + " documents: " + receivedDocumentIds);
         if (receiveFaileddDocumentIds.size() > 0) {
             log.error("FAILED to receive " + receiveFaileddDocumentIds.size() + " documents: " + receiveFaileddDocumentIds);
         }
@@ -177,17 +177,21 @@ public abstract class DvkServiceImpl implements DvkService {
         final MetainfoHelper metaInfoHelper = receivedDocument.getMetaInfoHelper();
         final DhlDokumentType dhlDokument = receivedDocument.getDhlDocument();
         final SignedDocType signedDoc = receivedDocument.getSignedDoc();
-        log.debug("dokument element=\n" + dhlDokument + "'");
-        log.debug("helper.getObject(DhlIdDocumentImpl)=" + dhlId + " " + metaInfoHelper.getDhlSaatjaAsutuseNimi() + " "
-                + metaInfoHelper.getDhlSaatjaAsutuseNr() + " saadeti: " + metaInfoHelper.getDhlSaatmisAeg() + " saabus: "
-                + metaInfoHelper.getDhlSaabumisAeg() + "\nmetaManual:\nKoostajaFailinimi: " + metaInfoHelper.getKoostajaFailinimi());
+        if (log.isTraceEnabled()) {
+            log.trace("dokument element=\n" + dhlDokument + "'");
+            log.trace("helper.getObject(DhlIdDocumentImpl)=" + dhlId + " " + metaInfoHelper.getDhlSaatjaAsutuseNimi() + " "
+                    + metaInfoHelper.getDhlSaatjaAsutuseNr() + " saadeti: " + metaInfoHelper.getDhlSaatmisAeg() + " saabus: "
+                    + metaInfoHelper.getDhlSaabumisAeg() + "\nmetaManual:\nKoostajaFailinimi: " + metaInfoHelper.getKoostajaFailinimi());
+        }
 
         try {
             Assert.isTrue(StringUtils.isNotBlank(dhlId), "dhlId can't be blank");
             Transport transport = dhlDokument.getTransport();
             AadressType saatja = transport.getSaatja();
             Assert.isTrue(StringUtils.isNotBlank(saatja.getRegnr()), "sender regNr can't be blank");
-            log.debug("sender: " + saatja.getRegnr() + " : " + saatja.getAsutuseNimi());
+            if (log.isDebugEnabled()) {
+                log.debug("sender: " + saatja.getRegnr() + " : " + saatja.getAsutuseNimi());
+            }
 
             List<DataFileType> dataFileList = signedDoc.getDataFileList();
             log.debug("document contains " + dataFileList.size() + " datafiles");
@@ -454,21 +458,23 @@ public abstract class DvkServiceImpl implements DvkService {
             dhlDokument.setMetaxml(metaxml);
 
             dhlDokument.setTransport(transport);
-            log.debug("\n\naltered dhlDokument:\n" + dhlDokument + "\n\n");
+            if (log.isTraceEnabled()) {
+                log.trace("\n\naltered dhlDokument:\n" + dhlDokument + "\n\n");
+            }
         }
 
         private Metaxml composeMetaxml(Letter letter) {
-            final Metaxml metaInfo = Metaxml.Factory.newInstance();
-            log.debug("letter:\n" + letter + "\n\n");
+            final Metaxml metaXml = Metaxml.Factory.newInstance();
             final XmlCursor cursorL = letter.newCursor();
-            final XmlCursor cursorM = metaInfo.newCursor();
-            log.debug("metaInfo1:\n" + metaInfo + "\n\n");
+            final XmlCursor cursorM = metaXml.newCursor();
             cursorM.toNextToken();
             cursorL.copyXmlContents(cursorM);
-            log.debug("metaInfo2:\n" + metaInfo + "\n\n");
+            if (log.isDebugEnabled()) {
+                log.debug("metaXml composed based on letter:\n" + metaXml + "\n\n");
+            }
             cursorL.dispose();
             cursorM.dispose();
-            return metaInfo;
+            return metaXml;
         }
     }
 

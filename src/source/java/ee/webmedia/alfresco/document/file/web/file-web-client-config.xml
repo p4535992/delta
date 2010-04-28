@@ -8,6 +8,9 @@
          <dialog name="deleteFile" page="/jsp/dialog/delete.jsp" managed-bean="DeleteFileDialog" icon="/images/icons/delete_large.gif" title-id="delete_file"
             description-id="delete_file_info" />
 
+         <dialog name="deleteNotification" page="/jsp/dialog/delete.jsp" managed-bean="DeleteNotificationDialog" icon="/images/icons/delete.gif" title-id="notification_delete"
+            description-id="delete_file_info" />
+
       </dialogs>
       <actions>
 

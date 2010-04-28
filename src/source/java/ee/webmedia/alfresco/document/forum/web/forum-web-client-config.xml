@@ -33,7 +33,7 @@
             <permissions>
                <permission allow="true">ReadPermissions</permission>
             </permissions>
-            <label-id>manage_invited_users</label-id>
+            <label-id>forum_invite_users</label-id>
             <image>/images/icons/invite.gif</image>
             <action-listener>#{PermissionsListDialog.setup}</action-listener>
             <action>dialog:permissionsListDialog</action>
@@ -110,7 +110,7 @@
       </actions>
       <dialogs>
          <dialog name="inviteUsersDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-add-dialog.jsp" managed-bean="InviteUsersDialog"
-            icon="/images/icons/users_large.gif" title-id="manage_invited_users" />
+            icon="/images/icons/users_large.gif" title-id="forum_invite_users" />
 
          <dialog name="showForum" page="/jsp/forums/forum.jsp" managed-bean="ForumsBean" icon="/images/icons/forum.gif" actions-config-id="forum_topic_actions" />
          <dialog name="showTopic" page="/jsp/forums/topic.jsp" managed-bean="ForumsBean" icon="/images/icons/topic.gif" actions-config-id="forum_post_actions" />

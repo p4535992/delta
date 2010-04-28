@@ -14,12 +14,15 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 /**
@@ -50,12 +53,12 @@ public class CaseServiceImpl implements CaseService {
     public Case getCaseByNoderef(String caseNodeRef) {
         return getCaseByNoderef(new NodeRef(caseNodeRef), null);
     }
-    
+
     @Override
     public Case getCaseByNoderef(NodeRef caseNodeRef) {
         return getCaseByNoderef(caseNodeRef, null);
     }
-    
+
     @Override
     public boolean isClosed(Node node) {
         return RepoUtil.isExistingPropertyValueEqualTo(node, CaseModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName());
@@ -83,7 +86,13 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public void saveOrUpdate(Case theCase, boolean fromNodeProps) {
-
+        final boolean isNew = theCase.getNode() instanceof TransientNode;
+        final String title = (String) (fromNodeProps ? theCase.getNode().getProperties().get(CaseModel.Props.TITLE) : theCase.getTitle());
+        if (isCaseNameUsed(title, theCase.getVolumeNodeRef(), theCase.getNode().getNodeRef())) {
+            final UnableToPerformException ex = new UnableToPerformException(MessageSeverity.ERROR, "case_save_error_caseNameUsed");
+            ex.setMessageValuesForHolders(new Object[] { title });
+            throw ex;
+        }
         final Map<QName, Serializable> props;
         if (!fromNodeProps) {
             props = caseBeanPropertyMapper.toProperties(theCase);
@@ -92,7 +101,7 @@ public class CaseServiceImpl implements CaseService {
         }
 
         Map<String, Object> stringQNameProperties = theCase.getNode().getProperties();
-        if (theCase.getNode() instanceof TransientNode) { // save
+        if (isNew) { // save
             NodeRef caseRef = nodeService.createNode(theCase.getVolumeNodeRef(),
                     CaseModel.Associations.CASE, CaseModel.Associations.CASE, CaseModel.Types.CASE, props).getChildRef();
             theCase.setNode(generalService.fetchNode(caseRef));
@@ -116,6 +125,21 @@ public class CaseServiceImpl implements CaseService {
         theCase.setNode(transientNode);
         theCase.setVolumeNodeRef(volumeRef);
         return theCase;
+    }
+
+    @Override
+    public boolean isCaseNameUsed(final String newCaseTitle, NodeRef volumeRef) {
+        return isCaseNameUsed(newCaseTitle, volumeRef, null);
+    }
+
+    private boolean isCaseNameUsed(final String newCaseTitle, NodeRef volumeRef, NodeRef caseRef) {
+        final List<Case> cases = getAllCasesByVolume(volumeRef);
+        for (Case theCase : cases) {
+            if (StringUtils.equals(theCase.getTitle(), newCaseTitle) && (caseRef == null || !caseRef.equals(theCase.getNode().getNodeRef()))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

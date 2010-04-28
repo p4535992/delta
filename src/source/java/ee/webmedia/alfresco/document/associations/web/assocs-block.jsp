@@ -10,13 +10,13 @@
 <h:panelGroup id="assocs-panel-facets">
    <f:facet name="title">
       <a:actionLink image="/images/icons/import.gif" id="col2-text" showLink="false" tooltip="#{msg.document_assocAdd}" value="" 
-         actionListener="#{DocumentDialog.searchDocsAndCases}" rendered="#{MetadataBlockBean.mode eq 'view'}" >
+         actionListener="#{DocumentDialog.searchDocsAndCases}" action="#docsearch-panel" rendered="#{MetadataBlockBean.mode eq 'view'}" >
       </a:actionLink>
    </f:facet>
 </h:panelGroup>
 
 <a:panel id="assocs-block-panel" label="#{msg.document_assocsBlockBean_panelTitle}" styleClass="panel-100 with-pager" progressive="true"
-   expanded="#{AssocsBlockBean.expanded}" expandedActionListener="#{AssocsBlockBean.expandedAction}" facetsId="dialog:dialog-body:assocs-panel-facets">
+   expanded="false" facetsId="dialog:dialog-body:assocs-panel-facets">
 
    <a:richList id="assocsList" viewMode="details" value="#{AssocsBlockBean.docAssocInfos}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="type">
@@ -58,6 +58,7 @@
                <f:param name="nodeRef" value="#{r.nodeRef}"/>
                <f:param name="caseNodeRef" value="#{r.caseNodeRef}"/>
                <f:param name="documentRef" value="#{AssocsBlockBean.document.nodeRef}"/>
+               <f:param name="source" value="#{r.source}" />
          </a:actionLink>
       </a:column>
 

@@ -5,10 +5,14 @@ import java.io.Serializable;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.lang.StringUtils;
 
+import com.thoughtworks.xstream.annotations.XStreamAlias;
+import com.thoughtworks.xstream.annotations.XStreamOmitField;
+
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 @AlfrescoModelType(uri = ClassificatorModel.URI)
+@XStreamAlias("classificatorValue")
 public class ClassificatorValue implements Serializable, Comparable<ClassificatorValue> {
 
     private static final long serialVersionUID = 1L;
@@ -20,15 +24,19 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
     private boolean active;
     
     @AlfrescoModelProperty(isMappable = false)
+    @XStreamOmitField
     private NodeRef nodeRef;
     
     @AlfrescoModelProperty(isMappable = false)
+    @XStreamOmitField
     private String lastOrderValidationMsg;
     
     @AlfrescoModelProperty(isMappable = false)
+    @XStreamOmitField
     private String lastNameValidationMsg;
     
     public ClassificatorValue() {
+        // default
     }
     
     public ClassificatorValue(ClassificatorValue classificatorValue) {

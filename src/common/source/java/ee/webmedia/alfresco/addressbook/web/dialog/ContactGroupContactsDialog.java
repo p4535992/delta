@@ -18,6 +18,7 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 public class ContactGroupContactsDialog extends ContactGroupBaseDialog implements IContextListener {
@@ -81,6 +82,11 @@ public class ContactGroupContactsDialog extends ContactGroupBaseDialog implement
         String contactNodeRef = ActionUtil.getParam(event, PARAM_CONTACT_NODEREF);
         getAddressbookService().deleteFromGroup(getCurrentNode().getNodeRef(), new NodeRef(contactNodeRef));
         contextUpdated();
+    }
+    
+    @Override
+    public String getContainerTitle() {
+        return MessageUtil.getMessage("addressbook_contactgroup_contacts_title", getNodeService().getProperty(getCurrentNode().getNodeRef(), AddressbookModel.Props.GROUP_NAME));
     }
 
     @Override

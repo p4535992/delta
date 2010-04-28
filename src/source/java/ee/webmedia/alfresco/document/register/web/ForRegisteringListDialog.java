@@ -8,13 +8,19 @@ import javax.faces.event.ActionEvent;
 
 /**
  * List dialog for document available for registering.
- *
+ * 
  * @author Romet Aidla
  */
 public class ForRegisteringListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 0L;
 
+    /** @param event */
     public void setup(ActionEvent event) {
+        restored();
+    }
+
+    @Override
+    public void restored() {
         documents = getDocumentSearchService().searchDocumentsForRegistering();
     }
 

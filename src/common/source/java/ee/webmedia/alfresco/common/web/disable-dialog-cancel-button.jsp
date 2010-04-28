@@ -5,8 +5,8 @@
 <f:verbatim>
    <script type="text/javascript">
       $jQ(document).ready(function () {
-         var cancelButton = $jQ('#' + escapeId4JQ('dialog:cancel-button'));
-         cancelButton.remove();
-      });      
+         disableAndRemoveButton('dialog:cancel-button');
+         disableAndRemoveButton('dialog:cancel-button-2');
+      });
    </script>
 </f:verbatim>

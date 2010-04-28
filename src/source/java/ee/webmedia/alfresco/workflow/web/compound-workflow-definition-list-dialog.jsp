@@ -38,10 +38,6 @@
          <f:facet name="header">
             <h:outputText id="col3-txt" value="#{msg.workflow_compound_actions}" />
          </f:facet>
-         <a:actionLink id="col3-act1" value="#{msg.workflow_compound_edit}" tooltip="#{msg.workflow_compound_edit}" image="/images/icons/edit_properties.gif"
-            action="dialog:compoundWorkflowDefinitionDialog" showLink="false" actionListener="#{CompoundWorkflowDefinitionDialog.setupWorkflow}">
-            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-         </a:actionLink>
          <a:actionLink id="col3-act2" value="#{msg.workflow_compound_delete}" tooltip="#{msg.workflow_compound_delete}"
             actionListener="#{CompoundWorkflowDefinitionListDialog.delete}" action="dialog:deleteFile" showLink="false" image="/images/icons/delete.gif">
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />

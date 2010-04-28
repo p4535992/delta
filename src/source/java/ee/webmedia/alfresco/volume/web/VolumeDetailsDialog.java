@@ -1,10 +1,12 @@
 package ee.webmedia.alfresco.volume.web;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import ee.webmedia.alfresco.archivals.service.ArchivalsService;
-import ee.webmedia.alfresco.utils.MessageUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
@@ -12,13 +14,11 @@ import org.alfresco.web.bean.repository.TransientNode;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.archivals.service.ArchivalsService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 /**
  * Form backing bean for Volumes details
@@ -33,6 +33,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     private transient VolumeService volumeService;
     private transient ArchivalsService archivalsService;
     private Volume currentEntry;
+    private boolean newVolume;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -54,6 +55,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     }
 
     public void addNewVolume(ActionEvent event) {
+        newVolume = true;
         NodeRef seriesRef = new NodeRef(ActionUtil.getParam(event, PARAM_SERIES_NODEREF));
         // create new node for currentEntry
         currentEntry = getVolumeService().createVolume(seriesRef);
@@ -90,6 +92,10 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         return volumeService.isClosed(getCurrentNode());
     }
 
+    public boolean isNew() {
+        return newVolume;
+    }
+
     @Override
     public Object getActionsContext() {
         return currentEntry;
@@ -99,6 +105,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
 
     private void resetFields() {
         currentEntry = null;
+        newVolume = false;
     }
 
     // START: getters / setters

@@ -19,8 +19,8 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.GeneralService;
 
 /**
@@ -39,10 +39,19 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendEmail(List<String> toEmails, List<String> toNames, String fromEmail, String subject, String content, boolean isHtml, NodeRef document,
             List<String> fileNodeRefs, boolean zipIt, String zipFileName) throws EmailException {
-        Assert.notEmpty(toEmails, "Parameter toEmails is mandatory.");
-        Assert.notNull(fromEmail, "Parameter fromEmail is mandatory.");
-        Assert.notNull(subject, "Parameter subject is mandatory.");
-        Assert.notNull(content, "Parameter content is mandatory.");
+
+        if (toEmails == null || toEmails.isEmpty()) {
+            throw new EmailException("Parameter toEmails is mandatory.");
+        }
+        if (fromEmail == null) {
+            throw new EmailException("Parameter fromEmail is mandatory.");
+        }
+        if (subject == null) {
+            throw new EmailException("Parameter subject is mandatory.");
+        }
+        if (content == null) {
+            throw new EmailException("Parameter content is mandatory.");
+        }
 
         MimeMessage message;
         try {
@@ -54,7 +63,7 @@ public class EmailServiceImpl implements EmailService {
         String encoding;
         boolean hasFiles = fileNodeRefs != null && fileNodeRefs.size() > 0;
         try {
-            helper = new MimeMessageHelper(message, hasFiles, "UTF-8");
+            helper = new MimeMessageHelper(message, hasFiles, AppConstants.CHARSET);
             helper.setValidateAddresses(true);
             encoding = helper.getEncoding();
             helper.setFrom(fromEmail);

@@ -24,6 +24,9 @@
          <f:facet name="header">
             <a:sortLink id="paramTypeCol-sort" label="#{msg.parameters_type}" value="typeMsg" mode="case-insensitive" />
          </f:facet>
+         <f:facet name="csvExport">
+            <f:param name="csvExport" value="false" />
+         </f:facet>
          <a:outputText id="paramTypeOT" value="#{msg[sParameter.typeMsg]}" />
       </a:column>
 
@@ -31,7 +34,7 @@
          <f:facet name="header">
             <a:outputText value="#{msg.parameters_value}" />
          </f:facet>
-         <h:inputTextarea rows="1" cols="45" value="#{sParameter.paramValue}" styleClass="#{sParameter.paramName} #{(sParameter.lastValidationSuccessful) ? '' : 'error' } expand5-200" />
+         <h:inputTextarea rows="1" cols="45" value="#{sParameter.paramValue}" styleClass="#{sParameter.paramName} #{(sParameter.lastValidationSuccessful) ? '' : 'error' } expand19-200 long" />
       </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

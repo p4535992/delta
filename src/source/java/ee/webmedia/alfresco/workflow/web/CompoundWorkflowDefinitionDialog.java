@@ -524,6 +524,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             UIPropertySheet sheetW = (UIPropertySheet) application.createComponent("org.alfresco.faces.PropertySheet");
             sheetW.setId("workflow-" + counter);
             sheetW.setVar("nodeW" + counter);
+            sheetW.getAttributes().put("workFlowIndex", counter-1);
             sheetW.setNode(block.getNode());
             sheetW.getAttributes().put("labelStyleClass", "propertiesLabel");
             sheetW.getAttributes().put("externalConfig", Boolean.TRUE);
@@ -648,6 +649,10 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
                     }
                     if (!hasRespTask) {
                         ((AssignmentWorkflow) block).addResponsibleTask();
+                    }
+                } else {
+                    if(block.getTasks().size() == 0 && !blockType.equals(WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW)) {
+                        block.addTask();
                     }
                 }
             }

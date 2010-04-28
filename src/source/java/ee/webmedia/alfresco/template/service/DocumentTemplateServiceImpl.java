@@ -96,12 +96,12 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public void updateGeneratedFilesOnRegistration(Node document) {
-        List<FileInfo> files = fileFolderService.listFiles(document.getNodeRef());
-        log.debug("Found " + files.size() + "files under document " + document.getNodeRefAsString());
+    public void updateGeneratedFilesOnRegistration(NodeRef docRef) {
+        List<FileInfo> files = fileFolderService.listFiles(docRef);
+        log.debug("Found " + files.size() + "files under document " + docRef);
         for (FileInfo file : files) {
             if (file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.GENERATED) != null) {
-                Map<QName, Serializable> docProp = nodeService.getProperties(document.getNodeRef());
+                Map<QName, Serializable> docProp = nodeService.getProperties(docRef);
                 ContentReader templateReader = fileFolderService.getReader(file.getNodeRef());
 
                 // Set document content's mimetype and encoding from template
@@ -378,7 +378,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 if (prop instanceof ArrayList<?>) {
                     List<?> list = (ArrayList<?>) prop;
                     String separator = ", ";
-                    if (key.getLocalName().equals("recipientName"))
+                    if (key.getLocalName().equals("recipientName") 
+                     || key.getLocalName().equals("additionalRecipientName") 
+                     || key.getLocalName().equals("additionalRecipientEmail"))
                         separator = "\r";
 
                     if (list.size() > 0 && list.get(0) != null) {
@@ -460,10 +462,16 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
         if ((pattern.equals("task.activeResponsible") || pattern.equals("task.unactiveResponsible"))
                 && nodeService.hasAspect(document, WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
-            if(properties.get("active") != null) {
-                return properties.get("active").toString();
+            Serializable activeProp = properties.get(WorkflowSpecificModel.Props.ACTIVE);
+            if(activeProp != null) {
+                Boolean isActive = (Boolean) activeProp; 
+                if(pattern.equals("task.activeResponsible") && isActive) {
+                    return isActive.toString();
+                }
+                if(pattern.equals("task.unactiveResponsible") && !isActive) {
+                    return isActive.toString();
+                }
             }
-            
         }
 
         if (pattern.equals("task.coResponsible") && !nodeService.hasAspect(document, WorkflowSpecificModel.Aspects.RESPONSIBLE)) {

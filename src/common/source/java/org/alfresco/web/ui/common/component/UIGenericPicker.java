@@ -25,7 +25,6 @@
 package org.alfresco.web.ui.common.component;
 
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.Map;
 import java.util.ResourceBundle;
 
@@ -269,7 +268,7 @@ public class UIGenericPicker extends UICommand
       String clientId = getClientId(context);
       
       // start outer table
-      out.write("<table cellspacing=\"4\" cellpadding=\"0\">");
+      out.write("<table cellspacing=\"0\" cellpadding=\"0\" width=\"100%\" class=\"generic-picker\">");
       
       // top row
       out.write("<tr valign=\"top\">");
@@ -347,11 +346,21 @@ public class UIGenericPicker extends UICommand
       
       // results list row
       out.write("<tr><td colspan=\"9\">");
-      out.write("<select size='8' style='width:");
-      out.write(Integer.toString(getWidth()));
-      out.write("px;height:");
-      out.write(Integer.toString(getHeight()));
-      out.write("px' name='");
+      out.write("<select size='");
+        if (getMultiSelect() == true) {
+            if (this.currentResults != null && getShowContains() == true) {
+                out.write("13");
+            } else {
+                out.write("15");
+            }
+        } else {
+            if (this.currentResults != null && getShowContains() == true) {
+                out.write("14");
+            } else {
+                out.write("17");
+            }
+        }
+      out.write("' style='width:100%;height:auto;' name='");
       out.write(clientId + FIELD_RESULTS);
       out.write("' id='");
       out.write(clientId + FIELD_RESULTS);

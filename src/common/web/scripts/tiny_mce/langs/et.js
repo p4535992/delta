@@ -120,7 +120,9 @@ col:"Veerg",
 cell:"Lahter"
 },
 autosave:{
-unload_msg:"Tehtud muudatused kaovad, kui lahkute siit lehelt."
+unload_msg:"Tehtud muudatused kaovad, kui lahkute siit lehelt.",
+restore_content:"Restore auto-saved content.",
+warning_message:"If you restore the saved content, you will lose all the content that is currently in the editor.\n\nAre you sure you want to restore the saved content?."
 },
 fullscreen:{
 desc:"L\u00FClita \u00FCmber t\u00E4isekraani re\u017Eiim"
@@ -151,4 +153,16 @@ no_mpell:"Valesti kirjutamisi ei leitud."
 },
 pagebreak:{
 desc:"Sisesta lehevahetus."
+},
+advlist:{
+types:"Types",
+def:"Default",
+lower_alpha:"Lower alpha",
+lower_greek:"Lower greek",
+lower_roman:"Lower roman",
+upper_alpha:"Upper alpha",
+upper_roman:"Upper roman",
+circle:"Circle",
+disc:"Disc",
+square:"Square"
 }}});

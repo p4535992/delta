@@ -52,6 +52,9 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
         getCustomAttributes().put(VALDIATION_DISABLED, Boolean.TRUE.toString());
         propIndex = 0;
         UIComponent container = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_GRID);
+        @SuppressWarnings("unchecked")
+        Map<String, String> attributes = container.getAttributes();
+        attributes.put("styleClass", "inline-property-group");
         FacesHelper.setupComponentId(context, container, null);
         return container;
     }

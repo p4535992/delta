@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.web;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
@@ -23,8 +24,15 @@ public abstract class BaseDocumentListDialog extends BaseDialogBean {
     protected List<Document> documents;
 
     @Override
+    public void init(Map<String, String> params) {
+        super.init(params);
+    }
+
+    @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        throw new RuntimeException("Finish button is not used");
+        // finish button is not used
+        return null; // but in case someone clicks finish button twice on the previous dialog,
+                     // then silently ignore it and stay on the same page
     }
 
     @Override

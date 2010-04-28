@@ -25,7 +25,6 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
-import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor.MultiValueEditorEvent;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -243,9 +242,9 @@ public class MultiValueEditor extends UIComponentBase {
                 // component was not generated using componentGenerator, so we have to add bindings manually
                 FacesHelper.setupComponentId(context, component, componentPropVO.getPropertyName() + "_" + rowIndex);
                 setValueBinding(context, component, componentPropVO.getPropertyName(), rowIndex);
-                if (isDisabled()) {
-                    ComponentUtil.setDisabledAttributeRecursively(component);
-                }
+            }
+            if (Utils.isComponentDisabledOrReadOnly(this)) {
+                ComponentUtil.setDisabledAttributeRecursively(component);
             }
             columnIndex++;
         }

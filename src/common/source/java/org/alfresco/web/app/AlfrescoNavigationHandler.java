@@ -47,6 +47,7 @@ import org.alfresco.web.config.NavigationResult;
 import org.alfresco.web.config.WizardsConfigElement;
 import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
 import org.alfresco.web.config.WizardsConfigElement.WizardConfig;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -99,6 +100,35 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
         if (logger.isDebugEnabled()) {
             logger.debug("handleNavigation (fromAction=" + fromAction + ", outcome=" + outcome + ")");
             logger.debug("Current view id: " + context.getViewRoot().getViewId());
+        }
+        
+        // "Support" for navigating to anchors when page loads
+        MenuBean mb = getMenuBean(context);
+        if (mb != null) {
+            // Reset old, if present
+            mb.setScrollToAnchor(null);
+            // Also reset previous scrolling value
+            mb.setScrollToY(null);
+
+            if(outcome != null) {
+                // Check if anchor is set
+                int anchorIndex = outcome.indexOf("#");
+                if(anchorIndex > -1) {
+                    String anchor = outcome.substring(anchorIndex);
+                    mb.setScrollToAnchor(anchor);
+                    // Restore original outcome for normal processing
+                    outcome = outcome.substring(0, anchorIndex);
+                }
+            }
+        }
+        
+        if(StringUtils.isEmpty(outcome)) {
+            return; // this enables to navigate to anchor on a page from actionlistener
+        }
+        
+        if(mb != null) {
+            // If we get past previous condition, we don't have a postback, so let's inform MenuBean
+            mb.setScrollToY("0");
         }
 
         boolean isDialog = isDialog(outcome);

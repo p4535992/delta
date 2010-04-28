@@ -14,6 +14,7 @@ import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
@@ -55,6 +56,12 @@ public class AddFileDialog extends AddContentDialog {
     private String selectedFileName;
 
     @Override
+    public String cancel() {
+        clearUpload();
+        return "dialog:close#files-panel";
+    }
+    
+    @Override
     public void start(ActionEvent event) {
         reset();
     }
@@ -69,11 +76,16 @@ public class AddFileDialog extends AddContentDialog {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         try {
-            if (isFileSelected) {
-                NodeRef documentNodeRef = new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId());
-                this.createdNode = getFileService().addFileToDocument(selectedFileName, selectedFileNodeRef, documentNodeRef);
-            } else {
-                outcome = super.finishImpl(context, outcome);
+            try {
+                if (isFileSelected) {
+                    NodeRef documentNodeRef = new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId());
+                    this.createdNode = getFileService().addFileToDocument(selectedFileName, selectedFileNodeRef, documentNodeRef);
+                } else {
+                    outcome = super.finishImpl(context, outcome);
+                }
+            } catch (NodeLockedException e) {
+                MessageUtil.addErrorMessage(context, "document_addFile_error_docLocked");
+                return outcome;
             }
             // XXX Should probably be refactored to a single service method to add all the aspects there.
             addVersionModifiedAspect(this.createdNode);
@@ -89,8 +101,10 @@ public class AddFileDialog extends AddContentDialog {
     
     @Override
     protected String doPostCommitProcessing(FacesContext context, String outcome) {
-        super.doPostCommitProcessing(context, outcome);
-        return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
+        if (this.createdNode != null) {
+            super.doPostCommitProcessing(context, outcome);
+        }
+        return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME + "#files-panel";
     }
 
     public String getFileNameWithoutExtension() {

@@ -58,19 +58,19 @@
    border="white" bgcolor="white" titleBorder="lbgrey" expandedTitleBorder="dotted" titleBgcolor="white" styleClass="column panel-65">
 
    <h:panelGrid columns="2" cellpadding="2" cellspacing="2" columnClasses="propertiesLabel,">
-      <h:outputText value="#{msg.start_location}:" />
+      <h:outputText value="#{msg.start_location}" styleClass="no-wrap" />
       <%-- Start Location drop-down selector --%>
       <h:selectOneMenu id="start-location" value="#{UserPreferencesBean.startLocation}" onchange="document.forms['dialog'].submit(); return true;">
          <f:selectItems value="#{UserPreferencesBean.startLocations}" />
       </h:selectOneMenu>
 
-      <h:outputText value="#{msg.interface_language}:" rendered="#{LoginBean.languageSelect}" />
+      <h:outputText value="#{msg.interface_language}" rendered="#{LoginBean.languageSelect}" styleClass="no-wrap" />
       <h:selectOneMenu id="language" value="#{UserPreferencesBean.language}" rendered="#{LoginBean.languageSelect}"
          onchange="document.forms['dialog'].submit(); return true;">
          <f:selectItems value="#{UserPreferencesBean.languages}" />
       </h:selectOneMenu>
 
-      <h:outputText value="#{msg.content_language_filter}:" />
+      <h:outputText value="#{msg.content_language_filter}" styleClass="no-wrap" />
       <%-- Content Language Filter drop-down selector --%>
       <h:selectOneMenu id="content-filter-language" value="#{UserPreferencesBean.contentFilterLanguage}"
          onchange="document.forms['dialog'].submit(); return true;">
@@ -97,12 +97,12 @@
    expandedTitleBorder="dotted" titleBgcolor="white" styleClass="column panel-35-f">
 
    <h:panelGrid id="usage-quota" columns="2" columnClasses="propertiesLabel" rendered="#{UsersBeanProperties.usagesEnabled == true}">
-      <h:outputText value="#{msg.sizeCurrent}:" />
+      <h:outputText value="#{msg.sizeCurrent}" />
       <h:outputText value="#{UsersBeanProperties.userUsage}">
          <a:convertSize />
       </h:outputText>
 
-      <h:outputText value="#{msg.sizeQuota}:" />
+      <h:outputText value="#{msg.sizeQuota}" />
       <h:outputText value="#{UsersBeanProperties.userQuota}">
          <a:convertSize />
       </h:outputText>

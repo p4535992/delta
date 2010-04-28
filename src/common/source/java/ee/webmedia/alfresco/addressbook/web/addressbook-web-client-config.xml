@@ -136,7 +136,7 @@
          </action>
 
          <action id="addressbook_add_org_person">
-            <label-id>addressbook_add_person</label-id>
+            <label-id>addressbook_add_org_person</label-id>
             <image>/images/icons/create_user.gif</image>
             <action>wizard:addressbookAddOrgPerson</action>
             <action-listener>#{AddressbookOrgPersonWizard.setupEntryOrg}</action-listener>

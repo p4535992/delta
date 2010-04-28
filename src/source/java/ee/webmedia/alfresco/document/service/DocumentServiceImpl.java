@@ -85,6 +85,7 @@ import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -111,6 +112,7 @@ public class DocumentServiceImpl implements DocumentService {
     private NodeService nodeService;
     private GeneralService generalService;
     private DocumentTypeService documentTypeService;
+    private DocumentTemplateService documentTemplateService;
     private RegisterService registerService;
     private VolumeService volumeService;
     private SeriesService seriesService;
@@ -170,6 +172,8 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         Set<QName> aspects = generalService.getDefaultAspects(documentTypeId);
+        // Add document type id. Now it's possible to modify props by doc type
+        aspects.add(documentTypeId);
 
         for (QName docAspect : aspects) {
             callbackAspectProperiesModifier(docAspect, properties);
@@ -410,9 +414,6 @@ public class DocumentServiceImpl implements DocumentService {
                         if (!baseVol.getNodeRefAsString().equals(volumeNodeRef)) {
                             throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp");
                         }
-                        if (isRegistered(baseRef)) {
-                            registerDocument(docNode, false);
-                        }
                     }
                 }
             } catch (UnableToPerformException e) {
@@ -433,6 +434,7 @@ public class DocumentServiceImpl implements DocumentService {
         final boolean isErrandDocAbroad = DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(docNode.getType());
         final boolean isErrandDocDomestic = DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(docNode.getType());
         final boolean isTraining = DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(docNode.getType());
+        generalService.saveRemovedChildAssocs(docNode);
         if (isErrandDocAbroad || isErrandDocDomestic || isTraining) {
             final QName applicantAssoc;
             final QName errandAssocType;
@@ -455,6 +457,7 @@ public class DocumentServiceImpl implements DocumentService {
             }
             for (int i = 0; i < applicants.size(); i++) {
                 Node applicantNode = applicants.get(i);
+                generalService.saveRemovedChildAssocs(applicantNode);
                 Node newApplicantNode = saveChildNode(docNode, applicantNode, applicantAssoc, applicants, i);
                 final List<Node> errandNodes = errandAssocType == null ? null : applicantNode.getAllChildAssociations(errandAssocType);
                 if(newApplicantNode == null) {
@@ -467,6 +470,7 @@ public class DocumentServiceImpl implements DocumentService {
                 }
                 for (int j = 0; j < errandNodes.size(); j++) {
                     Node errandNode = errandNodes.get(j);
+                    generalService.saveRemovedChildAssocs(errandNode);
                     try {
                         Node newErrandNode = saveChildNode(applicantNode, errandNode, errandAssocType, errandNodes, j);
                         if(newErrandNode == null) {
@@ -878,8 +882,8 @@ public class DocumentServiceImpl implements DocumentService {
         List<Document> docs = new ArrayList<Document>();
         for (ChildAssociationRef assocRef : childAssocs) {
             final Node doc = getDocument(assocRef.getChildRef());
-            docs.add(getDocumentByNodeRef(doc.getNodeRef()));
-
+            docs.add(0, getDocumentByNodeRef(doc.getNodeRef())); // flips the list, so newest are first
+            
         }
         return docs;
     }
@@ -1177,6 +1181,7 @@ public class DocumentServiceImpl implements DocumentService {
             assocInf.setType(documentTypeService.getDocumentType(otherDocNode.getType()).getName());
             assocInf.setNodeRef(assocRef.getTargetRef());
         }
+        assocInf.setSource(isSourceAssoc);
         return assocInf;
     }
 
@@ -1301,6 +1306,7 @@ public class DocumentServiceImpl implements DocumentService {
             public Object doWork() throws Exception {
                 // Register the document, if not already registered
                 registerDocumentIfNotRegistered(document, false);
+                documentTemplateService.updateGeneratedFilesOnRegistration(document);
                 // Generate PDF-files for all the files that support it.
                 fileService.transformActiveFilesToPdf(document);
                 return null;
@@ -1721,6 +1727,10 @@ public class DocumentServiceImpl implements DocumentService {
 
     public void setDocumentTypeService(DocumentTypeService documentTypeService) {
         this.documentTypeService = documentTypeService;
+    }
+    
+    public void setDocumentTemplateService(DocumentTemplateService documentTemplateService) {
+        this.documentTemplateService = documentTemplateService;
     }
 
     public void setDictionaryService(DictionaryService dictionaryService) {

@@ -1,17 +1,20 @@
 package ee.webmedia.alfresco.imap.web;
 
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.document.file.service.FileService;
-import ee.webmedia.alfresco.imap.service.ImapServiceExt;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-import java.util.List;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * Email attachments list dialog.
@@ -39,7 +42,11 @@ public class AttachmentListDialog extends BaseDialogBean {
     private void readFiles() {
         Node node = getGeneralService().fetchNode(getImapServiceExt().getAttachmentRoot());
         Assert.notNull(node, "Attachment root not found");
-        files = getFileService().getAllFilesExcludingDigidocSubitems(node.getNodeRef());
+        List<File> temp = getFileService().getAllFilesExcludingDigidocSubitems(node.getNodeRef());
+        files = new ArrayList<File>();
+        for(int i = temp.size(); i > 0; i--) {
+            files.add(temp.get(i-1));
+        }
     }
 
     public List<File> getFiles() {

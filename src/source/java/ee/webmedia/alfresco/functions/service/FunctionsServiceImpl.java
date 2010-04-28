@@ -12,6 +12,7 @@ import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -137,6 +138,13 @@ public class FunctionsServiceImpl implements FunctionsService {
     @Override
     public NodeRef getFunctionsRoot() {
         return generalService.getNodeRef(FunctionsModel.Repo.FUNCTIONS_SPACE);
+    }
+
+    @Override
+    public Location getDocumentListLocation() {
+        Location location = new Location(generalService.getStore());
+        location.setPath(FunctionsModel.Repo.FUNCTIONS_SPACE);
+        return location;
     }
 
     // START: getters / setters

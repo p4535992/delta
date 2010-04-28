@@ -7,36 +7,27 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
+
+<%@page import="ee.webmedia.alfresco.volume.web.VolumeDetailsDialog"%>
+<%@page import="org.alfresco.web.app.servlet.FacesHelper"%>
+<%@page import="javax.faces.context.FacesContext"%>
 <a:panel id="metadata-panel" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
    <r:propertySheetGrid id="volume-metatada" value="#{VolumeDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel"/>
 </a:panel>
 
 <f:verbatim>
 <script type="text/javascript">
-
-   var postProcessButtonStateBound = false;
    function postProcessButtonState(){
       var status = "</f:verbatim><h:outputText value="#{VolumeDetailsDialog.currentNode.properties['{http://alfresco.webmedia.ee/model/volume/1.0}status']}" /><f:verbatim>";
-      var closeBtn = $jQ("#"+escapeId4JQ("dialog:close-button"));
-      if(!postProcessButtonStateBound) {
-         closeBtn.bind("click", function(e){
-            nextButtonPressed = true;
-            return validate();
-   	     });
-         postProcessButtonStateBound = true;
-      }
-
-      //var valid = processButtonState();
-      //log("valid: "+valid);
-      var finishBtn = $jQ("#"+escapeId4JQ("dialog:finish-button"));
-      var finishDisabled = finishBtn.attr("disabled");
-      if(finishDisabled){
-         closeBtn.attr("disabled", finishDisabled);
-      } else {
-         if(status != "suletud"){
-         	closeBtn.attr("disabled", finishDisabled);
-         }
-      }
+      processFnSerVolCaseCloseButton(status);
    }
 </script>
 </f:verbatim>
+<%
+   final boolean isNew = ((VolumeDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "VolumeDetailsDialog")).isNew();
+   if(isNew) {
+%>
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-close-button.jsp" />
+<%
+   }
+%>

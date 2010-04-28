@@ -17,13 +17,19 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
 
     private String searchValue;
 
+    /** @param event */
     public void setup(ActionEvent event) {
+        restored();
+    }
+
+    @Override
+    public void restored() {
         documents = getDocumentSearchService().searchDocumentsQuick(searchValue);
 
         // Quick search must "reset the current dialog stack" and put the document list dialog as the base dialog into the stack.
-        // Also in case of quick search the cancel button is not displayed (the whole button container is not rendered through 
+        // Also in case of quick search the cancel button is not displayed (the whole button container is not rendered through
         // container.jsp hack for DocumentListDialog). If there are more beans that need to sometimes display some buttons and sometimes
-        // not. Then the hack should be refactored into new DialogManager isAnyButtonVisible method that asks this from then current 
+        // not. Then the hack should be refactored into new DialogManager isAnyButtonVisible method that asks this from then current
         // bean (BaseDialogBean always returns true).
         MenuBean.clearViewStack(String.valueOf(MenuBean.DOCUMENT_REGISTER_ID), null);
 

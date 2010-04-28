@@ -33,7 +33,6 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.UIOutput;
 import javax.faces.component.html.HtmlCommandButton;
 import javax.faces.context.FacesContext;
-import javax.faces.context.ResponseWriter;
 import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 
@@ -45,6 +44,8 @@ import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.SelfRenderingComponent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Component that displays the buttons for a dialog.
@@ -73,16 +74,13 @@ public class UIDialogButtons extends SelfRenderingComponent
    {
       if (!isRendered()) return;
       
-      // XXX Now button configuration is fetched on every reload. :)
+      // We need to refresh buttons on every reload (dynamic adding)
       this.getChildren().clear();
-      
-      if (this.getChildCount() == 0)
-      {
-         // generate all the required buttons the first time
-         generateButtons(context);
+      UIComponent existingButtons = ComponentUtil.findComponentById(context, Utils.getParentForm(context, this), "finish-button");
+      if(existingButtons == null) {
+          existingButtons = ComponentUtil.findComponentById(context, Utils.getParentForm(context, this), "cancel-button");
       }
-      
-      ResponseWriter out = context.getResponseWriter();
+      generateButtons(context, (existingButtons != null));
    }
 
    @Override
@@ -90,19 +88,12 @@ public class UIDialogButtons extends SelfRenderingComponent
    {
       if (!isRendered()) return;
       
-      ResponseWriter out = context.getResponseWriter();
-      
       // render the buttons
       for (Iterator i = getChildren().iterator(); i.hasNext(); /**/)
       {
          UIComponent child = (UIComponent)i.next();
          Utils.encodeRecursive(context, child);
       }
-   }
-
-   @Override
-   public void encodeEnd(FacesContext context) throws IOException
-   {
    }
 
    @Override
@@ -115,9 +106,10 @@ public class UIDialogButtons extends SelfRenderingComponent
     * Generates the buttons for the dialog currently being shown.
     * 
     * @param context Faces context
+    * @param secondRendering true, if buttons are rendered second time
     */
    @SuppressWarnings("unchecked")
-   protected void generateButtons(FacesContext context)
+   protected void generateButtons(FacesContext context, boolean secondRendering)
    {
       // generate the OK button, if necessary
       if (Application.getDialogManager().isOKButtonVisible())
@@ -125,7 +117,9 @@ public class UIDialogButtons extends SelfRenderingComponent
          UICommand okButton = (UICommand)context.getApplication().
                createComponent(HtmlCommandButton.COMPONENT_TYPE);
          okButton.setRendererType(ComponentConstants.JAVAX_FACES_BUTTON);
-         FacesHelper.setupComponentId(context, okButton, "finish-button");
+         
+         String okButtonId = secondRendering ? "finish-button-2" : "finish-button";
+         FacesHelper.setupComponentId(context, okButton, okButtonId);
          
          // create the binding for the finish button label
          ValueBinding valueBinding = context.getApplication().createValueBinding(
@@ -144,10 +138,8 @@ public class UIDialogButtons extends SelfRenderingComponent
          
          // setup CSS class for button
          String styleClass = (String)this.getAttributes().get("styleClass");
-         if (styleClass != null)
-         {
-            okButton.getAttributes().put("styleClass", styleClass);
-         }
+         styleClass = (styleClass == null) ? "dialog-button primary" : styleClass + " dialog-button primary";
+         okButton.getAttributes().put("styleClass", styleClass);
          
          // add the OK button
          this.getChildren().add(okButton);
@@ -156,13 +148,15 @@ public class UIDialogButtons extends SelfRenderingComponent
       }
       
       // generate the additional buttons
-      generateAdditionalButtons(context);
+      generateAdditionalButtons(context, secondRendering);
       
       // generate the OK button
       UICommand cancelButton = (UICommand)context.getApplication().
             createComponent(HtmlCommandButton.COMPONENT_TYPE);
       cancelButton.setRendererType(ComponentConstants.JAVAX_FACES_BUTTON);
-      FacesHelper.setupComponentId(context, cancelButton, "cancel-button");
+      
+      String cancelButtonId = secondRendering ? "cancel-button-2" : "cancel-button";
+      FacesHelper.setupComponentId(context, cancelButton, cancelButtonId);
       
       // create the binding for the cancel button label
       ValueBinding valueBinding = context.getApplication().createValueBinding(
@@ -176,10 +170,8 @@ public class UIDialogButtons extends SelfRenderingComponent
       
       // setup CSS class for button
       String styleClass = (String)this.getAttributes().get("styleClass");
-      if (styleClass != null)
-      {
-         cancelButton.getAttributes().put("styleClass", styleClass);
-      }
+      styleClass = (styleClass == null) ? "dialog-button cancel" : styleClass + " dialog-button cancel";
+      cancelButton.getAttributes().put("styleClass", styleClass);
       
       // set the immediate flag to true
       cancelButton.getAttributes().put("immediate", Boolean.TRUE);
@@ -188,7 +180,7 @@ public class UIDialogButtons extends SelfRenderingComponent
       this.getChildren().add(cancelButton);
    }
    
-   /**
+/**
     * If there are any additional buttons to add as defined by the dialog 
     * configuration and the dialog at runtime they are generated in this 
     * method.
@@ -196,7 +188,7 @@ public class UIDialogButtons extends SelfRenderingComponent
     * @param context Faces context
     */
    @SuppressWarnings("unchecked")
-   protected void generateAdditionalButtons(FacesContext context)
+   protected void generateAdditionalButtons(FacesContext context, boolean secondRendering)
    {
       // get potential list of additional buttons
       List<DialogButtonConfig> buttons = Application.getDialogManager().getAdditionalButtons();
@@ -214,7 +206,9 @@ public class UIDialogButtons extends SelfRenderingComponent
             UICommand button = (UICommand)context.getApplication().
                   createComponent(HtmlCommandButton.COMPONENT_TYPE);
             button.setRendererType(ComponentConstants.JAVAX_FACES_BUTTON);
-            FacesHelper.setupComponentId(context, button, buttonCfg.getId());
+            
+            String buttonId = secondRendering ? buttonCfg.getId() + "-2" : buttonCfg.getId();
+            FacesHelper.setupComponentId(context, button, buttonId);
             
             // setup the value of the button (the label)
             String label = buttonCfg.getLabel();
@@ -269,6 +263,7 @@ public class UIDialogButtons extends SelfRenderingComponent
             
             // setup CSS class for the button
             String styleClass = (String)this.getAttributes().get("styleClass");
+            styleClass = (styleClass == null) ? "dialog-button additional" : styleClass + " dialog-button additional";
             if (styleClass != null)
             {
                button.getAttributes().put("styleClass", styleClass);
@@ -305,10 +300,11 @@ public class UIDialogButtons extends SelfRenderingComponent
             ComponentConstants.JAVAX_FACES_OUTPUT);
       spacingRow.setRendererType(ComponentConstants.JAVAX_FACES_TEXT);
       FacesHelper.setupComponentId(context, spacingRow, null);
-      spacingRow.setValue("&nbsp;");
+      spacingRow.setValue(""); // NOTE: used to be <br />
       spacingRow.getAttributes().put("escape", Boolean.FALSE);
       this.getChildren().add(spacingRow);
    }
+
 }
 
 

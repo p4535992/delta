@@ -366,7 +366,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         List<Document> results = searchGeneralImpl(DOCUMENTS_FOR_REGISTERING_QUERY, false, new SearchCallback<Document>() {
             @Override
             public Document addResult(ResultSetRow row) {
-                return workflowService.hasFinishedCompoundWorkflows(row.getNodeRef())
+                return workflowService.hasFinishedCompoundWorkflows(row.getNodeRef()) && !documentService.isRegistered(generalService.fetchNode(row.getNodeRef()))
                         ? documentService.getDocumentByNodeRef(row.getNodeRef())
                         : null;
             }

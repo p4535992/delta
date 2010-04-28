@@ -50,6 +50,7 @@ public class ClassificatorSuggestingGenerator extends TextAreaGenerator {
             inputTextComp.setValue(existingValue);
         }
         attributes.put(CLASSIFICATOR_VALUES, classificatorValues.getFirst());
+        attributes.put("styleClass", "suggest");
 
         return inputTextComp;
     }

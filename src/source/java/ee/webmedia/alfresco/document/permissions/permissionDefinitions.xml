@@ -53,6 +53,7 @@
    Rolli ROLE_DOCUMENT_OWNER kasutatakse dokumendi (doccom:document) peal ning see võimaldab dokumendi omanikul:
    * Muuta dokumendi (ja selle all asuvate failide ja muude node'ide, nt. logikirjed) properteid
    * Luua dokumendi alla alam-node'e (nt. faile ja logikirjeid)
+   * Kustutada dokumenti
 
    Dokumendi loomisel luuakse node mustandite kausta, kus kehtivad muud õigused (TODO).
 
@@ -68,6 +69,7 @@
            <includePermissionGroup type="sys:base" permissionGroup="WriteProperties"/>
            <includePermissionGroup type="sys:base" permissionGroup="WriteContent"/>
            <includePermissionGroup type="cm:lockable" permissionGroup="Lock"/>
+           <includePermissionGroup type="sys:base" permissionGroup="DeleteNode"/>
       </permissionGroup>  
 
       <permissionGroup name="DocumentDelete" expose="true" allowFullControl="false">

@@ -158,6 +158,10 @@
          <property-name>parametersService</property-name>
          <value>#{ParametersService}</value>
       </managed-property>
+      <managed-property>
+         <property-name>menuService</property-name>
+         <value>#{MenuService}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>

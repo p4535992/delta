@@ -26,6 +26,8 @@ package org.alfresco.web.ui.repo.tag;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Arrays;
+import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletRequest;
@@ -46,6 +48,7 @@ import org.apache.commons.logging.LogFactory;
  */
 public class PageTag extends TagSupport
 {
+   private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PageTag.class);
    private static final long serialVersionUID = 8142765393181557228L;
    
    private final static String SCRIPTS_START = "<script type=\"text/javascript\" src=\"";
@@ -57,41 +60,57 @@ public class PageTag extends TagSupport
    private final static String IE7COND_START = "<!--[if IE 7]>\n";
    private final static String IE7COND_END   = "<![endif]-->\n";
    
-   private final static String[] SCRIPTS = 
-   {
-      // jQuery
-      "/scripts/jquery/jquery-min.js",
-      // jQuery UI
-      "/scripts/jquery/ui.core.js",
-      "/scripts/jquery/ui.datepicker.js",
-      // jQuery Plugins
-      "/scripts/jquery/jquery.textarea-expander.js",
-      "/scripts/jquery/jquery.tooltip.js",
-      "/scripts/jquery/jquery.hoverIntent.js",
-      "/scripts/jquery/jquery.textmetrix.js",
-      "/scripts/jquery/jquery.autocomplete.js",
-      "/scripts/jquery/jquery.jLog-min.js",
-      // menu javascript
-      "/scripts/menu.js",
-      // webdav javascript
-      "/scripts/webdav.js",
-      // base yahoo file
-      "/scripts/ajax/yahoo/yahoo/yahoo-min.js",
-      // io handling (AJAX)
-      "/scripts/ajax/yahoo/connection/connection-min.js",
-      // event handling
-      "/scripts/ajax/yahoo/event/event-min.js",
-      // mootools
-      "/scripts/ajax/mootools.v1.11.js",
-      // common Alfresco util methods
-      "/scripts/ajax/common.js",
-      // pop-up panel helper objects
-      "/scripts/ajax/summary-info.js",
-      // ajax pickers
-      "/scripts/ajax/picker.js",
-      "/scripts/ajax/tagger.js",
-      "/scripts/scripts.js"
-   };
+   private final static String[] SCRIPTS;
+   static {
+       List<String> scriptsList = getScripts();
+       SCRIPTS = scriptsList.toArray(new String[scriptsList.size()]);
+   }
+
+    private static List<String> getScripts() {
+        List<String> scriptsList = Arrays.asList(
+                        // jQuery
+                "/scripts/jquery/jquery" + (log.isDebugEnabled() ? "" : "-min") + ".js",
+                                // jQuery UI
+                "/scripts/jquery/ui.core.js",
+                "/scripts/jquery/ui.datepicker.js",
+                                // jQuery Plugins
+                "/scripts/jquery/jquery.textarea-expander.js",
+                "/scripts/jquery/jquery.tooltip.js",
+                "/scripts/jquery/jquery.hoverIntent.js",
+                "/scripts/jquery/jquery.textmetrix.js",
+                "/scripts/jquery/jquery.autocomplete.js",
+                "/scripts/jquery/jquery.jLog-min.js",
+                                // menu javascript
+                "/scripts/menu.js",
+                                // webdav javascript
+                "/scripts/webdav.js",
+                                // base yahoo file
+                "/scripts/ajax/yahoo/yahoo/yahoo-min.js",
+                                // io handling (AJAX)
+                "/scripts/ajax/yahoo/connection/connection-min.js",
+                                // event handling
+                "/scripts/ajax/yahoo/event/event-min.js",
+                                // mootools
+                "/scripts/ajax/mootools.v1.11.js",
+                                // common Alfresco util methods
+                "/scripts/ajax/common.js",
+                                // pop-up panel helper objects
+                "/scripts/ajax/summary-info.js",
+                                // ajax pickers
+                "/scripts/ajax/picker.js",
+                "/scripts/ajax/tagger.js",
+                "/scripts/scripts.js"
+                );
+        if (log.isDebugEnabled()) {
+            // construct new List, that supports adding
+            /*
+             * uncomment, if need to use firebug-lite (with non-firefox browser)
+            scriptsList = new ArrayList<String>(scriptsList);
+            scriptsList.add("/scripts/firebug-lite.js");
+             */
+        }
+        return scriptsList;
+    }
    
    private final static String[] CSS = 
    {
@@ -277,7 +296,7 @@ public class PageTag extends TagSupport
             out.write(STYLES_MAIN);
          }
          out.write(IE6COND_END);
-         
+
          // JavaScript includes
          for (final String s : PageTag.SCRIPTS)
          {
@@ -286,6 +305,12 @@ public class PageTag extends TagSupport
             out.write(s);
             out.write(SCRIPTS_END);
          }
+         
+         out.write(IE7COND_START);
+         out.write("<script type=\"text/javascript\">");
+         out.write("var ie7 = true;");
+         out.write("</script>\n");
+         out.write(IE7COND_END);
          
          
          out.write("<script type=\"text/javascript\">"); // start - generate naked javascript code

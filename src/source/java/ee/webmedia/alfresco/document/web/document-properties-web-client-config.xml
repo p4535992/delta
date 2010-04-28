@@ -9,11 +9,11 @@
       <property-sheet>
          <!-- XXX: SIMILAR accessRestriction-related properties are defined in series-web-client-config.xml - might need to sync changes -->
          <show-property name="doccom:accessRestriction" component-generator="ClassificatorSelectorGenerator" classificatorName="accessRestriction" />
-         <show-property name="doccom:accessRestrictionReason" mandatoryIf="accessRestriction" component-generator="ClassificatorSelectorAndTextGenerator" classificatorName="accessRestrictionReason" styleClass="expand5-200" />
+         <show-property name="doccom:accessRestrictionReason" mandatoryIf="accessRestriction" component-generator="ClassificatorSelectorAndTextGenerator" classificatorName="accessRestrictionReason" styleClass="expand19-200" />
          <show-property name="accessRestrictionDate" show-in-edit-mode="false" display-label-id="document_accessRestrictionDate" />
          <show-property name="doccom:accessRestrictionBeginDate" readOnlyIf="doccom:docStatus=suletud" mandatoryIf="accessRestriction" show-in-view-mode="false" />
          <show-property name="doccom:accessRestrictionEndDate" readOnlyIf="doccom:docStatus=suletud" show-in-view-mode="false" />
-         <show-property name="doccom:accessRestrictionEndDesc" readOnlyIf="doccom:docStatus=suletud" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="doccom:accessRestrictionEndDesc" readOnlyIf="doccom:docStatus=suletud" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <separator name="sep1" component-generator="SeparatorGenerator" />
       </property-sheet>
    </config>
@@ -25,7 +25,7 @@
       </property-sheet>
    </config>
 
-   <config evaluator="node-type" condition="docsub:contractSim,docsub:incomingLetter,docsub:managementsOrder,docsub:internalApplication,docsub:leavingLetter,docsub:trainingApplication,docsub:tenderingApplication">
+   <config evaluator="node-type" condition="docsub:contractSim,docsub:incomingLetter,docsub:managementsOrder,docsub:internalApplication,docsub:trainingApplication,docsub:tenderingApplication">
       <property-sheet>
          <show-property name="owner" show-in-edit-mode="false" display-label-id="document_owner2" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="doccom:ownerName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" dialogTitleId="users_search_title" editable="false" display-label-id="document_owner2" />
@@ -44,7 +44,7 @@
    <config evaluator="aspect-name" condition="doccom:common">
       <property-sheet>
          <separator name="sep2" component-generator="SeparatorGenerator" />
-         <show-property name="doccom:docName" readOnlyIf="doccom:docStatus!=töös" component-generator="TextAreaGenerator" styleClass="expand5-200" />
+         <show-property name="doccom:docName" readOnlyIf="doccom:docStatus!=töös" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
    </config>
 
@@ -112,33 +112,33 @@
    <!-- Koolitustaotluse dokumendi spetsiifilised väljad -->
    <config evaluator="aspect-name" condition="docspec:trainingApplication">
       <property-sheet>
-         <show-property name="docspec:trainingName" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:trainingOrganizer" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:trainingNeed" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:trainingName" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:trainingOrganizer" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:trainingNeed" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" />
          <show-property name="docspec:trainingBeginDate" display-label-id="document_training_trainingDates_title" textId="document_eventDates_templateText"  readOnlyIf="doccom:docStatus!=töös" 
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
              docspec:trainingBeginDate¤¤styleClass=date inline¤readOnlyIf=doccom:docStatus!=töös
             ,docspec:trainingEndDate¤¤styleClass=date inline¤readOnlyIf=doccom:docStatus!=töös
             "
          />
-         <show-property name="docspec:trainingHours" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:trainingLocation" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:trainingHours" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:trainingLocation" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" />
       </property-sheet>
    </config>
    
    <!-- VälisLähetuse dokumendi spetsiifilised väljad -->
    <config evaluator="aspect-name" condition="docspec:errandOrderAbroad"><!-- part 1 -->
       <property-sheet>
-         <show-property name="docspec:legalBasisForOfficials" component-generator="ParameterTextAreaGenerator" parameterName="errandOrderLegalBasisForOfficials" styleClass="expand5-200" read-only="true" />
-         <show-property name="docspec:legalBasisForSupportStaff" component-generator="ParameterTextAreaGenerator" parameterName="errandOrderLegalBasisForSupportStaff" styleClass="expand5-200" read-only="true" />
-         <show-property name="docspec:travelPurpose" display-label-id="document_errand_travelPurpose" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:legalBasisForOfficials" component-generator="ParameterTextAreaGenerator" parameterName="errandOrderLegalBasisForOfficials" styleClass="expand19-200" read-only="true" labelStyleClass="wrap" />
+         <show-property name="docspec:legalBasisForSupportStaff" component-generator="ParameterTextAreaGenerator" parameterName="errandOrderLegalBasisForSupportStaff" styleClass="expand19-200" read-only="true" labelStyleClass="wrap" />
+         <show-property name="docspec:travelPurpose" display-label-id="document_errand_travelPurpose" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="wrap" />
       </property-sheet>
    </config>
    
    <!-- SiseLähetuse dokumendi spetsiifilised väljad -->
    <config evaluator="aspect-name" condition="docspec:errandApplicationDomestic"><!-- part 1 -->
       <property-sheet>
-         <show-property name="docspec:eventName" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:eventName" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" />
       <!-- TODO: -->
       </property-sheet>
    </config>
@@ -181,34 +181,34 @@
       <property-sheet>
          <show-property name="procurementApplicants" ignore-if-missing="false" show-in-view-mode="true" display-label-id="document_tendering_procurementApplicants"
          pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setProcurementApplicantName}" dialogTitleId="users_search_title" 
-         component-generator="MultiValueEditorGenerator" propsGeneration="
-          docspec:procurementApplicantName
-         ,docspec:procurementApplicantJobTitle
-         ,docspec:procurementApplicantOrgStructUnit
+         component-generator="MultiValueEditorGenerator" addLabelId="document_add_applicant" propsGeneration="
+          docspec:procurementApplicantName¤TextAreaGenerator¤styleClass=medium expand19-200
+         ,docspec:procurementApplicantJobTitle¤TextAreaGenerator¤styleClass=small expand19-200
+         ,docspec:procurementApplicantOrgStructUnit¤TextAreaGenerator¤styleClass=small expand19-200
          "
          />
          <show-property name="docspec:procurementType" component-generator="ClassificatorSelectorGenerator" classificatorName="procurementType" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:procurementLegalBasis" component-generator="ParameterTextAreaGenerator" parameterName="procurementLegalBasis" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:procurementDesc" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:procurementSumEstimated" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:procurementLegalBasis" component-generator="ParameterTextAreaGenerator" parameterName="procurementLegalBasis" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:procurementDesc" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" />
+				 <show-property name="docspec:procurementSumEstimated" readOnlyIf="doccom:docStatus!=töös" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" />
          <show-property name="docspec:procurementBudgetClassification" component-generator="ClassificatorSelectorGenerator" classificatorName="procurementBudgetClassification" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:procurementObjectClassCode" component-generator="ParameterTextAreaGenerator" parameterName="procurementObjectClassCode" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:procurementTenderData" component-generator="ParameterTextAreaGenerator" parameterName="procurementTenderData" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:procurementObjectClassCode" component-generator="ParameterTextAreaGenerator" parameterName="procurementObjectClassCode" styleClass="expand19-200" labelStyleClass="wrap" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:procurementTenderData" component-generator="ParameterTextAreaGenerator" parameterName="procurementTenderData" styleClass="expand19-200" labelStyleClass="wrap" readOnlyIf="doccom:docStatus!=töös" />
 
          <show-property name="docspec:procurementContractDateEstimated" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus!=töös" />
 
-         <show-property name="docspec:procurementOfficialResponsible" show-in-view-mode="true" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setProcurementOfficialResponsible}" dialogTitleId="users_search_title" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:procurementOfficialResponsible" show-in-view-mode="true" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setProcurementOfficialResponsible}" dialogTitleId="users_search_title" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="wrap" />
 
-         <show-property name="docspec:linkedToEuProject" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:euProjectDesc" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" mandatoryIf="linkedToEuProject" />
-         <show-property name="docspec:structuralAidIdOutsideProject" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:objectTechnicalDesc" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:evaluationCriteria" component-generator="ParameterTextAreaGenerator" parameterName="procurementEvaluationCriteria" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:offeringEndDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:qualificationTermsForTenders" component-generator="ParameterTextAreaGenerator" parameterName="procurementQualificationTermsForTenders" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:linkedToEuProject" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="wrap" />
+         <show-property name="docspec:euProjectDesc" component-generator="TextAreaGenerator" styleClass="expand19-200" labelStyleClass="wrap" readOnlyIf="doccom:docStatus!=töös" mandatoryIf="linkedToEuProject" />
+         <show-property name="docspec:structuralAidIdOutsideProject" component-generator="TextAreaGenerator" styleClass="expand19-200" labelStyleClass="wrap" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:objectTechnicalDesc" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:evaluationCriteria" component-generator="ParameterTextAreaGenerator" parameterName="procurementEvaluationCriteria" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:offeringEndDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="wrap" />
+         <show-property name="docspec:qualificationTermsForTenders" component-generator="ParameterTextAreaGenerator" parameterName="procurementQualificationTermsForTenders" styleClass="expand19-200" labelStyleClass="wrap" readOnlyIf="doccom:docStatus!=töös" />
          <show-property name="docspec:contractBeginDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus!=töös" />
 
-         <show-property name="docspec:procurementNumber" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:procurementNumber" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="doccom:docStatus!=töös" />
       </property-sheet>
    </config>
 
@@ -261,25 +261,25 @@
             addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="parent.doccom:docStatus!=töös" 
             component-generator="MultiValueEditorGenerator" propsGeneration="
              docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=trainingAppAbroadExpenseType¤styleClass=small
-            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand5-200 medium
+            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium
             ,docspec:expenseFinancingSource¤ClassificatorSuggestingGenerator¤classificatorName=trainingAppExpenseFinancingSource¤styleClass=medium
             "
          />
          <show-property name="docspec:advancePaymentSum" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-edit" show-in-view-mode="false" readOnlyIf="parent.doccom:docStatus!=töös"
             component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
-             docspec:advancePaymentSum¤¤styleClass=small¤jsfConverter=javax.faces.convert.DoubleConverter
+             docspec:advancePaymentSum¤¤styleClass=small¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter
             ,docspec:advancePaymentDesc¤ClassificatorSelectorGenerator¤classificatorName=trainingAppAdvancePaymentDesc
             "
          />
          <show-property name="advancePaymentInfo" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-view" escapeText="false" show-in-edit-mode="false" ignore-if-missing="false"
-            component-generator="InlinePropertyGroupGenerator" props="
-             docspec:advancePaymentSum
+            component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             docspec:advancePaymentSum¤¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter
             ,docspec:advancePaymentDesc
             "
          />
          <show-property name="docspec:errandSubstituteName" readOnlyIf="parent.doccom:docStatus!=töös"
          component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setErrandSubstituteName}" setterCallbackTakesNode="true" dialogTitleId="users_search_title"  />
-         <show-property name="docspec:errandComment" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="parent.doccom:docStatus!=töös" />
+         <show-property name="docspec:errandComment" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="parent.doccom:docStatus!=töös" />
       </property-sheet>
    </config>
 
@@ -298,7 +298,7 @@
             addLabelId="document_errandsAbroad_addCatering" styleClass="add-catering" readOnlyIf="parent.parent.doccom:docStatus!=töös"
             component-generator="MultiValueEditorGenerator" propsGeneration="
              docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceCateringCount
-            ,docspec:dailyAllowanceDays¤¤styleClass=small
+            ,docspec:dailyAllowanceDays¤¤styleClass=small center
             ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceRate¤styleClass=small
             ,docspec:dailyAllowanceFinancingSource¤ClassificatorSuggestingGenerator¤classificatorName=errandAbroadDailyAllowanceFinancingSource¤styleClass=medium
             "
@@ -317,7 +317,7 @@
             ,docspec:county
             " 
          />
-         <show-property name="docspec:travelPurpose" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="parent.parent.doccom:docStatus!=töös" />
+         <show-property name="docspec:travelPurpose" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="parent.parent.doccom:docStatus!=töös" />
       </property-sheet>
    </config>
    
@@ -327,13 +327,13 @@
             addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
             component-generator="MultiValueEditorGenerator" propsGeneration="
              docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandOrderAbroadExpenseType¤styleClass=small
-            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand5-200 medium
+            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium
             ,docspec:expenseFinancingSource¤ClassificatorSuggestingGenerator¤classificatorName=errandAbroadExpenseFinancingSource¤styleClass=medium
             "
          />
          <show-property name="docspec:advancePaymentSum" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-edit" show-in-view-mode="false" readOnlyIf="parent.parent.doccom:docStatus!=töös"
             component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
-             docspec:advancePaymentSum¤¤styleClass=small¤jsfConverter=javax.faces.convert.DoubleConverter
+             docspec:advancePaymentSum¤TextAreaGenerator¤styleClass=small center expand19-200¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter
             ,docspec:advancePaymentDesc¤ClassificatorSelectorGenerator¤classificatorName=errandOrderAbroadAdvancePaymentDesc
             "
          />
@@ -346,13 +346,13 @@
             addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
             component-generator="MultiValueEditorGenerator" propsGeneration="
              docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandApplicationDomesticExpenseType¤styleClass=small
-            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand5-200 medium
+            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium
             ,docspec:expenseFinancingSource¤ClassificatorSuggestingGenerator¤classificatorName=errandDomesticExpenseFinancingSource¤styleClass=medium
             "
          />
          <show-property name="docspec:advancePaymentSum" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-edit" show-in-view-mode="false" readOnlyIf="parent.parent.doccom:docStatus!=töös"
             component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
-             docspec:advancePaymentSum¤¤styleClass=small¤jsfConverter=javax.faces.convert.DoubleConverter
+             docspec:advancePaymentSum¤¤styleClass=small¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter
             ,docspec:advancePaymentDesc¤ClassificatorSelectorGenerator¤classificatorName=errandDomesticAdvancePaymentDesc 
             "
          />
@@ -363,14 +363,14 @@
    <config evaluator="aspect-name" condition="docspec:errandBlockCommon"><!-- part 2 -->
       <property-sheet>
          <show-property name="advancePaymentInfo" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-view" escapeText="false" show-in-edit-mode="false" ignore-if-missing="false"
-            component-generator="InlinePropertyGroupGenerator" props="
-             docspec:advancePaymentSum
+            component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             docspec:advancePaymentSum¤¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter
             ,docspec:advancePaymentDesc
             "
          />
          <show-property name="docspec:errandSubstituteName" readOnlyIf="parent.parent.doccom:docStatus!=töös"
          component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setErrandSubstituteName}" setterCallbackTakesNode="true" dialogTitleId="users_search_title"  />
-         <show-property name="docspec:errandComment" component-generator="TextAreaGenerator" styleClass="expand5-200" readOnlyIf="parent.parent.doccom:docStatus!=töös" />
+         <show-property name="docspec:errandComment" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="parent.parent.doccom:docStatus!=töös" />
       </property-sheet>
    </config>
 
@@ -401,30 +401,30 @@
    
    <config evaluator="aspect-name" condition="doccom:legalBasis">
       <property-sheet>
-         <show-property name="doccom:legalBasisName" component-generator="ParameterTextAreaGenerator" parameterName="vacationOrderLegalBasis" styleClass="expand5-200" />
+         <show-property name="doccom:legalBasisName" component-generator="ParameterTextAreaGenerator" parameterName="vacationOrderLegalBasis" styleClass="expand19-200" />
       </property-sheet>
    </config>
 
    <config evaluator="aspect-name" condition="docspec:leaveDetails">
       <property-sheet>
          <separator name="leave-note-sep" component-generator="LeavingLetterContentGenerator" show-in-view-mode="false" />
-         <show-property name="docspec:leaveReason" readOnlyIf="doccom:docStatus!=töös" component-generator="ClassificatorSelectorGenerator" classificatorName="leavingLetterReason" />
-         <show-property name="docspec:leaveDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus!=töös"/>
+         <show-property name="docspec:leaveReason" readOnlyIf="doccom:docStatus!=töös" component-generator="ClassificatorSelectorGenerator" classificatorName="leavingLetterReason" labelStyleClass="wrap" />
+         <show-property name="docspec:leaveDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="wrap"/>
       </property-sheet>
    </config>
 
    <config evaluator="aspect-name" condition="docspec:leaveOfficials">
       <property-sheet>
-         <show-property name="docspec:trainingAdviser" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="trainingAdviser" styleClass="expand5-200" />
-         <show-property name="docspec:financialDepartmentHeadOnAccounting" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="financialDepartmentHeadOnAccounting" styleClass="expand5-200" />
-         <show-property name="docspec:adviserGeneralDepartmentOnArchives" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="adviserGeneralDepartmentOnArchives" styleClass="expand5-200" />
-         <show-property name="docspec:adviserGeneralDepartmentOnClassifiedRecords" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="adviserGeneralDepartmentOnClassifiedRecords" styleClass="expand5-200" />
-         <show-property name="docspec:deputyHeadOfTheGeneralDepartment" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="deputyHeadOfTheGeneralDepartment" styleClass="expand5-200" />
-         <show-property name="docspec:documentaryProceduresRecipient" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="documentaryProceduresRecipient" styleClass="expand5-200" />
-         <show-property name="docspec:adviserOnICT" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="adviserOnICT" styleClass="expand5-200" />
-         <show-property name="docspec:deputyHeadOfTheAdmDeptOnMaintenance" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="deputyHeadOfTheAdmDeptOnMaintenance" styleClass="expand5-200" />
-         <show-property name="docspec:officialsDirectManager" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="officialsDirectManager" styleClass="expand5-200" />
-         <show-property name="docspec:officialOnPersonnelDepartment" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="officialOnPersonnelDepartment" styleClass="expand5-200" />
+         <show-property name="docspec:trainingAdviser" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="trainingAdviser" styleClass="expand19-200" />
+         <show-property name="docspec:financialDepartmentHeadOnAccounting" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="financialDepartmentHeadOnAccounting" styleClass="expand19-200" labelStyleClass="wrap" />
+         <show-property name="docspec:adviserGeneralDepartmentOnArchives" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="adviserGeneralDepartmentOnArchives" styleClass="expand19-200" />
+         <show-property name="docspec:adviserGeneralDepartmentOnClassifiedRecords" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="adviserGeneralDepartmentOnClassifiedRecords" styleClass="expand19-200" />
+         <show-property name="docspec:deputyHeadOfTheGeneralDepartment" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="deputyHeadOfTheGeneralDepartment" styleClass="expand19-200" />
+         <show-property name="docspec:documentaryProceduresRecipient" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="documentaryProceduresRecipient" styleClass="expand19-200" />
+         <show-property name="docspec:adviserOnICT" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="adviserOnICT" styleClass="expand19-200" />
+         <show-property name="docspec:deputyHeadOfTheAdmDeptOnMaintenance" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="deputyHeadOfTheAdmDeptOnMaintenance" styleClass="expand19-200" />
+         <show-property name="docspec:officialsDirectManager" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="officialsDirectManager" styleClass="expand19-200" />
+         <show-property name="docspec:officialOnPersonnelDepartment" read-only="true" component-generator="ParameterTextAreaGenerator" parameterName="officialOnPersonnelDepartment" styleClass="expand19-200" />
       </property-sheet>
    </config>
 
@@ -432,12 +432,12 @@
       <property-sheet>
          <show-property name="responsible" show-in-edit-mode="false" display-label-id="document_responsibleName" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="docspec:responsibleName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setResponsible}" dialogTitleId="users_search_title" />
-         <show-property name="docspec:responsibleStructUnit" show-in-view-mode="false" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:responsibleStructUnit" show-in-view-mode="false" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:responsibleOrganization" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setOrganization}" dialogTitleId="contacts_search_title" />
-         <show-property name="docspec:coResponsibles" readOnlyIf="doccom:docStatus!=töös" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:coResponsibles" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:managementsOrderDueDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus!=töös" />
          <show-property name="docspec:managementsOrderComplienceDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:managementsOrderComplienceNotation" styleClass="expand5-200" component-generator="TextAreaGenerator" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:managementsOrderComplienceNotation" styleClass="expand19-200" component-generator="TextAreaGenerator" readOnlyIf="doccom:docStatus!=töös" />
          <show-property name="docspec:managementsOrderWhoseName" readOnlyIf="doccom:docStatus!=töös" component-generator="ClassificatorSelectorGenerator" classificatorName="managementsOrderWhose"  />
       </property-sheet>
    </config>
@@ -447,7 +447,8 @@
       <property-sheet>
          <show-property name="senderNameEmail" show-in-edit-mode="false" display-label-id="document_senderNameEmail" />
          <show-property name="docspec:senderName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" forcedMandatory="true" 
-                 component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setSender}"/>
+                 component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}"
+                 setterCallback="#{MetadataBlockBean.setSender}" dialogTitleId="document_sender_name_search_title"/>
          <show-property name="docspec:senderEmail" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" />
       </property-sheet>
    </config>
@@ -475,7 +476,7 @@
    <config evaluator="aspect-name" condition="docspec:complience">
       <property-sheet>
          <show-property name="docspec:dueDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:complienceNotation" styleClass="expand5-200" component-generator="TextAreaGenerator" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:complienceNotation" styleClass="expand19-200" component-generator="TextAreaGenerator" readOnlyIf="doccom:docStatus!=töös" />
          <show-property name="docspec:complienceDate" component-generator="DatePickerGenerator" readOnlyIf="doccom:docStatus!=töös" />
       </property-sheet>
    </config>
@@ -484,13 +485,13 @@
       <property-sheet>
          <separator name="vacsep0" component-generator="SeparatorGenerator" show="#{MetadataBlockBean.inEditMode == true || MetadataBlockBean.showVacationAdd == true}" />
          <show-property name="{temp}vacationAddText" show-in-edit-mode="false" show="#{MetadataBlockBean.showVacationAdd == true}" display-label-id="document_vacationAdd" component-generator="UnescapedOutputTextGenerator" />
-         <show-property name="docspec:leaveAnnual" show-in-view-mode="false" display-label-id="document_vacationAdd" component-generator="InlinePropertyGroupGenerator" props="docspec:leaveAnnual,docspec:leaveAnnualBeginDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualEndDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualDays||styleClass=small inline|mandatoryIf=_leaveAnnual,docspec:leaveWithoutPay,docspec:leaveWithoutPayBeginDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayEndDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayDays||styleClass=small inline|mandatoryIf=_leaveWithoutPay,docspec:leaveChild,docspec:leaveChildBeginDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildEndDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildDays||styleClass=small inline|mandatoryIf=_leaveChild,docspec:leaveStudy,docspec:leaveStudyBeginDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyEndDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyDays||styleClass=small inline|mandatoryIf=_leaveStudy" textId="document_vacationAdd_edit" />
+         <show-property name="docspec:leaveAnnual" show-in-view-mode="false" display-label-id="document_vacationAdd" component-generator="InlinePropertyGroupGenerator" props="docspec:leaveAnnual,docspec:leaveAnnualBeginDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualEndDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualDays||styleClass=tiny inline center|mandatoryIf=_leaveAnnual,docspec:leaveWithoutPay,docspec:leaveWithoutPayBeginDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayEndDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayDays||styleClass=tiny inline center|mandatoryIf=_leaveWithoutPay,docspec:leaveChild,docspec:leaveChildBeginDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildEndDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildDays||styleClass=tiny inline center|mandatoryIf=_leaveChild,docspec:leaveStudy,docspec:leaveStudyBeginDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyEndDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyDays||styleClass=tiny inline center|mandatoryIf=_leaveStudy" textId="document_vacationAdd_edit" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="docsub:vacationOrderSmit">
       <property-sheet>
-         <show-property name="docspec:leaveAnnual" show-in-view-mode="false" display-label-id="document_vacationAdd" component-generator="InlinePropertyGroupGenerator" props="docspec:leaveAnnual,docspec:leaveAnnualBeginDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualEndDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualDays||styleClass=small inline|mandatoryIf=_leaveAnnual,docspec:leaveWithoutPay,docspec:leaveWithoutPayBeginDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayEndDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayDays||styleClass=small inline|mandatoryIf=_leaveWithoutPay,docspec:leaveChild,docspec:leaveChildBeginDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildEndDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildDays||styleClass=small inline|mandatoryIf=_leaveChild,docspec:leaveStudy,docspec:leaveStudyBeginDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyEndDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyDays||styleClass=small inline|mandatoryIf=_leaveStudy" textId="document_vacationAddSmit_edit" />
+         <show-property name="docspec:leaveAnnual" show-in-view-mode="false" display-label-id="document_vacationAdd" component-generator="InlinePropertyGroupGenerator" props="docspec:leaveAnnual,docspec:leaveAnnualBeginDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualEndDate||styleClass=date inline|mandatoryIf=_leaveAnnual,docspec:leaveAnnualDays||styleClass=tiny inline center|mandatoryIf=_leaveAnnual,docspec:leaveWithoutPay,docspec:leaveWithoutPayBeginDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayEndDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay,docspec:leaveWithoutPayDays||styleClass=tiny inline center|mandatoryIf=_leaveWithoutPay,docspec:leaveChild,docspec:leaveChildBeginDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildEndDate||styleClass=date inline|mandatoryIf=_leaveChild,docspec:leaveChildDays||styleClass=tiny inline center|mandatoryIf=_leaveChild,docspec:leaveStudy,docspec:leaveStudyBeginDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyEndDate||styleClass=date inline|mandatoryIf=_leaveStudy,docspec:leaveStudyDays||styleClass=tiny inline center|mandatoryIf=_leaveStudy" textId="document_vacationAddSmit_edit" />
       </property-sheet>
    </config>
 
@@ -498,13 +499,13 @@
       <property-sheet>
          <separator name="vacsep1" component-generator="SeparatorGenerator" show="#{MetadataBlockBean.inEditMode == true || MetadataBlockBean.showVacationChange == true}" />
          <show-property name="{temp}vacationChangeText" show-in-edit-mode="false" show="#{MetadataBlockBean.showVacationChange == true}" display-label-id="document_vacationChange" component-generator="UnescapedOutputTextGenerator" />
-         <show-property name="docspec:leaveChange" show-in-view-mode="false" display-label-id="document_vacationChange" component-generator="InlinePropertyGroupGenerator" props="docspec:leaveChange,docspec:leaveInitialBeginDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveInitialEndDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveNewBeginDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveNewEndDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveNewDays||styleClass=small inline|mandatoryIf=_leaveChange,docspec:leaveCancel,docspec:leaveCancelBeginDate||styleClass=date inline|mandatoryIf=_leaveCancel,docspec:leaveCancelEndDate||styleClass=date inline|mandatoryIf=_leaveCancel,docspec:leaveCancelDays||styleClass=small inline|mandatoryIf=_leaveCancel" textId="document_vacationChange_edit" labelStyleClass="wrap" />
+         <show-property name="docspec:leaveChange" show-in-view-mode="false" display-label-id="document_vacationChange" component-generator="InlinePropertyGroupGenerator" props="docspec:leaveChange,docspec:leaveInitialBeginDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveInitialEndDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveNewBeginDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveNewEndDate||styleClass=date inline|mandatoryIf=_leaveChange,docspec:leaveNewDays||styleClass=tiny inline center|mandatoryIf=_leaveChange,docspec:leaveCancel,docspec:leaveCancelBeginDate||styleClass=date inline|mandatoryIf=_leaveCancel,docspec:leaveCancelEndDate||styleClass=date inline|mandatoryIf=_leaveCancel,docspec:leaveCancelDays||styleClass=tiny inline center|mandatoryIf=_leaveCancel" textId="document_vacationChange_edit" labelStyleClass="wrap" />
 
          <separator name="vacsep2" component-generator="SeparatorGenerator" />
          <show-property name="{temp}vacationSubstitute" show-in-edit-mode="false" display-label-id="document_vacationSubstitute" component-generator="UnescapedOutputTextGenerator"  />
          <show-property name="docspec:substituteName" show-in-view-mode="false" display-label-id="document_vacationSubstitute" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setVacationSubstitute}" dialogTitleId="users_search_title" 
-         component-generator="MultiValueEditorGenerator" propsGeneration="
-          docspec:substituteName
+         component-generator="MultiValueEditorGenerator" addLabelId="document_add_substitute" propsGeneration="
+          docspec:substituteName¤¤styleClass=medium
          ,docspec:substitutionBeginDate¤DatePickerGenerator
          ,docspec:substitutionEndDate¤DatePickerGenerator
          "
@@ -514,14 +515,14 @@
 
    <config evaluator="aspect-name" condition="docspec:applicationContent">
       <property-sheet>
-         <show-property name="docspec:applicationContentData" readOnlyIf="doccom:docStatus!=töös" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:applicationContentData" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>
 
    <config evaluator="aspect-name" condition="doccom:signer">
       <property-sheet>
          <show-property name="signer" show-in-edit-mode="false" display-label-id="document_signer" />
-         <show-property name="doccom:signerName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setSigner}" dialogTitleId="users_search_title" />
+         <show-property name="doccom:signerName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setSigner}" dialogTitleId="users_search_title" styleClass="long" />
          <show-property name="doccom:signerJobTitle" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" />
       </property-sheet>
    </config>
@@ -537,51 +538,51 @@
     <!-- docspec:firstPartyContactPerson IS MANDATORY for docsub:contractSim -->
    <config evaluator="node-type" condition="docsub:contractSim">
       <property-sheet>
-         <show-property name="docspec:firstPartyContactPerson" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" forcedMandatory="true" />
+         <show-property name="docspec:firstPartyContactPerson" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200" component-generator="TextAreaGenerator" forcedMandatory="true" />
          </property-sheet>
    </config>
     
     <!-- docspec:firstPartyContactPerson IS NOT MANDATORY for docsub:contractSmit -->  
    <config evaluator="node-type" condition="docsub:contractSmit">
       <property-sheet>
-         <show-property name="docspec:firstPartyContactPerson" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:firstPartyContactPerson" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          </property-sheet>
    </config>
    
    <config evaluator="aspect-name" condition="docspec:contractDetails">
       <property-sheet>
          <show-property name="docspec:secondPartyName" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setSecondParty}" dialogTitleId="contacts_search_title" />
-         <show-property name="docspec:secondPartySigner" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="docspec:secondPartyEmail" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="docspec:secondPartyContactPerson" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:secondPartySigner" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:secondPartyEmail" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:secondPartyContactPerson" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:thirdPartyName" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setThirdParty}" dialogTitleId="contacts_search_title" />
-         <show-property name="docspec:thirdPartySigner" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="docspec:thirdPartyEmail" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="docspec:thirdPartyContactPerson" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:thirdPartySigner" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:thirdPartyEmail" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:thirdPartyContactPerson" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>
    
    <config evaluator="aspect-name" condition="docspec:contractSimDetails">
       <property-sheet>
          <show-property name="docspec:secondPartyContractDate" readOnlyIf="doccom:docStatus!=töös" component-generator="DatePickerGenerator" />
-         <show-property name="docspec:secondPartyContractNumber" readOnlyIf="doccom:docStatus!=töös" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="docspec:inclusivePriceExclVat" readOnlyIf="doccom:docStatus!=töös" converter="javax.faces.Double" />
+         <show-property name="docspec:secondPartyContractNumber" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:inclusivePriceExclVat" readOnlyIf="doccom:docStatus!=töös" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" />
          <!-- FIXME: docspec:costManager väärtus pannakse hiljem klassifikaatorisse  -->
          <show-property name="docspec:costManager" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setCostManager}" dialogTitleId="users_search_title" />
-         <show-property name="docspec:financingSource" readOnlyIf="doccom:docStatus!=töös" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:financingSource" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:contractSimEndDate" readOnlyIf="doccom:docStatus!=töös" component-generator="DatePickerGenerator" />
          <show-property name="docspec:finalTermOfDeliveryAndReceipt" readOnlyIf="doccom:docStatus!=töös" component-generator="DatePickerGenerator" />
-         <show-property name="docspec:paymentAnnotation" readOnlyIf="doccom:docStatus!=töös" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:paymentAnnotation" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>
    
    <config evaluator="aspect-name" condition="docspec:contractSmitDetails">
       <property-sheet>
-      <show-property name="docspec:contractChange" readOnlyIf="doccom:docStatus!=töös" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-      <show-property name="docspec:warranty" readOnlyIf="doccom:docStatus!=töös" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-      <show-property name="docspec:inclusivePriceInclVat" readOnlyIf="doccom:docStatus!=töös" converter="javax.faces.Double" />
+      <show-property name="docspec:contractChange" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+      <show-property name="docspec:warranty" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+      <show-property name="docspec:inclusivePriceInclVat" readOnlyIf="doccom:docStatus!=töös" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" />
       <show-property name="docspec:contractSmitEndDate" readOnlyIf="doccom:docStatus!=töös" component-generator="DatePickerGenerator" />
-      <show-property name="docspec:contractEndAnnotation" readOnlyIf="doccom:docStatus!=töös" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+      <show-property name="docspec:contractEndAnnotation" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>
    
@@ -638,9 +639,9 @@
          <show-property name="recipients" show-in-edit-mode="false" display-label-id="document_recipients" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="doccom:recipientName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" display-label-id="document_recipients"
          pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title"  
-         component-generator="MultiValueEditorGenerator" propsGeneration="
-          doccom:recipientName¤TextAreaGenerator¤styleClass=expand5-200
-         ,doccom:recipientEmail¤TextAreaGenerator¤styleClass=expand5-200
+         component-generator="MultiValueEditorGenerator" addLabelId="document_add_recipient" propsGeneration="
+          doccom:recipientName¤TextAreaGenerator¤styleClass=expand19-200
+         ,doccom:recipientEmail¤TextAreaGenerator¤styleClass=expand19-200
          "
          />
       </property-sheet>
@@ -658,9 +659,9 @@
          <show-property name="additionalRecipients" show-in-edit-mode="false" display-label-id="document_additional_recipients" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="doccom:additionalRecipientName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" display-label-id="document_additional_recipients"
             pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title" 
-            component-generator="MultiValueEditorGenerator" propsGeneration="
-             doccom:additionalRecipientName¤TextAreaGenerator¤styleClass=expand5-200
-            ,doccom:additionalRecipientEmail¤TextAreaGenerator¤styleClass=expand5-200
+            component-generator="MultiValueEditorGenerator" addLabelId="document_add_additional_recipient" propsGeneration="
+             doccom:additionalRecipientName¤TextAreaGenerator¤styleClass=expand19-200
+            ,doccom:additionalRecipientEmail¤TextAreaGenerator¤styleClass=expand19-200
             "
          />
       </property-sheet>
@@ -668,7 +669,7 @@
 
    <config evaluator="aspect-name" condition="doccom:sendDesc">
       <property-sheet>
-         <show-property name="doccom:sendDescValue" readOnlyIf="doccom:docStatus!=töös" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="doccom:sendDescValue" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <separator name="sep4" component-generator="SeparatorGenerator" />
       </property-sheet>
    </config>
@@ -682,8 +683,8 @@
    <config evaluator="aspect-name" condition="doccom:common">
       <property-sheet>
          <show-property name="doccom:docStatus" read-only="true" />
-         <show-property name="doccom:comment" readOnlyIf="doccom:docStatus!=töös" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="doccom:keywords" readOnlyIf="doccom:docStatus!=töös" component-generator="ClassificatorSelectorAndTextGenerator" classificatorName="keywords" styleClass="expand5-200" />
+         <show-property name="doccom:comment" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="doccom:keywords" readOnlyIf="doccom:docStatus!=töös" component-generator="ClassificatorSelectorAndTextGenerator" classificatorName="keywords" styleClass="expand19-200" />
          <show-property name="doccom:storageType" show="#{MetadataBlockBean.showStorageType == true}" readOnlyIf="doccom:docStatus!=töös" component-generator="ClassificatorSelectorGenerator" classificatorName="storageType" />
       </property-sheet>
    </config>

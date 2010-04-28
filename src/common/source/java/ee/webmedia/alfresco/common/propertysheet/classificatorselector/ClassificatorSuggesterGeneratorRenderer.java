@@ -18,14 +18,22 @@ public class ClassificatorSuggesterGeneratorRenderer extends HtmlTextRenderer {
     public static final String CLASSIFICATOR_SUGGESTER_RENDERER_TYPE = ClassificatorSuggesterGeneratorRenderer.class.getCanonicalName();
 
     @Override
+    public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
+        super.encodeBegin(context, component);
+        ResponseWriter out = context.getResponseWriter();
+        out.startElement(HTML.SPAN_ELEM, component);// Add wrapper to fix IE bug related to input with background image and text shadowing
+        out.writeAttribute(HTML.CLASS_ATTR, "suggest-wrapper", null);
+    }
+    
+    @Override
     public void encodeEnd(FacesContext context, UIComponent component) throws IOException {
         super.encodeEnd(context, component);
+        ResponseWriter out = context.getResponseWriter();
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
         @SuppressWarnings("unchecked")
         final List<String> classificatorValues = (List<String>) attributes.get(CLASSIFICATOR_VALUES);
         if (classificatorValues != null) {
-            ResponseWriter out = context.getResponseWriter();
             out.startElement(HTML.SCRIPT_ELEM, component);
             out.writeAttribute(HTML.SCRIPT_TYPE_ATTR, HTML.SCRIPT_TYPE_TEXT_JAVASCRIPT, null);
             final String inputClientId = component.getClientId(context);
@@ -33,7 +41,7 @@ public class ClassificatorSuggesterGeneratorRenderer extends HtmlTextRenderer {
             out.write(javaScript);
             out.endElement(HTML.SCRIPT_ELEM);
         }
-
+        out.endElement(HTML.SPAN_ELEM);
     }
 
     private String getJavascriptFunctionCall(String inputClientId, List<String> classificatorValues) {

@@ -32,11 +32,11 @@
 <a:panel label="#{msg.http_app_state}" id="http-application-state" progressive="true" expanded="false">
    <a:httpApplicationState id="has" />
 </a:panel>
+--%>
 
 <a:panel label="#{msg.http_session_state}" id="http-session-state" progressive="true" expanded="false">
 <a:httpSessionState id="hss" />
 </a:panel>
- --%>
 
 <a:panel label="#{msg.http_request_state}" id="http-request-state" progressive="true" expanded="false">
 <a:httpRequestState id="hrs" />

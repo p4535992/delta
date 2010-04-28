@@ -31,7 +31,7 @@
 
       <a:column id="col3-contacts" actions="true">
          <f:facet name="header">
-            <h:outputText value="#{msg.addressbook_contactgroup_remove_contact}" />
+            <h:outputText value="#{msg.addressbook_contactgroup_actions}" />
          </f:facet>
          <a:actionLink value="#{msg.remove}" image="/images/icons/remove_user.gif" showLink="false" styleClass="inlineAction"
             actionListener="#{DialogManager.bean.removeContact}" tooltip="#{msg.addressbook_contactgroup_remove_contact}">

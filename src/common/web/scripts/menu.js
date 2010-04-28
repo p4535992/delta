@@ -5,6 +5,20 @@
 
 // Menu component functions
 var _lastMenu = null;
+var _curtain = null;
+
+function setupCurtain() {
+   _curtain = document.createElement("div");
+   _curtain.id = "menuCurtain";
+   _curtain.style.width = "100%";
+   _curtain.style.height = "100%";
+   _curtain.style.position = "absolute";
+   _curtain.style.top = "0px";
+   _curtain.style.left = "0px";
+   _curtain.style.zIndex = "9999";
+   _curtain.style.backgroundColor = "transparent"; // IE7
+   _curtain.onclick = _hideLastMenu;
+}
 
 // toggle a dynamic menu dropping down
 function _toggleMenu(e, menuId)
@@ -36,14 +50,7 @@ function _toggleMenu(e, menuId)
          top = 20;
       }
       
-      if ((winHeight - e.clientY) < menu.offsetHeight) 
-      {
-         menu.style.top = '-' + (menu.offsetHeight + top) + 'px';
-      }
-      else
-      {
-         menu.style.top = origTop;
-      }
+      menu.style.top = origTop;
       
       menu.style.visibility = 'visible';
       _lastMenu = menuId;
@@ -54,12 +61,20 @@ function _toggleMenu(e, menuId)
    	{
    	   e.stopPropagation();
    	}
-      document.onclick = _hideLastMenu;
+   	
+   	  var primaryMenu = menu.parentNode.parentNode.parentNode;
+   	  if(primaryMenu.id == "menu") {
+   		setupCurtain();
+	   	primaryMenu.insertBefore(_curtain, primaryMenu.firstChild);
+   	  } else {
+   		  document.onclick = _hideLastMenu;
+   	  }
    }
    else
    {
       document.getElementById(menuId).style.display = 'none';
       document.onclick = null;
+      _hideLastMenu();
    }
 }
 
@@ -71,6 +86,11 @@ function _hideLastMenu()
       document.getElementById(_lastMenu).style.display = 'none';
       _lastMenu = null;
       document.onclick = null;
+   }
+
+   if(_curtain != null) {
+	   _curtain.parentNode.removeChild(_curtain);
+	   _curtain = null;
    }
 }
 
@@ -85,15 +105,19 @@ function _togglePersistentMenu(e, menuId)
    if (targ.nodeType == 3) // defeat Safari bug
       targ = targ.parentNode;
    var liElement = targ.parentNode;
-   
+   var expanded = "expanded";
    var clName = liElement.className;
-   if(clName.indexOf("expanded") == -1)
+   var startIdx = clName.indexOf(expanded);
+   if(startIdx == -1)
    {
-      liElement.className = clName + " expanded";
+      liElement.className = clName + " " + expanded;
    }
    else
    {
-      liElement.className = "dropdown";
+      liElement.className = clName.substring(0, startIdx) + clName.substring(startIdx + expanded.length);
+      if(clName.indexOf("dropdown") == -1) {
+    	  liElement.className = liElement.className + " dropdown";
+      }
    }
    
    if (menu.style.display == 'none')

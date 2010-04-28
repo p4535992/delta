@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.functions.service;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.view.Location;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.functions.model.Function;
@@ -59,5 +60,7 @@ public interface FunctionsService {
     boolean closeFunction(Function function);
 
     NodeRef getFunctionsRoot();
+
+    Location getDocumentListLocation();
 
 }

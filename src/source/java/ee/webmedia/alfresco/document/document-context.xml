@@ -53,6 +53,7 @@
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="documentTypeService" ref="DocumentTypeService" />
+      <property name="documentTemplateService" ref="DocumentTemplateService" />
       <property name="registerService" ref="RegisterService" />
       <property name="seriesService" ref="SeriesService" />
       <property name="volumeService" ref="VolumeService" />
@@ -93,14 +94,38 @@
       <property name="nodeService" ref="NodeService" />
       <property name="organizationStructureService" ref="OrganizationStructureService" />
    </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.LicencePropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.TenderingApplicationPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ManagementsOrderPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.VacationOrderPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ChancellorsOrderPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
 
    <bean id="abstractDocChildCreator" abstract="true" parent="propertiesModifierCallback">
       <property name="nodeService" ref="NodeService" />
    </bean>
    
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandApplicantAbroadPropertiesModifierCallback" parent="abstractDocChildCreator" />
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandApplicantAbroadPropertiesModifierCallback" parent="abstractDocChildCreator">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
 
-   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandDocDomesticPropertiesModifierCallback" parent="abstractDocChildCreator" />
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandDocDomesticPropertiesModifierCallback" parent="abstractDocChildCreator">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
    
    <bean class="ee.webmedia.alfresco.document.propmodifiers.TrainingDocChildCreator" parent="abstractDocChildCreator" />
 
@@ -136,6 +161,7 @@
       <property name="bootstrapViews">
          <list>
             <props>
+               <prop key="encoding">UTF-8</prop>
                <prop key="path">/param:parameters</prop>
                <prop key="location">ee/webmedia/alfresco/document/bootstrap/document-parameters.xml</prop>
             </props>

@@ -40,7 +40,7 @@ public interface GeneralService {
 
     /**
      * Search for NodeRef with an XPath expression from given store.
-     *
+     * 
      * @param nodeRefXPath child association names separated with forward slashes, in the form of <code>/foo:bar/{pingNamespaceUri}pong</code>
      * @param storeRef Reference to store
      * @return NodeRef, {@code null} if node not found
@@ -87,8 +87,8 @@ public interface GeneralService {
     void setPropertiesIgnoringSystem(Map<QName, Serializable> properties, NodeRef nodeRef);
 
     Map<QName, Serializable> getPropertiesIgnoringSystem(Map<String, Object> nodeProps);
-    
-    /** the same as {@link #getPropertiesIgnoringSystem(Map)}, but different generic types*/
+
+    /** the same as {@link #getPropertiesIgnoringSystem(Map)}, but different generic types */
     Map<QName, Serializable> getPropertiesIgnoringSys(Map<QName, Serializable> nodeProps);
 
     /**
@@ -111,6 +111,7 @@ public interface GeneralService {
 
     /**
      * Return default property values defined in model.
+     * 
      * @param className type or aspect
      * @return
      */
@@ -120,8 +121,8 @@ public interface GeneralService {
 
     /**
      * Construct an anonymous type that combines all definitions of the specified type, aspects and mandatory aspects
-     *
-     * @param type the type to start with 
+     * 
+     * @param type the type to start with
      * @return the anonymous type definition
      */
     TypeDefinition getAnonymousType(QName type);
@@ -129,6 +130,13 @@ public interface GeneralService {
     TypeDefinition getAnonymousType(Node node);
 
     void saveAddedAssocs(Node node);
+
+    /**
+     * Remove all child association removed in the UI
+     * 
+     * @param node - node that previously had some childAssociations in repository that should be removed
+     */
+    public void saveRemovedChildAssocs(Node node);
 
     /**
      * @param nodeRef

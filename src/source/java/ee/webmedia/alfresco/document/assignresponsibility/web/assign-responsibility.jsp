@@ -10,11 +10,10 @@
 <a:panel id="assign-responsibility-panel" styleClass="column panel-100" label="#{msg.assign_responsibility}" progressive="true">
    <a:booleanEvaluator value="#{AssignResponsibilityBean.instructionSet}">
       <f:verbatim><div class="message"></f:verbatim>
-      <h:outputText value="#{AssignResponsibilityBean.instruction}" />
+      <h:outputText value="#{AssignResponsibilityBean.instruction}" styleClass="medium" />
       <f:verbatim></div></f:verbatim>
    </a:booleanEvaluator>
 
+   <h:commandButton actionListener="#{AssignResponsibilityBean.execute}" value="#{msg.assign_responsibility_perform}" disabled="#{AssignResponsibilityBean.ownerUnset}" style="margin-top: 5px;" />
    <r:propertySheetGrid labelStyleClass="propertiesLabel" columns="1" mode="edit" value="#{AssignResponsibilityBean.node}" externalConfig="true" var="assignResponsibility" />
-
-   <h:commandButton actionListener="#{AssignResponsibilityBean.execute}" value="#{msg.assign_responsibility_perform}" disabled="#{AssignResponsibilityBean.ownerUnset}" />
 </a:panel>

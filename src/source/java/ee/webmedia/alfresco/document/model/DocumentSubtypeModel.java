@@ -24,6 +24,7 @@ public interface DocumentSubtypeModel {
         QName CONTRACT_SMIT = QName.createQName(URI, "contractSmit");
         QName LICENCE = QName.createQName(URI, "licence");
         QName MANAGEMENTS_ORDER = QName.createQName(URI, "managementsOrder");
+        QName VACATION_ORDER = QName.createQName(URI, "vacationOrder");
         QName VACATION_ORDER_SMIT = QName.createQName(URI, "vacationOrderSmit");
     }
 

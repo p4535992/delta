@@ -44,7 +44,7 @@ public class VersionsListDialog extends BaseDialogBean {
 
     @Override
     public String getCancelButtonLabel() {
-        return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "close");
+        return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "back_button");
     }
 
     /**

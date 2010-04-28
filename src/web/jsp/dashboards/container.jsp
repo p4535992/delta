@@ -69,7 +69,7 @@
          <%-- Breadcrumb --%>
          <%@ include file="../parts/breadcrumb.jsp"%>
          
-         <a:panel id="titlebar">
+         <a:panel id="titlebar" rendered="#{MyTasksBean.titlebarRendered}">
             <h2 class="title-icon">
                <h:graphicImage id="dialog-logo" url="/images/icons/default_avatar.png" />
                <h:outputText value="#{MyTasksBean.dialogTitle}" escape="false" />

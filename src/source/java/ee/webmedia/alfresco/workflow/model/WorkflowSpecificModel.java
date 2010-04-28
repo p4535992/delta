@@ -10,11 +10,17 @@ public interface WorkflowSpecificModel {
     String PREFIX = "wfs:";
 
     interface Types {
+        /** Täitmiseks */
         QName ASSIGNMENT_WORKFLOW = QName.createQName(URI, "assignmentWorkflow");
+        /** Registreeri */
         QName DOC_REGISTRATION_WORKFLOW = QName.createQName(URI, "docRegistrationWorkflow");
+        /** Teadmiseks */
         QName INFORMATION_WORKFLOW = QName.createQName(URI, "informationWorkflow");
+        /** Arvamuse andmiseks */
         QName OPINION_WORKFLOW = QName.createQName(URI, "opinionWorkflow");
+        /** Kooskõlastamiseks */
         QName REVIEW_WORKFLOW = QName.createQName(URI, "reviewWorkflow");
+        /** Allkirjastamiseks */
         QName SIGNATURE_WORKFLOW = QName.createQName(URI, "signatureWorkflow");
 
         QName ASSIGNMENT_TASK = QName.createQName(URI, "assignmentTask");
@@ -40,22 +46,22 @@ public interface WorkflowSpecificModel {
         QName COMMENT = QName.createQName(URI, "comment");
         QName WORKFLOW_RESOLUTION = QName.createQName(URI, "workflowResolution");
         QName COMPLETED_OVERDUE = QName.createQName(URI, "completedOverdue");
+        QName TEMP_OUTCOME = QName.createQName(URI, "tempOutcome");
     }
 
     enum SignatureTaskOutcome {
         NOT_SIGNED,
         SIGNED;
-        
+
         public static SignatureTaskOutcome of(int index) {
-            return SignatureTaskOutcome.values()[index];
+            if (index < 0 || index >= values().length) {
+                return null;
+            }
+            return values()[index];
         }
-        
-        public boolean equals(SignatureTaskOutcome other) {
-            return this == other;
-        }
-        
+
         public boolean equals(int index) {
-            return this == SignatureTaskOutcome.of(index);
+            return this == of(index);
         }
 
     }
@@ -66,15 +72,14 @@ public interface WorkflowSpecificModel {
         NOT_CONFIRMED;
 
         public static ReviewTaskOutcome of(int index) {
-            return ReviewTaskOutcome.values()[index];
+            if (index < 0 || index >= values().length) {
+                return null;
+            }
+            return values()[index];
         }
-        
-        public boolean equals(ReviewTaskOutcome other) {
-            return this == other;
-        }
-        
+
         public boolean equals(int index) {
-            return this == ReviewTaskOutcome.of(index);
+            return this == of(index);
         }
     }
 

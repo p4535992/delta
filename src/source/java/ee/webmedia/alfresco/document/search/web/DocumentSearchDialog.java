@@ -22,7 +22,6 @@ import org.alfresco.web.bean.repository.TransientNode;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
-import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -46,7 +45,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     private static final long serialVersionUID = 1L;
 
     private static String OUTPUT_SIMPLE = "simple";
-    private static String OUTPUT_EXTENDED = "extended";
+    static String OUTPUT_EXTENDED = "extended";
 
     private DocumentSearchResultsDialog documentSearchResultsDialog;
 
@@ -98,13 +97,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // don't call reset, because we don't close this dialog
         isFinished = false;
-        List<Document> documents = getDocumentSearchService().searchDocuments(filter);
-        String dialog = "documentSearchResultsDialog";
-        if (OUTPUT_EXTENDED.equals(filter.getProperties().get(DocumentSearchModel.Props.OUTPUT))) {
-            dialog = "documentSearchExtendedResultsDialog";
-            documents = getDocumentService().processExtendedSearchResults(documents, filter);
-        }
-        documentSearchResultsDialog.setup(documents);
+        String dialog = documentSearchResultsDialog.setup(filter);
         return AlfrescoNavigationHandler.DIALOG_PREFIX + dialog;
     }
 

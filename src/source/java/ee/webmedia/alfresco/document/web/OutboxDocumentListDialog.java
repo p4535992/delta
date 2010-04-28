@@ -13,6 +13,11 @@ public class OutboxDocumentListDialog extends BaseDocumentListDialog {
 
     /** @param event from/menu */
     public void setup(ActionEvent event) {
+        restored();
+    }
+
+    @Override
+    public void restored() {
         documents = getDocumentSearchService().searchDocumentsInOutbox();
     }
 

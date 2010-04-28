@@ -110,6 +110,8 @@ public interface DocumentCommonModel {
 
         /** holds non-system properties of childnodes (childNodes, that are defined in DocumentSubTypeModel) for searching */
         QName SEARCHABLE_SUB_NODE_PROPERTIES = QName.createQName(URI, "searchableSubNodeProperties");
+
+        QName LEGAL_BASIS_NAME = QName.createQName(URI, "legalBasisName");
     }
 
 }

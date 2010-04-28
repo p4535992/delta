@@ -97,4 +97,17 @@ public class MessageUtil {
         addStatusMessage(facesContext, e.getMessage(), facesSeverity, e.getMessageValuesForHolders());
     }
 
+    /**
+     * Add error message by concatenating messages retrieved from the messageKeys
+     * @param currentInstance
+     * @param messageKeys
+     */
+    public static void addErrorMessage(FacesContext currentInstance, String[] messageKeys) {
+        final StringBuilder sb = new StringBuilder();
+        for (String messageId : messageKeys) {
+            sb.append(getMessage(currentInstance, messageId)).append(" ");
+        }
+        Utils.addErrorMessage(sb.toString());
+    }
+
 }

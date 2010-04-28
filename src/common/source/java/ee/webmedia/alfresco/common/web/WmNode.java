@@ -169,4 +169,11 @@ public class WmNode extends TransientNode {
         return object.getClass().getSimpleName() + "@" + Integer.toHexString(object.hashCode());
     }
 
+    public static String toString(String string) {
+        if (string == null) {
+            return "null";
+        }
+        return "String[" + string.length() + "]";
+    }
+
 }

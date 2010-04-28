@@ -71,6 +71,8 @@ public interface WorkflowService {
     void continueAllCompoundWorkflows(NodeRef parent);
 
     CompoundWorkflow saveAndCopyCompoundWorkflow(CompoundWorkflow compoundWorkflow);
+    
+    int getActiveResponsibleAssignmentTasks(NodeRef document);
 
     void addNewWorkflow(CompoundWorkflow compoundWorkflow, QName workflowTypeQName, int index);
 

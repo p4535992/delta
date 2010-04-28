@@ -1,14 +1,107 @@
-function scrollView() {
-	if (document.forms[0] != null && document.forms[0]['scrollView'] != null) {
-		window.scrollBy(0, document.forms[0]['scrollView'].value);
+// http://www.hunlock.com/blogs/Mastering_The_Back_Button_With_Javascript
+window.onbeforeunload = function () {
+   // This fucntion does nothing.  It won't spawn a confirmation dialog
+   // But it will ensure that the page is not cached by the browser.
+
+   // When page is submitted, uses sees an hourglass cursor
+   $jQ('*').css('cursor', 'wait');
+}
+
+function isIE7() {
+	if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)){ //test for MSIE x.x;
+		 var ieversion=new Number(RegExp.$1) // capture x.x portion and store as a number
+		 if (ieversion>=7 && ieversion < 8) {
+			 return true;
+		 }
+	}
+	return false;
+}
+
+function zIndexWorkaround()
+{
+    // If the browser is IE,
+    if(isIE7())
+    {
+    	var zIndexNumber = 5000;
+        $jQ("#container div").each(function() {
+                $jQ(this).css('zIndex', zIndexNumber);
+                $jQ(this).children('span').each(function() {
+                	$jQ(this).css('zIndex', zIndexNumber);
+                	zIndexNumber -= 10;
+                });
+                zIndexNumber -= 10;
+        });
+    }
+}
+
+function fixIEDropdownMinWidth(container, items) {
+	if(isIE7()) {
+		var max = 0;
+		var ul = $jQ(container);
+		ul.css('visibility', 'hidden').css('display', 'block');
+		$jQ(items).each(function() {
+			var li = $jQ(this);
+			if(li.outerWidth() > max) {
+				max = li.outerWidth();
+			}
+		}).each(function() {
+			$jQ(this).css('min-width', max+'px');
+		});
+		ul.css('display', 'none').css('visibility', 'visible');
 	}
 }
+
+function fixIESelectMinWidth() {
+	if(isIE7()) {
+		$jQ("#container-content td select").not('.with-pager select').not(".modalpopup-content-inner select[name$='_results']").each(function() {
+			var select = $jQ(this);
+			if(select.outerWidth() < 165) {
+				select.css('width', '170px');
+			}
+		});
+	}
+}
+
+// KAAREL: Do not delete! Yet... :)
+//function addFocusHighlight() {
+//	$jQ("#container-content td input, #container-content td select, #container-content td textarea,")
+//	.not(".modalpopup input, .modalpopup select, .modalpopup textarea").each(function() {
+//        var elm = $jQ(this);
+//        
+//        elm.focus(function() {
+//            $jQ(this).parents("tr").addClass("row-highlight");
+//        });
+//        
+//        elm.blur(function() {
+//            $jQ(this).parents("tr").removeClass("row-highlight");
+//        });
+//    });
+//}
 
 /**
  * @return input string where ":" and "." are escaped, so that the result could be used by jQuery
  */
 function escapeId4JQ(idToEscape) {
    return idToEscape.replace(/:/g, "\\:").replace(/\./g, "\\.");
+}
+
+/**
+ * Change the status of close button on function/series/volume/case details dialog
+ * @param status - status of the function/series/volume/case
+ */
+function processFnSerVolCaseCloseButton(status){
+   var closeBtn = $jQ("#"+escapeId4JQ("dialog:close-button"));
+   var finishBtn = $jQ("#"+escapeId4JQ("dialog:finish-button"));
+   var closeBtn2 = $jQ("#"+escapeId4JQ("dialog:close-button-2"));
+   var finishBtn2 = $jQ("#"+escapeId4JQ("dialog:finish-button-2"));
+   var finishDisabled = finishBtn.attr("disabled");
+   if(status != "avatud"){
+      closeBtn.remove();
+      closeBtn2.remove();
+   } else if(finishDisabled || status == "avatud"){
+      closeBtn.attr("disabled", finishDisabled);
+      closeBtn2.attr("disabled", finishDisabled);
+   }
 }
 
 function disableAndRemoveButton(buttonId) {
@@ -44,11 +137,53 @@ function setInputAutoCompleteArray(inputId, valuesArray){
   });
 }
 
+$jQ(document).ready(function () {
+   /**
+    * Forward click event to autocomplete input.
+    * (We wrap autocomplete inputs to fix IE bug related to input with background image and text shadowing)
+    */
+   $jQ(".suggest-wrapper").click(function (e) {
+      $jQ(this).children("input").focus();
+   });
+});
+
+function showFooterTitlebar() {
+	var bar = $jQ("#footer-titlebar");
+	
+	if($jQ(window).height() < bar.offset().top) {
+		bar.css('visibility', 'visible'); // vivibility is used, because display: none; gives offset (0, 0)
+	} else {
+		bar.css('display', 'none'); // doesn't need to take the space
+	}
+}
+
+function setPageScrollY() {
+	var scrollTop = $jQ(window).scrollTop();
+	$jQ('form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
+}
 
 $jQ(document).ready(function()
 {
-	var lastActiveInput = null;
+	// Darn IE7 bugs...
+	fixIESelectMinWidth();
+	fixIEDropdownMinWidth("#titlebar .extra-actions .dropdown-menu", "#titlebar .extra-actions .dropdown-menu li");
+	fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li");
+	fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li");
+	zIndexWorkaround();
 	
+	showFooterTitlebar();
+//	addFocusHighlight();
+	
+	$jQ(".toggle-tasks").click(function(){
+		var nextTr = $jQ(this).toggleClass("expanded").closest("tr").next()[0];
+		if(nextTr.style.display == 'none') { // bug in IE8
+		     $jQ(nextTr).show();
+		} else {
+		     $jQ(nextTr).hide();                       
+		}
+	});
+	
+	var lastActiveInput = null;
 	$jQ("input").focus(function() {
 		lastActiveInput = $jQ(this);
 	});
@@ -62,11 +197,20 @@ $jQ(document).ready(function()
 			// Check special cases
 			// modal popups
 			if(lastActiveInput.parents('.modalpopup-content-inner').length > 0) {
-				lastActiveInput.parent().parent().closest("td").children(".search").click(); // hack to override clearFormhiddenParams function. Works with mouse but not with click()...
+				var searchLink = lastActiveInput.parent().parent().closest("td").children(".search"); // SearchGenerator?
+				if(searchLink.length < 1) { // MultiValueEditor?
+					searchLink = lastActiveInput.parent().parent().closest("td").children("table").children("tbody").children("tr").children("td").children(".search");
+				}
+				if(searchLink.length < 1) { // TaskListGenerator?
+					searchLink = lastActiveInput.closest("span").children("table").children("tbody").children("tr").children("td").children("span").children(".search");
+				}
+				searchLink.click(); // hack to override clearFormhiddenParams function. Works with mouse but not with click()...
 				lastActiveInput.next().click();
 			} else if(lastActiveInput.attr("id") == $jQ("form").attr("name") + ":quickSearch") { // quick search
-				$jQ('#search.panel input[id$=quickSearchBtn]').click();
-				return true;
+				var submitButton = $jQ('#search.panel input[id$=quickSearchBtn]').click();
+				if(!isIE7()) {
+					return true;
+				}
 			}
 				
 			return false; // otherwise return false, users don't want to lose their data :)
@@ -95,8 +239,6 @@ $jQ(document).ready(function()
          appendSelection($jQ(this), textAreaId)
       });
    });
-   
-   scrollView();
    
    $jQ(".review-note-trimmed-comment a").click(function() {
 	   $jQ(this).parent().css("display", "none").next().css("display", "block");
@@ -178,8 +320,14 @@ function applySize(e, field)
 /* Dialog
 -------------------------------------------------- */
 var openModalContent = null;
+var titlebarIndex = null;
 
-function showModal(target, size){
+function showModal(target, height){
+   if(isIE7()) {
+	   titlebarIndex = $jQ("#titlebar").css("zIndex");
+	   $jQ("#titlebar").css("zIndex", "-1");
+	   $jQ("#mydetails-panel *, #pref-panel *, #man-panel *").css("zIndex", "-1");
+   }
    target = escapeId4JQ(target);
 	if ($jQ("#overlay").length == 0) {
 		$jQ("#" + target).before("<div id='overlay'></div>");
@@ -191,16 +339,10 @@ function showModal(target, size){
 
 	$jQ("#overlay").css("display","block");
 	$jQ("#" + target).css("display","block");
-	//TODO fadeIn does not work
-	$jQ("#" + target).fadeIn(1150);
-
-	if(size == 'big'){
-		$jQ("#" + target).addClass("modalpopup-large");
-	} else {
-		$jQ("#" + target).removeClass("modalpopup-large");
+	if (height != null) {
+	   $jQ("#" + target).css("height",height);
 	}
-
-	$jQ("#" + target).css("margin-top","-" + $jQ("#" + target).height() / 2 + "px");
+	$jQ("#" + target).show();
 
 	return false;
 }
@@ -209,24 +351,14 @@ $jQ(document).ready(function(){
    $jQ(".modalwrap select option").tooltip();
 });
 
-function positionDialog(){
-	if( $jQ(".modalwrap").css("position") == "absolute" ){
-		return false;
-	} else {
-		$jQ(".modalwrap").animate({ 
-			marginTop: "-" + $jQ(".modalwrap").height() / 2 + "px"
-		}, "normal" );
-	}
-}
-
 function hideModal(){
 	if (openModalContent != null){
-		$jQ("#" + openModalContent).fadeOut(150, function(){
-	      $jQ("#overlay").remove();
-	   });
+	  if(isIE7() && titlebarIndex != null) {
+		  $jQ("#titlebar").css("zIndex", titlebarIndex); // aoscModal
+	  }
+	  $jQ("#" + openModalContent).hide();
+      $jQ("#overlay").remove();
 	}
-	$jQ("#" + openModalContent).removeClass("modalpopup-large");
-
 	return false;
 }
 
@@ -234,6 +366,7 @@ var propSheetValidateBtnFn = [];
 var propSheetValidateSubmitFn = [];
 var propSheetValidateFormId = '';
 var propSheetValidateFinishId = '';
+var propSheetValidateSecondaryFinishId = '';
 var propSheetValidateNextId = '';
 var propSheetFinishBtnPressed = false;
 var propSheetNextBtnPressed = false;
@@ -246,6 +379,7 @@ function registerPropertySheetValidator(btnFn, submitFn, formId, finishBtnId, ne
    propSheetValidateSubmitFn.push(submitFn);
    propSheetValidateFormId = formId;
    propSheetValidateFinishId = finishBtnId;
+   propSheetValidateSecondaryFinishId = finishBtnId + "-2";
    propSheetValidateNextId = nextBtnId;
 }
 
@@ -253,7 +387,9 @@ function processButtonState() {
    for (var i = 0; i < propSheetValidateBtnFn.length; i++) {
       if (typeof propSheetValidateBtnFn[i] == 'function') { 
          propSheetValidateBtnFn[i]();
-         if (document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId).disabled == true) {
+         var finishBtn = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId);
+         var finishBtn2 = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryFinishId);
+         if (finishBtn == null || finishBtn.disabled == true) {
             break;
          }
       }
@@ -282,6 +418,10 @@ $jQ(document).ready(function() {
    if (propSheetValidateBtnFn.length > 0 || propSheetValidateSubmitFn.length > 0) {
       document.getElementById(propSheetValidateFormId).onsubmit = propSheetValidateSubmit;
       document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId).onclick = function() { propSheetFinishBtnPressed = true; }
+      var secondaryFinishButton = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryFinishId);
+      if(secondaryFinishButton != null) {
+    	  secondaryFinishButton.onclick = function() { propSheetFinishBtnPressed = true; }
+      }
       if (propSheetValidateNextId.length > 0) {
          document.getElementById(propSheetValidateFormId + ':' + propSheetValidateNextId).onclick = function() { propSheetNextBtnPressed = true; }
       }

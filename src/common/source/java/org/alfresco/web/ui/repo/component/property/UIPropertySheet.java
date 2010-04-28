@@ -571,11 +571,17 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
             renderValidationMethod(out, realTimeValidations.get(x), (x == (numberRealTimeValidations-1)), false, true);
          }
          // disable the finish button if validation failed and also the next button if it is present
-         out.write(" {\n      document.getElementById('");
-         out.write(form.getClientId(context));
-         out.write(NamingContainer.SEPARATOR_CHAR);
-         out.write(getFinishButtonId());
-         out.write("').disabled = true; \n");
+         out.write(" {\n      var btn = document.getElementById('");
+         final String finishBtnId = form.getClientId(context) + NamingContainer.SEPARATOR_CHAR + getFinishButtonId();
+         out.write(finishBtnId);
+         out.write("');\n");
+         out.write("if (btn != null) {\n");
+         out.write("   btn.disabled = true; \n");
+         out.write("}\n");
+         out.write("btn = document.getElementById('" + finishBtnId + "-2');\n");
+         out.write("if (btn != null) {\n");
+         out.write("   btn.disabled = true;");
+         out.write("}\n");
          if (this.nextButtonId != null && this.nextButtonId.length() > 0) {
             out.write("      document.getElementById('");
             out.write(form.getClientId(context));
@@ -584,11 +590,16 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
             out.write("').disabled = true; \n");
          }
          out.write("   }\n");
-         out.write("   else {\n      document.getElementById('");
-         out.write(form.getClientId(context));
-         out.write(NamingContainer.SEPARATOR_CHAR);
-         out.write(getFinishButtonId());
-         out.write("').disabled = false;");
+         out.write("   else {\n      var btn = document.getElementById('");
+         out.write(finishBtnId);
+         out.write("');\n");
+         out.write("if(btn != null){\n");
+         out.write("   btn.disabled = false;\n");
+         out.write("}\n");
+         out.write("var btn = document.getElementById('"+form.getClientId(context) + NamingContainer.SEPARATOR_CHAR + getFinishButtonId() + "-2')\n");
+         out.write("if ( btn != null) {\n");
+         out.write("   btn.disabled = false;");
+         out.write("}\n");
          if (this.nextButtonId != null && this.nextButtonId.length() > 0) {
             out.write("\n      document.getElementById('");
             out.write(form.getClientId(context));

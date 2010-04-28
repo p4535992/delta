@@ -14,6 +14,8 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.ClassPathResource;
 
+import ee.webmedia.alfresco.app.AppConstants;
+
 public class ContentCreatorHelper {
     
     private ApplicationContext applicationContext;
@@ -73,7 +75,7 @@ public class ContentCreatorHelper {
 
     public NodeRef createTestFileWithContentUtf8(NodeRef folderNodeRef, String fileName) {
         final NodeRef testFileNodeRef = createTestFile(folderNodeRef, fileName);
-        writeTestContent(testFileNodeRef, "UTF-8", MimetypeMap.MIMETYPE_TEXT_PLAIN, "täpiline sisu: šõäöüž");
+        writeTestContent(testFileNodeRef, AppConstants.CHARSET, MimetypeMap.MIMETYPE_TEXT_PLAIN, "täpiline sisu: šõäöüž");
         return testFileNodeRef;
     }
 

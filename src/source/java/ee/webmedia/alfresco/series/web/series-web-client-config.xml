@@ -47,7 +47,7 @@
          <dialog name="seriesDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/series/web/series-details-dialog.jsp" managed-bean="SeriesDetailsDialog"
 		    icon="/images/icons/versioned_properties_large.gif" title-id="series_details" show-ok-button="true" >
             <buttons>
-               <button id="close-button" label-id="close" action="#{SeriesDetailsDialog.close}" disabled="#{SeriesDetailsDialog.closed}" />
+               <button id="close-button" label-id="series_close" action="#{SeriesDetailsDialog.close}" disabled="#{SeriesDetailsDialog.closed}" />
             </buttons>
          </dialog>
          
@@ -62,8 +62,8 @@
          <show-property name="ser:type" display-label-id="series_type" classificatorName="seriesType" component-generator="ClassificatorSelectorGenerator"
             readOnlyIf="ser:status=suletud" />
          <show-property name="ser:seriesIdentifier" display-label-id="series_seriesIdentifier" readOnlyIf="ser:status=suletud" />
-         <show-property name="ser:title" display-label-id="series_title" readOnlyIf="ser:status=suletud" styleClass="expand5-200" component-generator="TextAreaGenerator" />
-         <show-property name="ser:description" display-label-id="series_description" readOnlyIf="ser:status=suletud" styleClass="expand5-200" component-generator="TextAreaGenerator"/>
+         <show-property name="ser:title" display-label-id="series_title" readOnlyIf="ser:status=suletud" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="ser:description" display-label-id="series_description" readOnlyIf="ser:status=suletud" styleClass="expand19-200" component-generator="TextAreaGenerator"/>
          <show-property name="ser:status" display-label-id="series_status" read-only="true" classificatorName="docListUnitStatus"
             component-generator="ClassificatorSelectorGenerator" />
          <show-property name="ser:order" display-label-id="series_order" converter="javax.faces.Integer" />
@@ -75,7 +75,7 @@
          <show-property name="doccom:accessRestriction" component-generator="ClassificatorSelectorGenerator" classificatorName="accessRestriction"
             readOnlyIf="ser:status=suletud" />
          <show-property name="doccom:accessRestrictionReason" mandatoryIf="accessRestriction" component-generator="ClassificatorSelectorAndTextGenerator"
-            classificatorName="accessRestrictionReason" styleClass="expand5-200" layoutStyle="default(could also use sideBySide)" readOnlyIf="ser:status=suletud" />
+            classificatorName="accessRestrictionReason" styleClass="expand19-200" layoutStyle="default(could also use sideBySide)" readOnlyIf="ser:status=suletud" />
          <show-property name="doccom:accessRestrictionBeginDate" mandatoryIf="accessRestriction" readOnlyIf="ser:status=suletud" />
          <show-property name="doccom:accessRestrictionEndDate" readOnlyIf="ser:status=suletud" />
          <show-property name="doccom:accessRestrictionEndDesc" readOnlyIf="ser:status=suletud" />
@@ -83,7 +83,7 @@
             pickerCallback="#{OrganizationStructureListDialog.searchOrgstructs}" converter="ee.webmedia.alfresco.orgstructure.web.OrganizationStructureConverter"
             dialogTitleId="series_structUnit_popUpInfo" />
          <show-property name="ser:retentionPeriod" display-label-id="series_retentionPeriod" converter="javax.faces.Integer" />
-         <show-property name="ser:retentionDesc" display-label-id="series_retentionDesc" styleClass="expand5-200" component-generator="TextAreaGenerator" />
+         <show-property name="ser:retentionDesc" display-label-id="series_retentionDesc" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>
 </alfresco-config>

@@ -17,10 +17,11 @@ public interface CaseService {
 
     /**
      * Save case using properties not from <code>theCase</code> fields, but from node properties
+     * 
      * @param theCase
      */
     void saveOrUpdate(Case theCase);
-    
+
     /**
      * @param theCase
      * @param fromNodeProps - if false properties to be used to update node will be taken from the fields of <code>theCase</code> not from the node properties
@@ -32,7 +33,7 @@ public interface CaseService {
     List<Case> getAllCasesByVolume(NodeRef volumeRef);
 
     Case getCaseByNoderef(NodeRef caseNodeRef);
-    
+
     Case getCaseByNoderef(String caseNodeRef);
 
     Node getCaseNodeByRef(NodeRef caseNodeRef);
@@ -45,16 +46,20 @@ public interface CaseService {
 
     /**
      * close given case
+     * 
      * @param currentCase
      */
     void closeCase(Case currentCase);
 
     /**
      * Close all clases that this volume has
+     * 
      * @param volumeRef
      */
     void closeAllCasesByVolume(NodeRef volumeRef);
 
     boolean isClosed(Node node);
+
+    boolean isCaseNameUsed(final String newCaseTitle, NodeRef volumeRef);
 
 }

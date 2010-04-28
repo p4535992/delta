@@ -12,7 +12,7 @@
 <a:panel id="add-user-list" styleClass="column panel-50" label="#{msg.addressbook_contactgroup_selected_contacts}">
 
    <h:dataTable value="#{DialogManager.bean.usersDataModel}" var="row" rowClasses="selectedItemsRow,selectedItemsRowAlt" headerClass="selectedItemsHeader"
-      rendered="#{DialogManager.bean.usersDataModel.rowCount != 0}">
+      rendered="#{DialogManager.bean.usersDataModel.rowCount != 0}" width="100%">
       <h:column>
          <f:facet name="header">
             <h:outputText value="#{msg.name}" />
@@ -20,8 +20,7 @@
          <h:outputText value="#{row.name}" />
       </h:column>
       <h:column>
-         <a:actionLink actionListener="#{DialogManager.bean.removeUserSelection}" image="/images/icons/delete.gif" value="#{msg.remove}" showLink="false"
-            style="padding-left:6px" />
+         <a:actionLink actionListener="#{DialogManager.bean.removeUserSelection}" image="/images/icons/delete.gif" value="#{msg.remove}" showLink="false" />
       </h:column>
    </h:dataTable>
 

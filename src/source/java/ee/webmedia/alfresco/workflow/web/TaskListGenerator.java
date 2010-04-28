@@ -5,6 +5,7 @@ import java.util.List;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIOutput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlInputText;
 import javax.faces.component.html.HtmlOutputText;
@@ -24,6 +25,7 @@ import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
@@ -73,8 +75,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
         
         HtmlPanelGrid taskGrid = (HtmlPanelGrid) application.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
         taskGrid.setId("task-grid-" + listId);
-        taskGrid.setColumns(2);
-        taskGrid.setStyleClass("recipient tasks");
+        taskGrid.setColumns(4);
+        final String customStyleClass = StringUtils.trimToEmpty(getCustomAttributes().get("styleClass"));
+        taskGrid.setStyleClass("recipient tasks" + " " + customStyleClass);
         result.getChildren().add(taskGrid);        
 
         List<Integer> visibleTasks = filterTasks(block.getTasks(), responsible);
@@ -124,35 +127,47 @@ public class TaskListGenerator extends BaseComponentGenerator {
             header.setId("task-grid-name-" + listId);
             header.setEscape(false);
             if (dialogManager.getBean() instanceof CompoundWorkflowDialog) {
-                // TODO ERKO: Heart attack!!!
-                String separator1 = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-                String separator2 = "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
-                header.setValue(MessageUtil.getMessage("workflow_task_owner_name") + separator1 + MessageUtil.getMessage("task_property_due_date") + separator2 + MessageUtil.getMessage("workflow_status"));
+                UIOutput ownerNameHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+                ownerNameHeading.getAttributes().put("styleClass", "th");
+                ownerNameHeading.setValue(MessageUtil.getMessage("workflow_task_owner_name"));
+                taskGrid.getChildren().add(ownerNameHeading);
+                
+                UIOutput dueDateHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+                dueDateHeading.getAttributes().put("styleClass", "th");
+                dueDateHeading.setValue(MessageUtil.getMessage("task_property_due_date"));
+                taskGrid.getChildren().add(dueDateHeading);
+                
+                UIOutput wfStatusHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+                wfStatusHeading.getAttributes().put("styleClass", "th");
+                wfStatusHeading.setValue(MessageUtil.getMessage("workflow_status"));
+                taskGrid.getChildren().add(wfStatusHeading);
+                
+                UIOutput actionsHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+                actionsHeading.getAttributes().put("styleClass", "th");
+                actionsHeading.setValue("");
+                taskGrid.getChildren().add(actionsHeading);
             }
             else {
                 header.setValue(MessageUtil.getMessage("workflow_task_owner_name"));
+                taskGrid.getFacets().put("header", header);
             }
-            taskGrid.getFacets().put("header", header);
 
             for (int counter = 0; counter < block.getTasks().size(); counter++) {
                 if (visibleTasks.contains(counter)) {
                     Task task = block.getTasks().get(counter);
                     String taskStatus = task.getStatus();
-                    
-                    HtmlPanelGroup columnInput = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-                    columnInput.setId("column-input-" + listId + "-" + counter);
-                    taskGrid.getChildren().add(columnInput);
     
                     HtmlInputText nameInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
                     nameInput.setId("task-name-" + listId + "-" + counter);
                     nameInput.setReadonly(true);
+                    nameInput.getAttributes().put("styleClass", "ownerName medium");
                     String nameValueBinding = "#{DialogManager.bean.workflow.workflows[" + index + "].tasks[" + counter + "].node.properties[\"" + WorkflowCommonModel.Props.OWNER_NAME + "\"]}";
                     nameInput.setValueBinding("value", application.createValueBinding(nameValueBinding));
-                    columnInput.getChildren().add(nameInput);
+                    taskGrid.getChildren().add(nameInput);
                     
                     if (dialogManager.getBean() instanceof CompoundWorkflowDialog) {
                         HtmlInputText dueDateInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
-                        columnInput.getChildren().add(dueDateInput);
+                        taskGrid.getChildren().add(dueDateInput);
                         dueDateInput.setId("task-duedate-" + listId + "-" + counter);
                         String dueDateValueBinding = "#{DialogManager.bean.workflow.workflows[" + index + "].tasks[" + counter + "].node.properties[\"" + WorkflowSpecificModel.Props.DUE_DATE + "\"]}";
                         dueDateInput.setValueBinding("value", application.createValueBinding(dueDateValueBinding));
@@ -169,7 +184,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                             propertySheet.addClientValidation(new ClientValidation("validateDate", params, true));
                         }
                         else {
-                            dueDateInput.getAttributes().put("styleClass", "margin-left-4");
+                            dueDateInput.getAttributes().put("styleClass", "margin-left-4 disabled-date");
                             dueDateInput.setReadonly(true);
                         }
                         
@@ -178,8 +193,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         statusInput.setReadonly(true);
                         String statusValueBinding = "#{DialogManager.bean.workflow.workflows[" + index + "].tasks[" + counter + "].node.properties[\"" + WorkflowCommonModel.Props.STATUS + "\"]}";
                         statusInput.setValueBinding("value", application.createValueBinding(statusValueBinding));
-                        statusInput.getAttributes().put("styleClass", "margin-left-4");
-                        columnInput.getChildren().add(statusInput);
+                        statusInput.getAttributes().put("styleClass", "margin-left-4 medium");
+                        taskGrid.getChildren().add(statusInput);
                     }
 
                     HtmlPanelGroup columnActions = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
@@ -278,7 +293,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             
             UIActionLink taskAddLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
             taskAddLink.setId("task-add-link-" + listId);
-            taskAddLink.setValue(MessageUtil.getMessage("workflow_compound_add_user"));
+            taskAddLink.setValue(MessageUtil.getMessage("workflow_compound_add_"+ blockType.getLocalName() +"_user"));
             taskAddLink.setActionListener(application.createMethodBinding("#{DialogManager.bean.addWorkflowTask}", UIActions.ACTION_CLASS_ARGS));
             taskAddLink.getAttributes().put("styleClass", "icon-link add-person");
             taskAddLink.getChildren().add(blockIndex);

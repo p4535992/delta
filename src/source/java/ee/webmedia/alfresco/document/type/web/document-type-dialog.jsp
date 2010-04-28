@@ -29,7 +29,7 @@
          <f:facet name="header">
             <a:outputText value="#{msg.document_type_comment}" />
          </f:facet>
-         <h:inputTextarea rows="1" cols="45" value="#{type.comment}" styleClass="expand5-200" />
+         <h:inputTextarea rows="1" cols="45" value="#{type.comment}" styleClass="expand19-200" />
       </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

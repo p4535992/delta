@@ -10,6 +10,7 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.AuthenticationFilter;
 import org.alfresco.web.app.servlet.AuthenticationHelper;
@@ -44,12 +45,18 @@ public class AMRAuthenticationFilter extends AuthenticationFilter {
                     status = AuthenticationHelper.authenticate(context, httpReq, httpRes, false);
                 } catch (AMRAuthenticationException e) {
                     if (log.isWarnEnabled()) {
-                        log.warn("authentication failed: ", e);
+                        log.warn("Authentication failed: ", e);
                     }
                     httpReq.getSession().setAttribute(AUTHENTICATION_EXCEPTION, "true");// save attribute that is used to show errMsgin jsp
                     status = AuthenticationStatus.Failure;
                     // authentication failed - so end servlet execution and redirect to login page
                     // also save the requested URL so the login page knows where to redirect too later
+                } catch (InvalidNodeRefException e) {
+                    if (log.isWarnEnabled()) {
+                        log.warn("User was deleted, preferences node does not exist", e);
+                    }
+                    httpReq.getSession().setAttribute(AUTHENTICATION_EXCEPTION, "true");// save attribute that is used to show errMsgin jsp
+                    status = AuthenticationStatus.Failure;
                 }
                 if (status == AuthenticationStatus.Success || status == AuthenticationStatus.Guest) {
                     chain.doFilter(httpReq, httpRes);// continue filter chaining
