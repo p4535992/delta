@@ -53,9 +53,14 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
 import org.hibernate.StaleObjectStateException;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -104,7 +109,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 /**
  * @author Alar Kvell
  */
-public class DocumentServiceImpl implements DocumentService {
+public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentServiceImpl.class);
 
     private DictionaryService dictionaryService;
@@ -125,6 +130,9 @@ public class DocumentServiceImpl implements DocumentService {
     private UserService userService;
     private OrganizationStructureService organizationStructureService;
     private SendOutService sendOutService;
+    /** NB! not injected - use getter to obtain instance of AdrService */
+    private AdrService _adrService;
+    private BeanFactory beanFactory;
 
     private String fromDvkXPath;
     private String incomingEmailPath;
@@ -263,6 +271,7 @@ public class DocumentServiceImpl implements DocumentService {
     public void reopenDocument(NodeRef documentRef) {
         if (log.isDebugEnabled()) log.debug("Reopening document:" + documentRef);
         Assert.notNull(documentRef, "Reference to document must be provided");
+        getAdrService().addDeletedDocument(documentRef);
         nodeService.setProperty(documentRef, DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
         if (log.isDebugEnabled()) log.debug("Document reopened");
     }
@@ -362,6 +371,20 @@ public class DocumentServiceImpl implements DocumentService {
         // add any associations added in the UI
         generalService.saveAddedAssocs(docNode);
 
+        // If accessRestriction changes from OPEN/AK to INTERNAL
+        if (AccessRestriction.INTERNAL.equals((String) docProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION))) {
+            String oldAccessRestriction = (String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
+            if (!AccessRestriction.INTERNAL.equals(oldAccessRestriction)) {
+
+                // And if document was FINISHED
+                String oldStatus = (String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.DOC_STATUS);
+                if (DocumentStatus.FINISHED.equals(oldStatus)) {
+                    getAdrService().addDeletedDocument(docNodeRef);
+                }
+            }
+        }
+        
+        
         // Write document properties to repository
         // XXX If owner is changed to another user, then after this call we don't have permissions any more to write document properties
         generalService.setPropertiesIgnoringSystem(docNodeRef, docProps);
@@ -796,6 +819,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public void deleteDocument(NodeRef nodeRef) {
         log.debug("Deleting document: " + nodeRef);
+        getAdrService().addDeletedDocument(nodeRef);
         List<AssociationRef> assocs = nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL);
         assocs.addAll(nodeService.getSourceAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
         for (AssociationRef assoc : assocs) {
@@ -1105,8 +1129,20 @@ public class DocumentServiceImpl implements DocumentService {
             }
         }
         if (StringUtils.isNotBlank(regNumber)) {
+            String oldRegNumber = (String) nodeService.getProperty(docNode.getNodeRef(), DocumentCommonModel.Props.REG_NUMBER);
+            boolean adrDeletedDocumentAdded = false;
+            if (oldRegNumber != null && !StringUtils.equals(oldRegNumber, regNumber)) {
+                getAdrService().addDeletedDocument(docNode.getNodeRef());
+                adrDeletedDocumentAdded = true;
+            }
+
             props.put(DocumentCommonModel.Props.REG_NUMBER.toString(), regNumber);
             if (!isRelocating) {
+                Date oldRegDateTime = (Date) nodeService.getProperty(docNode.getNodeRef(), DocumentCommonModel.Props.REG_DATE_TIME);
+                if (oldRegDateTime != null && !adrDeletedDocumentAdded) {
+                    getAdrService().addDeletedDocument(docNode.getNodeRef());
+                }
+
                 props.put(DocumentCommonModel.Props.REG_DATE_TIME.toString(), new Date());
             }
             if (!documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
@@ -1783,6 +1819,21 @@ public class DocumentServiceImpl implements DocumentService {
 
     public void setSendOutService(SendOutService sendOutService) {
         this.sendOutService = sendOutService;
+    }
+
+    /*
+     * To break circular dependency
+     */
+    private AdrService getAdrService() {
+        if (_adrService == null) {
+            _adrService = (AdrService) beanFactory.getBean(AdrService.BEAN_NAME);
+        }
+        return _adrService;
+    }
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
     }
 
     public void setFromDvkXPath(String fromDvkXPath) {

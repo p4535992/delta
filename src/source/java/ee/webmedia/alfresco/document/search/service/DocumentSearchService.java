@@ -150,21 +150,24 @@ public interface DocumentSearchService {
 
     /**
      * Used by ADR web service to search documents.
-     * @param beginDate
-     * @param endDate
+     * @param regDateBegin
+     * @param regDateEnd
      * @param docType
      * @param searchString
-     * @param accessRestrictions
      * @return
      */
-    List<Document> searchDocumentsADR(Date beginDate, Date endDate, QName docType, String searchString, AccessRestriction[] accessRestrictions);
+    List<Document> searchAdrDocuments(Date regDateBegin, Date regDateEnd, QName docType, String searchString);
 
     /**
      * Used by ADR web service to search document details. 
-     * @param viit
+     * @param regNumber
      * @param regDate
-     * @param accessRestrictions
      * @return
      */
-    List<Document> searchDocumentDetailsADR(String viit, Date regDate, AccessRestriction[] accessRestrictions);
+    List<Document> searchAdrDocuments(String regNumber, Date regDate);
+
+    List<Document> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd);
+
+    List<NodeRef> searchAdrDeletedDocuments(Date deletedDateBegin, Date deletedDateEnd);
+
 }

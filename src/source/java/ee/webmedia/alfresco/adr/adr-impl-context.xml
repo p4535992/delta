@@ -4,27 +4,14 @@
     http://www.springframework.org/schema/beans
     http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-
    <bean id="adrService" class="ee.webmedia.alfresco.adr.service.AdrServiceImpl">
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
       <property name="fileService" ref="FileService" />
       <property name="documentTypeService" ref="DocumentTypeService" />
       <property name="documentService" ref="DocumentService" />
-   </bean>
-
-   <bean id="AdrService" class="org.springframework.aop.framework.ProxyFactoryBean">
-      <property name="proxyInterfaces">
-         <value>ee.webmedia.alfresco.adr.service.AdrService</value>
-      </property>
-      <property name="target">
-         <ref bean="adrService" />
-      </property>
-      <property name="interceptorNames">
-         <list>
-            <idref bean="commonTransactionInterceptor" />
-         </list>
-      </property>
+      <property name="nodeService" ref="NodeService" />
+      <property name="generalService" ref="GeneralService" />
    </bean>
 
 </beans>

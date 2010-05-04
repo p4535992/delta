@@ -27,11 +27,11 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "otsiFailSisugaResponse", propOrder = {
-    "failSisuga"
+    "fail"
 })
 public class OtsiFailSisugaResponse {
 
-    protected FailSisuga failSisuga;
+    protected Fail fail;
 
     /**
      * Gets the value of the failSisuga property.
@@ -41,8 +41,8 @@ public class OtsiFailSisugaResponse {
      *     {@link FailSisuga }
      *     
      */
-    public FailSisuga getFailSisuga() {
-        return failSisuga;
+    public Fail getFail() {
+        return fail;
     }
 
     /**
@@ -53,8 +53,8 @@ public class OtsiFailSisugaResponse {
      *     {@link FailSisuga }
      *     
      */
-    public void setFailSisuga(FailSisuga value) {
-        this.failSisuga = value;
+    public void setFail(Fail fail) {
+        this.fail = fail;
     }
 
 }

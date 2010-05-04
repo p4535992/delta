@@ -1,10 +1,11 @@
 
 package ee.webmedia.alfresco.adr;
 
+import javax.activation.DataHandler;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttachmentRef;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlSeeAlso;
 import javax.xml.bind.annotation.XmlType;
 
 
@@ -35,10 +36,8 @@ import javax.xml.bind.annotation.XmlType;
     "failinimi",
     "suurus",
     "mimeType",
-    "encoding"
-})
-@XmlSeeAlso({
-    FailSisuga.class
+    "encoding",
+    "sisu"
 })
 public class Fail {
 
@@ -49,6 +48,9 @@ public class Fail {
     protected String mimeType;
     @XmlElement(required = true)
     protected String encoding;
+    @XmlElement(required = true, type = String.class)
+    @XmlAttachmentRef
+    protected DataHandler sisu;
 
     /**
      * Gets the value of the failinimi property.
@@ -136,6 +138,30 @@ public class Fail {
      */
     public void setEncoding(String value) {
         this.encoding = value;
+    }
+
+    /**
+     * Gets the value of the sisu property.
+     * 
+     * @return
+     *     possible object is
+     *     {@link String }
+     *     
+     */
+    public DataHandler getSisu() {
+        return sisu;
+    }
+
+    /**
+     * Sets the value of the sisu property.
+     * 
+     * @param value
+     *     allowed object is
+     *     {@link String }
+     *     
+     */
+    public void setSisu(DataHandler value) {
+        this.sisu = value;
     }
 
 }

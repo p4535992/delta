@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
@@ -53,6 +54,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
@@ -102,51 +104,78 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     private ParametersService parametersService;
     
     @Override
-    public List<Document> searchDocumentDetailsADR(String viit, Date regDate, AccessRestriction[] accessRestrictions) {
-        long startTime = System.currentTimeMillis();
-        List<String> queryParts = new ArrayList<String>(4);
-        queryParts.add(generateDatePropertyRangeQuery(null, regDate, DocumentCommonModel.Props.REG_DATE_TIME));
-        queryParts.add(generateStringExactQuery(viit, DocumentCommonModel.Props.REG_NUMBER));
-        queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
-        
-        // Possible access restrictions
-        List<String> accessParts = new ArrayList<String>(3);
-        for (AccessRestriction acc : accessRestrictions) {
-            accessParts.add(generateStringExactQuery(acc.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION));
-        }
-        queryParts.add(joinQueryPartsOr(accessParts));
-        
-        String query = generateDocumentSearchQuery(queryParts);
-        List<Document> results = searchDocumentsImpl(query, false);
-        if (log.isDebugEnabled()) {
-            log.debug("ADR document search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
-        }
-        return results;
-    }
-    
-    @Override
-    public List<Document> searchDocumentsADR(Date beginDate, Date endDate, QName docType, String searchString, AccessRestriction[] accessRestrictions) {
+    public List<Document> searchAdrDocuments(Date regDateBegin, Date regDateEnd, QName docType, String searchString) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(5);
-        queryParts.add(generateDatePropertyRangeQuery(beginDate, endDate, DocumentCommonModel.Props.REG_DATE_TIME, DocumentSpecificModel.Props.SENDER_REG_DATE));
+        queryParts.add(generateDatePropertyRangeQuery(regDateBegin, regDateEnd, DocumentCommonModel.Props.REG_DATE_TIME, DocumentSpecificModel.Props.SENDER_REG_DATE));
         queryParts.add(generateQuickSearchQuery(searchString));
-        queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         if (docType != null) {
             queryParts.add(generateTypeQuery(docType));
         }
-        // Possible access restrictions
-        List<String> accessParts = new ArrayList<String>(3);
-        for (AccessRestriction acc : accessRestrictions) {
-            accessParts.add(generateStringExactQuery(acc.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION));
-        }
-        queryParts.add(joinQueryPartsOr(accessParts));
-        
-        String query = generateDocumentSearchQuery(queryParts);
+
+        String query = generateAdrDocumentSearchQuery(queryParts);
         List<Document> results = searchDocumentsImpl(query, false);
         if (log.isDebugEnabled()) {
-            log.debug("ADR document search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+            log.debug("ADR documents search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() + ", query: " + query);
         }
         return results;
+    }
+
+    @Override
+    public List<Document> searchAdrDocuments(String regNumber, Date regDate) {
+        long startTime = System.currentTimeMillis();
+        List<String> queryParts = new ArrayList<String>(4);
+        queryParts.add(generatePropertyDateQuery(DocumentCommonModel.Props.REG_DATE_TIME, regDate));
+        queryParts.add(generateStringExactQuery(regNumber, DocumentCommonModel.Props.REG_NUMBER));
+
+        String query = generateAdrDocumentSearchQuery(queryParts);
+        List<Document> results = searchDocumentsImpl(query, false);
+        if (log.isDebugEnabled()) {
+            log.debug("ADR document details search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() + ", query: " + query);
+        }
+        return results;
+    }
+
+    @Override
+    public List<Document> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd) {
+        long startTime = System.currentTimeMillis();
+        List<String> queryParts = new ArrayList<String>(3);
+        queryParts.add(generateDatePropertyRangeQuery(modifiedDateBegin, modifiedDateEnd, ContentModel.PROP_MODIFIED));
+
+        String query = generateAdrDocumentSearchQuery(queryParts);
+        List<Document> results = searchDocumentsImpl(query, false);
+        if (log.isDebugEnabled()) {
+            log.debug("ADR document details search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() + ", query: " + query);
+        }
+        return results;
+    }
+
+    @Override
+    public List<NodeRef> searchAdrDeletedDocuments(Date deletedDateBegin, Date deletedDateEnd) {
+        long startTime = System.currentTimeMillis();
+        List<String> queryParts = new ArrayList<String>(2);
+        queryParts.add(generateTypeQuery(AdrModel.Types.ADR_DELETED_DOCUMENT));
+        queryParts.add(generateDatePropertyRangeQuery(deletedDateBegin, deletedDateEnd, AdrModel.Props.DELETED_DATE_TIME));
+
+        String query = joinQueryPartsAnd(queryParts);
+        List<NodeRef> results = searchNodes(query, false);
+        if (log.isDebugEnabled()) {
+            log.debug("ADR deleted documents search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() + ", query: " + query);
+        }
+        return results;
+    }
+
+    private static String generateAdrDocumentSearchQuery(List<String> queryParts) {
+        // Only finished documents go public
+        queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
+
+        // Possible access restrictions
+        List<String> accessParts = new ArrayList<String>(2);
+        accessParts.add(generateStringExactQuery(AccessRestriction.AK.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION));
+        accessParts.add(generateStringExactQuery(AccessRestriction.OPEN.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION));
+        queryParts.add(joinQueryPartsOr(accessParts));
+
+        return generateDocumentSearchQuery(queryParts);
     }
 
     @Override

@@ -45,22 +45,6 @@ public interface AvalikDokumendiRegister {
      * 
      * @param parameters
      * @return
-     *     returns ee.webmedia.alfresco.adr.OtsiDokumendidSamasTeemasResponse
-     */
-    @WebMethod
-    @WebResult(name = "dokument", targetNamespace = "http://alfresco/avalikdokumendiregister")
-    @RequestWrapper(localName = "otsiDokumendidSamasTeemas", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.OtsiDokumendidSamasTeemas")
-    @ResponseWrapper(localName = "otsiDokumendidSamasTeemasResponse", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.OtsiDokumendidSamasTeemasResponse")
-    public List<Dokument> otsiDokumendidSamasTeemas(
-            @WebParam(name = "viit", targetNamespace = "http://alfresco/avalikdokumendiregister")
-            String viit,
-            @WebParam(name = "registreerimiseAeg", targetNamespace = "http://alfresco/avalikdokumendiregister")
-            XMLGregorianCalendar registreerimiseAeg);
-
-    /**
-     * 
-     * @param parameters
-     * @return
      *     returns ee.webmedia.alfresco.adr.OtsiDokumentDetailidegaResponse
      */
     @WebMethod
@@ -80,15 +64,41 @@ public interface AvalikDokumendiRegister {
      *     returns ee.webmedia.alfresco.adr.OtsiFailSisugaResponse
      */
     @WebMethod
-    @WebResult(name = "failSisuga", targetNamespace = "http://alfresco/avalikdokumendiregister")
+    @WebResult(name = "fail", targetNamespace = "http://alfresco/avalikdokumendiregister")
     @RequestWrapper(localName = "otsiFailSisuga", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.OtsiFailSisuga")
     @ResponseWrapper(localName = "otsiFailSisugaResponse", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.OtsiFailSisugaResponse")
-    public FailSisuga failSisuga(
+    public Fail failSisuga(
             @WebParam(name = "viit", targetNamespace = "http://alfresco/avalikdokumendiregister")
             String viit,
             @WebParam(name = "registreerimiseAeg", targetNamespace = "http://alfresco/avalikdokumendiregister")
             XMLGregorianCalendar registreerimiseAeg,
             @WebParam(name = "failinimi", targetNamespace = "http://alfresco/avalikdokumendiregister")
             String filename);
+
+    @WebMethod
+    @WebResult(name = "dokumendiliik", targetNamespace = "http://alfresco/avalikdokumendiregister")
+    @RequestWrapper(localName = "otsiDokumendiliigid", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.OtsiDokumendiliigid")
+    @ResponseWrapper(localName = "otsiDokumendiliigidResponse", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.OtsiDokumendiliigidResponse")
+    public List<Dokumendiliik> dokumendiliigid();
+
+    @WebMethod
+    @WebResult(name = "dokumentDetailidegaFailSisuga", targetNamespace = "http://alfresco/avalikdokumendiregister")
+    @RequestWrapper(localName = "koikDokumendidLisatudMuudetud", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidLisatudMuudetud")
+    @ResponseWrapper(localName = "koikDokumendidLisatudMuudetudResponse", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidLisatudMuudetudResponse")
+    public List<DokumentDetailidega> koikDokumendidLisatudMuudetud(
+            @WebParam(name = "perioodiAlgusKuupaev", targetNamespace = "http://alfresco/avalikdokumendiregister")
+            XMLGregorianCalendar perioodiAlgusKuupaev,
+            @WebParam(name = "perioodiLoppKuupaev", targetNamespace = "http://alfresco/avalikdokumendiregister")
+            XMLGregorianCalendar perioodiLoppKuupaev);
+
+    @WebMethod
+    @WebResult(name = "dokumentKustutatud", targetNamespace = "http://alfresco/avalikdokumendiregister")
+    @RequestWrapper(localName = "koikDokumendidKustutatud", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidKustutatud")
+    @ResponseWrapper(localName = "koikDokumendidKustutatudResponse", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidKustutatudResponse")
+    public List<Dokument> koikDokumendidKustutatud(
+            @WebParam(name = "perioodiAlgusKuupaev", targetNamespace = "http://alfresco/avalikdokumendiregister")
+            XMLGregorianCalendar perioodiAlgusKuupaev,
+            @WebParam(name = "perioodiLoppKuupaev", targetNamespace = "http://alfresco/avalikdokumendiregister")
+            XMLGregorianCalendar perioodiLoppKuupaev);
 
 }

@@ -50,7 +50,8 @@ import javax.xml.datatype.XMLGregorianCalendar;
     "vastamiseKuupaev",
     "koostaja",
     "allkirjastaja",
-    "fail"
+    "fail",
+    "seotudDokument"
 })
 public class DokumentDetailidega
     extends Dokument
@@ -71,6 +72,7 @@ public class DokumentDetailidega
     protected String koostaja;
     protected String allkirjastaja;
     protected List<Fail> fail;
+    protected List<Dokument> seotudDokument;
 
     /**
      * Gets the value of the juurdepaasuPiirang property.
@@ -315,6 +317,13 @@ public class DokumentDetailidega
             fail = new ArrayList<Fail>();
         }
         return this.fail;
+    }
+
+    public List<Dokument> getSeotudDokument() {
+        if (seotudDokument == null) {
+            seotudDokument = new ArrayList<Dokument>();
+        }
+        return seotudDokument;
     }
 
 }

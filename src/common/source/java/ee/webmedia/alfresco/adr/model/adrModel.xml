@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="adr:adrModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
+   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/adr/1.0" prefix="adr" />
+   </namespaces>
+
+   <types>
+      <type name="adr:adrDeletedDocuments">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="adr:adrDeletedDocument">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>adr:adrDeletedDocument</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="adr:adrDeletedDocument">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="adr:regNumber">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="adr:regDateTime">
+               <type>d:datetime</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="adr:deletedDateTime">
+               <type>d:datetime</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+         </properties>
+      </type>
+
+   </types>
+
+</model>
