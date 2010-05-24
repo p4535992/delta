@@ -127,16 +127,22 @@ public class GeneralServiceImpl implements GeneralService {
     }
 
     @Override
-    public Node getAncestorWithType(NodeRef childRef, QName ancestorType) {
+    public NodeRef getAncestorNodeRefWithType(NodeRef childRef, QName ancestorType) {
         final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
         final QName realParentType = nodeService.getType(parentRef);
         if (ancestorType.equals(realParentType)) {
-            return fetchNode(parentRef);
+            return parentRef;
         }
         if (realParentType.equals(ContentModel.TYPE_STOREROOT)) {
             return null;
         }
-        return getAncestorWithType(parentRef, ancestorType);
+        return getAncestorNodeRefWithType(parentRef, ancestorType);
+    }
+
+    @Override
+    public Node getAncestorWithType(NodeRef childRef, QName ancestorType) {
+        NodeRef ancestorNodeRef = getAncestorNodeRefWithType(childRef, ancestorType);
+        return (ancestorNodeRef == null) ? null : fetchNode(ancestorNodeRef);
 
     }
 
@@ -517,6 +523,23 @@ public class GeneralServiceImpl implements GeneralService {
             i++;
         }
         return baseName + suffix + "." + extension;
+    }
+    
+    @Override
+    public void updateParentContainingDocsCount(NodeRef parentNodeRef, QName propertyName, boolean added, Integer count) {
+        if(parentNodeRef == null)
+            return;
+        
+        Serializable valueProperty = nodeService.getProperty(parentNodeRef, propertyName);
+        if(valueProperty == null) { // first time, assign default value
+            valueProperty = 0;
+        }
+        
+        int value = Integer.parseInt(valueProperty.toString());
+        count = (count == null) ? 1 : count;
+        int newValue = (added) ? value + count : value - count;
+        nodeService.setProperty(parentNodeRef, propertyName, newValue);
+
     }
 
     // START: getters / setters

@@ -23,14 +23,18 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.io.IOUtils;
+import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class FunctionsListDialog extends BaseDialogBean {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(FunctionsListDialog.class);
+
+    public static final String BEAN_NAME = "FunctionsListDialog";
 
     private static final long serialVersionUID = 1L;
 
@@ -40,8 +44,13 @@ public class FunctionsListDialog extends BaseDialogBean {
 
     @Override
     public void init(Map<String, String> params) {
+        reset();
         super.init(params);
         loadFunctions();
+    }
+
+    private void reset() {
+        functions = null;
     }
 
     @Override
@@ -61,8 +70,8 @@ public class FunctionsListDialog extends BaseDialogBean {
         return super.cancel();
     }
 
-    /** @param event */
-    public void export(ActionEvent event) {
+    // START: JSP event handlers
+    public void export(@SuppressWarnings("unused") ActionEvent event) {
         log.info("docList export started");
         HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
         response.setCharacterEncoding(CHARSET);
@@ -89,9 +98,20 @@ public class FunctionsListDialog extends BaseDialogBean {
         } finally {
             IOUtils.closeQuietly(outputStream);
             FacesContext.getCurrentInstance().responseComplete();
+            
+            // Erko hack for incorrect view id in the next request
+            JspStateManagerImpl.ignoreCurrentViewSequenceHack();
+            
             log.info("docList export completed");
         }
     }
+
+    public void createNewYearBasedVolumes(@SuppressWarnings("unused") ActionEvent event) {
+        final long createdVolumesCount = getFunctionsService().createNewYearBasedVolumes();
+        MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_createNewYearBasedVolumes_success", createdVolumesCount);
+    }
+
+    // END: JSP event handlers
 
     private ExporterCrawlerParameters getExportParameters() {
         ExporterCrawlerParameters parameters = new ExporterCrawlerParameters();
@@ -118,7 +138,6 @@ public class FunctionsListDialog extends BaseDialogBean {
     // START: private methods
     protected void loadFunctions() {
         functions = getFunctionsService().getAllFunctions();
-        Collections.sort(functions);
     }
 
     // END: private methods

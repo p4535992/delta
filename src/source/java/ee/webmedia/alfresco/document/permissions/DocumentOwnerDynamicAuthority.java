@@ -6,6 +6,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.EqualsHelper;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -36,6 +37,17 @@ public class DocumentOwnerDynamicAuthority extends BaseDynamicAuthority {
             log.debug("User " + userName + " matches document ownerId " + ownerId + ", granting authority " + getAuthority());
             return true;
         }
+        if (DocumentSubtypeModel.Types.LEAVING_LETTER.equals(type)) {
+            return false; // no need to check isOwnerOfFirstInprogressSignatureTask() for leavingLetter
+        }
+        final boolean hasAuthority = isOwnerOfFirstInprogressSignatureTask(nodeRef, userName);
+        if (!hasAuthority) {
+            log.trace("No conditions met, refusing authority " + getAuthority());
+        }
+        return hasAuthority;
+    }
+
+    private boolean isOwnerOfFirstInprogressSignatureTask(final NodeRef nodeRef, final String userName) {
         for (ChildAssociationRef compoundWorkflowAssoc : nodeService.getChildAssocs(nodeRef, WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                 WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW)) {
             NodeRef compoundWorkflow = compoundWorkflowAssoc.getChildRef();
@@ -71,7 +83,6 @@ public class DocumentOwnerDynamicAuthority extends BaseDynamicAuthority {
                 break; // only one workflow can be in progress under a compoundWorkflow
             }
         }
-        log.trace("No conditions met, refusing authority " + getAuthority());
         return false;
     }
 

@@ -23,22 +23,9 @@
 
 <f:verbatim>
    <script type="text/javascript">
-   // hide responsibleAssignee fields of assignment workflows, leaving only one, that is filled(or first). 
-   // None is rendered by JSF if there exists task with responsibleAssignee
-/*
-   var ownerNames = $jQ(".recipient.tasks.showOne .ownerName");
-   ownerNames.each(function (index, domEle) {
-      alert("hide index="+index);
-       if(index >0){
-           var len = $jQ.trim($jQ(domEle).val()).length;
-           if(len > 0){
-               $jQ(ownerNames.get(0)).parent().parent().parent().parent().parent().parent().parent().addClass("ui-helper-hidden");
-           } else {
-               var tRow = $jQ(domEle).parent().parent().parent().parent().parent().parent().parent();
-               tRow.addClass("ui-helper-hidden");
-           }
-       }
-   });
-*/
+      prependOnclick($jQ(".compoundWorkflowStart"), function(){
+         propSheetFinishBtnPressed = true;
+         return propSheetValidateSubmit();
+      });
    </script>
 </f:verbatim>

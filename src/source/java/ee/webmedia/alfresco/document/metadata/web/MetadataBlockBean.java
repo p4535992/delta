@@ -5,24 +5,22 @@ import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
-import javax.faces.component.UISelectItem;
-import javax.faces.component.html.HtmlInputTextarea;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.event.ActionEvent;
+import javax.faces.event.FacesListener;
+import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 import javax.faces.validator.ValidatorException;
 
-import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.LockStatus;
@@ -32,6 +30,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.Application;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.Utils;
@@ -46,8 +45,7 @@ import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
-import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdown;
-import ee.webmedia.alfresco.common.propertysheet.relateddropdown.RelatedDropdownGenerator;
+import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -61,7 +59,7 @@ import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.menu.service.MenuService;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
@@ -101,17 +99,11 @@ public class MetadataBlockBean implements Serializable {
     private transient DocumentTemplateService documentTemplateService;
     private transient ParametersService parametersService;
     private transient UIPropertySheet propertySheet;
-    private transient MenuService menuService;
-
-    private transient HtmlInputTextarea newCaseHtmlInput;
 
     private Node document;
     private boolean inEditMode;
     private DateFormat dateFormat;
     private String documentTypeName;
-    private String selectedCaseRefNum;
-    private String originalVolumeRef;
-    private String originalLocationId;
 
     /** timeOut in seconds how often lock should be refreshed to avoid expiring */
     private Integer lockRefreshTimeout;
@@ -128,13 +120,6 @@ public class MetadataBlockBean implements Serializable {
         sb.append(getParametersService().getStringParameter(Parameters.LEAVING_LETTER_CONTENT));
         sb.append("</div>");
         return sb.toString();
-    }
-
-    public void setCostManager(String userName) {
-        Map<QName, Serializable> personProps = getPersonProps(userName);
-
-        Map<String, Object> docProps = document.getProperties();
-        docProps.put(DocumentSpecificModel.Props.COST_MANAGER.toString(), UserUtil.getPersonFullName1(personProps));
     }
 
     public void setApplicantName(String userName, Node applicantNode) {
@@ -305,6 +290,13 @@ public class MetadataBlockBean implements Serializable {
         return list;
     }
 
+    public void setApplicationRecipient(String userName) {
+        Map<QName, Serializable> personProps = getPersonProps(userName);
+
+        Map<String, Object> docProps = document.getProperties();
+        docProps.put(DocumentSpecificModel.Props.APPLICATION_RECIPIENT.toString(), UserUtil.getPersonFullName1(personProps));
+    }
+
     public boolean isShowVacationAdd() {
         return StringUtils.isNotBlank((String) document.getProperties().get("{temp}vacationAddText"));
     }
@@ -328,7 +320,6 @@ public class MetadataBlockBean implements Serializable {
     }
 
     protected void afterModeChange() {
-        resetNewCaseHtmlInput();
         Map<String, Object> props = document.getProperties();
         if (!inEditMode) {
 
@@ -565,6 +556,11 @@ public class MetadataBlockBean implements Serializable {
 
         } else {
             /** in Edit mode */
+            NodeRef functionRef = (NodeRef) props.get(DocumentService.TransientProps.FUNCTION_NODEREF);
+            NodeRef seriesRef = (NodeRef) props.get(DocumentService.TransientProps.SERIES_NODEREF);
+            NodeRef volumeRef = (NodeRef) props.get(DocumentService.TransientProps.VOLUME_NODEREF);
+            String caseLabel = (String) props.get(DocumentService.TransientProps.CASE_LABEL_EDITABLE);
+            updateFnSerVol(functionRef, seriesRef, volumeRef, caseLabel, false, true);
 
             if (DocumentSubtypeModel.Types.LEAVING_LETTER.equals(document.getType())) {
                 /** Document name must be filled for this type. */
@@ -610,16 +606,12 @@ public class MetadataBlockBean implements Serializable {
      * 
      * @param submittedValue
      */
-    public void updateAccessRestrictionProperties(Object submittedValue) {
+    public void updateAccessRestrictionProperties(NodeRef seriesRef) {
         final Map<String, Object> docProps = document.getProperties();
         final String accessRestriction = (String) docProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
         if (StringUtils.isBlank(accessRestriction)) {
-            String sVal = (String) submittedValue;
-            if (StringUtils.isBlank(sVal)) {
-                return;
-            }
             // read serAccessRestriction-related values from series
-            final Series series = getSeriesService().getSeriesByNodeRef(sVal);
+            final Series series = getSeriesService().getSeriesByNodeRef(seriesRef);
             final Map<String, Object> seriesProps = series.getNode().getProperties();
             final String serAccessRestriction = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
             final String serAccessRestrictionReason = (String) seriesProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString());
@@ -740,144 +732,237 @@ public class MetadataBlockBean implements Serializable {
         return errandType;
     }
 
+    //===============================================================================================================================
+
+    private List<SelectItem> functions;
+    private List<SelectItem> series;
+    private List<SelectItem> volumes;
+    private List<String> cases;
+
     /**
-     * Query callback method executed by the component generated by {@link RelatedDropdown} or {@link RelatedDropdownGenerator}.
-     * This method is part of the contract to the {@link RelatedDropdownGenerator}, it is up to the backing bean
-     * to execute whatever query is appropriate and populate <code>selectComponent</code> with selection items.<br>
-     * 
-     * @param context - FacesContext for creating selection items
-     * @param selectComponent - selectComponent that will be rendered(use <code>selectComponent.getChildren()</code> to add selection items)
-     * @param submittedValue - value submitted by the previous {@link RelatedDropdown} (RelatedDropdown, that belongs to the same group and has order equal to
-     *            order of given <code>selectComponent.order -1 </code>) in the same group.
-     * @return A collection of UISelectItem objects containing the selection items to show on form.
+     * @param context
+     * @param selectComponent
+     * @return dropdown items for JSP
      */
-    public void findAllFunctions(FacesContext context, HtmlSelectOneMenu selectComponent, Object submittedValue) {
-        List<Function> functions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
-        @SuppressWarnings("unchecked")
-        List<UIComponent> selectOptions = selectComponent.getChildren();
-        selectOptions.clear();
+    public List<SelectItem> getFunctions(FacesContext context, UIInput selectComponent) {
+        return functions;
+    }
 
-        Map<String, Object> props = document.getProperties();
-        String selectedNodeRef = (String) props.get(TransientProps.FUNCTION_NODEREF);
-        boolean foundSelected = false;
+    /**
+     * @param context
+     * @param selectComponent
+     * @return dropdown items for JSP
+     */
+    public List<SelectItem> getSeries(FacesContext context, UIInput selectComponent) {
+        return series;
+    }
 
-        for (Function function : functions) {
-            if (DocListUnitStatus.OPEN.equals(function.getStatus())) {
+    /**
+     * @param context
+     * @param selectComponent
+     * @return dropdown items for JSP
+     */
+    public List<SelectItem> getVolumes(FacesContext context, UIInput selectComponent) {
+        return volumes;
+    }
+    
+    /**
+     * @param context
+     * @param selectComponent
+     * @return dropdown items for JSP
+     */
+    public List<String> getCases(FacesContext context, UIInput selectComponent) {
+        return cases;
+    }
+
+    public void functionValueChanged(ValueChangeEvent event) {
+        NodeRef functionRef = (NodeRef) event.getNewValue();
+        updateFnSerVol(functionRef, null, null, null, true, false);
+    }
+
+    public void seriesValueChanged(ValueChangeEvent event) {
+        NodeRef functionRef = (NodeRef) document.getProperties().get(DocumentService.TransientProps.FUNCTION_NODEREF);
+        NodeRef seriesRef = (NodeRef) event.getNewValue();
+        updateFnSerVol(functionRef, seriesRef, null, null, true, false);
+    }
+
+    public void volumeValueChanged(ValueChangeEvent event) {
+        NodeRef functionRef = (NodeRef) document.getProperties().get(DocumentService.TransientProps.FUNCTION_NODEREF);
+        NodeRef seriesRef = (NodeRef) document.getProperties().get(DocumentService.TransientProps.SERIES_NODEREF);
+        NodeRef volumeRef = (NodeRef) event.getNewValue();
+        updateFnSerVol(functionRef, seriesRef, volumeRef, null, true, false);
+    }
+
+    private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel, boolean updateComponents, boolean addIfMissing) {
+        { // Function
+            List<Function> allFunctions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
+            functions = new ArrayList<SelectItem>(allFunctions.size());
+            functions.add(new SelectItem("", ""));
+            boolean functionFound = false;
+            for (Function function : allFunctions) {
                 List<Series> openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, document.getType());
                 if (openSeries.size() == 0) {
                     continue;
                 }
+                functions.add(new SelectItem(function.getNode().getNodeRef(), function.getMark() + " " + function.getTitle()));
+                if (functionRef != null && functionRef.equals(function.getNode().getNodeRef())) {
+                    functionFound = true;
+                }
             }
-            final String itemLabel = function.getMark() + " " + function.getTitle();
-            final String itemNodeRef = function.getNodeRef().toString();
-            foundSelected = addSelectItem(itemLabel, itemNodeRef, selectComponent, selectedNodeRef, foundSelected, context);
-        }
-        addDefaultItemIfNeeded(context, selectComponent, foundSelected);
-    }
-
-    /**
-     * Query callback method executed by the component generated by {@link RelatedDropdown} or {@link RelatedDropdownGenerator}.
-     * This method is part of the contract to the {@link RelatedDropdownGenerator}, it is up to the backing bean
-     * to execute whatever query is appropriate and populate <code>selectComponent</code> with selection items.<br>
-     * 
-     * @param context - FacesContext for creating selection items
-     * @param selectComponent - selectComponent that will be rendered(use <code>selectComponent.getChildren()</code> to add selection items)
-     * @param submittedValue - value submitted by the previous {@link RelatedDropdown} (RelatedDropdown, that belongs to the same group and has order equal to
-     *            order of given <code>selectComponent.order -1 </code>) in the same group.
-     * @return A collection of UISelectItem objects containing the selection items to show on form.
-     */
-    public void findAllSeries(FacesContext context, HtmlSelectOneMenu selectComponent, Object submittedValue) {
-        String sVal = (String) submittedValue;
-        if (StringUtils.isBlank(sVal)) {
-            selectComponent.setDisabled(true);
-            return;
-        }
-        final NodeRef functionNodeRef = new NodeRef(sVal);
-        List<Series> allSeries = getSeriesService().getAllSeriesByFunction(functionNodeRef, DocListUnitStatus.OPEN, document.getType());
-        @SuppressWarnings("unchecked")
-        List<UIComponent> selectOptions = selectComponent.getChildren();
-        selectOptions.clear();
-
-        Map<String, Object> props = document.getProperties();
-        String selectedNodeRef = (String) props.get(TransientProps.SERIES_NODEREF);
-        boolean foundSelected = false;
-        for (Series series : allSeries) {
-            final String itemLabel = series.getSeriesIdentifier() + " " + series.getTitle();
-            final String itemNodeRef = series.getNode().getNodeRef().toString();
-            foundSelected = addSelectItem(itemLabel, itemNodeRef, selectComponent, selectedNodeRef, foundSelected, context);
-        }
-        addDefaultItemIfNeeded(context, selectComponent, foundSelected);
-    }
-
-    /**
-     * Query callback method executed by the component generated by {@link RelatedDropdown} or {@link RelatedDropdownGenerator}.
-     * This method is part of the contract to the {@link RelatedDropdownGenerator}, it is up to the backing bean
-     * to execute whatever query is appropriate and populate <code>selectComponent</code> with selection items.<br>
-     * 
-     * @param context - FacesContext for creating selection items
-     * @param selectComponent - selectComponent that will be rendered(use <code>selectComponent.getChildren()</code> to add selection items)
-     * @param submittedValue - value submitted by the previous {@link RelatedDropdown} (RelatedDropdown, that belongs to the same group and has order equal to
-     *            order of given <code>selectComponent.order -1 </code>) in the same group.
-     * @return A collection of UISelectItem objects containing the selection items to show on form.
-     */
-    public void findAllVolumes(FacesContext context, HtmlSelectOneMenu selectComponent, Object submittedValue) {
-        String sVal = (String) submittedValue;
-        if (StringUtils.isBlank(sVal)) {
-            selectComponent.setDisabled(true);
-            return;
-        }
-        final NodeRef seriesNodeRef = new NodeRef(sVal);
-        List<Volume> volumes = getVolumeService().getAllValidVolumesBySeries(seriesNodeRef);
-        @SuppressWarnings("unchecked")
-        List<UIComponent> selectOptions = selectComponent.getChildren();
-        selectOptions.clear();
-
-        Map<String, Object> props = document.getProperties();
-        String selectedNodeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
-        boolean foundSelected = false;
-
-        for (Volume volume : volumes) {
-            final String itemLabel = volume.getVolumeMark() + " " + volume.getTitle();
-            final String itemNodeRef = volume.getNode().getNodeRef().toString();
-            foundSelected = addSelectItem(itemLabel, itemNodeRef, selectComponent, selectedNodeRef, foundSelected, context);
-        }
-        addDefaultItemIfNeeded(context, selectComponent, foundSelected);
-    }
-
-    private boolean addSelectItem(String itemLabel, String itemValue, HtmlSelectOneMenu selectComponent //
-            , String selectedValue, boolean foundSelected, FacesContext context) {
-        @SuppressWarnings("unchecked")
-        List<UIComponent> selectOptions = selectComponent.getChildren();
-        UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-        selectItem.setItemLabel(itemLabel);
-        selectItem.setItemValue(itemValue);
-        if (StringUtils.equals(itemValue, selectedValue)) {
-            foundSelected = true;
-            selectComponent.setSubmittedValue(selectedValue);
-            selectComponent.setValue(selectedValue);
-        }
-        selectOptions.add(selectItem);
-        return foundSelected;
-    }
-
-    private void addDefaultItemIfNeeded(FacesContext context, HtmlSelectOneMenu selectComponent, boolean foundSelected) {
-        @SuppressWarnings("unchecked")
-        List<UIComponent> selectOptions = selectComponent.getChildren();
-        if (selectOptions.size() == 1) {
-            final UIComponent uiComponent = selectOptions.get(0);
-            if (uiComponent instanceof UISelectItem) {
-                UISelectItem selectItem = (UISelectItem) uiComponent;
-                final Object value = selectItem.getItemValue();
-                selectComponent.setSubmittedValue(value);
-                selectComponent.setValue(value);
+            if (!functionFound) {
+                if (addIfMissing && functionRef != null && getNodeService().exists(functionRef)) {
+                    Function function = getFunctionsService().getFunctionByNodeRef(functionRef);
+                    functions.add(1, new SelectItem(function.getNode().getNodeRef(), function.getMark() + " " + function.getTitle()));
+                } else {
+                    functionRef = null;
+                }
             }
-        } else if (!foundSelected) {
-            UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-            selectItem.setItemLabel("");
-            selectItem.setItemValue("");
-            selectOptions.add(0, selectItem);
-            selectComponent.setValue("");
+            // If list contains only one value, then select it right away
+            if (functions.size() == 2) {
+                functions.remove(0);
+                if (functionRef == null) {
+                    functionRef = (NodeRef) functions.get(0).getValue();
+                }
+            }
         }
+
+        if (functionRef == null) {
+            series = null;
+            seriesRef = null;
+        } else {
+            List<Series> allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, document.getType());
+            series = new ArrayList<SelectItem>(allSeries.size());
+            series.add(new SelectItem("", ""));
+            boolean serieFound = false;
+            for (Series serie : allSeries) {
+                series.add(new SelectItem(serie.getNode().getNodeRef(), serie.getSeriesIdentifier() + " " + serie.getTitle()));
+                if (seriesRef != null && seriesRef.equals(serie.getNode().getNodeRef())) {
+                    serieFound = true;
+                }
+            }
+            if (!serieFound) {
+                if (addIfMissing && seriesRef != null && getNodeService().exists(seriesRef)) {
+                    Series serie = getSeriesService().getSeriesByNodeRef(seriesRef);
+                    series.add(1, new SelectItem(serie.getNode().getNodeRef(), serie.getSeriesIdentifier() + " " + serie.getTitle()));
+                } else {
+                    seriesRef = null;
+                }
+            }
+            // If list contains only one value, then select it right away
+            if (series.size() == 2) {
+                series.remove(0);
+                if (seriesRef == null) {
+                    seriesRef = (NodeRef) series.get(0).getValue();
+                }
+            }
+        }
+
+        if (seriesRef == null) {
+            volumes = null;
+            volumeRef = null;
+        } else {
+            UIPropertySheet ps = getPropertySheet();
+            if (ps == null) { // when metadata block is first rendered
+                updateAccessRestrictionProperties(seriesRef);
+            } else { // when value change event is fired
+                final NodeRef finalSeriesRef = seriesRef;
+                ActionEvent event = new ActionEvent(ps) {
+                    boolean notExecuted = true;
+                    @Override
+                    public void processListener(FacesListener faceslistener) {
+                        notExecuted = false;
+                        updateAccessRestrictionProperties(finalSeriesRef);
+                    }
+                    @Override
+                    public boolean isAppropriateListener(FacesListener faceslistener) {
+                        return notExecuted;
+                    }
+                };
+                event.setPhaseId(PhaseId.INVOKE_APPLICATION);
+                ps.queueEvent(event);
+            }
+
+            List<Volume> allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
+            volumes = new ArrayList<SelectItem>(allVolumes.size());
+            volumes.add(new SelectItem("", ""));
+            boolean volumeFound = false;
+            for (Volume volume : allVolumes) {
+                volumes.add(new SelectItem(volume.getNode().getNodeRef(), volume.getVolumeMark() + " " + volume.getTitle()));
+                if (volumeRef != null && volumeRef.equals(volume.getNode().getNodeRef())) {
+                    volumeFound = true;
+                }
+            }
+            if (!volumeFound) {
+                if (addIfMissing && volumeRef != null && getNodeService().exists(volumeRef)) {
+                    Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
+                    volumes.add(1, new SelectItem(volume.getNode().getNodeRef(), volume.getVolumeMark() + " " + volume.getTitle()));
+                } else {
+                    volumeRef = null;
+                }
+            }
+            // If list contains only one value, then select it right away
+            if (volumes.size() == 2) {
+                volumes.remove(0);
+                if (volumeRef == null) {
+                    volumeRef = (NodeRef) volumes.get(0).getValue();
+                }
+            }
+        }
+
+        if (volumeRef == null) {
+            cases = null;
+            caseLabel = null;
+        } else {
+            if (getVolumeService().getVolumeByNodeRef(volumeRef).isContainsCases()) {
+                List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
+                cases = new ArrayList<String>(allCases.size());
+                for (Case tmpCase : allCases) {
+                    cases.add(tmpCase.getTitle());
+                }
+                if (StringUtils.isBlank(caseLabel) && cases.size() == 1) {
+                    caseLabel = cases.get(0);
+                }
+            } else {
+                cases = null;
+                caseLabel = null;
+            }
+        }
+
+        if (getPropertySheet() != null) {
+            @SuppressWarnings("unchecked")
+            List<UIComponent> children = getPropertySheet().getChildren();
+            for (UIComponent component : children) {
+                if (component.getId().endsWith("_function")) {
+                    HtmlSelectOneMenu functionList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), functionList, functions);
+                    functionList.setValue(functionRef);
+                } else if (component.getId().endsWith("_series")) {
+                    HtmlSelectOneMenu seriesList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), seriesList, series);
+                    seriesList.setValue(seriesRef);
+                } else if (component.getId().endsWith("_volume")) {
+                    HtmlSelectOneMenu volumeList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), volumeList, volumes);
+                    volumeList.setValue(volumeRef);
+                } else if (component.getId().endsWith("_case_Lbl_Editable")) {
+                    UIInput caseList = (UIInput) component.getChildren().get(1);
+                    SuggesterGenerator.setValue(caseList, cases);
+                    caseList.setValue(caseLabel);
+                    component.setRendered(cases != null);
+                }
+            }
+        }
+
+        // These only apply when called initially during creation of a new document
+        // If called from eventlistener, then model values are updated after and thus overwritten
+        document.getProperties().put(DocumentService.TransientProps.FUNCTION_NODEREF, functionRef);
+        document.getProperties().put(DocumentService.TransientProps.SERIES_NODEREF, seriesRef);
+        document.getProperties().put(DocumentService.TransientProps.VOLUME_NODEREF, volumeRef);
+        document.getProperties().put(DocumentService.TransientProps.CASE_LABEL_EDITABLE, caseLabel);
+    }
+
+    public boolean isShowCase() {
+        return document.getProperties().get(TransientProps.CASE_NODEREF) != null;
     }
 
     protected String generateNameAndEmailTable(List<String> names, List<String> emails) {
@@ -956,8 +1041,6 @@ public class MetadataBlockBean implements Serializable {
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
         documentTypeName = documentType != null ? documentType.getName() : null;
         final Map<String, Object> props = document.getProperties();
-        originalVolumeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
-        originalLocationId = getLocationId(props);
     }
 
     public void reloadDoc() {
@@ -968,29 +1051,21 @@ public class MetadataBlockBean implements Serializable {
         afterModeChange();
     }
 
-    private String getLocationId(final Map<String, Object> props) {
-        return (String) props.get(TransientProps.FUNCTION_NODEREF) + (String) props.get(TransientProps.SERIES_NODEREF) //
-                + (String) props.get(TransientProps.VOLUME_NODEREF);
-    }
-
     public void reset() {
         inEditMode = false;
         lockOrUnlockIfNeeded(inEditMode);
         document = null;
         propertySheet = null;
         documentTypeName = null;
-        selectedCaseRefNum = null;
-        originalVolumeRef = null;
-        originalLocationId = null;
-        resetNewCaseHtmlInput();
     }
 
     public void saveAndRegister() {
-        save();
-        registerDocument(null);
-        // We need to refresh the propertySheetgrid
-        clearPropertySheet();
-        afterModeChange();
+        if (save()) {
+            registerDocument(null);
+            // We need to refresh the propertySheetgrid
+            clearPropertySheet();
+            afterModeChange();
+        }
     }
 
     /**
@@ -1024,13 +1099,12 @@ public class MetadataBlockBean implements Serializable {
         afterModeChange();
     }
 
-    public void save() {
+    public boolean save() {
         log.debug("save: docNodeRef=" + document.getNodeRefAsString());
         if (!inEditMode) {
             throw new RuntimeException("Document metadata block is not in edit mode");
         }
         if (validate()) {
-            createOrSelectCase();
             try {
                 log.debug("save: doc NodeRef=" + document.getNodeRefAsString());
                 document = getDocumentService().updateDocument(document);
@@ -1040,7 +1114,7 @@ public class MetadataBlockBean implements Serializable {
                     log.warn("failed to save: " + e.getMessage());
                 }
                 MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
-                return;
+                return false;
             } finally {
                 lockOrUnlockIfNeeded(inEditMode);
                 reloadTransientProperties();
@@ -1048,34 +1122,22 @@ public class MetadataBlockBean implements Serializable {
             propertySheet.setMode(getMode());
             clearPropertySheet();
             afterModeChange();
-            final Map<String, Object> props = document.getProperties();
-            originalVolumeRef = (String) props.get(TransientProps.VOLUME_NODEREF); // user might not leave view, but return and want to save again
-            originalLocationId = getLocationId(props);
+            return true;
         }
+        return false;
     }
 
     public void clearPropertySheet() {
-        resetNewCaseHtmlInput();
         propertySheet.getChildren().clear();
         propertySheet.getClientValidations().clear();
     }
 
     private boolean validate() throws ValidatorException {
-        NodeRef functionRef = null;
-        NodeRef seriesRef = null;
-        NodeRef volumeRef = null;
         final Map<String, Object> props = document.getProperties();
-        final String functionNodeRef = (String) props.get(TransientProps.FUNCTION_NODEREF);
-        final String seriesNodeRef = (String) props.get(TransientProps.SERIES_NODEREF);
-        final String volumeNodeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
-        try {
-            functionRef = new NodeRef(functionNodeRef);
-            seriesRef = new NodeRef(seriesNodeRef);
-            volumeRef = new NodeRef(volumeNodeRef);
-        } catch (Exception e) {
-            // invalid nodeRef
-        }
-        if (volumeRef == null) {
+        NodeRef functionRef = (NodeRef) props.get(TransientProps.FUNCTION_NODEREF);
+        NodeRef seriesRef = (NodeRef) props.get(TransientProps.SERIES_NODEREF);
+        NodeRef volumeRef = (NodeRef) props.get(TransientProps.VOLUME_NODEREF);
+        if (functionRef == null || seriesRef == null || volumeRef == null) {
             if (log.isDebugEnabled()) {
                 log.warn("validation failed: document_validationMsg_mandatory_functionSeriesVolume");
             }
@@ -1090,9 +1152,37 @@ public class MetadataBlockBean implements Serializable {
         if (DocListUnitStatus.CLOSED.equals(getSeriesService().getSeriesByNodeRef(seriesRef).getStatus())) {
             messages.add("document_validationMsg_closed_series");
         }
-        if (DocListUnitStatus.CLOSED.equals(getVolumeService().getVolumeByNodeRef(volumeRef).getStatus())) {
+        Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
+        if (DocListUnitStatus.CLOSED.equals(volume.getStatus())) {
             messages.add("document_validationMsg_closed_volume");
         }
+
+        String caseLabel = StringUtils.trimToNull((String) props.get(TransientProps.CASE_LABEL_EDITABLE));
+        if (volume.isContainsCases() && StringUtils.isBlank(caseLabel)) {
+            // client-side validation prevents it; but it reaches here if in-between rendering and submitting, someone else changes volume's containsCases=true
+            if (log.isDebugEnabled()) {
+                log.warn("validation failed: document_validationMsg_mandatory_case");
+            }
+            messages.add("document_validationMsg_mandatory_case");
+        } else if (!volume.isContainsCases() && StringUtils.isNotBlank(caseLabel)) {
+            caseLabel = null;
+        }
+        if (volume.isContainsCases() && StringUtils.isNotBlank(caseLabel)) {
+            List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef);
+            for (Case tmpCase : allCases) {
+                if (caseLabel.equalsIgnoreCase(tmpCase.getTitle())) {
+                    if (tmpCase.isClosed()) {
+                        if (log.isDebugEnabled()) {
+                            log.warn("validation failed: document_validationMsg_closed_case");
+                        }
+                        messages.add("document_validationMsg_closed_case");
+                    }
+                    break;
+                }
+            }
+        }
+        props.put(TransientProps.CASE_LABEL_EDITABLE, caseLabel);
+
         if (messages.size() > 0) {
             for (String message : messages) {
                 if (log.isDebugEnabled()) {
@@ -1102,85 +1192,7 @@ public class MetadataBlockBean implements Serializable {
             }
             return false;
         }
-        return validateCase(volumeRef);
-    }
-
-    private boolean validateCase(NodeRef volumeRef) {
-        log.debug("validate: case not mandatory or case selected? docNodeRef=" + document.getNodeRefAsString());
-        final Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
-        if (volume.isContainsCases()) {
-            final Map<String, Object> docProps = document.getProperties();
-            if (StringUtils.equals(originalLocationId, getLocationId(docProps))) {
-                return true; // location has not changed
-            }
-            log.debug("originalLocationId=" + originalLocationId);
-            log.debug("new     LocationId=" + getLocationId(docProps));
-            NodeRef caseNodeRef = null;
-            try {
-                caseNodeRef = new NodeRef(selectedCaseRefNum);
-                if (DocListUnitStatus.CLOSED.equals(getCaseService().getCaseByNoderef(caseNodeRef).getStatus())) {
-                    if (log.isDebugEnabled()) {
-                        log.warn("validation failed: document_validationMsg_closed_case");
-                    }
-                    MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_validationMsg_closed_case");
-                    return false;
-                }
-            } catch (Exception e) {
-                // invalid nodeRef
-            }
-            final String newCaseTitle = getNewCaseTitle();
-            if (caseNodeRef == null && StringUtils.isBlank(newCaseTitle) && !StringUtils.equals(getLocationId(docProps), originalLocationId)) {
-                // client-side validation should prevent it at some cases, but sometimes not:
-                if (log.isDebugEnabled()) {
-                    log.warn("validation failed: document_validationMsg_mandatory_case");
-                }
-                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_validationMsg_mandatory_case");
-                return false;
-            } else if (caseNodeRef != null && StringUtils.isNotBlank(newCaseTitle)) {
-                final String msg = "specified selected name of new case '" + newCaseTitle + "' and selected existing case '" + caseNodeRef + "'";
-                if (log.isDebugEnabled()) {
-                    log.warn("validation failed: " + msg + "; docNodeRef=" + document.getNodeRefAsString());
-                }
-                throw new RuntimeException(msg);
-            }
-            if (StringUtils.isNotBlank(newCaseTitle)) {
-                if (getCaseService().isCaseNameUsed(newCaseTitle, volumeRef)) {
-                    MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_validationMsg_caseNameExists", newCaseTitle);
-                    resetNewCaseHtmlInput();
-                    return false;
-                }
-            }
-        }
         return true;
-    }
-
-    private void createOrSelectCase() {
-        final Map<String, Object> props = document.getProperties();
-        final String volumeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
-        final NodeRef volumeNodeRef = new NodeRef(volumeRef);
-        final Volume volume = getVolumeService().getVolumeByNodeRef(volumeNodeRef);
-        if (StringUtils.equals(volumeRef, originalVolumeRef)) {
-            // no need to create case nor put value of original case to props(already set when initialized)
-        } else if (volume.isContainsCases()) {
-            final String newCaseTitle = getNewCaseTitle();
-            resetNewCaseHtmlInput(); // reset value(otherwise might cause troubles later, when creating new doc right after this doc has been saved)
-            final NodeRef caseNodeRef;
-            if (StringUtils.isNotBlank(newCaseTitle)) {
-                final Case newCase = getCaseService().createCase(volumeNodeRef);
-                newCase.setTitle(newCaseTitle);
-                newCase.setStatus(DocListUnitStatus.OPEN.getValueName());
-                getCaseService().saveOrUpdate(newCase, false);
-                caseNodeRef = newCase.getNode().getNodeRef();
-            } else {
-                caseNodeRef = new NodeRef(selectedCaseRefNum);
-            }
-            if (caseNodeRef == null) {
-                throw new RuntimeException("failed to save document under case, caseNodeRef=null");
-            }
-            props.put(TransientProps.CASE_NODEREF, caseNodeRef.toString());
-        } else {
-            props.put(TransientProps.CASE_NODEREF, null);
-        }
     }
 
     public void cancel() {
@@ -1200,57 +1212,6 @@ public class MetadataBlockBean implements Serializable {
         return inEditMode ? UIPropertySheet.EDIT_MODE : UIPropertySheet.VIEW_MODE;
     }
 
-    /**
-     * @return SelectItems of cases from selected volume for jsp
-     */
-    public List<SelectItem> getCasesOfSelectedVolume() {
-        final Map<String, Object> props = document.getProperties();
-        final String volumeNodeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
-        if (StringUtils.isNotBlank(volumeNodeRef)) {
-            NodeRef volumeRef = null;
-            try {
-                volumeRef = new NodeRef(volumeNodeRef);
-            } catch (AlfrescoRuntimeException e) {
-                // invalid nodeRef
-            }
-            if (volumeRef != null) {
-                final List<Case> casesOfVolume = getCaseService().getAllCasesByVolume(volumeRef);
-                final List<SelectItem> selectItems = new ArrayList<SelectItem>(casesOfVolume.size());
-                for (Case case1 : casesOfVolume) {
-                    if (!case1.isClosed()) {
-                        selectItems.add(new SelectItem(case1.getNode().getNodeRefAsString(), case1.getTitle()));
-                    }
-                }
-                selectItems.add(0, new SelectItem("[defaultSelection]", ""));
-                return selectItems;
-            }
-        }
-        return Collections.emptyList();
-    }
-
-    public void setNewCaseHtmlInput(HtmlInputTextarea newCaseInput) {
-        this.newCaseHtmlInput = newCaseInput;
-    }
-
-    public HtmlInputTextarea getNewCaseHtmlInput() {
-        return newCaseHtmlInput;
-    }
-
-    private void resetNewCaseHtmlInput() {
-        if (newCaseHtmlInput != null) {
-            newCaseHtmlInput.setValue(null);
-        }
-    }
-
-    private String getNewCaseTitle() {
-        return StringUtils.trimToNull((String) newCaseHtmlInput.getValue());
-    }
-
-    /** @param event from jsp */
-    public void caseOfVolumeSelected(ValueChangeEvent event) {
-        selectedCaseRefNum = (String) event.getNewValue();
-    }
-
     private void reloadTransientProperties() {
         if (document == null) {
             return;
@@ -1267,8 +1228,9 @@ public class MetadataBlockBean implements Serializable {
     public void registerDocument(ActionEvent event) {
         try {
             document = getDocumentService().registerDocument(document);
+            nodeRef = document.getNodeRef(); // reloadDoc uses NodeRef
             getDocumentTemplateService().updateGeneratedFilesOnRegistration(document.getNodeRef());
-            getMenuService().menuUpdated();
+            ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
         } catch (UnableToPerformException e) {
             if (log.isDebugEnabled()) {
                 log.warn("failed to register: " + e.getMessage());
@@ -1278,26 +1240,6 @@ public class MetadataBlockBean implements Serializable {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_registerDoc_error_docLocked");
         }
         reloadDoc();
-    }
-
-    public boolean isCaseAssignmentNeeded() {
-        NodeRef volumeNodeRef = null;
-        final Map<String, Object> props = document.getProperties();
-        final String volumeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
-        Boolean selectedVolumeContainsCases = null;
-        boolean volumeSelectionChanged = false;
-        log.debug("originalVolumeRef=" + originalVolumeRef + "\n new noderef      =" + volumeRef + "");
-        if (!StringUtils.equals(volumeRef, originalVolumeRef)) {
-            volumeSelectionChanged = true;
-            if (StringUtils.isNotBlank(volumeRef)) {
-                volumeNodeRef = new NodeRef(volumeRef);
-                final Volume volume = getVolumeService().getVolumeByNodeRef(volumeNodeRef);
-                selectedVolumeContainsCases = volume.isContainsCases();
-            } else {
-                selectedVolumeContainsCases = false;
-            }
-        }
-        return selectedVolumeContainsCases != null && selectedVolumeContainsCases && volumeSelectionChanged;
     }
 
     public void setCaseAssignmentNeeded(@SuppressWarnings("unused") boolean showModal) {
@@ -1385,9 +1327,7 @@ public class MetadataBlockBean implements Serializable {
         setDocumentName(nodeRef);
         getDocumentService().setTransientProperties(document, getDocumentService().getAncestorNodesByDocument(nodeRef));
         final Map<String, Object> docProps = document.getProperties();
-        updateAccessRestrictionProperties(docProps.get(TransientProps.SERIES_NODEREF));
-        originalVolumeRef = (String) docProps.get(TransientProps.VOLUME_NODEREF);
-        originalLocationId = getLocationId(docProps);
+        updateAccessRestrictionProperties((NodeRef) docProps.get(TransientProps.SERIES_NODEREF));
     }
 
     private void setDocumentName(NodeRef nodeRef) {
@@ -1412,17 +1352,12 @@ public class MetadataBlockBean implements Serializable {
         private DateFormat dateFormat;
         private String documentTypeName;
         private String selectedCaseRefNum;
-        private String originalVolumeRef;
-        private String originalLocationId;
 
         private Snapshot(MetadataBlockBean bean) {
             this.document = bean.document;
             this.inEditMode = bean.inEditMode;
             this.dateFormat = bean.dateFormat;
             this.documentTypeName = bean.documentTypeName;
-            this.selectedCaseRefNum = bean.selectedCaseRefNum;
-            this.originalVolumeRef = bean.originalVolumeRef;
-            this.originalLocationId = bean.originalLocationId;
         }
 
         private void restoreState(MetadataBlockBean bean) {
@@ -1430,9 +1365,6 @@ public class MetadataBlockBean implements Serializable {
             bean.inEditMode = this.inEditMode;
             bean.dateFormat = this.dateFormat;
             bean.documentTypeName = this.documentTypeName;
-            bean.selectedCaseRefNum = this.selectedCaseRefNum;
-            bean.originalVolumeRef = this.originalVolumeRef;
-            bean.originalLocationId = this.originalLocationId;
         }
     }
 
@@ -1599,18 +1531,6 @@ public class MetadataBlockBean implements Serializable {
                     FacesContext.getCurrentInstance()).getBean(CaseService.BEAN_NAME);
         }
         return caseService;
-    }
-
-    public void setMenuService(MenuService menuService) {
-        this.menuService = menuService;
-    }
-
-    protected MenuService getMenuService() {
-        if (menuService == null) {
-            menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(MenuService.BEAN_NAME);
-        }
-        return menuService;
     }
 
     // END: getters / setters

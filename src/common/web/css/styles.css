@@ -206,7 +206,7 @@ a.action {
 	SIDEBAR
 	******************************/
 #sidebar {
-	background: #f1f1f1 url("../images/parts/container-bg.png") repeat-x 0 1px;
+	background: #f1f1f1 url("../images/parts/container-bg.png") repeat-x 0 0;
 }
 
 /* NAVIGATOR MENU */
@@ -393,7 +393,7 @@ a.action {
 	/* *************************************************************************/
 	
 	#container {
-		background: url("../images/parts/container-bg.png") repeat-x 0 2px;
+		background: url("../images/parts/container-bg.png") repeat-x 0 1px;
 	}
 	
 	/*
@@ -597,6 +597,12 @@ tr.row-highlight {
 /* PAGE CONTROLS */
 .page-controls * {
 	color: #666 !important;
+}
+
+.page-controls select {
+	vertical-align: text-bottom !important;
+	min-height: 18px !important;
+	height: 18px !important;
 }
 
 .pager-wrapper {
@@ -831,6 +837,16 @@ hr {
 	padding-bottom: 3px;
 }
 
+.propertiesLabel + td .propertiesLabel,
+.propertiesLabel + td .propertiesLabel + td {
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+.propertiesLabel + td .propertiesLabel {
+	padding-left: 25px;
+}
+
 .secondary {
 	font-weight: normal;
 }
@@ -849,7 +865,7 @@ hr {
 #container-content select, #container-content textarea {
 	height: 19px;
 	line-height: 19px;
-	vertical-align: middle;
+	vertical-align: top;
 }
 
 #container-content select {
@@ -877,7 +893,8 @@ hr {
 .propertiesLabel + td td,
 .propertiesLabel + td td span input {
 	line-height: 20px;
-	vertical-align: middle;
+	/*vertical-align: top; -- ruined workflow dialog on document (stopOnFinish)*/
+	vertical-align: middle; 
 }
 
 textarea {
@@ -931,6 +948,11 @@ input.spacing-top {
 	border: 1px solid #888888;
 	height: 19px;
 	display: block;
+	width: 384px;
+}
+
+.multiE .suggest-wrapper {
+	width: auto;
 }
 
 .suggest-wrapper input.suggest {
@@ -1104,6 +1126,7 @@ input.disabled-date {
 	padding-right:18px !important;
 	width:65px !important;
 	text-align: center;
+	vertical-align: top;
 }
 
 input.disabled-date {
@@ -1126,25 +1149,17 @@ input.disabled-date {
     height: 315px;
 }
 
-#send-out-panel td input[type="text"],
-#send-out-panel td select {
-	width: px;
-}
-
-#send-out-panel td td input[type="text"] {
-	width: 180px !important;
-}
-
-#send-out-panel td td textarea.medium {
-	width: 180px !important;
-}
-
 #send-out-panel td td select {
 	width: 140px;
 }
 
 #send-out-panel td th {
 	border-bottom: 0px none;
+}
+
+#send-out-panel .modalpopup-content-inner td input[type="text"] {
+	width: 216px !important;
+	margin-left: 5px;
 }
 
 td.requiredField {
@@ -1568,12 +1583,13 @@ table.recipient td {
 
 /* =modalpopup
 -------------------------------------------------- */
-#overlay {
+#overlay,
+.submit-protection-layer {
 	display: none;
 	position: fixed;
 	top: 0;
 	left: 0;
-	z-index: 100000 !important;
+	z-index: 90000 !important;
 	width: 100%;
 	height: 100%;
 	background: #808080;
@@ -1581,16 +1597,24 @@ table.recipient td {
 	filter:alpha(opacity=50);
 }
 
+.submit-protection-layer {
+   z-index: 100000 !important;
+   cursor: wait;
+   filter: alpha(opacity=0);
+   -moz-opacity: 0;
+   opacity: 0;
+}
+
 DIV.modalwrap {
 	display: none;
 	position: fixed;
 	top: 50%;
 	left: 50%;
-	z-index: 100000 !important;
+	z-index: 90000 !important;
 	/*width: 450px;*/
 	width: 500px;
-	height: 406px;
-	margin: -203px 0 0 -250px;
+	height: auto;
+	margin: -250px 0 0 -250px;
 	padding: 0;
 	text-align: left;
 }
@@ -1650,18 +1674,12 @@ DIV.modalpopup-header P.close A:hover {
 
 /* content */
 
-DIV.modalpopup-content,
-DIV.modalpopup-content * {
-	font-size: 13px;
-}
 DIV.modalpopup-content {
 	/*min-height: 200px;*/
 	max-height: 470px;
 	overflow: auto;
 	overflow-y: auto;
 	overflow-x: hidden;
-	border: solid #fff;
-	border-width: 4px 0;
 }
 DIV.modalpopup-content-inner {
 	/*padding: 3px 15px 11px;*/
@@ -1882,7 +1900,7 @@ DIV.modalpopup-footer P.action {
 }
 
 .task-table td {
-	padding: 0;
+	padding: 0 3px;;
 	line-height: 18px;
 
 }
@@ -1891,6 +1909,10 @@ DIV.modalpopup-footer P.action {
 	font-weight: bold;
 	border-bottom: 1px dotted #cacfd3;
 	padding: 0 2px;
+}
+
+.short-resolution {
+	width: 298px !important;
 }
 
 /*******************/
@@ -1982,4 +2004,44 @@ TH A.header-wrap {
 
 .workflow-task-block .propertiesLabel + td {
 	width: auto;
+}
+
+.inline {
+	display: inline;
+}
+
+.long-content-wrapper {
+	position: relative;
+}
+
+.long-content {
+	background-color: #fff;
+	display: none;
+	position: absolute; 
+	padding: 4px;
+	top: -5px;
+	left: -5px;
+	border: 1px solid #888;
+	z-index: 1000;
+	min-width: 150px;
+	max-width: 400px;
+}
+
+.recordSetRowAlt .long-content {
+	background-color: #efefef;
+}
+
+.long-content-wrapper.has-content:hover span,
+.long-content-wrapper.has-content:hover a {
+	visibility: hidden;
+} 
+
+.long-content-wrapper:hover .long-content,
+.long-content-wrapper:hover .long-content a,
+.long-content-wrapper:hover .long-content span,
+.long-content-wrapper.has-content:hover .long-content,
+.long-content-wrapper.has-content:hover .long-content a,
+.long-content-wrapper.has-content:hover .long-content span {
+	visibility: visible;
+	display: block;
 }

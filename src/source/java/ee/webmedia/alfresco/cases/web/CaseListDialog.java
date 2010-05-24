@@ -50,7 +50,6 @@ public class CaseListDialog extends BaseDialogBean {
 
     public List<Case> getEntries() {
         final List<Case> cases = getCaseService().getAllCasesByVolume(parent.getNode().getNodeRef());
-        Collections.sort(cases);
         return cases;
     }
 

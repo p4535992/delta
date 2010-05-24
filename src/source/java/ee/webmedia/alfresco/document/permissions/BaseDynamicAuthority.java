@@ -13,6 +13,7 @@ import org.alfresco.repo.security.permissions.impl.PermissionServiceImpl;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -56,7 +57,8 @@ public abstract class BaseDynamicAuthority implements DynamicAuthority, Initiali
     }
 
     protected boolean isDocumentManager() {
-        return authorityService.getAuthorities().contains(documentManagersGroup);
+        final Set<String> authorities = authorityService.getAuthorities();
+        return authorities.contains(documentManagersGroup) || authorities.contains(PermissionService.ADMINISTRATOR_AUTHORITY);
     }
 
     @Override

@@ -2,8 +2,8 @@ package ee.webmedia.alfresco.parameters.web;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,6 +23,8 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.FileUploadBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import de.schlichtherle.io.FileInputStream;
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.AbstractImportDialog;
 import ee.webmedia.alfresco.parameters.model.Parameter;
 import ee.webmedia.alfresco.parameters.model.StringParameter;
@@ -38,7 +40,7 @@ public class ParametersImportDialog extends AbstractImportDialog {
 
     private transient ParametersService parametersService;
     private Collection<Parameter<? extends Serializable>> changedParams;
-    private Map<String, String> paramsToImport;
+    private Map<String, ParameterImportLineVo> paramsToImport;
     private List<Parameter<?>> paramsOverview;
     private boolean containsUnknownParameters;
 
@@ -49,13 +51,14 @@ public class ParametersImportDialog extends AbstractImportDialog {
     /**
      * @return null if parsing failed, otherwise map of parameter names and values
      */
-    private Map<String/* paramName */, String/* paramValue */> getParamsToImport() {
+    private Map<String/* paramName */, ParameterImportLineVo/* paramValue */> getParamsToImport() {
         FileUploadBean fileBean = getFileUploadBean();
         File upFile = fileBean.getFile();
 
         try {
-            final BufferedReader br = new BufferedReader(new FileReader(upFile));
-            Map<String/* paramName */, String/* paramValue */> paramsMap = new HashMap<String, String>();
+            final InputStreamReader reader = new InputStreamReader(new FileInputStream(upFile), AppConstants.CHARSET);
+            final BufferedReader br = new BufferedReader(reader);
+            Map<String/* paramName */, ParameterImportLineVo/* paramValue */> paramsMap = new HashMap<String, ParameterImportLineVo>();
             String csvLine;
             int lineNr = 0;
             while ((csvLine = br.readLine()) != null) {
@@ -63,20 +66,20 @@ public class ParametersImportDialog extends AbstractImportDialog {
                 if (lineNr == 1) {
                     continue;
                 }
-                final int seppIndex = csvLine.indexOf(";");
+                int seppIndex = csvLine.indexOf(";");
                 if (seppIndex < 1) {
-                    final String msg = "Line doesn't contain parameter name. Line:\n'" + csvLine + "'";
-                    log.error(msg);
-                    final FacesContext context = FacesContext.getCurrentInstance();
-                    // veateate näitamine ja sulgemine millegi pärast ei toimi
-                    MessageUtil.addErrorMessage(context, "parameter_import_csv_error_wrongFileContent", getFileName());
-                    context.getApplication().getNavigationHandler().handleNavigation(context, null, AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME);
-                    reset();
+                    noColumn(csvLine);
                     return null;
                 }
                 final String paramName = csvLine.substring(0, seppIndex);
-                final String paramVal = csvLine.substring(seppIndex + 1);
-                paramsMap.put(paramName, paramVal);
+                int valueSeppIndex = csvLine.indexOf(";", seppIndex + 1);
+                if (valueSeppIndex < seppIndex) {
+                    noColumn(csvLine);
+                    return null;
+                }
+                final String paramComment = csvLine.substring(seppIndex + 1, valueSeppIndex);
+                final String paramVal = csvLine.substring(valueSeppIndex + 1);
+                paramsMap.put(paramName, new ParameterImportLineVo(paramComment, paramVal));
             }
             return paramsMap;
         } catch (IOException e) {
@@ -84,11 +87,21 @@ public class ParametersImportDialog extends AbstractImportDialog {
         }
     }
 
+    private void noColumn(String csvLine) {
+        final String msg = "Line doesn't contain parameter name, comment and value. Line:\n'" + csvLine + "'";
+        log.error(msg);
+        final FacesContext context = FacesContext.getCurrentInstance();
+        // veateate näitamine ja sulgemine millegi pärast ei toimi
+        MessageUtil.addErrorMessage(context, "parameter_import_csv_error_wrongFileContent", getFileName());
+        context.getApplication().getNavigationHandler().handleNavigation(context, null, AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME);
+        reset();
+    }
+
     public List<Parameter<?>> getImportableParams() {
         if (paramsToImport == null) {
             paramsToImport = getParamsToImport();
-            if(paramsToImport == null) {
-                return null;//problem while parsing the import file
+            if (paramsToImport == null) {
+                return null;// problem while parsing the import file
             }
         } else {
             return paramsOverview;
@@ -98,8 +111,9 @@ public class ParametersImportDialog extends AbstractImportDialog {
         final Map<String, Parameter<? extends Serializable>> paramsToUpdate = new HashMap<String, Parameter<?>>(existingParameters.size());
         for (Parameter<?> parameter : existingParameters) {
             final String paramName = parameter.getParamName();
-            if(paramsToImport.containsKey(paramName)) {
+            if (paramsToImport.containsKey(paramName)) {
                 parameter.setPreviousParamValue();
+                parameter.setPreviousParamDescription();
                 paramsToUpdate.put(parameter.getParamName(), parameter);
             }
         }
@@ -111,7 +125,7 @@ public class ParametersImportDialog extends AbstractImportDialog {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "parameter_import_csv_error_unknownParametersExist");
             for (String newParamName : newParameterNames) {
                 final StringParameter stringParameter = new StringParameter(newParamName);
-                stringParameter.setParamValue(paramsToImport.get(newParamName));
+                stringParameter.setParamValue(paramsToImport.get(newParamName).value);
                 paramsOverview.add(stringParameter);
             }
         }
@@ -124,8 +138,10 @@ public class ParametersImportDialog extends AbstractImportDialog {
 
             String importParamVal = null;
             if (paramsToImport.containsKey(paramName)) {
-                importParamVal = paramsToImport.get(paramName);
+                final ParameterImportLineVo parameterImportLineVo = paramsToImport.get(paramName);
+                importParamVal = parameterImportLineVo.value;
                 existingParam.setParamValueFromString(importParamVal);
+                existingParam.setParamDescription(parameterImportLineVo.comment);
                 paramsOverview.add(existingParam);
                 if (existingParam.getStatus().equals(ImportStatus.PARAM_NOT_CHANGED)) {
                     iterator.remove();
@@ -154,7 +170,7 @@ public class ParametersImportDialog extends AbstractImportDialog {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "parameter_import_csv_error_unknownParametersExist");
             return null;
         }
-        if(changedParams.size()==0) {
+        if (changedParams.size() == 0) {
             log.info("Values in uploaded file contain no changes to existing parameters");
             MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "parameter_import_csv_info_noChanges", getFileName());
         } else {
@@ -191,4 +207,14 @@ public class ParametersImportDialog extends AbstractImportDialog {
     }
 
     // END: getters / setters
+
+    private static class ParameterImportLineVo {
+        public ParameterImportLineVo(String comment, String value) {
+            this.comment = comment;
+            this.value = value;
+        }
+
+        private String comment;
+        private String value;
+    }
 }

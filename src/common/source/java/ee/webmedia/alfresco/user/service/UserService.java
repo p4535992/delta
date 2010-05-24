@@ -42,6 +42,8 @@ public interface UserService {
      * @return true if belongs
      */
     boolean isDocumentManager();
+    
+    boolean isDocumentManager(String userName);
 
     /**
      * Return group name for document administrators group

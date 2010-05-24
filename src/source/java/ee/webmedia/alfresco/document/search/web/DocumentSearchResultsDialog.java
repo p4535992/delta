@@ -9,6 +9,7 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.SendMode;
@@ -63,6 +64,9 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         DataReader dataReader = new RichListDataReader();
         CSVExporter exporter = new CSVExporter(dataReader);
         exporter.export("documentList");
+        
+        // Erko hack for incorrect view id in the next request
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack();        
     }
 
     /** @param event */
@@ -70,6 +74,9 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         CSVExporter exporter = new CSVExporter(new EstonianPostExportDataReader());
         exporter.setOrderInfo(0, false);
         exporter.export("documentList");
+        
+        // Erko hack for incorrect view id in the next request
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack();        
     }
 
     private class EstonianPostExportDataReader implements DataReader {

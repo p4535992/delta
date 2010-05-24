@@ -4,20 +4,21 @@ import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
 
-import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
-import org.apache.commons.lang.time.DateUtils;
 
 @AlfrescoModelType(uri = VolumeModel.URI)
 public class Volume implements Serializable, Comparable<Volume> {
 
     private static final long serialVersionUID = 1L;
 
+    private String volumeType;
     private String volumeMark;
     private String title;
     private Date validFrom;
@@ -26,10 +27,11 @@ public class Volume implements Serializable, Comparable<Volume> {
     private Date dispositionDate;
     private Date seriesIdentifier;
     private boolean containsCases;
+    private int containingDocsCount;
     // non-mappable fields
     @AlfrescoModelProperty(isMappable = false)
     private NodeRef seriesNodeRef;
-
+    
     @AlfrescoModelProperty(isMappable = false)
     private Node node;
 
@@ -88,21 +90,37 @@ public class Volume implements Serializable, Comparable<Volume> {
     public void setSeriesIdentifier(Date seriesIdentifier) {
         this.seriesIdentifier = seriesIdentifier;
     }
-    
+
     public boolean isContainsCases() {
         return containsCases;
     }
-    
+
     public void setContainsCases(boolean containsCases) {
         this.containsCases = containsCases;
     }
 
+    public int getContainingDocsCount() {
+        return Integer.valueOf(containingDocsCount);
+    }
+    
+    public void setContainingDocsCount(int containingDocsCount) {
+        this.containingDocsCount = containingDocsCount;
+    }
+    
     public NodeRef getSeriesNodeRef() {
         return seriesNodeRef;
     }
 
     public void setSeriesNodeRef(NodeRef seriesNodeRef) {
         this.seriesNodeRef = seriesNodeRef;
+    }
+
+    public String getVolumeType() {
+        return volumeType;
+    }
+
+    public void setVolumeType(String volumeType) {
+        this.volumeType = volumeType;
     }
 
     public Node getNode() {

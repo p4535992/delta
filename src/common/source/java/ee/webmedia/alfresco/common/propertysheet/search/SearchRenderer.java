@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
@@ -79,6 +80,14 @@ public class SearchRenderer extends BaseRenderer {
     }
 
     @Override
+    public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
+        ResponseWriter out = context.getResponseWriter();
+        out.write("<div class=\"inline\" id=\"");
+        out.write(((Search) component).getAjaxClientId(context));
+        out.write("\">");
+    }
+
+    @Override
     public void encodeChildren(FacesContext context, UIComponent component) throws IOException {
         ResponseWriter out = context.getResponseWriter();
         Search search = (Search) component;
@@ -131,11 +140,11 @@ public class SearchRenderer extends BaseRenderer {
         if (!search.isEmpty()) {
             out.write("notEmpty");
         }
-        out.write("\"/>");
+        out.write("\"/></div>");
     }
 
     private void renderMultiValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
-        out.write("<table class=\"recipient\" cellpadding=\"0\" cellspacing=\"0\"><tbody>");
+        out.write("<table class=\"recipient inline\" cellpadding=\"0\" cellspacing=\"0\"><tbody>");
 
         @SuppressWarnings("unchecked")
         List<UIComponent> children = list.getChildren();
@@ -146,6 +155,7 @@ public class SearchRenderer extends BaseRenderer {
             }
 
             out.write("<tr><td>");
+            setInputStyleClass(child, search);
             Utils.encodeRecursive(context, child);
             out.write("</td><td>");
             renderRemoveLink(context, out, search, i);
@@ -158,7 +168,7 @@ public class SearchRenderer extends BaseRenderer {
     }
 
     private void renderSingleValued(FacesContext context, ResponseWriter out, Search search, HtmlPanelGroup list, UIGenericPicker picker) throws IOException {
-        out.write("<table class=\"recipient\" cellpadding=\"0\" cellspacing=\"0\"><tbody><tr>");
+        out.write("<table class=\"recipient inline\" cellpadding=\"0\" cellspacing=\"0\"><tbody><tr>");
 
         @SuppressWarnings("unchecked")
         List<UIComponent> children = list.getChildren();
@@ -169,6 +179,7 @@ public class SearchRenderer extends BaseRenderer {
             }
 
             out.write("<td>");
+            setInputStyleClass(child, search);
             Utils.encodeRecursive(context, child);
             out.write("</td>");
             if(isRemoveLinkRendered(search)) {
@@ -182,13 +193,23 @@ public class SearchRenderer extends BaseRenderer {
         out.write("</td></tr></tbody></table>");
     }
 
+    private void setInputStyleClass(UIComponent child, Search search) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> searchAttributes = search.getAttributes();
+        if(child instanceof UIInput && searchAttributes.containsKey(Search.STYLE_CLASS_KEY)) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> childAttributes = child.getAttributes();
+            childAttributes.put(Search.STYLE_CLASS_KEY, searchAttributes.get(Search.STYLE_CLASS_KEY));
+        }
+    }
+    
     /**
      * Before calling this method, verify that remove link is needed/allowed with SearchRenderer.isRemoveLinkRendered()
      */
     private void renderRemoveLink(FacesContext context, ResponseWriter out, Search search, int index) throws IOException {
         out.write("<a class=\"icon-link delete\" onclick=\"");
-        out.write(Utils //
-                .generateFormSubmit(context, search, getActionId(context, search), REMOVE_ROW_ACTION + ACTION_SEPARATOR + index));
+        out.write(ComponentUtil //
+                .generateAjaxFormSubmit(context, search, getActionId(context, search), REMOVE_ROW_ACTION + ACTION_SEPARATOR + index));
         out.write("\" title=\"" + Application.getMessage(context, DELETE_MSG) + "\">");
         out.write("</a>");
     }
@@ -238,7 +259,8 @@ public class SearchRenderer extends BaseRenderer {
 
         out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"");
         out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), CLOSE_DIALOG_ACTION));
-        out.write(Utils.generateFormSubmit(context, picker, picker.getClientId(context), "1" /* ACTION_CLEAR */));
+        out.write("hideModal();");
+        out.write(ComponentUtil.generateAjaxFormSubmit(context, picker, picker.getClientId(context), "1" /* ACTION_CLEAR */));
         out.write("\">");
         out.write(Application.getMessage(context, CLOSE_WINDOW_MSG));
         out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner\">");
@@ -247,7 +269,7 @@ public class SearchRenderer extends BaseRenderer {
 
         out.write("</div></div></div>");
 
-        if (openDialog != null) {
+        if (openDialog != null) { // Used when full submit is done, but AJAX deprecates it
             search.getAttributes().remove(Search.OPEN_DIALOG_KEY);
             out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
             out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ACTION_SEPARATOR + openDialog));

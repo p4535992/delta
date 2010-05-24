@@ -20,6 +20,7 @@ public class DocumentType implements Serializable, Comparable<DocumentType> {
 
     private String name;
     private boolean used;
+    private boolean publicAdr;
     private String comment;
 
     // START: getters / setters
@@ -45,6 +46,14 @@ public class DocumentType implements Serializable, Comparable<DocumentType> {
 
     public void setUsed(boolean used) {
         this.used = used;
+    }
+
+    public boolean isPublicAdr() {
+        return publicAdr;
+    }
+
+    public void setPublicAdr(boolean publicAdr) {
+        this.publicAdr = publicAdr;
     }
 
     public String getComment() {

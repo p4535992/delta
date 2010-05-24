@@ -59,7 +59,9 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
+import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -132,10 +134,12 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     private SendOutService sendOutService;
     /** NB! not injected - use getter to obtain instance of AdrService */
     private AdrService _adrService;
+    private CaseService _caseService;
     private BeanFactory beanFactory;
 
     private String fromDvkXPath;
     private String incomingEmailPath;
+    private String sentEmailPath;
 
     // doesn't need to be synchronized, because it is not modified during runtime
     private final Map<QName/* nodeType/nodeAspect */, PropertiesModifierCallback> creationPropertiesModifierCallbacks = new LinkedHashMap<QName, PropertiesModifierCallback>();
@@ -189,6 +193,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
         NodeRef document = nodeService.createNode(parentRef, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT //
                 , documentTypeId, properties).getChildRef();
+        updateParentNodesContainingDocsCount(document, true);
 
         final Node documentNode = getDocument(document);
         // first iterate over callbacks to be able to predict in which order callbacks will be called (that is registration order).
@@ -308,19 +313,44 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     public Node updateDocument(final Node docNode) {
         final NodeRef docNodeRef = docNode.getNodeRef();
         final Map<String, Object> docProps = docNode.getProperties();
+        
+        // Prepare caseNodeRef
+        final NodeRef volumeNodeRef = (NodeRef) docProps.get(TransientProps.VOLUME_NODEREF);
+        String caseLabel = (String) docProps.get(TransientProps.CASE_LABEL_EDITABLE);
+        NodeRef caseNodeRef = null;
+        if (StringUtils.isNotBlank(caseLabel)) {
+            List<Case> allCases = getCaseService().getAllCasesByVolume(volumeNodeRef);
+            for (Case tmpCase : allCases) {
+                if (caseLabel.equalsIgnoreCase(tmpCase.getTitle())) {
+                    caseNodeRef = tmpCase.getNode().getNodeRef();
+                    break;
+                }
+            }
+            if (caseNodeRef == null) {
+                Case tmpCase = getCaseService().createCase(volumeNodeRef);
+                tmpCase.setTitle(caseLabel);
+                getCaseService().saveOrUpdate(tmpCase, false);
+                caseNodeRef = tmpCase.getNode().getNodeRef();
+                docProps.put(TransientProps.CASE_NODEREF, caseNodeRef);
+            }
+        } else {
+            caseLabel = null;
+            caseNodeRef = null;
+            docProps.put(TransientProps.CASE_LABEL_EDITABLE, null);
+            docProps.put(TransientProps.CASE_NODEREF, null);
+        }
+
         // Prepare existingParentNode and targetParentRef properties
-        final String volumeNodeRef = (String) docProps.get(TransientProps.VOLUME_NODEREF);
-        final String caseNodeRef = (String) docProps.get(TransientProps.CASE_NODEREF);
         final NodeRef targetParentRef;
         Node existingParentNode = null;
-        if (StringUtils.isNotBlank(caseNodeRef)) {
-            targetParentRef = new NodeRef(caseNodeRef);
+        if (caseNodeRef != null) {
+            targetParentRef = caseNodeRef;
             existingParentNode = getCaseByDocument(docNodeRef);
             if (existingParentNode == null) { // moving from volume to case?
                 existingParentNode = getVolumeByDocument(docNodeRef);
             }
         } else {
-            targetParentRef = new NodeRef(volumeNodeRef);
+            targetParentRef = volumeNodeRef;
             final Volume volume = volumeService.getVolumeByNodeRef(targetParentRef);
             if (volume.isContainsCases()) {
                 throw new RuntimeException("Selected volume '" + volume.getTitle() + "' must contain cases, not directly documents. Invalid caseNodeRef: '"
@@ -333,7 +363,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         }
         
         // Prepare series and function properties
-        NodeRef series = nodeService.getPrimaryParent(new NodeRef(volumeNodeRef)).getParentRef();
+        NodeRef series = nodeService.getPrimaryParent(volumeNodeRef).getParentRef();
         if (series == null) {
             throw new RuntimeException("Volume parent is null: " + volumeNodeRef);
         }
@@ -351,6 +381,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         }
         docProps.put(DocumentCommonModel.Props.FUNCTION.toString(), function);
         docProps.put(DocumentCommonModel.Props.SERIES.toString(), series);
+        docProps.put(DocumentCommonModel.Props.VOLUME.toString(), volumeNodeRef);
+        docProps.put(DocumentCommonModel.Props.CASE.toString(), caseNodeRef); 
 
         // If document is updated for the first time, add SEARCHABLE aspect to document and it's children files.
         if (!nodeService.hasAspect(docNodeRef, DocumentCommonModel.Aspects.SEARCHABLE)) {
@@ -383,15 +415,20 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 }
             }
         }
-        
-        
+
+        final String previousAccessrestriction = (String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
+
         // Write document properties to repository
         // XXX If owner is changed to another user, then after this call we don't have permissions any more to write document properties
-        generalService.setPropertiesIgnoringSystem(docNodeRef, docProps);
         // ==================================================================================================================================
         // ==================================================================================================================================
         // XXX If owner is changed to another user, then after previous call we don't have permissions any more to write document properties
 
+        generalService.setPropertiesIgnoringSystem(docNodeRef, docProps);
+        final String newAccessrestriction = (String) docProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
+        if (!StringUtils.equals(previousAccessrestriction, newAccessrestriction)) {
+            documentLogService.addDocumentLog(docNodeRef, I18NUtil.getMessage("document_log_status_accessRestrictionChanged"));
+        }
         
         if (existingParentNode == null || !targetParentRef.equals(existingParentNode.getNodeRef())) {
             // was not saved (under volume nor case) or saved, but parent (volume or case) must be changed
@@ -401,11 +438,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
                     @Override
                     public NodeRef doWork() throws Exception {
+                        updateParentNodesContainingDocsCount(docNodeRef, false);
                         NodeRef newDocNodeRef = nodeService.moveNode(docNodeRef, targetParentRef //
                                 , DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT).getChildRef();
                         if (!newDocNodeRef.equals(docNodeRef)) {
                             throw new RuntimeException("NodeRef changed while moving");
                         }
+                        updateParentNodesContainingDocsCount(docNodeRef, true);
                         return null;
                     }
                 }, AuthenticationUtil.getSystemUserName());
@@ -419,8 +458,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                     if (isInitialDocWithRepliesOrFollowUps) {
                         throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_hasReplyOrFollowUp");
                     }
-                    final Map<String, Object> props = docProps;
-                    final String existingRegNr = (String) props.get(DocumentCommonModel.Props.REG_NUMBER.toString());
+                    final String existingRegNr = (String) docProps.get(DocumentCommonModel.Props.REG_NUMBER.toString());
                     if (StringUtils.isNotBlank(existingRegNr)) {
                         registerDocument(docNode, true);
                     }
@@ -434,7 +472,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                         Node baseCase = getCaseByDocument(baseRef);
                         Node baseVol = getVolumeByDocument(baseRef, baseCase);
                         
-                        if (!baseVol.getNodeRefAsString().equals(volumeNodeRef)) {
+                        if (!baseVol.getNodeRef().equals(volumeNodeRef)) {
                             throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp");
                         }
                     }
@@ -799,21 +837,24 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
         // put props with empty values if missing, otherwise use existing values
         final Map<String, Object> props = document.getProperties();
-        props.put(TransientProps.FUNCTION_NODEREF, functionNode != null ? functionNode.getNodeRef().toString() : null);
-        props.put(TransientProps.SERIES_NODEREF, seriesNode != null ? seriesNode.getNodeRef().toString() : null);
-        props.put(TransientProps.VOLUME_NODEREF, volumeNode != null ? volumeNode.getNodeRef().toString() : null);
-        props.put(TransientProps.CASE_NODEREF, caseNode != null ? caseNode.getNodeRef().toString() : null);
+        props.put(TransientProps.FUNCTION_NODEREF, functionNode != null ? functionNode.getNodeRef() : null);
+        props.put(TransientProps.SERIES_NODEREF, seriesNode != null ? seriesNode.getNodeRef() : null);
+        props.put(TransientProps.VOLUME_NODEREF, volumeNode != null ? volumeNode.getNodeRef() : null);
+        props.put(TransientProps.CASE_NODEREF, caseNode != null ? caseNode.getNodeRef() : null);
 
         // add labels
+        String caseLbl = caseNode != null ? caseNode.getProperties().get(CaseModel.Props.TITLE).toString() : null;
         String volumeLbl = volumeNode != null ? volumeNode.getProperties().get(VolumeModel.Props.MARK).toString() //
-                + " " + volumeNode.getProperties().get(VolumeModel.Props.TITLE).toString() : " ";
+                + " " + volumeNode.getProperties().get(VolumeModel.Props.TITLE).toString() : null;
         String seriesLbl = seriesNode != null ? seriesNode.getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER).toString() //
-                + " " + seriesNode.getProperties().get(SeriesModel.Props.TITLE).toString() : " ";
+                + " " + seriesNode.getProperties().get(SeriesModel.Props.TITLE).toString() : null;
         String functionLbl = functionNode != null ? functionNode.getProperties().get(FunctionsModel.Props.MARK).toString() //
-                + " " + functionNode.getProperties().get(FunctionsModel.Props.TITLE).toString() : " ";
+                + " " + functionNode.getProperties().get(FunctionsModel.Props.TITLE).toString() : null;
         props.put(TransientProps.FUNCTION_LABEL, functionLbl);
         props.put(TransientProps.SERIES_LABEL, seriesLbl);
         props.put(TransientProps.VOLUME_LABEL, volumeLbl);
+        props.put(TransientProps.CASE_LABEL, caseLbl);
+        props.put(TransientProps.CASE_LABEL_EDITABLE, caseLbl);
     }
 
     @Override
@@ -843,6 +884,12 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         List<Document> documents = getAllDocumentsByParentNodeRef(generalService.getNodeRef(fromDvkXPath));
         Collections.sort(documents);
         return documents;
+    }
+
+    @Override
+    public int getAllDocumentFromDvkCount() {
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(generalService.getNodeRef(fromDvkXPath), RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
+        return childAssocs != null ? childAssocs.size() : 0;
     }
     
     @Override
@@ -910,6 +957,31 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             
         }
         return docs;
+    }
+
+    @Override
+    public int getIncomingEmailsCount() {
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(generalService.getNodeRef(incomingEmailPath));
+        return childAssocs != null ? childAssocs.size() : 0;
+    }
+    
+    @Override
+    public List<Document> getSentEmails() {
+        NodeRef sentNodeRef  = generalService.getNodeRef(sentEmailPath);
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(sentNodeRef);
+        List<Document> docs = new ArrayList<Document>();
+        for (ChildAssociationRef assocRef : childAssocs) {
+            final Node doc = getDocument(assocRef.getChildRef());
+            docs.add(0, getDocumentByNodeRef(doc.getNodeRef())); // flips the list, so newest are first
+            
+        }
+        return docs;    
+    }
+    
+    @Override
+    public int getSentEmailsCount() {
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(generalService.getNodeRef(sentEmailPath));
+        return childAssocs != null ? childAssocs.size() : 0;
     }
     
     @Override
@@ -1020,6 +1092,12 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     }
     
     @Override
+    public boolean isFromSent(NodeRef nodeRef) {
+        NodeRef sentNodeRef = generalService.getNodeRef(ImapModel.Repo.SENT_SPACE);
+        return sentNodeRef.equals(nodeService.getPrimaryParent(nodeRef).getParentRef());
+    }
+    
+    @Override
     public boolean isRegistered(Node docNode) {
         final String existingRegNr = (String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER.toString());
         return StringUtils.isNotBlank(existingRegNr);
@@ -1055,9 +1133,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             throw new RuntimeException("Document already registered! docNode=" + docNode);
         }
         // only register when no existingRegNr or when relocating
-        final String volumeNodeRef = (String) props.get(TransientProps.VOLUME_NODEREF);
-        final String seriesNodeRef = (String) props.get(TransientProps.SERIES_NODEREF);
-        final String caseNodeRef = (String) props.get(TransientProps.CASE_NODEREF);
+        final NodeRef volumeNodeRef = (NodeRef) props.get(TransientProps.VOLUME_NODEREF);
+        final NodeRef seriesNodeRef = (NodeRef) props.get(TransientProps.SERIES_NODEREF);
+        final NodeRef caseNodeRef = (NodeRef) props.get(TransientProps.CASE_NODEREF);
         final NodeRef docRef = docNode.getNodeRef();
         final String volumeMark = volumeService.getVolumeByNodeRef(volumeNodeRef).getVolumeMark();
         final DocumentType documentType = documentTypeService.getDocumentType(docNode.getType());
@@ -1085,7 +1163,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             final Map<String, Object> initDocProps = initialDoc.getProperties();
             final String initDocRegNr = (String) initDocProps.get(DocumentCommonModel.Props.REG_NUMBER.toString());
             if (StringUtils.isNotBlank(initDocRegNr)) {
-                final String initDocSeriesNodeRef = (String) initDocProps.get(TransientProps.SERIES_NODEREF.toString());
+                final NodeRef initDocSeriesNodeRef = (NodeRef) initDocProps.get(TransientProps.SERIES_NODEREF.toString());
 
                 final Series series = seriesService.getSeriesByNodeRef(initDocSeriesNodeRef);
                 final Map<String, Object> serProps = series.getNode().getProperties();
@@ -1095,7 +1173,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 } else { // add also individualizing number to regNr
                     final RegNrHolder initDocRegNrHolder = new RegNrHolder(initDocRegNr);
                     if (initDocRegNrHolder.getIndividualizingNr() != null) {
-                        final NodeRef initDocParentRef = new NodeRef(caseNodeRef != null ? caseNodeRef : volumeNodeRef);
+                        final NodeRef initDocParentRef = caseNodeRef != null ? caseNodeRef : volumeNodeRef;
                         int maxIndivNr = initDocRegNrHolder.getIndividualizingNr();
                         for (Document anotherDoc : getAllDocumentsByParentNodeRef(initDocParentRef)) {
                             if (!docRef.equals(anotherDoc.getNode().getNodeRef())) {
@@ -1746,6 +1824,16 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         }
         return false;
     }
+    
+    @Override
+    public void updateParentNodesContainingDocsCount(NodeRef documentNodeRef, boolean documentAdded) {
+        generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, CaseModel.Types.CASE),
+                CaseModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
+        generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, VolumeModel.Types.VOLUME),
+                VolumeModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
+        generalService.updateParentContainingDocsCount(generalService.getAncestorNodeRefWithType(documentNodeRef, SeriesModel.Types.SERIES),
+                SeriesModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
+    }
 
     // START: getters / setters
 
@@ -1831,6 +1919,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         return _adrService;
     }
 
+    public CaseService getCaseService() {
+        if (_caseService == null) {
+            _caseService = (CaseService) beanFactory.getBean(CaseService.BEAN_NAME);
+        }
+        return _caseService;
+    }
+
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
@@ -1843,6 +1938,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     public void setIncomingEmailPath(String incomingEmailPath) {
         this.incomingEmailPath = incomingEmailPath;
     }
+
+    public void setSentEmailPath(String sentEmailPath) {
+        this.sentEmailPath = sentEmailPath;
+    }
+    
     // END: getters / setters
 
 }

@@ -28,7 +28,7 @@
    </config>
    <config evaluator="node-type" condition="ntf:generalNotification">
       <property-sheet>
-         <show-property name="ntf:message" display-label-id="notification_message" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="ntf:message" display-label-id="notification_message" styleClass="wysiwygEditor" component-generator="TextAreaGenerator" />
          <show-property name="ntf:active" display-label-id="notification_active" />
       </property-sheet>
    </config>

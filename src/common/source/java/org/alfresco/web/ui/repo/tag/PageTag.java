@@ -99,6 +99,9 @@ public class PageTag extends TagSupport
                                 // ajax pickers
                 "/scripts/ajax/picker.js",
                 "/scripts/ajax/tagger.js",
+                "/scripts/json-2_2_min.js",
+                "/scripts/rsh_compressed.js",
+                "/scripts/validation.js",
                 "/scripts/scripts.js"
                 );
         if (log.isDebugEnabled()) {

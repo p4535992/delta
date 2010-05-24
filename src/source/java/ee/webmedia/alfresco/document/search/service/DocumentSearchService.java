@@ -3,12 +3,12 @@ package ee.webmedia.alfresco.document.search.service;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
-import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.volume.model.Volume;
@@ -55,6 +55,8 @@ public interface DocumentSearchService {
      */
     List<Document> searchDocumentsInOutbox();
 
+    int searchDocumentsInOutboxCount();
+    
     /**
      * @return dvkId's by sendInfos(aka dhl_id's - assigned to documents by DVK when sent to DVK, to be able to ask sending statuses)
      */
@@ -67,6 +69,8 @@ public interface DocumentSearchService {
      */
     List<Document> searchUserWorkingDocuments();
 
+    int searchUserWorkingDocumentsCount();
+    
     /**
      * Fetches list of documents where date in regDateTime property is current date
      * 
@@ -82,6 +86,8 @@ public interface DocumentSearchService {
      */
     List<Document> searchRecipientFinishedDocuments();
 
+    int searchRecipientFinishedDocumentsCount();
+    
     /**
      * Fetches a list of Series where series' structUnit is unit
      * 
@@ -156,7 +162,7 @@ public interface DocumentSearchService {
      * @param searchString
      * @return
      */
-    List<Document> searchAdrDocuments(Date regDateBegin, Date regDateEnd, QName docType, String searchString);
+    List<Document> searchAdrDocuments(Date regDateBegin, Date regDateEnd, QName docType, String searchString, Set<QName> documentTypes);
 
     /**
      * Used by ADR web service to search document details. 
@@ -164,10 +170,14 @@ public interface DocumentSearchService {
      * @param regDate
      * @return
      */
-    List<Document> searchAdrDocuments(String regNumber, Date regDate);
+    List<Document> searchAdrDocuments(String regNumber, Date regDate, Set<QName> documentTypes);
 
-    List<Document> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd);
+    List<Document> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<QName> documentTypes);
 
     List<NodeRef> searchAdrDeletedDocuments(Date deletedDateBegin, Date deletedDateEnd);
+
+    List<QName> searchAdrDeletedDocumentTypes(Date deletedDateBegin, Date deletedDateEnd);
+
+    List<QName> searchAdrAddedDocumentTypes(Date addedDateBegin, Date addedDateEnd);
 
 }

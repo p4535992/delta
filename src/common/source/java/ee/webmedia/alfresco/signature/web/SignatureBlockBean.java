@@ -45,6 +45,7 @@ public class SignatureBlockBean implements Serializable {
     }
 
     public void init(NodeRef file) {
+        reset();
         this.file = file;
         load();
     }
@@ -54,12 +55,12 @@ public class SignatureBlockBean implements Serializable {
     }
 
     private void load() {
+        dataItems = null;
+        signatureItems = null;
         if (!getSignatureService().isDigiDocContainer(file)) {
             return;
         }
 
-        dataItems = null;
-        signatureItems = null;
         try {
             SignatureItemsAndDataItems values = getSignatureService().getDataItemsAndSignatureItems(file, false);
             signatureItems = values.getSignatureItems();

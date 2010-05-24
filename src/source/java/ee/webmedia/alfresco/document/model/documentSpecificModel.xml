@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<model name="docspec:documentSpecificModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
-   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+<model name="docspec:documentSpecificModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
 
    <imports>
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
@@ -647,12 +647,15 @@
             <!-- Ürituse toimumise aeg -->
             <property name="docspec:eventBeginDate">
                <type>d:date</type>
+               <mandatory>true</mandatory>
             </property>
             <property name="docspec:eventEndDate">
                <type>d:date</type>
+               <mandatory>true</mandatory>
             </property>
             <property name="docspec:eventOrganizer">
                <type>d:text</type>
+               <mandatory>true</mandatory>
             </property>
          </properties>
       </aspect>
@@ -714,11 +717,6 @@
                </target>
             </child-association>
          </associations>
-<!--
-         <mandatory-aspects>
-            <aspect>docspec:costManager</aspect>
-         </mandatory-aspects>
-       -->
       </aspect>
 
       <aspect name="docspec:errandDates">
@@ -848,6 +846,7 @@
          <properties>
             <property name="docspec:travelPurpose">
                <type>d:text</type>
+               <mandatory>true</mandatory>
             </property>
          </properties>
       </aspect>
@@ -928,7 +927,16 @@
             </property>
          </properties>
       </aspect>
-      
+
+      <aspect name="docspec:applicationRecipient">
+         <properties>
+            <property name="docspec:applicationRecipient">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+         </properties>
+      </aspect>
+
    </aspects>
 
 </model>

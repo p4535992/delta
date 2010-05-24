@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.menu.model;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -51,7 +52,9 @@ public class DropdownMenuItem extends MenuItem {
     private String store;    
     @XStreamOmitField
     private NodeRef nodeRef;
-    
+    @XStreamAlias("child-filter")
+    private String childFilter;
+    private String transientOrderString;
 
     public DropdownMenuItem() {
         super();
@@ -88,6 +91,12 @@ public class DropdownMenuItem extends MenuItem {
         link.setAction(new ConstantMethodBinding(getOutcome()));
         if (StringUtils.isNotBlank(getActionListener())) {
             link.setActionListener(application.createMethodBinding(getActionListener(), new Class[] { javax.faces.event.ActionEvent.class }));
+        }
+        
+        if (getParams() != null) {
+            for (Entry<String, String> entry : getParams().entrySet()) {
+                addParameter(context, link, entry.getKey(), entry.getValue());
+            }
         }
         
         @SuppressWarnings("unchecked")
@@ -231,4 +240,21 @@ public class DropdownMenuItem extends MenuItem {
     public void setNodeRef(NodeRef nodeRef) {
         this.nodeRef = nodeRef;
     }
+
+    public String getChildFilter() {
+        return childFilter;
+    }
+
+    public void setChildFilter(String childFilter) {
+        this.childFilter = childFilter;
+    }
+
+    public String getTransientOrderString() {
+        return transientOrderString;
+    }
+
+    public void setTransientOrderString(String transientOrderString) {
+        this.transientOrderString = transientOrderString;
+    }
+    
 }

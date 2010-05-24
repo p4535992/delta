@@ -41,7 +41,7 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
 
     @Override
     public Authentication setCurrentUser(String userName) throws AuthenticationException {
-//        updateUserData(userName);
+        updateUserData(userName);
         return super.setCurrentUser(userName);
     }
 

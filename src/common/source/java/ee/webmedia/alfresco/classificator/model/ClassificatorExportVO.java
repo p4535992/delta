@@ -60,10 +60,6 @@ public class ClassificatorExportVO extends Classificator {
     public ImportStatus getStatus() {
         if (valueChangeStatus == null) {
             isValuesChanged();
-            System.out.println("problem, valueChangeStatus=" + valueChangeStatus);
-        }
-        if (StringUtils.equals(getName(), "decreeWhose")) {
-            System.out.println("aaaaaa");
         }
         return valueChangeStatus;
     }

@@ -71,7 +71,7 @@ public class FileBlockBean implements Serializable {
     
     public boolean moveAllFiles(NodeRef toRef) {
         try {
-            fileService.moveAllFiles(nodeRef, toRef);
+            getFileService().moveAllFiles(nodeRef, toRef);
             return true;
         } catch (DuplicateChildNodeNameException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "add_file_existing_file", e.getName());

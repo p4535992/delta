@@ -31,8 +31,8 @@ import javax.faces.event.AbortProcessingException;
 import javax.faces.event.FacesEvent;
 import javax.faces.event.PhaseId;
 
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener.LogColumn;
 
 /**
  * see Javadoc of <a href="http://java.sun.com/j2ee/javaserverfaces/1.1_01/docs/api/index.html">JSF Specification</a>
@@ -80,7 +80,7 @@ public class UIViewRoot
         _events.add(event);
     }
 
-    private void _broadcastForPhase(PhaseId phaseId)
+    public void _broadcastForPhase(PhaseId phaseId)
     {
         if (_events == null) return;
 
@@ -109,7 +109,7 @@ public class UIViewRoot
                     break;
                 } finally {
                     long duration = System.currentTimeMillis() - startTime;
-                    StatisticsPhaseListener.add(LogColumn.EVENT, duration + "," + event.getPhaseId() + "," + event.toString());
+                    StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.EVENT, duration + "," + event.getPhaseId() + "," + event.toString());
 
 	                try
 	                {
@@ -132,7 +132,7 @@ public class UIViewRoot
     }
 
 
-    private void clearEvents()
+    public void clearEvents()
     {
         _events = null;
     }

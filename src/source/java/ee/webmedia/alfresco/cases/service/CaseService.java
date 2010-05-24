@@ -6,6 +6,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 
 /**
  * Service class for cases
@@ -31,6 +32,8 @@ public interface CaseService {
     void saveAddedAssocs(Node caseNode);
 
     List<Case> getAllCasesByVolume(NodeRef volumeRef);
+
+    List<Case> getAllCasesByVolume(NodeRef volumeRef, DocListUnitStatus status);
 
     Case getCaseByNoderef(NodeRef caseNodeRef);
 

@@ -35,6 +35,7 @@
    </bean>
 
    <bean class="ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority" parent="dynamicAuthority">
+      <property name="workflowService" ref="WmWorkflowService" />
       <property name="requiredFor">
          <list>
             <value>DocumentFileWrite</value>

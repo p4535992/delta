@@ -1,17 +1,16 @@
 package ee.webmedia.alfresco.archivals.web;
 
-import ee.webmedia.alfresco.archivals.service.ArchivalsService;
-import ee.webmedia.alfresco.functions.model.Function;
-import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.functions.web.FunctionsListDialog;
-import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.alfresco.web.bean.repository.Node;
-import org.springframework.web.jsf.FacesContextUtils;
-
-import javax.faces.context.FacesContext;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import javax.faces.context.FacesContext;
+
+import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.springframework.web.jsf.FacesContextUtils;
+
+import ee.webmedia.alfresco.archivals.service.ArchivalsService;
+import ee.webmedia.alfresco.functions.model.Function;
 
 /**
  * Dialog bean for archived functions

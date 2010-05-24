@@ -83,6 +83,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
             MultiValueEditorEvent event = new MultiValueEditorEvent(component, action, removeIndex);
             event.setPhaseId(PhaseId.UPDATE_MODEL_VALUES); // addition to BaseMultiValueRenderer.decode()
             component.queueEvent(event);
+            Utils.setRequestValidationDisabled(context);
         }
     }
     
@@ -100,14 +101,23 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         final List<ComponentPropVO> propVOs = getPropVOs(component);
         ResponseWriter out = context.getResponseWriter();
         // class "recipient" should not be hard-coded, i guess
-        out.write("<table class=\"recipient multiE cells" + propVOs.size() + "\" cellpadding=\"0\" cellspacing=\"0\">");
-        out.write("<thead><tr>");
-        for (ComponentPropVO propVO : propVOs) {
-            out.write("<th>");
-            out.writeText(propVO.getPropertyLabel(), null);
-            out.write("</th>");
-        }
-        out.write("</tr></thead><tbody>");
+        out.write("<div id=\"");
+        out.write(((MultiValueEditor) component).getAjaxClientId(context));
+        out.write("\"><table class=\"recipient multiE cells" + propVOs.size() + "\" cellpadding=\"0\" cellspacing=\"0\">");
+        
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> attributes = component.getAttributes();
+        String showHeaders = (String) attributes.get(MultiValueEditor.SHOW_HEADERS);
+        if (StringUtils.isBlank(showHeaders) || Boolean.parseBoolean(showHeaders)) {
+            out.write("<thead><tr>");
+            for (ComponentPropVO propVO : propVOs) {
+                out.write("<th>");
+                out.writeText(propVO.getPropertyLabel(), null);
+                out.write("</th>");
+            }
+            out.write("</tr></thead>");
+        }        
+        out.write("<tbody>");
     }
 
     private List<ComponentPropVO> getPropVOs(UIComponent component) {
@@ -136,7 +146,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                 styleClass = "add-person";
             }
             out.write("<a class=\"icon-link " + styleClass + "\" onclick=\"");
-            out.write(Utils.generateFormSubmit(context, component, component.getClientId(context), Integer.toString(UIMultiValueEditor.ACTION_ADD)));
+            out.write(ComponentUtil.generateAjaxFormSubmit(context, component, component.getClientId(context), Integer.toString(UIMultiValueEditor.ACTION_ADD)));
             out.write("\">");
             out.write(Application.getMessage(context, addLabelId));
             out.write("</a>");
@@ -153,6 +163,8 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                 renderPicker(context, out, component, (UIGenericPicker) child);
             }
         }
+
+        out.write("</div>");
     }
 
     @Override
@@ -191,8 +203,8 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                 if (!Utils.isComponentDisabledOrReadOnly(multiValueEditor)) { // don't render removing link
 
                     out.write("<a class=\"icon-link margin-left-4 delete\" onclick=\"");
-                    out.write(Utils //
-                            .generateFormSubmit(context, multiValueEditor, multiValueEditor.getClientId(context), Integer
+                    out.write(ComponentUtil //
+                            .generateAjaxFormSubmit(context, multiValueEditor, multiValueEditor.getClientId(context), Integer
                                     .toString(UIMultiValueEditor.ACTION_REMOVE) + ";" + rowIndex));
                     out.write("\" title=\"" + Application.getMessage(context, "delete") + "\">");
                     out.write("</a>");
@@ -236,7 +248,8 @@ public class MultiValueEditorRenderer extends BaseRenderer {
 
         out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"");
         out.write(ComponentUtil.generateFieldSetter(context, multiValueEditor, getActionId(context, multiValueEditor), SearchRenderer.CLOSE_DIALOG_ACTION));
-        out.write(Utils.generateFormSubmit(context, picker, picker.getClientId(context), "1" /* ACTION_CLEAR */));
+        out.write("hideModal();");
+        out.write(ComponentUtil.generateAjaxFormSubmit(context, picker, picker.getClientId(context), "1" /* ACTION_CLEAR */));
         out.write("\">");
         out.write(Application.getMessage(context, SearchRenderer.CLOSE_WINDOW_MSG));
         out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner\">");
@@ -245,7 +258,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
 
         out.write("</div></div></div>");
 
-        if (openDialog != null) {
+        if (openDialog != null) { // Used when full submit is done, but AJAX deprecates it
             multiValueEditor.getAttributes().remove(Search.OPEN_DIALOG_KEY);
             out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
             out.write(ComponentUtil.generateFieldSetter(context, multiValueEditor, getActionId(context, multiValueEditor), SearchRenderer.OPEN_DIALOG_ACTION

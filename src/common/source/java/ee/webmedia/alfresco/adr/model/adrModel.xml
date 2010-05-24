@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<model name="adr:adrModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
-   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+<model name="adr:adrModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
 
    <imports>
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
@@ -12,6 +12,7 @@
    </namespaces>
 
    <types>
+
       <type name="adr:adrDeletedDocuments">
          <parent>sys:base</parent>
          <associations>
@@ -43,13 +44,90 @@
                <type>d:datetime</type>
                <mandatory enforced="true">true</mandatory>
             </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>adr:deletedDateTime</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="adr:adrDeletedDocumentTypes">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="adr:adrDeletedDocumentType">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>adr:adrDeletedDocumentType</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="adr:adrDeletedDocumentType">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>adr:documentType</aspect>
+            <aspect>adr:deletedDateTime</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="adr:adrAddedDocumentTypes">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="adr:adrAddedDocumentType">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>adr:adrAddedDocumentType</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="adr:adrAddedDocumentType">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>adr:documentType</aspect>
+            <aspect>adr:deletedDateTime</aspect>
+         </mandatory-aspects>
+      </type>
+
+   </types>
+
+   <aspects>
+
+      <aspect name="adr:documentType">
+         <properties>
+            <property name="adr:documentType">
+               <type>d:qname</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+         </properties>
+      </aspect>   
+
+      <aspect name="adr:deletedDateTime">
+         <properties>
             <property name="adr:deletedDateTime">
                <type>d:datetime</type>
                <mandatory enforced="true">true</mandatory>
             </property>
          </properties>
-      </type>
+      </aspect>   
 
-   </types>
+   </aspects>
 
 </model>

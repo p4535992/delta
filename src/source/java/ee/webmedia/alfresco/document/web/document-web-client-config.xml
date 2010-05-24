@@ -46,7 +46,7 @@
          
          <!-- Drop-down menu followUp actions: tenderingApplication -->
          <action id="document_createFollowUp_tenderingApplication">
-            <evaluator>ee.webmedia.alfresco.document.web.evaluator.TenderingApplicationNodeTypeEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.TenderingApplicationFollowupEvaluator</evaluator>
             <label-id>document_type_tenderingApplication</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action>#{DocumentDialog.action}</action>
@@ -57,7 +57,7 @@
          </action>
          
          <action id="document_createFollowUp_incomingLetter">
-            <evaluator>ee.webmedia.alfresco.document.web.evaluator.LetterOrTenderingApplicationNodeTypeEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.LetterFollowupEvaluator</evaluator>
             <label-id>document_type_incomingLetter</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action>#{DocumentDialog.action}</action>
@@ -68,7 +68,7 @@
          </action>
          
          <action id="document_createFollowUp_outgoingLetter">
-            <evaluator>ee.webmedia.alfresco.document.web.evaluator.LetterOrTenderingApplicationNodeTypeEvaluator</evaluator>
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.LetterFollowupEvaluator</evaluator>
             <label-id>document_type_outgoingLetter</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action>#{DocumentDialog.action}</action>
@@ -169,20 +169,6 @@
             <action idref="document_errandsAbroad_add" />
          </action-group>
 
-         <action id="document_proceeding_stop">
-            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ProceedingStopActionEvaluator</evaluator>
-            <label-id>document_proceeding_stop</label-id>
-            <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{DocumentDialog.toggleProceeding}</action-listener>
-         </action>
-
-         <action id="document_proceeding_continue">
-            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ProceedingContinueActionEvaluator</evaluator>
-            <label-id>document_proceeding_continue</label-id>
-            <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{DocumentDialog.toggleProceeding}</action-listener>
-         </action>
-
           <action id="document_end">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.EndDocumentEvaluator</evaluator>
             <label-id>document_end</label-id>
@@ -233,8 +219,6 @@
             <action idref="document_send_out" />
             <action idref="create_forum_node_override" />
             <action idref="discuss_node_override" />
-            <action idref="document_proceeding_stop" />
-            <action idref="document_proceeding_continue" />
             <action idref="document_end"/>
             <action idref="document_reopen"/>
             <action idref="document_delete"/>

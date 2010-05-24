@@ -207,7 +207,7 @@ public class SystemErrorTag extends TagSupport
          
          // output the initial toggle state
          out.write("<br/>");
-         out.write("<a id='detailsTitle' href='javascript:toggleDetails();'>");
+         out.write("<a id='detailsTitle' href='#' onclick='toggleDetails(); return false;'>");
          out.write(toggleTitle);
          out.write(" Details</a>");
          

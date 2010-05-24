@@ -560,7 +560,6 @@ public class Application
    }
    
    /**
-<<<<<<< .working
     * @return the Projects folder name
     */
    public static String getProjectsFolderName(ServletContext context)

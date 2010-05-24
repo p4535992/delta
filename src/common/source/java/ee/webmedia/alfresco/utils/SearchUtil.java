@@ -262,6 +262,18 @@ public class SearchUtil {
         return joinQueryPartsAnd(wordQueryParts);
     }
 
+    public static String generateMultiStringWordsWildcardQuery(List<String> values, QName ... documentPropNames) {
+        if (values == null || values.isEmpty()) {
+            return null;
+        }
+        
+        List<String> queryParts = new ArrayList<String>(values.size());
+        for (String value : values) {
+            queryParts.add(generateStringWordsWildcardQuery(value, documentPropNames));
+        }
+        return joinQueryPartsOr(queryParts);
+    }
+    
     public static String generateNodeRefQuery(NodeRef value, QName ... documentPropNames) {
         if (value == null) {
             return null;

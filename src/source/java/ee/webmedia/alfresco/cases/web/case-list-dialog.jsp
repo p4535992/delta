@@ -17,7 +17,7 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.case_title}" value="title" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col2-link" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{msg.case_document_list_info}" showLink="false"
+         <a:actionLink id="col2-link" value="#{r.title} (#{r.containingDocsCount})" action="dialog:documentListDialog" tooltip="#{msg.case_document_list_info}" showLink="false"
             actionListener="#{DocumentListDialog.setup}">
             <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>

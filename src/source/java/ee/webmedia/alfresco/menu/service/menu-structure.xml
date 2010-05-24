@@ -8,7 +8,6 @@
    <!-- MINU TÖÖÜLESANDED JA DOKUMENDID -->
    <item title-id="menu_my_tasks_and_documents">
       <outcome>myalfresco</outcome>
-      <action-listener>#{MyTasksBean.setupMyTasks}</action-listener>
       <subitems>
          <dropdown title-id="menu_my_tasks" expanded="true">
             <submenu-id>my-tasks-submenu</submenu-id>
@@ -38,7 +37,7 @@
                   <action-listener>#{MyTasksBean.setupSignatureTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}signatureTask</processor>
                </item>
-               <item title-id="menu_working_documents">
+               <item id="userWorkingDocuments" title-id="menu_working_documents">
                   <outcome>dialog:userWorkingDocumentsSearchResultsDialog</outcome>
                   <action-listener>#{UserWorkingDocumentsSearchResultsDialog.setup}</action-listener>
                </item>
@@ -57,25 +56,29 @@
                         <outcome>dialog:attachmentListDialog</outcome>
                          <action-listener>#{AttachmentListDialog.init}</action-listener>
                      </item>
-                     <item title-id="menu_dvk_error_messages">
+                     <item id="sentEmails" title-id="menu_sent_emails">
+                        <outcome>dialog:sentEmailListDialog</outcome>
+                        <action-listener>#{SentEmailListDialog.setup}</action-listener>
+                     </item>
+                     <item id="dvkCorrupt" title-id="menu_dvk_error_messages">
                         <outcome>dialog:dvkCorruptListDialog</outcome>
                         <action-listener>#{DvkCorruptListDialog.init}</action-listener>
                      </item>
-                     <item title-id="menu_scanned_documents">
-                        <outcome>dialog:scannedDocsListDialog</outcome>
-                         <action-listener>#{ScannedDocsListDialog.init}</action-listener>
+                     <item id="scannedDocuments" title-id="menu_scanned_documents">
+                        <outcome>dialog:scannedFoldersListDialog</outcome>
+                         <action-listener>#{ScannedFoldersListDialog.init}</action-listener>
                      </item>
-                     <item title-id="menu_dvk_documents">
+                     <item id="dvkDocuments" title-id="menu_dvk_documents">
                         <outcome>dialog:dvkDocumentListDialog</outcome>
                         <action-listener>#{DvkDocumentListDialog.setup}</action-listener>
                      </item>
                   </subitems>
                </dropdown>
-               <item title-id="menu_unsent_documents" document-manager="true">
+               <item id="unsentDocument" title-id="menu_unsent_documents" document-manager="true">
                   <outcome>dialog:unsentDocumentListDialog</outcome>
                   <action-listener>#{UnsentDocumentListDialog.setup}</action-listener>
                </item>
-               <item title-id="menu_outbox_documents" document-manager="true">
+               <item id="outboxDocument" title-id="menu_outbox_documents" document-manager="true">
                   <outcome>dialog:outboxDocumentListDialog</outcome>
                   <action-listener>#{OutboxDocumentListDialog.setup}</action-listener>
                </item>
@@ -95,9 +98,13 @@
          <item title-id="menu_department_documents">
             <outcome>myalfresco</outcome>
          </item>
-         <item title-id="menu_my_documents">
-            <outcome>dialog:mySeriesListDialog</outcome>
-         </item>
+         <dropdown title-id="menu_my_documents" browse="true">
+            <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}documentList</xpath>
+            <submenu-id>my-documents</submenu-id>
+            <outcome>dialog:myDocsFunctionsListDialog</outcome>
+            <action-listener>#{MenuBean.updateTree}</action-listener>
+            <child-filter>myDocuments</child-filter>
+         </dropdown>
       </subitems>
    </item>
 
@@ -123,7 +130,7 @@
    </item>
 
    <!-- KONTAKT -->
-   <item title-id="menu_contact" document-manager="true">
+   <item title-id="menu_contact">
       <outcome>dialog:addressbookManage</outcome>
       <subitems>
          <item title-id="menu_contact_management">
@@ -170,6 +177,7 @@
          </item>
          <item title-id="menu_user_group_management">
             <outcome>dialog:manageGroups</outcome>
+            <action-listener>#{GroupsDialog.reset}</action-listener>
          </item>
          <item title-id="menu_classificators">
             <outcome>dialog:classificatorListDialog</outcome>
@@ -206,6 +214,7 @@
 
    <!-- ALUSTA UUT DOKUMENTI -->
    <dropdown id="documentTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">
+      <child-filter>createDocument</child-filter>
       <submenu-id>new-document-submenu</submenu-id>
       <subitems>
          <dropdown title-id="menu_instrument" hover="true">

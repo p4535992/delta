@@ -9,6 +9,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
@@ -27,6 +28,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     private static final String PARAM_SERIES_NODEREF = "seriesNodeRef";
     private transient SeriesService seriesService;
     private transient MenuService menuService;
+    private LogBlockBean logBlockBean;
     private Series series;
     private boolean newSeries;
 
@@ -61,6 +63,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     public void showDetails(ActionEvent event) {
         String seriesNodeRef = ActionUtil.getParam(event, PARAM_SERIES_NODEREF);
         series = getSeriesService().getSeriesByNodeRef(seriesNodeRef);
+        logBlockBean.init(series.getNode());
     }
 
     public void addNewSeries(ActionEvent event) {
@@ -75,13 +78,13 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     }
 
     public String close() {
-        if(series.getNode() instanceof TransientNode) {
+        if (series.getNode() instanceof TransientNode) {
             return null;
         }
-        
+
         if (!isClosed()) {
             boolean wasClosed = getSeriesService().closeSeries(series);
-            if(!wasClosed) {
+            if (!wasClosed) {
                 MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "series_validationMsg_closeNotPossible");
                 return null;
             }
@@ -91,7 +94,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     }
 
     public boolean isClosed() {
-        return seriesService.isClosed(getCurrentNode());
+        return getSeriesService().isClosed(getCurrentNode());
     }
 
     public boolean isNew() {
@@ -103,6 +106,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     private void resetFields() {
         series = null;
         newSeries = false;
+        logBlockBean.reset();
     }
 
     // START: getters / setters
@@ -117,7 +121,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     public void setSeriesService(SeriesService seriesService) {
         this.seriesService = seriesService;
     }
-    
+
     protected MenuService getMenuService() {
         if (menuService == null) {
             menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
@@ -128,6 +132,14 @@ public class SeriesDetailsDialog extends BaseDialogBean {
 
     public void setMenuService(MenuService menuService) {
         this.menuService = menuService;
+    }
+
+    public void setLogBlockBean(LogBlockBean logBlockBean) {
+        this.logBlockBean = logBlockBean;
+    }
+
+    public LogBlockBean getLogBlockBean() {
+        return logBlockBean;
     }
 
     // END: getters / setters

@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.type.service;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 import org.alfresco.service.namespace.QName;
 
@@ -18,6 +19,16 @@ public interface DocumentTypeService {
      * @return all document type objects from repository
      */
     List<DocumentType> getAllDocumentTypes();
+
+    /**
+     * @return all document types which are public to ADR
+     */
+    List<DocumentType> getPublicAdrDocumentTypes();
+
+    /**
+     * @return all document types which are public to ADR
+     */
+    Set<QName> getPublicAdrDocumentTypeQNames();
 
     /**
      * @param used

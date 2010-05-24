@@ -26,11 +26,11 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.volume_title}" value="title" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col2-link2documents" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{msg.document_list_info}"
+         <a:actionLink id="col2-link2documents" value="#{r.title} (#{r.containingDocsCount})" action="dialog:documentListDialog" tooltip="#{msg.document_list_info}"
             showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{!r.containsCases}" >
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
-         <a:actionLink id="col2-link2cases" value="#{r.title}" action="dialog:caseListDialog" tooltip="#{msg.case_list_info}"
+         <a:actionLink id="col2-link2cases" value="#{r.title} (#{r.containingDocsCount})" action="dialog:caseListDialog" tooltip="#{msg.case_list_info}"
             showLink="false" actionListener="#{CaseListDialog.showAll}" rendered="#{r.containsCases}" >
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
@@ -65,6 +65,14 @@
       </a:column>
 
       <%-- dispositionDate --%>
+      <a:column id="col7">
+         <f:facet name="header">
+            <a:sortLink id="col7-sort" label="#{msg.volume_volumeType}" value="volumeType" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col7-text" value="#{r.volumeType}" />
+      </a:column>
+      
+      <%-- dispositionDate --%>
       <a:column id="col6">
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.volume_dispositionDate}" value="dispositionDate" styleClass="header" />
@@ -73,13 +81,13 @@
             <a:convertXMLDate pattern="#{msg.date_pattern}" />
          </h:outputText>
       </a:column>
-
+      
       <%-- show details --%>
-      <a:column id="col7" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager}" >
+      <a:column id="col8" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager}" >
          <f:facet name="header">
             <h:outputText value="&nbsp;" escape="false" />
          </f:facet>
-         <a:actionLink id="col7-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:volumeDetailsDialog" showLink="false"
+         <a:actionLink id="col8-act1" value="#{r.title}" image="/images/icons/edit_properties.gif" action="dialog:volumeDetailsDialog" showLink="false"
             actionListener="#{VolumeDetailsDialog.showDetails}" tooltip="#{msg.volume_details_info}">
             <f:param name="volumeNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>

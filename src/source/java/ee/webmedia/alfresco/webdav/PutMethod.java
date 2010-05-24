@@ -38,6 +38,7 @@ import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.ContentWriter;
+import org.alfresco.service.cmr.repository.NodeRef;
 
 /**
  * Implements the WebDAV PUT method
@@ -47,7 +48,7 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 public class PutMethod extends WebDAVMethod {
     // Request parameters
     private String m_strContentType = null;
-
+    
     /**
      * Parse the request headers
      * 
@@ -123,8 +124,13 @@ public class PutMethod extends WebDAVMethod {
         
         // add the user and date information to the custom aspect properties
         ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().updateVersionModifiedAspect(contentNodeInfo.getNodeRef());
+        
+        // Update document search info
+        NodeRef document = getNodeService().getPrimaryParent(contentNodeInfo.getNodeRef()).getParentRef();
+        ((WebDAVCustomHelper)getDAVHelper()).getDocumentService().updateSearchableFiles(document);
 
         // Set the response status, depending if the node existed or not
         m_response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_NO_CONTENT);
     }
+
 }

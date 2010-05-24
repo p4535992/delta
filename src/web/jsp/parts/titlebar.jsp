@@ -30,7 +30,7 @@
 <%@ taglib uri="/WEB-INF/wm.tld" prefix="wm" %> 
 
 <r:loadBundle var="msg"/>
-
+<div class="submit-protection-layer"></div>
 <%-- Begin Header --%>
 <a:panel id="header">
    <a:panel id="logo">

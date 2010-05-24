@@ -30,11 +30,18 @@
          <a:outputText id="paramTypeOT" value="#{msg[sParameter.typeMsg]}" />
       </a:column>
 
+      <a:column id="paramDescCol">
+         <f:facet name="header">
+            <a:sortLink id="paramDescCol-sort" label="#{msg.parameters_desc}" value="paramDescription" mode="case-insensitive" />
+         </f:facet>
+         <h:inputTextarea rows="1" cols="45" value="#{sParameter.paramDescription}" styleClass="#{sParameter.paramName} #{(sParameter.lastValidationSuccessful) ? '' : 'error' } expand19-200 medium" />
+      </a:column>
+
       <a:column id="paramValCol">
          <f:facet name="header">
             <a:outputText value="#{msg.parameters_value}" />
          </f:facet>
-         <h:inputTextarea rows="1" cols="45" value="#{sParameter.paramValue}" styleClass="#{sParameter.paramName} #{(sParameter.lastValidationSuccessful) ? '' : 'error' } expand19-200 long" />
+         <h:inputTextarea rows="1" cols="45" value="#{sParameter.paramValue}" styleClass="#{sParameter.paramName} #{(sParameter.lastValidationSuccessful) ? '' : 'error' } expand19-200 medium" />
       </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

@@ -27,3 +27,20 @@
 <a:booleanEvaluator value="#{DialogManager.bean.meta.inEditMode}" id="docMeta-InEditMode">
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block-lockRefresh.jsp" />
 </a:booleanEvaluator>
+<f:verbatim>
+<script type="text/javascript">
+   function postProcessButtonState(){
+      var registerBtn = $jQ("#" + escapeId4JQ("dialog:documentRegisterButton"));
+      if (registerBtn) {
+         var finishBtn = $jQ("#"+escapeId4JQ("dialog:finish-button"));
+         var finishDisabled = finishBtn.attr("disabled");
+         registerBtn.attr("disabled", finishDisabled);
+
+         var registerBtn2 = $jQ("#" + escapeId4JQ("dialog:documentRegisterButton-2"));
+         if (registerBtn2) {
+            registerBtn2.attr("disabled", finishDisabled);
+         }
+      }
+   }
+</script>
+</f:verbatim>

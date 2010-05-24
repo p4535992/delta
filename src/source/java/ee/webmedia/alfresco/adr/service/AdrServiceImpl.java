@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -59,23 +60,13 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         Date regDateBegin = getDate(perioodiAlgusKuupaev);
         Date regDateEnd = getDate(perioodiLoppKuupaev);
         QName docType = getTypeQName(dokumendiLiik);
-        
-        List<Dokument> list;
 
-        // If no parameters are given, then return nothing
-        // Note: you can still get ALL documents very easily if you specify a very broad date range for example
-        if (regDateBegin == null && regDateEnd == null && docType == null && StringUtils.isEmpty(otsingusona)) {
-            list = Collections.emptyList();
-
-        } else {
-            List<Document> docs = documentSearchService.searchAdrDocuments(regDateBegin, regDateEnd, docType, otsingusona);
-
-            list = new ArrayList<Dokument>(docs.size());
-            for (Document doc : docs) {
-                Dokument dokument = new Dokument();
-                setDokumentProperties(dokument, doc, true);
-                list.add(dokument);
-            }
+        List<Document> docs = documentSearchService.searchAdrDocuments(regDateBegin, regDateEnd, docType, otsingusona, documentTypeService.getPublicAdrDocumentTypeQNames());
+        List<Dokument> list = new ArrayList<Dokument>(docs.size());
+        for (Document doc : docs) {
+            Dokument dokument = new Dokument();
+            setDokumentProperties(dokument, doc, true);
+            list.add(dokument);
         }
 
         if (log.isDebugEnabled()) {
@@ -128,12 +119,9 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     @Override
     public List<Dokumendiliik> dokumendiliigid() {
         long startTime = System.currentTimeMillis();
-        List<DocumentType> docTypes = documentTypeService.getAllDocumentTypes();
+        List<DocumentType> docTypes = documentTypeService.getPublicAdrDocumentTypes();
         List<Dokumendiliik> list = new ArrayList<Dokumendiliik>(docTypes.size());
         for (DocumentType docType : docTypes) {
-            // TODO only show "public" document types
-            // TODO 2 does "public" have to be taken account on all service methods?
-
             Dokumendiliik dokumendiliik = new Dokumendiliik();
             dokumendiliik.setNimi(docType.getName());
             list.add(dokumendiliik);
@@ -150,7 +138,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             return null;
         }
 
-        List<Document> docs = documentSearchService.searchAdrDocuments(viit, regDateTime);
+        List<Document> docs = documentSearchService.searchAdrDocuments(viit, regDateTime, documentTypeService.getPublicAdrDocumentTypeQNames());
 
         // loop üle docs'i ja võrrelda kas viit ja registreerimiseAeg vastavad TÄPSELT, kui mitte siis eemaldada
         for (Iterator<Document> i = docs.iterator(); i.hasNext();) {
@@ -331,14 +319,44 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         if (modifiedDateBegin == null || modifiedDateEnd == null) {
             list = Collections.emptyList();
         } else {
-            List<Document> docs = documentSearchService.searchAdrDocuments(modifiedDateBegin, modifiedDateEnd);
-            list = new ArrayList<DokumentDetailidega>(docs.size());
+            Map<AdrDocument, DokumentDetailidega> results = new HashMap<AdrDocument, DokumentDetailidega>();
+            
+            // ============= Search for documents that were modified during specified period
+
+            List<Document> docs = documentSearchService.searchAdrDocuments(modifiedDateBegin, modifiedDateEnd, documentTypeService.getPublicAdrDocumentTypeQNames());
+            if (log.isDebugEnabled()) {
+                log.debug("Found " + docs.size() + " documents that were modified during specified period");
+            }
             for (Document doc : docs) {
-                DokumentDetailidega dokument = buildDokumentDetailidega(doc, false, true);
-                if (StringUtils.isNotEmpty(dokument.getViit()) && dokument.getRegistreerimiseAeg() != null) {
-                    list.add(dokument);
+                if (StringUtils.isNotEmpty(doc.getRegNumber()) && doc.getRegDateTime() != null) {
+                    DokumentDetailidega dokument = buildDokumentDetailidega(doc, false, true);
+                    results.put(new AdrDocument(doc.getRegNumber(), doc.getRegDateTime()), dokument);
                 }
             }
+
+            // ============= Search for document types that were changed to publicAdr=true during specified period
+            // ============= and add ALL documents that belong to these types to results
+
+            Set<QName> documentTypes = documentTypeService.getPublicAdrDocumentTypeQNames(); // Currently allowed docTypes
+            List<QName> addedDocumentTypes = documentSearchService.searchAdrAddedDocumentTypes(modifiedDateBegin, modifiedDateEnd);
+            documentTypes.retainAll(addedDocumentTypes); // Result: docTypes that were added during this period AND are currently allowed
+
+            docs = documentSearchService.searchAdrDocuments((Date) null, (Date) null, documentTypes);
+            if (log.isDebugEnabled()) {
+                log.debug("Found " + docs.size() + " documents that belong to " + documentTypes.size()
+                        + " document types that were changed to publicAdr=TRUE during specified period");
+            }
+            for (Document doc : docs) {
+                if (StringUtils.isNotEmpty(doc.getRegNumber()) && doc.getRegDateTime() != null) {
+                    AdrDocument adrDocument = new AdrDocument(doc.getRegNumber(), doc.getRegDateTime());
+                    if (!results.containsKey(adrDocument)) {
+                        DokumentDetailidega dokument = buildDokumentDetailidega(doc, false, true);
+                        results.put(new AdrDocument(dokument.getViit(), doc.getRegDateTime()), dokument);
+                    }
+                }
+            }
+
+            list = new ArrayList<DokumentDetailidega>(results.values());
         }
 
         if (log.isDebugEnabled()) {
@@ -361,14 +379,17 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         if (deletedDateBegin == null || deletedDateEnd == null) {
             list = Collections.emptyList();
         } else {
-            List<Document> existingDocs = documentSearchService.searchAdrDocuments(deletedDateBegin, deletedDateEnd);
-            Set<AdrDeletedDocument> existingDocsSet = new HashSet<AdrDeletedDocument>(existingDocs.size());
+
+            // ============= Search for documents that were deleted during specified period
+
+            List<Document> existingDocs = documentSearchService.searchAdrDocuments(deletedDateBegin, deletedDateEnd, documentTypeService.getPublicAdrDocumentTypeQNames());
+            Set<AdrDocument> existingDocsSet = new HashSet<AdrDocument>(existingDocs.size());
             for (Document document : existingDocs) {
-                existingDocsSet.add(new AdrDeletedDocument(document.getRegNumber(), document.getRegDateTime()));
+                existingDocsSet.add(new AdrDocument(document.getRegNumber(), document.getRegDateTime()));
             }
 
             List<NodeRef> deletedDocs = documentSearchService.searchAdrDeletedDocuments(deletedDateBegin, deletedDateEnd);
-            Set<AdrDeletedDocument> deletedDocsSet = new HashSet<AdrDeletedDocument>(deletedDocs.size());
+            Set<AdrDocument> deletedDocsSet = new HashSet<AdrDocument>(deletedDocs.size());
             for (NodeRef deletedDoc : deletedDocs) {
                 Map<QName, Serializable> props = nodeService.getProperties(deletedDoc);
                 String regNumber = (String) props.get(AdrModel.Props.REG_NUMBER);
@@ -376,13 +397,36 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 if (StringUtils.isEmpty(regNumber) || regDateTime == null) {
                     continue; // should not happen!
                 }
-                deletedDocsSet.add(new AdrDeletedDocument(regNumber, regDateTime));
+                deletedDocsSet.add(new AdrDocument(regNumber, regDateTime));
             }
 
             deletedDocsSet.removeAll(existingDocsSet);
+            if (log.isDebugEnabled()) {
+                log.debug("Found " + deletedDocsSet.size() + " documents that were deleted during specified period");
+            }
+
+            // ============= Search for document types that were changed to publicAdr=false during specified period
+            // ============= and add ALL documents that belong to these types to results
+
+            Set<QName> deletedDocumentTypes = new HashSet<QName>(documentSearchService.searchAdrDeletedDocumentTypes(deletedDateBegin, deletedDateEnd));
+            deletedDocumentTypes.removeAll(documentTypeService.getPublicAdrDocumentTypeQNames()); // Result: docTypes that were deleted during this period AND are not currently allowed
+
+            List<Document> docs = documentSearchService.searchAdrDocuments((Date) null, (Date) null, deletedDocumentTypes);
+            if (log.isDebugEnabled()) {
+                log.debug("Found " + docs.size() + " documents that belong to " + deletedDocumentTypes.size()
+                        + " document types that were changed to publicAdr=FALSE during specified period");
+            }
+            for (Document doc : docs) {
+                if (StringUtils.isEmpty(doc.getRegNumber()) || doc.getRegDateTime() == null) {
+                    continue; // should not happen!
+                }
+                deletedDocsSet.add(new AdrDocument(doc.getRegNumber(), doc.getRegDateTime()));
+            }
+
+            // ============= Build results
 
             list = new ArrayList<Dokument>(deletedDocsSet.size());
-            for (AdrDeletedDocument doc : deletedDocsSet) {
+            for (AdrDocument doc : deletedDocsSet) {
                 Dokument dokument = new Dokument();
                 dokument.setViit(doc.regNumber);
                 dokument.setRegistreerimiseAeg(convertToXMLGergorianCalendar(doc.regDateTime));

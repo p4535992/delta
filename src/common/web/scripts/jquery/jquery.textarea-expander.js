@@ -89,15 +89,3 @@
 	jQuery.fn.TextAreaExpander.ieInitialized = false;
 
 })(jQuery);
-
-
-// initialize all expanding textareas
-jQuery(document).ready(function() {
-	var expanders = jQuery("textarea[class*=expand]");
-	expanders.TextAreaExpander();
-   if(jQuery.browser.msie) {
-      // trigger size recalculation if IE, because e.scrollHeight may be inaccurate before keyup() is called
-      expanders.keyup();
-      jQuery.fn.TextAreaExpander.ieInitialized = true;
-   }
-});

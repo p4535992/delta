@@ -9,6 +9,7 @@ import java.util.Map;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlSelectManyListbox;
+import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
@@ -21,7 +22,8 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
+import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -37,21 +39,27 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
+import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * @author Alar Kvell
  */
 public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<DocumentSearchFilterService> {
+    
     private static final long serialVersionUID = 1L;
-
+    
+    public static String OUTPUT_EXTENDED = "extended";
+    
     private static String OUTPUT_SIMPLE = "simple";
-    static String OUTPUT_EXTENDED = "extended";
 
     private DocumentSearchResultsDialog documentSearchResultsDialog;
 
     private transient DocumentTypeService documentTypeService;
     private transient FunctionsService functionsService;
     private transient SeriesService seriesService;
+    private transient VolumeService volumeService;
+    private transient CaseService caseService;
     private transient OrganizationStructureService organizationStructureService;
     private transient DocumentService documentService;
 
@@ -59,10 +67,13 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     private List<SelectItem> documentTypes;
     private List<SelectItem> functions;
     private List<SelectItem> series;
+    private List<SelectItem> volumes;
+    private List<SelectItem> cases;
 
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
+        
         // Search output types
         if (searchOutput == null) {
             searchOutput = new ArrayList<SelectItem>(2);
@@ -85,10 +96,10 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         for (Function function : allFunctions) {
             functions.add(new SelectItem(function.getNodeRef(), function.getMark() + " " + function.getTitle()));
         }
-        WebUtil.sort(functions);
 
-        // Series
         series = Collections.emptyList();
+        volumes = Collections.emptyList();
+        cases = Collections.emptyList();
 
         loadAllFilters();
     }
@@ -133,7 +144,6 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
 
         // UISelectMany components don't want null as initial value
         node.getProperties().put(DocumentSearchModel.Props.DOCUMENT_TYPE.toString(), new ArrayList<QName>());
-        node.getProperties().put(DocumentSearchModel.Props.SERIES.toString(), new ArrayList<NodeRef>());
         node.getProperties().put(DocumentSearchModel.Props.DOC_STATUS.toString(), new ArrayList<String>());
         node.getProperties().put(DocumentSearchModel.Props.ACCESS_RESTRICTION.toString(), new ArrayList<String>());
         node.getProperties().put(DocumentSearchModel.Props.STORAGE_TYPE.toString(), new ArrayList<String>());
@@ -152,6 +162,8 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         documentTypes = null;
         functions = null;
         series = null;
+        volumes = null;
+        cases = null;
     }
 
     // GeneralSelectorGenerator 'selectionItems' method bindings
@@ -189,53 +201,68 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
      * @param selectComponent
      * @return dropdown items for JSP
      */
+    public List<SelectItem> getVolumes(FacesContext context, UIInput selectComponent) {
+        return volumes;
+    }
+    
+    /**
+     * @param context
+     * @param selectComponent
+     * @return dropdown items for JSP
+     */
+    public List<SelectItem> getCases(FacesContext context, UIInput selectComponent) {
+        return cases;
+    }
+    
+    /**
+     * @param context
+     * @param selectComponent
+     * @return dropdown items for JSP
+     */
     public List<SelectItem> getSearchOutput(FacesContext context, UIInput selectComponent) {
         return searchOutput;
     }
 
     // Functions selector value change event listener
     public void functionValueChanged(ValueChangeEvent event) {
-        NodeRef function = (NodeRef) event.getNewValue();
-        if (function == null) {
-            series = Collections.emptyList();
-        } else {
-            List<Series> allSeries = getSeriesService().getAllSeriesByFunction(function);
-            series = new ArrayList<SelectItem>(allSeries.size());
-            for (Series serie : allSeries) {
-                series.add(new SelectItem(serie.getNode().getNodeRef(), serie.getSeriesIdentifier() + " " + serie.getTitle()));
-            }
-        }
-        WebUtil.sort(series);
-
-        // Refresh series list
-        @SuppressWarnings("unchecked")
-        List<UIComponent> children = getPropertySheet().getChildren();
-        for (UIComponent component : children) {
-            if (component.getId().endsWith("_series")) {
-                HtmlSelectManyListbox seriesList = (HtmlSelectManyListbox) component.getChildren().get(1);
-                ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), seriesList, series);
-                break;
-            }
-        }
+        series = Collections.emptyList();
+        volumes = Collections.emptyList();
+        cases = Collections.emptyList();
+        
+        NodeRef functionRef = (NodeRef) event.getNewValue();
+        updateSelections(functionRef, null, null, true);
     }
 
+    public void seriesValueChanged(ValueChangeEvent event) {
+        volumes = Collections.emptyList();
+        cases = Collections.emptyList();
+        
+        NodeRef seriesRef = (NodeRef) event.getNewValue();
+        updateSelections(null, seriesRef, null, true);
+    }
+
+    public void volumeValueChanged(ValueChangeEvent event) {
+        cases = Collections.emptyList();
+
+        NodeRef volumeRef = (NodeRef) event.getNewValue();
+        updateSelections(null, null, volumeRef, true);
+    }
+
+    public void selectedFilterValueChanged(ValueChangeEvent event) {
+        super.selectedFilterValueChanged(event);
+        
+        series = Collections.emptyList();
+        volumes = Collections.emptyList();
+        cases = Collections.emptyList();
+     
+        Map<String, Object> props = filter.getProperties();
+        NodeRef functionRef = (NodeRef) props.get(DocumentSearchModel.Props.FUNCTION.toString());
+        NodeRef seriesRef = (NodeRef) props.get(DocumentSearchModel.Props.SERIES.toString());
+        NodeRef volumeRef = (NodeRef) props.get(DocumentSearchModel.Props.VOLUME.toString());
+        updateSelections(functionRef, seriesRef, volumeRef, false);
+    }
+    
     // SearchGenerator 'setterCallback' method bindings
-
-    public void setRecipientName(String nodeRefStr) {
-        NodeRef nodeRef = new NodeRef(nodeRefStr);
-
-        String name = "";
-        Map<QName, Serializable> props = getNodeService().getProperties(nodeRef);
-        if (AddressbookModel.Types.ORGANIZATION.equals(getNodeService().getType(nodeRef))) {
-            name = (String) props.get(AddressbookModel.Props.ORGANIZATION_NAME);
-        } else {
-            name = UserUtil.getPersonFullName((String) props.get(AddressbookModel.Props.PERSON_FIRST_NAME), (String) props
-                    .get(AddressbookModel.Props.PERSON_LAST_NAME));
-        }
-
-        Map<String, Object> filterProps = filter.getProperties();
-        filterProps.put(DocumentSearchModel.Props.RECIPIENT_NAME.toString(), name);
-    }
 
     public void setOwner(String userName) {
         Map<QName, Serializable> personProps = getUserService().getUserProperties(userName);
@@ -293,6 +320,22 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         return seriesService;
     }
 
+    protected VolumeService getVolumeService() {
+        if (volumeService == null) {
+            volumeService = (VolumeService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(VolumeService.BEAN_NAME);
+        }
+        return volumeService;
+    }
+    
+    protected CaseService getCaseService() {
+        if (caseService == null) {
+            caseService = (CaseService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(CaseService.BEAN_NAME);
+        }
+        return caseService;
+    }
+    
     protected OrganizationStructureService getOrganizationStructureService() {
         if (organizationStructureService == null) {
             organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext( //
@@ -308,6 +351,53 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         }
         return documentService;
     }
-
+        
     // END: getters / setters
+
+    private void updateSelections(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, boolean updateComponents) {
+        if (functionRef != null) {
+            List<Series> allSeries = getSeriesService().getAllSeriesByFunction(functionRef);
+            series = new ArrayList<SelectItem>(allSeries.size());
+            series.add(new SelectItem("", ""));
+            for (Series serie : allSeries) {
+                series.add(new SelectItem(serie.getNode().getNodeRef(), serie.getSeriesIdentifier() + " " + serie.getTitle()));
+            }
+        }
+
+        if (seriesRef != null) {
+            List<Volume> allVolumes = getVolumeService().getAllVolumesBySeries(seriesRef);
+            volumes = new ArrayList<SelectItem>(allVolumes.size());
+            volumes.add(new SelectItem("", ""));
+            for (Volume volume : allVolumes) {
+                volumes.add(new SelectItem(volume.getNode().getNodeRef(), volume.getVolumeMark() + " " + volume.getTitle()));
+            }
+        }
+        
+        if (volumeRef != null) {
+            List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef);
+            cases = new ArrayList<SelectItem>(allCases.size());
+            cases.add(new SelectItem("", ""));
+            for (Case tmpCase : allCases) {
+                cases.add(new SelectItem(tmpCase.getNode().getNodeRef(), tmpCase.getTitle()));
+            }
+        }
+        
+        if (updateComponents) {
+            @SuppressWarnings("unchecked")
+            List<UIComponent> children = getPropertySheet().getChildren();
+            for (UIComponent component : children) {
+                if (component.getId().endsWith("_series")) {
+                    HtmlSelectOneMenu seriesList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), seriesList, series);
+                } else if (component.getId().endsWith("_volume")) {
+                    HtmlSelectOneMenu volumeList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), volumeList, volumes);
+                } else if (component.getId().endsWith("_case")) {
+                    HtmlSelectOneMenu caseList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), caseList, cases);
+                }
+            }
+        }
+    }
+
 }

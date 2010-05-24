@@ -10,6 +10,19 @@
       </property>
    </bean>
 
+   <bean parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/document/file/model/fileModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+      <property name="ignoreUnresolvablePlaceholders" value="true" />
+      <property name="location" value="classpath:ee/webmedia/alfresco/document/scanned/bootstrap/scanned-bootstrap.properties" />
+   </bean>
+
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">
          <list>
@@ -28,7 +41,7 @@
       <property name="contentService" ref="ContentService" />
       <property name="generalService" ref="GeneralService"/>
       <property name="documentLogService" ref="DocumentLogService"/>
-      <property name="scannedFilesPath" value="/doccom:scannedDocs"/>
+      <property name="scannedFilesPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}"/>
    </bean>
 
    <bean id="FileService" class="org.springframework.aop.framework.ProxyFactoryBean">

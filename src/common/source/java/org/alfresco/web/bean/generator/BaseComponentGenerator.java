@@ -75,6 +75,7 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.util.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
 import ee.webmedia.alfresco.common.propertysheet.validator.ForcedMandatoryValidator;
@@ -198,10 +199,11 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
    }
 
     protected void processCustomAttributes(UIComponent component) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = component.getAttributes();
+
         String styleClass = getCustomAttributes().get(STYLE_CLASS);
         if (isNotBlank(styleClass)) {
-            @SuppressWarnings("unchecked")
-            Map<String, Object> attributes = component.getAttributes();
             final String existingStyleClass = (String) attributes.get(STYLE_CLASS);
             if (isNotBlank(existingStyleClass)) {
                 logger.warn("component already has existing styleclass set from code ("+existingStyleClass+"), adding styleclass also from property-sheet: "+styleClass);
@@ -209,6 +211,11 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             } else {
                 attributes.put(STYLE_CLASS, styleClass);
             }
+        }
+        
+        String dontRenderIfDisabled = getCustomAttributes().get(WMUIProperty.DONT_RENDER_IF_DISABLED_ATTR);
+        if (org.apache.commons.lang.StringUtils.isNotEmpty(dontRenderIfDisabled)) {
+            attributes.put(WMUIProperty.DONT_RENDER_IF_DISABLED_ATTR, Boolean.parseBoolean(dontRenderIfDisabled));
         }
     }
 
@@ -313,7 +320,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         }
         String valueExpression = split[1];
         // try to figure out the node and the property, that should be inspected
-        final Pair<Node, String> propNameAndNode = getBaseNodeAndPropName(propertySheet, expression, propPath); //FIXME: propertySheet.getVar() peaks juba viitama õigele nodele
+        final Pair<Node, String> propNameAndNode = getBaseNodeAndPropName(propertySheet, expression, propPath); //XXX find basenode(can't use propertySheet.getVar() when dealing with subpropertysheets)
         Node propNode = propNameAndNode.getFirst();
         String propertyName = propNameAndNode.getSecond();
         PropertyDefinition propDef = getDataDictionary(context).getPropertyDefinition(propNode, propertyName);
@@ -420,6 +427,10 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             } else {
                 if (org.apache.commons.lang.StringUtils.equals(READONLY_IF_PARENT_IDENTIFIER, token)) {
                     ancestorPropSheet = ComponentUtil.getAncestorComponent(ancestorPropSheet.getParent(), UIPropertySheet.class, true);
+                    if (ancestorPropSheet == null) {
+                        throw new IllegalArgumentException((i + 1) + ". 'parent.' expression in readOnlyIf=\"" + readOnlyIfExpression
+                                + "\" refers to parent propertySheet that is not present");
+                    }
                     propNode = ancestorPropSheet.getNode();
                 } else {
                     throw new RuntimeException("Unknown path token '" + token + "' in conditional readOnly expression '" + readOnlyIfExpression + "'");

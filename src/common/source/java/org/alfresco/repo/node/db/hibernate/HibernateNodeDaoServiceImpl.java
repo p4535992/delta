@@ -97,6 +97,7 @@ import org.alfresco.service.cmr.repository.AssociationExistsException;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
+import org.alfresco.service.cmr.repository.CyclicChildRelationshipException;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.EntityRef;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
@@ -2238,7 +2239,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                         }
                         else if (aclProperties.getAclType() == ACLType.SHARED)
                         {
-                            setFixedAcls(childNodeId, inheritedAclId, true);
+                            setFixedAcls(childNodeId, inheritedAclId, true, null);
                         }
                     }
                     else
@@ -2264,7 +2265,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
                 {
                     Long parentAcl = newParentNode.getAccessControlList().getId();
                     Long inheritedAcl = aclDaoComponent.getInheritedAccessControlList(parentAcl);
-                    setFixedAcls(childNodeId, inheritedAcl, true);
+                    setFixedAcls(childNodeId, inheritedAcl, true, null);
                 } 
             }
         }
@@ -2285,8 +2286,22 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
     private void setFixedAcls(
             final Long nodeId,
             final Long mergeFromAclId,
-            final boolean set)
+            final boolean set,
+            Set<Long> processedNodes)
     {
+        // ETHREEOH-3088: Cut/Paste into same hierarchy
+        if (processedNodes == null)
+        {
+            processedNodes = new HashSet<Long>(3);
+        }
+        if (!processedNodes.add(nodeId))
+        {
+            logger.error(
+                    "Cyclic parent-child relationship detected: \n" +
+                    "   current node: " + nodeId);
+            throw new CyclicChildRelationshipException("Node has been pasted into its own tree.", null);
+        }
+        
         Node mergeFromNode = getNodeNotNull(nodeId);
         
         if (set)
@@ -2321,7 +2336,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
 
             if (acl == null)
             {
-                setFixedAcls(childNodeId, mergeFromAclId, true);
+                setFixedAcls(childNodeId, mergeFromAclId, true, processedNodes);
             }
             else if (acl.getAclType() == ACLType.LAYERED)
             {
@@ -2335,7 +2350,7 @@ public class HibernateNodeDaoServiceImpl extends HibernateDaoSupport implements 
             }
             else
             {
-                    setFixedAcls(childNodeId, mergeFromAclId, true);
+                    setFixedAcls(childNodeId, mergeFromAclId, true, processedNodes);
             }
         }
     }

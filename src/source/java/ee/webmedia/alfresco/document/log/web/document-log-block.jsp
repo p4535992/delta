@@ -7,10 +7,10 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="document-block-block-panel" label="#{msg.document_log_title}" styleClass="panel-100" progressive="true" rendered="#{DocumentLogBlockBean.rendered}"
+<a:panel id="document-block-block-panel" label="#{msg.document_log_title}" styleClass="panel-100 with-pager" progressive="true" rendered="#{LogBlockBean.rendered}"
    expanded="false">
 
-   <a:richList id="logList" viewMode="details" value="#{DocumentLogBlockBean.documentLogs}" var="r" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+   <a:richList id="logList" viewMode="details" value="#{LogBlockBean.logs}" var="r" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="createdDateTime">
 
       <a:column id="col1">
@@ -36,6 +36,8 @@
          <h:outputText id="col3-txt" value="#{r.eventDescription}" />
       </a:column>
 
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
+      <a:dataPager id="seriesLogPager" styleClass="pager" />
    </a:richList>
 
 </a:panel>

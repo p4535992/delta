@@ -46,7 +46,7 @@ function validateMandatory(control, message, showMessage)
 {
    var result = true;
    
-   if (control.value == null || jQuery.trim(control.value).length == 0)
+   if (control != null && (control.value == null || jQuery.trim(control.value).length == 0))
    {
       informUser(control, message, showMessage);
       result = false;

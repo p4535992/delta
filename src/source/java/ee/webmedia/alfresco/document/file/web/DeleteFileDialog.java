@@ -2,16 +2,20 @@ package ee.webmedia.alfresco.document.file.web;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.content.DeleteContentDialog;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -33,9 +37,13 @@ public class DeleteFileDialog extends DeleteContentDialog {
         try {
             super.finishImpl(context, outcome);
             
-            if(file != null && file.getType().equals(DocumentCommonModel.Types.DOCUMENT)) {
+            if(file != null && (file.getType().equals(DocumentCommonModel.Types.DOCUMENT) || file.getType().equals(ContentModel.TYPE_CONTENT))) {
                 getDocumentLogService().addDocumentLog(document, MessageUtil.getMessage(context, "document_log_status_fileDeleted", file.getName()));
                 getDocumentService().updateSearchableFiles(document);
+            }
+            
+            if(file != null && (file.getType().equals(DocumentSubtypeModel.Types.OUTGOING_LETTER) || file.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER) || file.getType().equals(ContentModel.TYPE_CONTENT))) {
+                ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItems();
             }
         } catch (NodeLockedException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_delete_error_locked");

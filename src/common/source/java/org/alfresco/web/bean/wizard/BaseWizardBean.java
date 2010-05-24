@@ -67,6 +67,11 @@ public abstract class BaseWizardBean extends BaseDialogBean implements IWizardBe
       return false;
    }
    
+   @Override
+    public String getCancelButtonLabel() {
+       return Application.getMessage(FacesContext.getCurrentInstance(), "cancel");
+    }
+   
    public String getNextButtonLabel()
    {
       return Application.getMessage(FacesContext.getCurrentInstance(), "next_button");

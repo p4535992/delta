@@ -93,6 +93,10 @@ public class UserServiceImpl implements UserService {
         return authorityService.hasAdminAuthority();
     }
 
+    private boolean isAdministrator(String userName) {
+        return ((userName != null) && authorityService.getAuthoritiesForUser(userName).contains(PermissionService.ADMINISTRATOR_AUTHORITY));
+    }
+
     @Override
     public boolean isDocumentManager() {
         if (isAdministrator()) {
@@ -101,6 +105,15 @@ public class UserServiceImpl implements UserService {
 
         return authorityService.getAuthorities().contains(getDocumentManagersGroup());
     }
+    
+    @Override
+    public boolean isDocumentManager(String userName) {
+        if (isAdministrator(userName)) {
+            return true;
+        }
+        return authorityService.getAuthoritiesForUser(userName).contains(getDocumentManagersGroup());
+    }
+
 
     @Override
     public String getDocumentManagersGroup() {

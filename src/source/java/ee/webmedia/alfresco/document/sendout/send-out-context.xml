@@ -23,6 +23,27 @@
       </property>
    </bean>
 
+   <bean id="sendOutParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="sendOutParametersBootstrap2" />
+      <property name="sinceVersion" value="1.7.1.4" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/sendout/bootstrap/send-out-parameters2.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
    <bean id="sendOutService" class="ee.webmedia.alfresco.document.sendout.service.SendOutServiceImpl">
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />

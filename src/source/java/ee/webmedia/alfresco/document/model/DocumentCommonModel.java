@@ -51,6 +51,8 @@ public interface DocumentCommonModel {
     interface Props {
         QName FUNCTION = QName.createQName(URI, "function");
         QName SERIES = QName.createQName(URI, "series");
+        QName VOLUME = QName.createQName(URI, "volume");
+        QName CASE = QName.createQName(URI, "case");
         QName FILE_NAMES = QName.createQName(URI, "fileNames");
         QName FILE_CONTENTS = QName.createQName(URI, "fileContents");
         QName SEARCHABLE_SEND_MODE = QName.createQName(URI, "searchableSendMode");
@@ -98,6 +100,7 @@ public interface DocumentCommonModel {
         QName SEND_INFO_RECIPIENT_REG_NR = QName.createQName(URI, "recipientRegNr");
         QName SEND_INFO_SEND_DATE_TIME = QName.createQName(URI, "sendDateTime");
         QName SEND_INFO_SEND_MODE = QName.createQName(URI, "sendMode");
+        QName SEND_INFO_RESOLUTION = QName.createQName(URI, "resolution");
         /**
          * all values for this property are defined in Enum {@link SendStatus} 
          */

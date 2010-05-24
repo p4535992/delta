@@ -11,6 +11,7 @@ import ee.webmedia.alfresco.menu.model.MenuItem;
  * @author Romet Aidla
  */
 public abstract class CountAddingMenuItemProcessor implements MenuService.MenuItemProcessor {
+    
     @Override
     final public void doWithMenuItem(MenuItem menuItem) {
         if(menuItem.getTitle() == null) {
@@ -23,7 +24,9 @@ public abstract class CountAddingMenuItemProcessor implements MenuService.MenuIt
             firstBrace = title.lastIndexOf('(');
         }
 
-        int count = getCount();
+long start = System.currentTimeMillis();        
+        int count = getCount(menuItem);
+System.out.println("PERFORMANCE: processing " + getClass().getSimpleName() + ": " + menuItem.getId() + " - " + (System.currentTimeMillis() - start) + "ms");
 
         String titleSuffix = "";
         if (count != 0) {
@@ -37,5 +40,5 @@ public abstract class CountAddingMenuItemProcessor implements MenuService.MenuIt
         menuItem.setTitle(title + titleSuffix);
     }
 
-    abstract protected int getCount();
+    abstract protected int getCount(MenuItem menuItem);
 }

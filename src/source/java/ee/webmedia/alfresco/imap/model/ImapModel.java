@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.imap.model;
 
-import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 
 /**
@@ -16,6 +15,7 @@ public interface ImapModel {
         String IMAP_SPACE = IMAP_PARENT + IMAP_EXT_MODEL_PREFIX + ":" + IMAP_ROOT;
         String INCOMING_SPACE = IMAP_SPACE + "/" + IMAP_EXT_MODEL_PREFIX + ":" + "incoming";
         String ATTACHMENT_SPACE =  IMAP_SPACE + "/" + IMAP_EXT_MODEL_PREFIX + ":" + "attachments";
+        String SENT_SPACE = IMAP_SPACE + "/" + IMAP_EXT_MODEL_PREFIX + ":" + "sent";
     }
 
     interface Types {

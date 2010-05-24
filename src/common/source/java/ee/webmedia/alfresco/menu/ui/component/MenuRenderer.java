@@ -19,6 +19,8 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
+import ee.webmedia.alfresco.menu.service.MenuService;
+import ee.webmedia.alfresco.menu.service.MenuService.MenuItemFilter;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.user.service.UserService;
 
@@ -30,6 +32,7 @@ public class MenuRenderer extends BaseRenderer {
     public static final String PRIMARY_MENU_PREFIX = "pm";
 
     private UserService userService;
+    private MenuService menuService;
 
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
@@ -192,12 +195,24 @@ public class MenuRenderer extends BaseRenderer {
         List<MenuItem> menuItems = menu.getSubItems();
         int i = 0;
         String id = PRIMARY_MENU_PREFIX;
+        MenuItemFilter filter = null;
+        Map<String, MenuItemFilter> menuItemFilters = getMenuService().getMenuItemFilters();
         for (MenuItem item : menuItems) {
             if (activeItemid.equals(Integer.toString(i))) {
                 UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), false);
                 if (menuItem != null)
                     children.add(menuItem);
             } else if (item instanceof DropdownMenuItem) { // Only the drop-down item in primary menu needs the DocumentTypeService
+                if (((DropdownMenuItem) item).getChildFilter() != null && menuItemFilters != null && menuItemFilters.containsKey(((DropdownMenuItem) item).getChildFilter())) {
+                    filter = menuItemFilters.get(((DropdownMenuItem) item).getChildFilter());
+                }
+
+                // Substituting users are not allowed to create new documents
+                if(filter != null && !filter.passesFilter(item, null)) {
+                    filter.openItemActionsForType((DropdownMenuItem) item, null, null);
+                    filter = null; // reset for next cycle
+                }
+
                 UIComponent menuItem = item.createComponent(context, id + i, getUserService());
                 if (menuItem != null)
                     children.add(removeTooltipRecursive(menuItem));
@@ -251,6 +266,14 @@ public class MenuRenderer extends BaseRenderer {
                     .getBean(UserService.BEAN_NAME);
         }
         return userService;
+    }
+    
+    protected MenuService getMenuService() {
+        if (menuService == null) {
+            menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(MenuService.BEAN_NAME);
+        }
+        return menuService;
     }
 
 }

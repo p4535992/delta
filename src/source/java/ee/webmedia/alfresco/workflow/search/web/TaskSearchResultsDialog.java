@@ -6,6 +6,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
 import ee.webmedia.alfresco.simdhs.CSVExporter;
 import ee.webmedia.alfresco.simdhs.DataReader;
@@ -45,6 +46,9 @@ public class TaskSearchResultsDialog extends BaseDialogBean {
         DataReader dataReader = new RichListDataReader();
         CSVExporter exporter = new CSVExporter(dataReader);
         exporter.export("taskList");
+        
+        // Erko hack for incorrect view id in the next request
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack();        
     }
 
     public void setup(List<TaskInfo> tasks) {

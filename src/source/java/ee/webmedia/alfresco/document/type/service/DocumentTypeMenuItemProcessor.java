@@ -5,20 +5,24 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.alfresco.service.namespace.NamespaceService;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.document.type.model.DocumentType;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
 
 public class DocumentTypeMenuItemProcessor implements MenuItemProcessor, InitializingBean {
+    
     private static Logger log = Logger.getLogger(DocumentTypeMenuItemProcessor.class);
 
     private MenuService menuService;
     private DocumentTypeService documentTypeService;
+    private NamespaceService namespaceService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -27,25 +31,32 @@ public class DocumentTypeMenuItemProcessor implements MenuItemProcessor, Initial
 
     @Override
     public void doWithMenuItem(MenuItem menuItem) {
-        traverse(menuItem.getSubItems());
+        List<DocumentType> allDocumentTypes = documentTypeService.getAllDocumentTypes();
+        traverse(menuItem.getSubItems(), allDocumentTypes);
     }
 
-    private void traverse(List<MenuItem> items) {
+    private void traverse(List<MenuItem> items, List<DocumentType> allDocumentTypes) {
         if (items == null) {
             return;
         }
         for (Iterator<MenuItem> i = items.iterator(); i.hasNext();) {
             MenuItem item = i.next();
-            if (StringUtils.isNotEmpty(item.getOutcome()) && !process(item)) {
+            if (StringUtils.isNotEmpty(item.getOutcome()) && !process(item, allDocumentTypes)) {
                 i.remove();
             } else {
-                traverse(item.getSubItems());
+                traverse(item.getSubItems(), allDocumentTypes);
             }
         }
     }
 
-    private boolean process(MenuItem item) {
-        DocumentType docType = documentTypeService.getDocumentType(item.getOutcome());
+    private boolean process(MenuItem item, List<DocumentType> allDocumentTypes) {
+        DocumentType docType = null; 
+        for (DocumentType tmpType : allDocumentTypes) {
+            if (tmpType.getId().toPrefixString(namespaceService).equalsIgnoreCase(item.getOutcome())) {
+                docType = tmpType;
+                break;
+            }
+        }
         if (docType == null) {
             log.warn("Document type not found: " + item.getOutcome());
             return false;
@@ -73,6 +84,10 @@ public class DocumentTypeMenuItemProcessor implements MenuItemProcessor, Initial
 
     public void setDocumentTypeService(DocumentTypeService documentTypeService) {
         this.documentTypeService = documentTypeService;
+    }
+    
+    public void setNamespaceService(NamespaceService namespaceService) {
+        this.namespaceService = namespaceService;
     }
 
     // END: getters / setters

@@ -8,12 +8,14 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.node.integrity.IntegrityException;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.content.AddContentDialog;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
+import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.io.FilenameUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -28,6 +30,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
     private static final long serialVersionUID = 1L;
     private static final String ERR_EXISTING_FILE = "add_file_existing_file";
+    private static final String ERR_INVALID_FILE_NAME = "add_file_invalid_file_name";
     private transient GeneralService generalService;
     private Node docTemplateNode;
     boolean firstLoad;
@@ -76,7 +79,8 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
     @Override
     protected String doPostCommitProcessing(FacesContext context, String outcome) {
         clearUpload();
-
+        reset();
+        
         if (this.showOtherProperties) {
             this.browseBean.setDocument(new Node(this.createdNode));
         }
@@ -112,8 +116,16 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
             getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT, prop);
         }
 
-        reset();
         return outcome;
+    }
+    
+    @Override
+    protected String getErrorOutcome(Throwable exception) {
+        if(exception instanceof IntegrityException) {
+            Utils.addErrorMessage(MessageUtil.getMessage(FacesContext.getCurrentInstance(), ERR_INVALID_FILE_NAME));
+            return "";
+        }
+        return super.getErrorOutcome(exception);
     }
     
     @Override

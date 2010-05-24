@@ -2,7 +2,9 @@ package ee.webmedia.alfresco.cases.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -46,7 +48,20 @@ public class CaseServiceImpl implements CaseService {
             NodeRef caseNodeRef = caseARef.getChildRef();
             caseOfVolume.add(getCaseByNoderef(caseNodeRef, volumeRef));
         }
+        Collections.sort(caseOfVolume);
         return caseOfVolume;
+    }
+
+    @Override
+    public List<Case> getAllCasesByVolume(NodeRef volumeRef, DocListUnitStatus status) {
+        List<Case> cases = getAllCasesByVolume(volumeRef);
+        for (Iterator<Case> i = cases.iterator(); i.hasNext(); ) {
+            Case tmpCase = i.next();
+            if (!status.getValueName().equals(tmpCase.getStatus())) {
+                i.remove();
+            }
+        }
+        return cases;
     }
 
     @Override
@@ -118,6 +133,7 @@ public class CaseServiceImpl implements CaseService {
     @Override
     public Case createCase(NodeRef volumeRef) {
         Case theCase = new Case();
+        theCase.setStatus(DocListUnitStatus.OPEN.getValueName());
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         props.put(CaseModel.Props.STATUS, DocListUnitStatus.OPEN.getValueName());
 

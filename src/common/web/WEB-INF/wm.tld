@@ -126,6 +126,23 @@
       <tag-class>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditorTag</tag-class>
       <body-content>empty</body-content>
       <attribute>
+         <name>id</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>The component identifier for this component</description>
+      </attribute>
+      <attribute>
+         <name>binding</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>The value binding expression linking this component to a property in a backing bean</description>
+      </attribute>
+      <attribute>
+         <name>rendered</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+      </attribute>
+      <attribute>
          <name>varName</name>
          <required>true</required>
          <rtexprvalue>true</rtexprvalue>
@@ -160,60 +177,82 @@
          <rtexprvalue>true</rtexprvalue>
          <description>Dialog title id.</description>
       </attribute>
-       <attribute>
+      <attribute>
          <name>filters</name>
          <rtexprvalue>true</rtexprvalue>
          <description>Filters value binding</description>
       </attribute>
-       <attribute>
+      <attribute>
+         <name>filterIndex</name>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Filter's default index</description>
+      </attribute>
+      <attribute>
          <name>preprocessCallback</name>
          <required>false</required>
          <rtexprvalue>true</rtexprvalue>
       </attribute>
    </tag>
 
-    <tag>
-        <name>search</name>
-        <tag-class>ee.webmedia.alfresco.common.propertysheet.search.SearchTag</tag-class>
-        <body-content>empty</body-content>
-        <attribute>
-            <name>value</name>
-            <rtexprvalue>true</rtexprvalue>
-        </attribute>
-        <attribute>
-            <name>dataMultiValued</name>
-            <type>Boolean</type>
-            <description>Indicates whether user can select multiple values from search or only one (default value is FALSE).</description>
-        </attribute>
-        <attribute>
-            <name>dataMandatory</name>
-            <type>Boolean</type>
-            <description>Indicates data is mandatory (default value is TRUE).</description>
-        </attribute>
-        <attribute>
-            <name>pickerCallback</name>
-            <description>Picker callback for searching values.</description>
-            <required>true</required>
-        </attribute>
-        <attribute>
-            <name>setterCallback</name>
-            <description>Callback for setting value(s).</description>
-        </attribute>
-        <attribute>
-            <name>dialogTitleId</name>
-            <description>Sets custom title (from resource bundle) to search dialog.</description>
-        </attribute>
-        <attribute>
-            <name>editable</name>
-            <type>Boolean</type>
-            <description>Indicates whether user can manually change component value (edit html input) (default value is FALSE).</description>
-        </attribute>
-        <attribute>
-            <name>readonly</name>
-            <required>false</required>
-            <rtexprvalue>true</rtexprvalue>
-            <description>Indicates whether component value is changeable.</description>
-        </attribute>
-    </tag>
+   <tag>
+      <name>search</name>
+      <tag-class>ee.webmedia.alfresco.common.propertysheet.search.SearchTag</tag-class>
+      <body-content>empty</body-content>
+      <attribute>
+         <name>id</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>The component identifier for this component</description>
+      </attribute>
+      <attribute>
+         <name>binding</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>The value binding expression linking this component to a property in a backing bean</description>
+      </attribute>
+      <attribute>
+         <name>rendered</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+      </attribute>
+      <attribute>
+         <name>value</name>
+         <rtexprvalue>true</rtexprvalue>
+      </attribute>
+      <attribute>
+         <name>dataMultiValued</name>
+         <type>Boolean</type>
+         <description>Indicates whether user can select multiple values from search or only one (default value is FALSE).</description>
+      </attribute>
+      <attribute>
+         <name>dataMandatory</name>
+         <type>Boolean</type>
+         <description>Indicates data is mandatory (default value is TRUE).</description>
+      </attribute>
+      <attribute>
+         <name>pickerCallback</name>
+         <description>Picker callback for searching values.</description>
+         <required>true</required>
+      </attribute>
+      <attribute>
+         <name>setterCallback</name>
+         <description>Callback for setting value(s).</description>
+      </attribute>
+      <attribute>
+         <name>dialogTitleId</name>
+         <description>Sets custom title (from resource bundle) to search dialog.</description>
+      </attribute>
+      <attribute>
+         <name>editable</name>
+         <type>Boolean</type>
+         <description>Indicates whether user can manually change component value (edit html input) (default value is FALSE).</description>
+      </attribute>
+      <attribute>
+         <name>readonly</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Indicates whether component value is changeable.</description>
+      </attribute>
+   </tag>
       
 </taglib>

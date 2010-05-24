@@ -42,10 +42,14 @@ import javax.faces.model.SelectItem;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.ui.common.Utils;
 
+import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
+import ee.webmedia.alfresco.common.propertysheet.search.Search;
+import ee.webmedia.alfresco.utils.ComponentUtil;
+
 /**
  * @author Kevin Roast
  */
-public class UIGenericPicker extends UICommand
+public class UIGenericPicker extends UICommand implements AjaxUpdateable
 {
    /** action ids */
    private final static int ACTION_NONE   = -1;
@@ -68,6 +72,9 @@ public class UIGenericPicker extends UICommand
    
    private final static int DEFAULT_HEIGHT = 100;
    private final static int DEFAULT_WIDTH = 250;
+   private final static int DEFAULT_SIZE = 5;
+   private final static int MAX_SIZE = 21;
+   private final static int MIN_SIZE = 2;
    
    private MethodBinding queryCallback = null;
    private Boolean showFilter = null;
@@ -78,9 +85,11 @@ public class UIGenericPicker extends UICommand
    private String addButtonLabel;
    private Integer width = null;
    private Integer height = null;
+   private Integer size = null;
    
    private SelectItem[] filters = null;
    private int filterIndex = 0;
+   private int defaultFilterIndex = 0;
    private String contains = "";
    private String[] selectedResults = null;
    private SelectItem[] currentResults = null;
@@ -127,6 +136,8 @@ public class UIGenericPicker extends UICommand
       filters = (SelectItem[])values[12];
       filterRefresh = (Boolean)values[13];
       multiSelect = (Boolean)values[14];
+      size = (Integer)values[15];
+      defaultFilterIndex = (Integer)values[16];
    }
    
    /**
@@ -134,7 +145,7 @@ public class UIGenericPicker extends UICommand
     */
    public Object saveState(FacesContext context)
    {
-      Object values[] = new Object[15];
+      Object values[] = new Object[17];
       // standard component attributes are saved by the super class
       values[0] = super.saveState(context);
       values[1] = showFilter;
@@ -151,6 +162,8 @@ public class UIGenericPicker extends UICommand
       values[12] = filters;
       values[13] = filterRefresh;
       values[14] = multiSelect;
+      values[15] = size;
+      values[16] = defaultFilterIndex;
       return (values);
    }
    
@@ -170,11 +183,14 @@ public class UIGenericPicker extends UICommand
          // decode the values - we are expecting an action identifier
          action = Integer.parseInt(value);
       }
+      if (action == ACTION_NONE) {
+          return; // no need to create an unnecessary event
+      }
       
       // we always process these values to keep the component up-to-date
       
       // now find the Filter drop-down value
-      int filterIndex = 0;
+      int filterIndex = defaultFilterIndex;
       String strFilterIndex = (String)requestMap.get(fieldId + FIELD_FILTER);
       if (strFilterIndex != null && strFilterIndex.length() != 0)
       {
@@ -217,7 +233,7 @@ public class UIGenericPicker extends UICommand
             
             case ACTION_CLEAR:
                this.contains = "";
-               this.filterIndex = 0;
+               this.filterIndex = defaultFilterIndex;
                this.selectedResults = null;
                this.currentResults = null;
                break;
@@ -268,7 +284,9 @@ public class UIGenericPicker extends UICommand
       String clientId = getClientId(context);
       
       // start outer table
-      out.write("<table cellspacing=\"0\" cellpadding=\"0\" width=\"100%\" class=\"generic-picker\">");
+      out.write("<table id=\"");
+      out.write(getAjaxClientId(context));
+      out.write("\" cellspacing=\"0\" cellpadding=\"0\" width=\"100%\" class=\"generic-picker\">");
       
       // top row
       out.write("<tr valign=\"top\">");
@@ -284,7 +302,7 @@ public class UIGenericPicker extends UICommand
          if (getFilterRefresh() == true)
          {
             out.write(" onchange=\"");
-            out.write(generateFormSubmit(context, ACTION_FILTER));
+            out.write(generateFormSubmit(context, ACTION_FILTER, 0));
             out.write("\"");
          }
          
@@ -311,7 +329,7 @@ public class UIGenericPicker extends UICommand
             }
          }
          
-         out.write("</td></select>");
+         out.write("</select></td>");
       }
       out.write("<td>");
       
@@ -329,7 +347,7 @@ public class UIGenericPicker extends UICommand
       out.write("<input type='submit' value='");
       out.write(Utils.encode(bundle.getString(MSG_SEARCH)));
       out.write("' onclick=\"");
-      out.write(generateFormSubmit(context, ACTION_SEARCH));
+      out.write(generateFormSubmit(context, ACTION_SEARCH, 0));
       out.write("\">");
       out.write("</td></tr>");
       
@@ -338,7 +356,7 @@ public class UIGenericPicker extends UICommand
       {
          out.write("<tr><td colspan=\"9\">");
          out.write("<a href='#' onclick=\"");
-         out.write(generateFormSubmit(context, ACTION_CLEAR));
+         out.write(generateFormSubmit(context, ACTION_CLEAR, 0));
          out.write("\">");
          out.write(Utils.encode(bundle.getString(MSG_CLEAR)));
          out.write("</a></td></tr>");
@@ -346,28 +364,15 @@ public class UIGenericPicker extends UICommand
       
       // results list row
       out.write("<tr><td colspan=\"9\">");
-      out.write("<select size='");
-        if (getMultiSelect() == true) {
-            if (this.currentResults != null && getShowContains() == true) {
-                out.write("13");
-            } else {
-                out.write("15");
-            }
-        } else {
-            if (this.currentResults != null && getShowContains() == true) {
-                out.write("14");
-            } else {
-                out.write("17");
-            }
-        }
-      out.write("' style='width:100%;height:auto;' name='");
+      out.write("<select size=\"" + getSize() + "\"");
+      out.write(" style='width:100%;height:auto;' name='");
       out.write(clientId + FIELD_RESULTS);
       out.write("' id='");
       out.write(clientId + FIELD_RESULTS);
       out.write("'");
       if (getMultiSelect() == true)
       {
-         out.write(" multiple");
+         out.write(" multiple=\"multiple\"");
       }
       out.write(">");
       
@@ -397,7 +402,7 @@ public class UIGenericPicker extends UICommand
       // help text
       if (getMultiSelect() == true)
       {
-          out.write("<tr><td colspan=2>");
+          out.write("<tr><td colspan=\"2\">");
           out.write(Utils.encode(bundle.getString("help_select_multiple_rows")));
           out.write("</td></tr>");
       }
@@ -405,7 +410,7 @@ public class UIGenericPicker extends UICommand
       // bottom row - add button
       if (getShowAddButton() == true)
       {
-         out.write("<tr><td colspan=2>");
+         out.write("<tr><td colspan=\"2\">");
          out.write("<input type='submit' value='");
          String msg = getAddButtonLabel();
          if (msg == null || msg.length() == 0)
@@ -414,7 +419,13 @@ public class UIGenericPicker extends UICommand
          }
          out.write(Utils.encode(msg));
          out.write("' onclick=\"");
-         out.write(generateFormSubmit(context, ACTION_ADD));
+         int ajaxParentLevel = 1;
+         Integer addition = (Integer) getParent().getAttributes().get(Search.AJAX_PARENT_LEVEL_KEY);
+         if (addition != null)
+         {
+            ajaxParentLevel += addition;
+         }
+         out.write(generateFormSubmit(context, ACTION_ADD, ajaxParentLevel));
          out.write("\">");
          out.write("</td></tr>");
       }
@@ -448,6 +459,12 @@ public class UIGenericPicker extends UICommand
       return this.filterIndex;
    }
 
+   public void setDefaultFilterIndex(int defaultFilterIndex)
+   {
+      this.defaultFilterIndex = defaultFilterIndex;
+      this.filterIndex = defaultFilterIndex;
+   }
+   
    /**
     * @return Returns the addButtonLabel.
     */
@@ -624,6 +641,39 @@ public class UIGenericPicker extends UICommand
       this.height = Integer.valueOf(height);
    }
    
+   
+   /**
+    * @return Returns the size.
+    */
+   public int getSize()
+   {
+      ValueBinding vb = getValueBinding("size");
+      if (vb != null)
+      {
+         this.size = (Integer)vb.getValue(getFacesContext());
+      }
+      
+      if(this.currentResults != null) {
+          if(this.currentResults.length > MAX_SIZE)
+              return MAX_SIZE;
+          
+          if(this.currentResults.length < MIN_SIZE)
+              return MIN_SIZE;
+          
+          return this.currentResults.length;
+      }
+      
+      return size != null ? size.intValue() : DEFAULT_SIZE;
+   }
+
+   /**
+    * @param size The size to set.
+    */
+   public void setSize(int size)
+   {
+      this.size = Integer.valueOf(size);
+   }
+   
    /**
     * @return Returns the queryCallback.
     */
@@ -649,6 +699,11 @@ public class UIGenericPicker extends UICommand
       return this.selectedResults;
    }
    
+   @Override
+   public String getAjaxClientId(FacesContext context) {
+       return getClientId(context);
+   }
+   
    
    // ------------------------------------------------------------------------------
    // Private helpers
@@ -671,9 +726,9 @@ public class UIGenericPicker extends UICommand
     * 
     * @return FORM submit JavaScript
     */
-   private String generateFormSubmit(FacesContext context, int action)
+   private String generateFormSubmit(FacesContext context, int action, int parentLevel)
    {
-      return Utils.generateFormSubmit(context, this, getHiddenFieldName(), Integer.toString(action));
+      return ComponentUtil.generateAjaxFormSubmit(context, this, getHiddenFieldName(), Integer.toString(action), parentLevel);
    }
    
    

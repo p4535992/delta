@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.application.Application;
+import javax.faces.component.NamingContainer;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.component.html.HtmlPanelGroup;
@@ -30,6 +31,7 @@ import org.alfresco.web.ui.repo.component.UIMultiValueEditor.MultiValueEditorEve
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -41,19 +43,26 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * 
  * @author Alar Kvell
  */
-public class MultiValueEditor extends UIComponentBase {
+public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable, NamingContainer {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MultiValueEditor.class);
 
     protected static final String PROPERTY_SHEET_VAR = "propertySheetVar";
     protected static final String PREPROCESS_CALLBACK = "preprocessCallback";
     protected static final String FILTERS = "filters";
+    protected static final String FILTER_INDEX = "filterIndex";
 
     public static final String MULTI_VALUE_EDITOR_FAMILY = MultiValueEditor.class.getCanonicalName();
     public static final String ADD_LABEL_ID = "addLabelId";
+    public static final String SHOW_HEADERS = "showHeaders";
 
     @Override
     public String getFamily() {
         return MULTI_VALUE_EDITOR_FAMILY;
+    }
+
+    @Override
+    public String getAjaxClientId(FacesContext context) {
+        return getClientId(context) + "_container";
     }
 
     @Override
@@ -77,7 +86,7 @@ public class MultiValueEditor extends UIComponentBase {
         List<UIComponent> children = getChildren();
 
         UIGenericPicker picker = (UIGenericPicker) context.getApplication().createComponent("org.alfresco.faces.GenericPicker");
-        FacesHelper.setupComponentId(context, picker, null);
+        FacesHelper.setupComponentId(context, picker, "picker");
         picker.setShowFilter(false);
         picker.setWidth(400);
         picker.setMultiSelect(true);
@@ -93,6 +102,11 @@ public class MultiValueEditor extends UIComponentBase {
             picker.setShowFilter(true);
         }
 
+        String filterIndex = (String) getAttributes().get(FILTER_INDEX);
+        if (StringUtils.isNotBlank(filterIndex) && StringUtils.isNumeric(filterIndex)) {
+            picker.setDefaultFilterIndex(Integer.parseInt(filterIndex));
+        }
+        
         picker.addActionListener(new PickerFinishActionListener());
 
         children.add(picker);
@@ -290,12 +304,6 @@ public class MultiValueEditor extends UIComponentBase {
                 }
             }
             rowIndex++;
-        }
-        final UIPropertySheet propSheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
-        if (propSheet != null) { // no propSheet, if multivalueEditor is created outside propSheet - for example in jsp using MultiValueEditorTag
-            // to remove unnecessary client-side validations that might have been added by the componentGenerator to rowItem components
-            propSheet.getChildren().clear();
-            propSheet.getClientValidations().clear();
         }
     }
 

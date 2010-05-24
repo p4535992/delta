@@ -6,6 +6,7 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -21,13 +22,15 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     private static final String PARAM_FUNCTION_NODEREF = "nodeRef";
     private static final String ERROR_MESSAGE_SERIES_EXIST = "function_validation_series";
-    
+
     private transient FunctionsService functionsService;
     private transient MenuService menuService;
-    
+
     private Function function;
     private boolean newFunction;
-    
+
+    private transient UIPropertySheet propertySheet;
+
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         getFunctionsService().saveOrUpdate(function);
@@ -47,25 +50,20 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
         return false;
     }
 
+    // START: JSP event handlers
     /**
-     * JSP event handler.
      * Called before displaying function value.
-     * 
-     * @param event
      */
     public void select(ActionEvent event) {
         function = getFunctionsService().getFunctionByNodeRef(ActionUtil.getParam(event, PARAM_FUNCTION_NODEREF));
     }
 
-    /**
-     * JSP event handler.
-     * 
-     * @param event
-     */
-    public void addNewFunction(ActionEvent event) {
+    public void addNewFunction(@SuppressWarnings("unused") ActionEvent event) {
         newFunction = true;
         function = getFunctionsService().createFunction();
     }
+
+    // END: JSP event handlers
 
     /**
      * JSP event handler for the close button.
@@ -73,23 +71,31 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
      * @param event
      */
     public String close() {
-        if(function.getNode() instanceof TransientNode) {
+        if (function.getNode() instanceof TransientNode) {
             return null;
         }
         if (!isClosed()) {
             boolean wasClosed = getFunctionsService().closeFunction(function);
-            if(!wasClosed) {
+            if (!wasClosed) {
                 MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), ERROR_MESSAGE_SERIES_EXIST);
                 return null;
-		    }
-	    }
+            }
+            propertySheet.getChildren().clear();
+        }
         return null;
     }
-    
+
+    public String reopen() {
+        if (isClosed()) {
+            propertySheet.getChildren().clear();
+            getFunctionsService().reopenFunction(function);
+        }
+        return null;
+    }
+
     public boolean isClosed() {
         final String currentStatus = (String) getCurrentNode().getProperties().get(FunctionsModel.Props.STATUS.toString());
-        final boolean closed = DocListUnitStatus.CLOSED.equals(currentStatus);
-        return closed;
+        return DocListUnitStatus.CLOSED.equals(currentStatus);
     }
 
     public boolean isNew() {
@@ -99,12 +105,13 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
     public Node getCurrentNode() {
         return function.getNode();
     }
-    
+
     // START: private methods
     private void resetData() {
         function = null;
         newFunction = false;
     }
+
     // END: private methods
 
     // START: getters / setters
@@ -140,6 +147,13 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
     public void setMenuService(MenuService menuService) {
         this.menuService = menuService;
     }
-    
-	// END: getters / setters
+
+    public void setPropertySheet(UIPropertySheet propertySheet) {
+        this.propertySheet = propertySheet;
+    }
+
+    public UIPropertySheet getPropertySheet() {
+        return propertySheet;
+    }
+    // END: getters / setters
 }

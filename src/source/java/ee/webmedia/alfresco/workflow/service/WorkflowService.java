@@ -121,6 +121,10 @@ public interface WorkflowService {
     /**
      * If document has at least one compoundWorkflow and all compoundWorkflows have {@link Status#FINISHED}.
      */
-    boolean hasFinishedCompoundWorkflows(NodeRef parent);
+    boolean hasAllFinishedCompoundWorkflows(NodeRef parent);
+
+    boolean hasInprogressCompoundWorkflows(NodeRef parent);
+
+    boolean hasNoStoppedOrInprogressCompoundWorkflows(NodeRef parent);
 
 }

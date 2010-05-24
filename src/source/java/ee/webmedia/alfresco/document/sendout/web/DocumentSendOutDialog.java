@@ -32,6 +32,7 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
+import org.alfresco.web.ui.common.converter.ByteSizeConverter;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.validator.EmailValidator;
@@ -76,8 +77,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSendOutDialog.class);
 
-    private static final String[][] PROP_KEYS = { { "recipientName", "recipientEmail", "recipientSendMode" },
-            { "additionalRecipientName", "additionalRecipientEmail", "additionalRecipientSendMode" } };
+    private static final String[] PROP_KEYS = { "recipientName", "recipientEmail", "recipientSendMode" };
 
     private transient GeneralService generalService;
     private transient DocumentService documentService;
@@ -164,11 +164,11 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     @SuppressWarnings("unchecked")
     public void loadDocument(ActionEvent event) {
         resetState();
+        final FacesContext context = FacesContext.getCurrentInstance();
         Node node = null;
         try {
             node = getDocumentService().getDocument(new NodeRef(ActionUtil.getParam(event, "documentNodeRef")));
         } catch (InvalidNodeRefException e) {
-            final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_sendOut_error_docDeleted");
             return;
         }
@@ -178,9 +178,14 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         List<String> selectedFiles = new ArrayList<String>();
         SortedMap<String, String> files = new TreeMap<String, String>();
         final List<File> allFiles = getFileService().getAllActiveFiles(node.getNodeRef());
+        ByteSizeConverter converter = (ByteSizeConverter)context.getApplication().createConverter(ByteSizeConverter.CONVERTER_ID);
         for (File file : allFiles) {
             final String fileRef = file.getNodeRef().toString();
-            files.put(file.getName(), fileRef);
+            
+            String fileName = file.getName();
+            fileName += " (" + converter.getAsString(context, null, file.getSize()) + ")";
+            
+            files.put(fileName, fileRef);
             boolean isDdoc = file.isDigiDocContainer();
             if (isDdoc) {
                 if (!ddocExists) {
@@ -198,6 +203,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         model.setDocName((String) props.get(DocumentCommonModel.Props.DOC_NAME));
         model.setSendDesc((String) props.get(DocumentCommonModel.Props.SEND_DESC_VALUE));
         model.setSenderEmail(getParametersService().getStringParameter(Parameters.DOC_SENDER_EMAIL));
+        model.setSendoutInfo(getParametersService().getStringParameter(Parameters.DOC_SENDOUT_INFO));
         model.setSubject(model.getDocName());
         Map<String, List<String>> properties = new HashMap<String, List<String>>();
 
@@ -226,6 +232,17 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             names.add(StringUtils.isNotBlank(contractName) ? contractName : "");
             emails.add(StringUtils.isNotBlank(contractEmail) ? contractEmail : "");
         }
+
+        if (names.size() == 1 && emails.size() == 1 && StringUtils.isBlank(names.get(0)) && StringUtils.isBlank(emails.get(0))) {
+            names = new ArrayList<String>();
+            emails = new ArrayList<String>();
+        }
+        
+        List<String> namesAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), false);
+        names.addAll(namesAdd);
+        List<String> emailsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), false);
+        emails.addAll(emailsAdd);
+        
         if (names.isEmpty()) {
             names.add("");
         }
@@ -240,23 +257,10 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                 recSendModes.add("");
             }
         }
-        properties.put(PROP_KEYS[0][0], names);
-        properties.put(PROP_KEYS[0][1], emails);
-        properties.put(PROP_KEYS[0][2], recSendModes);
-
-        names = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), true);
-        emails = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), true);
-        recSendModes = new ArrayList<String>(names.size());
-        for (int i = 0; i < names.size(); i++) {
-            if (StringUtils.isNotBlank(names.get(i)) || StringUtils.isNotBlank(emails.get(i))) {
-                recSendModes.add(defaultSendMode);
-            } else {
-                recSendModes.add("");
-            }
-        }
-        properties.put(PROP_KEYS[1][0], names);
-        properties.put(PROP_KEYS[1][1], emails);
-        properties.put(PROP_KEYS[1][2], recSendModes);
+        
+        properties.put(PROP_KEYS[0], names);
+        properties.put(PROP_KEYS[1], emails);
+        properties.put(PROP_KEYS[2], recSendModes);
 
         model.setProperties(properties);
     }
@@ -292,13 +296,9 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     }
 
     public void updateSendModes(ActionEvent event) {
-        List<String> recSendModes = model.getProperties().get(PROP_KEYS[0][2]);
+        List<String> recSendModes = model.getProperties().get(PROP_KEYS[2]);
         for (int i = 0; i < recSendModes.size(); i++) {
             recSendModes.set(i, model.getSendMode());
-        }
-        List<String> additionalSendModes = model.getProperties().get(PROP_KEYS[1][2]);
-        for (int i = 0; i < additionalSendModes.size(); i++) {
-            additionalSendModes.set(i, model.getSendMode());
         }
     }
 
@@ -376,33 +376,32 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         boolean hasInvalidRecipient = false;
         boolean hasMissingEmails = false;
         boolean hasEmailMode = false;
-        for (int round = 0; round < 2; round++) {
-            List<String> names = model.getProperties().get(PROP_KEYS[round][0]);
-            List<String> emails = model.getProperties().get(PROP_KEYS[round][1]);
-            List<String> modes = model.getProperties().get(PROP_KEYS[round][2]);
-            for (int i = 0; i < names.size(); i++) {
-                String name = names.get(i);
-                String email = StringUtils.trim(emails.get(i));
-                String mode = modes.get(i);
-                if (round == 0 && !hasValidRecipient && StringUtils.isNotBlank(name) && StringUtils.isNotBlank(mode)
-                        && (StringUtils.isNotBlank(email) || (!SendMode.EMAIL.equals(mode) && !SendMode.EMAIL_DVK.equals(mode)))) {
-                    hasValidRecipient = true;
-                } else if (!hasMissingEmails && StringUtils.isNotBlank(mode) && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode))
-                        && StringUtils.isBlank(email)) {
-                    hasMissingEmails = true;
-                } else if (!hasInvalidRecipient && (StringUtils.isNotBlank(name) || StringUtils.isNotBlank(mode) || StringUtils.isNotBlank(email))
-                        && (StringUtils.isBlank(name) || StringUtils.isBlank(mode))) {
-                    hasInvalidRecipient = true;
+
+        List<String> names = model.getProperties().get(PROP_KEYS[0]);
+        List<String> emails = model.getProperties().get(PROP_KEYS[1]);
+        List<String> modes = model.getProperties().get(PROP_KEYS[2]);
+        for (int i = 0; i < names.size(); i++) {
+            String name = names.get(i);
+            String email = StringUtils.trim(emails.get(i));
+            String mode = modes.get(i);
+            if (!hasValidRecipient && StringUtils.isNotBlank(name) && StringUtils.isNotBlank(mode)
+                    && (StringUtils.isNotBlank(email) || (!SendMode.EMAIL.equals(mode) && !SendMode.EMAIL_DVK.equals(mode)))) {
+                hasValidRecipient = true;
+            } else if (!hasMissingEmails && StringUtils.isNotBlank(mode) && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode))
+                    && StringUtils.isBlank(email)) {
+                hasMissingEmails = true;
+            } else if (!hasInvalidRecipient && (StringUtils.isNotBlank(name) || StringUtils.isNotBlank(mode) || StringUtils.isNotBlank(email))
+                    && (StringUtils.isBlank(name) || StringUtils.isBlank(mode))) {
+                hasInvalidRecipient = true;
+            }
+            if (StringUtils.isNotBlank(email)) {
+                if (!emailValidator.isValid(email)) {
+                    valid = false;
+                    MessageUtil.addErrorMessage(context, "email_format_is_not_valid");
                 }
-                if (StringUtils.isNotBlank(email)) {
-                    if (!emailValidator.isValid(email)) {
-                        valid = false;
-                        MessageUtil.addErrorMessage(context, "email_format_is_not_valid");
-                    }
-                }
-                if (!hasEmailMode && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode))) {
-                    hasEmailMode = true;
-                }
+            }
+            if (!hasEmailMode && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode))) {
+                hasEmailMode = true;
             }
         }
 
@@ -420,17 +419,9 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         }
 
         final String senderEmail = StringUtils.trim(model.getSenderEmail());
-        if (StringUtils.isBlank(senderEmail)) {
+        if (StringUtils.isBlank(senderEmail) || !emailValidator.isValid(senderEmail)) {
             valid = false;
-            MessageUtil.addErrorMessage(context, "common_propertysheet_validator_mandatory", MessageUtil.getMessage(context, "document_senderEmail"));
-        } else if (!emailValidator.isValid(senderEmail)) {
-            valid = false;
-            MessageUtil.addErrorMessage(context, "email_format_is_not_valid");
-        }
-
-        if (StringUtils.isBlank(model.getContent())) {
-            valid = false;
-            MessageUtil.addErrorMessage(context, "common_propertysheet_validator_mandatory", MessageUtil.getMessage(context, "document_send_content"));
+            MessageUtil.addErrorMessage(context, "document_docSenderEmail_problem");
         }
 
         if (valid && hasEmailMode && model.getSelectedFiles().size() > 0) {
@@ -457,7 +448,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
                 if (totalSizeBytes > maxSizeBytes) {
                     valid = false;
-                    MessageUtil.addErrorMessage(context, "document_send_out_size");
+                    MessageUtil.addErrorMessage(context, "document_send_out_size", maxSizeMB);
                 }
             }
         }
@@ -470,11 +461,11 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         List<String> names = new ArrayList<String>();
         List<String> emails = new ArrayList<String>();
         List<String> modes = new ArrayList<String>();
-        for (int round = 0; round < 2; round++) {
-            names.addAll(model.getProperties().get(PROP_KEYS[round][0]));
-            emails.addAll(model.getProperties().get(PROP_KEYS[round][1]));
-            modes.addAll(model.getProperties().get(PROP_KEYS[round][2]));
-        }
+
+        names.addAll(model.getProperties().get(PROP_KEYS[0]));
+        emails.addAll(model.getProperties().get(PROP_KEYS[1]));
+        modes.addAll(model.getProperties().get(PROP_KEYS[2]));
+
         try {
             result = getSendOutService().sendOut(model.getNodeRef(), names, emails, modes, model.getSenderEmail(), model.getSubject(), model.getContent(),
                     model.getSelectedFiles(), model.isZip());
@@ -658,6 +649,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         private String sendMode;
         private boolean zip;
         private String senderEmail;
+        private String sendoutInfo;
         private String subject;
         private String content;
         private String template;
@@ -718,6 +710,14 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
         public void setSenderEmail(String senderEmail) {
             this.senderEmail = senderEmail;
+        }
+
+        public String getSendoutInfo() {
+            return sendoutInfo;
+        }
+
+        public void setSendoutInfo(String sendoutInfo) {
+            this.sendoutInfo = sendoutInfo;
         }
 
         public String getSubject() {

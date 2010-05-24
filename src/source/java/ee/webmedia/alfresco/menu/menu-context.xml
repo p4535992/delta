@@ -33,6 +33,16 @@
       <property name="nodeService" ref="NodeService" />
       <property name="userService" ref="UserService" />
       <property name="updateCount" value="0" />
+      <property name="menuItemFilters">
+         <map>
+             <entry key="myDocuments">
+                 <ref bean="myDocumentsMenuItemFilter" />
+             </entry>
+             <entry key="createDocument">
+               <ref bean="createDocumentMenuItemFilter"/>
+             </entry>
+         </map>
+     </property>
    </bean>
 
    <bean id="MenuService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -62,10 +72,16 @@
    </bean>
 -->
 
+   <bean name="createDocumentMenuItemFilter" class="ee.webmedia.alfresco.menu.service.CreateDocumentMenuItemFilter" />
+
+   <bean name="myDocumentsMenuItemFilter" class="ee.webmedia.alfresco.menu.service.MyDocumentsMenuItemFilter">
+      <property name="userService" ref="UserService" />
+      <property name="nodeService" ref="NodeService" />      
+   </bean>
+
    <bean class="ee.webmedia.alfresco.menu.service.DocumentListTreeItemProcessor" init-method="init">
       <property name="nodeService" ref="NodeService" />
       <property name="menuService" ref="MenuService" />
    </bean>
-   
 
 </beans>

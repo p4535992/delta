@@ -46,10 +46,12 @@ import javax.faces.event.PhaseId;
 import javax.transaction.UserTransaction;
 
 import org.alfresco.web.app.Application;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ViewsConfigElement;
 import org.alfresco.web.data.IDataContainer;
 import org.alfresco.web.ui.common.renderer.data.IRichListRenderer;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -128,6 +130,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
       this.initialSortColumn = (String)values[8];
       this.initialSortDescending = ((Boolean)values[9]).booleanValue();
       this.refreshOnBind = ((Boolean)values[10]).booleanValue();
+      this.doPermissionCheck = (String)values[11];
    }
    
    /**
@@ -147,7 +150,8 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
             Integer.valueOf(this.pageSize),
             this.initialSortColumn,
             (this.initialSortDescending ? Boolean.TRUE : Boolean.FALSE),
-            this.refreshOnBind};
+            this.refreshOnBind,
+            this.doPermissionCheck};
       
       return (values);
    }
@@ -254,12 +258,25 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
     * 
     * @return UIComponent
     */
+   
    public UIComponent getEmptyMessage()
    {
       return getFacet("empty");
    }
    
    
+    public void setDoPermissionCheck(String doPermissionCheck) {
+        if (!StringUtils.isBlank(doPermissionCheck)) {
+            this.doPermissionCheck = doPermissionCheck;
+        } else {
+            this.doPermissionCheck = null;
+        }
+    }
+
+    public String getDoPermissionCheck() {
+        return this.doPermissionCheck;
+    }
+
    // ------------------------------------------------------------------------------
    // IDataContainer implementation 
    
@@ -467,6 +484,9 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
       }
       int rowCount = getDataModel().size();
       this.absoluteRwCount = rowCount;
+
+      removeNodesWithoutPermissionFromDataModel();
+
       // if a page size is specified, then we use that
       int pageSize = getPageSize();
       if (pageSize != -1 && pageSize != 0)
@@ -506,6 +526,32 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
          logger.debug("Bound datasource: PageSize: " + pageSize + "; CurrentPage: " + this.currentPage + "; RowIndex: " + this.rowIndex + "; MaxRowIndex: " + this.maxRowIndex + "; RowCount: " + rowCount);
    }
    
+
+   private void removeNodesWithoutPermissionFromDataModel() {
+       IGridDataModel myDataModel = getDataModel();
+       int rowCount = myDataModel.size();
+       if (getDoPermissionCheck() != null && myDataModel.size() != 0) {
+           int start = this.currentPage * this.pageSize - 1;
+           if (start < 0)
+               start = 0;
+           while (start <= ((this.currentPage + 1) * this.pageSize) + 1 && start < rowCount) {
+               Node nood = (Node) myDataModel.getRow(start);
+               boolean check = nood.hasPermission(getDoPermissionCheck());
+               if (check) {
+                   start++;
+               } else {
+                   Object removed = myDataModel.remove(start);
+                   if(getChildren().contains(removed)){
+                       getChildren().remove(removed);
+                   }
+                   rowCount--;
+                   this.absoluteRwCount--;
+                   this.maxRowIndex = (rowCount - 1);
+               }
+           }
+       }
+   }
+   
    /**
     * @return A new IRichListRenderer implementation for the current view mode
     */
@@ -520,7 +566,8 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
       return renderer;
    }
    
-   /**
+
+/**
     * Return the data model wrapper
     * 
     * @return IGridDataModel 
@@ -543,24 +590,29 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
          {
             throw new IllegalStateException("UIRichList 'value' attribute binding should specify data model of a supported type!"); 
          }
-         
-         // sort first time on initially sorted column if set
-         if (this.sortColumn == null)
-         {
-            String initialSortColumn = getInitialSortColumn();
-            if (initialSortColumn != null && initialSortColumn.length() != 0)
-            {
-               boolean descending = isInitialSortDescending();
-               
-               // TODO: add support for retrieving correct column sort mode here
-               this.sortColumn = initialSortColumn;
-               this.sortDescending = descending;
-            }
-         }
-         if (this.sortColumn != null)
-         {
-            // delegate to the data model to sort its contents
-            this.dataModel.sort(this.sortColumn, this.sortDescending, IDataContainer.SORT_CASEINSENSITIVE);
+         // cannot sort if permissions are not checked
+         if(getDoPermissionCheck() == null){
+             
+             // sort first time on initially sorted column if set
+             if (this.sortColumn == null)
+             {
+                 String initialSortColumn = getInitialSortColumn();
+                 if (initialSortColumn != null && initialSortColumn.length() != 0)
+                 {
+                     boolean descending = isInitialSortDescending();
+                     
+                     // TODO: add support for retrieving correct column sort mode here
+                     this.sortColumn = initialSortColumn;
+                     this.sortDescending = descending;
+                 }
+             }
+             if (this.sortColumn != null)
+             {
+                 // delegate to the data model to sort its contents
+                 this.dataModel.sort(this.sortColumn, this.sortDescending, IDataContainer.SORT_CASEINSENSITIVE);
+             }
+         } else {
+             removeNodesWithoutPermissionFromDataModel();
          }
          
          // reset current page
@@ -592,6 +644,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
    private String initialSortColumn = null;
    private boolean initialSortDescending = false;
    private boolean refreshOnBind = false;
+   private String doPermissionCheck = null;
    
    // transient component state that exists during a single page refresh only
    private int rowIndex = -1;

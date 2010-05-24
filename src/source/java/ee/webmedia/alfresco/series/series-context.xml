@@ -18,6 +18,14 @@
       </property>
    </bean>
 
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.series.service.series-log</value>
+         </list>
+      </property>
+   </bean>
+
    <bean id="seriesWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="documentWebClientBootstrap">
       <property name="configs">
          <list>
@@ -30,7 +38,7 @@
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
-      <property name="copyService" ref="CopyService" />
+      <property name="logService" ref="DocumentLogService" />
       <!--  XXX: property:volumeService - retrieved from applicationContext to avoid circular dependency between VolumeService and SeriesService      -->
    </bean>
 

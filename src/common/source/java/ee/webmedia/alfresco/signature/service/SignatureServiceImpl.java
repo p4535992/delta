@@ -237,8 +237,15 @@ public class SignatureServiceImpl implements SignatureService {
             throw new SignatureException("NodeRef is not a digidoc: " + nodeRef);
         }
         try {
-            InputStream contentInputStream = fileFolderService.getReader(nodeRef).getContentInputStream();
-            return getSignedDoc(contentInputStream);
+            ContentReader reader = fileFolderService.getReader(nodeRef);
+            if(reader == null){
+                throw new SignatureException("NodeRef has no content: " + nodeRef);
+            }
+            InputStream contentInputStream = reader.getContentInputStream();
+            if(contentInputStream != null){
+                return getSignedDoc(contentInputStream);
+            }
+            throw new SignatureException("NodeRef has no content: " + nodeRef);
         } catch (DigiDocException e) {
             throw new SignatureException("Failed to parse ddoc file, nodeRef = " + nodeRef, e);
         } catch (IOException e) {

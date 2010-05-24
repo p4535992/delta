@@ -17,7 +17,8 @@
             <f:facet name="header">
                 <a:sortLink id="substituteNameSort" label="#{msg.substitute_name}" value="substituteName" styleClass="header" />
             </f:facet>
-            <wm:search value="#{r.substituteName}"
+            <wm:search id="substituteSearch"
+                       value="#{r.substituteName}"
                        dataMultiValued="false"
                        dataMandatory="true"
                        pickerCallback="#{UserListDialog.searchUsers}"

@@ -1,14 +1,14 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
-import org.alfresco.web.action.evaluator.BaseActionEvaluator;
-import org.alfresco.web.bean.repository.Node;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 
-public class ContractSimOrSmitNodeTypeEvaluator extends BaseActionEvaluator {
+public class ContractSimOrSmitNodeTypeEvaluator extends AbstractFollowUpNodeTypeEvaluator {
 
     private static final long serialVersionUID = 1L;
-
-    @Override
-    public boolean evaluate(Node node) {
-        return new ContractSimNodeTypeEvaluator().evaluate(node) || new ContractSmitNodeTypeEvaluator().evaluate(node);
+    
+    public ContractSimOrSmitNodeTypeEvaluator() {
+        nodeTypes.add(DocumentSubtypeModel.Types.CONTRACT_SIM);
+        nodeTypes.add(DocumentSubtypeModel.Types.CONTRACT_SMIT);
     }
+
 }

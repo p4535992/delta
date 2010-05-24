@@ -6,6 +6,7 @@
             <label-id>parameter_export_csv</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{ParametersListDialog.exportAsCsv}</action-listener>
+            <target>no_wait_workaround</target>
          </action>
 
          <action id="parameter_import_csv">

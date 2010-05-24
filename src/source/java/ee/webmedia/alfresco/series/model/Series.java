@@ -24,8 +24,8 @@ public class Series implements Serializable, Comparable<Series> {
     private String description;
     private String status;
     private Integer retentionPeriod; // can be empty
-    private int order;
     private List<QName> docType;
+    private int containingDocsCount;
 
     @AlfrescoModelProperty(isMappable = false)
     private Node node;
@@ -43,6 +43,7 @@ public class Series implements Serializable, Comparable<Series> {
     }
 
     public void setSeriesIdentifier(String seriesIdentifier) {
+        node.getProperties().put(SeriesModel.Props.SERIES_IDENTIFIER.toString(), seriesIdentifier);
         this.seriesIdentifier = seriesIdentifier;
     }
 
@@ -79,11 +80,11 @@ public class Series implements Serializable, Comparable<Series> {
     }
 
     public int getOrder() {
-        return order;
+        return (Integer) node.getProperties().get(SeriesModel.Props.ORDER.toString());
     }
 
     public void setOrder(int order) {
-        this.order = order;
+        node.getProperties().put(SeriesModel.Props.ORDER.toString(), order);
     }
 
     public Integer getRetentionPeriod() {
@@ -100,6 +101,14 @@ public class Series implements Serializable, Comparable<Series> {
 
     public void setDocType(List<QName> docType) {
         this.docType = docType;
+    }
+    
+    public int getContainingDocsCount() {
+        return containingDocsCount;
+    }
+    
+    public void setContainingDocsCount(int containingDocsCount) {
+        this.containingDocsCount = containingDocsCount;
     }
 
     public Node getNode() {
@@ -118,7 +127,7 @@ public class Series implements Serializable, Comparable<Series> {
         sb.append("title = " + title + "\n");
         sb.append("description = " + description + "\n");
         sb.append("status = " + status + "\n");
-        sb.append("order = " + order + "\n");
+        sb.append("order = " + getOrder() + "\n");
         return sb.toString();
     }
 

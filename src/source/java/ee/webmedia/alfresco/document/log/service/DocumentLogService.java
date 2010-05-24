@@ -7,7 +7,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import ee.webmedia.alfresco.document.log.model.DocumentLog;
 
 public interface DocumentLogService {
-    
+
     String BEAN_NAME = "DocumentLogService";
 
     /**
@@ -17,7 +17,14 @@ public interface DocumentLogService {
     List<DocumentLog> getDocumentLogs(NodeRef document);
 
     /**
+     * @param seriesRef
+     * @return all log entries of this series.
+     */
+    List<DocumentLog> getSeriesLogs(NodeRef seriesRef);
+
+    /**
      * Add a log entry.
+     * 
      * @param document
      * @param event
      */
@@ -25,9 +32,12 @@ public interface DocumentLogService {
 
     /**
      * Add a log entry, specify the creator.
+     * 
      * @param document
      * @param event
      * @param creator
      */
     void addDocumentLog(NodeRef document, String event, String creator);
+
+    void addSeriesLog(NodeRef document, String event);
 }

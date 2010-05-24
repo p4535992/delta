@@ -65,11 +65,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     /*
      * There are two ways to be notified of events:
      * 1) WorkflowEventListener which is registered via #registerEventListener, is called at the end of each service call.
-     *    Events are queued up during service call and are passed to event handler at the end, when previous actions were successful.
-     *    This is suitable for e-mail sending.
+     * Events are queued up during service call and are passed to event handler at the end, when previous actions were successful.
+     * This is suitable for e-mail sending.
      * 2) If WorkflowType, which is registered via #registerWorkflowType, implements WorkflowEventListener or WorkflowEventListenerWithModifications,
-     *    then it is called on every event, right away. This is suitable for making additional modifications to workflow objects or repository,
-     *    for example registering document or finishing the task that was just started.
+     * then it is called on every event, right away. This is suitable for making additional modifications to workflow objects or repository,
+     * for example registering document or finishing the task that was just started.
      */
 
     private NodeService nodeService;
@@ -164,7 +164,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private List<NodeRef> getCompoundWorkflowNodeRefs(NodeRef parent) {
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parent, WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW, WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW);
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parent, WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
+                WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW);
         List<NodeRef> compoundWorkflows = new ArrayList<NodeRef>(childAssocs.size());
         for (ChildAssociationRef childAssoc : childAssocs) {
             compoundWorkflows.add(childAssoc.getChildRef());
@@ -355,7 +356,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         // also check repo status
         CompoundWorkflowDefinition freshCompoundWorkflowDefinition = getCompoundWorkflowDefinition(compoundWorkflowDefinition.getNode().getNodeRef());
         checkCompoundWorkflow(freshCompoundWorkflowDefinition, true, Status.NEW);
-        // ignore events 
+        // ignore events
         return freshCompoundWorkflowDefinition;
     }
 
@@ -377,7 +378,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private void saveCompoundWorkflow(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow) {
-//        checkCompoundWorkflow(compoundWorkflow, Status.NEW, Status.IN_PROGRESS, Status.STOPPED); // XXX NO check at the beginning...
+        // checkCompoundWorkflow(compoundWorkflow, Status.NEW, Status.IN_PROGRESS, Status.STOPPED); // XXX NO check at the beginning...
         // XXX is it ok that this ^^ check is before we process task's finish/unfinish action?
         requireStatusUnchanged(compoundWorkflow);
 
@@ -584,7 +585,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {
                 if (isStatus(workflow, Status.NEW, Status.IN_PROGRESS)) {
                     setStatus(queue, workflow, Status.FINISHED);
-    
+
                     for (Task task : workflow.getTasks()) {
                         if (isStatus(task, Status.NEW, Status.IN_PROGRESS)) {
                             setTaskFinishedManualOutcome(queue, task);
@@ -632,7 +633,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {
                 if (isStatus(workflow, Status.IN_PROGRESS)) {
                     setStatus(queue, workflow, Status.STOPPED);
-    
+
                     for (Task task : workflow.getTasks()) {
                         if (isStatus(task, Status.IN_PROGRESS)) {
                             setStatus(queue, task, Status.STOPPED);
@@ -684,15 +685,15 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {
                 if (isStatus(workflow, Status.STOPPED)) {
                     setStatus(queue, workflow, Status.IN_PROGRESS);
-    
+
                     for (Task task : workflow.getTasks()) {
                         if (isStatus(task, Status.STOPPED)) {
                             setStatus(queue, task, Status.IN_PROGRESS);
                         }
-                        task.setStoppedDateTime(null);            
+                        task.setStoppedDateTime(null);
                     }
                 }
-                workflow.setStoppedDateTime(null);            
+                workflow.setStoppedDateTime(null);
             }
             stepAndCheck(queue, compoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
             boolean changed = saveCompoundWorkflow(queue, compoundWorkflow, null);
@@ -891,7 +892,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             matches = true;
         }
         if (!matches) {
-            throw new WorkflowChangedException("Illegal value\n  Property: " + repoPropertyName + "\n  Required values: " + StringUtils.join(requiredValues, ", ")
+            throw new WorkflowChangedException("Illegal value\n  Property: " + repoPropertyName + "\n  Required values: "
+                    + StringUtils.join(requiredValues, ", ")
                     + "\n  Object value: " + objectValue + "\n  Repo value: " + repoValue + "\n  Object = "
                     + StringUtils.replace(object.toString(), "\n", "\n  "));
         }
@@ -940,13 +942,41 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public boolean hasFinishedCompoundWorkflows(NodeRef parent) {
+    public boolean hasAllFinishedCompoundWorkflows(NodeRef parent) {
         List<NodeRef> compoundWorkflows = getCompoundWorkflowNodeRefs(parent);
         if (compoundWorkflows.isEmpty()) {
             return false;
         }
         for (NodeRef compoundWorkflow : compoundWorkflows) {
             if (!Status.FINISHED.equals(getRepoStatus(compoundWorkflow))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public boolean hasInprogressCompoundWorkflows(NodeRef parent) {
+        List<NodeRef> compoundWorkflows = getCompoundWorkflowNodeRefs(parent);
+        if (compoundWorkflows.isEmpty()) {
+            return false;
+        }
+        for (NodeRef compoundWorkflow : compoundWorkflows) {
+            if (Status.IN_PROGRESS.equals(getRepoStatus(compoundWorkflow))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public boolean hasNoStoppedOrInprogressCompoundWorkflows(NodeRef parent) {
+        List<NodeRef> compoundWorkflows = getCompoundWorkflowNodeRefs(parent);
+        if (compoundWorkflows.isEmpty()) {
+            return true;
+        }
+        for (NodeRef compoundWorkflow : compoundWorkflows) {
+            if (Status.IN_PROGRESS.equals(getRepoStatus(compoundWorkflow)) || Status.STOPPED.equals(getRepoStatus(compoundWorkflow))) {
                 return false;
             }
         }
@@ -1009,7 +1039,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
     }
 
-    private void queueEvent(WorkflowEventQueue queue, WorkflowEventType type, BaseWorkflowObject object, Object ... extras) {
+    private void queueEvent(WorkflowEventQueue queue, WorkflowEventType type, BaseWorkflowObject object, Object... extras) {
         WorkflowEvent event = new BaseWorkflowEvent(type, object, extras);
         handleEventForWorkflowType(queue, event);
 
@@ -1079,7 +1109,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             for (Workflow workflow : workflows) {
                 if (isStatus(workflow, Status.NEW)) {
                     setStatus(queue, workflow, Status.IN_PROGRESS);
-                    
+
                     // if we previously finished another workflow, then it means this workflow is started automatically
                     List<WorkflowEvent> events = queue.getEvents();
                     for (WorkflowEvent event : events) {

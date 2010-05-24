@@ -3,8 +3,15 @@ window.onbeforeunload = function () {
    // This fucntion does nothing.  It won't spawn a confirmation dialog
    // But it will ensure that the page is not cached by the browser.
 
-   // When page is submitted, uses sees an hourglass cursor
-   $jQ('*').css('cursor', 'wait');
+   // When page is submitted, user sees an hourglass cursor
+   $jQ(".submit-protection-layer").show();
+}
+
+function isIE() {
+	if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)){ //test for MSIE x.x;
+		return true;
+	}
+	return false;
 }
 
 function isIE7() {
@@ -17,29 +24,74 @@ function isIE7() {
 	return false;
 }
 
-function zIndexWorkaround()
-{
-    // If the browser is IE,
-    if(isIE7())
-    {
-    	var zIndexNumber = 5000;
-        $jQ("#container div").each(function() {
-                $jQ(this).css('zIndex', zIndexNumber);
-                $jQ(this).children('span').each(function() {
-                	$jQ(this).css('zIndex', zIndexNumber);
-                	zIndexNumber -= 10;
-                });
-                zIndexNumber -= 10;
-        });
-    }
+function isIE8() {
+	if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)){ //test for MSIE x.x;
+		 var ieversion=new Number(RegExp.$1) // capture x.x portion and store as a number
+		 if (ieversion>7) {
+			 return true;
+		 }
+	}
+	return false;
 }
 
-function fixIEDropdownMinWidth(container, items) {
+
+function zIndexWorkaround(context)
+{
+   // If the browser is IE,
+   if(isIE()) {
+
+      var containerContext = context;
+	  if (context) {
+         if (!$jQ(context).parents().is('#container')) {
+            return;
+         }
+      } else {
+         containerContext = $jQ('#container');
+      }
+
+      if(isIE7()) {
+         var zIndexNumber = 5000;
+         $jQ("div", containerContext).each(function() {
+            $jQ(this).css('zIndex', zIndexNumber);
+            $jQ(this).children('span').each(function() {
+               $jQ(this).css('zIndex', zIndexNumber);
+               zIndexNumber -= 10;
+            });
+            zIndexNumber -= 10;
+         });
+
+         $jQ(".long-content-wrapper", context).mouseenter(function() {
+            var td = $jQ(this).parent();
+            var tr = td.parent();
+            td.css({"z-index": "1000", "position": "relative"});
+            td.siblings().css({"z-index": "-1", "position": "relative"});
+            tr.siblings(".recordSetRow, .recordSetRowAlt").css({"z-index": "-1", "position": "relative"});
+            var footer = tr.siblings(":last-child").children("td[align=center]");
+            footer.children(".pager-wrapper").css("z-index", "-2");
+            footer.children(".page-controls").css("z-index", "-1");
+         }).mouseleave(function(index, el) {
+            var td = $jQ(this).parent();
+            var tr = td.parent();
+            td.siblings().css("z-index", "0");
+            tr.siblings(".recordSetRow, .recordSetRowAlt").css("z-index", "0");
+            var footer = tr.siblings(":last-child").children("td[align=center]");
+            footer.children(".pager-wrapper").css("z-index", "0");
+            footer.children(".page-controls").css("z-index", "1");
+         });
+      }
+
+      if(isIE8()) {
+         $jQ(".long-content", context).css("top", "-17px");
+      }
+   }
+}
+
+function fixIEDropdownMinWidth(container, items, context) {
 	if(isIE7()) {
 		var max = 0;
-		var ul = $jQ(container);
+		var ul = $jQ(container, context);
 		ul.css('visibility', 'hidden').css('display', 'block');
-		$jQ(items).each(function() {
+		$jQ(items, context).each(function() {
 			var li = $jQ(this);
 			if(li.outerWidth() > max) {
 				max = li.outerWidth();
@@ -51,9 +103,17 @@ function fixIEDropdownMinWidth(container, items) {
 	}
 }
 
-function fixIESelectMinWidth() {
+function fixIESelectMinWidth(context) {
 	if(isIE7()) {
-		$jQ("#container-content td select").not('.with-pager select').not(".modalpopup-content-inner select[name$='_results']").each(function() {
+      if (context) {
+         if (!$jQ(context).parents().is('#container-content')) {
+            return;
+         }
+      } else {
+         context = $jQ('#container-content');
+      }
+
+      $jQ("td select").not('.with-pager select').not(".modalpopup-content-inner select[name$='_results']").not("#aoscModal-container-modalpopup select").each(function() {
 			var select = $jQ(this);
 			if(select.outerWidth() < 165) {
 				select.css('width', '170px');
@@ -62,27 +122,47 @@ function fixIESelectMinWidth() {
 	}
 }
 
-// KAAREL: Do not delete! Yet... :)
-//function addFocusHighlight() {
-//	$jQ("#container-content td input, #container-content td select, #container-content td textarea,")
-//	.not(".modalpopup input, .modalpopup select, .modalpopup textarea").each(function() {
-//        var elm = $jQ(this);
-//        
-//        elm.focus(function() {
-//            $jQ(this).parents("tr").addClass("row-highlight");
-//        });
-//        
-//        elm.blur(function() {
-//            $jQ(this).parents("tr").removeClass("row-highlight");
-//        });
-//    });
-//}
-
 /**
  * @return input string where ":" and "." are escaped, so that the result could be used by jQuery
  */
 function escapeId4JQ(idToEscape) {
    return idToEscape.replace(/:/g, "\\:").replace(/\./g, "\\.");
+}
+
+/**
+ * Prepend given function to each element selected with jQBtnOrLink jQuery object.  
+ * @param jQBtnOrLink - jQuery object containing elements that need prepending function
+ * @param prependFn - function to be called before existing onclick function is called
+ * @return
+ */
+function prependOnclick(jQBtnOrLink, prependFn) {
+   prependFunction(jQBtnOrLink, prependFn, "onclick");
+}
+
+function prependOnchange(jQHtmlElem, prependFn) {
+   prependFunction(jQHtmlElem, prependFn, "onchange");
+}
+
+/**
+ * Prepend given function to each element selected with jQHtmlElem jQuery object.  
+ * @param jQHtmlElem - jQuery object containing elements that need prepending function
+ * @param prependFn - function to be called before existing function is called (function name given with eventAttributeName parameter)
+ * @param eventAttributeName - attribute name that contains function that needs to be prepended
+ * @return
+ */
+function prependFunction(jQHtmlElem, prependFn, eventAttributeName) {
+   if(!eventAttributeName.startsWith("on")) {
+      alert("invalid eventAttributeName '"+eventAttributeName+"'");
+   }
+   jQHtmlElem.each(function(index, domElem) {
+      var jQElem = $jQ(this);
+      var originalClickHandler = jQElem.attr(eventAttributeName);
+      jQElem.attr(eventAttributeName, "return false;");
+      var jQEventType = eventAttributeName.substring(2, eventAttributeName.length);
+      jQElem.bind(jQEventType, function() {
+         return prependFn(jQElem) && originalClickHandler();
+      });
+   });
 }
 
 /**
@@ -129,128 +209,63 @@ function appendSelection(source, targetId) {
  * @param valuesArray - values to be suggested int the input
  * @author Ats Uiboupin
  */
-function setInputAutoCompleteArray(inputId, valuesArray){
-   var jQInput = $jQ("#"+escapeId4JQ(inputId));
-   var autoCompleter = jQInput.autocompleteArray(valuesArray, { minChars: -1, suggestAll: 1, delay: 50 });
-   jQInput.focus(function() {
-     jQInput.keydown();
-  });
+var autocompleters = new Array();
+
+function addAutocompleter(inputId, valuesArray){
+   autocompleters.push(function() {
+      var jQInput = $jQ("#"+escapeId4JQ(inputId));
+      var autoCompleter = jQInput.autocompleteArray(valuesArray, { minChars: -1, suggestAll: 1, delay: 50, onItemSelect: function(li) { processButtonState(); } });
+      jQInput.focus(function() {
+         jQInput.keydown();
+      });
+   });
 }
 
-$jQ(document).ready(function () {
-   /**
-    * Forward click event to autocomplete input.
-    * (We wrap autocomplete inputs to fix IE bug related to input with background image and text shadowing)
-    */
-   $jQ(".suggest-wrapper").click(function (e) {
-      $jQ(this).children("input").focus();
+// Autocompleters are applied here, this guarantees sequentiality
+// When they were applied in random order from AJAX updating function, then something was broken
+function applyAutocompleters() {
+    $jQ.each(autocompleters, function() {
+      this();
    });
-});
+   autocompleters = new Array();
+}
 
 function showFooterTitlebar() {
 	var bar = $jQ("#footer-titlebar");
 	
-	if($jQ(window).height() < bar.offset().top) {
-		bar.css('visibility', 'visible'); // vivibility is used, because display: none; gives offset (0, 0)
-	} else {
-		bar.css('display', 'none'); // doesn't need to take the space
+	if (bar.length > 0) {
+   	if($jQ(window).height() < bar.offset().top) {
+   		bar.css('visibility', 'visible'); // vivibility is used, because display: none; gives offset (0, 0)
+   	} else {
+   		bar.css('display', 'none'); // doesn't need to take the space
+   	}
 	}
 }
 
 function setPageScrollY() {
 	var scrollTop = $jQ(window).scrollTop();
-	$jQ('form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
+	$jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
 }
 
-$jQ(document).ready(function()
-{
-	// Darn IE7 bugs...
-	fixIESelectMinWidth();
-	fixIEDropdownMinWidth("#titlebar .extra-actions .dropdown-menu", "#titlebar .extra-actions .dropdown-menu li");
-	fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li");
-	fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li");
-	zIndexWorkaround();
-	
-	showFooterTitlebar();
-//	addFocusHighlight();
-	
-	$jQ(".toggle-tasks").click(function(){
-		var nextTr = $jQ(this).toggleClass("expanded").closest("tr").next()[0];
-		if(nextTr.style.display == 'none') { // bug in IE8
-		     $jQ(nextTr).show();
-		} else {
-		     $jQ(nextTr).hide();                       
-		}
-	});
-	
-	var lastActiveInput = null;
-	$jQ("input").focus(function() {
-		lastActiveInput = $jQ(this);
-	});
-	
-	$jQ("form").submit(function(e) {
-		if(lastActiveInput != null) {
-			if(lastActiveInput.attr("type") == "submit") {
-				return true;
-			}
-			
-			// Check special cases
-			// modal popups
-			if(lastActiveInput.parents('.modalpopup-content-inner').length > 0) {
-				var searchLink = lastActiveInput.parent().parent().closest("td").children(".search"); // SearchGenerator?
-				if(searchLink.length < 1) { // MultiValueEditor?
-					searchLink = lastActiveInput.parent().parent().closest("td").children("table").children("tbody").children("tr").children("td").children(".search");
-				}
-				if(searchLink.length < 1) { // TaskListGenerator?
-					searchLink = lastActiveInput.closest("span").children("table").children("tbody").children("tr").children("td").children("span").children(".search");
-				}
-				searchLink.click(); // hack to override clearFormhiddenParams function. Works with mouse but not with click()...
-				lastActiveInput.next().click();
-			} else if(lastActiveInput.attr("id") == $jQ("form").attr("name") + ":quickSearch") { // quick search
-				var submitButton = $jQ('#search.panel input[id$=quickSearchBtn]').click();
-				if(!isIE7()) {
-					return true;
-				}
-			}
-				
-			return false; // otherwise return false, users don't want to lose their data :)
-		}
-	});
-	
-   /**
-    * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
-    * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX) 
-    * @author Ats Uiboupin
-    */
-   $jQ(".selectBoundWithText").each(function (intIndex)
+function webdavOpen() {
+   var showDoc = true;
+   // if the link represents an Office document and we are in IE try and
+   // open the file directly to get WebDAV editing capabilities
+   var agent = navigator.userAgent.toLowerCase();
+   if (agent.indexOf('msie') != -1)
    {
-      var TARGET_SUFFIX = "select_target"; // corresponding textAreas/input
-      var selectId = $(this).id;
-      var textAreaId = selectId.substring(0, selectId.lastIndexOf(':') + 1) + TARGET_SUFFIX;
-      var existingValue = $jQ("#" + escapeId4JQ(textAreaId)).text();
-      var initialValue = $jQ('#' + escapeId4JQ(selectId) + ' :selected').text()
-      if (initialValue != "" && existingValue == "")
-      {
-         var targetElem = $jQ("#" + escapeId4JQ(textAreaId));
-         targetElem.val(initialValue);
-      }
-      $jQ(this).bind("change", function()
-      {
-         appendSelection($jQ(this), textAreaId)
-      });
-   });
-   
-   $jQ(".review-note-trimmed-comment a").click(function() {
-	   $jQ(this).parent().css("display", "none").next().css("display", "block");
-	   return false;
-   });
-   
-   $jQ(".review-note-comment a").click(function() {
-	   $jQ(this).parent().css("display", "none").prev().css("display", "block");
-	   return false;
-   });
-   
-});
+         var wordDoc = new ActiveXObject('SharePoint.OpenDocuments.1');
+         if (wordDoc)
+         {
+            showDoc = !wordDoc.EditDocument(this.href);
+         }
+   }
+   if (showDoc == true)
+   {
+      window.open(this.href, '_blank');
+   }
+   return false;
+}
 
 /**
  * Open file in read-only mode (TODO: with webdav, if file is office document)
@@ -286,12 +301,6 @@ function webdavOpenReadOnly() {
    window.open(this.href, '_blank');// regular file saveAs/open by downloading it to HD
    return false;
 }
-$jQ(document).ready(function () {
-   /**
-    * Bind all links with "webdav-readOnly" class to function webdavOpenReadOnly to open them in read-only mode for office documents
-    */
-   $jQ('a.webdav-readOnly').click(webdavOpenReadOnly);
-});
 
 // Functions for changing number of item displayed in RichList components
 function applySizeSpaces(e)
@@ -306,7 +315,7 @@ function applySizeContent(e)
 
 function applySize(e, field)
 { 
-   var formId = document.forms[0].name;
+   var formId = $jQ("#wrapper form").attr("name");
    document.forms[formId][formId+':act'].value= formId + ':' + field;
    document.forms[formId].submit();
 
@@ -323,14 +332,14 @@ var openModalContent = null;
 var titlebarIndex = null;
 
 function showModal(target, height){
-   if(isIE7()) {
-	   titlebarIndex = $jQ("#titlebar").css("zIndex");
-	   $jQ("#titlebar").css("zIndex", "-1");
-	   $jQ("#mydetails-panel *, #pref-panel *, #man-panel *").css("zIndex", "-1");
-   }
-   target = escapeId4JQ(target);
+	target = escapeId4JQ(target);
 	if ($jQ("#overlay").length == 0) {
 		$jQ("#" + target).before("<div id='overlay'></div>");
+	}
+	if(isIE7()) {
+		titlebarIndex = $jQ("#titlebar").css("z-index");
+		$jQ("#titlebar").css("z-index", "-1");
+
 	}
 	if (openModalContent != null){
 		$jQ("#" + openModalContent).hide();
@@ -347,14 +356,10 @@ function showModal(target, height){
 	return false;
 }
 
-$jQ(document).ready(function(){
-   $jQ(".modalwrap select option").tooltip();
-});
-
 function hideModal(){
 	if (openModalContent != null){
 	  if(isIE7() && titlebarIndex != null) {
-		  $jQ("#titlebar").css("zIndex", titlebarIndex); // aoscModal
+		  $jQ("#titlebar").css("zIndex", titlebarIndex);
 	  }
 	  $jQ("#" + openModalContent).hide();
       $jQ("#overlay").remove();
@@ -414,7 +419,7 @@ function propSheetValidateSubmit() {
    return result;
 }
 
-$jQ(document).ready(function() {
+function propSheetValidateOnDocumentReady() {
    if (propSheetValidateBtnFn.length > 0 || propSheetValidateSubmitFn.length > 0) {
       document.getElementById(propSheetValidateFormId).onsubmit = propSheetValidateSubmit;
       document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId).onclick = function() { propSheetFinishBtnPressed = true; }
@@ -423,11 +428,14 @@ $jQ(document).ready(function() {
     	  secondaryFinishButton.onclick = function() { propSheetFinishBtnPressed = true; }
       }
       if (propSheetValidateNextId.length > 0) {
-         document.getElementById(propSheetValidateFormId + ':' + propSheetValidateNextId).onclick = function() { propSheetNextBtnPressed = true; }
+         var validateNextId = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateNextId);
+         if (validateNextId != null){
+            validateNextId.onclick = function() { propSheetNextBtnPressed = true; }
+         }
       }
       processButtonState();
    }
-});
+}
 
 function togglePanel(divId) {
     $jQ(divId).toggle();
@@ -456,4 +464,291 @@ function requestUpdatePanelStateSuccess(ajaxResponse) {
 
 function requestUpdatePanelStateFailure(ajaxResponse) {
     $jQ.log("Updating panel status in server side failed");
+}
+
+function ajaxSubmit(componentId, componentClientId, componentContainerId, formClientId, viewName, submittableParams) {
+   // When page is submitted, user sees an hourglass cursor
+   $jQ(".submit-protection-layer").show();
+
+   var uri = getContextPath() + '/ajax/invoke/AjaxBean.submit?componentId=' + componentId + '&componentClientId=' + componentClientId + '&viewName=' + viewName;
+
+   // Find all form fields that are inside this component
+   var componentChildFormElements = $jQ('#' + escapeId4JQ(componentContainerId)).find('input,select,textarea');
+
+   // Find additional hidden fields at the end of the page that HtmlFormRendererBase renders
+   var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
+      return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
+   });
+
+   $jQ.ajax({
+      type: 'POST',
+      url: uri,
+      data: componentChildFormElements.add(hiddenFormElements).serialize(),
+      success: function (responseText) {
+         // Split response
+         var i = responseText.lastIndexOf('VIEWSTATE:');
+         var html = responseText.substr(0, i);
+         var viewState = responseText.substr(i + 10);
+
+         // Update HTML
+         $jQ('#' + escapeId4JQ(componentContainerId)).after(html).remove();
+
+         // Update ViewState
+         document.getElementById('javax.faces.ViewState').value = viewState;
+
+         // Reset hidden fields
+         var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
+            return componentClientId == this.name.substring(0, componentClientId.length);
+         }).each(function() {
+            this.value = '';
+         });
+
+         // Reattach behaviour
+         handleHtmlLoaded($jQ('#' + escapeId4JQ(componentContainerId)));
+
+         $jQ(".submit-protection-layer").hide();
+      },
+      error: function ajaxError(request, textStatus, errorThrown) {
+         var result = request.responseText.match(/<body>(.*)<\/body>/i);
+         if (result) {
+            $jQ(".submit-protection-layer").hide();
+            $jQ('#wrapper').html(result[1]);
+         } else {
+            alert('Error during submit: ' + textStatus + "\nAfter clicking OK, the page will reload!");
+            $jQ('#' + formClientId).submit();
+         }
+      },
+      dataType: 'html'
+   });
+}
+
+//-----------------------------------------------------------------------------
+// Realy simple history stuff for back button
+//-----------------------------------------------------------------------------
+
+var historyListener = function(newLocation, historyData) {
+   var debugHist = false;
+   var curHashVal = historyStorage.get('CUR_HASH_VAL');
+   if (debugHist) window.alert('Detected navigation event: \'' + newLocation + '\', history: \'' + historyData + '\', HASH: \'' + curHashVal + '\'');
+
+   if (newLocation == 'files-panel') {
+      // Special case for our only real anchor tag
+      if (debugHist) window.alert('files-panel ei tee midagi!');
+      window.dhtmlHistory.add(randomHistoryHash(), null);
+   } 
+   else if (newLocation != '' && newLocation == curHashVal) {
+      // Just a browser refresh of the same page, do nothing
+      if (debugHist) window.alert('Given hash equals to current hash, no action!');
+   }
+   else if ($jQ('DIV.modalpopup.modalwrap DIV.modalpopup-header P.close A').filter(':visible:first').length > 0) {
+     // There is a visible popup with close button
+     if (debugHist) window.alert('Closing popup!');
+     $jQ('DIV.modalpopup.modalwrap DIV.modalpopup-header P.close A').filter(':visible:first').click();
+   }
+   else if ($jQ('#' + escapeId4JQ('dialog:cancel-button')).filter(':visible:first').length > 0) {
+     // There is a visible back/cancel button
+     if (debugHist) window.alert('Clicking \'Tagasi\'!');
+     $jQ('#' + escapeId4JQ('dialog:cancel-button')).filter(':visible:first').click();
+   }
+   else {
+     if (debugHist) window.alert('Siit enam tagasiteed ei ole!');
+     historyStorage.reset();
+     historyStorage.put(window.dhtmlHistory.PAGELOADEDSTRING, true);
+     window.dhtmlHistory.add(randomHistoryHash(), null);
+   }
+}
+
+function randomHistoryHash() {
+   var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
+   var string_length = 8;
+   var randomstring = '';
+   for ( var i = 0; i < string_length; i++) {
+      var rnum = Math.floor(Math.random() * chars.length);
+      randomstring += chars.substring(rnum, rnum + 1);
+   }
+   historyStorage.put('CUR_HASH_VAL', randomstring);
+   return randomstring;
+}
+
+window.dhtmlHistory.create( {
+   debugMode : false, 
+   toJSON : function(o) {
+      return $jQ.toJSON(o);
+   },
+   fromJSON : function(s) {
+      return $jQ.parseJSON(s);
+   }
+});
+
+//-----------------------------------------------------------------------------
+// DOCUMENT-READY FUNCTIONS
+//-----------------------------------------------------------------------------
+
+// Form submission with Enter key
+var lastActiveInput = null;
+
+// These things need to be performed only once after full page load
+$jQ(document).ready(function() {
+   showFooterTitlebar();
+   
+   $jQ(".admin-user-search-input").keyup(function(event) {
+	   updateButtonState();
+	   if (event.keyCode == '13') {
+		     $jQ(this).next().click();
+	   }
+   });
+
+   var id = $jQ("#wrapper form").attr("name") + "\\:quickSearch";
+   $jQ("#" + id).keyup(function(event) {
+	   if (event.keyCode == '13') {
+		     $jQ(this).next().click();
+	   }
+   });
+
+   $jQ("input").focus(function() {
+	      lastActiveInput = $jQ(this);
+   });
+
+   $jQ("#wrapper form").submit(function(e) {
+	  var debug = false;
+	  
+	  
+      if(lastActiveInput != null) {
+         if(lastActiveInput.attr("type") == "submit" || $jQ("#login-wrapper").length>0) {
+            return true;
+            if (debug) alert("Either submit or login");
+         }
+         
+         // Check special cases
+         // modal popups
+         if(lastActiveInput.parents('.modalpopup-content-inner').length > 0) {
+            var searchLink = lastActiveInput.parent().parent().closest("td").children(".search"); // SearchGenerator?
+            if(searchLink.length < 1) { // MultiValueEditor?
+               if (debug) console.log("Checking for MultiValueEditor");
+               searchLink = lastActiveInput.parent().parent().closest("td").children("table").children("tbody").children("tr").children("td").children(".search");
+            }
+            if(searchLink.length < 1) { // TaskListGenerator?
+               if (debug) console.log("Checking for TaskListGenerator");
+               searchLink = lastActiveInput.closest("span").children("table").children("tbody").children("tr").children("td").children("span").children(".search");
+            }
+            if(searchLink.length > 0) { // Act ONLY if we have identified current location
+            	if (debug) console.log("Found a searchLink");
+            	if (debug) alert("Pausing, check Console!");
+	            searchLink.click(); // hack to override clearFormhiddenParams function. Works with mouse but not with click()...
+	            lastActiveInput.next().click();
+            }
+            
+         } 
+         if (debug) alert("Pausing, check Console!");
+         return false; // otherwise return false, users don't want to lose their data :)
+      }
+   });
+   
+   if(isIE7()) {
+	   $jQ(window).resize(function() {
+		   var htmlWidth = $jQ("html").outerWidth(true);
+		   var width =  htmlWidth < 920 ? 920 : htmlWidth;
+		   $jQ("#wrapper").css("min-width", width + "px");
+	   });
+   }
+
+   // Realy simple history stuff for back button
+   window.dhtmlHistory.initialize();
+   window.dhtmlHistory.addListener(historyListener);
+   window.dhtmlHistory.add(randomHistoryHash(), null);
+
+   handleHtmlLoaded(null);
+});
+
+// These things need to be performed
+// 1) once after full page load
+// *) each time an area is replaced inside the page
+function handleHtmlLoaded(context) {
+   applyAutocompleters();
+
+   //initialize all expanding textareas
+   var expanders = jQuery("textarea[class*=expand]", context);
+   expanders.TextAreaExpander();
+   if(jQuery.browser.msie) {
+      // trigger size recalculation if IE, because e.scrollHeight may be inaccurate before keyup() is called
+      expanders.keyup();
+      jQuery.fn.TextAreaExpander.ieInitialized = true;
+   }
+
+   // datepicker
+   jQuery("input.date", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', yearRange: '-100:+100' });
+   jQuery("input.sysdate", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', defaultDate: +7, yearRange: '-100:+100' });
+
+   // Darn IE7 bugs...
+   fixIESelectMinWidth(context);
+   fixIEDropdownMinWidth("#titlebar .extra-actions .dropdown-menu", "#titlebar .extra-actions .dropdown-menu li", context);
+   fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li", context);
+   fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li", context);
+   zIndexWorkaround(context);
+
+   /**
+    * Open Office documents directly from server
+    */
+   $jQ('a.webdav-open', context).click(webdavOpen);
+   $jQ('a.webdav-readOnly', context).click(webdavOpenReadOnly);
+
+   $jQ(".modalwrap select option", context).tooltip();
+
+   /**
+    * Forward click event to autocomplete input.
+    * (We wrap autocomplete inputs to fix IE bug related to input with background image and text shadowing)
+    */
+   $jQ(".suggest-wrapper", context).click(function (e) {
+      $jQ(this).children("input").focus();
+   });
+   
+   $jQ(".toggle-tasks", context).click(function(){
+      var nextTr = $jQ(this).toggleClass("expanded").closest("tr").next()[0];
+      if(nextTr.style.display == 'none') { // bug in IE8
+           $jQ(nextTr).show();
+      } else {
+           $jQ(nextTr).hide();                       
+      }
+   });
+   
+   if(context != null) {
+	   $jQ("input", context).focus(function() {
+		      lastActiveInput = $jQ(this);
+	   });
+   }
+
+   /**
+    * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
+    * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX) 
+    * @author Ats Uiboupin
+    */
+   $jQ(".selectBoundWithText", context).each(function (intIndex)
+   {
+      var TARGET_SUFFIX = "select_target"; // corresponding textAreas/input
+      var selectId = $(this).id;
+      var textAreaId = selectId.substring(0, selectId.lastIndexOf(':') + 1) + TARGET_SUFFIX;
+      var existingValue = $jQ("#" + escapeId4JQ(textAreaId)).text();
+      var initialValue = $jQ('#' + escapeId4JQ(selectId) + ' :selected').text()
+      if (initialValue != "" && existingValue == "")
+      {
+         var targetElem = $jQ("#" + escapeId4JQ(textAreaId));
+         targetElem.val(initialValue);
+      }
+      $jQ(this).bind("change", function()
+      {
+         appendSelection($jQ(this), textAreaId)
+      });
+   });
+   
+   $jQ(".review-note-trimmed-comment a", context).click(function() {
+      $jQ(this).parent().css("display", "none").next().css("display", "block");
+      return false;
+   });
+   
+   $jQ(".review-note-comment a", context).click(function() {
+      $jQ(this).parent().css("display", "none").prev().css("display", "block");
+      return false;
+   });
+
+   propSheetValidateOnDocumentReady();
 }

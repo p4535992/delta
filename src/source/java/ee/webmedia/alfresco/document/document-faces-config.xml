@@ -121,8 +121,8 @@
          <value>#{WorkflowBlockBean}</value>
       </managed-property>
       <managed-property>
-         <property-name>documentLogBlockBean</property-name>
-         <value>#{DocumentLogBlockBean}</value>
+         <property-name>logBlockBean</property-name>
+         <value>#{LogBlockBean}</value>
       </managed-property>
    </managed-bean>
 
@@ -157,10 +157,6 @@
       <managed-property>
          <property-name>parametersService</property-name>
          <value>#{ParametersService}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>menuService</property-name>
-         <value>#{MenuService}</value>
       </managed-property>
    </managed-bean>
 
@@ -310,8 +306,8 @@
       <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
    <managed-bean>
-      <managed-bean-name>DocumentLogBlockBean</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.document.log.web.DocumentLogBlockBean</managed-bean-class>
+      <managed-bean-name>LogBlockBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.log.web.LogBlockBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
 

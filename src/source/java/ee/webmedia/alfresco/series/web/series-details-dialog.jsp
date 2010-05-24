@@ -11,13 +11,15 @@
 <%@page import="ee.webmedia.alfresco.series.web.SeriesDetailsDialog"%>
 <%@page import="org.alfresco.web.app.servlet.FacesHelper"%>
 <%@page import="javax.faces.context.FacesContext"%>
-<a:panel id="metadata-panel" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
+
+<%@page import="org.alfresco.web.app.Application"%><a:panel id="metadata-panel" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
    <r:propertySheetGrid id="ser-metatada" value="#{SeriesDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" />
 </a:panel>
 
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/series/web/series-log-block.jsp" />
+
 <f:verbatim>
 <script type="text/javascript">
-
    function postProcessButtonState(){
       var status = "</f:verbatim><h:outputText value="#{SeriesDetailsDialog.currentNode.properties['{http://alfresco.webmedia.ee/model/series/1.0}status']}" /><f:verbatim>";
       processFnSerVolCaseCloseButton(status);
@@ -29,6 +31,22 @@
    if(isNew) {
 %>
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-close-button.jsp" />
+<script type="text/javascript">
+   var jQSeriesIdentifier = $jQ("#"+escapeId4JQ("dialog:dialog-body:ser-metatada:prop_serx003a_seriesIdentifier:serx003a_seriesIdentifier"));
+   var initialSeriesIdentifier = jQSeriesIdentifier.val().trim();
+   propSheetValidateSubmitFn.push(validateSeriesIdentifier);
+
+   function validateSeriesIdentifier(){
+      var newSeriesIdentifier = jQSeriesIdentifier.val().trim();
+      if(newSeriesIdentifier == initialSeriesIdentifier){
+         jQSeriesIdentifier.val(newSeriesIdentifier);
+         var errMsg = "<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("series_seriesIdentifier_notChanged")%>";
+         informUser(jQSeriesIdentifier.get(0), errMsg, true);
+         return false;
+      }
+      return true;
+   }
+</script>
 <%
    }
 %>

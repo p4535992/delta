@@ -68,6 +68,7 @@
       <property name="sendOutService" ref="SendOutService" />
       <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
       <property name="incomingEmailPath" value="${imap.config.home.rootPath}/imap-ext:incoming"/>
+      <property name="sentEmailPath" value="${imap.config.home.rootPath}/imap-ext:sent"/>
    </bean>
 
    <bean id="DocumentService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -218,5 +219,15 @@ DaoAuthenticationProvider.authenticate()
         </property>
     </bean>
  -->
+ 
+   <bean class="ee.webmedia.alfresco.document.web.UnsentDocumentMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.web.OutboxDocumentMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
+   </bean>
 
 </beans>

@@ -27,7 +27,7 @@
             <h:panelGroup>
                <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
                   <a:actionLink id="col1-act1" value="#{r.name}" href="#{r.downloadUrl}" target="new" image="#{r.fileType16}" showLink="false"
-                     styleClass="inlineAction webdav-open" />
+                     styleClass="inlineAction #{DialogManager.bean.downloadType}" />
                </r:permissionEvaluator>
                <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
                   <h:graphicImage value="#{r.fileType16}" />
@@ -35,7 +35,7 @@
             </h:panelGroup>
          </f:facet>
          <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
-            <a:actionLink id="col1-act2" value="#{r.name}" href="#{r.downloadUrl}" target="new" styleClass="webdav-open" />
+            <a:actionLink id="col1-act2" value="#{r.name}" href="#{r.downloadUrl}" target="new" styleClass="#{DialogManager.bean.downloadType}" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
             <h:outputText value="#{r.name}" />
@@ -105,7 +105,7 @@
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.node}" allow="DeleteNode">
             <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
-               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}">
+               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{UserService.documentManager && !DocumentDialog.inprogressCompoundWorkflows}">
                <f:param name="id" value="#{r.id}" />
                <f:param name="ref" value="#{r.nodeRef}" />
             </a:actionLink>
@@ -188,7 +188,7 @@
             <h:panelGroup>
                <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
                   <a:actionLink id="col21-act1" value="#{r.name}" href="#{r.downloadUrl}" target="new" image="#{r.fileType16}" showLink="false"
-                     styleClass="inlineAction webdav-open" />
+                     styleClass="inlineAction #{DialogManager.bean.downloadType}" />
                </r:permissionEvaluator>
                <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
                   <h:graphicImage value="#{r.fileType16}" />
@@ -196,7 +196,7 @@
             </h:panelGroup>
          </f:facet>
          <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
-            <a:actionLink id="col21-act2" value="#{r.name}" href="#{r.downloadUrl}" target="new" styleClass="webdav-open" />
+            <a:actionLink id="col21-act2" value="#{r.name}" href="#{r.downloadUrl}" target="new" styleClass="#{DialogManager.bean.downloadType}" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
             <h:outputText value="#{r.name}" />
@@ -266,7 +266,7 @@
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.node}" allow="DeleteNode">
             <a:actionLink id="col27-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
-               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}">
+               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{UserService.documentManager && !DocumentDialog.inprogressCompoundWorkflows}">
                <f:param name="id" value="#{r.id}" />
                <f:param name="ref" value="#{r.nodeRef}" />
             </a:actionLink>
@@ -325,32 +325,3 @@
 
    </a:richList>
 </a:panel>
-
-
-
-<f:verbatim>
-   <script type="text/javascript">
-function webdavOpen() {
-   var showDoc = true;
-   // if the link represents an Office document and we are in IE try and
-   // open the file directly to get WebDAV editing capabilities
-   var agent = navigator.userAgent.toLowerCase();
-   if (agent.indexOf('msie') != -1)
-   {
-         var wordDoc = new ActiveXObject('SharePoint.OpenDocuments.1');
-         if (wordDoc)
-         {
-            showDoc = !wordDoc.EditDocument(this.href);
-         }
-   }
-   if (showDoc == true)
-   {
-      window.open(this.href, '_blank');
-   }
-   return false;
-}
-$jQ(document).ready(function () {
-    $jQ('a.webdav-open').click(webdavOpen);
-});
-</script>
-</f:verbatim>

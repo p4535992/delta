@@ -151,10 +151,10 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
                 throw new RuntimeException("Service didn't respond with 'OK': " + response.getContent().getStringValue());
             }
         } catch (XTeeServiceConsumptionException e) {
-            throw new RuntimeException("Failed to excecute xtee query " + queryMethod, e);
+            throw new RuntimeException(resolveMessage(queryMethod, e), e);
         }
     }
-    */
+     */
 
     @Override
     public void markDocumentsReceived(Collection<String> receivedDocumentIds) {
@@ -179,7 +179,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
                 throw new RuntimeException("Service didn't respond with 'OK': " + response.getContent().getStringValue());
             }
         } catch (XTeeServiceConsumptionException e) {
-            throw new RuntimeException("Failed to excecute xtee query " + queryMethod, e);
+            throw new RuntimeException(resolveMessage(queryMethod, e), e);
         }
     }
 
@@ -194,7 +194,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             = send(new XmlBeansXTeeMessage<ReceiveDocumentsRequestType>(request), RECEIVE_DOCUMENTS, RECEIVE_DOCUMENTS_VERSION);
             return new ReceivedDocumentsWrapperImpl(response);
         } catch (XTeeServiceConsumptionException e) {
-            throw new RuntimeException("Failed to excecute xtee query " + queryMethod, e);
+            throw new RuntimeException(resolveMessage(queryMethod, e), e);
         }
     }
 
@@ -216,7 +216,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             }
             this.dhlDocumentsMap = new HashMap<String, ReceivedDocument>();
             for (DhlDokumentType dhlDokument : receivedDocuments) {
-                if(log.isTraceEnabled()) {
+                if (log.isTraceEnabled()) {
                     log.trace("received dhlDokument : " + dhlDokument + "'");
                 }
                 Metainfo metainfo = dhlDokument.getMetainfo();
@@ -333,7 +333,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             }
             return sentDocumentsDhlIds;
         } catch (XTeeServiceConsumptionException e) {
-            throw new RuntimeException("Failed to excecute xtee query " + queryMethod, e);
+            throw new RuntimeException(resolveMessage(queryMethod, e), e);
         } catch (IOException e) {
             throw new RuntimeException("Failed to extract response " + queryMethod, e);
         }
@@ -352,7 +352,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
                     , GET_OCCUPATION_LIST, GET_OCCUPATION_LIST_VERSION);
             return response.getContent().getAmetikohtList();
         } catch (XTeeServiceConsumptionException e) {
-            throw new RuntimeException("Failed to excecute xtee query " + queryMethod, e);
+            throw new RuntimeException(resolveMessage(queryMethod, e), e);
         }
     }
 
@@ -377,7 +377,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             }
             return dvkCapableOrganizations;
         } catch (XTeeServiceConsumptionException e) {
-            throw new RuntimeException("Failed to excecute xtee query " + queryMethod, e);
+            throw new RuntimeException(resolveMessage(queryMethod, e), e);
         }
     }
 
@@ -589,7 +589,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             // Add mandatory empty elements
             dokumentContainer.addNewMetaxml();
             dokumentContainer.addNewAjalugu();
-            
+
             if (StringUtils.isBlank(sender.getAsutuseNimi())) {
                 String senderName = getDvkOrganizationsHelper().getOrganizationName(sender.getRegnr());
                 sender.setAsutuseNimi(senderName);
@@ -719,7 +719,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
     private static <T extends XmlObject> T getTypeFromXml(String inputXml, Class<T> responseClass) {
         try {
             SchemaType sType = (SchemaType) responseClass.getField("type").get(null);
-            if(log.isTraceEnabled()) {
+            if (log.isTraceEnabled()) {
                 log.trace("Starting to parse '" + inputXml + "' to class: " + responseClass.getCanonicalName());
             }
             XmlOptions replaceRootNameOpts = new XmlOptions().setLoadReplaceDocumentElement(new QName("xml-fragment"));
@@ -753,7 +753,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
         try {
             responseString = "<root>" + responseString + "</root>";
             XmlOptions options = new XmlOptions();
-            if(log.isTraceEnabled()) {
+            if (log.isTraceEnabled()) {
                 log.trace("Starting to parse '" + responseString + "' to class: " + responseClass.getCanonicalName() + "\n\n");
             }
             XmlObject xmlObject = XmlObject.Factory.parse(responseString, options);
@@ -767,7 +767,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             int i = 0;
             do {
                 currentXmlObject = cursor.getObject();
-                if(log.isTraceEnabled()) {
+                if (log.isTraceEnabled()) {
                     log.trace(i++ + " Token type: '" + cursor.currentTokenType() + "', text:\n" + currentXmlObject + "\n\n");
                 }
                 @SuppressWarnings("unchecked")
@@ -831,6 +831,10 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
         } finally {
             IOUtils.closeQuietly(gzipInputStream);
         }
+    }
+
+    private String resolveMessage(String queryMethod, XTeeServiceConsumptionException e) {
+        return "Failed to excecute xtee query " + queryMethod + ". Fault(" + e.getFaultCode() + "): '" + e.getFaultString() + "'";
     }
 
     // START: getters/setters

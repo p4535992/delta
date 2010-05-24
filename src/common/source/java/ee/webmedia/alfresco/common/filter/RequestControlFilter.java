@@ -14,6 +14,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -25,8 +26,8 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener.LogColumn;
 
 /**
  * NOTE by Erko Hansar
@@ -141,6 +142,7 @@ public class RequestControlFilter implements Filter{
             return;
         }
         StatisticsPhaseListener.clear();
+        StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.SERVLET_PATH, httpRequest.getServletPath());
         // Setting log prefix to allow request tracking
         String logPrefix = getLogPrefix( session );
         log( logPrefix, "REQUEST BEGINS " + httpRequest.hashCode() );
@@ -158,7 +160,7 @@ public class RequestControlFilter implements Filter{
                 startWaitTime = System.currentTimeMillis();
                 if( !waitForRelease( httpRequest, syncObject ) ){
                     stopWaitTime = System.currentTimeMillis();
-                    StatisticsPhaseListener.add(LogColumn.REQUEST_CANCEL, Long.toString(stopWaitTime - startWaitTime));
+                    StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_CANCEL, Long.toString(stopWaitTime - startWaitTime));
                     // this request was replaced in the queue by another request,
                     // so it need not be processed
                     return;
@@ -181,7 +183,7 @@ public class RequestControlFilter implements Filter{
             long stopWorkTime = System.currentTimeMillis();
             log( logPrefix, "check 8" );
             releaseQueuedRequest( httpRequest, syncObject );
-            StatisticsPhaseListener.add(LogColumn.REQUEST_END, (stopWorkTime - startWorkTime) + "," + (stopWaitTime - startWaitTime));
+            StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.REQUEST_END, (stopWorkTime - startWorkTime) + "," + (stopWaitTime - startWaitTime));
             StatisticsPhaseListener.log();
         }
     }

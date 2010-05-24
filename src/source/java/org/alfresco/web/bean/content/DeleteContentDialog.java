@@ -38,6 +38,8 @@ import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -159,8 +161,12 @@ public class DeleteContentDialog extends BaseDialogBean
       else if (document.getType().equals(NotificationModel.Types.GENERAL_NOTIFICATION)) {
           // FIXME: kaarel - see küll õige koht ei tohiks olla.. pigem DeleteFileDialog'is
           fileConfirmMsg = MessageUtil.getMessage("notification_delete_notification_confirm");
-          // FIXME: kaarel - mis on tähtsa teate kustutamisel pistmist töövoogudega?
-          documentName = (String)document.getProperties().get(WorkflowCommonModel.Props.NAME);
+      } else if (document.getType().equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
+          fileConfirmMsg = MessageUtil.getMessage("imap_delete_outgoing_letter_confirm");
+          documentName = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
+      } else if (document.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
+          fileConfirmMsg = MessageUtil.getMessage("imap_delete_incoming_letter_confirm");
+          documentName = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
       }
       else
       {
@@ -190,9 +196,14 @@ public class DeleteContentDialog extends BaseDialogBean
        }
        else if (document.getType().equals(WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION)) {
            title = MessageUtil.getMessage("delete_compound_workflow");
+       } else if (document.getType().equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
+           title = MessageUtil.getMessage("imap_delete_outgoing_letter_title");
+       } else if (document.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
+           title = MessageUtil.getMessage("imap_delete_incoming_letter_title");
        }
        
-        return title;
+       
+       return title;
     }
    
 

@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.menu.model;
 
 import java.io.Serializable;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
@@ -203,7 +204,7 @@ public class MenuItem implements Serializable {
         return wrap;
     }
 
-    private void addParameter(FacesContext context, UIActionLink link, String name, String value) {
+    protected void addParameter(FacesContext context, UIActionLink link, String name, String value) {
         UIParameter param = (UIParameter) context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_PARAMETER);
         FacesHelper.setupComponentId(context, param, null);
         param.setName(name);
@@ -308,6 +309,9 @@ public class MenuItem implements Serializable {
     }
 
     public Map<String, String> getParams() {
+        if(params == null) {
+            setParams(new HashMap<String, String>());
+        }
         return params;
     }
     

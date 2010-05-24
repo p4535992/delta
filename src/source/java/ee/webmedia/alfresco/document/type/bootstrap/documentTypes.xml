@@ -8,6 +8,7 @@
                <view:properties>
                   <doctype:name>Sissetulev kiri</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -15,6 +16,7 @@
                <view:properties>
                   <doctype:name>Väljaminev kiri</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -22,6 +24,7 @@
                <view:properties>
                   <doctype:name>Välislähetuse korraldus</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -29,6 +32,7 @@
                <view:properties>
                   <doctype:name>Siselähetuse taotlus</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -36,6 +40,7 @@
                <view:properties>
                   <doctype:name>Puhkuse käskkiri</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                   <doctype:comment>SIM</doctype:comment>
                </view:properties>
             </doctype:documentType>
@@ -44,6 +49,7 @@
                <view:properties>
                   <doctype:name>Puhkuse taotlus</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                   <doctype:comment>SMIT</doctype:comment>
                </view:properties>
             </doctype:documentType>
@@ -52,6 +58,7 @@
                <view:properties>
                   <doctype:name>Lahkumisleht</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -59,6 +66,7 @@
                <view:properties>
                   <doctype:name>Koolitustaotlus</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -66,6 +74,7 @@
                <view:properties>
                   <doctype:name>Riigihanke läbiviimise taotlus</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -73,6 +82,7 @@
                <view:properties>
                   <doctype:name>Majasisene kiri/taotlus/avaldus</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -80,6 +90,7 @@
                <view:properties>
                   <doctype:name>Kantsleri käskkiri</doctype:name>
                   <doctype:used>false</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -87,6 +98,7 @@
                <view:properties>
                   <doctype:name>Põhitegevuse käskkiri</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -94,6 +106,7 @@
                <view:properties>
                   <doctype:name>Üldkäskkiri</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -102,6 +115,7 @@
                   <doctype:name>Personali käskkiri</doctype:name>
                   <doctype:used>true</doctype:used>
                   <doctype:comment>SIM</doctype:comment>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -110,6 +124,7 @@
                   <doctype:name>Personali käskkiri</doctype:name>
                   <doctype:used>true</doctype:used>
                   <doctype:comment>SMIT</doctype:comment>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -117,6 +132,7 @@
                <view:properties>
                   <doctype:name>Määrus</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -124,6 +140,7 @@
                <view:properties>
                   <doctype:name>Akt</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -131,6 +148,7 @@
                <view:properties>
                   <doctype:name>Järelevalveakt</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -138,6 +156,7 @@
                <view:properties>
                   <doctype:name>Aruanne</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -145,6 +164,7 @@
                <view:properties>
                   <doctype:name>Luba</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -152,6 +172,7 @@
                <view:properties>
                   <doctype:name>Protokoll</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -159,6 +180,7 @@
                <view:properties>
                   <doctype:name>Memo</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -167,6 +189,7 @@
                   <doctype:name>Leping</doctype:name>
                   <doctype:used>true</doctype:used>
                   <doctype:comment>SIM</doctype:comment>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -175,6 +198,7 @@
                   <doctype:name>Leping</doctype:name>
                   <doctype:used>true</doctype:used>
                   <doctype:comment>SMIT</doctype:comment>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 
@@ -182,6 +206,7 @@
                <view:properties>
                   <doctype:name>Juhtkonna korraldus</doctype:name>
                   <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
 

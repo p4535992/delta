@@ -23,5 +23,6 @@ public interface CaseModel {
     public interface Props {
         QName STATUS = QName.createQName(URI, "status");
         QName TITLE = QName.createQName(URI, "title");
+        QName CONTAINING_DOCS_COUNT = QName.createQName(URI, "containingDocsCount");
     }
 }

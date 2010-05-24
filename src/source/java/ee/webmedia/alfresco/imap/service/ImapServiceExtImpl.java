@@ -7,11 +7,13 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.mail.Address;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
@@ -62,6 +64,7 @@ import ee.webmedia.alfresco.imap.AttachmentsFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.ImmutableFolder;
 import ee.webmedia.alfresco.imap.IncomingFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.PermissionDeniedAppendBehaviour;
+import ee.webmedia.alfresco.imap.SentFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.model.ImapModel;
 
 /**
@@ -89,10 +92,15 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         return addBehaviour(imapService.getFolder(user, folderName));
     }
 
-    public long saveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage) throws FolderException { // todo: ex handling
+    public long saveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage, boolean incomingEmail) throws FolderException { // todo: ex handling
         try {
             String name = AlfrescoImapConst.MESSAGE_PREFIX + GUID.generate();
-            FileInfo docInfo = fileFolderService.create(folderNodeRef, name, DocumentSubtypeModel.Types.INCOMING_LETTER);
+            FileInfo docInfo = null;
+            if(incomingEmail) {
+                docInfo = fileFolderService.create(folderNodeRef, name, DocumentSubtypeModel.Types.INCOMING_LETTER);
+            } else {
+                docInfo = fileFolderService.create(folderNodeRef, name, DocumentSubtypeModel.Types.OUTGOING_LETTER);
+            }
 
             Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
             String subject = mimeMessage.getSubject();
@@ -100,10 +108,28 @@ public class ImapServiceExtImpl implements ImapServiceExt {
                 subject = I18NUtil.getMessage("imap.letter_subject_missing");
             }
             properties.put(DocumentCommonModel.Props.DOC_NAME, subject);
-            if (mimeMessage.getFrom() != null) {
-                InternetAddress sender = (InternetAddress) mimeMessage.getFrom()[0];
-                properties.put(DocumentSpecificModel.Props.SENDER_DETAILS_NAME, sender.getPersonal());
-                properties.put(DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL, sender.getAddress());            }            properties.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.EMAIL.getValueName());
+            if(incomingEmail) {
+                if (mimeMessage.getFrom() != null) {
+                    InternetAddress sender = (InternetAddress) mimeMessage.getFrom()[0];
+                    properties.put(DocumentSpecificModel.Props.SENDER_DETAILS_NAME, sender.getPersonal());
+                    properties.put(DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL, sender.getAddress());
+                }
+            } else {
+                Address[] allRecipients = mimeMessage.getAllRecipients();
+                
+                List<String> names = new ArrayList<String>(allRecipients.length);
+                List<String> emails = new ArrayList<String>(allRecipients.length);
+                if(allRecipients != null) {
+                    for (int i = 0; i < allRecipients.length; i++) {
+                        names.add(((InternetAddress)allRecipients[i]).getPersonal());
+                        emails.add(((InternetAddress)allRecipients[i]).getAddress());
+                    }
+                }
+                properties.put(DocumentCommonModel.Props.RECIPIENT_NAME, (Serializable) names);
+                properties.put(DocumentCommonModel.Props.RECIPIENT_EMAIL, (Serializable) emails);
+                
+            }
+            properties.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.EMAIL.getValueName());
             properties.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
             properties.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
 
@@ -111,7 +137,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             nodeService.addProperties(docRef, properties);
             saveAttachments(docRef, mimeMessage, true);
 
-            documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", "DVK") //
+            documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", I18NUtil.getMessage("document_log_creator_imap")) //
                     , I18NUtil.getMessage("document_log_creator_imap"));
 
             return (Long) nodeService.getProperty(docRef, ContentModel.PROP_NODE_DBID);
@@ -282,6 +308,8 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             return new IncomingFolderAppendBehaviour(this);
         } else if (AttachmentsFolderAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
             return new AttachmentsFolderAppendBehaviour(this);
+        } else if (SentFolderAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
+            return new SentFolderAppendBehaviour(this);
         } else {
             throw new RuntimeException("Unknown behaviour: " + behaviour);
         }
@@ -311,6 +339,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             allowedFolders = new HashSet<String>();
             allowedFolders.add(I18NUtil.getMessage("imap.folder_letters"));
             allowedFolders.add(I18NUtil.getMessage("imap.folder_attachments"));
+            allowedFolders.add(I18NUtil.getMessage("imap.folder_sent_letters"));
         }
         return allowedFolders;
     }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<model name="docsearch:documentSearchModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
-   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+<model name="docsearch:documentSearchModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
 
    <imports>
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
@@ -44,12 +44,18 @@
             <property name="docsearch:function">
                <type>d:noderef</type>
             </property>
-            <!-- Sari, sõltub funktsiooni valikust - mitme valimine -->
+            <!-- Sari, sõltub funktsiooni valikust-->
             <property name="docsearch:series">
                <type>d:noderef</type>
-               <multiple>true</multiple>
             </property>
-   
+            <!-- Toimik, sõltub sarja valikust -->
+            <property name="docsearch:volume">
+               <type>d:noderef</type>
+            </property>
+            <!-- Asi, sõltub toimiku valikust -->
+            <property name="docsearch:case">
+               <type>d:noderef</type>
+            </property>
             <property name="docsearch:regDateTimeBegin">
                <type>d:date</type>
             </property>
@@ -63,8 +69,13 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>
+            <property name="docsearch:senderName">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
             <property name="docsearch:recipientName">
                <type>d:text</type>
+               <multiple>true</multiple>
             </property>
             <property name="docsearch:docName">
                <type>d:text</type>

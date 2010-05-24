@@ -7,11 +7,26 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="series-panel" styleClass="panel-100 with-pager" label="#{SeriesListDialog.function.mark} #{SeriesListDialog.function.title}" progressive="true">
+<a:panel id="series-panel" styleClass="panel-100 with-pager" label="#{SeriesListDialog.listTitle}" progressive="true">
 
    <%-- Main List --%>
    <a:richList id="seriesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{SeriesListDialog.series}" var="r">
+      
+      <a:column id="functionColumn" rendered="#{SeriesListDialog.disableActions}">
+         <f:facet name="header">
+            <a:sortLink id="functionColumn-sort" label="#{msg.series_function}" value="order" styleClass="header" />
+         </f:facet>
+         <h:outputText id="functionColumn-text" value="#{SeriesListDialog.function.mark} #{SeriesListDialog.function.title}" />
+      </a:column>
+      
+      <%-- seriesIdentifier --%>
+      <a:column id="col0">
+         <f:facet name="header">
+            <a:sortLink id="col0-sort" label="#{msg.series_order_heading}" value="order" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col0-text" value="#{r.order}" />
+      </a:column>
 
       <%-- seriesIdentifier --%>
       <a:column id="col1" primary="true">
@@ -26,7 +41,7 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.series_title}" value="title" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col2-text" value="#{r.title}" action="dialog:volumeListDialog" tooltip="#{msg.volume_list_info}"
+         <a:actionLink id="col2-text" value="#{r.title} (#{r.containingDocsCount})" action="dialog:volumeListDialog" tooltip="#{msg.volume_list_info}"
             showLink="false" actionListener="#{VolumeListDialog.showAll}" >
             <f:param name="seriesNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
@@ -49,7 +64,7 @@
       </a:column>
 
       <%-- show details --%>
-      <a:column id="col5" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager}" >
+      <a:column id="col5" actions="true" styleClass="actions-column" rendered="#{UserService.documentManager and not SeriesListDialog.disableActions}" >
          <f:facet name="header">
             <h:outputText value="&nbsp;" escape="false" />
          </f:facet>

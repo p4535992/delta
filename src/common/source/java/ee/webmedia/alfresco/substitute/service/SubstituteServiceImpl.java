@@ -127,12 +127,15 @@ public class SubstituteServiceImpl implements SubstituteService {
         queryParts.add(generateDatePropertyRangeQuery(null, today, SubstituteModel.Props.SUBSTITUTION_START_DATE));
         queryParts.add(generateDatePropertyRangeQuery(today, null, SubstituteModel.Props.SUBSTITUTION_END_DATE));
         String query = joinQueryPartsAnd(queryParts);
-        ResultSet resultSet = doSearch(query);
         List<Substitute> substitutes = new ArrayList<Substitute>();
-        for (ResultSetRow row : resultSet) {
-            substitutes.add(getSubstitute(row.getNodeRef()));
+        ResultSet resultSet = doSearch(query);
+        try {
+            for (ResultSetRow row : resultSet) {
+                substitutes.add(getSubstitute(row.getNodeRef()));
+            }
+        } finally {
+            resultSet.close();
         }
-
         return substitutes;
     }
 

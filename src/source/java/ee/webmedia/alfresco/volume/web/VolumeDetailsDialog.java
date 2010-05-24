@@ -8,6 +8,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -15,6 +16,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.archivals.service.ArchivalsService;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
@@ -86,6 +88,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         NodeRef archivedVolumeNodeRef = getArchivalsService().archiveVolume(currentEntry.getNode().getNodeRef(),
                 String.format(MessageUtil.getMessage("volume_archiving_note"), df.format(new Date())));
         currentEntry = getVolumeService().getVolumeByNodeRef(archivedVolumeNodeRef); // refresh screen with archived volume data
+        ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).updateTree();
     }
 
     public boolean isClosed() {

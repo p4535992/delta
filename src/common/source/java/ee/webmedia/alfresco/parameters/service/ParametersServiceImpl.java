@@ -134,15 +134,16 @@ public class ParametersServiceImpl implements ParametersService {
             final String paramName = qName.getLocalName();
             NodeRef paramNodeRef = ref.getChildRef();
             final Serializable paramValue = nodeService.getProperty(paramNodeRef, ParametersModel.Props.Parameter.VALUE);
-            final Parameter<? extends Serializable> parameter = getParameter(paramName, paramValue, paramNodeRef);
+            final String paramDescription = (String) nodeService.getProperty(paramNodeRef, ParametersModel.Props.Parameter.DESCRIPTION);
+            final Parameter<? extends Serializable> parameter = getParameter(paramName, paramValue, paramNodeRef, paramDescription);
             parameters.add(parameter);
         }
         return parameters;
     }
 
-    private Parameter<? extends Serializable> getParameter(final String paramName, Serializable paramValue, NodeRef paramNodeRef) {
+    private Parameter<? extends Serializable> getParameter(final String paramName, Serializable paramValue, NodeRef paramNodeRef, String paramDescription) {
         final QName nodeType = nodeService.getType(paramNodeRef);
-        return Parameter.newInstance(paramName, paramValue, nodeType);
+        return Parameter.newInstance(paramName, paramValue, nodeType, paramDescription);
     }
 
     @Override
@@ -161,6 +162,7 @@ public class ParametersServiceImpl implements ParametersService {
         }
         Serializable previousValueInRepo = getParameter(parameter, parameter.getParamValue().getClass());
         nodeService.setProperty(nodeRef, ParametersModel.Props.Parameter.VALUE, parameter.getParamValue());
+        nodeService.setProperty(nodeRef, ParametersModel.Props.Parameter.DESCRIPTION, parameter.getParamDescription());
         nodeService.setProperty(nodeRef, ParametersModel.Props.Parameter.NEXT_FIRE_TIME, parameter.getNextFireTime());
         // only reschedule jobs if the parameter value actually changed
         if (!previousValueInRepo.equals(parameter.getParamValue())) {

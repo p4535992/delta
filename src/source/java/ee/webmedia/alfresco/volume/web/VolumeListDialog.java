@@ -51,7 +51,6 @@ public class VolumeListDialog extends BaseDialogBean {
 
     public List<Volume> getEntries() {
         final List<Volume> volumes = getVolumeService().getAllVolumesBySeries(parent.getNode().getNodeRef());
-        Collections.sort(volumes);
         return volumes;
     }
 

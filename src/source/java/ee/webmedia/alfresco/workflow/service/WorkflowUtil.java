@@ -152,7 +152,7 @@ public class WorkflowUtil {
             break;
         case STOPPED:
             if (workflow.isParallelTasks()) {
-                if (!isStatusAll(tasks, Status.STOPPED, Status.FINISHED, Status.UNFINISHED)) {
+                if (!isStatusAll(tasks, Status.NEW, Status.STOPPED, Status.FINISHED, Status.UNFINISHED)) {
                     throw new WorkflowChangedException("If workflow status is STOPPED, then all tasks must have status STOPPED or FINISHED or UNFINISHED\n" + workflow);
                 }
             } else {

@@ -21,6 +21,27 @@
       var status = "</f:verbatim><h:outputText value="#{VolumeDetailsDialog.currentNode.properties['{http://alfresco.webmedia.ee/model/volume/1.0}status']}" /><f:verbatim>";
       processFnSerVolCaseCloseButton(status);
    }
+
+   var volumeMarkInput = $jQ("#"+escapeId4JQ("dialog:dialog-body:volume-metatada:prop_volx003a_volumeMark:volx003a_volumeMark"));
+   var initialVolumeMark = volumeMarkInput.val();
+
+   $jQ(document).ready(function () {
+      var jQVolumeType = $jQ("#"+escapeId4JQ("dialog:dialog-body:volume-metatada:prop_volx003a_volumeType:volx003a_volumeType"));
+      changeVolumeMarkReadOnly(jQVolumeType);
+      prependOnchange(jQVolumeType, changeVolumeMarkReadOnly);
+   });
+
+   function changeVolumeMarkReadOnly(selectBox){
+      var selectedVal = selectBox.children("option:selected").val();
+      if(selectedVal == "objektipõhine"){
+         volumeMarkInput.val(initialVolumeMark);
+         volumeMarkInput.attr("disabled", "disabled");
+      } else {
+         volumeMarkInput.removeAttr("disabled");
+      }
+      processButtonState();
+   }
+
 </script>
 </f:verbatim>
 <%

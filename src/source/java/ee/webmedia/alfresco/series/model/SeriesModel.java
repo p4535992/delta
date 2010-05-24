@@ -11,6 +11,7 @@ public interface SeriesModel {
 
     interface Associations {
         QName SERIES = QName.createQName(URI, "series");
+        QName SERIES_LOG = QName.createQName(URI, "seriesLog");
     }
 
     /**
@@ -24,5 +25,6 @@ public interface SeriesModel {
         QName REGISTER = QName.createQName(URI, "register");
         QName INDIVIDUALIZING_NUMBERS = QName.createQName(URI, "individualizingNumbers");
         QName STRUCT_UNIT = QName.createQName(URI, "structUnit");
+        QName CONTAINING_DOCS_COUNT = QName.createQName(URI, "containingDocsCount");
     }
 }

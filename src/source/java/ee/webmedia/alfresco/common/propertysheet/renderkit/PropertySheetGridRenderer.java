@@ -8,6 +8,7 @@ import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
+import org.alfresco.web.ui.repo.component.property.UISeparator;
 import org.apache.myfaces.renderkit.html.HtmlGridRenderer;
 import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 import org.apache.myfaces.shared_impl.renderkit.RendererUtils;
@@ -16,17 +17,18 @@ import org.apache.myfaces.shared_impl.renderkit.html.HtmlRendererUtils;
 import org.apache.myfaces.shared_impl.util.ArrayUtils;
 import org.apache.myfaces.shared_impl.util.StringUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
+import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
+import ee.webmedia.alfresco.common.propertysheet.search.Search;
 
 /**
- * Custom Grid render which DOES NOT open or close any table cell's in the body (<td></td>). 
- * The children can open and close their own cells.
- * 
  * @author Erko Hansar
+ * @author Kaarel Jõgeva
  */
 public class PropertySheetGridRenderer extends HtmlGridRenderer {
 
     /**
-     * Copied from Apache myfaces 1.1.7 shared_impl HtmlGridRendererBase and modified the <td> </td> output part
+     * Copied from Apache myfaces 1.1.7 shared_impl HtmlGridRendererBase and modified the <td></td> output part
      */
     @SuppressWarnings("unchecked")
     @Override
@@ -56,10 +58,13 @@ public class PropertySheetGridRenderer extends HtmlGridRenderer {
             int columnIndex = 0;
             int rowClassIndex = 0;
             boolean rowStarted = false;
+            boolean inlineMode = false;
+            String labelStyleClass = (String) component.getAttributes().get("labelStyleClass");
+            labelStyleClass = (labelStyleClass != null) ? labelStyleClass : "";
             for (Iterator it = getChildren(component).iterator(); it.hasNext();) {
                 UIComponent child = (UIComponent) it.next();
                 if (child.isRendered()) {
-                    if (columnIndex == 0) {
+                    if (columnIndex == 0 && !inlineMode) {
                         // start of new/next row
                         if (rowStarted) {
                             // do we have to close the last row?
@@ -77,14 +82,48 @@ public class PropertySheetGridRenderer extends HtmlGridRenderer {
                         }
                     }
 
-                    // ERKO: we let children elements to render their own <td> and </td>  
-                    //writer.startElement(HTML.TD_ELEM, component);
-                    //if (columnIndex < columnClassesCount) {
-                    //    writer.writeAttribute(HTML.CLASS_ATTR, columnClassesArray[columnIndex], null);
-                    //}
-                    //columnIndex = childAttributes(context, writer, child, columnIndex);
+                    writer.startElement(HTML.TD_ELEM, component);
+                    if (columnIndex < columnClassesCount) {
+                        writer.writeAttribute(HTML.CLASS_ATTR, columnClassesArray[columnIndex] + " " + labelStyleClass, null);
+                    } else if (child instanceof UISeparator) {
+                        writer.writeAttribute(HTML.CLASS_ATTR, "separator", null);
+                        writer.writeAttribute(HTML.COLSPAN_ATTR, 3, null);
+                    } else {
+                        writer.writeAttribute(HTML.CLASS_ATTR, labelStyleClass, null);
+                    }
+
+                    columnIndex = childAttributes(context, writer, child, columnIndex);
+                    String styleClass = (String) child.getAttributes().get("styleClass");
+                    if(org.apache.commons.lang.StringUtils.isNotBlank(styleClass)) {
+                        styleClass += " inline";
+                    } else {
+                        styleClass = "inline";
+                    }
+                    child.getAttributes().put("styleClass", styleClass);
                     RendererUtils.renderChild(context, child);
-                    //writer.endElement(HTML.TD_ELEM);
+
+                    if ((child instanceof CustomAttributes || child instanceof Search) && component instanceof WMUIPropertySheet) {
+                        String display = ((CustomAttributes) child).getCustomAttributes().get(WMUIPropertySheet.DISPLAY);
+                        if (org.apache.commons.lang.StringUtils.isNotBlank(display) && display.equals(WMUIPropertySheet.INLINE)) {
+                            if (!inlineMode) {
+                                writer.startElement(HTML.TABLE_ELEM, component);
+                                writer.writeAttribute(HTML.CELLPADDING_ATTR, 0, null);
+                                writer.writeAttribute(HTML.CELLSPACING_ATTR, 0, null);
+                                writer.writeAttribute(HTML.BORDER_ATTR, 0, null);
+                                writer.writeAttribute(HTML.CLASS_ATTR, "inline", null);
+                                writer.startElement(HTML.TR_ELEM, component);
+                            }
+                            inlineMode = true;
+                        } else {
+                            if (inlineMode) {
+                                writer.endElement(HTML.TR_ELEM);
+                                writer.endElement(HTML.TABLE_ELEM);
+                            }
+                            inlineMode = false;
+                        }
+                    }
+
+                    writer.endElement(HTML.TD_ELEM);
 
                     columnIndex++;
                     if (columnIndex >= columns) {
@@ -110,6 +149,5 @@ public class PropertySheetGridRenderer extends HtmlGridRenderer {
         }
 
         writer.endElement(HTML.TBODY_ELEM);
-    }    
-    
+    }
 }

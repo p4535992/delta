@@ -5,6 +5,7 @@ import java.util.List;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.volume.model.Volume;
 
 /**
@@ -21,10 +22,12 @@ public interface VolumeService {
 
     List<Volume> getAllValidVolumesBySeries(NodeRef seriesNodeRef);
 
+    List<Volume> getAllValidVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status);
+
     Volume getVolumeByNodeRef(String volumeNodeRef);
 
     Volume getVolumeByNodeRef(NodeRef volumeRef);
-    
+
     Node getVolumeNodeByRef(NodeRef volumeNodeRef);
 
     /**
@@ -33,8 +36,11 @@ public interface VolumeService {
      */
     Volume createVolume(NodeRef seriesNodeRef);
 
+    Volume copyVolume(Volume baseVolume);
+
     /**
      * Close given volume and all cases under given volume.
+     * 
      * @param volume
      */
     void closeVolume(Volume volume);

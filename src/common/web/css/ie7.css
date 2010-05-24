@@ -58,8 +58,8 @@ a.button {
 
 input[type="submit"] {
 	overflow: auto;
-	padding-left: 10px;
-	padding-right: 10px;
+	padding-left: 13px;
+	padding-right: 13px;
 }
 
 #content,
@@ -151,20 +151,24 @@ th {
 	width: 100%;
 }
 
+.propertiesLabel + td .propertiesLabel + td {
+	width: auto;
+}
+
 hr {
 	margin: 0;
 	border-top: #efefef 1px solid;
 }
 
-#metadata-panel td td input {
+#metadata-panel td td input[type="text"] {
 	width: 300px;
 }
 
-.recipient.cells1 input {
+.recipient.cells1 input[type="text"] {
 	width: 300px !important; 
 }
 
-.recipient.cells2 input {
+.recipient.cells2 input[type="text"] {
 	width: 146px !important; 
 }
 
@@ -324,10 +328,6 @@ hr {
 	margin-left: 133px;
 }
 
-#container-content #send-out-panel  table.recipient {
-	width: 100%;
-}
-
 #document-search-panel .inline-property-group input,
 #task-search-panel .inline-property-group input {
 	vertical-align: top !important;
@@ -345,4 +345,8 @@ hr {
 .subPropertySheetTR div:first-child {
 	float: left;
 	overflow: visible;
+}
+
+.long-content {
+	top: -4px;
 }

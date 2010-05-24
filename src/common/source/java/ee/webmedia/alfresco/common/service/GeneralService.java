@@ -171,4 +171,15 @@ public interface GeneralService {
 
     String getUniqueFileName(NodeRef folder, String fileName);
 
+    NodeRef getAncestorNodeRefWithType(NodeRef childRef, QName ancestorType);
+    
+    /**
+     * Updates parent node containingDocsCount property
+     *
+     * @param parentNodeRef parent to update
+     * @param propertyName property name to update
+     * @param added should we increase or decrease
+     * @param count how many docs were added/removed
+     */
+    void updateParentContainingDocsCount(NodeRef parentNodeRef, QName propertyName, boolean added, Integer count);
 }

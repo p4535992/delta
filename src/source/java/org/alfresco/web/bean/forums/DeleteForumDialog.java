@@ -22,13 +22,23 @@ public class DeleteForumDialog extends DeleteSpaceDialog {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         Node node = this.browseBean.getActionSpace();
+        NodeRef documentNodeRef = null;
+        ChildAssociationRef assoc = null;
         if (node != null) {
             // remove discussable aspect from parent
-            ChildAssociationRef document = getNodeService().getPrimaryParent(node.getNodeRef());
-            getNodeService().removeAspect(document.getParentRef(), ForumModel.ASPECT_DISCUSSABLE);
+            assoc = getNodeService().getPrimaryParent(node.getNodeRef());
+            if(assoc != null) {
+                documentNodeRef = assoc.getParentRef();
+            }
         }
 
-        return super.finishImpl(context, outcome);
+        outcome = super.finishImpl(context, outcome);
+
+        if(assoc != null && documentNodeRef != null) {
+            getNodeService().removeAspect(documentNodeRef, ForumModel.ASPECT_DISCUSSABLE);
+        }
+
+        return outcome;
     }
 
     @Override

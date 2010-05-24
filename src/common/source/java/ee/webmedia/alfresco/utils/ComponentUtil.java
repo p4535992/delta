@@ -2,8 +2,12 @@ package ee.webmedia.alfresco.utils;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.Map.Entry;
 
 import javax.faces.FacesException;
 import javax.faces.component.UIComponent;
@@ -37,6 +41,7 @@ import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.component.NodeAssocBrand;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
@@ -233,9 +238,13 @@ public class ComponentUtil {
      * @param component - this component and all its children will recursively be set disabled
      */
     public static void setDisabledAttributeRecursively(UIComponent component) {
+        setDisabledAttributeRecursively(component, Boolean.TRUE);
+    }
+
+    public static void setDisabledAttributeRecursively(UIComponent component, Boolean value) {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
-        attributes.put("readonly", Boolean.TRUE);
+        attributes.put("readonly", value);
         if (component instanceof UIOutput) {
             return;
         }
@@ -245,7 +254,7 @@ public class ComponentUtil {
             return;
         }
         for (UIComponent childComponent : children) {
-            setDisabledAttributeRecursively(childComponent);
+            setDisabledAttributeRecursively(childComponent, value);
         }
     }
 
@@ -270,11 +279,16 @@ public class ComponentUtil {
         }
     }
 
-    public static void setSelectItems(FacesContext context, UIComponent component, List<SelectItem> selectItems) {
+    public static void setSelectItems(FacesContext context, UIInput component, List<SelectItem> selectItems) {
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
         children.clear();
-        children.addAll(generateSelectItems(context, selectItems));
+        setDisabledAttributeRecursively(component, selectItems == null);
+        if (selectItems == null) {
+            component.setValue(null);
+        } else {
+            children.addAll(generateSelectItems(context, selectItems));
+        }
         setHtmlSelectManyListboxSize(component, selectItems);
     }
 
@@ -296,13 +310,6 @@ public class ComponentUtil {
 
             ((HtmlSelectManyListbox) component).setSize(itemCount);
         }
-    }
-
-    public static void addSelectItems(FacesContext context, UIComponent component, List<SelectItem> selectItems) {
-        @SuppressWarnings("unchecked")
-        List<UIComponent> children = component.getChildren();
-        children.addAll(generateSelectItems(context, selectItems));
-        setHtmlSelectManyListboxSize(component, selectItems);
     }
 
     public static List<UISelectItem> generateSelectItems(FacesContext context, List<SelectItem> selectItems) {
@@ -339,6 +346,10 @@ public class ComponentUtil {
         if (form == null) {
             throw new IllegalStateException("Must nest components inside UIForm to generate form submit!");
         }
+        return generateFieldSetter(context, form, fieldId, value);
+    }
+
+    public static String generateFieldSetter(FacesContext context, UIForm form, String fieldId, String value) {
         String formClientId = form.getClientId(context);
         HtmlFormRendererBase.addHiddenCommandParameter(context, form, fieldId);
         StringBuilder buf = new StringBuilder(200);
@@ -352,6 +363,100 @@ public class ComponentUtil {
         buf.append(val);
         buf.append("';");
         return buf.toString();
+    }
+
+    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component) {
+        return generateAjaxFormSubmit(context, component, null, null);
+    }
+
+    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value) {
+        return generateAjaxFormSubmit(context, component, fieldId, value, null, 0);
+    }
+
+    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value, Map<String, String> params) {
+        return generateAjaxFormSubmit(context, component, fieldId, value, params, 0);
+    }
+
+    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value, int parentLevel) {
+        return generateAjaxFormSubmit(context, component, fieldId, value, null, parentLevel);
+    }
+
+    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value, Map<String, String> params, int parentLevel) {
+        Assert.isTrue(parentLevel >= 0, "parentLevel cannot be negative");
+        UIComponent ajaxComponent = null;
+        int parentLevelFound = -1;
+        while (parentLevelFound < parentLevel) {
+            if (ajaxComponent == null) {
+                ajaxComponent = component;
+            } else {
+                ajaxComponent = ajaxComponent.getParent();
+                if (ajaxComponent == null) {
+                    break;
+                }
+            }
+            if (ajaxComponent instanceof AjaxUpdateable && !Boolean.TRUE.equals(ajaxComponent.getAttributes().get(AjaxUpdateable.AJAX_DISABLED_ATTR))) {
+                parentLevelFound++;
+            }
+        }
+
+        // If desired upper level parent AjaxUpdateable component not found, do full submit
+        if (ajaxComponent == null || parentLevelFound < parentLevel) {
+            if (fieldId == null) {
+                return Utils.generateFormSubmit(context, component);
+            } else if (params == null) {
+                return Utils.generateFormSubmit(context, component, fieldId, value);
+            }
+            return Utils.generateFormSubmit(context, component, fieldId, value, params);
+        }
+
+        // Otherwise do AJAX submit
+
+        UIForm form = Utils.getParentForm(context, component);
+        if (form == null) {
+            throw new IllegalStateException("Must nest components inside UIForm to generate form submit!");
+        }
+
+        Set<String> submittableParams = new HashSet<String>();
+        String clientId = ajaxComponent.getClientId(context);
+        StringBuilder s = new StringBuilder();
+
+        if (fieldId != null) {
+            s.append(generateFieldSetter(context, form, fieldId, value));
+            if (!fieldId.startsWith(clientId)) {
+                submittableParams.add(fieldId);
+            }
+        }
+
+        if (params != null) {
+            for (Entry<String, String> param : params.entrySet()) {
+                String paramName = param.getKey();
+                s.append(generateFieldSetter(context, form, paramName, param.getValue()));
+                if (!paramName.startsWith(clientId)) {
+                    submittableParams.add(paramName);
+                }
+            }
+        }
+
+        s.append("ajaxSubmit('").append(ajaxComponent.getId()).append("','");
+        s.append(clientId).append("','");
+        s.append(((AjaxUpdateable) ajaxComponent).getAjaxClientId(context)).append("','");
+        s.append(form.getClientId(context)).append("','");
+        s.append(context.getViewRoot().getViewId()).append("',[");
+        for (Iterator<String> i = submittableParams.iterator(); i.hasNext(); ) {
+            String submittableParam = i.next();
+            s.append("'").append(submittableParam).append("'");
+            if (i.hasNext()) {
+                s.append(",");
+            }
+        }
+        s.append("]);return false;");
+        return s.toString();
+    }
+
+    public static void setAjaxDisabled(UIComponent component) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = component.getAttributes();
+        attributes.put(AjaxUpdateable.AJAX_DISABLED_ATTR, Boolean.TRUE);
     }
 
     public static final String ATTR_DISPLAY_LABEL = "displayLabel";
@@ -536,6 +641,62 @@ public class ComponentUtil {
 		}
 		return component;
 	}
+
+    public static UIComponent findChildComponentById(FacesContext context, UIComponent component, String id, String clientId) {
+        if (component == null) {
+            return null;
+        }
+        if (id.equals(component.getId()) && clientId.equals(component.getClientId(context))) {
+            return component;
+        }
+        for (int i = 0; i < component.getChildCount(); i++) {
+            UIComponent child = (UIComponent) component.getChildren().get(i);
+            UIComponent result = findChildComponentById(context, child, id, clientId);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    public static <T> List<T> findChildComponentsByClass(FacesContext context, UIComponent component, Class<? extends T> clazz) {
+        List<T> results = null;
+        if (component == null) {
+            return null;
+        }
+        for (int i = 0; i < component.getChildCount(); i++) {
+            UIComponent child = (UIComponent) component.getChildren().get(i);
+            List<T> results2 = findChildComponentsByClass(context, child, clazz);
+            if (results2 != null) {
+                if (results == null) {
+                    results = results2;
+                } else {
+                    results.addAll(results2);
+                }
+            }
+        }
+        if (clazz.isAssignableFrom(component.getClass())) {
+            @SuppressWarnings("unchecked")
+            T resultComponent = (T) component;
+            if (results == null) {
+                results = new ArrayList<T>();
+                results.add(resultComponent);
+            } else {
+                results.add(resultComponent);
+            }
+        }
+        return results;
+    }
+
+    public static UIComponent findParentComponentById(FacesContext context, UIComponent component, String id, String clientId) {
+        while (component != null) {
+            if (id.equals(component.getId()) && clientId.equals(component.getClientId(context))) {
+                return component;
+            }
+            component = component.getParent();
+        }
+        return null;
+    }
 
     /**
      * @param context

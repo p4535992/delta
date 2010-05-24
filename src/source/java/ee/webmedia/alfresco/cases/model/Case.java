@@ -23,6 +23,7 @@ public class Case implements Serializable, Comparable<Case> {
 
     private String title;
     private String status;
+    private int containingDocsCount;
     // non-mappable fields
     @AlfrescoModelProperty(isMappable = false)
     private NodeRef volumeNodeRef;
@@ -47,6 +48,14 @@ public class Case implements Serializable, Comparable<Case> {
         this.status = status;
     }
 
+    public int getContainingDocsCount() {
+        return containingDocsCount;
+    }
+    
+    public void setContainingDocsCount(int containingDocsCount) {
+        this.containingDocsCount = containingDocsCount;
+    }
+    
     public NodeRef getVolumeNodeRef() {
         return volumeNodeRef;
     }

@@ -7,7 +7,9 @@ import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.InMemoryTicketComponentImpl;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.webdav.WebDAVServlet;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.model.FileFolderService;
@@ -24,6 +26,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.cmr.security.PermissionService;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.apache.commons.io.FilenameUtils;
@@ -50,14 +53,14 @@ public class FileServiceImpl implements FileService {
     private PermissionService permissionService;
     private ContentService contentService;
     private GeneralService generalService;
-    private DocumentLogService documentLogService; 
+    private DocumentLogService documentLogService;
 
     private String scannedFilesPath;
 
     @Override
     public void toggleActive(NodeRef nodeRef) {
         boolean active = true; // If file doesn't have the flag set, then it hasn't been toggled yet, thus active
-        if(nodeService.getProperty(nodeRef, File.ACTIVE) != null) {
+        if (nodeService.getProperty(nodeRef, File.ACTIVE) != null) {
             active = Boolean.parseBoolean(nodeService.getProperty(nodeRef, File.ACTIVE).toString());
         }
         nodeService.setProperty(nodeRef, File.ACTIVE, !active);
@@ -67,12 +70,12 @@ public class FileServiceImpl implements FileService {
     public List<File> getAllFilesExcludingDigidocSubitems(NodeRef nodeRef) {
         return getAllFiles(nodeRef, false, false);
     }
-    
+
     @Override
     public List<File> getAllFiles(NodeRef nodeRef) {
         return getAllFiles(nodeRef, true, false);
     }
-    
+
     private List<File> getAllFiles(NodeRef nodeRef, boolean includeDigidocSubitems, boolean onlyActive) {
         List<File> files = new ArrayList<File>();
         List<FileInfo> fileInfos = fileFolderService.listFiles(nodeRef);
@@ -84,7 +87,8 @@ public class FileServiceImpl implements FileService {
             if (item.isActive() || !onlyActive) {
                 files.add(item);
             }
-            if (isDdoc && includeDigidocSubitems && permissionService.hasPermission(item.getNodeRef(), PermissionService.READ_CONTENT).equals(AccessStatus.ALLOWED)) {
+            if (isDdoc && includeDigidocSubitems
+                    && permissionService.hasPermission(item.getNodeRef(), PermissionService.READ_CONTENT).equals(AccessStatus.ALLOWED)) {
                 // hack: add another File to display nested tables in JSP.
                 // this "item2" should be exactly after the "item" in the list
                 try {
@@ -104,7 +108,7 @@ public class FileServiceImpl implements FileService {
         }
         return files;
     }
-    
+
     @Override
     public List<File> getAllActiveFiles(NodeRef nodeRef) {
         return getAllFiles(nodeRef, false, true);
@@ -113,7 +117,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public List<NodeRef> getAllActiveFilesNodeRefs(NodeRef nodeRef) {
         List<NodeRef> nodeRefs = new ArrayList<NodeRef>();
-        for (File file : getAllActiveFiles(nodeRef)) {  // TODO not optimal
+        for (File file : getAllActiveFiles(nodeRef)) { // TODO not optimal
             nodeRefs.add(file.getNodeRef());
         }
         return nodeRefs;
@@ -177,7 +181,8 @@ public class FileServiceImpl implements FileService {
             transformer.transform(reader, writer);
             if (log.isDebugEnabled()) {
                 log.debug("Transformed file to PDF, time " + (System.currentTimeMillis() - startTime) + " ms, filename=" + filename + ", size="
-                        + reader.getSize() + " bytes, mimeType=" + reader.getMimetype() + ", encoding=" + reader.getEncoding() + ", PDF size=" + writer.getSize() + " bytes");
+                        + reader.getSize() + " bytes, mimeType=" + reader.getMimetype() + ", encoding=" + reader.getEncoding() + ", PDF size="
+                        + writer.getSize() + " bytes");
             }
         } catch (ContentIOException e) {
             log.debug("Failed to transform file to PDF, filename=" + filename + ", size=" + reader.getSize() + ", mimeType=" + reader.getMimetype()
@@ -205,30 +210,66 @@ public class FileServiceImpl implements FileService {
                 throw e;
             } catch (FileExistsException e) {
                 log.warn("Move failed. File '" + fileInfo.getName() + "' already exists");
-                throw e; 
+                throw e;
             } catch (FileNotFoundException e) {
                 log.warn("Move failed. File '" + fileInfo.getName() + "' not found");
-                throw e; 
+                throw e;
             }
         }
     }
 
-
     @Override
-    public NodeRef addFileToDocument(String name, NodeRef fileNodeRef, NodeRef documentNodeRef) {
-        // change file name
-        nodeService.setProperty(fileNodeRef, ContentModel.PROP_NAME, name);
-        // move file
-        return nodeService.moveNode(fileNodeRef, documentNodeRef,
-                ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
+    public NodeRef addFileToDocument(final String name, final NodeRef fileNodeRef, final NodeRef documentNodeRef) {
+        // Moving is executed with System user rights, because this is not appropriate to implement in permissions model
+        return AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
+            @Override
+            public NodeRef doWork() throws Exception {
+                // change file name
+                nodeService.setProperty(fileNodeRef, ContentModel.PROP_NAME, name);
+                // move file
+                return nodeService.moveNode(fileNodeRef, documentNodeRef,
+                        ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
+            }
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     @Override
-    public List<File> getScannedFiles() {
-        if (log.isDebugEnabled()) log.debug("Getting scanned files");
-        NodeRef scannedFilesNodeRef  = generalService.getNodeRef(scannedFilesPath);
-        Assert.notNull(scannedFilesNodeRef, "Scanned files node reference not found");
-        return getAllFilesExcludingDigidocSubitems(scannedFilesNodeRef);
+    public List<File> getScannedFolders() {
+        if (log.isDebugEnabled())
+            log.debug("Getting scanned files");
+        NodeRef scannedNodeRef = generalService.getNodeRef(scannedFilesPath);
+        Assert.notNull(scannedNodeRef, "Scanned files node reference not found");
+        List<FileInfo> fileInfos = fileFolderService.listFolders(scannedNodeRef);
+        List<File> files = new ArrayList<File>(fileInfos.size());
+        for (FileInfo fileInfo : fileInfos) {
+            final File file = createFile(fileInfo);
+            file.setName(userService.getUserFullName(file.getName())); // real folder names are userNames - replace them with user full name
+            final int nrOfChildren = nodeService.getChildAssocs(file.getNodeRef(), ContentModel.ASSOC_CONTAINS, RegexQNamePattern.MATCH_ALL).size();
+            file.setNrOfChildren(nrOfChildren);
+            files.add(file);
+        }
+        return files;
+    }
+
+    @Override
+    public List<File> getAllScannedFiles() {
+        NodeRef scannedNodeRef = generalService.getNodeRef(scannedFilesPath);
+        Assert.notNull(scannedNodeRef, "Scanned files node reference not found");
+        List<FileInfo> fileInfos = fileFolderService.listFolders(scannedNodeRef);
+        List<File> files = new ArrayList<File>(fileInfos.size());
+        for (FileInfo fileInfo : fileInfos) {
+            final List<File> filesInFolder = getScannedFiles(fileInfo.getNodeRef());
+            files.addAll(filesInFolder);
+        }
+        return files;
+    }
+
+    @Override
+    public List<File> getScannedFiles(NodeRef folderRef) {
+        if (log.isDebugEnabled())
+            log.debug("Getting scanned files");
+        Assert.notNull(folderRef, "Scanned folder node reference not found");
+        return getAllFilesExcludingDigidocSubitems(folderRef);
     }
 
     private File createFile(FileInfo fi) {
@@ -305,7 +346,7 @@ public class FileServiceImpl implements FileService {
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }
-    
+
     public void setDocumentLogService(DocumentLogService documentLogService) {
         this.documentLogService = documentLogService;
     }

@@ -68,6 +68,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
    <bean class="ee.webmedia.alfresco.document.type.service.DocumentTypeMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
       <property name="documentTypeService" ref="DocumentTypeService" />
+      <property name="namespaceService" ref="NamespaceService" />
    </bean>
 
 </beans>

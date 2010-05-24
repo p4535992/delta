@@ -47,7 +47,7 @@ public interface ParametersService {
      */
     void updateParameters(Collection<Parameter<?>> parameters);
 
-    void updateParameter(Parameter<?> parameter);
+    void updateParameter(Parameter<? extends Serializable> parameter);
 
     void addParameterChangeListener(String paramName, ParameterChangedCallback callback);
 

@@ -43,7 +43,6 @@ import org.alfresco.repo.security.authentication.InMemoryTicketComponentImpl;
 import org.alfresco.repo.web.filter.beans.DependencyInjectedFilter;
 import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.repo.webdav.WebDAVHelper;
-import org.alfresco.repo.webdav.auth.NTLMAuthenticationFilter;
 import org.alfresco.repo.webdav.auth.WebDAVUser;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -63,11 +62,7 @@ public class AuthenticationFilter implements DependencyInjectedFilter
 {
     // Debug logging
     
-    private static Log logger = LogFactory.getLog(NTLMAuthenticationFilter.class);
-    
-    // Authenticated user session object name
-
-    public final static String AUTHENTICATION_USER = "_alfDAVAuthTicket";
+    private static Log logger = LogFactory.getLog(AuthenticationFilter.class);
 
     // Various services required by NTLM authenticator
     
@@ -127,133 +122,105 @@ public class AuthenticationFilter implements DependencyInjectedFilter
         HttpServletRequest httpReq = (HttpServletRequest) req;
         HttpServletResponse httpResp = (HttpServletResponse) resp;
 
-        // Get the user details object from the session
+        WebDAVUser user = null;
 
-        WebDAVUser user = (WebDAVUser) httpReq.getSession().getAttribute(AUTHENTICATION_USER);
+    	// Check if the request includes an authentication ticket
+ 
+		String ticket = null;
 
-        if (user != null)
+        String path = WebDAV.getRepositoryPath(httpReq);
+        List<String> pathElements = WebDAVHelper.splitAllPaths(path);
+        if (pathElements.size() > 0)
         {
-            try
+            ticket = pathElements.get(0);
+            if (!ticket.startsWith(InMemoryTicketComponentImpl.GRANTED_AUTHORITY_TICKET_PREFIX))
             {
-               // Setup the authentication context
-               authService.validate(user.getTicket());
-
-               // Set the current locale
-
-               // I18NUtil.setLocale(Application.getLanguage(httpRequest.getSession()));
-            }
-            catch (Exception ex)
-            {
-               // No user/ticket, force the client to prompt for logon details
-               
-               user = null;
+                ticket = InMemoryTicketComponentImpl.GRANTED_AUTHORITY_TICKET_PREFIX + ticket;
             }
         }
+    	
+    	if ( ticket != null &&  ticket.length() > 0)
+    	{
+    	    // TODO check if PowerPoint bug fix is still needed
 
-        if (user == null)
+        	// Debug
+            
+            if ( logger.isDebugEnabled())
+                logger.debug("Logon via ticket from " + req.getRemoteHost() + " (" +
+                        req.getRemoteAddr() + ":" + req.getRemotePort() + ")" + " ticket=" + ticket);
+            
+    		UserTransaction tx = null;
+    	    try
+    	    {
+    	    	// Validate the ticket
+    	    	  
+    	    	authService.validate(ticket);
+
+    	    	// Need to create the User instance if not already available
+    	    	  
+    	        String currentUsername = authService.getCurrentUserName();
+
+    	        // Start a transaction
+    	          
+  	            tx = transactionService.getUserTransaction();
+    	        tx.begin();
+    	            
+    	        NodeRef personRef = personService.getPerson(currentUsername);
+    	        user = new WebDAVUser( currentUsername, authService.getCurrentTicket(), personRef);
+    	        NodeRef homeRef = (NodeRef) nodeService.getProperty(personRef, ContentModel.PROP_HOMEFOLDER);
+    	            
+    	        // Check that the home space node exists - else Login cannot proceed
+    	            
+    	        if (nodeService.exists(homeRef) == false)
+    	        {
+    	        	throw new InvalidNodeRefException(homeRef);
+    	        }
+    	        user.setHomeNode(homeRef);
+    	            
+    	        tx.commit();
+    	        tx = null; 
+    	    }
+        	catch (AuthenticationException authErr)
+        	{
+        		// Clear the user object to signal authentication failure
+        		
+                if (logger.isDebugEnabled())
+                    logger.debug("Logon via ticket failed: " + authErr.getMessage());
+
+        		user = null;
+        	}
+        	catch (Throwable e)
+        	{
+        		// Clear the user object to signal authentication failure
+
+        	    if (logger.isDebugEnabled())
+                    logger.debug("Logon via ticket failed", e);
+        		
+        		user = null;
+        	}
+        	finally
+        	{
+        		try
+        	    {
+        			if (tx != null)
+        	        {
+        				tx.rollback();
+       	        	}
+        	    }
+        	    catch (Exception tex)
+        	    {
+        	    }
+        	}
+    	}
+        
+        // Check if the user is authenticated, if not then prompt again
+        
+        if ( user == null)
         {
-            	// Check if the request includes an authentication ticket
-            
-				String ticket = null;
+            // No user/ticket, force the client to prompt for logon details
 
-                String path = WebDAV.getRepositoryPath(httpReq);
-                List<String> pathElements = WebDAVHelper.splitAllPaths(path);
-                if (pathElements.size() > 0)
-                {
-                    ticket = pathElements.get(0);
-                    if (!ticket.startsWith(InMemoryTicketComponentImpl.GRANTED_AUTHORITY_TICKET_PREFIX))
-                    {
-                        ticket = InMemoryTicketComponentImpl.GRANTED_AUTHORITY_TICKET_PREFIX + ticket;
-                    }
-                }
-            	
-            	if ( ticket != null &&  ticket.length() > 0)
-            	{
-            	    // TODO check if PowerPoint bug fix is still needed
-
-                	// Debug
-                    
-                    if ( logger.isDebugEnabled())
-                        logger.debug("Logon via ticket from " + req.getRemoteHost() + " (" +
-                                req.getRemoteAddr() + ":" + req.getRemotePort() + ")" + " ticket=" + ticket);
-                    
-            		UserTransaction tx = null;
-            	    try
-            	    {
-            	    	// Validate the ticket
-            	    	  
-            	    	authService.validate(ticket);
-
-            	    	// Need to create the User instance if not already available
-            	    	  
-            	        String currentUsername = authService.getCurrentUserName();
-
-            	        // Start a transaction
-            	          
-          	            tx = transactionService.getUserTransaction();
-            	        tx.begin();
-            	            
-            	        NodeRef personRef = personService.getPerson(currentUsername);
-            	        user = new WebDAVUser( currentUsername, authService.getCurrentTicket(), personRef);
-            	        NodeRef homeRef = (NodeRef) nodeService.getProperty(personRef, ContentModel.PROP_HOMEFOLDER);
-            	            
-            	        // Check that the home space node exists - else Login cannot proceed
-            	            
-            	        if (nodeService.exists(homeRef) == false)
-            	        {
-            	        	throw new InvalidNodeRefException(homeRef);
-            	        }
-            	        user.setHomeNode(homeRef);
-            	            
-            	        tx.commit();
-            	        tx = null; 
-            	            
-            	        // Store the User object in the Session - the authentication servlet will then proceed
-            	            
-            	        httpReq.getSession().setAttribute( AUTHENTICATION_USER, user);
-            	    }
-	            	catch (AuthenticationException authErr)
-	            	{
-	            		// Clear the user object to signal authentication failure
-	            		
-	                    if (logger.isDebugEnabled())
-	                        logger.debug("Logon via ticket failed: " + authErr.getMessage());
-
-	            		user = null;
-	            	}
-	            	catch (Throwable e)
-	            	{
-	            		// Clear the user object to signal authentication failure
-
-	            	    if (logger.isDebugEnabled())
-                            logger.debug("Logon via ticket failed", e);
-	            		
-	            		user = null;
-	            	}
-	            	finally
-	            	{
-	            		try
-	            	    {
-	            			if (tx != null)
-	            	        {
-	            				tx.rollback();
-	           	        	}
-	            	    }
-	            	    catch (Exception tex)
-	            	    {
-	            	    }
-	            	}
-            	}
-            
-            // Check if the user is authenticated, if not then prompt again
-            
-            if ( user == null)
-            {
-                // No user/ticket, force the client to prompt for logon details
-    
-                httpResp.sendError(HttpServletResponse.SC_FORBIDDEN);
-                return;
-            }
+            httpResp.sendError(HttpServletResponse.SC_FORBIDDEN);
+            return;
         }
 
         // Chain other filters

@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
@@ -44,6 +45,7 @@ public class MenuServiceImpl implements MenuService {
     private Menu menu;
     private List<ProcessorWrapper> processors = new ArrayList<ProcessorWrapper>(); // doesn't need to be synchronized, because it is not modified after spring initialization
     private TreeItemProcessor treeItemProcessor;
+    private Map<String, MenuItemFilter> menuItemFilters;
     
     private static class ProcessorWrapper {
 
@@ -63,9 +65,11 @@ public class MenuServiceImpl implements MenuService {
     
     @Override
     public void processTasks(Menu menu) {
+long start = System.currentTimeMillis();
+System.out.println("PERFORMANCE: MENU PROCESS TASK START");
         process(menu, false);
+System.out.println("PERFORMANCE: MENU PROCESS TASK END: " + (System.currentTimeMillis() - start) + "ms");        
     }
-    
     
     @Override
     public int getUpdateCount() {
@@ -205,6 +209,11 @@ public class MenuServiceImpl implements MenuService {
         nodeService.setProperty(user, MenuModel.Props.SHORTCUTS, shortcuts);
     }
 
+    @Override
+    public Map<String, MenuItemFilter> getMenuItemFilters() {
+        return menuItemFilters;
+    }
+
     // START: getters / setters
 
     public void setMenuConfigLocation(String menuConfigLocation) {
@@ -229,6 +238,10 @@ public class MenuServiceImpl implements MenuService {
 
     public void setUpdateCount(int updateCount) {
         this.updateCount = updateCount;
+    }
+
+    public void setMenuItemFilters(Map<String, MenuItemFilter> menuItemFilters) {
+        this.menuItemFilters = menuItemFilters;
     }
 
     // END: getters / setters

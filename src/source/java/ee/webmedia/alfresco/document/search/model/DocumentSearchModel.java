@@ -32,10 +32,13 @@ public interface DocumentSearchModel {
         QName DOCUMENT_TYPE = QName.createQName(URI, "documentType");
         QName FUNCTION = QName.createQName(URI, "function");
         QName SERIES = QName.createQName(URI, "series");
+        QName VOLUME = QName.createQName(URI, "volume");
+        QName CASE = QName.createQName(URI, "case");
         QName REG_DATE_TIME_BEGIN = QName.createQName(URI, "regDateTimeBegin");
         QName REG_DATE_TIME_END = QName.createQName(URI, "regDateTimeEnd");
         QName REG_NUMBER = QName.createQName(URI, "regNumber");
         QName DOC_STATUS = QName.createQName(URI, "docStatus");
+        QName SENDER_NAME = QName.createQName(URI, "senderName");
         QName RECIPIENT_NAME = QName.createQName(URI, "recipientName");
         QName DOC_NAME = QName.createQName(URI, "docName");
         QName SENDER_REG_NUMBER = QName.createQName(URI, "senderRegNumber");

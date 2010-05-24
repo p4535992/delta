@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.component.NamingContainer;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.component.UIOutput;
@@ -25,6 +26,7 @@ import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
+import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -33,7 +35,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * 
  * @author Alar Kvell
  */
-public class Search extends UIComponentBase {
+public class Search extends UIComponentBase implements AjaxUpdateable, NamingContainer {
 
     public static final String SETTER_CALLBACK = "setterCallback";
 
@@ -50,10 +52,18 @@ public class Search extends UIComponentBase {
     public static final String VALUE_KEY = "value";
     public static final String SHOW_FILTER_KEY = "showFilter";
     public static final String FILTERS_KEY = "filters";
+    public static final String ID_KEY = "id";
+    public static final String STYLE_CLASS_KEY = "styleClass";
+    public static final String AJAX_PARENT_LEVEL_KEY = "ajaxParentLevel";
 
     @Override
     public String getFamily() {
         return SEARCH_FAMILY;
+    }
+
+    @Override
+    public String getAjaxClientId(FacesContext context) {
+        return getClientId(context) + "_container";
     }
 
     @Override
@@ -104,7 +114,8 @@ public class Search extends UIComponentBase {
         List<UIComponent> children = getChildren();
 
         UIGenericPicker picker = (UIGenericPicker) context.getApplication().createComponent("org.alfresco.faces.GenericPicker");
-        FacesHelper.setupComponentId(context, picker, "picker");
+        String id = (String) getAttributes().get(ID_KEY);
+        FacesHelper.setupComponentId(context, picker, "picker_" + id);
         picker.setShowFilter(getAttributes().containsKey(SHOW_FILTER_KEY) && Boolean.valueOf((String) getAttributes().get(SHOW_FILTER_KEY)));
         if (picker.getShowFilter()) {
             ValueBinding pickerV = context.getApplication().createValueBinding((String) getAttributes().get(FILTERS_KEY));
@@ -116,6 +127,13 @@ public class Search extends UIComponentBase {
         MethodBinding b = getFacesContext().getApplication().createMethodBinding(pickerCallback, new Class[] { int.class, String.class });
         picker.setQueryCallback(b);
         picker.addActionListener(new PickerFinishActionListener());
+
+        // Disable AJAX if inside RichList
+        if (isChildOfUIRichList()) {
+            ComponentUtil.setAjaxDisabled(this);
+            ComponentUtil.setAjaxDisabled(picker);
+        }
+
         children.add(picker);
     }
 
@@ -207,10 +225,10 @@ public class Search extends UIComponentBase {
     protected void appendRowComponent(FacesContext context, int rowIndex) {
         @SuppressWarnings("unchecked")
         List<UIComponent> children = ((UIComponent) getChildren().get(0)).getChildren();
-
+        String id = (String) getAttributes().get(ID_KEY);
         UIOutput component = (UIOutput) context.getApplication().createComponent(
                 isEditable() ? ComponentConstants.JAVAX_FACES_INPUT : ComponentConstants.JAVAX_FACES_OUTPUT);
-        FacesHelper.setupComponentId(context, component, "row_"+rowIndex);
+        FacesHelper.setupComponentId(context, component, "picker_" + id + "row_" + getNextCounterValue());
         setValueBinding(context, component, rowIndex);
         ComponentUtil.createAndSetConverter(context, (String) getAttributes().get(CONVERTER_KEY), component);
         if (isDisabled()) {
@@ -327,6 +345,19 @@ public class Search extends UIComponentBase {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = getAttributes();
         return attributes.containsKey("editable") && (Boolean) attributes.get("editable");
+    }
+
+    private int getNextCounterValue() {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> attributes = getAttributes();
+        Integer counter = (Integer) attributes.get("counter");
+        if (counter == null) {
+            counter = 0;
+        } else {
+            counter = counter + 1;
+        }
+        attributes.put("counter", counter);
+        return counter;
     }
 
     public static class PickerFinishActionListener implements ActionListener {

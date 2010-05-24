@@ -48,6 +48,7 @@
       <property name="nodeService" ref="NodeService" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="seriesService" ref="SeriesService" />
+      <property name="volumeService" ref="VolumeService" />
    </bean>
 
    <bean id="FunctionsService" class="org.springframework.aop.framework.ProxyFactoryBean">

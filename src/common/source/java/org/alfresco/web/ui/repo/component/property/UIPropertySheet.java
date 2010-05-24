@@ -38,6 +38,7 @@ import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.el.ValueBinding;
+import javax.faces.event.FacesListener;
 
 import org.alfresco.config.Config;
 import org.alfresco.config.ConfigLookupContext;
@@ -61,12 +62,14 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
+
 /**
  * Component that represents the properties of a Node
  * 
  * @author gavinc
  */
-public class UIPropertySheet extends UIPanel implements NamingContainer
+public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpdateable
 {
    public static final String VIEW_MODE = "view";
    public static final String EDIT_MODE = "edit";
@@ -95,6 +98,11 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
    {
       // set the default renderer for a property sheet
       setRendererType(ComponentConstants.JAVAX_FACES_GRID);
+      addFacesListener(new DummyListener());
+   }
+
+   public static class DummyListener implements FacesListener {
+       // Do nothing
    }
    
    /**
@@ -188,6 +196,11 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
       // put the node in the session if it is not there already
       storePropSheetVariable(node);
 
+      ResponseWriter out = context.getResponseWriter();
+      out.write("<div id=\"");
+      out.write(getAjaxClientId(context));
+      out.write("\">");
+
       super.encodeBegin(context);
    }
 
@@ -220,6 +233,9 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
       {
          renderValidationScript(context);
       }
+
+      ResponseWriter out = context.getResponseWriter();
+      out.write("</div>");
    }
 
    /**
@@ -542,10 +558,7 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
       UIForm form = Utils.getParentForm(context, this);
          
       // output the validation.js script
-      out.write("\n<script type='text/javascript' src='");
-      out.write(context.getExternalContext().getRequestContextPath());
-      out.write("/scripts/validation.js");
-      out.write("'></script>\n<script type='text/javascript'>\n");
+      out.write("\n<script type='text/javascript'>\n");
       
       // output the validateSubmit() function
       out.write("function " + prefix + "validateSubmit() {\n");
@@ -583,11 +596,14 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
          out.write("   btn.disabled = true;");
          out.write("}\n");
          if (this.nextButtonId != null && this.nextButtonId.length() > 0) {
-            out.write("      document.getElementById('");
+             out.write("      var nextElement = document.getElementById('");
             out.write(form.getClientId(context));
             out.write(NamingContainer.SEPARATOR_CHAR);
             out.write(this.nextButtonId);
-            out.write("').disabled = true; \n");
+            out.write("'); \n");
+            out.write("      if(nextElement != null){");
+            out.write("         nextElement.disabled = true; \n");
+            out.write("      }");
          }
          out.write("   }\n");
          out.write("   else {\n      var btn = document.getElementById('");
@@ -900,4 +916,10 @@ public class UIPropertySheet extends UIPanel implements NamingContainer
         }
         return new Pair<PropertySheetItem, String>(propSheetItem, id);
     }
+
+    @Override
+    public String getAjaxClientId(FacesContext context) {
+        return getClientId(getFacesContext()) + "_container";
+    }
+
 }

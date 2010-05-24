@@ -141,6 +141,7 @@ public class SendOutServiceImpl implements SendOutService {
                 props.put(DocumentCommonModel.Props.SEND_INFO_SEND_MODE, sendMode);
                 props.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, sendStatus.toString());
                 props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, "");
+                props.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION, content);
                 sendInfoProps.add(props);
             }
         }

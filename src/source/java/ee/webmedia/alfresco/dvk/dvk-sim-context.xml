@@ -14,5 +14,17 @@
    <!-- START: web beans: -->
    <bean id="DvkCorruptListDialog" class="ee.webmedia.alfresco.dvk.web.DvkCorruptListDialog" scope="session" />
    <!-- END: web beans: -->
+   
+   <bean class="ee.webmedia.alfresco.dvk.web.DvkCorruptMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="dvkService" ref="DvkService" />
+      <property name="fileFolderService" ref="FileFolderService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.dvk.web.DvkDocumentsMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="documentService" ref="DocumentService" />
+   </bean>
 
 </beans>

@@ -74,11 +74,9 @@
          <f:verbatim>
          <div id="search-panel">
          </f:verbatim>
-         <h:inputText id="search-text" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" onkeyup="updateButtonState();" onchange="updateButtonState();" />&nbsp;
-         <f:verbatim>&nbsp;</f:verbatim>
-         <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" />
-         <f:verbatim>&nbsp;</f:verbatim>
-	     <h:commandButton value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" />
+         <h:inputText id="search-text" styleClass="admin-user-search-input" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" />&nbsp;
+         <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" style="margin-left: 5px;" />
+ 	     <h:commandButton value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" style="margin-left: 5px;" />
          <f:verbatim>
          </div>
          </f:verbatim>
@@ -154,14 +152,4 @@
             <a:dataPager styleClass="pager" />
          </a:richList>
          
-         <a:panel id="quota-panel" rendered="#{UsersDialog.usersSize != 0 && UsersBeanProperties.usagesEnabled == true}">
-            <f:verbatim><p></f:verbatim>
-            <h:outputText value="#{msg.quota_totalusage}:" />
-            <h:outputText value="#{UsersDialog.usersTotalUsage}"><a:convertSize/></h:outputText>
-            <f:verbatim></p><p></f:verbatim>
-            <h:outputText value="#{msg.quota_totalquota}:" />
-            <h:outputText value="#{UsersDialog.usersTotalQuota}"><a:convertSize/></h:outputText>
-            <f:verbatim></p></f:verbatim>
-         </a:panel>
-
       </a:panel>

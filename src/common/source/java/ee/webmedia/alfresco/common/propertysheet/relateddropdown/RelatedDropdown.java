@@ -266,7 +266,7 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
     }
 
     private String getOnChangeJS(FacesContext context) {
-        return Utils.generateFormSubmit(context, this, getFilledFieldId(context), CHANGE_MARKER);
+        return ComponentUtil.generateAjaxFormSubmit(context, this, getFilledFieldId(context), CHANGE_MARKER);
     }
 
     private String getFilledFieldId(FacesContext context) {

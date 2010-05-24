@@ -17,9 +17,6 @@
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/type/web/document-type-block.jsp" />
 </a:booleanEvaluator>
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block.jsp" />
-<a:booleanEvaluator id="metadataAddOrSelectCaseEvaluator" value="#{DocumentDialog.meta.inEditMode}">
-   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-addOrSelectCase.jsp" />
-</a:booleanEvaluator>
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/file/web/file-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-summary-block.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/send-out-block.jsp" />

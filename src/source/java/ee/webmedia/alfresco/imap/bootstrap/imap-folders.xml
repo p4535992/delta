@@ -29,5 +29,13 @@
                 </view:properties>
             </imap-ext:imapFolder>
         </cm:contains>
+        <cm:contains>
+            <imap-ext:imapFolder view:childName="imap-ext:sent">
+                <cm:name>${imap-folders.sent}</cm:name>
+                <view:properties>
+                    <imap-ext:appendBehaviour>sentBehaviour</imap-ext:appendBehaviour>
+                </view:properties>
+            </imap-ext:imapFolder>
+        </cm:contains>
     </imap-ext:imapFolder>
 </view:view>

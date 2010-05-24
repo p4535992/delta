@@ -14,6 +14,7 @@ import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.node.integrity.IntegrityException;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -44,6 +45,7 @@ public class AddFileDialog extends AddContentDialog {
     private static final long serialVersionUID = 1L;
 
     private static final String ERR_EXISTING_FILE = "add_file_existing_file";
+    private static final String ERR_INVALID_FILE_NAME = "add_file_invalid_file_name";
 
     private transient UserService userService;
     private transient ImapServiceExt imapServiceExt;
@@ -100,6 +102,15 @@ public class AddFileDialog extends AddContentDialog {
     }
     
     @Override
+    protected String getErrorOutcome(Throwable exception) {
+        if(exception instanceof IntegrityException) {
+            Utils.addErrorMessage(MessageUtil.getMessage(FacesContext.getCurrentInstance(), ERR_INVALID_FILE_NAME));
+            return ""; // Don't return null!
+        }
+        return super.getErrorOutcome(exception);
+    }
+    
+    @Override
     protected String doPostCommitProcessing(FacesContext context, String outcome) {
         if (this.createdNode != null) {
             super.doPostCommitProcessing(context, outcome);
@@ -126,13 +137,15 @@ public class AddFileDialog extends AddContentDialog {
             Map<QName, Serializable> properties = getNodeService().getProperties(nodeRef);
             
             String user = (String)properties.get(ContentModel.PROP_CREATOR);
+
+            Date modified = DefaultTypeConverter.INSTANCE.convert(Date.class, properties.get(ContentModel.PROP_CREATED));
+            Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(3);
+            aspectProperties.put(VersionsModel.Props.VersionModified.MODIFIED, modified );
+
             Map<QName, Serializable> personProps = getUserService().getUserProperties(user);
             String first = (String) personProps.get(ContentModel.PROP_FIRSTNAME);
             String last = (String) personProps.get(ContentModel.PROP_LASTNAME);
-            Date modified = DefaultTypeConverter.INSTANCE.convert(Date.class, properties.get(ContentModel.PROP_CREATED));
 
-            Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(3);
-            aspectProperties.put(VersionsModel.Props.VersionModified.MODIFIED, modified );
             aspectProperties.put(VersionsModel.Props.VersionModified.FIRSTNAME, first);
             aspectProperties.put(VersionsModel.Props.VersionModified.LASTNAME, last);
 
@@ -145,9 +158,7 @@ public class AddFileDialog extends AddContentDialog {
         if (isFileSelected) {
             return selectedFileName;
         }
-        else {
-            return super.getFileName();
-        }
+        return super.getFileName();
     }
 
     @Override
@@ -156,9 +167,7 @@ public class AddFileDialog extends AddContentDialog {
             String msg = Application.getMessage(FacesContext.getCurrentInstance(), "file_upload_success");
             return MessageFormat.format(msg, Utils.encode(getFileName())); 
         }
-        else {
-            return super.getFileUploadSuccessMsg();
-        }
+        return super.getFileUploadSuccessMsg();
     }
 
     public void fileSelected(ValueChangeEvent event) {
@@ -235,7 +244,7 @@ public class AddFileDialog extends AddContentDialog {
 
     public List<SelectItem> getScannedFiles() {
         List<SelectItem> scannedFiles = new ArrayList<SelectItem>();
-        List<File> files = getFileService().getScannedFiles();
+        List<File> files = getFileService().getAllScannedFiles();
         for (File file : files) {
             scannedFiles.add(new SelectItem(file.getNodeRef().toString(), file.getName()));
         }

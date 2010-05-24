@@ -43,6 +43,13 @@
          <h:outputText id="col4-txt" value="#{r.sendStatus}" />
       </a:column>
 
+      <a:column id="col5">
+         <f:facet name="header">
+            <a:sortLink id="col5-header" label="#{msg.document_send_resolution}" value="resolution" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col5-txt" value="#{r.resolution}" escape="false" />
+      </a:column>
+      
    </a:richList>
 
 </a:panel>

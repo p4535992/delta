@@ -29,8 +29,8 @@ import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ActionListener;
 
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener.LogColumn;
 
 
 /**
@@ -84,7 +84,7 @@ public class ActionListenerImpl
             {
                 if (fromAction != null) {
                     long duration = System.currentTimeMillis() - startTime;
-                    StatisticsPhaseListener.add(LogColumn.ACTION, duration + "," + methodBinding.getExpressionString());
+                    StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.ACTION, duration + "," + methodBinding.getExpressionString());
                 }
             }
         }
@@ -95,7 +95,7 @@ public class ActionListenerImpl
                                            fromAction,
                                            outcome);
         long duration = System.currentTimeMillis() - startTime;
-        StatisticsPhaseListener.add(LogColumn.OUTCOME, duration + "," + outcome);
+        StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.OUTCOME, duration + "," + outcome);
 		//Render Response if needed
 		facesContext.renderResponse();
 

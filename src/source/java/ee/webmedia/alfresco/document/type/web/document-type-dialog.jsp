@@ -18,6 +18,13 @@
          <h:selectBooleanCheckbox value="#{type.used}" />
       </a:column>
 
+      <a:column id="documentTypePublicAdrCol">
+         <f:facet name="header">
+            <a:outputText value="#{msg.document_type_public_adr}" />
+         </f:facet>
+         <h:selectBooleanCheckbox value="#{type.publicAdr}" />
+      </a:column>
+
       <a:column id="documentTypeNameCol" primary="true">
          <f:facet name="header">
             <a:sortLink id="documentTypeNameCol-sort" label="#{msg.document_type_name}" value="name" mode="case-insensitive" />

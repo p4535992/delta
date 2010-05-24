@@ -72,25 +72,8 @@
          setterCallback="#{DocumentSendOutDialog.fetchContactData}"
          dialogTitleId="contacts_search_title"
          filters="#{DocumentSendOutDialog.recipientSearchFilters}"
+         filterIndex="2"
           />
-
-      <h:panelGroup>
-         <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_additional_recipients}" /><f:verbatim></span></f:verbatim>
-      </h:panelGroup>
-      <wm:multiValueEditor
-         varName="DocumentSendOutDialog.model"
-         propsGeneration="
-          additionalRecipientName¤TextAreaGenerator¤styleClass=expand19-200 medium
-         ,additionalRecipientEmail¤TextAreaGenerator¤styleClass=expand19-200 medium
-         ,additionalRecipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=small
-         "
-         titles="document_name,document_email,document_send_mode" 
-         pickerCallback="#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}"
-         preprocessCallback="#{DocumentSendOutDialog.preprocessSearchResult}"
-         setterCallback="#{DocumentSendOutDialog.fetchContactData}"
-         dialogTitleId="contacts_search_title"
-         filters="#{DocumentSendOutDialog.recipientSearchFilters}"
-         />
 
       <h:panelGroup>
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_send_mode}" /><f:verbatim></span></f:verbatim>
@@ -108,21 +91,9 @@
       <h:selectBooleanCheckbox value="#{DocumentSendOutDialog.model.zip}" />
       
       <h:panelGroup>
-         <f:verbatim><span class="no-wrap"><span class="red">*&nbsp;</span></f:verbatim>
-         <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_senderEmail}" /><f:verbatim></span></span></f:verbatim>
-      </h:panelGroup>
-      <h:inputTextarea value="#{DocumentSendOutDialog.model.senderEmail}" styleClass="expand19-200 long"/>
-      
-      <h:panelGroup>
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_send_subject}" /><f:verbatim></span></f:verbatim>
       </h:panelGroup>
       <h:inputTextarea value="#{DocumentSendOutDialog.model.subject}" styleClass="expand19-200 long"/>
-      
-      <h:panelGroup>
-         <f:verbatim><span class="red">*&nbsp;</span></f:verbatim>
-         <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_send_content}" /><f:verbatim></span></f:verbatim>
-      </h:panelGroup>
-      <h:inputTextarea id="editor" value="#{DocumentSendOutDialog.model.content}" rows="5" cols="40" />
       
       <h:panelGroup>
          <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_send_template}" /><f:verbatim></span></f:verbatim>
@@ -132,7 +103,15 @@
             <f:selectItems value="#{DocumentSendOutDialog.emailTemplates}" />
          </h:selectOneMenu>
          <h:commandLink id="setTemplateBtn" value="#{msg.document_set_template}" actionListener="#{DocumentSendOutDialog.updateTemplate}" />
+         <a:booleanEvaluator value="#{not empty DocumentSendOutDialog.model.sendoutInfo}">
+            <f:verbatim><br/><br/><div class="message"></f:verbatim><h:outputText value="#{DocumentSendOutDialog.model.sendoutInfo}" /><f:verbatim></div></f:verbatim>
+         </a:booleanEvaluator>                  
       </h:panelGroup>
+      
+      <h:panelGroup>
+         <f:verbatim><span></f:verbatim><h:outputText value="#{msg.document_send_content}" /><f:verbatim></span></f:verbatim>
+      </h:panelGroup>
+      <h:inputTextarea id="editor" value="#{DocumentSendOutDialog.model.content}" rows="5" cols="40" />
       
    </h:panelGrid>
 

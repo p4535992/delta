@@ -28,12 +28,6 @@
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
          
-<%-- Group Path Breadcrumb --%>
-   <a:panel id="groups-breadcrumb" styleClass="breadcrumb">     
-       <a:breadcrumb value="#{DialogManager.bean.location}" />     
-    </a:panel>
-
-
    <%-- Groups List --%>
    <a:panel id="groups-panel" label="#{msg.groups}" styleClass="with-pager" rendered="#{not empty DialogManager.bean.groups}">
 
@@ -50,7 +44,7 @@
             <f:facet name="header">
                <a:sortLink label="#{msg.addressbook_group_name}" value="id" mode="case-insensitive" styleClass="header"/>
             </f:facet>
-            <a:actionLink value="#{r.displayName}" actionListener="#{DialogManager.bean.clickGroup}">
+            <a:actionLink value="#{r.displayName}" action="dialog:manageGroups" actionListener="#{DialogManager.bean.clickGroup}">
                <f:param name="id" value="#{r.id}" />
             </a:actionLink>
          </a:column>

@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.series.web;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -26,6 +25,8 @@ public class SeriesListDialog extends BaseDialogBean {
     private transient SeriesService seriesService;
     private transient FunctionsService functionsService;
     private Function function;
+    private List<Series> series;
+    private boolean disableActions = false;
     
     public static final String BEAN_NAME = "SeriesListDialog"; 
 
@@ -42,8 +43,21 @@ public class SeriesListDialog extends BaseDialogBean {
     }
 
     @Override
+    public void restored() {
+        loadSeries();
+    }
+
+    @Override
     public Object getActionsContext() {
         return function.getNode();
+    }
+
+    @Override
+    public String getActionsConfigId() {
+        if(disableActions) {
+            return "";
+        }
+        return super.getActionsConfigId();
     }
 
     public void showAll(ActionEvent event) {
@@ -52,11 +66,21 @@ public class SeriesListDialog extends BaseDialogBean {
     
     public void showAll(NodeRef nodeRef) {
         function = getFunctionsService().getFunctionByNodeRef(nodeRef);
+        loadSeries();
+        disableActions = false;
+    }
+
+    private void loadSeries() {
+        series = getSeriesService().getAllSeriesByFunction(function.getNodeRef());
+    }
+
+    public void showAllForStructUnit(NodeRef nodeRef, Integer structUnitId) {
+        function = getFunctionsService().getFunctionByNodeRef(nodeRef);
+        series = getSeriesService().getAllSeriesByFunctionForStructUnit(nodeRef, structUnitId);
+        disableActions = true;
     }
 
     public List<Series> getSeries() {
-        final List<Series> series = getSeriesService().getAllSeriesByFunction(function.getNodeRef());
-        Collections.sort(series);
         return series;
     }
 
@@ -64,11 +88,26 @@ public class SeriesListDialog extends BaseDialogBean {
         return function;
     }
 
+    public String getListTitle() {
+        if(disableActions)
+            return "Minu dokumentide loetelu";
+
+        return getFunction().getMark() + " " + getFunction().getTitle();
+    }
+
     // END: jsf actions/accessors
 
     private void resetFields() {
         function = null;
+        series = null;
+    }
 
+    public boolean getDisableActions() {
+        return disableActions;
+    }
+
+    public void setDisableActions(boolean disableActions) {
+        this.disableActions = disableActions;
     }
 
     // START: getters / setters

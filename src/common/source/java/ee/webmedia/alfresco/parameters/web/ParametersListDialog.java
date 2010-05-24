@@ -11,6 +11,7 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.common.Utils;
+import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.parameters.model.Parameter;
@@ -81,6 +82,9 @@ public class ParametersListDialog extends BaseDialogBean {
         DataReader dataReader = new RichListDataReader();
         CSVExporter exporter = new CSVExporter(dataReader);
         exporter.export("parametersList");
+        
+        // Erko hack for incorrect view id in the next request
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack();        
     }
 
     @Override

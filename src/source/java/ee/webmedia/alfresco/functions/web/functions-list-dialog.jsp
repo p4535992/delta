@@ -70,11 +70,11 @@
 
 <f:verbatim>
    <script type="text/javascript">
-      function confirmExport(){
-         var res = confirm('<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("docList_export_confirmProceed")%>');
-         if(res){
-            $jQ('.docList_export').click();
-         }
-      }
+      prependOnclick($jQ(".docList_export"), function(){
+         return confirm('<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("docList_export_confirmProceed")%>');
+      });
+      $jQ(".docList_createNewYearBasedVolumes").click(function(){
+         alert('<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("docList_createNewYearBasedVolumes_confirmProceed")%>');
+      });
    </script>
 </f:verbatim>

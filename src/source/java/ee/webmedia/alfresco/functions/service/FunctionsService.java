@@ -59,8 +59,16 @@ public interface FunctionsService {
      */
     boolean closeFunction(Function function);
 
+    /**
+     * Reopen the function by setting DocListUnitStatus.OPEN status
+     * @param function
+     */
+    void reopenFunction(Function function);
+
     NodeRef getFunctionsRoot();
 
     Location getDocumentListLocation();
+
+    long createNewYearBasedVolumes();
 
 }

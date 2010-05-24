@@ -1,16 +1,13 @@
 package ee.webmedia.alfresco.imap;
 
-import com.icegreen.greenmail.store.FolderException;
-import ee.webmedia.alfresco.imap.service.ImapServiceExt;
-import org.alfresco.repo.transaction.RetryingTransactionHelper;
-import org.alfresco.service.ServiceRegistry;
-import org.apache.xml.security.transforms.TransformationException;
+import java.util.Date;
 
 import javax.mail.Flags;
-import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
-import java.io.IOException;
-import java.util.Date;
+
+import com.icegreen.greenmail.store.FolderException;
+
+import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * Saves attachments to the folder.

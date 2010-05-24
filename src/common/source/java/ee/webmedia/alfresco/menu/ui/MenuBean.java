@@ -3,6 +3,8 @@ package ee.webmedia.alfresco.menu.ui;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +50,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * @author Kaarel Jõgeva
  */
 public class MenuBean implements Serializable {
+    
     private static final long serialVersionUID = 1L;
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MenuBean.class);
 
@@ -78,18 +81,17 @@ public class MenuBean implements Serializable {
     private String scrollToAnchor;
     private String scrollToY;
 
-    
     /**
      * Watch out for a gotcha moment! If event comes from ActionLink or CommandButton,
      * handleNavigation is called for a second time and it resets this setting!
-     *
+     * 
      * @param anchor ID of the HTML element in the form of "#my-panel"
      */
     public void scrollToAnchor(String anchor) {
         FacesContext context = FacesContext.getCurrentInstance();
         context.getApplication().getNavigationHandler().handleNavigation(context, null, anchor);
     }
-    
+
     public void resetBreadcrumb() {
         stateList.clear();
     }
@@ -124,7 +126,7 @@ public class MenuBean implements Serializable {
 
     public void addBreadcrumbItem(WizardConfig wizard) {
         String title = "";
-        if(wizard.getTitle() != null) {
+        if (wizard.getTitle() != null) {
             title = wizard.getTitle();
         } else if (wizard.getTitleId() != null) {
             title = MessageUtil.getMessage(wizard.getTitleId());
@@ -133,15 +135,20 @@ public class MenuBean implements Serializable {
         addBreadcrumbItem(title);
     }
 
+    @SuppressWarnings("unchecked")
     public void addBreadcrumbItem(String title) {
         int i = 0;
         for (String listTitle : stateList) {
             if (i < 3 && listTitle.equals(title)) { // i < 3, left side menu provides functionality for backwards navigation.
+                stateList.setSize(i);
+                Stack viewStack = (Stack) FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get(UIMenuComponent.VIEW_STACK);
+                if (viewStack != null) {
+                    viewStack.setSize(i + 1);
+                }
                 break;
             }
             i++;
         }
-        stateList.setSize(i);
         stateList.push(title);
     }
 
@@ -152,7 +159,7 @@ public class MenuBean implements Serializable {
 
     public void removeBreadcrumbItems(int numberToRemove) {
         for (int i = 0; i < numberToRemove; i++) {
-            if(!stateList.isEmpty()) {
+            if (!stateList.isEmpty()) {
                 stateList.pop();
             }
         }
@@ -190,10 +197,10 @@ public class MenuBean implements Serializable {
         int i = 1;
         for (Object item : items) {
             UIComponent component = null;
-            if(items.length > i) {
+            if (items.length > i) {
                 component = generateLink(application, (String) item, (items.length - i));
             } else {
-                component = generateText((String)item, true);
+                component = generateText((String) item, true);
             }
             children.add(component);
             i++;
@@ -206,9 +213,10 @@ public class MenuBean implements Serializable {
      * @param title
      * @return
      */
+    @SuppressWarnings("unchecked")
     private UIComponent generateText(String title, boolean styleClass) {
         UIComponent component = new UIOutputText();
-        if(styleClass) {
+        if (styleClass) {
             component.getAttributes().put("styleClass", "breadcrumb-link");
         }
         ((UIOutputText) component).setValue(title);
@@ -276,18 +284,20 @@ public class MenuBean implements Serializable {
                 item = item.getSubItems().get(Integer.parseInt(step));
             } else if (path.length > 1 && item instanceof DropdownMenuItem) { // if necessary, fetch children
                 DropdownMenuItem dropdownItem = ((DropdownMenuItem) item);
-                NodeRef nr = dropdownItem.getNodeRef();
-                if (nr == null) {
-                    nr = getGeneralService().getNodeRef(dropdownItem.getXPath());
+                NodeRef nodeRef = dropdownItem.getNodeRef();
+                if (nodeRef == null) {
+                    nodeRef = getGeneralService().getNodeRef(dropdownItem.getXPath());
                 }
-                for (NodeRef childItemRef : getMenuService().openTreeItem(dropdownItem, nr)) {
+                for (NodeRef childItemRef : getMenuService().openTreeItem(dropdownItem, nodeRef)) {
                     DropdownMenuItem childItem = new DropdownMenuItem();
+                    childItem.setChildFilter(dropdownItem.getChildFilter()); // By default pass on parent's filter. Can be overridden in setupTreeItem
                     getMenuService().setupTreeItem(childItem, childItemRef);
                     if (item.getSubItems() == null) {
                         item.setSubItems(new ArrayList<MenuItem>());
                     }
                     item.getSubItems().add(childItem);
                 }
+                Collections.sort(item.getSubItems(), new DropdownMenuComparator());                
                 dropdownItem.setExpanded(true);
                 item = dropdownItem.getSubItems().get(Integer.parseInt(step));
             }
@@ -317,13 +327,14 @@ public class MenuBean implements Serializable {
                     ddChild.setNodeRef(child);
                     ddChild.setBrowse(true);
                     ddChild.setSubmenuId(lastLinkId);
+                    ddChild.setChildFilter(dd.getChildFilter());
                     getMenuService().setupTreeItem(ddChild, child);
                     dd.getSubItems().add(ddChild);
                 }
+                Collections.sort(dd.getSubItems(), new DropdownMenuComparator());
             }
             dd.setExpanded(true);
         }
-
     }
 
     /**
@@ -363,7 +374,7 @@ public class MenuBean implements Serializable {
     public void reset() {
         menu = null;
         lastLinkId = null;
-        linkNodeRef = null;        
+        linkNodeRef = null;
     }
 
     public MenuItem getActiveMainMenuItem() {
@@ -385,21 +396,22 @@ public class MenuBean implements Serializable {
         this.clickedId = secondaryId;
     }
 
+    @SuppressWarnings("unchecked")
     public static void clearViewStack(String primaryId, String secondaryId) {
         FacesContext context = FacesContext.getCurrentInstance();
 
         // Clear the view stack, otherwise it would grow too big as the cancel button is hidden in some views
-        // Later in the life-cycle the view where this action came from is added to the stack, so visible cancel buttons will function properly 
-        @SuppressWarnings("unchecked")
+        // Later in the life-cycle the view where this action came from is added to the stack, so visible cancel buttons will function properly
         Map<String, Object> sessionMap = context.getExternalContext().getSessionMap();
-        sessionMap.put(UIMenuComponent.VIEW_STACK, new Stack<String>());
+        sessionMap.put(UIMenuComponent.VIEW_STACK, new Stack());
 
         MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
         menuBean.setMenuItemId(primaryId, secondaryId);
         menuBean.resetBreadcrumb();
 
         // let the ClearStateNotificationHandler notify all the interested listeners
-        ClearStateNotificationHandler clearStateNotificationHandler = (ClearStateNotificationHandler) FacesHelper.getManagedBean(context, ClearStateNotificationHandler.BEAN_NAME);
+        ClearStateNotificationHandler clearStateNotificationHandler = (ClearStateNotificationHandler) FacesHelper.getManagedBean(context,
+                ClearStateNotificationHandler.BEAN_NAME);
         clearStateNotificationHandler.notifyClearStateListeners();
     }
 
@@ -503,7 +515,7 @@ public class MenuBean implements Serializable {
         }
 
         Map<String, Object> sessionMap = FacesContext.getCurrentInstance().getExternalContext().getSessionMap();
-        Stack<String> viewStack = (Stack<String>) sessionMap.get(UIMenuComponent.VIEW_STACK);
+        Stack viewStack = (Stack) sessionMap.get(UIMenuComponent.VIEW_STACK);
         if (viewStack.size() > 1) {
             return 0;
         }
@@ -596,7 +608,7 @@ public class MenuBean implements Serializable {
 
         @Override
         public void processAction(ActionEvent actionEvent) throws AbortProcessingException {
-            MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME);
+            //MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME);
             MenuBean.clearViewStack(getPathFromShortcut(shortcut)[0], "shortcut:sm" + shortcut);
         }
 
@@ -679,4 +691,15 @@ public class MenuBean implements Serializable {
     }
 
     // END: getters / setters
+
+    public class DropdownMenuComparator implements Comparator<MenuItem> {
+        @Override
+        public int compare(MenuItem o1, MenuItem o2) {
+            if (o1 != null && o2 != null && o1 instanceof DropdownMenuItem && o2 instanceof DropdownMenuItem) {
+                return ((DropdownMenuItem)o1).getTransientOrderString().compareToIgnoreCase(((DropdownMenuItem)o2).getTransientOrderString());
+            }
+            return 0;
+        }
+    }
+
 }

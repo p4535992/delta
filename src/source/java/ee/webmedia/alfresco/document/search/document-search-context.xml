@@ -49,6 +49,7 @@
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="volumeService" ref="VolumeService" />
       <property name="parametersService" ref="ParametersService" />
+      <property name="archivalsStore" value="workspace://ArchivalsStore" />
    </bean>
 
    <bean id="DocumentSearchService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -100,6 +101,11 @@
             </props>
          </list>
       </property>
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.search.web.UserWorkingDocumentsMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
 
 </beans>

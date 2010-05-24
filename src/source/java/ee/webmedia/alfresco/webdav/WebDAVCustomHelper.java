@@ -12,16 +12,19 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.web.bean.repository.Repository;
 
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
 public class WebDAVCustomHelper extends WebDAVHelper {
     
     // Custom services
     private VersionsService m_versionsService;
+    private DocumentService documentService;
 
-    protected WebDAVCustomHelper(ServiceRegistry serviceRegistry, AuthenticationService authService, VersionsService versionsService) {
+    protected WebDAVCustomHelper(ServiceRegistry serviceRegistry, AuthenticationService authService, VersionsService versionsService, DocumentService documentService) {
         super(serviceRegistry, authService);
         m_versionsService = versionsService;
+        this.documentService = documentService;
     }
 
     /**
@@ -71,6 +74,10 @@ public class WebDAVCustomHelper extends WebDAVHelper {
     public VersionsService getVersionsService() 
     {
         return m_versionsService;
+    }
+
+    public DocumentService getDocumentService() {
+        return documentService;
     }
 
 }

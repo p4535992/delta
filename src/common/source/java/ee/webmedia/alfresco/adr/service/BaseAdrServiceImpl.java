@@ -42,10 +42,10 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         }
     }
 
-    protected static class AdrDeletedDocument {
+    protected static class AdrDocument {
         protected String regNumber;
         protected Date regDateTime;
-        public AdrDeletedDocument(String regNumber, Date regDateTime) {
+        public AdrDocument(String regNumber, Date regDateTime) {
             Assert.notNull(regNumber);
             this.regNumber = regNumber;
             Assert.notNull(regDateTime);
@@ -56,10 +56,10 @@ public abstract class BaseAdrServiceImpl implements AdrService {
             if (other == this) {
                 return true;
             }
-            if (!(other instanceof AdrDeletedDocument)) {
+            if (!(other instanceof AdrDocument)) {
                 return false;
             }
-            AdrDeletedDocument otherDoc = (AdrDeletedDocument) other;
+            AdrDocument otherDoc = (AdrDocument) other;
             return regNumber.equals(otherDoc.regNumber) && regDateTime.equals(otherDoc.regDateTime);
         }
         @Override
@@ -82,6 +82,24 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         props.put(AdrModel.Props.REG_DATE_TIME, regDateTime);
         props.put(AdrModel.Props.DELETED_DATE_TIME, new Date());
         nodeService.createNode(root, AdrModel.Types.ADR_DELETED_DOCUMENT, AdrModel.Types.ADR_DELETED_DOCUMENT, AdrModel.Types.ADR_DELETED_DOCUMENT, props);
+    }
+
+    @Override
+    public void deleteDocumentType(QName documentType) {
+        NodeRef root = generalService.getNodeRef(AdrModel.Repo.ADR_DELETED_DOCUMENT_TYPES);
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(AdrModel.Props.DOCUMENT_TYPE, documentType);
+        props.put(AdrModel.Props.DELETED_DATE_TIME, new Date());
+        nodeService.createNode(root, AdrModel.Types.ADR_DELETED_DOCUMENT_TYPE, AdrModel.Types.ADR_DELETED_DOCUMENT_TYPE, AdrModel.Types.ADR_DELETED_DOCUMENT_TYPE, props);
+    }
+
+    @Override
+    public void addDocumentType(QName documentType) {
+        NodeRef root = generalService.getNodeRef(AdrModel.Repo.ADR_ADDED_DOCUMENT_TYPES);
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(AdrModel.Props.DOCUMENT_TYPE, documentType);
+        props.put(AdrModel.Props.DELETED_DATE_TIME, new Date());
+        nodeService.createNode(root, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, AdrModel.Types.ADR_ADDED_DOCUMENT_TYPE, props);
     }
 
     protected DataHandler getFileDataHandler(NodeRef nodeRef, String filename) {

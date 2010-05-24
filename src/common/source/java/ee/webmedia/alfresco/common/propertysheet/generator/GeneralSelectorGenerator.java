@@ -20,7 +20,6 @@ import javax.faces.model.SelectItem;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
-import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
@@ -124,7 +123,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         if (StringUtils.isNotBlank(valueChangeListener)) {
             ((UIInput) component).setValueChangeListener(context.getApplication().createMethodBinding(valueChangeListener,
                     new Class[] { ValueChangeEvent.class }));
-            String onchange = Utils.generateFormSubmit(context, component);
+            String onchange = ComponentUtil.generateAjaxFormSubmit(context, component);
             if (component instanceof HtmlSelectOneMenu) {
                 ((HtmlSelectOneMenu) component).setOnchange(onchange);
             } else if (component instanceof HtmlSelectManyListbox) {
@@ -141,7 +140,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         try {
             @SuppressWarnings("unchecked")
             List<SelectItem> selectItems = (List<SelectItem>) mb.invoke(context, new Object[] { context, component });
-            ComponentUtil.addSelectItems(context, component, selectItems);
+            ComponentUtil.setSelectItems(context, component, selectItems);
         } catch (ClassCastException e) {
             throw new RuntimeException("Failed to get values for selection from '" + selectionItems + "'", e);
         }
@@ -154,10 +153,13 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
         super.setupMandatoryValidation(context, propertySheet, item, component, true, idSuffix);
 
-        // add event handler to kick off real time checks
-        @SuppressWarnings("unchecked")
-        Map<String, Object> attributes = component.getAttributes();
-        attributes.put("onchange", "processButtonState();");
+        // currently valuechangelistener and mandatory validation are not used together in any property sheet
+        if (StringUtils.isBlank(getCustomAttributes().get("valueChangeListener"))) {
+            // add event handler to kick off real time checks
+            @SuppressWarnings("unchecked")
+            Map<String, Object> attributes = component.getAttributes();
+            attributes.put("onchange", "processButtonState();");
+        }
     }
 
     protected String getSelectionItems() {

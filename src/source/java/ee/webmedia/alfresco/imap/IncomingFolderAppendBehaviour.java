@@ -1,11 +1,13 @@
 package ee.webmedia.alfresco.imap;
 
-import com.icegreen.greenmail.store.FolderException;
-import ee.webmedia.alfresco.imap.service.ImapServiceExt;
+import java.util.Date;
 
 import javax.mail.Flags;
 import javax.mail.internet.MimeMessage;
-import java.util.Date;
+
+import com.icegreen.greenmail.store.FolderException;
+
+import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * Saves mail to the folder without changing.
@@ -22,6 +24,6 @@ public class IncomingFolderAppendBehaviour implements AppendBehaviour {
 
     @Override
     public long appendMessage(ImmutableFolder folder, MimeMessage mimeMessage, Flags flags, Date date) throws FolderException {
-        return imapService.saveEmail(folder.getFolderNodeRef(), mimeMessage);
+        return imapService.saveEmail(folder.getFolderNodeRef(), mimeMessage, true);
     }
 }

@@ -186,18 +186,14 @@ public class GroupsDialog extends BaseDialogBean
         return "dialog:close:dialog:manageGroups";
     }
    
+   public void reset(ActionEvent event) {
+       restored();
+   }
+   
    @Override
    public void restored()
    {
-      Object groupToRemove = FacesContext.getCurrentInstance().getExternalContext().
-            getRequestMap().get(KEY_GROUP);
-      if (groupToRemove != null)
-      {
-         if (logger.isDebugEnabled())
-            logger.debug("Removing group '" + groupToRemove + "' from breadcrumb");
-         
-         removeFromBreadcrumb((String)groupToRemove);
-      }
+       setCurrentGroup(null, Application.getMessage(FacesContext.getCurrentInstance(), MSG_ROOT_GROUPS));
    }
    
    @Override

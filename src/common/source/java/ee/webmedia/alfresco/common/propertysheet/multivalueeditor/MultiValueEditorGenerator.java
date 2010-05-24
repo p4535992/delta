@@ -63,6 +63,8 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator implements
         addValueFromCustomAttributes(Search.DIALOG_TITLE_ID_KEY, attributes);
         addValueFromCustomAttributes(Search.SETTER_CALLBACK, attributes);
         addValueFromCustomAttributes(MultiValueEditor.ADD_LABEL_ID, attributes);
+        addValueFromCustomAttributes(MultiValueEditor.SHOW_HEADERS, attributes);
+        addValueFromCustomAttributes(Search.AJAX_PARENT_LEVEL_KEY, attributes, Integer.class);
 
         if (!propertySheet.inEditMode() || item.isReadOnly()) {
            ComponentUtil.setDisabledAttributeRecursively(component);

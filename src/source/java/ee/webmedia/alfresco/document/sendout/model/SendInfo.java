@@ -46,4 +46,8 @@ public class SendInfo implements Serializable {
         return node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS);
     }
 
+    public Object getResolution() {
+        return node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_RESOLUTION);
+    }
+
 }

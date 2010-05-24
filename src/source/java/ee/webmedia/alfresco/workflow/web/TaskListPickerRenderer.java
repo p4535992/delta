@@ -67,7 +67,8 @@ public class TaskListPickerRenderer extends BaseRenderer {
         out.write(MessageUtil.getMessage(SearchRenderer.SEARCH_MSG));
         out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"");
         out.write(ComponentUtil.generateFieldSetter(context, picker, TaskListGenerator.getActionId(context, picker), SearchRenderer.CLOSE_DIALOG_ACTION));
-        out.write(Utils.generateFormSubmit(context, picker, picker.getClientId(context), "1" /* ACTION_CLEAR */));
+        out.write("hideModal();");
+        out.write(ComponentUtil.generateAjaxFormSubmit(context, picker, picker.getClientId(context), "1" /* ACTION_CLEAR */));
         out.write("\">");
         out.write(MessageUtil.getMessage(SearchRenderer.CLOSE_WINDOW_MSG));
         out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner modalpopup-filter\">");
@@ -83,7 +84,7 @@ public class TaskListPickerRenderer extends BaseRenderer {
         UIGenericPicker picker = (UIGenericPicker)component.getChildren().get(0);
         String openDialog = (String) picker.getAttributes().get(Search.OPEN_DIALOG_KEY);
         if (openDialog != null) {
-            picker.getAttributes().remove(Search.OPEN_DIALOG_KEY);
+            picker.getAttributes().remove(Search.OPEN_DIALOG_KEY); // Used when full submit is done, but AJAX deprecates it
             out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
             out.write(ComponentUtil.generateFieldSetter(context, picker, TaskListGenerator.getActionId(context, picker), SearchRenderer.OPEN_DIALOG_ACTION + ";" + openDialog));
             out.write("showModal('");

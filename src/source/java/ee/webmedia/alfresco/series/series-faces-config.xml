@@ -37,6 +37,10 @@
          <property-name>menuService</property-name>
          <value>#{MenuService}</value>
       </managed-property>
+      <managed-property>
+         <property-name>logBlockBean</property-name>
+         <value>#{LogBlockBean}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>

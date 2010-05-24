@@ -6,6 +6,7 @@
                <label-id>document_export_csv</label-id>
                <image>/images/icons/versioned_properties.gif</image>
                <action-listener>#{DocumentSearchResultsDialog.exportAsCsv}</action-listener>
+	             <target>no_wait_workaround</target>
            </action>
 
            <action id="document_search_export_estonian_post">
@@ -13,6 +14,7 @@
                <label-id>document_search_export_estonian_post</label-id>
                <image>/images/icons/versioned_properties.gif</image>
                <action-listener>#{DocumentSearchResultsDialog.exportEstonianPost}</action-listener>
+               <target>no_wait_workaround</target>
            </action>
 
            <action-group id="document_search_actions">
@@ -48,9 +50,16 @@
          <show-property name="docsearch:regNumber" display-label-id="document_regNumber2" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:documentType" display-label-id="document_docType" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getDocumentTypes}" converter="ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter" />
          <show-property name="docsearch:function" display-label-id="function" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getFunctions}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" valueChangeListener="#{DocumentSearchDialog.functionValueChanged}" />
-         <show-property name="docsearch:series" display-label-id="series" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getSeries}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" />
+         <show-property name="docsearch:series" display-label-id="series" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getSeries}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" valueChangeListener="#{DocumentSearchDialog.seriesValueChanged}" />
+         <show-property name="docsearch:volume" display-label-id="volume" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getVolumes}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" valueChangeListener="#{DocumentSearchDialog.volumeValueChanged}" />
+         <show-property name="docsearch:case" display-label-id="document_search_case" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getCases}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" />
          <show-property name="docsearch:docStatus" display-label-id="document_docStatus" component-generator="ClassificatorSelectorGenerator" classificatorName="documentStatus" />
-         <show-property name="docsearch:recipientName" display-label-id="document_allRecipients" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{DocumentSearchDialog.setRecipientName}" dialogTitleId="contacts_search_title" />
+         <show-property name="docsearch:senderName" display-label-id="document_sender"
+            pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title" showHeaders="false"
+            component-generator="MultiValueEditorGenerator" addLabelId="document_search_add_sender" propsGeneration="docsearch:senderName¤TextAreaGenerator¤styleClass=expand19-200" />
+         <show-property name="docsearch:recipientName" display-label-id="document_allRecipients"
+            pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{AddressbookDialog.getContactData}" dialogTitleId="contacts_search_title" showHeaders="false"
+            component-generator="MultiValueEditorGenerator" addLabelId="document_add_recipient" propsGeneration="docsearch:recipientName¤TextAreaGenerator¤styleClass=expand19-200" />
          <show-property name="docsearch:docName" display-label-id="document_docName" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:senderRegNumber" display-label-id="document_senderRegNumber" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:senderRegDateBegin" display-label-id="document_senderRegDate" component-generator="InlinePropertyGroupGenerator" props="docsearch:senderRegDateBegin||styleClass=date,docsearch:senderRegDateEnd||styleClass=date" textId="document_search_from_to" />

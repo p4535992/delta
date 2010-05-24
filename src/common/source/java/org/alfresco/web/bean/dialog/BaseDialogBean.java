@@ -142,7 +142,7 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
             // reset the flag so we can re-attempt the operation
             isFinished = false;
             outcome = getErrorOutcome(e);
-            if (e instanceof ReportedException == false)
+            if (outcome == null && e instanceof ReportedException == false)
             {
                 Utils.addErrorMessage(formatErrorMessage(e), e);
             }

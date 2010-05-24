@@ -7,8 +7,8 @@ function handle_upload_helper(fileInputElement,
                               actionUrl,
                               params)
 {
-  // When file upload has begun, uses sees an hourglass cursor
-  $jQ('*').css('cursor', 'wait');
+  // When file upload has begun, user sees an hourglass cursor
+  $jQ(".submit-protection-layer").show();
   $jQ(fileInputElement).before('Faili laetakse üles, palun oodake...');
 
   var id = fileInputElement.getAttribute("name");

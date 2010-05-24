@@ -14,6 +14,7 @@
             <label-id>workflow_compound_start</label-id>
             <image>/images/icons/workflow.gif</image>
             <action-listener>#{CompoundWorkflowDialog.startWorkflow}</action-listener>
+            <style-class>compoundWorkflowStart</style-class>
          </action>
 
          <action id="compound_workflow_stop">
@@ -135,12 +136,6 @@
       </property-sheet>
    </config>
 
-   <config evaluator="aspect-name" condition="wfs:commonWorkflow" >
-      <property-sheet>
-         <separator name="wfs:description" component-generator="PropValueSeparatorGenerator" />
-      </property-sheet>
-   </config>
-   
    <config evaluator="node-type" condition="wfs:reviewWorkflow">
       <property-sheet>
          <show-property name="wfc:parallelTasks" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud||teostamata" component-generator="GeneralSelectorGenerator"
@@ -151,13 +146,19 @@
 
    <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow" >
       <property-sheet>
-         <show-property name="wfs:resolution" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud||teostamata" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         <show-property name="wfs:resolution" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud||teostamata" component-generator="TextAreaGenerator" styleClass="expand19-200 short-resolution" display="inline" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:assignmentWorkflow" >
       <property-sheet>
-         <show-property name="wfs:resolution" readOnlyIf="wfc:status=lõpetatud||teostamata" component-generator="TextAreaAlwaysEditGenerator" styleClass="expand19-200" />
+         <show-property name="wfs:resolution" readOnlyIf="wfc:status=lõpetatud||teostamata" component-generator="TextAreaAlwaysEditGenerator" styleClass="expand19-200 short-resolution" display="inline" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:docRegistrationWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow" >
+      <property-sheet>
+         <show-property name="wfc:stopOnFinish" readOnlyIf="wfc:status=lõpetatud" />
       </property-sheet>
    </config>
 
@@ -192,11 +193,6 @@
       </property-sheet>
    </config>
 
-   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:docRegistrationWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow" >
-      <property-sheet>
-         <show-property name="wfc:stopOnFinish" readOnlyIf="wfc:status=lõpetatud" />
-      </property-sheet>
-   </config>
 
    <!-- COMPOUND WORKFLOW CONFIG - END -->
 

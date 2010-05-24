@@ -6,7 +6,6 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<%-- This JSP is used from multiple dialogs, that's why DialogManager.bean reference is used --%>
 <a:panel id="tasks-panel" styleClass="panel-100 with-pager" label="#{MyTasksBean.listTitle}" progressive="true">
 
    <%-- Main List --%>

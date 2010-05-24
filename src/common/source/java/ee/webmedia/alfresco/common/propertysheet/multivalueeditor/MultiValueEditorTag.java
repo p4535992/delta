@@ -39,6 +39,7 @@ public class MultiValueEditorTag extends UIComponentTag {
     private String dialogTitleId;
     private String titles;
     private String filters;
+    private String filterIndex;
     private String preprocessCallback;
 
     public void setVarName(String varName) {
@@ -67,6 +68,10 @@ public class MultiValueEditorTag extends UIComponentTag {
 
     public void setFilters(String filters) {
         this.filters = filters;
+    }
+
+    public void setFilterIndex(String filterIndex) {
+        this.filterIndex = filterIndex;
     }
 
     public void setPreprocessCallback(String preprocessCallback) {
@@ -100,6 +105,9 @@ public class MultiValueEditorTag extends UIComponentTag {
         if (StringUtils.isNotBlank(filters)) {
             attributes.put(MultiValueEditor.FILTERS, filters);
         }
+        if (StringUtils.isNotBlank(filterIndex)) {
+            attributes.put(MultiValueEditor.FILTER_INDEX, filterIndex);
+        }
         if (StringUtils.isNotBlank(preprocessCallback)) {
             attributes.put(MultiValueEditor.PREPROCESS_CALLBACK, preprocessCallback);
         }
@@ -115,6 +123,7 @@ public class MultiValueEditorTag extends UIComponentTag {
         dialogTitleId = null;
         titles = null;
         filters = null;
+        filterIndex = null;
         preprocessCallback = null;
     }
 

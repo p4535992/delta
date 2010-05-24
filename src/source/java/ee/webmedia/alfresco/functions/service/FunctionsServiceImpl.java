@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.functions.service;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
@@ -8,6 +9,9 @@ import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
+import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.service.VolumeService;
+
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -19,6 +23,7 @@ import org.alfresco.web.bean.repository.TransientNode;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -37,6 +42,7 @@ public class FunctionsServiceImpl implements FunctionsService {
     private NodeService nodeService;
     private DictionaryService dictionaryService;
     private SeriesService seriesService;
+    private VolumeService volumeService;
 
     @Override
     public List<Function> getAllFunctions() {
@@ -52,13 +58,14 @@ public class FunctionsServiceImpl implements FunctionsService {
         if (log.isDebugEnabled()) {
             log.debug("Functions found: " + functions);
         }
+        Collections.sort(functions);
         return functions;
     }
 
     @Override
     public List<Function> getAllFunctions(DocListUnitStatus status) {
         List<Function> functions = getAllFunctions();
-        for (Iterator<Function> i = functions.iterator(); i.hasNext(); ) {
+        for (Iterator<Function> i = functions.iterator(); i.hasNext();) {
             Function function = i.next();
             if (!status.getValueName().equals(function.getStatus())) {
                 i.remove();
@@ -110,7 +117,7 @@ public class FunctionsServiceImpl implements FunctionsService {
         function.setNode(transientNode);
         return function;
     }
-    
+
     @Override
     public boolean closeFunction(Function function) {
         List<Series> allSeries = seriesService.getAllSeriesByFunction(function.getNodeRef());
@@ -119,12 +126,18 @@ public class FunctionsServiceImpl implements FunctionsService {
                 return false;
             }
         }
-        
+
         function.getNode().getProperties().put(FunctionsModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
         saveOrUpdate(function);
         return true;
     }
-    
+
+    @Override
+    public void reopenFunction(Function function) {
+        function.getNode().getProperties().put(FunctionsModel.Props.STATUS.toString(), DocListUnitStatus.OPEN.getValueName());
+        saveOrUpdate(function);
+    }
+
     private int getNextFunctionOrderNrByFunction() {
         int maxOrder = 0;
         for (Function fn : getAllFunctions()) {
@@ -164,5 +177,33 @@ public class FunctionsServiceImpl implements FunctionsService {
         this.seriesService = seriesService;
     }
 
+    public void setVolumeService(VolumeService volumeService) {
+        this.volumeService = volumeService;
+    }
+
+    @Override
+    public long createNewYearBasedVolumes() {
+        log.info("creating copy of year-based volumes that are opened.");
+        long counter = 0;
+        for (Function function : getAllFunctions()) {
+            for (Series series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
+                for (Volume volume : volumeService.getAllValidVolumesBySeries(series.getNode().getNodeRef())) {
+                    if (DocListUnitStatus.OPEN.equals(volume.getStatus()) && VolumeType.YEAR_BASED.equals(volume.getVolumeType())) {
+                        volumeService.copyVolume(volume);
+                        counter++;
+                        log.info("created copy of " + counter + " volume: [" + function.getMark() + "]" + function.getTitle()
+                                + "/[" + series.getSeriesIdentifier() + "]" + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle());
+                    } else {
+                        if (log.isDebugEnabled()) {
+                            log.debug("skipping volume: [" + function.getMark() + "]" + function.getTitle()
+                                    + "/[" + series.getSeriesIdentifier() + "]" + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle());
+                        }
+                    }
+                }
+            }
+        }
+        log.info("created copy of " + counter + " year-based volumes that were opened.");
+        return counter;
+    }
     // END: getters / setters
 }

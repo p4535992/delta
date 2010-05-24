@@ -87,8 +87,18 @@
          Generator, that generates a TextArea that suggests values of classificator name (defined using "classificatorName" attribute in the
          show-property element), but allows to insert value that is not in classificator values
       </description>
-      <managed-bean-name>ClassificatorSuggestingGenerator</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSuggestingGenerator</managed-bean-class>
+      <managed-bean-name>ClassificatorSuggesterGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.suggester.ClassificatorSuggesterGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <description>
+         Generator, that generates a TextArea that suggests values (defined using "suggesterValues" attribute in the show-property element, which contains a
+         value-binding ...), and allows to insert value that is not predefined
+      </description>
+      <managed-bean-name>SuggesterGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
@@ -189,8 +199,8 @@
    <render-kit>
       <renderer>
          <component-family>javax.faces.Input</component-family>
-         <renderer-type>ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSuggesterGeneratorRenderer</renderer-type>
-         <renderer-class>ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSuggesterGeneratorRenderer</renderer-class>
+         <renderer-type>ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterRenderer</renderer-type>
+         <renderer-class>ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterRenderer</renderer-class>
       </renderer>
       <renderer>
          <component-family>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor</component-family>

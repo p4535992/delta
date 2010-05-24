@@ -206,6 +206,8 @@ public interface DocumentSpecificModel {
         QName MANAGEMENTS_ORDER_DUE_DATE = QName.createQName(URI, "managementsOrderDueDate");
 
         QName PROCUREMENT_TYPE = QName.createQName(URI, "procurementType"); // TODO not in data model yet, because docsub:tenderingApplication is not yet implemented
+        
+        QName APPLICATION_RECIPIENT = QName.createQName(URI, "applicationRecipient");
     }
 
 }

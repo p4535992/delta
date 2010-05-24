@@ -1,10 +1,12 @@
 package ee.webmedia.alfresco.menu.service;
 
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
@@ -53,6 +55,22 @@ public interface MenuService {
 
     }
     
+    public interface MenuItemFilter {
+        
+        boolean passesFilter(MenuItem menuItem, NodeRef childNodeRef);
+
+        /**
+         * Provides ability to execute third party actions when opening a MenuItem. For example call some dialog's method
+         *   
+         * @param nodeRef NodeRef this item represents 
+         * @param dd DropdownMenuItem that is being opened
+         * @param type QName on item that is being opened
+         * 
+         * @return returns null if further processing is not needed 
+         */
+        String openItemActionsForType(DropdownMenuItem dd, NodeRef nodeRef, QName type);
+    }
+    
     List<NodeRef> openTreeItem(DropdownMenuItem menuItem, NodeRef nodeRef);
     
     void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef);
@@ -76,5 +94,7 @@ public interface MenuService {
     void addShortcut(String shortcut);
 
     void removeShortcut(String shortcut);
+
+    Map<String, MenuItemFilter> getMenuItemFilters();
 
 }

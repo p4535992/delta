@@ -16,6 +16,7 @@ import org.alfresco.web.config.PropertySheetConfigElement.ItemConfig;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO.ConfigItemType;
@@ -29,6 +30,8 @@ import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 public class WMUIPropertySheet extends UIPropertySheet {
 
     public static final String SHOW = "show";
+    public static final String DISPLAY = "display";
+    public static final String INLINE = "inline";
 
     /**
      * If this propertySheet represents a subPropertySheet(meaning it is in another propertySheet), it is associated to the parent using some type of
@@ -43,6 +46,14 @@ public class WMUIPropertySheet extends UIPropertySheet {
      */
     public WMUIPropertySheet() {
         super();
+    }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public void encodeBegin(FacesContext context) throws IOException {
+        this.getAttributes().put(HTML.CELLSPACING_ATTR, 0);
+        this.getAttributes().put(HTML.CELLPADDING_ATTR, 0);
+        super.encodeBegin(context);
     }
 
     @Override

@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.imap.web;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
 import ee.webmedia.alfresco.menu.service.MenuService;
 
@@ -12,8 +13,8 @@ public class IncomingEmailMenuItemProcessor extends CountAddingMenuItemProcessor
     private DocumentService documentService;
     
     @Override
-    protected int getCount() {
-        return documentService.getIncomingEmails().size();
+    protected int getCount(MenuItem menuItem) {
+        return documentService.getIncomingEmailsCount();
     }
 
     @Override

@@ -16,7 +16,7 @@ public interface DocumentTypeModel {
 
     public interface Props {
         QName NAME = QName.createQName(URI, "name");
-        
+        QName PUBLIC_ADR = QName.createQName(URI, "publicAdr");
         QName SELECTED = QName.createQName(URI, "selected");
     }
     

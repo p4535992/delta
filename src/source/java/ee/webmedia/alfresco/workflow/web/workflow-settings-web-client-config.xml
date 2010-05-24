@@ -18,45 +18,50 @@
 
    <config evaluator="aspect-name" condition="wfs:commonWorkflow" >
       <property-sheet>
-         <show-property name="wfs:description" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         <show-property name="wfs:description" component-generator="TextAreaGenerator" styleClass="expand19-200" display="inline" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:docRegistrationWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow" >
+      <property-sheet>
+         <show-property name="wfc:stopOnFinish" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="aspect-name" condition="wfs:commonWorkflow" >
+      <property-sheet>
          <show-property name="wfs:resolution" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:signatureWorkflow">
       <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="signatureWorkflow_tasks" />
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="signatureWorkflow_tasks" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:opinionWorkflow">
       <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="opinionWorkflow_tasks" />
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="opinionWorkflow_tasks" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:reviewWorkflow">
       <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="reviewWorkflow_tasks" />
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="reviewWorkflow_tasks" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:informationWorkflow">
       <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="informationWorkflow_tasks" />
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="informationWorkflow_tasks" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:assignmentWorkflow">
       <property-sheet>
-         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="assignmentWorkflow_tasks" responsible="true" />
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks" responsible="true" />
          <show-property name="{temp}workflowTasksCo" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks_co" />
-      </property-sheet>
-   </config>
-
-   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:docRegistrationWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow" >
-      <property-sheet>
-         <show-property name="wfc:stopOnFinish" />
       </property-sheet>
    </config>
 

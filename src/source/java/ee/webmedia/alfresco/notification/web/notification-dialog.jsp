@@ -12,38 +12,41 @@
 
 <r:propertySheetGrid value="#{NotificationDialog.userPrefsNode}" var="node" finishButtonId="dialog:finish-button">
 
-   <h:panelGrid columns="2" styleClass="table-padding">
+   <h:panelGrid styleClass="table-padding" columns="2">
 
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}newTaskNotification']}" />
       <h:outputText value="#{msg.notification_newTaskNotification_label}" />
-      
+
+      <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}cancelledTaskNotification']}" />
+      <h:outputText value="#{msg.notification_cancelledTaskNotification_label}" />
+
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}signatureTaskCompleted']}" />
       <h:outputText value="#{msg.notification_signatureTaskCompleted_label}" />
-      
+
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}opinionTaskCompleted']}" />
       <h:outputText value="#{msg.notification_opinionTaskCompleted_label}" />
-      
+
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}assignmentTaskCompletedByCoResponsible']}" />
       <h:outputText value="#{msg.notification_assignmentTaskCompletedByCoResponsible_label}" />
-      
+
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewTaskCompleted']}" />
       <h:outputText value="#{msg.notification_reviewTaskCompleted_label}" />
-      
+
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewTaskCompletedNotAccepted']}" />
       <h:outputText value="#{msg.notification_reviewTaskCompletedNotAccepted_label}" />
-      
+
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}reviewTaskCompletedWithRemarks']}" />
       <h:outputText value="#{msg.notification_reviewTaskCompletedWithRemarks_label}" />
-      
+
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}informationTaskCompleted']}" />
       <h:outputText value="#{msg.notification_informationTaskCompleted_label}" />
-      
+
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}workflowCompleted']}" />
       <h:outputText value="#{msg.notification_workflowCompleted_label}" />
-      
+
       <h:selectBooleanCheckbox value="#{node.properties['{http://alfresco.webmedia.ee/model/notification/1.0}newWorkflowStarted']}" />
       <h:outputText value="#{msg.notification_newWorkflowStarted_label}" />
-   
+
    </h:panelGrid>
 
 </r:propertySheetGrid>

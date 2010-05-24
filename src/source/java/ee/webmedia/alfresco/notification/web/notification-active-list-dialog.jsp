@@ -12,7 +12,21 @@
    <a:richList id="notifications-list" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" value="#{NotificationBean.generalNotifications}" var="r" refreshOnBind="true" initialSortColumn="createdDateTime" initialSortDescending="true" >
 
-      <a:column id="col1" primary="true">
+      <a:column id="col3" primary="true">
+         <f:facet name="header">
+            <a:sortLink id="col3-sort" label="#{msg.notification_message}" value="message" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col3-text" escape="false" value="#{r.message}" />
+      </a:column>
+
+      <a:column id="col2">
+         <f:facet name="header">
+            <a:sortLink id="col2-sort" label="#{msg.notification_creator}" value="creatorName" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col2-text" value="#{r.creatorName}" />
+      </a:column>
+      
+      <a:column id="col1">
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.notification_created}" value="createdDateTime" styleClass="header" />
          </f:facet>
@@ -21,20 +35,6 @@
          </h:outputText>
       </a:column>      
       
-      <a:column id="col2">
-         <f:facet name="header">
-            <a:sortLink id="col2-sort" label="#{msg.notification_creator}" value="creatorName" styleClass="header" />
-         </f:facet>
-         <h:outputText id="col2-text" value="#{r.creatorName}" />
-      </a:column>
-      
-      <a:column id="col3">
-         <f:facet name="header">
-            <a:sortLink id="col3-sort" label="#{msg.notification_message}" value="message" styleClass="header" />
-         </f:facet>
-         <h:outputText id="col3-text" value="#{r.message}" />
-      </a:column>
-
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="notifications-pager" styleClass="pager" />
    </a:richList>

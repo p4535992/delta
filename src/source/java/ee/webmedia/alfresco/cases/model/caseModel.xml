@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<model name="case:caseModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
-   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+<model name="case:caseModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
 
    <imports>
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
@@ -22,6 +22,9 @@
             </property>
             <property name="case:status">
                <type>d:text</type>
+            </property>
+            <property name="case:containingDocsCount">
+               <type>d:int</type>
             </property>
          </properties>
          <associations>

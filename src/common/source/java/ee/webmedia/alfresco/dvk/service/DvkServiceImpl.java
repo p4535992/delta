@@ -14,6 +14,7 @@ import java.util.Set;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.model.FileFolderService;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -31,6 +32,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedDocument;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedDocumentImpl;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
@@ -194,7 +196,11 @@ public abstract class DvkServiceImpl implements DvkService {
             }
 
             List<DataFileType> dataFileList = signedDoc.getDataFileList();
-            log.debug("document contains " + dataFileList.size() + " datafiles");
+            if (dataFileList.size() == 0) {
+                log.error("document contains " + dataFileList.size() + " datafiles. signedDoc:\n" + signedDoc);
+            } else if (log.isDebugEnabled()) {
+                log.debug("document contains " + dataFileList.size() + " datafiles");
+            }
 
             // gather properties that will be attached to space created for this document
             final DvkReceivedDocument rd = new DvkReceivedDocumentImpl();
@@ -243,8 +249,15 @@ public abstract class DvkServiceImpl implements DvkService {
     abstract protected NodeRef createDocumentNode(DvkReceivedDocument rd, NodeRef dvkIncomingFolder, String documentFolderName);
 
     protected Collection<String> getPreviouslyFailedDvkIds() {
-        // FIXME: kui tk projektis ka vastu võtmine implemenditakse, siis võiks järgneva rea asendada sim'i ilmplementatsiooniga
-        return new HashSet<String>(0);
+        NodeRef corruptFolderRef = generalService.getNodeRef(corruptDvkDocumentsPath);
+        final List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(corruptFolderRef);
+        final HashSet<String> failedDvkIds = new HashSet<String>(childAssocs.size());
+        for (ChildAssociationRef failedAssocRef : childAssocs) {
+            final NodeRef failedRef = failedAssocRef.getChildRef();
+            String dvkId = (String) nodeService.getProperty(failedRef, DvkModel.Props.DVK_ID);
+            failedDvkIds.add(dvkId);
+        }
+        return failedDvkIds;
     }
 
     protected NodeRef storeFile(DvkReceivedDocument rd, NodeRef documentFolder, DataFileType dataFile) {

@@ -216,6 +216,12 @@
          <required>false</required>
          <rtexprvalue>true</rtexprvalue>
       </attribute>
+
+      <attribute>
+         <name>doPermissionCheck</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+      </attribute>
    </tag>
 
    <tag>
@@ -1818,6 +1824,12 @@
       <attribute>
          <name>queryCallback</name>
          <required>true</required>
+         <rtexprvalue>true</rtexprvalue>
+      </attribute>
+      
+      <attribute>
+         <name>size</name>
+         <required>false</required>
          <rtexprvalue>true</rtexprvalue>
       </attribute>
    </tag>

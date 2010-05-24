@@ -1,14 +1,17 @@
 package ee.webmedia.alfresco.common.propertysheet.component;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.faces.component.UIComponent;
 import javax.faces.component.html.HtmlOutputText;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.IComponentGenerator;
 import org.alfresco.web.ui.common.ComponentConstants;
+import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
@@ -24,6 +27,7 @@ public class WMUIProperty extends UIProperty implements CustomAttributes {
 
     public static final String LABEL_STYLE_CLASS = "labelStyleClass";
     public static final String REPO_NODE = "__repo_node";
+    public static final String DONT_RENDER_IF_DISABLED_ATTR = "dontRenderIfDisabled";
     protected Map<String, String> propertySheetItemAttributes;
 
     @Override
@@ -35,6 +39,36 @@ public class WMUIProperty extends UIProperty implements CustomAttributes {
             gen.setCustomAttributes(propertySheetItemAttributes);
         }
         return compGenerator;
+    }
+
+    @Override
+    public boolean isRendered() {
+        // --------------------------------------------------------
+        // The same as UIProperty#encodeBegin
+        if (getChildCount() == 0) {
+            // get the variable being used from the parent
+            UIComponent parent = this.getParent();
+            if ((parent instanceof UIPropertySheet) == false) {
+                throw new IllegalStateException(getIncorrectParentMsg());
+            }
+            // only build the components if there are currently no children
+            int howManyKids = getChildren().size();
+            if (howManyKids == 0) {
+                try {
+                    generateItem(FacesContext.getCurrentInstance(), (UIPropertySheet) parent);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
+        // --------------------------------------------------------
+        if (getChildCount() >= 2) {
+            UIComponent child = (UIComponent) getChildren().get(1);
+            if (Boolean.TRUE.equals(child.getAttributes().get(DONT_RENDER_IF_DISABLED_ATTR)) && Utils.isComponentDisabledOrReadOnly(child)) {
+                return false;
+            }
+        }
+        return super.isRendered();
     }
 
     // START: getters / setters
@@ -66,5 +100,22 @@ public class WMUIProperty extends UIProperty implements CustomAttributes {
     }
 
     // END: getters / setters
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void restoreState(FacesContext context, Object state) {
+        Object values[] = (Object[]) state;
+        super.restoreState(context, values[0]);
+        this.propertySheetItemAttributes = (Map<String, String>) values[1];
+    }
+
+    @Override
+    public Object saveState(FacesContext context) {
+        Object values[] = new Object[] {
+            super.saveState(context),
+            this.propertySheetItemAttributes
+        };
+        return values;
+    }
 
 }

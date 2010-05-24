@@ -102,10 +102,7 @@
 
       function pageLoaded()
       {
-   <%if (fileUploaded) {%>
-         document.getElementById("dialog").onsubmit = validate;
-   <%}%>
-         document.getElementById("dialog:finish-button").onclick = function() {finishButtonPressed = true; clear_dialog();}
+        document.getElementById("dialog:finish-button").onclick = function() {finishButtonPressed = true; clear_dialog();}
         checkButtonState();
       }
 

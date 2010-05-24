@@ -23,6 +23,8 @@ public interface SeriesService {
 
     List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, QName docTypeId);
 
+    List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, Integer structUnitId);
+
     Series getSeriesByNodeRef(String seriesNodeRef);
 
     Node getSeriesNodeByRef(NodeRef seriesNodeRef);
@@ -42,5 +44,7 @@ public interface SeriesService {
     boolean closeSeries(Series series);
 
     boolean isClosed(Node currentNode);
+    
+    void updateContainingDocsCountByVolume(NodeRef seriesNodeRef, NodeRef volumeNodeRef, boolean volumeAdded);
 
 }

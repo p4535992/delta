@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<model name="doccom:documentCommonModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
-   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+<model name="doccom:documentCommonModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
 
    <imports>
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
@@ -119,11 +119,24 @@
             <property name="doccom:dvkId">
                <type>d:text</type>
             </property>
+            <property name="doccom:resolution">
+               <type>d:text</type>
+            </property>
          </properties>
       </type>
       
       <type name="doccom:documentLog">
          <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>doccom:documentLogAspect</aspect>
+         </mandatory-aspects>
+      </type>
+      
+   </types>
+
+   <aspects>
+
+      <aspect name="doccom:documentLogAspect">
          <properties>
             <property name="doccom:createdDateTime">
                <type>d:date</type>
@@ -137,11 +150,7 @@
                <type>d:text</type>
             </property>
          </properties>
-      </type>
-      
-   </types>
-
-   <aspects>
+      </aspect>
 
       <aspect name="doccom:favoriteContainer">
          <associations>
@@ -183,6 +192,12 @@
                <type>d:noderef</type>
             </property>
             <property name="doccom:series">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:volume">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:case">
                <type>d:noderef</type>
             </property>
             <property name="doccom:fileNames">

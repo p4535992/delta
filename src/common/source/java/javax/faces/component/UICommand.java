@@ -24,8 +24,8 @@ import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.*;
 
+import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
-import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener.LogColumn;
 
 /**
  * see Javadoc of <a href="http://java.sun.com/j2ee/javaserverfaces/1.1_01/docs/api/index.html">JSF Specification</a>
@@ -107,7 +107,7 @@ public class UICommand
                 finally
                 {
                     long duration = System.currentTimeMillis() - startTime;
-                    StatisticsPhaseListener.add(LogColumn.ACTION_LISTENER, duration + "," + actionListenerBinding.getExpressionString());
+                    StatisticsPhaseListener.add(StatisticsPhaseListenerLogColumn.ACTION_LISTENER, duration + "," + actionListenerBinding.getExpressionString());
                 }
             }
 

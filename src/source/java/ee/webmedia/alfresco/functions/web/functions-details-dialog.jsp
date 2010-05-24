@@ -12,7 +12,7 @@
 <%@page import="org.alfresco.web.app.servlet.FacesHelper"%>
 <%@page import="javax.faces.context.FacesContext"%>
 <a:panel id="metadata-panel" label="#{msg.functions_list}" styleClass="panel-100" progressive="true">
-   <r:propertySheetGrid id="fn-metadata" value="#{DialogManager.bean.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" />
+   <r:propertySheetGrid id="fn-metadata" value="#{DialogManager.bean.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" binding="#{FunctionsDetailsDialog.propertySheet}" />
 </a:panel>
 <f:verbatim>
 <script type="text/javascript">
@@ -20,6 +20,16 @@
    function postProcessButtonState(){
       var status = "</f:verbatim><h:outputText value="#{FunctionsDetailsDialog.currentNode.properties['{http://alfresco.webmedia.ee/model/functions/1.0}status']}" /><f:verbatim>";
       processFnSerVolCaseCloseButton(status);
+      processFnReopenButton(status);
+   }
+
+   function processFnReopenButton(status){
+      var reopenBtn = $jQ("#"+escapeId4JQ("dialog:reopen-button"));
+      var reopenBtn2 = $jQ("#"+escapeId4JQ("dialog:reopen-button-2"));
+      if(status != "suletud"){
+         reopenBtn.remove();
+         reopenBtn2.remove();
+      }
    }
 </script>
 </f:verbatim>

@@ -1,9 +1,11 @@
 package ee.webmedia.alfresco.document.register.web;
 
+import org.springframework.beans.factory.InitializingBean;
+
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
 import ee.webmedia.alfresco.menu.service.MenuService;
-import org.springframework.beans.factory.InitializingBean;
 
 /**
  * TODO: add comment
@@ -20,7 +22,7 @@ public class RegisterMenuItemProcessor extends CountAddingMenuItemProcessor impl
     }
 
     @Override
-    protected int getCount() {
+    protected int getCount(MenuItem menuItem) {
         return documentSearchService.getCountOfDocumentsForRegistering();
     }
 

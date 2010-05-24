@@ -5,6 +5,7 @@ import java.util.List;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.adr.Dokumendiliik;
 import ee.webmedia.alfresco.adr.Dokument;
@@ -36,7 +37,6 @@ public interface AdrService {
     // kõik parameetrid on kohustuslikud, otsitakse täpset vastet!
     Fail failSisuga(String viit, XMLGregorianCalendar registreerimiseAeg, String filename);
 
-    // XXX TODO FIXME NB! kas kasutajaliideses dok.liigi mittenähtavaks muutmine peab mõjutama ka teisi päringuid?!?!
     List<Dokumendiliik> dokumendiliigid();
 
     // ---------- Perioodilise sünkimise osa -----------
@@ -69,9 +69,14 @@ public interface AdrService {
 
     // kohad
     // * dokumendi kustutamine - ei saagi kustutada registreeritud dokumenti; aga igaks juhuks lisatud kood
-    // * arhiveerimine - liigutatakse aktiivsest dok.loetelust ära; kas siis märkida ADR jaoks kustutatuks??? real-time osas kaob ära; praegu siin ei teinud TODO
     // * registreerimine, rakendub ka kohtadest kus seda välja kutsutakse, näiteks ümberliigitamine - kui reg.nr või reg.aeg muutub, siis märgitakse vana viit+aeg kustutatuks
+    // * (arhiveerimine - ei tehta midagi, jääb ADR'i alles)
+    // * hävitamine - kustutatakse ADR'ist
 
     void addDeletedDocument(NodeRef document);
+
+    public void deleteDocumentType(QName documentType);
+
+    public void addDocumentType(QName documentType);
 
 }

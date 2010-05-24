@@ -11,21 +11,17 @@ public class NodeTypeEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 1L;
     protected List<QName> nodeTypes = new ArrayList<QName>();
-    
+
     @Override
     public boolean evaluate(Node docNode) {
-        boolean viewMode = new ViewStateActionEvaluator().evaluate(docNode);
-        if (!viewMode) {
-            return false;
-        }
-        
-        boolean isOfType = false;
-        for (QName nodeType : nodeTypes) {
-            isOfType = nodeType.equals(docNode.getType());
-            if (isOfType) {
-                break;
-            }
-        }
-        return isOfType;
+        return evaluateViewSatate(docNode) && evaluateType(docNode);
+    }
+
+    protected boolean evaluateViewSatate(Node docNode) {
+        return new ViewStateActionEvaluator().evaluate(docNode);
+    }
+
+    protected boolean evaluateType(Node docNode) {
+        return nodeTypes.contains(docNode.getType());
     }
 }

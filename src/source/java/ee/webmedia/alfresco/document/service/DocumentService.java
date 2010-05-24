@@ -11,10 +11,10 @@ import org.alfresco.web.bean.repository.Node;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
-import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
+import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -31,11 +31,13 @@ public interface DocumentService {
         String FUNCTION_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function_Lbl").toString();
         String SERIES_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series_Lbl").toString();
         String VOLUME_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume_Lbl").toString();
+        String CASE_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case_Lbl").toString();
+        String CASE_LABEL_EDITABLE = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case_Lbl_Editable").toString();
         //
-        String FUNCTION_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function_fnSerVol").toString();
-        String SERIES_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series_fnSerVol").toString();
-        String VOLUME_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume_fnSerVol").toString();
-        String CASE_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume_fnSerVolCase").toString();
+        String FUNCTION_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function").toString();
+        String SERIES_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series").toString();
+        String VOLUME_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume").toString();
+        String CASE_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case").toString();
     }
 
     String BEAN_NAME = "DocumentService";
@@ -114,6 +116,8 @@ public interface DocumentService {
     
     List<Document> getAllDocumentFromDvk();
 
+    int getAllDocumentFromDvkCount();
+    
     List<DocAssocInfo> getAssocInfos(Node document);
     
     /**
@@ -134,6 +138,17 @@ public interface DocumentService {
      */
     List<Document> getIncomingEmails();
 
+    int getIncomingEmailsCount();
+    
+    /**
+     * Get list of sent email.
+     *
+     * @return list of documents
+     */
+    List<Document> getSentEmails();
+
+    int getSentEmailsCount();
+    
     void deleteDocument(NodeRef nodeRef);
 
     /**
@@ -241,6 +256,12 @@ public interface DocumentService {
      * @return true if document is saved under incoming email space
      */
     boolean isFromIncoming(NodeRef nodeRef);
+    
+    /**
+     * @param nodeRef
+     * @return true if document is saved under sent email space
+     */
+    boolean isFromSent(NodeRef nodeRef);
     
     void setTransientProperties(Node document, DocumentParentNodesVO documentParentNodesVO);
 
@@ -355,5 +376,6 @@ public interface DocumentService {
      * @return list of documents that are reply or follow up to base
      */
     List<Document> getReplyOrFollowUpDocuments(NodeRef base);
-
+    
+    void updateParentNodesContainingDocsCount(NodeRef documentNodeRef, boolean documentAdded);
 }

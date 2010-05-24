@@ -12,6 +12,7 @@
             <label-id>classificators_export</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{ClassificatorListDialog.export}</action-listener>
+            <target>no_wait_workaround</target>
          </action>
 
          <action id="classificator_import">

@@ -36,11 +36,9 @@
 
    
    <a:panel id="search-panel">
-      <h:inputText id="search-text" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" onkeyup="updateButtonState();" onchange="updateButtonState();" />&nbsp;
-      <f:verbatim>&nbsp;</f:verbatim>
-      <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" />
-      <f:verbatim>&nbsp;</f:verbatim>
-      <h:commandButton value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" />
+      <h:inputText id="search-text" styleClass="admin-user-search-input" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" />
+      <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" style="margin-left: 5px;" />
+      <h:commandButton value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" style="margin-left: 5px;"/>
    </a:panel>
    
    <%-- Spaces List --%>

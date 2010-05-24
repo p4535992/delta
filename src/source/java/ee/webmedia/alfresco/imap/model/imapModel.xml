@@ -15,6 +15,7 @@
                     <value>permissionDeniedBehaviour</value>
                     <value>incomingBehaviour</value>
                     <value>attachmentBehaviour</value>
+                    <value>sentBehaviour</value>
                 </list>
             </parameter>
             

@@ -93,7 +93,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
         final Node document = documentService.createDocument(DocumentSubtypeModel.Types.INCOMING_LETTER, dvkIncomingFolder, props);
         final NodeRef docRef = document.getNodeRef();
-        documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", "DVK"), I18NUtil.getMessage("document_log_creator_dvk"));
+        documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", I18NUtil.getMessage("document_log_creator_dvk")), I18NUtil.getMessage("document_log_creator_dvk"));
         return docRef;
     }
 
@@ -146,19 +146,6 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             log.fatal(msg, e3);
             throw new RuntimeException(msg, e3);
         }
-    }
-
-    @Override
-    protected Collection<String> getPreviouslyFailedDvkIds() {
-        NodeRef corruptFolderRef = generalService.getNodeRef(corruptDvkDocumentsPath);
-        final List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(corruptFolderRef);
-        final HashSet<String> failedDvkIds = new HashSet<String>(childAssocs.size());
-        for (ChildAssociationRef failedAssocRef : childAssocs) {
-            final NodeRef failedRef = failedAssocRef.getChildRef();
-            String dvkId = (String) nodeService.getProperty(failedRef, DvkModel.Props.DVK_ID);
-            failedDvkIds.add(dvkId);
-        }
-        return failedDvkIds;
     }
 
     // START: getters / setters

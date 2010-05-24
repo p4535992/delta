@@ -16,40 +16,60 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.log.model.DocumentLog;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
 
 public class DocumentLogServiceImpl implements DocumentLogService {
-    
+
     private NodeService nodeService;
     private GeneralService generalService;
     private UserService userService;
 
     @Override
-    public List<DocumentLog> getDocumentLogs(NodeRef document) {
-        List<ChildAssociationRef> assocs = nodeService.getChildAssocs(document, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Assocs.DOCUMENT_LOG);
+    public List<DocumentLog> getDocumentLogs(NodeRef docRef) {
+        return getLogs(docRef, DocumentCommonModel.Assocs.DOCUMENT_LOG);
+    }
+
+    @Override
+    public List<DocumentLog> getSeriesLogs(NodeRef seriesRef) {
+        return getLogs(seriesRef, SeriesModel.Associations.SERIES_LOG);
+    }
+
+    @Override
+    public void addDocumentLog(NodeRef document, String event) {
+        String currentUserFullName = userService.getUserFullName();
+        addDocumentLog(document, event, currentUserFullName);
+    }
+
+    @Override
+    public void addDocumentLog(NodeRef document, String event, String creator) {
+        addLogEntry(document, event, creator, DocumentCommonModel.Assocs.DOCUMENT_LOG);
+    }
+
+    public void addSeriesLog(NodeRef document, String event) {
+        String currentUserFullName = userService.getUserFullName();
+        addLogEntry(document, event, currentUserFullName, SeriesModel.Associations.SERIES_LOG);
+    }
+
+    private void addLogEntry(NodeRef parentRef, String event, String creator, QName assocQName) {
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>(3);
+        props.put(DocumentCommonModel.Props.CREATED_DATETIME, new Date());
+        props.put(DocumentCommonModel.Props.CREATOR_NAME, creator);
+        props.put(DocumentCommonModel.Props.EVENT_DESCRIPTION, event);
+
+        nodeService.createNode(parentRef, assocQName, assocQName,
+                DocumentCommonModel.Types.DOCUMENT_LOG, props);
+    }
+
+    private List<DocumentLog> getLogs(NodeRef parentRef, QName assocName) {
+        List<ChildAssociationRef> assocs = nodeService.getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, assocName);
         List<DocumentLog> result = new ArrayList<DocumentLog>(assocs.size());
         for (ChildAssociationRef assoc : assocs) {
             result.add(new DocumentLog(generalService.fetchNode(assoc.getChildRef())));
         }
         return result;
     }
-    
-    @Override
-    public void addDocumentLog(NodeRef document, String event) {
-        String currentUserFullName = userService.getUserFullName();
-        addDocumentLog(document, event, currentUserFullName);
-    }
-    
-    @Override
-    public void addDocumentLog(NodeRef document, String event, String creator) {
-        Map<QName, Serializable> props = new HashMap<QName, Serializable>(3);
-        props.put(DocumentCommonModel.Props.CREATED_DATETIME, new Date());
-        props.put(DocumentCommonModel.Props.CREATOR_NAME, creator);
-        props.put(DocumentCommonModel.Props.EVENT_DESCRIPTION, event);
 
-        nodeService.createNode(document, DocumentCommonModel.Assocs.DOCUMENT_LOG, DocumentCommonModel.Assocs.DOCUMENT_LOG, DocumentCommonModel.Types.DOCUMENT_LOG, props);
-    }
-    
     // START: getters / setters
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;

@@ -25,6 +25,7 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
     private static final long serialVersionUID = 1L;
 
     public static final String LIST_SEPARATOR = ", ";
+    public static final int SHORT_PROP_LENGTH = 20;
 
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
@@ -71,7 +72,7 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
     private String getDocTypeLocalName() {
         return documentType.getId().getLocalName();
     }
-    
+
     @Override
     public String getCssStyleClass() {
         return getDocTypeLocalName();
@@ -87,6 +88,10 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
         return (Date) getNode().getProperties().get(DocumentCommonModel.Props.REG_DATE_TIME);
     }
 
+    public String getShortSender() {
+        return shortenProp(getSender());
+    }
+
     public String getSender() {
         if (documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
             return (String) getNode().getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
@@ -94,8 +99,16 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
     }
 
+    public String getShortAllRecipients() {
+        return shortenProp(getAllRecipients());
+    }
+
     public String getAllRecipients() {
         return join(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+    }
+
+    public String getShortDocName() {
+        return shortenProp(getDocName());
     }
 
     public String getDocName() {
@@ -160,7 +173,7 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
     public String getAccessRestrictionEndDesc() {
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC);
     }
-    
+
     public String getOwnerId() {
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.OWNER_ID);
     }
@@ -349,6 +362,10 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
             }
         }
         return result.toString();
+    }
+
+    public static String shortenProp(String propValue) {
+        return (StringUtils.isBlank(propValue) || propValue.length() <= SHORT_PROP_LENGTH) ? propValue : propValue.substring(0, SHORT_PROP_LENGTH) + "...";
     }
 
 }

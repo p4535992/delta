@@ -106,7 +106,7 @@
    </bean>
 
    <bean id="workflowType" class="ee.webmedia.alfresco.workflow.service.type.BaseWorkflowType" abstract="true">
-      <property name="workflowService" ref="wmWorkflowService" />
+      <property name="workflowService" ref="WmWorkflowService" />
       <property name="namespaceService" ref="NamespaceService" />
    </bean>
 

@@ -84,9 +84,12 @@
 
    <bean class="ee.webmedia.alfresco.imap.web.AttachmentListMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
-      <property name="generalService" ref="GeneralService" />
       <property name="fileService" ref="FileService" />
       <property name="imapServiceExt" ref="ImapServiceExt" />
    </bean>
-
+   
+   <bean class="ee.webmedia.alfresco.imap.web.SentEmailMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="documentService" ref="DocumentService" />
+   </bean>
 </beans>

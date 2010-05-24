@@ -1,8 +1,10 @@
 package ee.webmedia.alfresco.archivals.service;
 
+import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
@@ -12,6 +14,8 @@ import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
+
+import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -30,11 +34,22 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
+import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.functions.service.FunctionsService;
+import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.series.service.SeriesService;
+import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.volume.service.VolumeService;
 
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
-
 /**
  * @author Romet Aidla
  */
@@ -46,6 +61,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
     private SeriesService seriesService;
     private FunctionsService functionsService;
     private SearchService searchService;
+    private DictionaryService dictionaryService;
+    private AdrService adrService;
 
     private StoreRef archivalsStore;
 
@@ -75,8 +92,8 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         }
         else { // function is archived, let's check whether we need to archive series
             archivedSeriesRef = getArchivedSeriesByIdentifies(archivedFunRef, seriesIdentifier);
-
             if (archivedSeriesRef == null) { // series isn't archived before, let's do this now
+                nodeService.setProperty(copiedSeriesNodeRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, 0); // reset value if it' first time
                 archivedSeriesRef = nodeService.moveNode(copiedSeriesNodeRef, archivedFunRef,
                         SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES).getChildRef();
             }
@@ -85,11 +102,13 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             nodeService.deleteNode(copiedFunNodeRef);
         }
         Assert.notNull(archivedSeriesRef, "Series was not archived");
-
+        
+        seriesService.updateContainingDocsCountByVolume(series.getNode().getNodeRef(), volumeNodeRef, false);
         // now move volume with all children
         NodeRef archivedVolumeNodeRef = nodeService.moveNode(volumeNodeRef, archivedSeriesRef,
                 VolumeModel.Associations.VOLUME, VolumeModel.Associations.VOLUME).getChildRef();
         nodeService.setProperty(archivedVolumeNodeRef, VolumeModel.Props.ARCHIVING_NOTE, archivingNote);
+        seriesService.updateContainingDocsCountByVolume(archivedSeriesRef, archivedVolumeNodeRef, true);
         return archivedVolumeNodeRef;
     }
 
@@ -106,8 +125,14 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             // remove all childs
             List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(volumeNodeRef);
             for (ChildAssociationRef childAssoc : childAssocs) {
-                nodeService.deleteNode(childAssoc.getChildRef());
+                NodeRef nodeRef = childAssoc.getChildRef();
+                if (dictionaryService.isSubClass(nodeService.getType(nodeRef), DocumentCommonModel.Types.DOCUMENT)) {
+                    adrService.addDeletedDocument(nodeRef);
+                }
+                nodeService.deleteNode(nodeRef);
             }
+            seriesService.updateContainingDocsCountByVolume(volumeService.getVolumeByNodeRef(volumeNodeRef).getSeriesNodeRef(), volumeNodeRef, false);
+            nodeService.setProperty(volumeNodeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, 0); // all documents are deleted
         }
 
         return volumesForDestruction.size();
@@ -121,11 +146,15 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         queryParts.add(generateStringExactQuery("true", VolumeModel.Props.SEND_TO_DESTRUCTION));
         String query = joinQueryPartsAnd(queryParts);
         ResultSet resultSet = doSearch(query);
-        List<NodeRef> volumesForDestruction = new ArrayList<NodeRef>();
-        for (ResultSetRow resultSetRow : resultSet) {
-            volumesForDestruction.add(resultSetRow.getNodeRef());
+        try {
+            List<NodeRef> volumesForDestruction = new ArrayList<NodeRef>();
+            for (ResultSetRow resultSetRow : resultSet) {
+                volumesForDestruction.add(resultSetRow.getNodeRef());
+            }
+            return volumesForDestruction;
+        } finally {
+            resultSet.close();
         }
-        return volumesForDestruction;
     }
 
     private ResultSet doSearch(String query) {
@@ -201,6 +230,14 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
     public void setSearchService(SearchService searchService) {
         this.searchService = searchService;
+    }
+
+    public void setDictionaryService(DictionaryService dictionaryService) {
+        this.dictionaryService = dictionaryService;
+    }
+
+    public void setAdrService(AdrService adrService) {
+        this.adrService = adrService;
     }
 
     public void setArchivalsStore(String archivalsStore) {

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<model name="ser:seriesModel" xmlns="http://www.alfresco.org/model/dictionary/1.0"
-   schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+<model name="ser:seriesModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
 
    <imports>
       <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
@@ -63,6 +63,9 @@
             <property name="ser:individualizingNumbers">
                <type>d:boolean</type>
             </property>
+            <property name="ser:containingDocsCount">
+               <type>d:int</type>
+            </property>
          </properties>
          <associations>
             <child-association name="vol:volume">
@@ -76,11 +79,23 @@
                   <many>true</many>
                </target>
             </child-association>
+            <child-association name="ser:seriesLog">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>doccom:documentLog</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
          </associations>
          <mandatory-aspects>
             <aspect>doccom:accessRights</aspect>
          </mandatory-aspects>
       </type>
+
    </types>
 
 </model>

@@ -86,6 +86,7 @@ a:focus {
 
 .doc-list-actions .icon-link {
 	padding-left: 16px;
+	padding-top: 1px;
 	background-position: center;
 	margin: 0 1px;
 }
@@ -741,11 +742,11 @@ td .dropdown-menu {
 		}
 		
 .panel-border {
-	position: relative;
 	padding: 5px 5px 7px;
 }
 
 .with-pager .panel-border {
+	position: relative;
 	padding-bottom: 30px;
 }
 
@@ -856,6 +857,10 @@ td.actions-column * {
 
 .propertiesLabel {
 	width: 125px;
+}
+
+.propertiesLabel + td .propertiesLabel {
+	width: 65px;
 }
 
 .propertiesLabel,
@@ -1253,11 +1258,12 @@ input[type="checkbox"] {
 }
 
 .modalpopup-content-inner table td input[type="text"] {
-	width: 300px !important;
+	width: 392px !important;
 }
 
 .modalpopup-content-inner.modalpopup-filter table td input[type="text"] {
-    width: 220px !important;
+    width: 218px !important;
+    margin-left: 4px;
 }
 
 #task-search-panel .modalpopup-content-inner table td input[type="text"] {

@@ -6,7 +6,14 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel label="#{DocumentDialog.searchBlockTitle}" id="docsearch-panel" styleClass="panel-100" progressive="true">
+<h:panelGroup id="docsearch-panel-facets">
+   <f:facet name="title">
+      <a:actionLink id="close-docSearch" actionListener="#{DocumentDialog.hideSearchBlock}" value="#{msg.document_assocSearch_close}" image="/images/icons/close_panel.gif" showLink="false"/>
+   </f:facet>
+</h:panelGroup>
+
+<a:panel label="#{DocumentDialog.searchBlockTitle}" id="docsearch-panel" styleClass="panel-100" progressive="true"
+      facetsId="dialog:dialog-body:docsearch-panel-facets">
    <h:panelGrid width="100%" >
       <a:panel id="docsearch-button">
          <f:verbatim>
