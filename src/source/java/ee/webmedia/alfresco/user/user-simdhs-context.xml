@@ -27,6 +27,13 @@
       <property name="executeOnceOnly" value="true" />
    </bean>
 
+   <bean id="deleteDummyUserBootstrap" class="ee.webmedia.alfresco.user.bootstrap.DeleteDummyUserBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="deleteDummyUserBootstrap" />
+      <property name="sinceVersion" value="1.8.1.1" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>
+
    <bean id="userHomesSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="name" value="userHomesSpacesBootstrap" />

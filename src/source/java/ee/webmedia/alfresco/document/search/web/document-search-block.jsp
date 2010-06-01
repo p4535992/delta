@@ -14,7 +14,7 @@
 
 <a:panel label="#{DocumentDialog.searchBlockTitle}" id="docsearch-panel" styleClass="panel-100" progressive="true"
       facetsId="dialog:dialog-body:docsearch-panel-facets">
-   <h:panelGrid width="100%" >
+   <h:panelGrid width="100%" id="docsearch-panelGrid" >
       <a:panel id="docsearch-button">
          <f:verbatim>
             <script type="text/javascript">

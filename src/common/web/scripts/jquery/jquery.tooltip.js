@@ -99,7 +99,7 @@
 		// create the helper, h3 for title, div for url
 		helper.parent = jQuery('<div id="' + settings.id + '"><h3></h3><div class="body"></div><div class="url"></div></div>')
 			// add to document
-			.appendTo(document.body)
+			.appendTo(jQuery("#wrapper"))
 			// hide it at first
 			.hide();
 			

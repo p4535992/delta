@@ -18,6 +18,7 @@ import ee.webmedia.alfresco.parameters.model.Parameter;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.simdhs.CSVExporter;
 import ee.webmedia.alfresco.simdhs.DataReader;
+import ee.webmedia.alfresco.simdhs.EscapingCSVExporter;
 import ee.webmedia.alfresco.simdhs.RichListDataReader;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -80,9 +81,8 @@ public class ParametersListDialog extends BaseDialogBean {
     /** @param event */
     public void exportAsCsv(ActionEvent event) {
         DataReader dataReader = new RichListDataReader();
-        CSVExporter exporter = new CSVExporter(dataReader);
+        CSVExporter exporter = new EscapingCSVExporter(dataReader);
         exporter.export("parametersList");
-        
         // Erko hack for incorrect view id in the next request
         JspStateManagerImpl.ignoreCurrentViewSequenceHack();        
     }

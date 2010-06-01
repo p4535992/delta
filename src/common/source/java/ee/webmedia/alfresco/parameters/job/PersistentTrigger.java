@@ -45,6 +45,6 @@ public class PersistentTrigger extends SimpleTrigger {
 
     private void persistNextFireTime(Parameter param) {
         param.setNextFireTime(getNextFireTime());
-        parametersService.updateParameter(param);
+        parametersService.setParameterNextFireTime(param);
     }
 }

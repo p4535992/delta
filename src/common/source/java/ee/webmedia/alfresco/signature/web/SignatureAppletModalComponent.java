@@ -72,14 +72,20 @@ public class SignatureAppletModalComponent extends UIOutputText {
         
         sb.append("<script type=\"text/javascript\">\n");
         sb.append("function processCert(cert, token) {\n");
+        sb.append("  $jQ('#signApplet').hide();\n");
+        sb.append("  $jQ('#signWait').show();\n");
         sb.append("  return oamSubmitForm('dialog','dialog:dialog-body:processCert',null,[['cert', cert]]);\n");
         sb.append("}\n");
         
         sb.append("function signDocument(signature) {\n");
+        sb.append("  $jQ('#signApplet').hide();\n");
+        sb.append("  $jQ('#signWait').show();\n");
         sb.append("  return oamSubmitForm('dialog','dialog:dialog-body:signDocument',null,[['signature', signature]]);\n");
         sb.append("}\n");
         
         sb.append("function cancelSign() {\n");
+        sb.append("  $jQ('#signApplet').hide();\n");
+        sb.append("  $jQ('#signWait').show();\n");
         sb.append("  return oamSubmitForm('dialog','dialog:dialog-body:cancelSign',null,[[]]);\n");
         sb.append("}\n");
         
@@ -123,6 +129,7 @@ public class SignatureAppletModalComponent extends UIOutputText {
         sb.append("\" TOKEN_ID=\"\">\n");
         sb.append("         <noembed></noembed>\n");
         sb.append("         </embed></object>\n");
+        sb.append("         <p id=\"signWait\" style=\"display: none;\">Palun oodake...</p>\n");
         sb.append("      </div>\n");
         
         return sb.toString();

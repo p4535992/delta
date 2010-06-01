@@ -489,12 +489,11 @@ a.action {
 .panel-wrapper h3 {
 	background: url("../images/parts/panel-wrapper-bg.png") repeat-x;
 	font-weight: bold;
-	cursor: pointer;
 }
 
 .panel-wrapper h3 a {
 	color: #000;
-	
+	cursor: pointer;	
 }
 
 .panel-border {
@@ -648,6 +647,7 @@ tr.row-highlight {
 /*
 	GENERIC BUTTONS
 	******************************/
+button, 
 input[type="submit"]
 , a.button {
 	background: url("../images/parts/button-submit-bg.png") repeat-x;
@@ -656,11 +656,13 @@ input[type="submit"]
 	border: none;
 }
 
+button:hover, button:focus,
 input[type="submit"]:hover, input[type="submit"]:focus
 , a.button:hover, a.button:focus{
 	background-position: 0 -23px;
 }
 
+button:active,
 input[type="submit"]:active
 , a.button:active {
 	background-position: 0 -46px;
@@ -915,6 +917,11 @@ span.small input, input.small, textarea.small, select.small {
 	min-width: 80px !important;
 }
 
+.width120 {
+	width: 120px !important;
+	min-width: 120px !important; 
+}
+
 span.medium input, input.medium, textarea.medium, select.medium {
 	width: 200px !important;/*153px !important;*/
 	min-width: 200px !important;
@@ -1079,6 +1086,10 @@ table.recipient th {
 	width: 398px;
 	padding-left: 2px;
 	padding-right: 2px
+}
+
+#container-content .workflow-panel textarea {
+	width: 360px;
 }
 
 #container-content td select {
@@ -1745,8 +1756,8 @@ DIV.modalpopup-footer P.action {
 	max-width: 320px;
 	padding: 8px 10px;
 	border: 1px solid;
-	border-color: #7cba82 #3e9850 #3e9850 #7cba82;
-	background: #f9ffe6;
+	border-color: #D7D9DB;
+	background: #F1F1F1;
 	opacity: 0.95;
 	outline: 1px solid #fff;
 }
@@ -1985,9 +1996,11 @@ TH A.header-wrap {
 	white-space: nowrap;
 }
 
+/*
 #assign-responsibility-panel input[type=text] {
 	width: 200px !important;
 }
+*/
 
 #assign-responsibility-panel .panel-border > input {
 	display: inline;
@@ -2044,4 +2057,8 @@ TH A.header-wrap {
 .long-content-wrapper.has-content:hover .long-content span {
 	visibility: visible;
 	display: block;
+}
+
+.no-underline:hover {
+	text-decoration: none;
 }

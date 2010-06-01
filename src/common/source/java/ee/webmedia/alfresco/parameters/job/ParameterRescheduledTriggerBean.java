@@ -125,7 +125,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
                     startTime = new Date(System.currentTimeMillis() + repeatInterval);
                     if (log.isDebugEnabled()) log.debug("Storing next fire time to parameter: " + startTime);
                     param.setNextFireTime(startTime);
-                    parametersService.updateParameter(param);
+                    parametersService.setParameterNextFireTime(param);
                 }
                 long delay = startTime.getTime() - System.currentTimeMillis();
                 return delay > 0 ? delay : 0;
@@ -155,7 +155,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
                             // persist next fire time to repository
                             Parameter parameter = parametersService.getParameter(Parameters.get(parameterName));
                             parameter.setNextFireTime(trigger.getStartTime());
-                            parametersService.updateParameter(parameter);
+                            parametersService.setParameterNextFireTime(parameter);
                         }
                         scheduler.rescheduleJob(triggerName, triggerGroupName, trigger);
                         info(trigger, newValue, false);
@@ -164,7 +164,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
             }
         } catch (SchedulerException e) {
             final UnableToPerformException unableToPerformException = new UnableToPerformException(MessageSeverity.ERROR, "parameters_error_canNotReschedule");
-            unableToPerformException.setMessageValuesForHolders(new Object[] {parameterName, newValue});
+            unableToPerformException.setMessageValuesForHolders(parameterName, newValue);
             throw unableToPerformException;
         } catch (ParseException e) {
             throw new RuntimeException("failed to parse cron expression", e);

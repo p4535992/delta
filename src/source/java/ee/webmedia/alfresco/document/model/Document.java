@@ -9,6 +9,7 @@ import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -87,6 +88,10 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
     public Date getRegDateTime() {
         return (Date) getNode().getProperties().get(DocumentCommonModel.Props.REG_DATE_TIME);
     }
+    
+    public String getRegDateTimeStr() {
+        return getRegDateTime() != null ? dateFormat.format(getRegDateTime()) : "";
+    }
 
     public String getShortSender() {
         return shortenProp(getSender());
@@ -118,6 +123,10 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
     public Date getDueDate() {
         // Only docsub:incomingLetter has this property
         return (Date) getNode().getProperties().get(DocumentSpecificModel.Props.DUE_DATE);
+    }
+    
+    public String getDueDateStr() {
+        return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
     }
 
     public Date getComplienceDate() {
@@ -258,6 +267,10 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
     public String getProcurementType() {
         // Only docsub:tenderingApplication has this property
         return (String) getNode().getProperties().get(DocumentSpecificModel.Props.PROCUREMENT_TYPE);
+    }
+    
+    public Date getCreated() {
+        return (Date) getNode().getProperties().get(ContentModel.PROP_CREATED);
     }
 
     // Other

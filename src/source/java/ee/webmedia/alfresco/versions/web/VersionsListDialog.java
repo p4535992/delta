@@ -42,11 +42,6 @@ public class VersionsListDialog extends BaseDialogBean {
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "versions_title", new Object[] { fileName });
     }
 
-    @Override
-    public String getCancelButtonLabel() {
-        return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "back_button");
-    }
-
     /**
      * JSP event handler.
      * 

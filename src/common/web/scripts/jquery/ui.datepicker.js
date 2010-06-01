@@ -1605,7 +1605,7 @@ jQuery.fn.datepicker = function(options){
 	/* Initialise the date picker. */
 	if (!jQuery.datepicker.initialized) {
 		jQuery(document).mousedown(jQuery.datepicker._checkExternalClick).
-			find('body').append(jQuery.datepicker.dpDiv);
+			find('#wrapper').append(jQuery.datepicker.dpDiv);
 		jQuery.datepicker.initialized = true;
 	}
 

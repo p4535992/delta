@@ -15,12 +15,11 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.dvk.service.DvkService;
-import ee.webmedia.alfresco.utils.ActionUtil;
 
 /**
  * Email attachments list dialog.
  * 
- * @author Romet Aidla
+ * @author Ats Uiboupin
  */
 public class DvkCorruptListDialog extends BaseDialogBean {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DvkCorruptListDialog.class);
@@ -40,12 +39,6 @@ public class DvkCorruptListDialog extends BaseDialogBean {
     /** @param event from JSP */
     public void init(ActionEvent event) {
         readFiles();
-    }
-
-    public void deleteFile(ActionEvent event) {
-        log.debug("deleteFile..");
-        new NodeRef(ActionUtil.getParam(event, "functionNodeRef"));
-
     }
 
     @Override

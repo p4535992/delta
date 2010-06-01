@@ -66,7 +66,7 @@ public class AddressbookServiceImpl implements AddressbookService {
     public List<Node> listOrganization() {
         return listAddressbookChildren(Types.ORGANIZATION);
     }
-    
+
     @Override
     public List<Node> listContactGroups() {
         return listAddressbookChildren(Types.CONTACT_GROUP);
@@ -89,7 +89,7 @@ public class AddressbookServiceImpl implements AddressbookService {
         }
         return output;
     }
-    
+
     @Override
     public void addToGroup(NodeRef groupNodeRef, NodeRef memberNodeRef) {
         QName type = nodeService.getType(memberNodeRef);
@@ -99,7 +99,7 @@ public class AddressbookServiceImpl implements AddressbookService {
             nodeService.createAssociation(groupNodeRef, memberNodeRef, Assocs.CONTACT_PERSON_BASE);
         }
     }
-    
+
     @Override
     public void deleteFromGroup(NodeRef groupNodeRef, NodeRef memberNodeRef) {
         QName type = nodeService.getType(memberNodeRef);
@@ -159,7 +159,7 @@ public class AddressbookServiceImpl implements AddressbookService {
     public List<Node> searchContactGroups(String searchCriteria) {
         return executeSearch(searchCriteria, contactGroupSearchFields);
     }
-    
+
     private List<Node> executeSearch(String searchCriteria, Set<QName> fields) {
         List<NodeRef> nodeRefs = null;
         final ResultSet searchResult;
@@ -204,7 +204,7 @@ public class AddressbookServiceImpl implements AddressbookService {
             }
         }
         @SuppressWarnings("null")
-        // nodeRefs shouldn't be null here as it is initialized based on searchResult when searching 
+        // nodeRefs shouldn't be null here as it is initialized based on searchResult when searching
         // or directly set in when getting all contact groups under addressBook
         List<Node> result = new ArrayList<Node>(nodeRefs.size());
         for (NodeRef nodeRef : nodeRefs) {
@@ -217,7 +217,7 @@ public class AddressbookServiceImpl implements AddressbookService {
     public NodeRef getOrgOfPerson(NodeRef ref) {
         return nodeService.getPrimaryParent(ref).getParentRef();
     }
-    
+
     @Override
     public List<Node> getContactsByType(QName type, NodeRef nodeRef) {
         List<Node> allNodes = getContacts(nodeRef);
@@ -229,7 +229,7 @@ public class AddressbookServiceImpl implements AddressbookService {
         }
         return nodes;
     }
-    
+
     @Override
     public List<Node> getContacts(NodeRef nodeRef) {
         List<AssociationRef> assocRefs = nodeService.getTargetAssocs(nodeRef, RegexQNamePattern.MATCH_ALL);
@@ -269,7 +269,7 @@ public class AddressbookServiceImpl implements AddressbookService {
                 organization == null ? Assocs.ABPEOPLE : Assocs.ORGPEOPLE,
                 organization == null ? Types.PRIV_PERSON : Types.ORGPERSON, data);
     }
-    
+
     private NodeRef createContactGroup(Map<QName, Serializable> data) {
         return createNode(null, Assocs.CONTACT_GROUPS, Types.CONTACT_GROUP, data);
     }
@@ -285,7 +285,8 @@ public class AddressbookServiceImpl implements AddressbookService {
         return nodeService.getRootNode(store);
     }
 
-    private NodeRef getAddressbookNodeRef() {
+    @Override
+    public NodeRef getAddressbookNodeRef() {
         return nodeService.getChildAssocs(getRootNodeRef(), RegexQNamePattern.MATCH_ALL, Assocs.ADDRESSBOOK)
                 .get(0).getChildRef();
     }
@@ -342,7 +343,7 @@ public class AddressbookServiceImpl implements AddressbookService {
             contactGroupSearchFields.add(QName.createQName(qname, namespaceService));
         }
     }
-    
+
     public void setStore(String store) {
         this.store = new StoreRef(store);
     }

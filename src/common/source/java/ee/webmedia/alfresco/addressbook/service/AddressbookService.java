@@ -137,4 +137,6 @@ public interface AddressbookService {
      */
     List<Node> getContacts(NodeRef nodeRef);
 
+    NodeRef getAddressbookNodeRef();
+
 }

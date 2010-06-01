@@ -115,12 +115,12 @@ public class DropdownMenuItem extends MenuItem {
         if(isBrowse()) {
             // avoid setting on-click
         } else if (isTemporary()) {
-            link.setOnclick("_toggleMenu(event, '" + getSubmenuId() + "'); return false;");
+            link.setOnclick("_toggleTempMenu(event, '" + getSubmenuId() + "'); return false;");
         } else if (isHover()) {
             attr.put("styleClass", "dropdown-hover");
             link.setOnclick("return false;");
         } else {
-            link.setOnclick("_togglePersistentMenu(event, '" + getSubmenuId() + "')");
+            link.setOnclick("_togglePersistentMenu(event, '" + getSubmenuId() + "'); return false;");
         }
 
         @SuppressWarnings("unchecked")

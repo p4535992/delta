@@ -91,21 +91,23 @@ public interface DocumentService {
     /**
      * Create a node of the specified type from the properties
      * of the original node as a reply.
+     * 
      * @param docType
      * @param nodeRef
      * @return
      */
     Node createReply(QName docType, NodeRef nodeRef);
-    
+
     /**
      * Create a node of the specified type from the properties
      * of the original node as a follow up.
+     * 
      * @param docType
      * @param nodeRef
      * @return
      */
     Node createFollowUp(QName docType, NodeRef nodeRef);
-    
+
     /**
      * @param volumeRef
      * @return all documents that have been assigned under given volume
@@ -113,13 +115,13 @@ public interface DocumentService {
     List<Document> getAllDocumentsByVolume(NodeRef volumeRef);
 
     List<Document> getAllDocumentsByCase(NodeRef caseRef);
-    
+
     List<Document> getAllDocumentFromDvk();
 
     int getAllDocumentFromDvkCount();
-    
+
     List<DocAssocInfo> getAssocInfos(Node document);
-    
+
     /**
      * Deletes association between nodes
      * 
@@ -133,22 +135,22 @@ public interface DocumentService {
 
     /**
      * Get list of incoming email.
-     *
+     * 
      * @return list of documents
      */
     List<Document> getIncomingEmails();
 
     int getIncomingEmailsCount();
-    
+
     /**
      * Get list of sent email.
-     *
+     * 
      * @return list of documents
      */
     List<Document> getSentEmails();
 
     int getSentEmailsCount();
-    
+
     void deleteDocument(NodeRef nodeRef);
 
     /**
@@ -203,9 +205,10 @@ public interface DocumentService {
         public abstract QName getAspectName();
 
     }
-    
+
     /**
-     * Executes the callback registered for docAspect to modify the properties. 
+     * Executes the callback registered for docAspect to modify the properties.
+     * 
      * @param docAspect
      * @param properties
      */
@@ -250,43 +253,44 @@ public interface DocumentService {
      * @return true if document is saved under DVK receive space
      */
     boolean isFromDVK(NodeRef nodeRef);
-    
+
     /**
      * @param nodeRef
      * @return true if document is saved under incoming email space
      */
     boolean isFromIncoming(NodeRef nodeRef);
-    
+
     /**
      * @param nodeRef
      * @return true if document is saved under sent email space
      */
     boolean isFromSent(NodeRef nodeRef);
-    
+
     void setTransientProperties(Node document, DocumentParentNodesVO documentParentNodesVO);
 
     Document getDocumentByNodeRef(NodeRef document);
 
-    public enum AssocType{
-        INITIAL("alusdokument"), 
+    public enum AssocType {
+        INITIAL("alusdokument"),
         REPLY("vastusdokument"),
         FOLLOWUP("järgdokument"),
         DEFAULT("tavaline");
-        
+
         String valueName;
-        
-        AssocType(String valueName){
+
+        AssocType(String valueName) {
             this.valueName = valueName;
         }
-        
+
         public String getValueName() {
             return valueName;
         }
-        
+
     }
-    
+
     /**
      * Changes the type of the repository node to the type of this node.
+     * 
      * @param node
      * @return
      */
@@ -295,6 +299,7 @@ public interface DocumentService {
     /**
      * Change the type of the node without writing to the repository,
      * add new aspects and fill some required default properties.
+     * 
      * @param node
      * @param newType
      */
@@ -310,7 +315,6 @@ public interface DocumentService {
     void setDocumentOwner(NodeRef document, String userName);
 
     /**
-     * 
      * @param docNode
      * @return true when docNode is registered.
      */
@@ -326,26 +330,28 @@ public interface DocumentService {
 
     /**
      * Updates the status of the document ant it's compound workflows to stopped.
+     * 
      * @param nodeRef
      */
     void stopDocumentPreceedingAndUpdateStatus(NodeRef nodeRef);
 
     /**
      * Updates the status of the document ant it's compound workflows to working.
+     * 
      * @param nodeRef
      */
     void continueDocumentPreceedingAndUpdateStatus(NodeRef nodeRef);
 
     /**
      * Ends document.
-     *
+     * 
      * @param documentRef Reference to document to be ended
      */
     void endDocument(NodeRef documentRef);
 
     /**
      * Reopens document.
-     *
+     * 
      * @param documentRef Reference to document to be reopened
      */
     void reopenDocument(NodeRef documentRef);
@@ -358,7 +364,7 @@ public interface DocumentService {
     void finishDocumentSigning(SignatureTask task, String signatureHex);
 
     SignatureDigest prepareDocumentDigest(NodeRef document, String certHex) throws SignatureException;
-    
+
     List<Document> getFavorites();
 
     boolean isFavorite(NodeRef document);
@@ -376,6 +382,12 @@ public interface DocumentService {
      * @return list of documents that are reply or follow up to base
      */
     List<Document> getReplyOrFollowUpDocuments(NodeRef base);
-    
+
     void updateParentNodesContainingDocsCount(NodeRef documentNodeRef, boolean documentAdded);
+
+    /**
+     * @param parentRef
+     * @return number of documents under given volume or case
+     */
+    int getDocumentsCountByVolumeOrCase(NodeRef parentRef);
 }

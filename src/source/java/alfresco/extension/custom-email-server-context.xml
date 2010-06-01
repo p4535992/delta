@@ -17,6 +17,7 @@
    <bean id="simEmailMessageHandler" parent="emailMessageHandlerBase" class="ee.webmedia.alfresco.smtp.ScannedEmailHandler" >
       <property name="userService" ref="UserService" />
       <property name="generalService" ref="GeneralService" />
+      <property name="ocrService" ref="OcrService" />
    </bean>
 
    <!-- @Override from email-service-context.xml -->

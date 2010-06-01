@@ -527,7 +527,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             // block data panel
             UIPanel panelW = (UIPanel) application.createComponent("org.alfresco.faces.Panel");
             panelW.setId("workflow-panel-" + counter);
-            panelW.getAttributes().put("styleClass", "panel-100 ie7-workflow");
+            panelW.getAttributes().put("styleClass", "panel-100 ie7-workflow workflow-panel");
             String panelLabel = MessageUtil.getMessage(block.getNode().getType().getLocalName() + "_title");
             if(StringUtils.isBlank(getConfigArea())) {
                 String workflowDescription = (String) block.getNode().getProperties().get(WorkflowSpecificModel.Props.DESCRIPTION);

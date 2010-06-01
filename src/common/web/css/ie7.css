@@ -109,7 +109,11 @@ td.actions-column {
 
 .extra-actions > li > a {
 	padding-top: 0;
-	padding-bottom: 6px;
+	padding-bottom: 8px;
+}
+
+.extra-actions {
+	margin-right: -3px;
 }
 
 .right.dropdown-menu {
@@ -180,15 +184,15 @@ hr {
 	/*z-index: 100;*/
 }
 
-.extra-actions > li:first-child > a,
-.extra-actions > li:first-child > span > a {
-	padding-top: 0px;
-	padding-bottom: 6px;
-}
 
 .dropdown-menu > span {
 	position: relative;
 	top: 8px;
+}
+
+.dropdown-menu-anchor img {
+	vertical-align: 1px !important;
+	top: 9px !important;
 }
 
 .dropdown-menu.in-title > span {

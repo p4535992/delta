@@ -14,6 +14,7 @@ import org.alfresco.web.bean.repository.NodePropertyResolver;
 import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.CssStylable;
@@ -26,6 +27,8 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
  */
 public class Task extends BaseWorkflowObject implements Serializable, Comparable<Task>, CssStylable {
     private static final long serialVersionUID = 1L;
+    
+    public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
     public static enum Action {
         NONE,
@@ -168,6 +171,10 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
 
     public Date getDueDate() {
         return getProp(WorkflowSpecificModel.Props.DUE_DATE);
+    }
+    
+    public String getDueDateStr() {
+        return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
     }
 
     public String getResolution() {

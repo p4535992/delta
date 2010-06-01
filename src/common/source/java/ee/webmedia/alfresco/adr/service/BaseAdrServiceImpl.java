@@ -20,8 +20,8 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
-import ee.webmedia.alfresco.adr.util.ContentReaderDataSource;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.utils.ContentReaderDataSource;
 
 /**
  * @author Alar Kvell

@@ -35,10 +35,9 @@ function updateButtonState()
             <%-- Organizations List --%>
             <a:panel id="ab-addressbook-panel" styleClass="mainSubTitle" label="#{msg.addressbook}">
             <a:panel id="search-panel">
-            <h:inputText id="search-text" value="#{DialogManager.bean.searchCriteria}" size="35" maxlength="1024" onkeyup="updateButtonState();"
-               onchange="updateButtonState();" /><f:verbatim>&nbsp;</f:verbatim>
-            <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" /><f:verbatim>&nbsp;</f:verbatim>
-            <h:commandButton id="show-all-button" value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" />
+            <h:inputText id="search-text" styleClass="admin-user-search-input" value="#{DialogManager.bean.searchCriteria}" size="35" maxlength="1024" />
+            <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" style="margin-left: 5px;"/>
+            <h:commandButton id="show-all-button" value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" style="margin-left: 5px;"/>
             </a:panel>
             <a:panel id="ab-org-panel" styleClass="column panel-50 with-pager" label="#{msg.addressbook_organizations}">
 
@@ -66,19 +65,25 @@ function updateButtonState()
                            <%-- Actions column --%>
                            <a:column id="ab-org-list-col2" actions="true">
                               <f:facet name="header">
-                                 <h:outputText id="ab-org-list-ot1" value="#{msg.actions}" />
+                                 <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="WriteProperties,DeleteNode">
+                                    <h:outputText id="ab-org-list-ot1" value="#{msg.actions}" />
+                                 </r:permissionEvaluator>
                               </f:facet>
-                              <a:actionLink id="ab-org-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
-                                 action="wizard:addressbookAddOrg" actionListener="#{AddressbookOrgWizard.setupEdit}">
-                                 <f:param id="ab-org-list-link-mod-param" name="nodeRef" value="#{r.nodeRef}" />
-                              </a:actionLink>
-                              <a:actionLink id="ab-org-list-link-del" value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false"
-                                 action="dialog:addressbookDeleteEntry" actionListener="#{AddressbookDeleteDialog.setupDelete}">
-                                 <f:param id="ab-org-list-link-del-param" name="nodeRef" value="#{r.nodeRef}" />
-                              </a:actionLink>
+                              <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="WriteProperties">
+                                 <a:actionLink id="ab-org-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
+                                    action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}">
+                                    <f:param id="ab-org-list-link-mod-param" name="nodeRef" value="#{r.nodeRef}" />
+                                 </a:actionLink>
+                              </r:permissionEvaluator>
+                              <r:permissionEvaluator id="ab-org-list-deleteEval" value="#{DialogManager.bean.addressbookNode}" allow="DeleteNode">
+                                 <a:actionLink id="ab-org-list-link-del" value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false"
+                                    action="dialog:addressbookDeleteEntry" actionListener="#{AddressbookDeleteDialog.setupDelete}">
+                                    <f:param id="ab-org-list-link-del-param" name="nodeRef" value="#{r.nodeRef}" />
+                                 </a:actionLink>
+                              </r:permissionEvaluator>
                            </a:column>
 
-                           <a:dataPager id="ab-org-list-pager" styleClass="pager" />
+         <a:dataPager id="ab-org-list-pager" styleClass="pager" />
                         </a:richList>
 
                      </a:panel>
@@ -109,18 +114,23 @@ function updateButtonState()
                            <%-- Actions column --%>
                            <a:column id="ab-people-list-col2" actions="true" style="text-align:left">
                               <f:facet name="header">
-                                 <h:outputText id="ab-people-list-ot1" value="#{msg.actions}" />
+                                 <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="WriteProperties,DeleteNode">
+                                    <h:outputText id="ab-people-list-ot12" value="#{msg.actions}" />
+                                 </r:permissionEvaluator>
                               </f:facet>
-                              <a:actionLink id="ab-people-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
-                                 action="wizard:addressbookAddPerson" actionListener="#{AddressbookPersonWizard.setupEdit}">
-                                 <f:param id="ab-people-list-link-mod-param" name="nodeRef" value="#{r.nodeRef}" />
-                              </a:actionLink>
-                              <a:actionLink id="ab-people-list-link-del" value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false"
-                                 action="dialog:addressbookDeleteEntry" actionListener="#{AddressbookDeleteDialog.setupDelete}">
-                                 <f:param id="ab-people-list-link-del-param" name="nodeRef" value="#{r.nodeRef}" />
-                              </a:actionLink>
+                              <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="WriteProperties">
+                                 <a:actionLink id="ab-people-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
+                                    action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}">
+                                    <f:param id="ab-people-list-link-mod-param" name="nodeRef" value="#{r.nodeRef}" />
+                                 </a:actionLink>
+                              </r:permissionEvaluator>
+                              <r:permissionEvaluator id="ab-people-list-deleteEval" value="#{DialogManager.bean.addressbookNode}" allow="DeleteNode">
+                                 <a:actionLink id="ab-people-list-link-del" value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false"
+                                    action="dialog:addressbookDeleteEntry" actionListener="#{AddressbookDeleteDialog.setupDelete}">
+                                    <f:param id="ab-people-list-link-del-param" name="nodeRef" value="#{r.nodeRef}" />
+                                 </a:actionLink>
+                              </r:permissionEvaluator>
                            </a:column>
-
                            <a:dataPager id="ab-people-list-pager" styleClass="pager" />
                         </a:richList>
 
@@ -184,7 +194,7 @@ function updateButtonState()
                                     <h:outputText id="ab-people-list2-ot10" value="#{msg.actions}" />
                                  </f:facet>
                                  <a:actionLink id="ab-people-list2-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
-                                    action="wizard:addressbookAddOrgPerson" actionListener="#{AddressbookOrgPersonWizard.setupEdit}">
+                                    action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}">
                                     <f:param id="ab-people-list2-link-mod-param" name="nodeRef" value="#{r.nodeRef}" />
                                  </a:actionLink>
                                  <a:actionLink id="ab-people-list2-link-del" value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false"

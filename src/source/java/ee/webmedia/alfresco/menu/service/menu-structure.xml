@@ -217,7 +217,7 @@
       <child-filter>createDocument</child-filter>
       <submenu-id>new-document-submenu</submenu-id>
       <subitems>
-         <dropdown title-id="menu_instrument" hover="true">
+         <dropdown title-id="menu_instrument">
             <submenu-id>instrument-submenu</submenu-id>
             <subitems>
                <item>
@@ -234,7 +234,7 @@
          <item>
             <outcome>docsub:managementsOrder</outcome>
          </item>
-         <dropdown title-id="menu_letter" hover="true">
+         <dropdown title-id="menu_letter">
             <submenu-id>letter-submenu</submenu-id>
             <subitems>
                <item>
@@ -245,7 +245,7 @@
                </item>
             </subitems>
          </dropdown>
-         <dropdown title-id="menu_order" hover="true">
+         <dropdown title-id="menu_order">
             <submenu-id>order-submenu</submenu-id>
             <subitems>
                <item>
@@ -274,7 +274,7 @@
          <item>
             <outcome>docsub:licence</outcome>
          </item>
-         <dropdown title-id="menu_internal_application" hover="true">
+         <dropdown title-id="menu_internal_application">
             <submenu-id>internal-application-submenu</submenu-id>
             <subitems>
             <item>

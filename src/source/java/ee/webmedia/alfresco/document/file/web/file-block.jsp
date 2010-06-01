@@ -122,9 +122,14 @@
          <a:panel id="ddoc-inner-panel" styleClass="digidoc-panel">
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">
                <h:column id="col1-inner">
-                  <a:actionLink id="inner-act1" value="#{v.name}" href="#{v.downloadUrl}" target="new" image="#{v.fileType16}" showLink="false"
-                     styleClass="inlineAction" />
-                  <a:actionLink id="inner-act2" value="#{v.name}" href="#{v.downloadUrl}" target="new" />
+                  <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+                     <a:actionLink id="inner-act1" value="#{v.name}" href="#{v.downloadUrl}" target="new" image="#{v.fileType16}" showLink="false" styleClass="inlineAction" />
+                     <a:actionLink id="inner-act2" value="#{v.name}" href="#{v.downloadUrl}" target="new" />
+                  </r:permissionEvaluator>
+                  <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+                     <h:graphicImage id="inner-act1-deny" value="#{v.fileType16}" />
+                     <h:outputText id="inner-act2-deny" value="#{v.name}" />
+                  </r:permissionEvaluator>
                </h:column>
             </h:dataTable>
          </a:panel>
@@ -277,9 +282,14 @@
          <a:panel id="ddoc-inner-panel" styleClass="digidoc-panel">
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">
                <h:column id="col21-inner">
-                  <a:actionLink id="inner-act1" value="#{v.name}" href="#{v.downloadUrl}" target="new" image="#{v.fileType16}" showLink="false"
-                     styleClass="inlineAction" />
-                  <a:actionLink id="inner-act2" value="#{v.name}" href="#{v.downloadUrl}" target="new" />
+                  <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+                     <a:actionLink id="inner-act1" value="#{v.name}" href="#{v.downloadUrl}" target="new" image="#{v.fileType16}" showLink="false" styleClass="inlineAction" />
+                     <a:actionLink id="inner-act2" value="#{v.name}" href="#{v.downloadUrl}" target="new" />
+                  </r:permissionEvaluator>
+                  <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+                     <h:graphicImage id="inner-act1-deny" value="#{v.fileType16}" />
+                     <h:outputText id="inner-act2-deny" value="#{v.name}" />
+                  </r:permissionEvaluator>
                </h:column>
             </h:dataTable>
          </a:panel>

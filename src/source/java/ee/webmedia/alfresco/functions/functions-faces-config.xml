@@ -21,6 +21,10 @@
          <property-name>functionsService</property-name>
          <value>#{FunctionsService}</value>
       </managed-property>
+      <managed-property>
+         <property-name>userService</property-name>
+         <value>#{UserService}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>

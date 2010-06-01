@@ -85,6 +85,7 @@ public class MyTasksBean extends BaseDialogBean {
     }
 
     public void setupAssignmentTasks(ActionEvent event) {
+        reset();
         dialogTitle = MessageUtil.getMessage("assignmentWorkflow");
         listTitle = MessageUtil.getMessage("task_list_assignment_title");
         lessColumns = false;
@@ -258,6 +259,7 @@ public class MyTasksBean extends BaseDialogBean {
         opinionTasks = null;
         reviewTasks = null;
         signatureTasks = null;
+        lastLoadMillis = 0;
     }
 
     private List<TaskAndDocument> filterTasksByDate(List<TaskAndDocument> tasks) {

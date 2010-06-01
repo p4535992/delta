@@ -92,6 +92,13 @@ public interface FileService {
 
     void transformToPdf(NodeRef nodeRef);
 
+    /**
+     * Transform a source file to PDF. Original source file is preserved and a new PDF file is created.
+     * @param parent folder where PDF file is created
+     * @param reader source file that is converted to PDF
+     * @param filename the name that the created PDF file will have
+     * @return created PDF file. If transformation was not possible or failed, returns {@code null}.
+     */
     FileInfo transformToPdf(NodeRef parent, ContentReader reader, String filename);
 
     /**

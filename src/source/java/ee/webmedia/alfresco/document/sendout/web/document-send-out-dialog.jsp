@@ -64,7 +64,7 @@
          propsGeneration="
           recipientName¤TextAreaGenerator¤styleClass=expand19-200 medium
          ,recipientEmail¤TextAreaGenerator¤styleClass=expand19-200 medium
-         ,recipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=small
+         ,recipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=width120
          "
          titles="document_name,document_email,document_send_mode" 
          pickerCallback="#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}"

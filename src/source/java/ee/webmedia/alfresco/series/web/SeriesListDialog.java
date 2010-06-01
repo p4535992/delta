@@ -1,11 +1,16 @@
 package ee.webmedia.alfresco.series.web;
 
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -13,6 +18,7 @@ import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.service.SeriesService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 
 /**
@@ -24,6 +30,7 @@ public class SeriesListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     private transient SeriesService seriesService;
     private transient FunctionsService functionsService;
+    private transient UserService userService;
     private Function function;
     private List<Series> series;
     private boolean disableActions = false;
@@ -72,6 +79,12 @@ public class SeriesListDialog extends BaseDialogBean {
 
     private void loadSeries() {
         series = getSeriesService().getAllSeriesByFunction(function.getNodeRef());
+    }
+    
+    public void showMyStructUnit(ActionEvent event) {
+        Map<QName, Serializable> userProperties = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
+        Integer userStructUnit = Integer.parseInt(userProperties.get(ContentModel.PROP_ORGID).toString());
+        showAllForStructUnit(new NodeRef(ActionUtil.getParam(event, "functionNodeRef")), userStructUnit);
     }
 
     public void showAllForStructUnit(NodeRef nodeRef, Integer structUnitId) {
@@ -134,6 +147,17 @@ public class SeriesListDialog extends BaseDialogBean {
         }
         return functionsService;
     }
-    // END: getters / setters
 
+    protected UserService getUserService() {
+        if (userService == null) {
+            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(UserService.BEAN_NAME);
+        }
+        return userService;
+    }
+    
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+    // END: getters / setters
 }

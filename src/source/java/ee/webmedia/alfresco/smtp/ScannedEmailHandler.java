@@ -12,6 +12,8 @@ import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
+import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
+import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.email.EmailMessage;
 import org.alfresco.service.cmr.email.EmailMessagePart;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -22,6 +24,7 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.ocr.service.OcrService;
 import ee.webmedia.alfresco.user.service.UserService;
 
 /**
@@ -33,6 +36,7 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ScannedEmailHandler.class);
     private UserService userService;
     private GeneralService generalService;
+    private OcrService ocrService;
 
     public void processMessage(NodeRef contentNodeRef, EmailMessage message) {
         if (log.isDebugEnabled()) {
@@ -105,7 +109,15 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
         InputStream contentIs = attachment.getContent();
         String mimetype = getMimetypeService().guessMimetype(fileNameSplitter.getFileNameWithoutSSN());
         String encoding = attachment.getEncoding();
-        writeContent(associationRef.getChildRef(), contentIs, mimetype, encoding);
+        final NodeRef fileNodeRef = associationRef.getChildRef();
+        writeContent(fileNodeRef, contentIs, mimetype, encoding);
+
+        AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
+            @Override
+            public void afterCommit() {
+                ocrService.queueOcr(fileNodeRef);
+            }
+        });
     }
 
     private NodeRef getPersonalFolderRef(NodeRef contentNodeRef, String userIdCode) {
@@ -174,6 +186,10 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
 
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
+    }
+
+    public void setOcrService(OcrService ocrService) {
+        this.ocrService = ocrService;
     }
     // END: getters / setters
 }

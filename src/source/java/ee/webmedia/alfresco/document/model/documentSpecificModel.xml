@@ -308,6 +308,11 @@
                <multiple>true</multiple>
                <default></default>
             </property>
+            <property name="docspec:substituteJobTitle">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+
             <property name="docspec:substitutionBeginDate">
                <type>d:date</type>
                <multiple>true</multiple>
@@ -916,11 +921,12 @@
             </property>
             <property name="docspec:inclusivePriceInclVat">
                <type>d:double</type>
-               <mandatory enforced="false">true</mandatory>
             </property>
             <property name="docspec:contractSmitEndDate">
                <type>d:date</type>
-               <mandatory enforced="false">true</mandatory>
+            </property>
+            <property name="docspec:contractSmitEndDateDesc">
+               <type>d:text</type>
             </property>
             <property name="docspec:contractEndAnnotation">
                <type>d:text</type>

@@ -197,6 +197,7 @@ public interface DocumentSpecificModel {
         QName LEAVE_CANCEL_DAYS = QName.createQName(URI, "leaveCancelDays");
 
         QName SUBSTITUTE_NAME = QName.createQName(URI, "substituteName");
+        QName SUBSTITUTE_JOB_TITLE = QName.createQName(URI, "substituteJobTitle");
         QName SUBSTITUTION_BEGIN_DATE = QName.createQName(URI, "substitutionBeginDate");
         QName SUBSTITUTION_END_DATE = QName.createQName(URI, "substitutionEndDate");
 

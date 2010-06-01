@@ -117,22 +117,16 @@ public class MenuRenderer extends BaseRenderer {
             
             MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
             
-            if(StringUtils.isNotEmpty(menuBean.getScrollToAnchor())) {
+            final boolean scrollToAnchor = StringUtils.isNotEmpty(menuBean.getScrollToAnchor());
+            if(scrollToAnchor || StringUtils.isNotEmpty(menuBean.getScrollToY())) {
+                final String scrollTo = scrollToAnchor ? "'"+menuBean.getScrollToAnchor()+"'" : menuBean.getScrollToY();
                 StringBuilder sb = new StringBuilder("<script type=\"text/javascript\">")
                 .append("$jQ(document).ready(function(){")
-                .append("window.location=\"")
-                .append(menuBean.getScrollToAnchor())
-                .append("\"});")
+                .append("$jQ.scrollTo(")
+                .append(scrollTo)
+                .append(")});")
                 .append("</script>");
                 
-                out.write(sb.toString());
-            } else if(StringUtils.isNotEmpty(menuBean.getScrollToY())) {
-                StringBuilder sb = new StringBuilder("<script type=\"text/javascript\">")
-                .append("$jQ(document).ready(function(){")
-                .append("$jQ(window).scrollTop(")
-                .append(menuBean.getScrollToY())
-                .append(")\n});")
-                .append("</script>");
                 out.write(sb.toString());
             }
 

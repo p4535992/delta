@@ -145,9 +145,9 @@ public class WorkflowBlockBean implements Serializable {
         return getWorkflowService().isOwner(getCompoundWorkflows());
     }
 
-    public List<ActionDefinition> findCompoundWorkflowDefinitions(String documentTypeQName) {
+    public List<ActionDefinition> findCompoundWorkflowDefinitions(String documentTypeQName, String documentStatus) {
         QName documentType = QName.createQName(documentTypeQName);
-        List<CompoundWorkflowDefinition> workflowDefs = getWorkflowService().getCompoundWorkflowDefinitions(documentType);
+        List<CompoundWorkflowDefinition> workflowDefs = getWorkflowService().getCompoundWorkflowDefinitions(documentType, documentStatus);
         List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
         for (CompoundWorkflowDefinition compoundWorkflowDefinition : workflowDefs) {
             ActionDefinition actionDefinition = new ActionDefinition("compoundWorkflowDefinitionAction");
@@ -210,6 +210,7 @@ public class WorkflowBlockBean implements Serializable {
             if (outcomeIndex == 1) {
                 
                 // signing requires that at least 1 active file exists within this document
+                long step0 = System.currentTimeMillis();
                 List<File> activeFiles = getFileService().getAllActiveFiles(document);
                 if (activeFiles == null || activeFiles.isEmpty()) {
                     MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_required");
@@ -218,9 +219,16 @@ public class WorkflowBlockBean implements Serializable {
                 
                 signatureTask = (SignatureTask) task;
                 try {
+                    long step1 = System.currentTimeMillis();
                     getDocumentService().prepareDocumentSigning(document);
+                    long step2 = System.currentTimeMillis();
                     fileBlockBean.restore();
                     showModal();
+                    long step3 = System.currentTimeMillis();
+                    if (log.isDebugEnabled()) {
+                        log.debug("prepareDocumentSigning took total time " + (step3 - step0) + " ms\n    load file list - " + (step1 - step0)
+                                + " ms\n    service call - " + (step2 - step1) + " ms\n    reload file list - " + (step3 - step2) + " ms");
+                    }
                 } catch (UnableToPerformException e) {
                     MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
                 }
@@ -316,9 +324,14 @@ public class WorkflowBlockBean implements Serializable {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         String certHex = (String) facesContext.getExternalContext().getRequestParameterMap().get("cert");
         try {
+            long step0 = System.currentTimeMillis();
             SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(document, certHex);
+            long step1 = System.currentTimeMillis();
             showModal(signatureDigest.getDigestHex());
             signatureTask.setSignatureDigest(signatureDigest);
+            if (log.isDebugEnabled()) {
+                log.debug("prepareDocumentDigest took total time " + (step1 - step0) + " ms\n    service call - " + (step1 - step0) + " ms");
+            }
         } catch (SignatureException e) {
             SignatureBlockBean.addSignatureError(e);
             closeModal();
@@ -331,10 +344,20 @@ public class WorkflowBlockBean implements Serializable {
         String signatureHex = (String) facesContext.getExternalContext().getRequestParameterMap().get("signature");
 
         try {
+            long step0 = System.currentTimeMillis();
             getDocumentService().finishDocumentSigning(signatureTask, signatureHex);
+            long step1 = System.currentTimeMillis();
             fileBlockBean.restore();
+            long step2 = System.currentTimeMillis();
             metadataBlockBean.viewDocument(getDocumentService().getDocument(metadataBlockBean.getDocument().getNodeRef()));
+            long step3 = System.currentTimeMillis();
             restore();
+            long step4 = System.currentTimeMillis();
+            if (log.isDebugEnabled()) {
+                log.debug("finishDocumentSigning took total time " + (step4 - step0) + " ms\n    service call - " + (step1 - step0)
+                        + " ms\n    reload file list - " + (step2 - step1) + " ms\n    reload document - " + (step3 - step2) + " ms\n    reload workflows - "
+                        + (step4 - step3) + " ms");
+            }
         } catch (WorkflowChangedException e) {
             log.debug("Finishing signature task failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");

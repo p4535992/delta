@@ -1,16 +1,12 @@
 package ee.webmedia.alfresco.functions.service;
 
-import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
-import ee.webmedia.alfresco.classificator.enums.VolumeType;
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.functions.model.Function;
-import ee.webmedia.alfresco.functions.model.FunctionsModel;
-import ee.webmedia.alfresco.series.model.Series;
-import ee.webmedia.alfresco.series.service.SeriesService;
-import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
-import ee.webmedia.alfresco.volume.model.Volume;
-import ee.webmedia.alfresco.volume.service.VolumeService;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -21,13 +17,23 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.TransientNode;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import ee.webmedia.alfresco.cases.model.Case;
+import ee.webmedia.alfresco.cases.model.CaseModel;
+import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.functions.model.Function;
+import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.series.service.SeriesService;
+import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
+import ee.webmedia.alfresco.volume.model.Volume;
+import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.volume.service.VolumeService;
 
 public class FunctionsServiceImpl implements FunctionsService {
 
@@ -43,6 +49,8 @@ public class FunctionsServiceImpl implements FunctionsService {
     private DictionaryService dictionaryService;
     private SeriesService seriesService;
     private VolumeService volumeService;
+    private CaseService caseService;
+    private DocumentService documentService;
 
     @Override
     public List<Function> getAllFunctions() {
@@ -181,6 +189,14 @@ public class FunctionsServiceImpl implements FunctionsService {
         this.volumeService = volumeService;
     }
 
+    public void setCaseService(CaseService caseService) {
+        this.caseService = caseService;
+    }
+
+    public void setDocumentService(DocumentService documentService) {
+        this.documentService = documentService;
+    }
+
     @Override
     public long createNewYearBasedVolumes() {
         log.info("creating copy of year-based volumes that are opened.");
@@ -204,6 +220,40 @@ public class FunctionsServiceImpl implements FunctionsService {
         }
         log.info("created copy of " + counter + " year-based volumes that were opened.");
         return counter;
+    }
+
+    @Override
+    public long updateDocCounters() {
+        long docCountInRepo = 0;
+        log.info("Starting to update documents count in documentList");
+        for (Function function : getAllFunctions()) {
+            long docCountInFunction = 0;
+            for (Series series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
+                long docCountInSeries = 0;
+                final NodeRef volumeRef = series.getNode().getNodeRef();
+                for (Volume volume : volumeService.getAllVolumesBySeries(volumeRef)) {
+                    long docCountInVolume = 0;
+                    if (volume.isContainsCases()) {
+                        for (Case aCase : caseService.getAllCasesByVolume(volume.getNode().getNodeRef())) {
+                            final NodeRef caseRef = aCase.getNode().getNodeRef();
+                            final int documentsCountByCase = documentService.getDocumentsCountByVolumeOrCase(caseRef);
+                            nodeService.setProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, documentsCountByCase);
+                            docCountInVolume += documentsCountByCase;
+                        }
+                    } else {
+                        final int documentsCountByVolume = documentService.getDocumentsCountByVolumeOrCase(volume.getNode().getNodeRef());
+                        docCountInVolume += documentsCountByVolume;
+                    }
+                    nodeService.setProperty(volumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, docCountInVolume);
+                    docCountInSeries += docCountInVolume;
+                }
+                nodeService.setProperty(volumeRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, docCountInSeries);
+                docCountInFunction += docCountInSeries;
+            }
+            docCountInRepo += docCountInFunction;
+        }
+        log.info("Updated documents count in documentList. Found " + docCountInRepo + " documents.");
+        return docCountInRepo;
     }
     // END: getters / setters
 }

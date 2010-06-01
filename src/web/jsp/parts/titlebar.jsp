@@ -75,7 +75,7 @@
          <a:actionLink id="login" image="/images/icons/login.gif" value="#{msg.login}" rendered="#{NavigationBean.isGuest}" action="#{LoginBean.logout}" />
 
          <h:graphicImage value="/images/parts/search_controls_left.png" width="3" height="21" styleClass="simple" />
-         <h:inputText value="#{DocumentQuickSearchResultsDialog.searchValue}" maxlength="50" id="quickSearch" />
+         <h:inputText value="#{DocumentQuickSearchResultsDialog.searchValue}" maxlength="50" id="quickSearch" styleClass="quickSearch-input" />
          <h:commandButton id="quickSearchBtn" value="#{msg.search}" type="submit" action="dialog:documentQuickSearchResultsDialog" actionListener="#{DocumentQuickSearchResultsDialog.setup}" />
       </a:panel>
 

@@ -36,6 +36,7 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
@@ -130,12 +131,26 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(QName documentType) {
+    public List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(QName documentType, String documentStatus) {
+        boolean isFinished = DocumentStatus.FINISHED.equals(documentStatus);
         List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = getCompoundWorkflowDefinitions();
+        outer:
         for (Iterator<CompoundWorkflowDefinition> i = compoundWorkflowDefinitions.iterator(); i.hasNext();) {
             CompoundWorkflowDefinition compoundWorkflowDefinition = i.next();
             if (!compoundWorkflowDefinition.getDocumentTypes().contains(documentType)) {
                 i.remove();
+                continue outer;
+            }
+            if (isFinished) {
+                for (Workflow workflow : compoundWorkflowDefinition.getWorkflows()) {
+                    QName workflowType = workflow.getNode().getType();
+                    if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(workflowType) || 
+                            WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(workflowType) || 
+                            WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(workflowType)) {
+                        i.remove();
+                        continue outer;
+                    }
+                }
             }
         }
         return compoundWorkflowDefinitions;

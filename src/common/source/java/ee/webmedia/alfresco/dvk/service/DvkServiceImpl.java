@@ -130,7 +130,9 @@ public abstract class DvkServiceImpl implements DvkService {
             lastReceiveDocuments = results.getFirst();
             lastFailedDocuments = results.getSecond();
             if (lastReceiveDocuments.size() != 0) {
-                dhlXTeeService.markDocumentsReceived(lastReceiveDocuments);
+                final ArrayList<String> markReceived = new ArrayList<String>(lastReceiveDocuments);
+                markReceived.addAll(lastFailedDocuments);
+                dhlXTeeService.markDocumentsReceived(markReceived);
                 receiveDocuments.addAll(lastReceiveDocuments);
             }
             countServiceCalls++;

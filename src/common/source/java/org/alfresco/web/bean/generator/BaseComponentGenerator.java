@@ -233,6 +233,8 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         String mandatoryIfValue = (propertySheetItemAttributes != null ? propertySheetItemAttributes.get(MandatoryIfValidator.ATTR_MANDATORY_IF) : null);
         if (isNotBlank(mandatoryIfValue)) {
             MandatoryIfValidator validator = new MandatoryIfValidator(mandatoryIfValue);
+            String mandatoryIfLabelId = (propertySheetItemAttributes != null ? propertySheetItemAttributes.get(MandatoryIfValidator.ATTR_MANDATORY_IF_LABEL_ID) : null);
+            validator.setMandatoryIfLabelId(mandatoryIfLabelId);
             component.addValidator(validator);
             if (logger.isDebugEnabled()) {
                 logger.debug("Adding MandatoryIfValidator based on property with name '" + mandatoryIfValue + "' to component with id '" + component.getId()
@@ -287,6 +289,8 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
                 if (isReadonly) {
                     ComponentUtil.setDisabledAttributeRecursively(component);
                 }
+            } else if (Boolean.valueOf(((CustomAttributes) item).getCustomAttributes().get("read-only"))) {
+                ComponentUtil.setDisabledAttributeRecursively(component);
             }
         }
     }

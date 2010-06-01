@@ -1,9 +1,9 @@
 package ee.webmedia.alfresco.imap.web;
 
+import javax.faces.event.ActionEvent;
+
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
-
-import javax.faces.event.ActionEvent;
 
 /**
  * Dialog for incoming emails list.

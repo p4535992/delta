@@ -105,7 +105,7 @@ public class CaseServiceImpl implements CaseService {
         final String title = (String) (fromNodeProps ? theCase.getNode().getProperties().get(CaseModel.Props.TITLE) : theCase.getTitle());
         if (isCaseNameUsed(title, theCase.getVolumeNodeRef(), theCase.getNode().getNodeRef())) {
             final UnableToPerformException ex = new UnableToPerformException(MessageSeverity.ERROR, "case_save_error_caseNameUsed");
-            ex.setMessageValuesForHolders(new Object[] { title });
+            ex.setMessageValuesForHolders(title);
             throw ex;
         }
         final Map<QName, Serializable> props;

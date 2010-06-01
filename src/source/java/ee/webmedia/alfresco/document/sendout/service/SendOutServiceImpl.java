@@ -13,7 +13,6 @@ import java.util.Map;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
-import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -25,11 +24,9 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
@@ -232,22 +229,6 @@ public class SendOutServiceImpl implements SendOutService {
             updateSearchableSendMode(document);
         }
         
-        // Check if its a reply outgoing letter and update originating document info (if needed)
-        if (docType.equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
-            List<AssociationRef> assocs = nodeService.getTargetAssocs(document, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
-            for (AssociationRef assoc : assocs) {
-                Node originatingDoc = generalService.fetchNode(assoc.getTargetRef());
-                if (originatingDoc.hasAspect(DocumentSpecificModel.Aspects.COMPLIENCE)) {
-                    Map<String, Object> originatingProps = originatingDoc.getProperties();
-                    Date complienceDate = (Date) originatingProps.get(DocumentSpecificModel.Props.COMPLIENCE_DATE);
-                    if (complienceDate == null) {
-                        nodeService.setProperty(originatingDoc.getNodeRef(), DocumentSpecificModel.Props.COMPLIENCE_DATE, now);
-                        nodeService.setProperty(originatingDoc.getNodeRef(), DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.FINISHED.getValueName());
-                    }
-                }
-            }
-        }
-
         return true;
     }
 

@@ -35,7 +35,7 @@ public class UnableToPerformException extends RuntimeException {
         return messageValuesForHolders;
     }
 
-    public void setMessageValuesForHolders(Object[] messageValuesForHolders) {
+    public void setMessageValuesForHolders(Object... messageValuesForHolders) {
         this.messageValuesForHolders = messageValuesForHolders;
     }
 

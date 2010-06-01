@@ -27,6 +27,14 @@
             <action>dialog:documentListImportDialog</action>
          </action>
 
+         <action id="docList_updateDocCounters">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>docList_updateDocCounters</label-id>
+            <tooltip-id>docList_updateDocCounters_tooltip</tooltip-id>
+            <image>/images/icons/edit-properties.png</image>
+            <action-listener>#{FunctionsListDialog.updateDocCounters}</action-listener>
+         </action>
+
          <action id="docList_createNewYearBasedVolumes">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
             <label-id>docList_createNewYearBasedVolumes</label-id>
@@ -41,6 +49,7 @@
             <action idref="docList_export" />
             <action idref="docList_import" />
             <action idref="docList_createNewYearBasedVolumes" />
+            <action idref="docList_updateDocCounters" />
          </action-group>
 
       </actions>
@@ -50,7 +59,7 @@
          <dialog name="functionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/functions-list-dialog.jsp" managed-bean="FunctionsListDialog"
             icon="/images/icons/versioned_properties_large.gif" actions-config-id="browse_actions_functions" title-id="functions_title" show-ok-button="false" />
 
-            <dialog name="myDocsFunctionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/functions-list-dialog.jsp" managed-bean="FunctionsListDialog"
+            <dialog name="myDocsFunctionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/my-functions-list-dialog.jsp" managed-bean="FunctionsListDialog"
             icon="/images/icons/versioned_properties_large.gif" actions-config-id="browse_actions_functions" title-id="functions_my_documents_title" show-ok-button="false" />
 
          <dialog name="functionsDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/functions/web/functions-details-dialog.jsp" managed-bean="FunctionsDetailsDialog"

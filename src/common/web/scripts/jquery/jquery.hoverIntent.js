@@ -25,7 +25,7 @@ jQuery(document).ready(function() {
 		     out: hideMenu // function = onMouseOut callback (REQUIRED)    
 		};
 
-	jQuery("#menu .dropdown .dropdown").hoverIntent( config )
+	jQuery(".dropdown-hover").hoverIntent( config )
 
 	
 });

@@ -8,10 +8,13 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.repository.Repository;
+import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
@@ -24,9 +27,8 @@ import ee.webmedia.alfresco.volume.web.VolumeListDialog;
 
 public class MyDocumentsMenuItemFilter implements MenuItemFilter {
 
-    private UserService userService;
-    private NodeService nodeService;
-    private Integer currentUsersStructUnitId;
+    private transient UserService userService;
+    private transient NodeService nodeService;
 
     @Override
     public boolean passesFilter(MenuItem menuItem, NodeRef childNodeRef) {
@@ -35,21 +37,34 @@ public class MyDocumentsMenuItemFilter implements MenuItemFilter {
 
         NodeRef nodeRef = ((DropdownMenuItem) menuItem).getNodeRef();
         if (nodeRef != null && nodeService.getType(nodeRef).equals(FunctionsModel.Types.FUNCTION)) {
-            
-            @SuppressWarnings("unchecked")
-            List<Integer> structUnits = (List<Integer>) nodeService.getProperty(childNodeRef, SeriesModel.Props.STRUCT_UNIT);
-            
-            return structUnits.contains(getCurrentUsersStructUnitId());
+            return isCurrentUsersSeries(childNodeRef);
         }
-        if (nodeRef == null && ((DropdownMenuItem) menuItem).getXPath() != null) // The very first link defined in menu-structure.xml should always return true
-            return true;
+        if (nodeRef == null && ((DropdownMenuItem) menuItem).getXPath() != null && nodeService.getType(childNodeRef).equals(FunctionsModel.Types.FUNCTION)) {
+            List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(childNodeRef);
+            for (ChildAssociationRef caRef : childAssocs) {
+                if (isCurrentUsersSeries(caRef.getChildRef()))
+                    return true;
+            }
+        }
 
         return false;
     }
 
+    /**
+     * Decides whether currently logged in users department is mentioned in series meta-data.
+     * 
+     * @param nodeRef
+     * @return
+     */
+    private boolean isCurrentUsersSeries(NodeRef nodeRef) {
+        @SuppressWarnings("unchecked")
+        List<Integer> structUnits = (List<Integer>) nodeService.getProperty(nodeRef, SeriesModel.Props.STRUCT_UNIT);
+        return structUnits.contains(getCurrentUsersStructUnitId());
+    }
+
     @Override
     public String openItemActionsForType(DropdownMenuItem dd, NodeRef nodeRef, QName type) {
-        
+
         if (type.equals(FunctionsModel.Types.FUNCTION)) {
             SeriesListDialog seriesListDialog = (SeriesListDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), SeriesListDialog.BEAN_NAME);
             seriesListDialog.showAllForStructUnit(nodeRef, getCurrentUsersStructUnitId());
@@ -58,27 +73,42 @@ public class MyDocumentsMenuItemFilter implements MenuItemFilter {
             ((VolumeListDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), VolumeListDialog.BEAN_NAME)).showAll(nodeRef);
             return null;
         }
-        
+
         return "done";
+    }
+
+    private Integer getCurrentUsersStructUnitId() {
+        Map<QName, Serializable> userProperties = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
+        Serializable orgId = userProperties.get(ContentModel.PROP_ORGID);
+        if (orgId == null)
+            return null;
+        return Integer.parseInt(orgId.toString());
+    }
+
+    // START - getters/setters
+
+    protected UserService getUserService() {
+        if (userService == null) {
+            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(UserService.BEAN_NAME);
+        }
+        return userService;
     }
 
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
 
+    protected NodeService getNodeService() {
+        if (nodeService == null) {
+            nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
+        }
+        return nodeService;
+    }
+
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
     }
 
-    public Integer getCurrentUsersStructUnitId() {
-        if(currentUsersStructUnitId == null) {
-            Map<QName, Serializable> userProperties = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
-            currentUsersStructUnitId = Integer.parseInt(userProperties.get(ContentModel.PROP_ORGID).toString());
-        }
-        return currentUsersStructUnitId;
-    }
-
-    public void setCurrentUsersStructUnitId(Integer currentUsersStructUnitId) {
-        this.currentUsersStructUnitId = currentUsersStructUnitId;
-    }
+    // END - getters/setters
 }

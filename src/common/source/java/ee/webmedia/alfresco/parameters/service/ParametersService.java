@@ -22,7 +22,7 @@ public interface ParametersService {
     }
 
     Parameter<?> getParameter(Parameters parameter);
-    
+
     /**
      * @param <T> - Type of requiredClazz
      * @param parameter - value of this parameter will be returned
@@ -47,7 +47,7 @@ public interface ParametersService {
      */
     void updateParameters(Collection<Parameter<?>> parameters);
 
-    void updateParameter(Parameter<? extends Serializable> parameter);
+    void setParameterNextFireTime(Parameter<? extends Serializable> parameter);
 
     void addParameterChangeListener(String paramName, ParameterChangedCallback callback);
 

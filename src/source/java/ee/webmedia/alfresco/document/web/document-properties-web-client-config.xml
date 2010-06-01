@@ -259,7 +259,7 @@
          <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance"
             addLabelId="document_errandsAbroad_addCatering" styleClass="add-catering" readOnlyIf="parent.doccom:docStatus!=töös"
             component-generator="MultiValueEditorGenerator" propsGeneration="
-             docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceCateringCount
+             docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceCateringCount¤styleClass=width120
             ,docspec:dailyAllowanceDays¤¤styleClass=small
             ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceRate¤styleClass=small
             ,docspec:dailyAllowanceFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=trainingAppDailyAllowanceFinancingSource¤styleClass=medium
@@ -268,7 +268,7 @@
          <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
             addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="parent.doccom:docStatus!=töös" 
             component-generator="MultiValueEditorGenerator" propsGeneration="
-             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=trainingAppAbroadExpenseType¤styleClass=small
+             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=trainingAppAbroadExpenseType¤styleClass=width120
             ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium
             ,docspec:expenseFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=trainingAppExpenseFinancingSource¤styleClass=medium
             "
@@ -305,7 +305,7 @@
          <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance"
             addLabelId="document_errandsAbroad_addCatering" styleClass="add-catering" readOnlyIf="parent.parent.doccom:docStatus!=töös"
             component-generator="MultiValueEditorGenerator" propsGeneration="
-             docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceCateringCount
+             docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceCateringCount¤styleClass=width120
             ,docspec:dailyAllowanceDays¤¤styleClass=small center
             ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceRate¤styleClass=small
             ,docspec:dailyAllowanceFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=errandAbroadDailyAllowanceFinancingSource¤styleClass=medium
@@ -334,7 +334,7 @@
          <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
             addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
             component-generator="MultiValueEditorGenerator" propsGeneration="
-             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandOrderAbroadExpenseType¤styleClass=small
+             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandOrderAbroadExpenseType¤styleClass=width120
             ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium
             ,docspec:expenseFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=errandAbroadExpenseFinancingSource¤styleClass=medium
             "
@@ -353,7 +353,7 @@
          <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
             addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
             component-generator="MultiValueEditorGenerator" propsGeneration="
-             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandApplicationDomesticExpenseType¤styleClass=small
+             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandApplicationDomesticExpenseType¤styleClass=width120
             ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium
             ,docspec:expenseFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=errandDomesticExpenseFinancingSource¤styleClass=medium
             "
@@ -370,7 +370,7 @@
    <!-- LÄHETUSE BLOKK (välislähetuse ja siselähetuse puhul lähetuse bloki ühised väljad) -->
    <config evaluator="aspect-name" condition="docspec:errandBlockCommon"><!-- part 2 -->
       <property-sheet>
-         <show-property name="advancePaymentInfo" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-view" escapeText="false" show-in-edit-mode="false" ignore-if-missing="false"
+         <show-property name="advancePaymentInfo" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-edit" escapeText="false" show-in-edit-mode="false" ignore-if-missing="false"
             component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
              docspec:advancePaymentSum¤¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter
             ,docspec:advancePaymentDesc
@@ -514,6 +514,7 @@
          <show-property name="docspec:substituteName" show-in-view-mode="false" display-label-id="document_vacationSubstitute" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setVacationSubstitute}" dialogTitleId="users_search_title" 
          component-generator="MultiValueEditorGenerator" addLabelId="document_add_substitute" propsGeneration="
           docspec:substituteName¤¤styleClass=medium
+         ,docspec:substituteJobTitle¤¤read-only=true
          ,docspec:substitutionBeginDate¤DatePickerGenerator
          ,docspec:substitutionEndDate¤DatePickerGenerator
          "
@@ -559,7 +560,7 @@
 
    <config evaluator="aspect-name" condition="doccom:signer">
       <property-sheet>
-         <show-property name="doccom:signerJobTitle" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" />
+         <show-property name="doccom:signerJobTitle" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" />
       </property-sheet>
    </config>
    
@@ -603,7 +604,8 @@
       <show-property name="docspec:contractChange" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       <show-property name="docspec:warranty" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       <show-property name="docspec:inclusivePriceInclVat" readOnlyIf="doccom:docStatus!=töös" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" labelStyleClass="wrap" />
-      <show-property name="docspec:contractSmitEndDate" readOnlyIf="doccom:docStatus!=töös" component-generator="DatePickerGenerator" />
+      <show-property name="docspec:contractSmitEndDate" readOnlyIf="doccom:docStatus!=töös" component-generator="DatePickerGenerator" mandatoryIf="docspec:contractSmitEndDateDesc!=null" mandatoryIfLabelId="document_contractSmitEndDate_mandatoryIf" />
+      <show-property name="docspec:contractSmitEndDateDesc" readOnlyIf="doccom:docStatus!=töös" mandatoryIf="docspec:contractSmitEndDate!=null" mandatoryIfLabelId="document_contractSmitEndDateDesc_mandatoryIf" />
       <show-property name="docspec:contractEndAnnotation" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>

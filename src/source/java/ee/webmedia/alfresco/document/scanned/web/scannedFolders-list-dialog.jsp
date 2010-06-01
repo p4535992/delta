@@ -18,15 +18,10 @@
             <h:outputText id="col1-header" value="#{msg.imap_file_name}" styleClass="header" />
          </f:facet>
          <f:facet name="small-icon">
-            <h:panelGroup>
-               <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
-                  <a:actionLink id="folderName" value="#{r.name} (#{r.nrOfChildren})" action="dialog:scannedDocsListDialog" tooltip="#{msg.scanned_folder_tooltip}"
-                     showLink="false" actionListener="#{ScannedDocsListDialog.init}">
-                     <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-                  </a:actionLink>
-               </r:permissionEvaluator>
-
-            </h:panelGroup>
+         <a:actionLink id="folderName" value="#{r.name} (#{r.nrOfChildren})" action="dialog:scannedDocsListDialog" tooltip="#{msg.scanned_folder_tooltip}"
+            showLink="false" actionListener="#{ScannedDocsListDialog.init}">
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
          </f:facet>
       </a:column>
 

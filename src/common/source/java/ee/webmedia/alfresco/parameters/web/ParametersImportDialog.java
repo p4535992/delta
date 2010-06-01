@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.parameters.web;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -19,9 +18,10 @@ import java.util.Map.Entry;
 
 import javax.faces.context.FacesContext;
 
-import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.FileUploadBean;
 import org.springframework.web.jsf.FacesContextUtils;
+
+import com.csvreader.CsvReader;
 
 import de.schlichtherle.io.FileInputStream;
 import ee.webmedia.alfresco.app.AppConstants;
@@ -31,6 +31,8 @@ import ee.webmedia.alfresco.parameters.model.StringParameter;
 import ee.webmedia.alfresco.parameters.model.Parameter.ImportStatus;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 public class ParametersImportDialog extends AbstractImportDialog {
 
@@ -56,51 +58,52 @@ public class ParametersImportDialog extends AbstractImportDialog {
         File upFile = fileBean.getFile();
 
         try {
-            final InputStreamReader reader = new InputStreamReader(new FileInputStream(upFile), AppConstants.CHARSET);
-            final BufferedReader br = new BufferedReader(reader);
+            final FileInputStream fileInputStream = new FileInputStream(upFile);
+            final InputStreamReader isReader = new InputStreamReader(fileInputStream, AppConstants.CHARSET);
+            CsvReader csvReader = new CsvReader(isReader);
+            csvReader.setDelimiter(';');
+            csvReader.readHeaders();
             Map<String/* paramName */, ParameterImportLineVo/* paramValue */> paramsMap = new HashMap<String, ParameterImportLineVo>();
-            String csvLine;
-            int lineNr = 0;
-            while ((csvLine = br.readLine()) != null) {
-                lineNr++;
-                if (lineNr == 1) {
-                    continue;
+            final int expectedColumnsCount = 3;
+            while (csvReader.readRecord()) {
+                if (log.isDebugEnabled()) {
+                    log.debug("import line: " + csvReader.getRawRecord());
                 }
-                int seppIndex = csvLine.indexOf(";");
-                if (seppIndex < 1) {
-                    noColumn(csvLine);
-                    return null;
-                }
-                final String paramName = csvLine.substring(0, seppIndex);
-                int valueSeppIndex = csvLine.indexOf(";", seppIndex + 1);
-                if (valueSeppIndex < seppIndex) {
-                    noColumn(csvLine);
-                    return null;
-                }
-                final String paramComment = csvLine.substring(seppIndex + 1, valueSeppIndex);
-                final String paramVal = csvLine.substring(valueSeppIndex + 1);
+                checkColumnCount(csvReader, expectedColumnsCount);
+                String paramName = csvReader.get(0);
+                final String paramComment = csvReader.get(1);
+                final String paramVal = csvReader.get(2);
                 paramsMap.put(paramName, new ParameterImportLineVo(paramComment, paramVal));
             }
+            csvReader.close();
             return paramsMap;
         } catch (IOException e) {
             throw new RuntimeException("Failed to read data for importing parameters from uploaded file: '" + upFile.getAbsolutePath() + "'", e);
         }
     }
 
-    private void noColumn(String csvLine) {
-        final String msg = "Line doesn't contain parameter name, comment and value. Line:\n'" + csvLine + "'";
-        log.error(msg);
-        final FacesContext context = FacesContext.getCurrentInstance();
-        // veateate näitamine ja sulgemine millegi pärast ei toimi
-        MessageUtil.addErrorMessage(context, "parameter_import_csv_error_wrongFileContent", getFileName());
-        context.getApplication().getNavigationHandler().handleNavigation(context, null, AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME);
-        reset();
+    private void checkColumnCount(CsvReader csvReader, final int expectedColumnsCount) {
+        final int lineColumnCount = csvReader.getColumnCount();
+        if (lineColumnCount != expectedColumnsCount) {
+            final String rawRecord = csvReader.getRawRecord();
+            if (log.isDebugEnabled()) {
+                log.error( //
+                        "During importing parameters expected " + expectedColumnsCount + " columns, but got " + lineColumnCount + " from line:\n" + rawRecord);
+            }
+            final UnableToPerformException unableToPerformException = new UnableToPerformException( //
+                    MessageSeverity.ERROR, "parameter_import_csv_error_wrongNumOfColumns");
+            unableToPerformException.setMessageValuesForHolders(expectedColumnsCount, lineColumnCount, rawRecord);
+            throw unableToPerformException;
+        }
     }
 
     public List<Parameter<?>> getImportableParams() {
         if (paramsToImport == null) {
-            paramsToImport = getParamsToImport();
-            if (paramsToImport == null) {
+            try {
+                paramsToImport = getParamsToImport();
+            } catch (UnableToPerformException e) {
+                // veateate näitamine ja sulgemine millegi pärast ei toimi
+                MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
                 return null;// problem while parsing the import file
             }
         } else {
@@ -175,7 +178,16 @@ public class ParametersImportDialog extends AbstractImportDialog {
             MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "parameter_import_csv_info_noChanges", getFileName());
         } else {
             log.info("Starting to import parameters");
-            getParametersService().updateParameters(changedParams);
+            try {
+                getParametersService().updateParameters(changedParams);
+            } catch (UnableToPerformException e) {
+                final String msg = "failed to import parameters: ";
+                if (log.isDebugEnabled()) {
+                    log.error(msg + e.getMessage(), e);
+                }
+                MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
+                return null;
+            }
             log.info("Finished importing parameters");
             MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "parameter_import_csv_success", changedParams.size(), getFileName());
         }

@@ -37,12 +37,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
-         <h:panelGroup styleClass="long-content-wrapper #{(r.shortSender eq r.sender) ? '' : ' has-content' }">
-            <h:outputText id="col4-text-1" value="#{r.shortSender}" />
-            <h:panelGroup styleClass="long-content" rendered="#{r.shortSender ne r.sender}">
-               <h:outputText id="col4-text-2" value="#{r.sender}" />
-            </h:panelGroup>
-         </h:panelGroup>
+         <h:outputText id="col4-text-1" value="#{r.shortSender}" title="#{r.sender}" styleClass="tooltip" />
       </a:column>
       
       <%-- All Recipients --%>
@@ -50,12 +45,7 @@
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.document_allRecipients}" value="allRecipients" styleClass="header" />
          </f:facet>
-         <h:panelGroup styleClass="long-content-wrapper #{(r.shortAllRecipients eq r.allRecipients) ? '' : ' has-content' }">
-            <h:outputText id="col5-text-1" value="#{r.shortAllRecipients}" />
-            <h:panelGroup styleClass="long-content" rendered="#{r.shortAllRecipients ne r.allRecipients}">
-               <h:outputText id="col5-text-2" value="#{r.allRecipients}" />
-            </h:panelGroup>
-         </h:panelGroup>
+         <h:outputText id="col5-text-1" value="#{r.shortAllRecipients}" title="#{r.allRecipients}" styleClass="tooltip" />
       </a:column>
 
       <%-- Title --%>
@@ -63,31 +53,15 @@
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
-         <h:panelGroup styleClass="long-content-wrapper#{(r.docName eq r.shortDocName) ? '' : ' has-content' }" rendered="#{r.cssStyleClass ne 'case'}">
-            <a:actionLink id="col6-text-1" value="#{r.shortDocName}" action="dialog:document" tooltip="#{msg.document_details_info}"
-               showLink="false" actionListener="#{DocumentDialog.open}" >
-               <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-            </a:actionLink>
-            <h:panelGroup styleClass="long-content" rendered="#{r.docName ne r.shortDocName}">
-               <a:actionLink id="col6-text-2" value="#{r.docName}" action="dialog:document" tooltip="#{msg.document_details_info}"
-               showLink="false" actionListener="#{DocumentDialog.open}" >
-                  <f:param name="nodeRef" value="#{r.node.nodeRef}" />
-               </a:actionLink>
-            </h:panelGroup>
-         </h:panelGroup>
+         <a:actionLink id="col6-text-1" value="#{r.shortDocName}" action="dialog:document" tooltip="#{r.docName}"
+            actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass ne 'case'}" styleClass="tooltip" >
+            <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
          <!-- if row item is not document, but case, create link to documents list of case (row item is subclass of Document, to be shown as listItem in document list) -->
-         <h:panelGroup styleClass="long-content-wrapper#{(r.docName eq r.shortDocName) ? '' : ' has-content' }" rendered="#{r.cssStyleClass == 'case'}">
-            <a:actionLink id="col6-link2docList-1" value="#{r.shortDocName}" action="dialog:documentListDialog" tooltip="#{msg.document_search_caseLink_tooltip}"
-               showLink="false" actionListener="#{DocumentListDialog.setup}" >
-               <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
-            </a:actionLink>
-            <h:panelGroup styleClass="long-content" rendered="#{r.docName ne r.shortDocName}">
-               <a:actionLink id="col6-link2docList-2" value="#{r.shortDocName}" action="dialog:documentListDialog" tooltip="#{msg.document_search_caseLink_tooltip}"
-                  showLink="false" actionListener="#{DocumentListDialog.setup}" >
-                  <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
-               </a:actionLink>
-            </h:panelGroup>
-         </h:panelGroup>
+         <a:actionLink id="col6-link2docList-1" value="#{r.shortDocName}" action="dialog:documentListDialog" tooltip="#{r.shortDocName}"
+            actionListener="#{DocumentListDialog.setup}" rendered="#{r.cssStyleClass == 'case'}">
+            <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
 
       <%-- DueDate --%>

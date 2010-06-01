@@ -4,9 +4,6 @@
 
          <!-- Discuss document or space e.g. jump to Forums view for this node -->
          <action id="create_forum_node_override">
-            <permissions>
-               <permission allow="true">Collaborator</permission>
-            </permissions>
             <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.CreateForumNodeEvaluator</evaluator>
             <label-id>start_discussion</label-id>
             <image>/images/icons/create_forum.gif</image>

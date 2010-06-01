@@ -19,7 +19,9 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
@@ -77,7 +79,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        if (validate(context)) {
+        if (validate(context, false)) {
             try {
                 removeEmptyTasks();
                 getWorkflowService().saveCompoundWorkflow(workflow);
@@ -142,7 +144,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
      */
     public void startWorkflow(ActionEvent event) {
         log.debug("startWorkflow");
-        if (validate(FacesContext.getCurrentInstance())) {
+        if (validate(FacesContext.getCurrentInstance(), true)) {
             try {
                 removeEmptyTasks();
                 workflow = getWorkflowService().saveAndStartCompoundWorkflow(workflow);
@@ -205,7 +207,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
      */
     public void copyWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("copyWorkflow");
-        if (validate(FacesContext.getCurrentInstance())) {
+        if (validate(FacesContext.getCurrentInstance(), false)) {
             try {
                 removeEmptyTasks();
                 workflow = getWorkflowService().saveAndCopyCompoundWorkflow(workflow);
@@ -376,12 +378,13 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         }
     }
 
-    private boolean validate(FacesContext context) {
+    private boolean validate(FacesContext context, boolean checkFinished) {
         boolean valid = true;
         boolean activeResponsibleAssignedInSomeWorkFlow = false;
         boolean missingOwnerAssignment = false;
         Boolean missingInformationTasks = null;
         Set<String> missingOwnerMessageKeys = null;
+        boolean hasForbiddenFlowsForFinished = false;
         for (Workflow block : workflow.getWorkflows()) {
             boolean foundOwner = false;
             QName blockType = block.getNode().getType();
@@ -389,6 +392,13 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             boolean activeResponsibleAssigneeNeeded = blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)
                     && !activeResponsibleAssignedInSomeWorkFlow && !isActiveResponsibleAssignedForDocument(false);
             boolean activeResponsibleAssigneeAssigned = !activeResponsibleAssigneeNeeded;
+            
+            if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(blockType) || 
+                    WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(blockType) || 
+                    WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(blockType)) {
+                hasForbiddenFlowsForFinished = true;
+            }
+            
             for (Task task : block.getTasks()) {
                 final boolean activeResponsible = WorkflowUtil.isActiveResponsible(task);
                 if (activeResponsibleAssigneeNeeded && StringUtils.isNotBlank(task.getOwnerName()) && activeResponsible) {
@@ -465,6 +475,14 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         } else if (missingOwnerMessageKeys != null) {
             for (String msgKey : missingOwnerMessageKeys) {
                 MessageUtil.addErrorMessage(context, msgKey);
+            }
+        }
+        
+        if (checkFinished && hasForbiddenFlowsForFinished) {
+            String docStatus = (String) getDocumentDialog().getNode().getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
+            if (DocumentStatus.FINISHED.equals(docStatus)) {
+                valid = false;
+                MessageUtil.addErrorMessage(context, "workflow_start_failed_docFinished");
             }
         }
 

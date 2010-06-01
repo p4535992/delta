@@ -50,7 +50,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * @author Kaarel Jõgeva
  */
 public class MenuBean implements Serializable {
-    
+
     private static final long serialVersionUID = 1L;
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MenuBean.class);
 
@@ -139,7 +139,9 @@ public class MenuBean implements Serializable {
     public void addBreadcrumbItem(String title) {
         int i = 0;
         for (String listTitle : stateList) {
-            if (i < 3 && listTitle.equals(title)) { // i < 3, left side menu provides functionality for backwards navigation.
+            if (i < 3 && listTitle.equals(title) && i == stateList.size()) { // i < 3, left side menu provides functionality for backwards navigation. If we are
+                // at the end of the list and dialog with same title is added, then we should
+                // probably add it (followUp)
                 stateList.setSize(i);
                 Stack viewStack = (Stack) FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get(UIMenuComponent.VIEW_STACK);
                 if (viewStack != null) {
@@ -273,7 +275,9 @@ public class MenuBean implements Serializable {
         String[] path = lastLinkId.substring(MenuRenderer.SECONDARY_MENU_PREFIX.length()).split(UIMenuComponent.VALUE_SEPARATOR);
 
         MenuItem item = getActiveMainMenuItem();
-        collapseMenuItems(item);
+        if(Integer.parseInt(activeItemId) == DOCUMENT_REGISTER_ID) {
+            collapseMenuItems(item);
+        }
 
         // Let's go to the clicked link
         for (String step : path) {
@@ -297,7 +301,7 @@ public class MenuBean implements Serializable {
                     }
                     item.getSubItems().add(childItem);
                 }
-                Collections.sort(item.getSubItems(), new DropdownMenuComparator());                
+                Collections.sort(item.getSubItems(), new DropdownMenuComparator());
                 dropdownItem.setExpanded(true);
                 item = dropdownItem.getSubItems().get(Integer.parseInt(step));
             }
@@ -312,8 +316,8 @@ public class MenuBean implements Serializable {
             dd.getSubItems().clear();
 
             // Toggle the link
-            if (dd.isExpanded()) {
-                dd.setExpanded(false);
+            dd.setExpanded(!dd.isExpanded());
+            if (!dd.isExpanded()) {
                 return; // When hiding, we don't need to refresh children
             }
 
@@ -608,7 +612,7 @@ public class MenuBean implements Serializable {
 
         @Override
         public void processAction(ActionEvent actionEvent) throws AbortProcessingException {
-            //MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME);
+            // MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME);
             MenuBean.clearViewStack(getPathFromShortcut(shortcut)[0], "shortcut:sm" + shortcut);
         }
 
@@ -696,7 +700,7 @@ public class MenuBean implements Serializable {
         @Override
         public int compare(MenuItem o1, MenuItem o2) {
             if (o1 != null && o2 != null && o1 instanceof DropdownMenuItem && o2 instanceof DropdownMenuItem) {
-                return ((DropdownMenuItem)o1).getTransientOrderString().compareToIgnoreCase(((DropdownMenuItem)o2).getTransientOrderString());
+                return ((DropdownMenuItem) o1).getTransientOrderString().compareToIgnoreCase(((DropdownMenuItem) o2).getTransientOrderString());
             }
             return 0;
         }

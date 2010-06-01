@@ -47,6 +47,10 @@ public class Series implements Serializable, Comparable<Series> {
         this.seriesIdentifier = seriesIdentifier;
     }
 
+    public void setInitialSeriesIdentifier(String initialSeriesIdentifier) {
+        node.getProperties().put("{temp}seriesIdentifier", initialSeriesIdentifier);
+    }
+
     public String getTitle() {
         return title;
     }
@@ -102,11 +106,11 @@ public class Series implements Serializable, Comparable<Series> {
     public void setDocType(List<QName> docType) {
         this.docType = docType;
     }
-    
+
     public int getContainingDocsCount() {
         return containingDocsCount;
     }
-    
+
     public void setContainingDocsCount(int containingDocsCount) {
         this.containingDocsCount = containingDocsCount;
     }

@@ -30,7 +30,6 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
 
     private Date nextFireTime;
 
-
     protected Parameter(String paramName, String typeMsg, String defaultValidationFailedMsg) {
         this.paramName = paramName;
         this.defaultValidationFailedMsgId = defaultValidationFailedMsg;
@@ -117,7 +116,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
 
     @Override
     public String toString() {
-        return "paramName: " + paramName + "; paramValue=" + paramValue + " (" + this.getClass().getSimpleName() + ")";
+        return this.getClass().getSimpleName() + " " + paramName + "=" + paramValue + "(" + paramDescription + ")";
     }
 
     // START: private methods
@@ -167,6 +166,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
         this.previousParamValue = paramValue;
         statusOfValueChange = null;
     }
+
     public void setPreviousParamDescription() {
         this.previousParamDescription = paramDescription;
         statusOfValueChange = null;
@@ -184,7 +184,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
                 statusOfValueChange = PARAM_NEW;
             } else if (!StringUtils.equals(previousVal, nvlParamVal)) {
                 statusOfValueChange = PARAM_CHANGED;
-            } else if (!StringUtils.equals(previousParamDescription, StringUtils.trimToNull(getParamDescription()))) {
+            } else if (!StringUtils.equals(StringUtils.trimToNull(previousParamDescription), StringUtils.trimToNull(getParamDescription()))) {
                 statusOfValueChange = PARAM_DESC_CHANGED;
             } else {
                 statusOfValueChange = PARAM_NOT_CHANGED;
@@ -196,6 +196,7 @@ public abstract class Parameter<T extends Serializable> implements Serializable 
     private String getStringValOrNull(final T val) {
         return val == null ? null : val.toString().trim();
     }
+
     private String getNvlStringVal(final T val) {
         return val == null ? "" : val.toString().trim();
     }

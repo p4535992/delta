@@ -338,17 +338,17 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       {
          out.write("<input name='");
          out.write(clientId + FIELD_CONTAINS);
-         out.write("' type='text' maxlength='256' style='width:120px' value=\"");
+         out.write("' type='text' class=\"genericpicker-input\" maxlength='256' style='width:120px' value=\"");
          out.write(Utils.encode(this.contains));
          out.write("\">&nbsp;");
       }
       
       // Search button
-      out.write("<input type='submit' value='");
-      out.write(Utils.encode(bundle.getString(MSG_SEARCH)));
-      out.write("' onclick=\"");
+      out.write("<button type=\"button\" onclick=\"");
       out.write(generateFormSubmit(context, ACTION_SEARCH, 0));
       out.write("\">");
+      out.write(Utils.encode(bundle.getString(MSG_SEARCH)));
+      out.write("</button>");
       out.write("</td></tr>");
       
       // information row

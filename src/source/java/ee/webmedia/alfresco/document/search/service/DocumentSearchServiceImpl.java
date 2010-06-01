@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.utils.SearchUtil.formatLuceneDate;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringWordsWildcardQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
@@ -17,7 +18,6 @@ import static ee.webmedia.alfresco.utils.SearchUtil.isBlank;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
 import static ee.webmedia.alfresco.utils.SearchUtil.parseQuickSearchWords;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringWordsWildcardQuery;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -538,7 +538,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         int count = searchGeneralImpl(DOCUMENTS_FOR_REGISTERING_QUERY, false, new SearchCallback<String>() {
             @Override
             public String addResult(ResultSetRow row) {
-                return workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef())
+                return workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef()) && !documentService.isRegistered(generalService.fetchNode(row.getNodeRef())) 
                         ? row.getNodeRef().toString()
                         : null;
             }

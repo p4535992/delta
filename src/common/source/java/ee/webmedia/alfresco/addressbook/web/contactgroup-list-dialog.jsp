@@ -30,17 +30,24 @@
       <%-- Actions column --%>
       <a:column id="col2-act" actions="true" style="text-align:left">
          <f:facet name="header">
-            <h:outputText id="col2-head" value="#{msg.actions}" />
+            <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="CreateAssociations, DeleteAssociations">
+               <h:outputText id="col2-head" value="#{msg.actions}" />
+            </r:permissionEvaluator>
          </f:facet>
-         <a:actionLink id="contact-group-add" value="#{msg.add}" image="/images/icons/add_group.gif" showLink="false"
-            action="dialog:addressbookAddContactGroup" actionListener="#{ContactGroupAddDialog.setupAddGroup}" tooltip="#{msg.addressbook_contactgroup_add_title}">
-            <f:param id="contactgroup-noderef-add-param" name="nodeRef" value="#{r.nodeRef}" />
-         </a:actionLink>
-         <a:actionLink id="contact-group-delete" value="#{msg.delete}" image="/images/icons/delete_group.gif" showLink="false"
-            action="dialog:addressbookDeleteContactGroup" actionListener="#{ContactGroupDeleteDialog.setupDeleteGroup}" tooltip="#{msg.delete_group}">
-            <f:param id="contactgroup-noderef-delete-param" name="nodeRef" value="#{r.nodeRef}" />
-            <f:param id="contactgroup-groupName-delete-param" name="groupName" value="#{r['ab:groupName']}" />
-         </a:actionLink>
+         <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="CreateAssociations">
+            <a:actionLink id="contact-group-add" value="#{msg.add}" image="/images/icons/add_group.gif" showLink="false"
+               action="dialog:addressbookAddContactGroup" actionListener="#{ContactGroupAddDialog.setupAddGroup}"
+               tooltip="#{msg.addressbook_contactgroup_add_title}">
+               <f:param id="contactgroup-noderef-add-param" name="nodeRef" value="#{r.nodeRef}" />
+            </a:actionLink>
+         </r:permissionEvaluator>
+         <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="DeleteAssociations">
+            <a:actionLink id="contact-group-delete" value="#{msg.delete}" image="/images/icons/delete_group.gif" showLink="false"
+               action="dialog:addressbookDeleteContactGroup" actionListener="#{ContactGroupDeleteDialog.setupDeleteGroup}" tooltip="#{msg.delete_group}">
+               <f:param id="contactgroup-noderef-delete-param" name="nodeRef" value="#{r.nodeRef}" />
+               <f:param id="contactgroup-groupName-delete-param" name="groupName" value="#{r['ab:groupName']}" />
+            </a:actionLink>
+         </r:permissionEvaluator>
       </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

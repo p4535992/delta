@@ -123,7 +123,7 @@
                <%--<f:subview id="more-actions-panel" rendered="#{DialogManager.moreActionsId != null and DialogManager.currentDialog.name ne 'document'}">--%>
                <f:subview id="more-actions-panel-sub1" rendered="#{DialogManager.moreActionsId ne ''}">
                   <f:verbatim><li></f:verbatim>
-                     <a:menu id="more_actions_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
+                     <a:menu id="more_actions_menu" style="white-space:nowrap" styleClass="dropdown-menu-anchor"  menuStyleClass="dropdown-menu right"
                         label="#{DialogManager.moreActionsMenuLabel}" image="/images/icons/arrow-down.png" 
                         rendered="#{DialogManager.moreActionsId ne ''}">
                         <r:actions id="more_actions_menu_items" value="#{DialogManager.moreActionsId}" context="#{DialogManager.actionsContext}" />

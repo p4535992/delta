@@ -11,9 +11,9 @@
          <f:facet name="header">
             <a:sortLink id="dueDate-sort" label="#{msg.task_property_dueDate}" value="dueDate" styleClass="header" />
          </f:facet>
-         <h:outputText id="dueDate-text" value="#{r.task.dueDate}">
-            <a:convertXMLDate pattern="#{msg.date_pattern}" />
-         </h:outputText>
+         <a:actionLink id="dueDate-text" value="#{r.task.dueDateStr}" action="dialog:document" tooltip="#{r.task.dueDateStr}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+            <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
       
       <%-- resolution --%>
@@ -21,7 +21,9 @@
          <f:facet name="header">
             <a:sortLink id="resolution-sort" label="#{msg.task_property_resolution}" value="resolution" styleClass="header" />
          </f:facet>
-         <h:outputText id="resolution-text" value="#{r.task.node.properties['{temp}resolution']}" />
+         <a:actionLink id="resolution-text" value="#{r.task.node.properties['{temp}resolution']}" action="dialog:document" tooltip="#{r.task.node.properties['{temp}resolution']}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+            <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
       
       <%-- creatorName --%>
@@ -29,7 +31,9 @@
          <f:facet name="header">
             <a:sortLink id="creatorName-sort" label="#{msg.task_property_creator_name}" value="creatorName" styleClass="header" />
          </f:facet>
-         <h:outputText id="creatorName-text" value="#{r.task.creatorName}" />
+         <a:actionLink id="creatorName-text" value="#{r.task.creatorName}" action="dialog:document" tooltip="#{r.task.creatorName}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+            <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
 
       <%-- Sender/owner --%>
@@ -37,7 +41,9 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
-         <h:outputText id="col4-text" value="#{r.document.sender}" />
+         <a:actionLink id="col4-text" value="#{r.document.shortSender}" action="dialog:document" tooltip="#{r.document.sender}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+            <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
+         </a:actionLink>
       </a:column>
 
       <%-- Title --%>
@@ -45,8 +51,7 @@
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col6-text" value="#{r.document.docName}" action="dialog:document" tooltip="#{msg.document_details_info}"
-            showLink="false" actionListener="#{DocumentDialog.open}" >
+         <a:actionLink id="col6-text" value="#{r.document.shortDocName}" action="dialog:document" tooltip="#{r.document.docName}" actionListener="#{DocumentDialog.open}" >
             <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
          </a:actionLink>
       </a:column>
@@ -56,5 +61,7 @@
          <f:facet name="header">
             <a:sortLink id="col3-sort" label="#{msg.document_docType}" value="documentTypeName" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-text" value="#{r.document.documentTypeName}" />
+         <a:actionLink id="col3-text" value="#{r.document.documentTypeName}" action="dialog:document" tooltip="#{r.document.documentTypeName}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+            <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
+         </a:actionLink>
       </a:column>

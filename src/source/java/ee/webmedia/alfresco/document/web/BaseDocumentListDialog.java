@@ -47,6 +47,23 @@ public abstract class BaseDocumentListDialog extends BaseDialogBean {
     }
 
     public abstract String getListTitle();
+    
+    public String getInfoMessage() {
+        return ""; // Subclasses can override if necessary
+    }
+    
+    public boolean isInfoMessageVisible() {
+        return getInfoMessage().length() > 0;
+    }
+    
+    /**
+     * Returns the file name to import as document list columns
+     * Subclasses can override if necessary.
+     * @return String path to JSP file
+     */
+    public String getColumnsFile() {
+        return "/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog-columns.jsp";
+    }
 
     // START: getters / setters
 

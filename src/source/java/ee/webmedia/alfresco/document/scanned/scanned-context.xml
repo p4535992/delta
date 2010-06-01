@@ -28,6 +28,21 @@
       </property>
    </bean>
 
+   <bean id="scannedOcrBootstrap" class="ee.webmedia.alfresco.document.scanned.bootstrap.ScannedOcrBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="scannedOcrBootstrap" />
+      <property name="sinceVersion" value="1.8.1.1" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="scannedSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="generalService" ref="GeneralService" />
+      <property name="ocrService" ref="OcrService" />
+      <property name="scannedFilesPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}" />
+   </bean>
+
    <bean id="scannedWebClientBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">
          <list>
@@ -55,5 +70,13 @@
 
    <!-- START: web beans: -->
    <bean id="ScannedFoldersListDialog" class="ee.webmedia.alfresco.document.scanned.web.ScannedFoldersListDialog" scope="session" />
+   
+   <bean class="ee.webmedia.alfresco.document.scanned.web.ScannedDocumentsMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="generalService" ref="GeneralService"/>
+      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="scannedFilesPath" value="${scannedFiles.rootPath}${scannedFiles.folder.name}"/>
+   </bean>
    <!-- END: web beans: -->
 </beans>

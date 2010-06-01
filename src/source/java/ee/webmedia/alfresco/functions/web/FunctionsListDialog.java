@@ -5,7 +5,8 @@ import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collections;
+import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -13,12 +14,16 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.exporter.ACPExportPackageHandler;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.view.ExportPackageHandler;
 import org.alfresco.service.cmr.view.ExporterCrawlerParameters;
 import org.alfresco.service.cmr.view.ExporterService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
@@ -29,6 +34,8 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
+import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class FunctionsListDialog extends BaseDialogBean {
@@ -40,6 +47,7 @@ public class FunctionsListDialog extends BaseDialogBean {
 
     private transient FunctionsService functionsService;
     private transient ExporterService exporterService;
+    private transient UserService userService;
     protected List<Function> functions;
 
     @Override
@@ -70,6 +78,11 @@ public class FunctionsListDialog extends BaseDialogBean {
         return super.cancel();
     }
 
+    public void updateDocCounters(@SuppressWarnings("unused") ActionEvent event) {
+        final long docCount = getFunctionsService().updateDocCounters();
+        MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
+    }
+
     // START: JSP event handlers
     public void export(@SuppressWarnings("unused") ActionEvent event) {
         log.info("docList export started");
@@ -98,10 +111,10 @@ public class FunctionsListDialog extends BaseDialogBean {
         } finally {
             IOUtils.closeQuietly(outputStream);
             FacesContext.getCurrentInstance().responseComplete();
-            
+
             // Erko hack for incorrect view id in the next request
             JspStateManagerImpl.ignoreCurrentViewSequenceHack();
-            
+
             log.info("docList export completed");
         }
     }
@@ -150,6 +163,32 @@ public class FunctionsListDialog extends BaseDialogBean {
         return functions;
     }
 
+    public List<Function> getMySeriesFunctions() {
+        List<Function> seriesFunctions = new ArrayList<Function>(functions.size());
+        for (Function function : getFunctions()) {
+            List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(function.getNodeRef());
+            for (ChildAssociationRef caRef : childAssocs) {
+                @SuppressWarnings("unchecked")
+                List<Integer> structUnits = (List<Integer>) getNodeService().getProperty(caRef.getChildRef(), SeriesModel.Props.STRUCT_UNIT);
+                boolean contains = structUnits.contains(getCurrentUsersStructUnitId());
+                if (contains) {
+                    seriesFunctions.add(function);
+                    break;
+                }
+            }
+        }
+
+        return seriesFunctions;
+    }
+
+    private Integer getCurrentUsersStructUnitId() {
+        Map<QName, Serializable> userProperties = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
+        Serializable orgId = userProperties.get(ContentModel.PROP_ORGID);
+        if (orgId == null)
+            return null;
+        return Integer.parseInt(orgId.toString());
+    }
+
     protected FunctionsService getFunctionsService() {
         if (functionsService == null) {
             functionsService = (FunctionsService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
@@ -169,5 +208,18 @@ public class FunctionsListDialog extends BaseDialogBean {
     public void setFunctionsService(FunctionsService functionsService) {
         this.functionsService = functionsService;
     }
+
+    protected UserService getUserService() {
+        if (userService == null) {
+            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean("UserService");
+        }
+        return userService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }
+
     // END: getters / setters
 }

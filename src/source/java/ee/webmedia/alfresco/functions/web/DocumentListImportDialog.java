@@ -5,6 +5,7 @@ import java.util.Map;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.repo.importer.ACPImportPackageHandler;
+import org.alfresco.repo.importer.ImportTimerProgress;
 import org.alfresco.service.cmr.view.ImporterException;
 import org.alfresco.service.cmr.view.ImporterService;
 import org.alfresco.service.cmr.view.Location;
@@ -62,7 +63,7 @@ public class DocumentListImportDialog extends AbstractImportDialog {
         final ACPImportPackageHandler importHandler = new ACPImportPackageHandler(file, AppConstants.CHARSET);
         final Location location = getFunctionsService().getDocumentListLocation();
         try {
-            getImporterService().importView(importHandler, location, null, null);
+            getImporterService().importView(importHandler, location, null, new ImportTimerProgress(log));
             log.info("Finished importing docList");
             MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_import_success", getFileName());
         } catch (ImporterException e) {
@@ -89,7 +90,7 @@ public class DocumentListImportDialog extends AbstractImportDialog {
     protected ImporterService getImporterService() {
         if (importerService == null) {
             importerService = (ImporterService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean("ImporterService");
+                    .getBean("DocListImporterComponent");
         }
         return importerService;
     }

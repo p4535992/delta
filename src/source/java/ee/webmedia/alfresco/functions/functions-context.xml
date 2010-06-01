@@ -2,6 +2,8 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
+   <import resource="classpath:ee/webmedia/alfresco/functions/docListImport-context.xml"/>
+
    <bean id="functionsModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,seriesModelBootstrap,documentModelBootstrap">
       <property name="models">
          <list>
@@ -49,6 +51,8 @@
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="seriesService" ref="SeriesService" />
       <property name="volumeService" ref="VolumeService" />
+      <property name="caseService" ref="CaseService" />
+      <property name="documentService" ref="DocumentService" />
    </bean>
 
    <bean id="FunctionsService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -65,9 +69,4 @@
       </property>
    </bean>
 
-   <!-- START: web beans: -->
-
-   <bean id="DocumentListImportDialog" class="ee.webmedia.alfresco.functions.web.DocumentListImportDialog" scope="session" />
-
-   <!-- END: web beans: -->
 </beans>

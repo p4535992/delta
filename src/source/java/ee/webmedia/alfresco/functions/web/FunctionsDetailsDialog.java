@@ -110,6 +110,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
     private void resetData() {
         function = null;
         newFunction = false;
+        propertySheet = null;
     }
 
     // END: private methods

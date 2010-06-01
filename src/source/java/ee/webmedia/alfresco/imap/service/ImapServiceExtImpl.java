@@ -20,6 +20,7 @@ import javax.mail.Part;
 import javax.mail.internet.ContentType;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
+import javax.mail.internet.ParseException;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
@@ -40,6 +41,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.GUID;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -66,6 +68,7 @@ import ee.webmedia.alfresco.imap.IncomingFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.PermissionDeniedAppendBehaviour;
 import ee.webmedia.alfresco.imap.SentFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.model.ImapModel;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 
 /**
  * SimDhs specific IMAP logic.
@@ -171,7 +174,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             for (int i = 0, n = multipart.getCount(); i < n; i++) {
                 Part part = multipart.getBodyPart(i);
                 if ("attachment".equalsIgnoreCase(part.getDisposition())) {
-                    createAttachment(document, part);
+                    createAttachment(document, part, null);
                 }
             }
         }
@@ -183,19 +186,56 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         return attachmentSpaceRef;
     }
 
-    private void createAttachment(NodeRef document, Part part) throws MessagingException, IOException {
-        ContentType contentType = new ContentType(part.getContentType());
-        String filename = part.getFileName();
-        String mimeType = contentType.getBaseType();
+    private void createAttachment(NodeRef document, Part part, String overrideFilename) throws MessagingException, IOException {
+        String mimeType = null;
+        String contentTypeString = part.getContentType();
+        try {
+            ContentType contentType = new ContentType(contentTypeString);
+            mimeType = contentType.getBaseType();
+        } catch (ParseException e) {
+            log.warn("Error parsing contentType '" + contentTypeString + "'", e);
+        }
+        if (StringUtils.isBlank(mimeType)) {
+            log.debug("MimeType is blank");
+            if (overrideFilename != null) {
+                mimeType = MimetypeMap.MIMETYPE_BINARY;
+            } else {
+                String filename = part.getFileName();
+                if (filename != null) {
+                    String extension = FilenameUtils.getExtension(filename);
+                    if (StringUtils.isNotBlank(extension)) {
+                        mimeType = mimetypeService.getMimetypesByExtension().get(extension.toLowerCase());
+                        if (mimeType == null) {
+                            mimeType = MimetypeMap.MIMETYPE_BINARY;
+                        } else {
+                            log.debug("Guessed mimeType '" + mimeType + "' based on filename '" + filename + "'");
+                        }
+                    } else {
+                        mimeType = MimetypeMap.MIMETYPE_BINARY;
+                    }
+                } else {
+                    mimeType = MimetypeMap.MIMETYPE_BINARY;
+                }
+            }
+        }
+
+        String filename;
+        if (overrideFilename == null) {
+            filename = part.getFileName();
+        } else {
+            filename = overrideFilename + "." + mimetypeService.getExtension(mimeType);
+        }
         if (filename == null) {
             filename = I18NUtil.getMessage("imap.letter_attachment_filename") + "." + mimetypeService.getExtension(mimeType);
         }
+        String encoding = getEncoding(part);
         FileInfo createdFile = fileFolderService.create(
                 document,
                 generalService.getUniqueFileName(document, filename),
                 ContentModel.TYPE_CONTENT);
         ContentWriter writer = fileFolderService.getWriter(createdFile.getNodeRef());
         writer.setMimetype(mimeType);
+        writer.setEncoding(encoding);
         OutputStream os = writer.getContentOutputStream();
         FileCopyUtils.copy(part.getInputStream(), os);
     }
@@ -232,7 +272,10 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
         ContentReader reader = tempWriter.getReader();
 
-        fileService.transformToPdf(document, reader, I18NUtil.getMessage("imap.letter_body_filename"));
+        FileInfo createdFile = fileService.transformToPdf(document, reader, I18NUtil.getMessage("imap.letter_body_filename"));
+        if (createdFile == null) {
+            createAttachment(document, p, I18NUtil.getMessage("imap.letter_body_filename"));
+        }
     }
 
     // Workaround for getting encoding from content type

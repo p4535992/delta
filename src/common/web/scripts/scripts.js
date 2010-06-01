@@ -584,64 +584,30 @@ window.dhtmlHistory.create( {
 // DOCUMENT-READY FUNCTIONS
 //-----------------------------------------------------------------------------
 
-// Form submission with Enter key
-var lastActiveInput = null;
-
 // These things need to be performed only once after full page load
 $jQ(document).ready(function() {
    showFooterTitlebar();
    
    $jQ(".admin-user-search-input").keyup(function(event) {
 	   updateButtonState();
-	   if (event.keyCode == '13') {
+	   if (event.keyCode == 13) {
 		     $jQ(this).next().click();
+		     return false;
 	   }
    });
 
-   var id = $jQ("#wrapper form").attr("name") + "\\:quickSearch";
-   $jQ("#" + id).keyup(function(event) {
-	   if (event.keyCode == '13') {
-		     $jQ(this).next().click();
+   $jQ(".quickSearch-input").live('keydown', function(event) {
+	   if (event.keyCode == 13) {
+		    $jQ(this).next().click();
+		    return false;
 	   }
    });
 
-   $jQ("input").focus(function() {
-	      lastActiveInput = $jQ(this);
-   });
-
-   $jQ("#wrapper form").submit(function(e) {
-	  var debug = false;
-	  
-	  
-      if(lastActiveInput != null) {
-         if(lastActiveInput.attr("type") == "submit" || $jQ("#login-wrapper").length>0) {
-            return true;
-            if (debug) alert("Either submit or login");
-         }
-         
-         // Check special cases
-         // modal popups
-         if(lastActiveInput.parents('.modalpopup-content-inner').length > 0) {
-            var searchLink = lastActiveInput.parent().parent().closest("td").children(".search"); // SearchGenerator?
-            if(searchLink.length < 1) { // MultiValueEditor?
-               if (debug) console.log("Checking for MultiValueEditor");
-               searchLink = lastActiveInput.parent().parent().closest("td").children("table").children("tbody").children("tr").children("td").children(".search");
-            }
-            if(searchLink.length < 1) { // TaskListGenerator?
-               if (debug) console.log("Checking for TaskListGenerator");
-               searchLink = lastActiveInput.closest("span").children("table").children("tbody").children("tr").children("td").children("span").children(".search");
-            }
-            if(searchLink.length > 0) { // Act ONLY if we have identified current location
-            	if (debug) console.log("Found a searchLink");
-            	if (debug) alert("Pausing, check Console!");
-	            searchLink.click(); // hack to override clearFormhiddenParams function. Works with mouse but not with click()...
-	            lastActiveInput.next().click();
-            }
-            
-         } 
-         if (debug) alert("Pausing, check Console!");
-         return false; // otherwise return false, users don't want to lose their data :)
-      }
+   $jQ(".genericpicker-input").live('keydown', function (event) {
+	   if (event.keyCode == 13) {
+		    $jQ(this).next().click();
+			return false;
+	   }
    });
    
    if(isIE7()) {
@@ -651,6 +617,10 @@ $jQ(document).ready(function() {
 		   $jQ("#wrapper").css("min-width", width + "px");
 	   });
    }
+   
+   $jQ("#my-tasks-wrapper a, .tooltip").tooltip({
+	   track: true
+   });
 
    // Realy simple history stuff for back button
    window.dhtmlHistory.initialize();
@@ -676,8 +646,8 @@ function handleHtmlLoaded(context) {
    }
 
    // datepicker
-   jQuery("input.date", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', yearRange: '-100:+100' });
-   jQuery("input.sysdate", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', defaultDate: +7, yearRange: '-100:+100' });
+   jQuery("input.date", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', yearRange: '-100:+100', duration: '' });
+   jQuery("input.sysdate", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', defaultDate: +7, yearRange: '-100:+100', duration: '' });
 
    // Darn IE7 bugs...
    fixIESelectMinWidth(context);

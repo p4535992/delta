@@ -36,6 +36,7 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
+import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.user.service.UserService;
 
@@ -80,28 +81,38 @@ public class FileServiceImpl implements FileService {
         List<File> files = new ArrayList<File>();
         List<FileInfo> fileInfos = fileFolderService.listFiles(nodeRef);
         for (FileInfo fi : fileInfos) {
-            File item = createFile(fi);
+            final File item = createFile(fi);
             boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());
             item.setDigiDocContainer(isDdoc);
             item.setTransformableToPdf(isTransformableToPdf(fi.getContentData()));
             if (item.isActive() || !onlyActive) {
                 files.add(item);
             }
-            if (isDdoc && includeDigidocSubitems
-                    && permissionService.hasPermission(item.getNodeRef(), PermissionService.READ_CONTENT).equals(AccessStatus.ALLOWED)) {
+            if (isDdoc && includeDigidocSubitems) {
                 // hack: add another File to display nested tables in JSP.
                 // this "item2" should be exactly after the "item" in the list
                 try {
                     File item2 = new File();
-                    item2.setDdocItems(signatureService.getDataItemsAndSignatureItems(item.getNodeRef(), false));
+                    SignatureItemsAndDataItems ddocItems = AuthenticationUtil.runAs(new RunAsWork<SignatureItemsAndDataItems>() {
+                        @Override
+                        public SignatureItemsAndDataItems doWork() throws Exception {
+                            return signatureService.getDataItemsAndSignatureItems(item.getNodeRef(), false);
+                        }
+                    }, AuthenticationUtil.getSystemUserName());
+                    item2.setNode(item.getNode()); // Digidoc item uses node of its container for permission evaluations
+                    item2.setDdocItems(ddocItems);
                     item2.setDigiDocItem(true);
                     item2.setActive(item.isActive());
                     if (item.isActive() || !onlyActive) {
                         files.add(item2);
                     }
-                } catch (SignatureException e) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Unable to parse DigiDoc file '" + item.getName() + "':\n" + e.getMessage());
+                } catch (RuntimeException e) {
+                    if (e.getCause() instanceof SignatureException) {
+                        if (log.isDebugEnabled()) {
+                            log.debug("Unable to parse DigiDoc file '" + item.getName() + "':\n" + e.getCause().getMessage());
+                        }
+                    } else {
+                        throw e;
                     }
                 }
             }

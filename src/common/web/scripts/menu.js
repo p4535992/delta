@@ -20,6 +20,12 @@ function setupCurtain() {
    _curtain.onclick = _hideLastMenu;
 }
 
+// toggle temporary menu children visibility
+function _toggleTempMenu(e, menuId) {
+	$jQ("#" + escapeId4JQ(menuId)).toggle();
+	return false;
+}
+
 // toggle a dynamic menu dropping down
 function _toggleMenu(e, menuId)
 {
@@ -41,11 +47,11 @@ function _toggleMenu(e, menuId)
       menu.style.display = 'block';
        
       if (typeof(window.innerWidth) == 'number') {
-         //Non-IE
+         // Non-IE
          winHeight = window.innerHeight;
          top = 20;
       } else if (document.documentElement && (document.documentElement.clientWidth || document.documentElement.clientHeight)) {
-         //IE 6+ in 'standards compliant mode'
+         // IE 6+ in 'standards compliant mode'
          winHeight = document.documentElement.clientHeight;
          top = 20;
       }
@@ -128,4 +134,5 @@ function _togglePersistentMenu(e, menuId)
    {
       menu.style.display = 'none';
    }
+   return false;
 }

@@ -51,13 +51,13 @@ public class CSVExporter {
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
     
     private static final char CSV_QUOTE = '"';
-    private static final String CHARSET = AppConstants.CHARSET;
-    private static final char SEPARATOR = ';';
+    protected static final String CHARSET = AppConstants.CHARSET;
+    protected static final char SEPARATOR = ';';
     private static final char[] CSV_SEARCH_CHARS = new char[] {SEPARATOR, CSV_QUOTE, CharUtils.CR, CharUtils.LF};
 
-    private DataReader dataReader;
+    protected DataReader dataReader;
 
-    private boolean doOrdering = false;
+    protected boolean doOrdering = false;
     private int sortColumnNr = 0;
     private boolean isDescending = false;
 
@@ -126,7 +126,7 @@ public class CSVExporter {
         this.isDescending = isDescending;
     }
 
-    private void orderRows(List<List<String>> rows) {
+    protected void orderRows(List<List<String>> rows) {
         // sort according to first column
         Collections.sort(rows, new Comparator<List<String>>() {
             @Override
@@ -152,7 +152,7 @@ public class CSVExporter {
         }
     }
 
-    private String escape(String str) throws IOException {
+    private String escape(String str) {
         StringBuilder result = new StringBuilder();
         if (StringUtils.containsNone(str, CSV_SEARCH_CHARS)) {
             if (str != null) {
@@ -176,7 +176,7 @@ public class CSVExporter {
      * Taken from {@link org.alfresco.web.ui.repo.tag.LoadBundleTag}. Needed for loading headed labels.
      */
     @SuppressWarnings("unchecked")
-    private static class BundleMap implements Map {
+    protected static class BundleMap implements Map {
         private ResourceBundle _bundle;
         private List _values;
 

@@ -41,13 +41,13 @@
       </a:column>
       
       <%-- Actions column --%>
-      <a:column id="col4" actions="true" style="text-align:right" styleClass="actions-column">
+      <a:column id="act-col" actions="true" style="text-align:right" styleClass="actions-column">
          <f:facet name="header">
             <h:outputText id="col4-txt" value="#{msg.template_delete}" />
          </f:facet>
-         <a:actionLink id="col7-act" value="#{msg.template_delete}" tooltip="#{msg.template_delete}" actionListener="#{DialogManager.bean.setupTemplateAction}" action="dialog:deleteFile" showLink="false"
+         <a:actionLink id="act-col-act1" value="#{msg.template_delete}" tooltip="#{msg.template_delete}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
             image="/images/icons/delete.gif">
-            <f:param name="nodeRef" value="#{r.nodeRef}" />
+            <f:param name="id" value="#{r.nodeRef.id}" />
          </a:actionLink>
       </a:column>
 

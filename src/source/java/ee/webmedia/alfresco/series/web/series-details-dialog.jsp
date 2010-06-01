@@ -31,9 +31,11 @@
    if(isNew) {
 %>
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-close-button.jsp" />
+<f:verbatim>
 <script type="text/javascript">
    var jQSeriesIdentifier = $jQ("#"+escapeId4JQ("dialog:dialog-body:ser-metatada:prop_serx003a_seriesIdentifier:serx003a_seriesIdentifier"));
-   var initialSeriesIdentifier = jQSeriesIdentifier.val().trim();
+   var initialSeriesIdentifier = "</f:verbatim><h:outputText value="#{SeriesDetailsDialog.currentNode.properties['{temp}seriesIdentifier']}" /><f:verbatim>";
+
    propSheetValidateSubmitFn.push(validateSeriesIdentifier);
 
    function validateSeriesIdentifier(){
@@ -47,6 +49,7 @@
       return true;
    }
 </script>
+</f:verbatim>
 <%
    }
 %>

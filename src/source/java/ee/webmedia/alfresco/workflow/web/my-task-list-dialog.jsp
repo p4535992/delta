@@ -8,6 +8,7 @@
 
 <h:outputText escape="false" value="#{SubstitutionBean.substitutionMessages}"/>
 
+<a:panel id="my-tasks-wrapper">
 <a:panel id="assignment-tasks-panel" styleClass="panel-100 #{(MyTasksBean.assignmentPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_assignment_title}" progressive="true" rendered="#{not empty MyTasksBean.assignmentTasks}">
 
    <%-- Main List --%>
@@ -79,6 +80,7 @@
       </a:booleanEvaluator>
    </a:richList>
 
+</a:panel>
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

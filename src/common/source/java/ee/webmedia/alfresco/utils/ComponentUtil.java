@@ -63,6 +63,39 @@ public class ComponentUtil {
     private static GeneralService generalService;
 
     /**
+     * Put attribute to given component
+     * 
+     * @param component
+     * @param key
+     * @param value
+     * @return attributes of the component
+     */
+    public static Map<String, Object> putAttribute(UIComponent component, final String key, final Object value) {
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> attributes = component.getAttributes();
+        attributes.put(key, value);
+        return attributes;
+    }
+
+    /**
+     * Add children to the component
+     * 
+     * @param component
+     * @param children - children to be added or null - then just children of the component are returned without adding any children
+     * @return children of the component
+     */
+    public static List<UIComponent> addChildren(UIComponent component, UIComponent... children) {
+        @SuppressWarnings("unchecked")
+        final List<UIComponent> componentChildren = component.getChildren();
+        if (children != null) {
+            for (UIComponent child : children) {
+                componentChildren.add(child);
+            }
+        }
+        return componentChildren;
+    }
+
+    /**
      * @param component - UIComponent to be searched from(looking towards the ancestors up to UIPropertySheet and then down to UIProperty matching
      *            <code>searchPropertyIdSuffix</code>)
      * @param searchPropertyIdSuffix - used to validate if <code>uiProperty.getId().endsWith(propertyIdSuffix)</code>
@@ -294,17 +327,18 @@ public class ComponentUtil {
 
     /**
      * Sets the listbox size (if is listbox) so that size is 1 .. 4
+     * 
      * @param component
      * @param selectItems
      */
     public static void setHtmlSelectManyListboxSize(UIComponent component, List<?> selectItems) {
-        if(component instanceof HtmlSelectManyListbox) {
+        if (component instanceof HtmlSelectManyListbox) {
             int itemCount = selectItems.size();
 
-            if(itemCount > 4) {
+            if (itemCount > 4) {
                 itemCount = 4;
             }
-            if(itemCount < 1) {
+            if (itemCount < 1) {
                 itemCount = 1;
             }
 
@@ -381,7 +415,8 @@ public class ComponentUtil {
         return generateAjaxFormSubmit(context, component, fieldId, value, null, parentLevel);
     }
 
-    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value, Map<String, String> params, int parentLevel) {
+    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value //
+            , Map<String, String> params, int parentLevel) {
         Assert.isTrue(parentLevel >= 0, "parentLevel cannot be negative");
         UIComponent ajaxComponent = null;
         int parentLevelFound = -1;
@@ -442,7 +477,7 @@ public class ComponentUtil {
         s.append(((AjaxUpdateable) ajaxComponent).getAjaxClientId(context)).append("','");
         s.append(form.getClientId(context)).append("','");
         s.append(context.getViewRoot().getViewId()).append("',[");
-        for (Iterator<String> i = submittableParams.iterator(); i.hasNext(); ) {
+        for (Iterator<String> i = submittableParams.iterator(); i.hasNext();) {
             String submittableParam = i.next();
             s.append("'").append(submittableParam).append("'");
             if (i.hasNext()) {
@@ -460,7 +495,7 @@ public class ComponentUtil {
     }
 
     public static final String ATTR_DISPLAY_LABEL = "displayLabel";
-    
+
     /**
      * NB! If NOT <code>componentPropVO.isUseComponentGenerator()</code>, then component generators are not used, and hence for example value bindings and
      * validations are not set up.<br>
@@ -511,13 +546,15 @@ public class ComponentUtil {
         if (component instanceof UIOutput) {
             final String converterName = customAttributes.get(JSF_CONVERTER);
             if (StringUtils.isNotBlank(converterName)) {
-                try {// XXX: pm võiks külge panna ka property tüübi järgi mingid default converterid(a la double tüübi puhul DoubleConverter), et ei peaks käsitsi attribuute lisama
+                try {// XXX: pm võiks külge panna ka property tüübi järgi mingid default
+                    // converterid(a la double tüübi puhul DoubleConverter), et ei peaks käsitsi attribuute lisama
                     @SuppressWarnings("unchecked")
                     final Class<Converter> converterClass = (Class<Converter>) Class.forName(converterName);
                     final Converter converter = converterClass.newInstance();
-                    ((UIOutput)component).setConverter(converter);
+                    ((UIOutput) component).setConverter(converter);
                 } catch (Exception e) {
-                    throw new RuntimeException("Can't initialize converter with class name '" + converterName + "' while creating property '" + propName + "'", e);
+                    throw new RuntimeException("Can't initialize converter with class name '" + converterName // 
+                            + "' while creating property '" + propName + "'", e);
                 }
             }
         }
@@ -527,28 +564,29 @@ public class ComponentUtil {
 
         return component;
     }
-    
+
     /**
-     * Method that constructs component without using componentGenerators 
+     * Method that constructs component without using componentGenerators
+     * 
      * @param context
      * @param vo
      * @return
      */
     private static UIComponent createCellComponent(FacesContext context, ComponentPropVO vo) {
         UIComponent component = null;
-        
+
         String type = vo.getGeneratorName();
         final Map<String, String> voCustomAttributes = vo.getCustomAttributes();
-        if(StringUtils.equals(RepoConstants.GENERATOR_TEXT_AREA, type)){
+        if (StringUtils.equals(RepoConstants.GENERATOR_TEXT_AREA, type)) {
             component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
             component.setRendererType(ComponentConstants.JAVAX_FACES_TEXTAREA);
-        } else if(StringUtils.equals(RepoConstants.GENERATOR_DATE_PICKER, type)){
+        } else if (StringUtils.equals(RepoConstants.GENERATOR_DATE_PICKER, type)) {
             component = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_INPUT);
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = component.getAttributes();
             attributes.put("styleClass", "date");
             ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
-        } else if(StringUtils.equals("ClassificatorSelectorGenerator", type)){
+        } else if (StringUtils.equals("ClassificatorSelectorGenerator", type)) {
             if (voCustomAttributes.containsKey(ClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_NAME)) {
                 ClassificatorSelectorGenerator classificGenerator = new ClassificatorSelectorGenerator();
                 classificGenerator.setCustomAttributes(voCustomAttributes);
@@ -627,20 +665,20 @@ public class ComponentUtil {
     }
 
     public static UIComponent findComponentById(FacesContext context, UIComponent root, String id) {
-		UIComponent component = null;
+        UIComponent component = null;
 
-		for (int i = 0; i < root.getChildCount() && component == null; i++) {
-			UIComponent child = (UIComponent) root.getChildren().get(i);
-			component = findComponentById(context, child, id);
-		}
+        for (int i = 0; i < root.getChildCount() && component == null; i++) {
+            UIComponent child = (UIComponent) root.getChildren().get(i);
+            component = findComponentById(context, child, id);
+        }
 
-		if (root.getId() != null) {
-			if (component == null && root.getId().equals(id)) {
-				component = root;
-			}
-		}
-		return component;
-	}
+        if (root.getId() != null) {
+            if (component == null && root.getId().equals(id)) {
+                component = root;
+            }
+        }
+        return component;
+    }
 
     public static UIComponent findChildComponentById(FacesContext context, UIComponent component, String id, String clientId) {
         if (component == null) {

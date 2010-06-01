@@ -169,7 +169,9 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         series.setNode(transientNode);
         series.setFunctionNodeRef(functionNodeRef);
         final String functionMark = getFunctionsService().getFunctionByNodeRef(functionNodeRef).getMark();
-        series.setSeriesIdentifier(functionMark + "-");
+        final String initialSeriesIdentifier = functionMark + "-";
+        series.setSeriesIdentifier(initialSeriesIdentifier);
+        series.setInitialSeriesIdentifier(initialSeriesIdentifier);
         return series;
     }
 

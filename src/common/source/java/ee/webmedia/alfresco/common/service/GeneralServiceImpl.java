@@ -24,6 +24,8 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.ClassDefinition;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
@@ -526,20 +528,27 @@ public class GeneralServiceImpl implements GeneralService {
     }
     
     @Override
-    public void updateParentContainingDocsCount(NodeRef parentNodeRef, QName propertyName, boolean added, Integer count) {
-        if(parentNodeRef == null)
+    public void updateParentContainingDocsCount(final NodeRef parentNodeRef, final QName propertyName, boolean added, Integer count) {
+        if (parentNodeRef == null)
             return;
-        
+
         Serializable valueProperty = nodeService.getProperty(parentNodeRef, propertyName);
-        if(valueProperty == null) { // first time, assign default value
+        if (valueProperty == null) { // first time, assign default value
             valueProperty = 0;
         }
-        
+
         int value = Integer.parseInt(valueProperty.toString());
         count = (count == null) ? 1 : count;
-        int newValue = (added) ? value + count : value - count;
-        nodeService.setProperty(parentNodeRef, propertyName, newValue);
+        final int newValue = (added) ? value + count : value - count;
 
+        // Update property with elevated rights
+        AuthenticationUtil.runAs(new RunAsWork<Object>() {
+            @Override
+            public Object doWork() throws Exception {
+                nodeService.setProperty(parentNodeRef, propertyName, newValue);
+                return null;
+            }
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     // START: getters / setters

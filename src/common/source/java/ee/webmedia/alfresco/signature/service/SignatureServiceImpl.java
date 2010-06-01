@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ContentReader;
@@ -207,6 +209,17 @@ public class SignatureServiceImpl implements SignatureService {
     }
 
     private SignatureItemsAndDataItems getDataItemsAndSignatureItems(SignedDoc ddoc, NodeRef nodeRef, boolean includeData) {
+        if(!includeData) {
+            AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
+                @Override
+                public NodeRef doWork() throws Exception {
+                    return null;
+                }
+            }, AuthenticationUtil.getSystemUserName());
+        }
+//        
+//        
+        
         SignatureItemsAndDataItems signatureItemsAndDataItems = new SignatureItemsAndDataItems();
         signatureItemsAndDataItems.setSignatureItems(getSignatureItems(nodeRef, ddoc));
         signatureItemsAndDataItems.setDataItems(getDataItems(nodeRef, ddoc, includeData));

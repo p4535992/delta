@@ -153,7 +153,7 @@ public class ParametersServiceImpl implements ParametersService {
         }
     }
 
-    public void updateParameter(Parameter<? extends Serializable> parameter) {
+    private void updateParameter(Parameter<? extends Serializable> parameter) {
         final Parameters parameterEnum = Parameters.get(parameter);
         final String xPath = parameterEnum.toString();
         final NodeRef nodeRef = generalService.getNodeRef(xPath);
@@ -174,6 +174,17 @@ public class ParametersServiceImpl implements ParametersService {
                 }
             }
         }
+    }
+
+    @Override
+    public void setParameterNextFireTime(Parameter<? extends Serializable> parameter) {
+        final Parameters parameterEnum = Parameters.get(parameter);
+        final String xPath = parameterEnum.toString();
+        final NodeRef nodeRef = generalService.getNodeRef(xPath);
+        if (log.isDebugEnabled()) {
+            log.debug("updating parameter next fire time: " + parameter + "; nextFire=" + parameter.getNextFireTime());
+        }
+        nodeService.setProperty(nodeRef, ParametersModel.Props.Parameter.NEXT_FIRE_TIME, parameter.getNextFireTime());
     }
 
     // START: getters / setters

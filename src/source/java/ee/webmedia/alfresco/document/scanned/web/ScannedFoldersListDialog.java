@@ -1,13 +1,15 @@
 package ee.webmedia.alfresco.document.scanned.web;
 
-import ee.webmedia.alfresco.document.file.model.File;
-import ee.webmedia.alfresco.document.file.service.FileService;
-import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.springframework.web.jsf.FacesContextUtils;
+import java.util.List;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
-import java.util.List;
+
+import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.springframework.web.jsf.FacesContextUtils;
+
+import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.service.FileService;
 
 /**
  * Dialog showing list of folders that contain scanned documents

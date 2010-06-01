@@ -28,7 +28,7 @@ function setAddressbookDiv(id){
                         <a:panel id="_org-panel" label="#{msg.addressbook_organizations}" styleClass="with-pager">
 
                         <a:actionLink id="add-org-button" value="#{msg.addressbook_add_org}" image="/images/icons/add_user.gif" showLink="false"
-                           action="wizard:addressbookAddOrg" />
+                           action="dialog:addressbookAddOrg" />
                         <a:richList id="_organizations-list" viewMode="details" width="100%"
                            binding="#{AddressbookDialog.orgRichList}" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow"
                            altRowStyleClass="recordSetRowAlt" value="#{AddressbookDialog.organizations}" var="r" initialSortColumn="name"
@@ -78,7 +78,7 @@ function setAddressbookDiv(id){
 
                         <a:panel id="people-panel2" label="#{msg.addressbook_org_persons}" styleClass="with-pager">
                            <a:actionLink value="#{msg.addressbook_add_org_person}" image="/images/icons/add_user.gif" showLink="false"
-                              action="wizard:addressbookAddOrgPerson" actionListener="#{AddressbookOrgPersonWizard.setupEntryOrg}">
+                              action="dialog:addressbookAddOrgPerson" actionListener="#{AddressbookOrgPersonWizard.setupEntryOrg}">
                               <f:param name="org" value="#{AddressbookDialog.currentNode.nodeRef}" />
                            </a:actionLink>
 
@@ -125,7 +125,7 @@ function setAddressbookDiv(id){
                      
                      <a:panel id="person-panel" styleClass="column panel-33 with-pager" label="#{msg.addressbook_private_persons}">
                         <a:actionLink value="#{msg.addressbook_add_person}" image="/images/icons/add_user.gif" showLink="false"
-                           action="wizard:addressbookAddPerson" />
+                           action="dialog:addressbookAddPerson" />
 
                         <a:richList id="people-list" viewMode="details" binding="#{AddressbookDialog.peopleRichList}"
                            rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"

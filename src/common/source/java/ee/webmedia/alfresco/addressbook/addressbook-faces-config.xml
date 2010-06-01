@@ -40,9 +40,8 @@
    </managed-bean>
    
    <managed-bean>
-      <description>The bean that houses the Addressbook Org entry creation.</description>
-      <managed-bean-name>AddressbookOrgWizard</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.addressbook.web.wizard.AddOrgWizard</managed-bean-class>
+      <managed-bean-name>AddressbookAddEditDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.addressbook.web.dialog.AddressbookAddEditDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
       <managed-property>
          <property-name>addressbookService</property-name>
@@ -50,28 +49,6 @@
       </managed-property>
    </managed-bean>
 
-   <managed-bean>
-      <description>The bean that houses the Addressbook Person entry creation.</description>
-      <managed-bean-name>AddressbookPersonWizard</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.addressbook.web.wizard.AddPersonWizard</managed-bean-class>
-      <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-         <property-name>addressbookService</property-name>
-         <value>#{AddressbookService}</value>
-      </managed-property>
-   </managed-bean>
-
-   <managed-bean>
-      <description>The bean that houses the Addressbook OrgPerson entry creation.</description>
-      <managed-bean-name>AddressbookOrgPersonWizard</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.addressbook.web.wizard.AddOrgPersonWizard</managed-bean-class>
-      <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-         <property-name>addressbookService</property-name>
-         <value>#{AddressbookService}</value>
-      </managed-property>
-   </managed-bean>
-   
    <managed-bean>
       <managed-bean-name>ContactGroupListDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupListDialog</managed-bean-class>

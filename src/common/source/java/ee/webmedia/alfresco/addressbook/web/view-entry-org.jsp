@@ -43,8 +43,8 @@
                      <f:facet name="header">
                         <h:outputText value="#{msg.actions}" />
                      </f:facet>
-                     <a:actionLink value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false" action="wizard:addressbookAddOrgPerson"
-                        actionListener="#{AddressbookOrgPersonWizard.setupEdit}">
+                     <a:actionLink value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false" action="dialog:addressbookAddEdit"
+                        actionListener="#{AddressbookAddEditDialog.setupEdit}">
                         <f:param name="nodeRef" value="#{r.nodeRef}" />
                      </a:actionLink>
                      <a:actionLink value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false" action="dialog:addressbookDeleteEntry"

@@ -87,7 +87,11 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
             email = testEmail;
         }
         properties.put(ContentModel.PROP_EMAIL, email);
-        properties.put(ContentModel.PROP_ORGID, ametnik.getYksusId());
+        BigInteger yksusId = ametnik.getYksusId();
+        if(BigInteger.valueOf(-1).equals(yksusId)) {
+            yksusId = null;
+        }
+        properties.put(ContentModel.PROP_ORGID, yksusId);
         return person;
     }
 

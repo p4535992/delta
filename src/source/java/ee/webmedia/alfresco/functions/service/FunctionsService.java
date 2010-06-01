@@ -71,4 +71,10 @@ public interface FunctionsService {
 
     long createNewYearBasedVolumes();
 
+    /**
+     * Update fields that contain documents count
+     * @return number of documents in documentList
+     */
+    long updateDocCounters();
+
 }

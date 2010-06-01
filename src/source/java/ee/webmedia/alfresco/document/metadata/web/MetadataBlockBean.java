@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.metadata.web;
 
+import static org.alfresco.web.ui.common.StringUtils.encode;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.DateFormat;
@@ -33,7 +35,6 @@ import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
-import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.BooleanUtils;
@@ -275,6 +276,7 @@ public class MetadataBlockBean implements Serializable {
 
         List<String> list = new ArrayList<String>(3);
         list.add(UserUtil.getPersonFullName1(personProps));
+        list.add((String) personProps.get(ContentModel.PROP_JOBTITLE));
         list.add(null);
         list.add(null);
         return list;
@@ -345,15 +347,15 @@ public class MetadataBlockBean implements Serializable {
             }
 
             if (document.hasAspect(DocumentCommonModel.Aspects.OWNER)) {
-                String owner = Utils.encode((String) props.get(DocumentCommonModel.Props.OWNER_NAME));
+                String owner = encode((String) props.get(DocumentCommonModel.Props.OWNER_NAME));
                 List<String> ownerProps = new ArrayList<String>(4);
                 String ownerJobTitle = (String) props.get(DocumentCommonModel.Props.OWNER_JOB_TITLE);
                 if (!StringUtils.isBlank(ownerJobTitle)) {
-                    ownerProps.add(Utils.encode(ownerJobTitle));
+                    ownerProps.add(encode(ownerJobTitle));
                 }
                 String ownerOrgStructUnit = (String) props.get(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT);
                 if (!StringUtils.isBlank(ownerOrgStructUnit)) {
-                    ownerProps.add(Utils.encode(ownerOrgStructUnit));
+                    ownerProps.add(encode(ownerOrgStructUnit));
                 }
                 String ownerEmail = (String) props.get(DocumentCommonModel.Props.OWNER_EMAIL);
                 if (!StringUtils.isBlank(ownerEmail)) {
@@ -361,7 +363,7 @@ public class MetadataBlockBean implements Serializable {
                 }
                 String ownerPhone = (String) props.get(DocumentCommonModel.Props.OWNER_PHONE);
                 if (!StringUtils.isBlank(ownerPhone)) {
-                    ownerProps.add(Utils.encode(ownerPhone));
+                    ownerProps.add(encode(ownerPhone));
                 }
 
                 String ownerDetails = StringUtils.join(ownerProps.iterator(), ", ");
@@ -435,7 +437,7 @@ public class MetadataBlockBean implements Serializable {
             }
 
             if (document.hasAspect(DocumentSpecificModel.Aspects.MANAGEMENTS_ORDER_DETAILS)) {
-                String responsible = Utils.encode((String) props.get(DocumentSpecificModel.Props.RESPONSIBLE_NAME));
+                String responsible = encode((String) props.get(DocumentSpecificModel.Props.RESPONSIBLE_NAME));
                 String responsibleStructUnit = (String) props.get(DocumentSpecificModel.Props.RESPONSIBLE_STRUCT_UNIT);
                 props.put("responsible", joinStringAndStringWithParentheses(responsible, responsibleStructUnit));
             }
@@ -454,7 +456,7 @@ public class MetadataBlockBean implements Serializable {
                     String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL_DAYS));
                     String msg = document.getType().equals(DocumentSubtypeModel.Types.VACATION_ORDER_SMIT) //
                             ? "document_leaveAnnualSmit" : "document_leaveAnnual";
-                    sb.append(Utils.encode(MessageUtil.getMessage(context, msg, from, to, days)));
+                    sb.append(encode(MessageUtil.getMessage(context, msg, from, to, days)));
                 }
                 if (BooleanUtils.isTrue(leaveWithoutPay)) {
                     String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY_BEGIN_DATE));
@@ -463,7 +465,7 @@ public class MetadataBlockBean implements Serializable {
                     if (StringUtils.isNotBlank(sb.toString())) {
                         sb.append("<br/>");
                     }
-                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveWithoutPay", from, to, days)));
+                    sb.append(encode(MessageUtil.getMessage(context, "document_leaveWithoutPay", from, to, days)));
                 }
                 if (BooleanUtils.isTrue(leaveChild)) {
                     String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_CHILD_BEGIN_DATE));
@@ -472,7 +474,7 @@ public class MetadataBlockBean implements Serializable {
                     if (StringUtils.isNotBlank(sb.toString())) {
                         sb.append("<br/>");
                     }
-                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveChild", from, to, days)));
+                    sb.append(encode(MessageUtil.getMessage(context, "document_leaveChild", from, to, days)));
                 }
                 if (BooleanUtils.isTrue(leaveStudy)) {
                     String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_STUDY_BEGIN_DATE));
@@ -481,7 +483,7 @@ public class MetadataBlockBean implements Serializable {
                     if (StringUtils.isNotBlank(sb.toString())) {
                         sb.append("<br/>");
                     }
-                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveStudy", from, to, days)));
+                    sb.append(encode(MessageUtil.getMessage(context, "document_leaveStudy", from, to, days)));
                 }
                 if (StringUtils.isNotBlank(sb.toString())) {
                     props.put("{temp}vacationAddText", sb.toString());
@@ -491,27 +493,27 @@ public class MetadataBlockBean implements Serializable {
                 Boolean leaveCancel = (Boolean) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL);
                 sb = new StringBuilder();
                 if (BooleanUtils.isTrue(leaveChange)) {
-                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveChange1")));
+                    sb.append(encode(MessageUtil.getMessage(context, "document_leaveChange1")));
                     sb.append("<br/>");
                     String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_INITIAL_BEGIN_DATE));
                     String to = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_INITIAL_END_DATE));
-                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveChange2", from, to)));
+                    sb.append(encode(MessageUtil.getMessage(context, "document_leaveChange2", from, to)));
                     sb.append("<br/>");
                     String newFrom = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE));
                     String newTo = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_NEW_END_DATE));
                     String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_NEW_DAYS));
-                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveChange3", newFrom, newTo, days)));
+                    sb.append(encode(MessageUtil.getMessage(context, "document_leaveChange3", newFrom, newTo, days)));
                 }
                 if (BooleanUtils.isTrue(leaveCancel)) {
                     if (StringUtils.isNotBlank(sb.toString())) {
                         sb.append("<br/>");
                     }
-                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveCancel1")));
+                    sb.append(encode(MessageUtil.getMessage(context, "document_leaveCancel1")));
                     sb.append("<br/>");
                     String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE));
                     String to = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE));
                     String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_DAYS));
-                    sb.append(Utils.encode(MessageUtil.getMessage(context, "document_leaveCancel2", from, to, days)));
+                    sb.append(encode(MessageUtil.getMessage(context, "document_leaveCancel2", from, to, days)));
                 }
                 if (StringUtils.isNotBlank(sb.toString())) {
                     props.put("{temp}vacationChangeText", sb.toString());
@@ -519,11 +521,14 @@ public class MetadataBlockBean implements Serializable {
 
                 StringBuilder table = new StringBuilder("<table cellspacing='0' cellpadding='0' class='recipient padding'><thead><tr><th>");
                 table.append(MessageUtil.getMessage(context, "document_vacationSubstitute2"));
+                table.append("</th><th>").append(MessageUtil.getMessage(context, "user_jobtitle"));
                 table.append("</th><th>").append(MessageUtil.getMessage(context, "from"));
                 table.append("</th><th>").append(MessageUtil.getMessage(context, "to"));
                 table.append("</th></tr></thead><tbody>");
                 @SuppressWarnings("unchecked")
                 List<String> names = (List<String>) props.get(DocumentSpecificModel.Props.SUBSTITUTE_NAME);
+                @SuppressWarnings("unchecked")
+                List<String> jobTitles = (List<String>) props.get(DocumentSpecificModel.Props.SUBSTITUTE_JOB_TITLE);
                 @SuppressWarnings("unchecked")
                 List<Date> begins = (List<Date>) props.get(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE);
                 @SuppressWarnings("unchecked")
@@ -533,6 +538,10 @@ public class MetadataBlockBean implements Serializable {
                         String name = "";
                         if (names.get(i) != null) {
                             name = names.get(i);
+                        }
+                        String jobTitle = "";
+                        if (jobTitles.get(i) != null) {
+                            jobTitle = jobTitles.get(i);
                         }
                         String begin = "";
                         if (begins != null && i < begins.size() && begins.get(i) != null) {
@@ -545,9 +554,10 @@ public class MetadataBlockBean implements Serializable {
                         if (StringUtils.isBlank(name) && StringUtils.isBlank(begin) && StringUtils.isBlank(end)) {
                             continue;
                         }
-                        table.append("<tr><td>").append(Utils.encode(name)).append("</td><td>");
-                        table.append(Utils.encode(begin)).append("</td><td>");
-                        table.append(Utils.encode(end)).append("</td></tr>");
+                        table.append("<tr><td>").append(encode(name)).append("</td><td>");
+                        table.append(encode(jobTitle)).append("</td><td>");
+                        table.append(encode(begin)).append("</td><td>");
+                        table.append(encode(end)).append("</td></tr>");
                     }
                     table.append("</tbody></table>");
                     props.put("{temp}vacationSubstitute", table.toString());
@@ -560,7 +570,7 @@ public class MetadataBlockBean implements Serializable {
             NodeRef seriesRef = (NodeRef) props.get(DocumentService.TransientProps.SERIES_NODEREF);
             NodeRef volumeRef = (NodeRef) props.get(DocumentService.TransientProps.VOLUME_NODEREF);
             String caseLabel = (String) props.get(DocumentService.TransientProps.CASE_LABEL_EDITABLE);
-            updateFnSerVol(functionRef, seriesRef, volumeRef, caseLabel, false, true);
+            updateFnSerVol(functionRef, seriesRef, volumeRef, caseLabel, true);
 
             if (DocumentSubtypeModel.Types.LEAVING_LETTER.equals(document.getType())) {
                 /** Document name must be filled for this type. */
@@ -732,7 +742,7 @@ public class MetadataBlockBean implements Serializable {
         return errandType;
     }
 
-    //===============================================================================================================================
+    // ===============================================================================================================================
 
     private List<SelectItem> functions;
     private List<SelectItem> series;
@@ -765,7 +775,7 @@ public class MetadataBlockBean implements Serializable {
     public List<SelectItem> getVolumes(FacesContext context, UIInput selectComponent) {
         return volumes;
     }
-    
+
     /**
      * @param context
      * @param selectComponent
@@ -777,23 +787,23 @@ public class MetadataBlockBean implements Serializable {
 
     public void functionValueChanged(ValueChangeEvent event) {
         NodeRef functionRef = (NodeRef) event.getNewValue();
-        updateFnSerVol(functionRef, null, null, null, true, false);
+        updateFnSerVol(functionRef, null, null, null, false);
     }
 
     public void seriesValueChanged(ValueChangeEvent event) {
         NodeRef functionRef = (NodeRef) document.getProperties().get(DocumentService.TransientProps.FUNCTION_NODEREF);
         NodeRef seriesRef = (NodeRef) event.getNewValue();
-        updateFnSerVol(functionRef, seriesRef, null, null, true, false);
+        updateFnSerVol(functionRef, seriesRef, null, null, false);
     }
 
     public void volumeValueChanged(ValueChangeEvent event) {
         NodeRef functionRef = (NodeRef) document.getProperties().get(DocumentService.TransientProps.FUNCTION_NODEREF);
         NodeRef seriesRef = (NodeRef) document.getProperties().get(DocumentService.TransientProps.SERIES_NODEREF);
         NodeRef volumeRef = (NodeRef) event.getNewValue();
-        updateFnSerVol(functionRef, seriesRef, volumeRef, null, true, false);
+        updateFnSerVol(functionRef, seriesRef, volumeRef, null, false);
     }
 
-    private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel, boolean updateComponents, boolean addIfMissing) {
+    private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel, boolean addIfMissing) {
         { // Function
             List<Function> allFunctions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
             functions = new ArrayList<SelectItem>(allFunctions.size());
@@ -867,12 +877,16 @@ public class MetadataBlockBean implements Serializable {
             } else { // when value change event is fired
                 final NodeRef finalSeriesRef = seriesRef;
                 ActionEvent event = new ActionEvent(ps) {
+                    private static final long serialVersionUID = 1L;
+
                     boolean notExecuted = true;
+
                     @Override
                     public void processListener(FacesListener faceslistener) {
                         notExecuted = false;
                         updateAccessRestrictionProperties(finalSeriesRef);
                     }
+
                     @Override
                     public boolean isAppropriateListener(FacesListener faceslistener) {
                         return notExecuted;
@@ -982,7 +996,7 @@ public class MetadataBlockBean implements Serializable {
             if (emails != null && i < emails.size()) {
                 email = emails.get(i);
             }
-            String row = joinStringAndStringWithComma(Utils.encode(name), generateEmailLink(email));
+            String row = joinStringAndStringWithComma(encode(name), generateEmailLink(email));
             if (!StringUtils.isBlank(row)) {
                 rows.add(row);
             }
@@ -994,7 +1008,7 @@ public class MetadataBlockBean implements Serializable {
         if (StringUtils.isBlank(email)) {
             return email;
         }
-        return "<a href=\"mailto:" + Utils.encode(email) + "\">" + Utils.encode(email) + "</a>";
+        return "<a href=\"mailto:" + encode(email) + "\">" + encode(email) + "</a>";
     }
 
     protected String joinStringAndDateWithComma(String value1, Date date) {
@@ -1040,7 +1054,6 @@ public class MetadataBlockBean implements Serializable {
         reloadDoc();
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
         documentTypeName = documentType != null ? documentType.getName() : null;
-        final Map<String, Object> props = document.getProperties();
     }
 
     public void reloadDoc() {
@@ -1170,7 +1183,7 @@ public class MetadataBlockBean implements Serializable {
         if (volume.isContainsCases() && StringUtils.isNotBlank(caseLabel)) {
             List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef);
             for (Case tmpCase : allCases) {
-                if (caseLabel.equalsIgnoreCase(tmpCase.getTitle())) {
+                if (StringUtils.equalsIgnoreCase(caseLabel, tmpCase.getTitle())) {
                     if (tmpCase.isClosed()) {
                         if (log.isDebugEnabled()) {
                             log.warn("validation failed: document_validationMsg_closed_case");
@@ -1351,7 +1364,6 @@ public class MetadataBlockBean implements Serializable {
         private boolean inEditMode;
         private DateFormat dateFormat;
         private String documentTypeName;
-        private String selectedCaseRefNum;
 
         private Snapshot(MetadataBlockBean bean) {
             this.document = bean.document;

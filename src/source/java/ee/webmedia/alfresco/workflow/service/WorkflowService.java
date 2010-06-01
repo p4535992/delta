@@ -36,7 +36,7 @@ public interface WorkflowService {
     CompoundWorkflowDefinition getNewCompoundWorkflowDefinition();
 
     // Dokumendi ekraanil terviktöövoo alustamise menüü
-    List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(QName documentType);
+    List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(QName documentType, String documentStatus);
 
     // new in-memory object, based on existing compoundWorkflow definition
     CompoundWorkflow getNewCompoundWorkflow(NodeRef compoundWorkflowDefinition, NodeRef parent);

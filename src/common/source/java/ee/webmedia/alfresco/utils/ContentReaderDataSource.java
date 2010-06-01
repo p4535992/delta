@@ -1,4 +1,4 @@
-package ee.webmedia.alfresco.adr.util;
+package ee.webmedia.alfresco.utils;
 
 import java.io.IOException;
 import java.io.InputStream;

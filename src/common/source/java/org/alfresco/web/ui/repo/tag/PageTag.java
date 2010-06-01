@@ -70,6 +70,7 @@ public class PageTag extends TagSupport
         List<String> scriptsList = Arrays.asList(
                         // jQuery
                 "/scripts/jquery/jquery" + (log.isDebugEnabled() ? "" : "-min") + ".js",
+                "/scripts/jquery/jquery.scrollTo" + (log.isDebugEnabled() ? "" : "-min") + ".js",
                                 // jQuery UI
                 "/scripts/jquery/ui.core.js",
                 "/scripts/jquery/ui.datepicker.js",
@@ -100,7 +101,7 @@ public class PageTag extends TagSupport
                 "/scripts/ajax/picker.js",
                 "/scripts/ajax/tagger.js",
                 "/scripts/json-2_2_min.js",
-                "/scripts/rsh_compressed.js",
+                "/scripts/rsh"+(!log.isDebugEnabled() ? "_compressed" : "") + ".js",
                 "/scripts/validation.js",
                 "/scripts/scripts.js"
                 );
@@ -108,13 +109,13 @@ public class PageTag extends TagSupport
             // construct new List, that supports adding
             /*
              * uncomment, if need to use firebug-lite (with non-firefox browser)
-            scriptsList = new ArrayList<String>(scriptsList);
+            scriptsList = new java.util.ArrayList<String>(scriptsList);
             scriptsList.add("/scripts/firebug-lite.js");
              */
         }
         return scriptsList;
     }
-   
+    
    private final static String[] CSS = 
    {
       "/css/main.css",

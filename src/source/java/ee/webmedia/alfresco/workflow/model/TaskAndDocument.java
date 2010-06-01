@@ -5,7 +5,6 @@ import java.util.Date;
 
 import org.apache.commons.lang.time.DateUtils;
 
-import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.workflow.service.Task;
 

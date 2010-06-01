@@ -50,6 +50,10 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         return organizations;
     }
 
+    public NodeRef getAddressbookNode() {
+        return getAddressbookService().getAddressbookNodeRef();
+    }
+
     @Override
     public void init(Map<String, String> params) {
         organizations = Collections.emptyList();
@@ -68,7 +72,7 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         }
         super.restored();
     }
-    
+
     @Override
     public String getCancelButtonLabel() {
         return Application.getMessage(FacesContext.getCurrentInstance(), "back_button");
@@ -126,16 +130,14 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         setOrgPeople(op);
         return null;
     }
-    
-    
+
     /**
      * Query callback method executed by the Generic Picker component.
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param filterIndex        Index of the filter drop-down selection
-     * @param contains           Text from the contains textbox
-     * 
+     * @param filterIndex Index of the filter drop-down selection
+     * @param contains Text from the contains textbox
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
     public SelectItem[] searchContacts(int filterIndex, String contains) {
@@ -144,12 +146,12 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         List<Node> nodes = getAddressbookService().search(contains);
         return transformNodesToSelectItems(nodes, personLabel, organizationLabel);
     }
-    
+
     /**
      * Transforms the list of contact nodes (usually returned by the search) to SelectItems in the following form:
      * OrganizationName (organizationLabel, email) -- if it's an organization
      * FirstName LastName (privPersonLabel, email) -- if it's a person (can be both orgPerson or privPerson in the model)
-     *  
+     * 
      * @param nodes
      * @param privPersonLabel
      * @param organizationLabel
@@ -202,12 +204,12 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         String name;
         QName type = getNodeService().getType(new NodeRef(nodeRef));
         if (type.equals(Types.CONTACT_GROUP)) {
-            name = (String) props.get(AddressbookModel.Props.GROUP_NAME);    
-        }
-        else if (type.equals(Types.ORGANIZATION)) {
+            name = (String) props.get(AddressbookModel.Props.GROUP_NAME);
+        } else if (type.equals(Types.ORGANIZATION)) {
             name = (String) props.get(AddressbookModel.Props.ORGANIZATION_NAME);
         } else {
-            name = UserUtil.getPersonFullName((String) props.get(AddressbookModel.Props.PERSON_FIRST_NAME), (String) props.get(AddressbookModel.Props.PERSON_LAST_NAME));
+            name = UserUtil.getPersonFullName((String) props.get(AddressbookModel.Props.PERSON_FIRST_NAME), (String) props
+                    .get(AddressbookModel.Props.PERSON_LAST_NAME));
         }
 
         list.add(name);
