@@ -91,6 +91,7 @@
             value="<%if (session.getAttribute("digest") != null)
                            out.write((String) session.getAttribute("digest"));%>" />
          <param name="TOKEN_ID" value="" />
+         <param name="legacy_lifecycle" value="true" />
 
          <embed id="signApplet" type="application/x-java-applet;version=1.4" width="400" height="80"
             pluginspage="http://javadl.sun.com/webapps/download/GetFile/1.6.0_18-b07/windows-i586/xpiinstall.exe" java_code="SignApplet.class"
@@ -100,7 +101,7 @@
             OPERATION="<%if (session.getAttribute("operation") != null)
                                out.write((String) session.getAttribute("operation"));%>"
             HASH="<%if (session.getAttribute("digest") != null)
-                          out.write((String) session.getAttribute("digest"));%>" TOKEN_ID="">
+                          out.write((String) session.getAttribute("digest"));%>" TOKEN_ID="" LEGACY_LIFECYCLE="true">
          <noembed></noembed>
          </embed></object>
       </div>

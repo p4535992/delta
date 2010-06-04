@@ -115,6 +115,7 @@ public class SignatureAppletModalComponent extends UIOutputText {
         sb.append(getDigestHex());
         sb.append("\" />\n");
         sb.append("         <param name=\"TOKEN_ID\" value=\"\" />\n");
+        sb.append("         <param name=\"legacy_lifecycle\" value=\"true\" />\n");
         sb.append("\n");
         sb.append("         <embed id=\"signApplet\" type=\"application/x-java-applet;version=1.4\" width=\"400\" height=\"80\"\n");
         sb.append("            pluginspage=\"http://javadl.sun.com/webapps/download/GetFile/1.6.0_18-b07/windows-i586/xpiinstall.exe\" java_code=\"SignApplet.class\"\n");
@@ -126,7 +127,7 @@ public class SignatureAppletModalComponent extends UIOutputText {
         sb.append("\"\n");
         sb.append("            HASH=\"");
         sb.append(getDigestHex());
-        sb.append("\" TOKEN_ID=\"\">\n");
+        sb.append("\" TOKEN_ID=\"\" LEGACY_LIFECYCLE=\"true\">\n");
         sb.append("         <noembed></noembed>\n");
         sb.append("         </embed></object>\n");
         sb.append("         <p id=\"signWait\" style=\"display: none;\">Palun oodake...</p>\n");
