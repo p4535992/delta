@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.common.service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.Serializable;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -12,6 +13,7 @@ import javax.faces.context.FacesContext;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
+import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
@@ -172,14 +174,29 @@ public interface GeneralService {
     String getUniqueFileName(NodeRef folder, String fileName);
 
     NodeRef getAncestorNodeRefWithType(NodeRef childRef, QName ancestorType);
-    
+
     /**
      * Updates parent node containingDocsCount property
-     *
+     * 
      * @param parentNodeRef parent to update
      * @param propertyName property name to update
      * @param added should we increase or decrease
      * @param count how many docs were added/removed
      */
     void updateParentContainingDocsCount(NodeRef parentNodeRef, QName propertyName, boolean added, Integer count);
+
+    /**
+     * Sets up the writer (mimetype, encoding) and writes contents of the file
+     * 
+     * @param writer ContentWriter where to write
+     * @param file file from where content is read
+     * @param fileName full file name with extension
+     * @param mimetype
+     * @return
+     */
+    void writeFile(ContentWriter writer, File file, String fileName, String mimetype);
+
+    NodeRef addFileOrFolder(File file, NodeRef parentNodeRef, boolean flatten);
+
+    NodeRef addFile(File file, NodeRef parentNodeRef);
 }

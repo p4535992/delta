@@ -104,8 +104,8 @@ public class RepoUtil {
             }
             return newList;
 
-        } else if (property instanceof IClonable) {
-            return (Serializable) ((IClonable)property).clone();
+        } else if (property instanceof IClonable<?>) {
+            return (Serializable) ((IClonable<?>)property).clone();
         }
         throw new RuntimeException("Copying property not supported: " + property.getClass());
     }

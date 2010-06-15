@@ -27,6 +27,14 @@
             <action>dialog:documentListImportDialog</action>
          </action>
 
+         <action id="docList_import_smitExcel">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.SmitExcelImportEvaluator</evaluator>
+            <label-id>docList_import_smitExcel</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <tooltip-id>docList_import_smitExcel_tooltip</tooltip-id>
+            <action-listener>#{FunctionsListDialog.importSmitDocList}</action-listener>
+         </action>
+
          <action id="docList_updateDocCounters">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
             <label-id>docList_updateDocCounters</label-id>
@@ -50,6 +58,7 @@
             <action idref="docList_import" />
             <action idref="docList_createNewYearBasedVolumes" />
             <action idref="docList_updateDocCounters" />
+            <action idref="docList_import_smitExcel" />
          </action-group>
 
       </actions>

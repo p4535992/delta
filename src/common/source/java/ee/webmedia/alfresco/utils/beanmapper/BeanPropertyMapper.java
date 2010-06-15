@@ -5,7 +5,6 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -49,6 +48,7 @@ public class BeanPropertyMapper<T> {
     private HashMap<String, String> methodUris;
     /** Fully qualified QName and Corresponding setter methods */
     private HashMap<QName, Method> qNameWriteMethods;
+    private boolean addNullValuedToPropsMap;
 
     /**
      * @param properties Alfresco properties map
@@ -78,21 +78,22 @@ public class BeanPropertyMapper<T> {
             final Method writer = qNameWriteMethods.get(qName);
 
             if (writer != null && RepoUtil.isSystemProperty(qName)) {
-                RuntimeException e = new RuntimeException("Handling a system property '" + qName + "' is not allowed; target class " + mappedClass.getCanonicalName());
+                RuntimeException e = new RuntimeException("Handling a system property '"
+                        + qName + "' is not allowed; target class " + mappedClass.getCanonicalName());
                 log.error(e);
                 throw e;
             }
 
             if (null == writer) {
-                if (!RepoUtil.isSystemProperty(qName) && log.isDebugEnabled()) {
-                    log.debug("got property '" + qName + "' but didn't find corresponding setter on target class: " + mappedClass.getCanonicalName());
+                if (!RepoUtil.isSystemProperty(qName) && log.isTraceEnabled()) {
+                    log.trace("got property '" + qName + "' but didn't find corresponding setter on target class: " + mappedClass.getCanonicalName());
                 }
                 continue;
             }
 
             try {
                 Class<?> paramClass = writer.getParameterTypes()[0];
-                if(value == null && paramClass.isPrimitive()) {
+                if (value == null && paramClass.isPrimitive()) {
                     writer.invoke(target, 0);
                 } else {
                     writer.invoke(target, value);
@@ -116,19 +117,35 @@ public class BeanPropertyMapper<T> {
             targetProps = new HashMap<QName, Serializable>();
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Starting to map to properties with CLASS_URI '" + CLASS_URI + "' from object:"
+        if (log.isTraceEnabled()) {
+            log.trace("Starting to map to properties with CLASS_URI '" + CLASS_URI + "' from object:"
                     + ReflectionToStringBuilder.reflectionToString(object, ToStringStyle.MULTI_LINE_STYLE));
         }
         for (String fieldName : readMethods.keySet()) {
             String uri = methodUris.get(fieldName);
-            uri = (uri != null) ? uri : CLASS_URI;// prefer URI defined in interface over URI defined in class
             final Method reader = readMethods.get(fieldName);
             Object value;
             try {
                 value = reader.invoke(object);
+                if (!addNullValuedToPropsMap && !reader.getReturnType().isPrimitive() && value == null) {
+                    log.trace("not adding null value of field '" + fieldName + "' to properties map");
+                    continue;
+                }
             } catch (Exception e) {
                 throw new RuntimeException("failed to get value of field " + fieldName + " using method: " + reader, e);
+            }
+            if (uri == null) {
+                final Class<?> declaringClass = reader.getDeclaringClass();
+                final AlfrescoModelType uriSource = declaringClass.getAnnotation(AlfrescoModelType.class);
+                if (uriSource != null) {
+                    String declaringClassUri = uriSource.uri();
+                    // FIXME: see ei pruugi olla päris korrektne lahendus -
+                    // võtab küll interface'lt uri, aga võib-olla võiks võtta ka interface parent-interface't?):
+                    if (uri == null && StringUtils.isNotBlank(declaringClassUri)) {
+                        uri = declaringClassUri;
+                    }
+                }
+                uri = (uri != null) ? uri : CLASS_URI;// prefer URI defined in interface over URI defined in class
             }
             targetProps.put(QName.createQName(uri, fieldName), (Serializable) value);
         }
@@ -161,7 +178,7 @@ public class BeanPropertyMapper<T> {
                 log.debug("\tStarting to map " + clazz.getDeclaredFields().length + " fields of class " + clazz.getSimpleName());
             }
             for (Field field : clazz.getDeclaredFields()) {
-                if(Modifier.isStatic(field.getModifiers())) {
+                if (Modifier.isStatic(field.getModifiers())) {
                     continue; // not mapping staitc fields
                 }
                 final AlfrescoModelProperty filedAnnotation = field.getAnnotation(AlfrescoModelProperty.class);
@@ -178,8 +195,8 @@ public class BeanPropertyMapper<T> {
                         Method setter = clazz.getDeclaredMethod(setterName, (Class<?>) field.getType());
                         if (cAnnotation != null) {
                             if (log.isDebugEnabled()) {
-                                log.debug("Subclass already has a field with the same name '" + fieldName + "' and QName: " + qName + ". Mappable class: "
-                                        + mappedClass.getCanonicalName() + ", currently inspectable class: " + clazz.getCanonicalName());
+                                log.debug("Mappable class or it's superclass has a field named '" + fieldName + "', QName '" + qName
+                                        + "' will be mapped into filed using '" + setter + "' for mappable class: " + mappedClass.getCanonicalName());
                             }
                             qNameWriteMethods.put(qName, setter);
                         }
@@ -194,7 +211,7 @@ public class BeanPropertyMapper<T> {
                         throw new RuntimeException(errMsg, e);
                     }
                 }
-                
+
                 if (log.isDebugEnabled()) {
                     log.debug("\t\tStarting to map field: " + fieldName);
                 }
@@ -210,7 +227,8 @@ public class BeanPropertyMapper<T> {
         if (!isAlfrescoModelType) {
             throw new RuntimeException("The class " + mappedClass + " and its superclasses are not annotated with @AlfrescoModelType");
         } else if (StringUtils.isBlank(CLASS_URI)) {
-            log.info("Neither superclasses nor mappable class itself "+mappedClass+" has defined non-empty URI for mapping - all URIs will be retrieved from the interfaces for mapping to properties");
+            log.info("Neither superclasses nor mappable class itself " + mappedClass
+                    + " has defined non-empty URI for mapping - all URIs will be retrieved from the interfaces for mapping to properties");
         }
 
         if (log.isDebugEnabled()) {
@@ -254,10 +272,12 @@ public class BeanPropertyMapper<T> {
             final AlfrescoModelType iAnnotation = interf.getAnnotation(AlfrescoModelType.class);
             if (iAnnotation != null) {
                 final String interfAnnotationUri = iAnnotation.uri();
-                Assert.assertTrue(StringUtils.isNotBlank(interfAnnotationUri));// at the moment we don't accept that interfaces have @AlfrescoModelType annotation with blank URI
                 final PropertyDescriptor[] pd = BeanUtils.getPropertyDescriptors(interf);
                 for (PropertyDescriptor propertyDescriptor : pd) {
                     final String fieldName = propertyDescriptor.getName();
+                    // at the moment we don't accept that interfaces have @AlfrescoModelType annotation with blank URI
+                    Assert.assertTrue(interf.getCanonicalName() + "Inferfaces with methods should not have empty URI value : @AlfrescoModelType(uri=\"\")",
+                            StringUtils.isNotBlank(interfAnnotationUri));
                     qNameWriteMethods.put(QName.createQName(interfAnnotationUri, fieldName), propertyDescriptor.getWriteMethod());
                     if (!methodUris.containsKey(fieldName)) {
                         methodUris.put(fieldName, interfAnnotationUri);
@@ -266,7 +286,7 @@ public class BeanPropertyMapper<T> {
             }
         }
         if (log.isDebugEnabled()) {
-            log.debug(methodUris.size() + "methodUris: ");
+            log.debug(methodUris.size() + " methodUris: ");
             for (String methodName : methodUris.keySet()) {
                 log.debug("\t" + methodName + "\t" + methodUris.get(methodName));
             }
@@ -278,17 +298,25 @@ public class BeanPropertyMapper<T> {
         return this;
     }
 
-    private Collection<Class<?>> getAllInterfaces(Class<?> interf) {
+    /**
+     * @param classOrInterface
+     * @return all interfaces (interfaces of the class + interfaces of the superClasses + interfaces of all the interfaces)
+     */
+    private Collection<Class<?>> getAllInterfaces(Class<?> classOrInterface) {
         final Set<Class<?>> allInterfaces = new HashSet<Class<?>>();
-        allInterfaces.addAll(Arrays.asList(interf.getInterfaces()));
-        final Class<?> superclass = interf.getSuperclass();
+        addInterfacesFrom(classOrInterface, allInterfaces);
+        final Class<?> superclass = classOrInterface.getSuperclass();
         if (superclass != null) {
-            for (Class<?> superInterf : superclass.getInterfaces()) {
-                allInterfaces.add(superInterf);
-                allInterfaces.addAll(getAllInterfaces(superInterf));
-            }
+            addInterfacesFrom(superclass, allInterfaces);
         }
         return allInterfaces;
+    }
+
+    private void addInterfacesFrom(final Class<?> clazz, final Set<Class<?>> allInterfaces) {
+        for (Class<?> superInterf : clazz.getInterfaces()) {
+            allInterfaces.add(superInterf);
+            allInterfaces.addAll(getAllInterfaces(superInterf));
+        }
     }
 
 }

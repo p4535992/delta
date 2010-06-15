@@ -55,7 +55,7 @@ public class CaseServiceImpl implements CaseService {
     @Override
     public List<Case> getAllCasesByVolume(NodeRef volumeRef, DocListUnitStatus status) {
         List<Case> cases = getAllCasesByVolume(volumeRef);
-        for (Iterator<Case> i = cases.iterator(); i.hasNext(); ) {
+        for (Iterator<Case> i = cases.iterator(); i.hasNext();) {
             Case tmpCase = i.next();
             if (!status.getValueName().equals(tmpCase.getStatus())) {
                 i.remove();
@@ -100,10 +100,16 @@ public class CaseServiceImpl implements CaseService {
     }
 
     @Override
-    public void saveOrUpdate(Case theCase, boolean fromNodeProps) {
-        final boolean isNew = theCase.getNode() instanceof TransientNode;
-        final String title = (String) (fromNodeProps ? theCase.getNode().getProperties().get(CaseModel.Props.TITLE) : theCase.getTitle());
-        if (isCaseNameUsed(title, theCase.getVolumeNodeRef(), theCase.getNode().getNodeRef())) {
+    public void saveOrUpdate(final Case theCase, boolean fromNodeProps) {
+        final Node node = theCase.getNode();
+        final boolean nodeIsNull = node == null;
+        if (nodeIsNull) {
+            fromNodeProps = false;
+        }
+        final boolean isNew = nodeIsNull || node instanceof TransientNode;
+        @SuppressWarnings("null")
+        final String title = (String) (fromNodeProps ? node.getProperties().get(CaseModel.Props.TITLE) : theCase.getTitle());
+        if (isCaseNameUsed(title, theCase.getVolumeNodeRef(), node != null ? node.getNodeRef() : null)) {
             final UnableToPerformException ex = new UnableToPerformException(MessageSeverity.ERROR, "case_save_error_caseNameUsed");
             ex.setMessageValuesForHolders(title);
             throw ex;
@@ -112,16 +118,19 @@ public class CaseServiceImpl implements CaseService {
         if (!fromNodeProps) {
             props = caseBeanPropertyMapper.toProperties(theCase);
         } else {
-            props = RepoUtil.toQNameProperties(theCase.getNode().getProperties());
+            @SuppressWarnings("null")
+            final Map<QName, Serializable> qNameProperties = RepoUtil.toQNameProperties(node.getProperties());
+            props = qNameProperties;
         }
 
-        Map<String, Object> stringQNameProperties = theCase.getNode().getProperties();
         if (isNew) { // save
             NodeRef caseRef = nodeService.createNode(theCase.getVolumeNodeRef(),
                     CaseModel.Associations.CASE, CaseModel.Associations.CASE, CaseModel.Types.CASE, props).getChildRef();
             theCase.setNode(generalService.fetchNode(caseRef));
         } else { // update
-            generalService.setPropertiesIgnoringSystem(theCase.getNode().getNodeRef(), stringQNameProperties);
+            @SuppressWarnings("null")
+            Map<String, Object> stringQNameProperties = node.getProperties();
+            generalService.setPropertiesIgnoringSystem(node.getNodeRef(), stringQNameProperties);
         }
     }
 
@@ -152,6 +161,9 @@ public class CaseServiceImpl implements CaseService {
         final List<Case> cases = getAllCasesByVolume(volumeRef);
         for (Case theCase : cases) {
             if (StringUtils.equals(theCase.getTitle(), newCaseTitle) && (caseRef == null || !caseRef.equals(theCase.getNode().getNodeRef()))) {
+                if (log.isDebugEnabled()) {
+                    log.debug("found case that has the same name as name being checked for availability:\n" + theCase);
+                }
                 return true;
             }
         }

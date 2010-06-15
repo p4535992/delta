@@ -153,6 +153,7 @@ public class Volume implements Serializable, Comparable<Volume> {
         return new StringBuilder("Volume:")//
                 .append("\n\tvolumeMark = " + volumeMark)
                 .append("\n\ttitle = " + title)
+                .append("\n\tcontainsCases = " + containsCases)
                 .append("\n\tvalidFrom = " + validFrom)
                 .append("\n\tvalidTo = " + validTo)
                 .append("\n\tstatus = " + status)

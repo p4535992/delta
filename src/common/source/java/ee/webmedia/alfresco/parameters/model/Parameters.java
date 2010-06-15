@@ -18,8 +18,8 @@ public enum Parameters {
     DVK_RECEIVE_ORGANIZATIONS("dvkReceiveOrganizations"),
     /** period in minutes */
     DVK_RECEIVE_DOC_SEND_STATUSES("dvkReceiveDocSendStatusesInterval"),
-    DVK_ORGANIZATION_NAME("dvkOrganizationName"),
-    DVK_ORGANIZATION_REG_NUM("dvkOrganizationRegNr"),
+    DVK_ORGANIZATION_NAME("dvkOrganizationName"), // kui tühi, kasutatakse xtee confist
+    DVK_ORGANIZATION_REG_NUM("dvkOrganizationRegNr"), // see on üsna mõtetu, kuna kui valesti panna, siis viskab DVK tala
     EMPLOYEE_REG_RECEIVE_STRUCT_UNITS_TIME("employeeRegReceiveStructUnitsTime"),
     /** period that is used to update users registry */
     EMPLOYEE_REG_RECEIVE_USERS_PERIOD("employeeRegReceiveUsersPeriod"),

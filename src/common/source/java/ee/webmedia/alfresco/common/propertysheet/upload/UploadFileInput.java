@@ -20,7 +20,7 @@ import ee.webmedia.alfresco.common.service.IClonable;
 
 public class UploadFileInput extends UIInput implements NamingContainer {
 
-    public static class FileWithContentType implements Serializable, IClonable {
+    public static class FileWithContentType implements Serializable, IClonable<FileWithContentType> {
         private static final long serialVersionUID = 1L;
 
         public File file;
@@ -34,7 +34,7 @@ public class UploadFileInput extends UIInput implements NamingContainer {
         }
         
         @Override
-        public Object clone() {
+        public FileWithContentType clone() {
             return new FileWithContentType(file, contentType, fileName);
         }
     }

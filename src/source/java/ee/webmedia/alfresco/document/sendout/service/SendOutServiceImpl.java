@@ -82,7 +82,7 @@ public class SendOutServiceImpl implements SendOutService {
         List<Node> dvkCapableOrgs = new ArrayList<Node>();
         for (Node organization : addressbookService.listOrganization()) {
             Object dvkObj = organization.getProperties().get(AddressbookModel.Props.DVK_CAPABLE);
-            if (dvkObj != null && (Boolean)dvkObj) {
+            if (dvkObj != null && (Boolean) dvkObj) {
                 dvkCapableOrgs.add(organization);
             }
         }
@@ -103,7 +103,7 @@ public class SendOutServiceImpl implements SendOutService {
                 String recipientRegNr = "";
                 String sendMode = modes.get(i);
                 SendStatus sendStatus = SendStatus.RECEIVED;
-                
+
                 if (SendMode.EMAIL_DVK.equals(modes.get(i))) {
                     // Check if matches a DVK capable organization entry in addressbook
                     boolean hasDvkContact = false;
@@ -116,7 +116,7 @@ public class SendOutServiceImpl implements SendOutService {
                             break;
                         }
                     }
-                    
+
                     if (hasDvkContact) {
                         toRegNums.add(recipientRegNr);
                         sendMode = SEND_MODE_DVK;
@@ -130,7 +130,7 @@ public class SendOutServiceImpl implements SendOutService {
                     toEmails.add(email);
                     toNames.add(recipientName);
                 }
-                
+
                 Map<QName, Serializable> props = new HashMap<QName, Serializable>();
                 props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, recipient);
                 props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR, recipientRegNr);
@@ -163,7 +163,7 @@ public class SendOutServiceImpl implements SendOutService {
             }
             zipFileName = FilenameUtil.buildFileName(docName.toString(), "zip");
         }
-        
+
         // Send through DVK
         String dvkId = "";
         if (toRegNums.size() > 0) {
@@ -223,16 +223,22 @@ public class SendOutServiceImpl implements SendOutService {
                 props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, dvkId);
             }
 
-            final NodeRef sendInfoRef = nodeService.createNode(document, //
-                    DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Types.SEND_INFO, props).getChildRef();
-            log.debug("created new sendInfo '" + sendInfoRef + "' for sent document '" + document + "'");
-            updateSearchableSendMode(document);
+            addSendinfo(document, props);
         }
-        
+
         return true;
     }
 
-    ///// PRIVATE METHODS
+    @Override
+    public NodeRef addSendinfo(NodeRef document, Map<QName, Serializable> props) {
+        final NodeRef sendInfoRef = nodeService.createNode(document, //
+                DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Types.SEND_INFO, props).getChildRef();
+        log.debug("created new sendInfo '" + sendInfoRef + "' for sent document '" + document + "'");
+        updateSearchableSendMode(document);
+        return sendInfoRef;
+    }
+
+    // /// PRIVATE METHODS
 
     private void updateSearchableSendMode(NodeRef document) {
         List<SendInfo> sendInfos = getSendInfos(document);
@@ -244,7 +250,7 @@ public class SendOutServiceImpl implements SendOutService {
     }
 
     private List<ContentToSend> prepareContents(NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName) {
-        List<ContentToSend> result = new ArrayList<ContentToSend>(); 
+        List<ContentToSend> result = new ArrayList<ContentToSend>();
         if (fileNodeRefs == null || fileNodeRefs.size() == 0) {
             return result;
         }
@@ -262,9 +268,9 @@ public class SendOutServiceImpl implements SendOutService {
                     ContentToSend content = new ContentToSend();
                     content.setFileName(fileInfo.getName());
                     content.setMimeType(reader.getMimetype());
-                    // Instead of directly setting reader.getContentInputStream into ContentToSend, we read the bytes 
+                    // Instead of directly setting reader.getContentInputStream into ContentToSend, we read the bytes
                     // and set a new ByteArrayInputStream to avoid tight coupling between ContentToSend and ContentReader
-                    // input stream life-cycle. 
+                    // input stream life-cycle.
                     ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
                     reader.getContent(byteStream);
                     content.setInputStream(new ByteArrayInputStream(byteStream.toByteArray()));

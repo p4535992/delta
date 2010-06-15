@@ -9,7 +9,8 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
  *
  */
 @AlfrescoModelType(uri = DvkModel.URI)
-public interface DvkReceivedDocument extends AccessRights, LetterSender{
+public interface DvkReceivedDocument extends IDocument{
+
 
     /**
      * @return dhl_id - unique id assigned to the sent document by the DVK server

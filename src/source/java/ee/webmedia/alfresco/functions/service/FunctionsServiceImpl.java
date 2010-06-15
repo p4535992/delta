@@ -90,7 +90,7 @@ public class FunctionsServiceImpl implements FunctionsService {
     @Override
     public Function getFunctionByNodeRef(NodeRef nodeRef) {
         Function function = functionsBeanPropertyMapper.toObject(nodeService.getProperties(nodeRef));
-        function.setNode(generalService.fetchNode(nodeRef));
+        function.setNode(generalService.fetchNode(nodeRef)); // FIXME: FacesContext can't be null
         if (log.isDebugEnabled()) {
             log.debug("Found Function: " + function);
         }

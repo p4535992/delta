@@ -69,7 +69,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         List<Series> series = getAllSeriesByFunction(functionNodeRef);
         for (Iterator<Series> i = series.iterator(); i.hasNext();) {
             Series s = i.next();
-            if (!status.getValueName().equals(s.getStatus()) || !s.getDocType().contains(docTypeId)) {
+            if (!status.getValueName().equals(s.getStatus()) || (docTypeId != null && !s.getDocType().contains(docTypeId))) {
                 i.remove();
             }
         }

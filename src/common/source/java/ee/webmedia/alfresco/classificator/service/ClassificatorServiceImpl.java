@@ -43,10 +43,11 @@ public class ClassificatorServiceImpl implements ClassificatorService {
 
     private GeneralService generalService;
     private NodeService nodeService;
+    private String classificatorsPath;
 
     @Override
     public List<Classificator> getAllClassificators() {
-        NodeRef root = generalService.getNodeRef("/" + ClassificatorModel.NAMESPACE_PREFFIX + ClassificatorModel.Types.CLASSIFICATOR_ROOT.getLocalName());
+        NodeRef root = generalService.getNodeRef(classificatorsPath);
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
         List<Classificator> classificators = new ArrayList<Classificator>(childRefs.size());
         for (ChildAssociationRef childRef : childRefs) {
@@ -124,16 +125,24 @@ public class ClassificatorServiceImpl implements ClassificatorService {
 
     @Override
     public Classificator getClassificatorByName(String name) {
-        String xpath = "/" + ClassificatorModel.NAMESPACE_PREFFIX + ClassificatorModel.Types.CLASSIFICATOR_ROOT.getLocalName() + "/"
-                + ClassificatorModel.NAMESPACE_PREFFIX + ISO9075.encode(name);
-        NodeRef classifNodeRef = generalService.getNodeRef(xpath);
+        String xpath = getClassificatorPathByName(name);
+        NodeRef classifNodeRef1 = generalService.getNodeRef(xpath);
+        NodeRef classifNodeRef = classifNodeRef1;
         Assert.notNull(classifNodeRef, "Unknown classificator '" + name + "'");
         return getClassificatorByNodeRef(classifNodeRef);
     }
 
+    private String getClassificatorPathByName(String classificatorName) {
+        return classificatorsPath + "/" + ClassificatorModel.NAMESPACE_PREFFIX + ISO9075.encode(classificatorName);
+    }
+
     @Override
     public List<ClassificatorValue> getAllClassificatorValues(Classificator classificator) {
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(classificator.getNodeRef(), ClassificatorModel.Associations.CLASSIFICATOR_VALUE,
+        return getAllClassificatorValues(classificator.getNodeRef());
+    }
+
+    private List<ClassificatorValue> getAllClassificatorValues(final NodeRef classificatorRef) {
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(classificatorRef, ClassificatorModel.Associations.CLASSIFICATOR_VALUE,
                 RegexQNamePattern.MATCH_ALL);
         List<ClassificatorValue> classificatorValues = new ArrayList<ClassificatorValue>(childRefs.size());
         for (ChildAssociationRef childRef : childRefs) {
@@ -202,6 +211,10 @@ public class ClassificatorServiceImpl implements ClassificatorService {
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+
+    public void setClassificatorsPath(String classificatorsPath) {
+        this.classificatorsPath = classificatorsPath;
     }
     // END: getters / setters
 }

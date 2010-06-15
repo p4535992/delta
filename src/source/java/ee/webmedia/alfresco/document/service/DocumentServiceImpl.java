@@ -116,13 +116,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
     private DictionaryService dictionaryService;
     private NamespaceService namespaceService;
-    private NodeService nodeService;
-    private GeneralService generalService;
+    protected NodeService nodeService;
+    protected GeneralService generalService;
     private DocumentTypeService documentTypeService;
     private DocumentTemplateService documentTemplateService;
     private RegisterService registerService;
-    private VolumeService volumeService;
-    private SeriesService seriesService;
+    protected VolumeService volumeService;
+    protected SeriesService seriesService;
     private FileFolderService fileFolderService;
     private ContentService contentService;
     private FileService fileService;
@@ -131,11 +131,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     private DocumentLogService documentLogService;
     private UserService userService;
     private OrganizationStructureService organizationStructureService;
-    private SendOutService sendOutService;
+    protected SendOutService sendOutService;
     /** NB! not injected - use getter to obtain instance of AdrService */
     private AdrService _adrService;
     private CaseService _caseService;
-    private BeanFactory beanFactory;
+    protected BeanFactory beanFactory;
 
     private String fromDvkXPath;
     private String incomingEmailPath;
@@ -320,29 +320,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
         // Prepare caseNodeRef
         final NodeRef volumeNodeRef = (NodeRef) docProps.get(TransientProps.VOLUME_NODEREF);
-        String caseLabel = (String) docProps.get(TransientProps.CASE_LABEL_EDITABLE);
-        NodeRef caseNodeRef = null;
-        if (StringUtils.isNotBlank(caseLabel)) {
-            List<Case> allCases = getCaseService().getAllCasesByVolume(volumeNodeRef);
-            for (Case tmpCase : allCases) {
-                if (caseLabel.equalsIgnoreCase(tmpCase.getTitle())) {
-                    caseNodeRef = tmpCase.getNode().getNodeRef();
-                    break;
-                }
-            }
-            if (caseNodeRef == null) {
-                Case tmpCase = getCaseService().createCase(volumeNodeRef);
-                tmpCase.setTitle(caseLabel);
-                getCaseService().saveOrUpdate(tmpCase, false);
-                caseNodeRef = tmpCase.getNode().getNodeRef();
-                docProps.put(TransientProps.CASE_NODEREF, caseNodeRef);
-            }
-        } else {
-            caseLabel = null;
-            caseNodeRef = null;
-            docProps.put(TransientProps.CASE_LABEL_EDITABLE, null);
-            docProps.put(TransientProps.CASE_NODEREF, null);
-        }
+        NodeRef caseNodeRef = getCaseNodeRef(docProps, volumeNodeRef);
 
         // Prepare existingParentNode and targetParentRef properties
         final NodeRef targetParentRef;
@@ -493,6 +471,36 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         }
         makeChildNodesSearchable(docNodeRef);
         return getDocument(docNodeRef);
+    }
+
+    private NodeRef getCaseNodeRef(final Map<String, Object> docProps, final NodeRef volumeNodeRef) {
+        NodeRef caseNodeRef = (NodeRef) docProps.get(TransientProps.CASE_NODEREF);
+        String caseLabel = (String) docProps.get(TransientProps.CASE_LABEL_EDITABLE);
+        if (StringUtils.isBlank(caseLabel)) {
+            docProps.put(TransientProps.CASE_LABEL_EDITABLE, null);
+        }
+        if (caseNodeRef != null) {
+            return caseNodeRef;
+        }
+        if (StringUtils.isNotBlank(caseLabel)) {
+            // find case by casLabel
+            List<Case> allCases = getCaseService().getAllCasesByVolume(volumeNodeRef);
+            for (Case tmpCase : allCases) {
+                if (caseLabel.equalsIgnoreCase(tmpCase.getTitle())) {
+                    caseNodeRef = tmpCase.getNode().getNodeRef();
+                    break;
+                }
+            }
+            if (caseNodeRef == null) {
+                // create case
+                Case tmpCase = getCaseService().createCase(volumeNodeRef);
+                tmpCase.setTitle(caseLabel);
+                getCaseService().saveOrUpdate(tmpCase, false);
+                caseNodeRef = tmpCase.getNode().getNodeRef();
+            }
+        }
+        docProps.put(TransientProps.CASE_NODEREF, caseNodeRef);
+        return caseNodeRef;
     }
 
     private void saveChildNodes(Node docNode) {
@@ -737,14 +745,22 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         /** Copy Ancestors (function, series, volume, case) */
         setTransientProperties(followUpDoc, getAncestorNodesByDocument(doc.getNodeRef()));
 
-        /** Add association from new to original doc */
-        nodeService.createAssociation(followUpDoc.getNodeRef(), doc.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
+        addFollowupAssoc(followUpDoc.getNodeRef(), doc.getNodeRef());
 
         if (log.isDebugEnabled()) {
             log.debug("Created followUp: " + docType.getLocalName() + " from " + doc.getType().getLocalName());
         }
 
         return followUpDoc;
+    }
+
+    /** Add association from new to original doc */
+    protected void addFollowupAssoc(NodeRef followUpDocRef, NodeRef initialDocRef) {
+        nodeService.createAssociation(followUpDocRef, initialDocRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
+    }
+
+    protected void addReplyAssoc(NodeRef replyDocRef, NodeRef initialDocRef) {
+        nodeService.createAssociation(replyDocRef, initialDocRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
     }
 
     @Override
@@ -798,7 +814,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         setTransientProperties(replyDoc, getAncestorNodesByDocument(doc.getNodeRef()));
 
         /** Add association from new to original doc */
-        nodeService.createAssociation(replyDoc.getNodeRef(), doc.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_REPLY);
+        addReplyAssoc(replyDoc.getNodeRef(), doc.getNodeRef());
 
         if (log.isDebugEnabled()) {
             log.debug("Created reply: " + docType.getLocalName() + " from " + doc.getType().getLocalName());
@@ -1803,8 +1819,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 }
                 oneExecuted = true;
                 List<Document> childResults = processExtendedSearchResults(props, childNode, filter, document);
-                // System.out.println("RRRRRRRRRRRR " + childNode.getType().toPrefixString(namespaceService) + " returned " + (childResults == null ? null :
-                // childResults.size()));
                 if (childResults != null) {
                     documents.addAll(childResults);
                     oneReturnedNotNull = true;
@@ -1994,7 +2008,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         return _adrService;
     }
 
-    public CaseService getCaseService() {
+    protected CaseService getCaseService() {
         if (_caseService == null) {
             _caseService = (CaseService) beanFactory.getBean(CaseService.BEAN_NAME);
         }

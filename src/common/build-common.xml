@@ -98,6 +98,8 @@
       <delete file="${common.dir.lib.server}/xstream-1.2.2.jar" />
       <!-- Newer version (2.4) of commons-lang is added from common/lib folder -->
       <delete file="${common.dir.lib.server}/commons-lang-2.1.jar" />
+      <!-- Newer version of apache poi is added from common/lib folder -->
+      <delete file="${common.dir.lib.server}/poi-3.1.jar" />
    </target>
 
    <target name="setup-project-done">

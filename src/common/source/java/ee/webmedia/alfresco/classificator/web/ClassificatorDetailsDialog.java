@@ -173,7 +173,7 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
      * @param event
      */
     public void select(ActionEvent event) {
-        selectedClassificator = getClassificatoByNodeRef(ActionUtil.getParam(event, "nodeRef"));
+        selectedClassificator = getClassificatorByNodeRef(ActionUtil.getParam(event, "nodeRef"));
         loadClassificatorValues();
     }
     
@@ -287,7 +287,7 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
         return maxOrder;
     }
     
-    private Classificator getClassificatoByNodeRef(String ref) {
+    private Classificator getClassificatorByNodeRef(String ref) {
         Assert.notNull(ref);
         return getClassificatorService().getClassificatorByNodeRef(ref);
     }

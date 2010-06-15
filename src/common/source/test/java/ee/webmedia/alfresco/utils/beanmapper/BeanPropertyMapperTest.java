@@ -8,7 +8,7 @@ import junit.framework.Assert;
 import junit.framework.TestCase;
 
 import org.alfresco.service.namespace.QName;
-import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 import ee.webmedia.alfresco.dvk.model.DvkModel;
@@ -34,6 +34,7 @@ public class BeanPropertyMapperTest extends TestCase {
     private static TestableModel testableModel;
     private static Map<QName, Serializable> mappedProperties;
 
+    @Override
     protected void setUp() throws Exception {
         super.setUp();
 
@@ -46,6 +47,7 @@ public class BeanPropertyMapperTest extends TestCase {
         testableModel.setNotMappable("---------notMappable----");
     }
 
+    @Override
     protected void tearDown() throws Exception {
         super.tearDown();
     }
@@ -57,7 +59,7 @@ public class BeanPropertyMapperTest extends TestCase {
             for (QName qName : mappedProperties.keySet()) {
                 log.debug("\t" + qName + " \t" + mappedProperties.get(qName));
             }
-            log.debug("=========== object that was mapped, was " + ReflectionToStringBuilder.reflectionToString(testableModel, ToStringStyle.MULTI_LINE_STYLE));
+            log.debug("=========== object that was mapped, was " + ToStringBuilder.reflectionToString(testableModel, ToStringStyle.MULTI_LINE_STYLE));
         }
         Assert.assertEquals(dvkId, mappedProperties.get(QName.createQName(DvkModel.URI, "dvkId")));
         Assert.assertEquals(letterAccessRestrictionReason, mappedProperties.get(QName.createQName(DvkModel.URI, "letterAccessRestrictionReason")));
@@ -74,7 +76,7 @@ public class BeanPropertyMapperTest extends TestCase {
         mappedProperties.put(QName.createQName("noSuchUri, but existing property", "dvkId"), "cmNameValue");
         final TestableModel mappedObject2 = mapper.toObject(mappedProperties);
         if (log.isDebugEnabled()) {
-            log.debug("Properties parsed to object: " + ReflectionToStringBuilder.reflectionToString(mappedObject2, ToStringStyle.MULTI_LINE_STYLE));
+            log.debug("Properties parsed to object: " + ToStringBuilder.reflectionToString(mappedObject2, ToStringStyle.MULTI_LINE_STYLE));
             log.debug("Given properties with " + mappedProperties.size() + " entries were:");
             for (QName qName : mappedProperties.keySet()) {
                 log.debug("\t" + qName + " \t" + mappedProperties.get(qName));

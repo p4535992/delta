@@ -107,7 +107,7 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
                 contentProps);
 
         InputStream contentIs = attachment.getContent();
-        String mimetype = getMimetypeService().guessMimetype(fileNameSplitter.getFileNameWithoutSSN());
+        String mimetype = getMimetypeService().guessMimetype(fileName);
         String encoding = attachment.getEncoding();
         final NodeRef fileNodeRef = associationRef.getChildRef();
         writeContent(fileNodeRef, contentIs, mimetype, encoding);

@@ -1,8 +1,11 @@
 package ee.webmedia.alfresco.document.sendout.service;
 
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 
@@ -44,4 +47,5 @@ public interface SendOutService {
      */
     boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, String fromEmail, String subject, String content, List<String> fileNodeRefs, boolean zipIt);
 
+    NodeRef addSendinfo(NodeRef document, Map<QName, Serializable> props);
 }

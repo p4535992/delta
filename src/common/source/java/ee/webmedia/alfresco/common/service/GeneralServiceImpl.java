@@ -434,6 +434,66 @@ public class GeneralServiceImpl implements GeneralService {
         }
     }
 
+    @Override
+    public NodeRef addFileOrFolder(File fileOrFolder, NodeRef parentNodeRef, boolean flatten) {
+        if (fileOrFolder.isDirectory()) {
+            if (!flatten) {
+                final FileInfo folderInfo = fileFolderService.create(parentNodeRef, fileOrFolder.getName(), ContentModel.TYPE_FOLDER);
+                parentNodeRef = folderInfo.getNodeRef();
+            }
+            final File[] listFiles = fileOrFolder.listFiles();
+            for (File file2 : listFiles) {
+                addFileOrFolder(file2, parentNodeRef, flatten);
+            }
+            return parentNodeRef;
+        }
+        return addFile(fileOrFolder, parentNodeRef);
+    }
+
+    @Override
+    public NodeRef addFile(File file, NodeRef parentNodeRef) {
+        final FileInfo fileInfo = fileFolderService.create(parentNodeRef, file.getName(), ContentModel.TYPE_CONTENT);
+        final NodeRef fileRef = fileInfo.getNodeRef();
+        final ContentWriter writer = fileFolderService.getWriter(fileRef);
+        writeFile(writer, file, file.getName(), null);
+        return fileRef;
+    }
+
+    @Override
+    public void writeFile(ContentWriter writer, File file, String fileName, String mimetype) {
+        // use container.mimeType; if our mimetype map has it, then use it; otherwise guess based on filename
+        if (MimetypeMap.MIMETYPE_BINARY.equals(mimetype) || !mimetypeService.getExtensionsByMimetype().containsKey(mimetype)) {
+            String oldMimetype = mimetype;
+            mimetype = mimetypeService.guessMimetype(fileName);
+            if (log.isDebugEnabled()) {
+                log.debug("User provided mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '" + fileName + "' => '"
+                        + mimetype + "'");
+            }
+        }
+
+        String encoding;
+        InputStream is = null;
+        try {
+            is = new BufferedInputStream(new FileInputStream(file));
+            Charset charset = mimetypeService.getContentCharsetFinder().getCharset(is, mimetype);
+            encoding = charset.name();
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                if (is != null) {
+                    is.close();
+                }
+            } catch (IOException e) {
+                // Do nothing
+            }
+        }
+
+        writer.setMimetype(mimetype);
+        writer.setEncoding(encoding);
+        writer.putContent(file);
+    }
+
     private NodeRef getParentNodeRefWithType(NodeRef childRef, QName parentType) {
         final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
         final QName realParentType = nodeService.getType(parentRef);
@@ -526,7 +586,7 @@ public class GeneralServiceImpl implements GeneralService {
         }
         return baseName + suffix + "." + extension;
     }
-    
+
     @Override
     public void updateParentContainingDocsCount(final NodeRef parentNodeRef, final QName propertyName, boolean added, Integer count) {
         if (parentNodeRef == null)

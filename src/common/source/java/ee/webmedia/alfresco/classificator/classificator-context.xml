@@ -2,6 +2,12 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
+
+   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+      <property name="ignoreUnresolvablePlaceholders" value="true" />
+      <property name="location" value="classpath:ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap.properties" />
+   </bean>
+
    <bean id="classificatorModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
       <property name="models">
          <list>
@@ -28,8 +34,9 @@
          <list>
             <props>
                <prop key="encoding">UTF-8</prop>
-               <prop key="path">/</prop>
+               <prop key="path">${classificators.parent.folder.xpath}</prop>
                <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators.xml</prop>
+               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
             </props>
          </list>
       </property>
@@ -46,6 +53,7 @@
    <bean id="classificatorService" class="ee.webmedia.alfresco.classificator.service.ClassificatorServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="classificatorsPath" value="${classificators.parent.folder.xpath}${classificators.folder.name}" />
    </bean>
 
    <bean id="ClassificatorService" class="org.springframework.aop.framework.ProxyFactoryBean">

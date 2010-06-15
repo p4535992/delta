@@ -6,7 +6,8 @@ import java.util.Collection;
  * @author Ats Uiboupin
  *
  */
-public interface DvkSendDocuments extends LetterSender, AccessRights, LetterCompilator {
+public interface DvkSendDocuments extends IDocument, LetterCompilator {
+
 
     String getDocType();
 

@@ -34,6 +34,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
+import ee.webmedia.alfresco.importer.excel.bootstrap.SmitExcelImporter;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -122,6 +123,18 @@ public class FunctionsListDialog extends BaseDialogBean {
     public void createNewYearBasedVolumes(@SuppressWarnings("unused") ActionEvent event) {
         final long createdVolumesCount = getFunctionsService().createNewYearBasedVolumes();
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_createNewYearBasedVolumes_success", createdVolumesCount);
+    }
+
+    public void importSmitDocList(@SuppressWarnings("unused") ActionEvent event) {
+        final SmitExcelImporter importExcelBootstrap = (SmitExcelImporter) FacesContextUtils.getRequiredWebApplicationContext(
+                FacesContext.getCurrentInstance()).getBean("smitExcelImporter");
+        try {
+            importExcelBootstrap.importSmitDocList();
+        } catch (Exception e) {
+            final String msg = "failed to import:";
+            log.debug(msg, e);
+            throw new RuntimeException(msg, e);
+        }
     }
 
     // END: JSP event handlers
@@ -222,4 +235,5 @@ public class FunctionsListDialog extends BaseDialogBean {
     }
 
     // END: getters / setters
+
 }

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.utils;
 
+import java.util.Arrays;
+
 /**
  * This class could be used in service layer to notify view layer, that some message(key defined with constructor argument, placehoders with
  * <code>messageValuesForHolders</code> ) could/should be shown to the user. <br>
@@ -38,5 +40,9 @@ public class UnableToPerformException extends RuntimeException {
     public void setMessageValuesForHolders(Object... messageValuesForHolders) {
         this.messageValuesForHolders = messageValuesForHolders;
     }
-
+    
+    @Override
+    public String getMessage() {
+        return super.getMessage() + Arrays.asList(messageValuesForHolders);
+    }
 }

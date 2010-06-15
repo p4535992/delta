@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
-   <cl:classificators view:childName="cl:classificators">
+   <cl:classificators view:childName="${classificators.folder.name}">
       <view:associations>
          <cl:classificator>
          

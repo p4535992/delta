@@ -31,7 +31,7 @@
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
-            <property name="dvk:senderRegNr"><!-- Saatja asutuse reg nr -->
+            <property name="dvk:senderRegNr"><!-- Saatja asutuse kood(registri number) -->
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
