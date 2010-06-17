@@ -722,3 +722,110 @@ function handleHtmlLoaded(context) {
 
    propSheetValidateOnDocumentReady();
 }
+
+//-----------------------------------------------------------------------------
+//DIGITAL SIGNATURE
+//-----------------------------------------------------------------------------
+
+function processCert(cert, selectedCertNumber) {
+ $jQ('#signApplet').hide();
+ $jQ('#signWait').show();
+ return oamSubmitForm('dialog','dialog:dialog-body:processCert',null,[['cert', cert], ['selectedCertNumber', selectedCertNumber]]);
+}
+
+function signDocument(signature) {   
+ $jQ('#signApplet').hide();
+ $jQ('#signWait').show();
+  return oamSubmitForm('dialog','dialog:dialog-body:signDocument',null,[['signature', signature]]);
+}
+
+function cancelSign() {
+ $jQ('#signApplet').hide();
+ $jQ('#signWait').show();
+ return oamSubmitForm('dialog','dialog:dialog-body:cancelSign',null,[[]]);
+}
+
+function driverError() {
+}
+
+//Some lines based on https://digidoc.sk.ee/include/JS/idCard.js
+function loadSigningPlugin(operation, hashHex, selectedCertNumber, path) {
+
+ if (isIE())
+ {
+    //activeX
+    document.getElementById('pluginLocation').innerHTML = '<OBJECT id="IdCardSigning" codebase="' + path + '/applet/EIDCard.cab#Version=1,0,2,4" classid="clsid:FC5B7BD2-584A-4153-92D7-4C5840E4BC28"></OBJECT>';
+
+    if (!this.isActiveXOK(document.getElementById('IdCardSigning')))
+    {
+       $jQ('#signWait').html('ID-kaardi draiverid ei ole paigaldatud!');
+       return;
+    }
+    var plugin = document.getElementById('IdCardSigning');
+
+    if (operation == 'PREPARE') {
+       var certHex = plugin.getSigningCertificate();
+       if (certHex) {
+          var selectedCertNumber = plugin.selectedCertNumber;
+          processCert(certHex, selectedCertNumber);
+       } else {
+          $jQ('#signWait').html('Sertifikaati ei valitud või sertifikaadid on registreerimata!');
+       }
+
+    } else if (operation == 'FINALIZE') {
+       var signedHashHex = plugin.getSignedHash(hashHex, selectedCertNumber);
+       if (signedHashHex) {
+          signDocument(signedHashHex);
+       } else {
+          $jQ('#signWait').html('Allkirjastamine katkestati või ID-kaart ei ole lugejas!');
+       }
+    }
+ }
+ else
+ {
+    //applet
+    $jQ('#signWait').hide();
+    $jQ('#pluginLocation').show();
+
+    document.getElementById('pluginLocation').innerHTML = '<embed'
+       + ' id="signApplet"'
+       + ' type="application/x-java-applet;version=1.4"'
+       + ' width="400"'
+       + ' height="80"'
+       + ' pluginspage="http://javadl.sun.com/webapps/download/GetFile/1.6.0_18-b07/windows-i586/xpiinstall.exe"'
+       + ' java_code="SignApplet.class"'
+       + ' java_codebase="' + path + '/applet"'
+       + ' java_archive="SignApplet_sig.jar, iaikPkcs11Wrapper_sig.jar"'
+       + ' NAME="SignApplet"'
+       + ' MAYSCRIPT="true"'
+       + ' LANGUAGE="EST"'
+       + ' FUNC_SET_CERT="window.processCert"'
+       + ' FUNC_SET_SIGN="window.signDocument"'
+       + ' FUNC_CANCEL="window.cancelSign"'
+       + ' FUNC_DRIVER_ERR="window.driverError"'
+       + ' DEBUG_LEVEL="4"'
+       + ' OPERATION="' + operation + '"'
+       + ' HASH="' + hashHex + '"'
+       + ' TOKEN_ID=""'
+       + ' LEGACY_LIFECYCLE="true"'
+       + '><noembed></noembed></embed>';
+ }  
+}
+
+//https://digidoc.sk.ee/include/JS/idCard.js
+function isActiveXOK(plugin) {
+
+ if (plugin == null)
+    return false;
+
+ if (typeof(plugin) == "undefined")
+    return false;
+
+ if (plugin.readyState != 4 )
+    return false;
+
+ if (plugin.object == null )
+    return false;
+
+ return true;
+}

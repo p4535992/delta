@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.application.Application;
 import javax.faces.application.NavigationHandler;
@@ -321,13 +322,15 @@ public class WorkflowBlockBean implements Serializable {
     }
 
     public void processCert() {
-        FacesContext facesContext = FacesContext.getCurrentInstance();
-        String certHex = (String) facesContext.getExternalContext().getRequestParameterMap().get("cert");
+        @SuppressWarnings("unchecked")
+        Map<String, String> requestParameterMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
+        String certHex = requestParameterMap.get("cert");
+        int selectedCertNumber = Integer.parseInt(requestParameterMap.get("selectedCertNumber"));
         try {
             long step0 = System.currentTimeMillis();
             SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(document, certHex);
             long step1 = System.currentTimeMillis();
-            showModal(signatureDigest.getDigestHex());
+            showModal(signatureDigest.getDigestHex(), selectedCertNumber);
             signatureTask.setSignatureDigest(signatureDigest);
             if (log.isDebugEnabled()) {
                 log.debug("prepareDocumentDigest took total time " + (step1 - step0) + " ms\n    service call - " + (step1 - step0) + " ms");
@@ -522,8 +525,8 @@ public class WorkflowBlockBean implements Serializable {
         getModalApplet().showModal();
     }
 
-    private void showModal(String digestHex) {
-        getModalApplet().showModal(digestHex);
+    private void showModal(String digestHex, int selectedCertNumber) {
+        getModalApplet().showModal(digestHex, selectedCertNumber);
     }
 
     private void closeModal() {
