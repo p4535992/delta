@@ -58,7 +58,7 @@ public class FieldMismatchException extends RuntimeException {
 
     private List<String> overTakeCauseMessages() {
         final List<String> causeMessages2passOver = causeMessages;
-        this.causeMessages = null;
+        this.causeMessages = new ArrayList<String>(0);
         return causeMessages2passOver;
     }
 

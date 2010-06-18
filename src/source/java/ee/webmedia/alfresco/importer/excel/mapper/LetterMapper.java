@@ -111,7 +111,6 @@ public class LetterMapper extends AbstractSmitExcelMapper<LetterDocument> {
                 in.setDueDate(dueDate);
             }
             addToComment(in, "Allkirjastaja", signerName);
-            addToComment(in, "Allkirjastaja", signerName);
         }
         { // common fields of letter
             doc.setSenderRegDate(getDate(row, SenderRegDate));

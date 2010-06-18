@@ -14,7 +14,7 @@ public class ExcelRowMapperTest extends TestCase {
 
     public void testExtractDate() {
         ExcelRowMapper<Object> s = getInstance();
-        final List<String> mustMatch = Arrays.asList("28.08.2008 ", "28.08.2008", " 28.08.2008", "28.08.2008 29.08.2008 ", "-28.08.2008-");
+        final List<String> mustMatch = Arrays.asList("28.8.2008", "28.08.2008 ", "28.08.2008", " 28.08.2008", "28.08.2008 29.08.2008 ", "-28.08.2008-");
         Date extractionResult = null;
         for (String dateString : mustMatch) {
             final Date date = s.extractDate(dateString);

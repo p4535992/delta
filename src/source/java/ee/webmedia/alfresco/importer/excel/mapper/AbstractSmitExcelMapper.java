@@ -111,11 +111,12 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         if (StringUtils.isBlank(comment)) {
             return;
         }
-        final String existingComment = StringUtils.trimToEmpty(doc.getComment());
+        String existingComment = StringUtils.trimToEmpty(doc.getComment());
         if (StringUtils.isNotBlank(existingComment)) {
-            comment = existingComment + "\n" + commentFieldName + ": " + comment;
+            existingComment = existingComment + "\n";
         }
-        doc.setComment(comment);
+        comment = commentFieldName + ": " + comment;
+        doc.setComment(existingComment + comment);
     }
 
     private void fillDocLocation(IDoc doc, Row row) {
