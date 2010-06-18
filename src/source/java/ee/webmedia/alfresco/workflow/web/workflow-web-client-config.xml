@@ -89,6 +89,7 @@
             See Task class, it adds a resolver which returns task's resolution if present or workflow's resolution otherwise 
          -->
          <show-property name="{temp}resolution" outputText="true" display-label-id="task_property_resolution" />
+         <show-property name="wfc:creatorName" outputText="true" />
          <show-property name="wfs:dueDate" outputText="true" styleClass="date" />
          <show-property name="wfs:comment" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>

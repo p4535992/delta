@@ -339,7 +339,6 @@ function showModal(target, height){
 	if(isIE7()) {
 		titlebarIndex = $jQ("#titlebar").css("z-index");
 		$jQ("#titlebar").css("z-index", "-1");
-
 	}
 	if (openModalContent != null){
 		$jQ("#" + openModalContent).hide();
@@ -609,6 +608,11 @@ $jQ(document).ready(function() {
 			return false;
 	   }
    });
+
+   if(isIE()) {
+	   // http://www.htmlcenter.com/blog/fixing-the-ie-text-selection-bug/
+	   document.body.style.height = document.documentElement.scrollHeight + 'px';
+   }
    
    if(isIE7()) {
 	   $jQ(window).resize(function() {
@@ -618,7 +622,7 @@ $jQ(document).ready(function() {
 	   });
    }
    
-   $jQ("#my-tasks-wrapper a, .tooltip").tooltip({
+   $jQ(".tooltip").tooltip({
 	   track: true
    });
 
@@ -655,6 +659,12 @@ function handleHtmlLoaded(context) {
    fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li", context);
    fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li", context);
    zIndexWorkaround(context);
+   
+   if(isIE()) {
+	   $jQ("option").each(function() {
+		   $jQ(this).attr('title', $jQ(this).text());
+	   });
+   }
 
    /**
     * Open Office documents directly from server
@@ -720,7 +730,14 @@ function handleHtmlLoaded(context) {
       return false;
    });
 
-   propSheetValidateOnDocumentReady();
+   $jQ(".admin-user-search-input", context).keyup(function(event) {
+       updateButtonState();
+       if (event.keyCode == '13') {
+          $jQ(this).next().click();
+       }
+    });
+
+	propSheetValidateOnDocumentReady();
 }
 
 //-----------------------------------------------------------------------------

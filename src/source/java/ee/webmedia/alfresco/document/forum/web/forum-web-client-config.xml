@@ -39,6 +39,7 @@
                <param name="permission">DocumentFileRead</param>
                <param name="notify">true</param>
                <param name="alternateConfigId">forum_invite_users</param>
+               <param name="alternateDialogTitleId">forum_invite_users</param>
             </params>
          </action>
 
@@ -107,7 +108,7 @@
       </actions>
       <dialogs>
          <dialog name="inviteUsersDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-add-dialog.jsp" managed-bean="InviteUsersDialog"
-            icon="/images/icons/users_large.gif" title-id="forum_invite_users" />
+            icon="/images/icons/users_large.gif" title-id="select_users_groups" />
 
          <dialog name="showForum" page="/jsp/forums/forum.jsp" managed-bean="ForumsBean" icon="/images/icons/forum.gif" actions-config-id="forum_topic_actions" />
          <dialog name="showTopic" page="/jsp/forums/topic.jsp" managed-bean="ForumsBean" icon="/images/icons/topic.gif" actions-config-id="forum_post_actions" />

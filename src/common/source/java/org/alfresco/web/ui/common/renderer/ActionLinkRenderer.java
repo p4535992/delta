@@ -39,16 +39,11 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIMenu;
 import org.alfresco.web.ui.repo.component.UIActions;
 
-import ee.webmedia.alfresco.utils.ComponentUtil;
-
 /**
  * @author kevinr
  */
 public class ActionLinkRenderer extends BaseRenderer
 {
-   public static final String AJAX_SUBMIT_COMPONENT_ID_ATTR = "ajaxSubmitComponentId";
-   public static final String AJAX_SUBMIT_COMPONENT_CLIENT_ID_ATTR = "ajaxSubmitComponentClientId";
-
    // ------------------------------------------------------------------------------
    // Renderer implementation 
    
@@ -188,19 +183,13 @@ public class ActionLinkRenderer extends BaseRenderer
          }
          else
          {
-            if (attrs.containsKey(AJAX_SUBMIT_COMPONENT_ID_ATTR)) {
-                String componentId = (String) attrs.get(AJAX_SUBMIT_COMPONENT_ID_ATTR);
-                String componentClientId = (String) attrs.get(AJAX_SUBMIT_COMPONENT_CLIENT_ID_ATTR);
-                UIComponent component = ComponentUtil.findParentComponentById(context, link, componentId, componentClientId);
-                String submit = ComponentUtil.generateAjaxFormSubmit(context, component, Utils.getActionHiddenFieldName(context, link), link.getClientId(context), getParameterComponents(link));
-                out.write(submit);
-            } else {
-                out.write(Utils.generateFormSubmit(context, 
-                                                   link, 
-                                                   Utils.getActionHiddenFieldName(context, link), 
-                                                   link.getClientId(context), 
-                                                   getParameterComponents(link)));
-            }
+            // generate JavaScript to set a hidden form field and submit
+            // a form which request attributes that we can decode
+            out.write(Utils.generateFormSubmit(context, 
+                                               link, 
+                                               Utils.getActionHiddenFieldName(context, link), 
+                                               link.getClientId(context), 
+                                               getParameterComponents(link)));
          }
          
          out.write('"');

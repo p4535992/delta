@@ -7,7 +7,7 @@
    <a:genericPicker id="picker" filters="#{DialogManager.bean.usersGroupsFilters}" queryCallback="#{DialogManager.bean.searchUsersGroups}" actionListener="#{DialogManager.bean.addAuthorities}" />
 </a:panel>
 
-<a:panel id="add-authority-list" styleClass="column panel-50" label="#{msg.selected_users_groups}">
+<a:panel id="add-authority-list" styleClass="column panel-50-f" label="#{msg.selected_users_groups}">
 
    <h:dataTable value="#{DialogManager.bean.authorities}" var="row" rowClasses="selectedItemsRow,selectedItemsRowAlt" styleClass="selectedItems"
       headerClass="selectedItemsHeader" cellspacing="0" cellpadding="4" rendered="#{DialogManager.bean.authorities.rowCount != 0}" width="100%">

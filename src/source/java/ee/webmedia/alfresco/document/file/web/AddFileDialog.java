@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.document.file.web;
 
+import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
+import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
+
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -8,9 +11,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.application.Application;
+import javax.faces.component.UIComponent;
+import javax.faces.component.UIParameter;
+import javax.faces.component.html.HtmlInputText;
+import javax.faces.component.html.HtmlOutputText;
+import javax.faces.component.html.HtmlPanelGrid;
+import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.component.html.HtmlSelectManyMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
-import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
@@ -21,27 +31,36 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
-import org.alfresco.web.app.Application;
-import org.alfresco.web.bean.content.AddContentDialog;
+import org.alfresco.web.bean.FileUploadBean;
+import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Repository;
+import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.UIActionLink;
+import org.alfresco.web.ui.repo.component.UIActions;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.versions.model.VersionsModel;
 
 /**
  * @author Dmitri Melnikov
+ * @author Kaarel Jõgeva
  */
-public class AddFileDialog extends AddContentDialog {
+public class AddFileDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
     private static final String ERR_EXISTING_FILE = "add_file_existing_file";
@@ -52,18 +71,23 @@ public class AddFileDialog extends AddContentDialog {
     private transient FileService fileService;
     private transient DocumentService documentService;
     private transient DocumentLogService documentLogService;
+    private transient GeneralService generalService;
+
+    private transient HtmlPanelGroup uploadedFilesPanelGroup;
+    private transient HtmlSelectManyMenu attachmentSelect;
+    private transient HtmlSelectManyMenu scannedSelect;
 
     private boolean isFileSelected = false;
-    private NodeRef selectedFileNodeRef;
-    private String selectedFileName;
+    private List<NodeRef> selectedFileNodeRef;
+    private List<String> selectedFileName;
+    private List<String> selectedFileNameWithoutExtension;
 
     @Override
     public String cancel() {
-        clearUpload();
+        reset();
         return "dialog:close#files-panel";
     }
-    
-    @Override
+
     public void start(ActionEvent event) {
         reset();
     }
@@ -72,75 +96,137 @@ public class AddFileDialog extends AddContentDialog {
         isFileSelected = false;
         selectedFileNodeRef = null;
         selectedFileName = null;
-        return removeUploadedFile();
+        selectedFileNameWithoutExtension = null;
+        uploadedFilesPanelGroup = null;
+        attachmentSelect = null;
+        scannedSelect = null;
+        clearUpload();
+        return null;
+    }
+
+    @Override
+    public List<DialogButtonConfig> getAdditionalButtons() {
+        List<DialogButtonConfig> buttons = new ArrayList<DialogButtonConfig>(1);
+        if (getFileUploadBean() == null && getSelectedFileNodeRef() == null) {
+            buttons.add(new DialogButtonConfig("confirmFileSelectionButton", null, "file_confirm_selected_files",
+                    "#{AddFileDialog.confirmSelectedFiles}", "false", null));
+        }
+        return buttons;
     }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         try {
+            List<NodeRef> createdFiles = new ArrayList<NodeRef>();
             try {
+                NodeRef documentNodeRef = new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId());
+                NodeRef addedFileNodeRef;
                 if (isFileSelected) {
-                    NodeRef documentNodeRef = new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId());
-                    this.createdNode = getFileService().addFileToDocument(selectedFileName, selectedFileNodeRef, documentNodeRef);
-                } else {
-                    outcome = super.finishImpl(context, outcome);
+                    for (int i = 0; i < selectedFileNodeRef.size(); i++) {
+                        String displayName = selectedFileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(selectedFileName.get(i));
+                        checkPlusInFileName(displayName);
+                        displayName = getFileService().getUniqueFileDisplayName(documentNodeRef, displayName);
+                        String name = getGeneralService().limitFileNameLength(displayName, 20, null);
+                        addedFileNodeRef = getFileService().addFileToDocument(name, selectedFileNodeRef.get(i), documentNodeRef);
+                        getNodeService().setProperty(addedFileNodeRef, File.DISPLAY_NAME, displayName);
+                        createdFiles.add(addedFileNodeRef);
+                    }
+                }
+                if (getFileUploadBean() != null) {
+                    List<java.io.File> files = getFileUploadBean().getFiles();
+                    List<String> fileNames = getFileUploadBean().getFileNames();
+                    List<String> fileNameWithoutExtension = getFileUploadBean().getFileNameWithoutExtension();
+                    for (int i = 0; i < files.size(); i++) {
+                        String displayName = fileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(fileNames.get(i));
+                        checkPlusInFileName(displayName);
+                        String uniqueDisplayName = getFileService().getUniqueFileDisplayName(documentNodeRef, displayName);
+                        if (!displayName.equals(uniqueDisplayName)) {
+                            // Take care of "duplicate files"
+                            throw new FileExistsException(documentNodeRef, displayName);
+                        }
+
+                        String name = getGeneralService().limitFileNameLength(displayName, 20, null);
+                        name = getGeneralService().getUniqueFileName(documentNodeRef, name);
+
+                        addedFileNodeRef = getFileService().addFileToDocument(
+                                name,
+                                files.get(i),
+                                documentNodeRef,
+                                getFileUploadBean().getContentTypes().get(i));
+                        getNodeService().setProperty(addedFileNodeRef, File.DISPLAY_NAME, displayName);
+                        createdFiles.add(addedFileNodeRef);
+                    }
                 }
             } catch (NodeLockedException e) {
                 MessageUtil.addErrorMessage(context, "document_addFile_error_docLocked");
                 return outcome;
             }
             // XXX Should probably be refactored to a single service method to add all the aspects there.
-            addVersionModifiedAspect(this.createdNode);
-            NodeRef document = getNodeService().getPrimaryParent(this.createdNode).getParentRef();
-            getDocumentService().updateSearchableFiles(document);
-            getDocumentLogService().addDocumentLog(document, MessageUtil.getMessage(context, "document_log_status_fileAdded", getFileName()));
+            for (NodeRef fileNodeRef : createdFiles) {
+                addVersionModifiedAspect(fileNodeRef);
+                NodeRef document = getNodeService().getPrimaryParent(fileNodeRef).getParentRef();
+                getDocumentService().updateSearchableFiles(document);
+                getDocumentLogService().addDocumentLog(document, MessageUtil.getMessage(context, "document_log_status_fileAdded", getFileName()));
+            }
             return outcome;
         } catch (FileExistsException e) {
             isFinished = false;
             throw new RuntimeException(MessageUtil.getMessage(context, ERR_EXISTING_FILE, e.getName()));
         }
     }
-    
+
+    public static void checkPlusInFileName(String displayName) {
+        if (displayName.contains("+")) {
+            // On some server environments(concrete case with GlassFish on Linux server - on other Linux/Windows machine there were no such problem) when using
+            // encoded "+" ("%2B") in url's request.getRequestURI() returns unEncoded value of "+" (instead of "%2B") and
+            // further decoding will replace + with space. Hence when looking for file by name there is " " instead of "+" and file will not be found.
+            throw new RuntimeException(MessageUtil.getMessage(FacesContext.getCurrentInstance(), ERR_INVALID_FILE_NAME));
+        }
+    }
+
+    @Override
+    public void restored() {
+        refreshUploadedFilesPanelGroup();
+        super.restored();
+    }
+
     @Override
     protected String getErrorOutcome(Throwable exception) {
-        if(exception instanceof IntegrityException) {
+        if (exception instanceof IntegrityException) {
             Utils.addErrorMessage(MessageUtil.getMessage(FacesContext.getCurrentInstance(), ERR_INVALID_FILE_NAME));
             return ""; // Don't return null!
         }
         return super.getErrorOutcome(exception);
     }
-    
+
     @Override
     protected String doPostCommitProcessing(FacesContext context, String outcome) {
-        if (this.createdNode != null) {
-            super.doPostCommitProcessing(context, outcome);
-        }
         return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME + "#files-panel";
+    }
+
+    protected void clearUpload() {
+        // remove the file upload bean from the session
+        FacesContext ctx = FacesContext.getCurrentInstance();
+        ctx.getExternalContext().getSessionMap().remove(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
     }
 
     public String getFileNameWithoutExtension() {
         return FilenameUtils.removeExtension(getFileName());
     }
 
-    public void setFileNameWithoutExtension(String name) {
-        String fileName = name + "." + FilenameUtils.getExtension(getFileName());
-        if (isFileSelected) {
-            selectedFileName = fileName;
-        }
-        else {
-            setFileName(fileName);
-        }
+    public void setFileNameWithoutExtension(String name, int index) {
+        getFileUploadBean().getFileNameWithoutExtension().set(index, name);
     }
-    
+
     private void addVersionModifiedAspect(NodeRef nodeRef) {
         if (getNodeService().hasAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED) == false) {
             Map<QName, Serializable> properties = getNodeService().getProperties(nodeRef);
-            
-            String user = (String)properties.get(ContentModel.PROP_CREATOR);
+
+            String user = (String) properties.get(ContentModel.PROP_CREATOR);
 
             Date modified = DefaultTypeConverter.INSTANCE.convert(Date.class, properties.get(ContentModel.PROP_CREATED));
             Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(3);
-            aspectProperties.put(VersionsModel.Props.VersionModified.MODIFIED, modified );
+            aspectProperties.put(VersionsModel.Props.VersionModified.MODIFIED, modified);
 
             Map<QName, Serializable> personProps = getUserService().getUserProperties(user);
             String first = (String) personProps.get(ContentModel.PROP_FIRSTNAME);
@@ -153,34 +239,215 @@ public class AddFileDialog extends AddContentDialog {
         }
     }
 
-    @Override
     public String getFileName() {
-        if (isFileSelected) {
-            return selectedFileName;
-        }
-        return super.getFileName();
+        return getFileName(-1);
     }
 
-    @Override
+    public String getFileName(int index) {
+        index = (index < 0) ? 0 : index;
+
+        if (isFileSelected) {
+            return selectedFileName.get(index);
+        }
+        FileUploadBean fileUploadBean = getFileUploadBean();
+
+        return (fileUploadBean != null) ? fileUploadBean.getFileNames().get(index) : "";
+    }
+
     public String getFileUploadSuccessMsg() {
-        if (isFileSelected) {
-            String msg = Application.getMessage(FacesContext.getCurrentInstance(), "file_upload_success");
-            return MessageFormat.format(msg, Utils.encode(getFileName())); 
+        String msg = MessageUtil.getMessage(FacesContext.getCurrentInstance(), "file_upload_success");
+        Object[] uploaded = new Object[0];
+        if (getFileUploadBean() != null) {
+            uploaded = getFileUploadBean().getFileNames().toArray();
         }
-        return super.getFileUploadSuccessMsg();
+        Object[] names = ArrayUtils.addAll(
+                uploaded,
+                selectedFileName.toArray());
+        String namesStr = "";
+        if (names.length > 2) {
+            namesStr = StringUtils.join(names, ", ", 0, names.length - 2);
+            namesStr += " " + MessageUtil.getMessage("file_and") + " " + names[names.length - 1];
+        } else if (names.length == 2) {
+            namesStr = StringUtils.join(names, " " + MessageUtil.getMessage("file_and") + " ");
+        } else if (names.length == 1) {
+            namesStr = names[0].toString();
+        }
+        return MessageFormat.format(msg, namesStr);
     }
 
-    public void fileSelected(ValueChangeEvent event) {
-        String newVal = (String) event.getNewValue();
-        Assert.notNull(newVal, "Node reference must be provided when file is selected.");
-        selectedFileNodeRef = new NodeRef(newVal);
-        File file = getFileService().getFile(selectedFileNodeRef);
-        Assert.notNull(file, "Selected file was not found.");
-        isFileSelected = true;
-        selectedFileName = file.getName();
+    public HtmlPanelGroup getUploadedFilesPanelGroup() {
+        return uploadedFilesPanelGroup;
     }
-    
+
+    public void setUploadedFilesPanelGroup(HtmlPanelGroup panelGroup) {
+        if (this.uploadedFilesPanelGroup == null) {
+            this.uploadedFilesPanelGroup = panelGroup;
+            refreshUploadedFilesPanelGroup();
+        } else {
+            this.uploadedFilesPanelGroup = panelGroup;
+        }
+    }
+
+    /**
+     * @param app
+     */
+    private void refreshUploadedFilesPanelGroup() {
+        List<UIComponent> groupChildren = uploadedFilesPanelGroup.getChildren();
+        groupChildren.clear();
+
+        Application app = FacesContext.getCurrentInstance().getApplication();
+        HtmlPanelGrid uploadedFilesGrid = (HtmlPanelGrid) app.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
+        uploadedFilesGrid.setStyleClass("table-padding");
+        uploadedFilesGrid.setColumnClasses("propertiesLabel,");
+        uploadedFilesGrid.setColumns(3);
+
+        groupChildren.add(uploadedFilesGrid);
+
+        List<UIComponent> gridChildren = uploadedFilesGrid.getChildren();
+        int rowCount = 0, size = 0;
+        FileUploadBean fileBean = getFileUploadBean();
+        if (fileBean != null) {
+            size = fileBean.getFiles().size();
+        }
+
+        for (int i = 0; i < size; i++, rowCount++) { // Uploaded files
+            gridChildren.add(createLabel(app, rowCount));
+
+            String nameValueBinding = "#{AddFileDialog.fileUploadBean.fileNameWithoutExtension[" + i + "]}";
+            gridChildren.add(createInput(app, rowCount, nameValueBinding));
+
+            String deleteMethodBinding = "#{AddFileDialog.removeUploadedFile}";
+            gridChildren.add(createDelete(app, rowCount, i, deleteMethodBinding));
+        }
+
+        if (selectedFileNodeRef == null) {
+            return; // We can skip further processing
+        }
+
+        for (int i = 0; i < selectedFileNodeRef.size(); i++, rowCount++) { // Scanned files and email-attachments
+            gridChildren.add(createLabel(app, rowCount));
+
+            String nameValueBinding = "#{AddFileDialog.selectedFileNameWithoutExtension[" + i + "]}";
+            gridChildren.add(createInput(app, rowCount, nameValueBinding));
+
+            String deleteMethodBinding = "#{AddFileDialog.removeSelectedFile}";
+            gridChildren.add(createDelete(app, rowCount, i, deleteMethodBinding));
+        }
+    }
+
+    private UIActionLink createDelete(Application app, int rowCount, int i, String deleteBinding) {
+        UIActionLink delete = (UIActionLink) app.createComponent("org.alfresco.faces.ActionLink");
+        delete.setId("file-remove-link-" + rowCount);
+        delete.setImage("/images/icons/delete.gif");
+        delete.setValue("");
+        delete.setTooltip(MessageUtil.getMessage("delete"));
+        delete.setActionListener(app.createMethodBinding(deleteBinding, UIActions.ACTION_CLASS_ARGS));
+        delete.setShowLink(false);
+        putAttribute(delete, "styleClass", "icon-link");
+
+        UIParameter index = (UIParameter) app.createComponent(UIParameter.COMPONENT_TYPE);
+        index.setName("index");
+        index.setValue(i);
+        addChildren(delete, index);
+        return delete;
+    }
+
+    private HtmlInputText createInput(Application app, int rowCount, String nameValueBinding) {
+        HtmlInputText nameInput = (HtmlInputText) app.createComponent(HtmlInputText.COMPONENT_TYPE);
+        nameInput.setValueBinding("value", app.createValueBinding(nameValueBinding));
+        nameInput.setId("uploaded-file-input-" + rowCount);
+        nameInput.setRequired(true);
+        nameInput.setValidator(app.createMethodBinding("#{AddFileDialog.validateFileName}", new Class[] { FacesContext.class, UIComponent.class,
+                Object.class }));
+        return nameInput;
+    }
+
+    private HtmlOutputText createLabel(Application app, int rowCount) {
+        HtmlOutputText label = (HtmlOutputText) app.createComponent(HtmlOutputText.COMPONENT_TYPE);
+        label.setValue("<span class=\"red\">* </span>" + MessageUtil.getMessage("name"));
+        label.setEscape(false);
+        label.setId("uploaded-file-label-" + rowCount);
+        return label;
+    }
+
+    public void removeUploadedFile(ActionEvent event) {
+        int index = Integer.parseInt(ActionUtil.getParam(event, "index"));
+        getFileUploadBean().removeFile(index);
+        refreshUploadedFilesPanelGroup();
+    }
+
+    public void removeSelectedFile(ActionEvent event) {
+        int index = Integer.parseInt(ActionUtil.getParam(event, "index"));
+        selectedFileNodeRef.remove(index);
+        selectedFileName.remove(index);
+        refreshUploadedFilesPanelGroup();
+    }
+
+    public FileUploadBean getFileUploadBean() {
+        FileUploadBean fileBean = (FileUploadBean) FacesContext.getCurrentInstance().getExternalContext().getSessionMap().
+                get(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
+        return fileBean;
+    }
+
+    public List<NodeRef> getSelectedFileNodeRef() {
+        return selectedFileNodeRef;
+    }
+
+    public List<String> getSelectedFileName() {
+        return selectedFileName;
+    }
+
+    public void validateFileName(FacesContext context, UIComponent component, Object value) {
+        if (component instanceof HtmlInputText) {
+            boolean isValid = true;
+            if (!value.toString().equals(FilenameUtil.stripForbiddenWindowsCharacters(value.toString()))) {
+                isValid = false;
+            }
+
+            String styleClass = ((HtmlInputText) component).getStyleClass();
+            styleClass = (styleClass == null) ? "" : styleClass;
+            if (isValid) {
+                styleClass = styleClass.replaceAll("[\\s]error", "");
+            } else {
+                if (!styleClass.contains("error")) {
+                    styleClass += styleClass + " error";
+                }
+            }
+
+            ((HtmlInputText) component).setStyleClass(styleClass);
+        }
+    }
+
+    public void confirmSelectedFiles() {
+        String[] attachments = (String[]) getAttachmentSelect().getValue();
+        String[] scanned = (String[]) getScannedSelect().getValue();
+
+        String[] selected = (String[]) ArrayUtils.addAll(attachments, scanned);
+
+        if (selectedFileNodeRef == null)
+            selectedFileNodeRef = new ArrayList<NodeRef>(selected.length);
+
+        if (selectedFileName == null)
+            selectedFileName = new ArrayList<String>(selected.length);
+
+        if (selectedFileNameWithoutExtension == null)
+            selectedFileNameWithoutExtension = new ArrayList<String>(selected.length);
+
+        for (String nodeRefStr : selected) {
+            NodeRef nodeRef = new NodeRef(nodeRefStr);
+            File file = getFileService().getFile(nodeRef);
+            Assert.notNull(file, "Selected file was not found.");
+
+            selectedFileNodeRef.add(nodeRef);
+            selectedFileName.add(file.getName());
+            selectedFileNameWithoutExtension.add(FilenameUtils.getBaseName(file.getName()));
+        }
+
+        isFileSelected = (selectedFileNodeRef.size() > 0);
+    }
+
     // START: getters / setters
+
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
@@ -233,13 +500,21 @@ public class AddFileDialog extends AddContentDialog {
         return documentLogService;
     }
 
+    protected GeneralService getGeneralService() {
+        if (generalService == null) {
+            generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(GeneralService.BEAN_NAME);
+        }
+        return generalService;
+    }
+
     public List<SelectItem> getAttachments() {
         List<SelectItem> attachments = new ArrayList<SelectItem>();
         List<File> files = getFileService().getAllFilesExcludingDigidocSubitems(getImapServiceExt().getAttachmentRoot());
         for (File file : files) {
             attachments.add(new SelectItem(file.getNodeRef().toString(), file.getName()));
         }
-        return attachments;        
+        return attachments;
     }
 
     public List<SelectItem> getScannedFiles() {
@@ -250,5 +525,30 @@ public class AddFileDialog extends AddContentDialog {
         }
         return scannedFiles;
     }
+
+    public HtmlSelectManyMenu getScannedSelect() {
+        return scannedSelect;
+    }
+
+    public void setScannedSelect(HtmlSelectManyMenu scannedSelect) {
+        this.scannedSelect = scannedSelect;
+    }
+
+    public HtmlSelectManyMenu getAttachmentSelect() {
+        return attachmentSelect;
+    }
+
+    public void setAttachmentSelect(HtmlSelectManyMenu attachmentSelect) {
+        this.attachmentSelect = attachmentSelect;
+    }
+
+    public List<String> getSelectedFileNameWithoutExtension() {
+        return selectedFileNameWithoutExtension;
+    }
+
+    public void setSelectedFileNameWithoutExtension(List<String> selectedFileNameWithoutExtension) {
+        this.selectedFileNameWithoutExtension = selectedFileNameWithoutExtension;
+    }
     // END: getters / setters
+
 }

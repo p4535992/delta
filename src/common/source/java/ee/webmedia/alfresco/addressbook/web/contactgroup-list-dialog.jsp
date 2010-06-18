@@ -30,7 +30,7 @@
       <%-- Actions column --%>
       <a:column id="col2-act" actions="true" style="text-align:left">
          <f:facet name="header">
-            <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="CreateAssociations, DeleteAssociations">
+            <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="CreateAssociations,DeleteAssociations">
                <h:outputText id="col2-head" value="#{msg.actions}" />
             </r:permissionEvaluator>
          </f:facet>

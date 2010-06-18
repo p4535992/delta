@@ -538,8 +538,9 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
 
         @Override
         public void updateDvkCapableOrganisationsCache() {
+            log.info("starting to update dvkCapableOrganisationsCache");
             setDvkOrganizationsCache(getSendingOptions());
-            log.debug("--updateDvkCapableOrganisationsCache--");
+            log.info("updated dvkCapableOrganisationsCache");
         }
 
         @Override
@@ -593,6 +594,7 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             if (StringUtils.isBlank(sender.getAsutuseNimi())) {
                 String senderName = getDvkOrganizationsHelper().getOrganizationName(sender.getRegnr());
                 sender.setAsutuseNimi(senderName);
+                log.debug("Added senders name based on organization code from DVK organizations list: '" + senderName + "'");
             }
 
             Transport transport = dokumentContainer.addNewTransport();

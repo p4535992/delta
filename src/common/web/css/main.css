@@ -738,6 +738,12 @@ td .dropdown-menu {
 			margin-left: 4px;
 		}
 		
+		#container-content .title-component select {
+			vertical-align: middle;
+			height: 22px;
+			margin-top: -2px;
+		}
+		
 .panel-border {
 	padding: 5px 5px 7px;
 }
@@ -776,6 +782,7 @@ td .dropdown-menu {
 .panel-35-f { width: 35%; margin-right: 0; }
 .panel-40	{ width: 39%; margin-right: 1%; }
 .panel-50	{ width: 49%; margin-right: 1%; }
+.panel-50-f	{ width: 50%; margin-right: 0; }
 .panel-60 	{ width: 59%; margin-right: 1%; }
 .panel-65 	{ width: 64%; margin-right: 1%; }
 .panel-70 	{ width: 69%; margin-right: 1%; }
@@ -828,7 +835,10 @@ tr.recordSetRow td {
 	}
 
 	tr.recordSetRow td,
-	tr.recordSetRowAlt td {
+	tr.recordSetRowAlt td,
+	tr.odd td,
+	tr.selectedItemsRow td,
+	tr.selectedItemsRowAlt td {
 		padding: 3px;
 		vertical-align: top;
 		line-height: 14px;

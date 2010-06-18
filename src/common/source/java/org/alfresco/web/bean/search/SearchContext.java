@@ -106,6 +106,9 @@ public class SearchContext implements Serializable
    public final static int SEARCH_FILE_NAMES = 2;
    public final static int SEARCH_SPACE_NAMES = 3;
    
+   public final static int TYPE_OTHER = 0;
+   public final static int TYPE_QUICK = 1;
+   
    /** the search text string */
    private String text = "";
    
@@ -141,6 +144,8 @@ public class SearchContext implements Serializable
    
    /** set true to force the use of AND between text terms */
    private boolean forceAndTerms = false;
+   
+   private int type = TYPE_OTHER;
    
    /** logger */
    private static Log logger = LogFactory.getLog(SearchContext.class);
@@ -815,6 +820,16 @@ public class SearchContext implements Serializable
    public void setForceAndTerms(boolean forceAndTerms)
    {
       this.forceAndTerms = forceAndTerms;
+   }
+
+   public int getType()
+   {
+      return type;
+   }
+
+   public void setType(int type)
+   {
+      this.type = type;
    }
 
    /**

@@ -13,8 +13,10 @@ import java.util.Stack;
 import javax.faces.application.Application;
 import javax.faces.component.StateHolder;
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
+import javax.faces.el.MethodBinding;
 import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ActionListener;
@@ -26,7 +28,6 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.IDialogBean;
 import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
 import org.alfresco.web.config.WizardsConfigElement.WizardConfig;
-import org.alfresco.web.ui.common.ConstantMethodBinding;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIOutputText;
 import org.alfresco.web.ui.repo.component.UIActions;
@@ -62,6 +63,7 @@ public class MenuBean implements Serializable {
     public static final int MY_TASKS_AND_DOCUMENTS_ID = 0;
     public static final int DOCUMENT_REGISTER_ID = 1;
     public static final int CREATE_NEW_DOCUMENT = 5;
+    public static final int MY_DOCUMENTS_ID = 3;
 
     private transient HtmlPanelGroup shortcutsPanelGroup;
     private transient HtmlPanelGroup breadcrumb;
@@ -120,7 +122,7 @@ public class MenuBean implements Serializable {
         } catch (NullPointerException npe) {
             // XXX is any action necessary?
         }
-
+        
         addBreadcrumbItem(title);
     }
 
@@ -138,10 +140,12 @@ public class MenuBean implements Serializable {
     @SuppressWarnings("unchecked")
     public void addBreadcrumbItem(String title) {
         int i = 0;
+        List<String> leftMenuTitles = new ArrayList<String>();
+        leftMenuTitles.add(MessageUtil.getMessage("volume_list"));
+        leftMenuTitles.add(MessageUtil.getMessage("series_list"));
+        leftMenuTitles.add(MessageUtil.getMessage("document_list"));
         for (String listTitle : stateList) {
-            if (i < 3 && listTitle.equals(title) && i == stateList.size()) { // i < 3, left side menu provides functionality for backwards navigation. If we are
-                // at the end of the list and dialog with same title is added, then we should
-                // probably add it (followUp)
+            if (leftMenuTitles.contains(title) && listTitle.equals(title)) { // left side menu provides functionality for backwards navigation.
                 stateList.setSize(i);
                 Stack viewStack = (Stack) FacesContext.getCurrentInstance().getExternalContext().getSessionMap().get(UIMenuComponent.VIEW_STACK);
                 if (viewStack != null) {
@@ -230,9 +234,29 @@ public class MenuBean implements Serializable {
         UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
         link.setValue(title);
         link.getAttributes().put("styleClass", "breadcrumb-link");
-        link.setAction(new ConstantMethodBinding("dialog:close[" + closeCount + "]"));
-        link.getAttributes().put(COUNT, closeCount + "");
+        MethodBinding action = application.createMethodBinding("#{MenuBean.closeBreadcrumbItem}", UIActions.ACTION_CLASS_ARGS);
+        link.setActionListener(action);
+
+        UIParameter count = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
+        count.setName(COUNT);
+        count.setValue(closeCount);
+        link.getChildren().add(count);
+
+        link.getAttributes().put(COUNT, closeCount);
         return link;
+    }
+    
+    public void closeBreadcrumbItem(ActionEvent event) {
+        Integer closeCount = null;
+        if (ActionUtil.hasParam(event, COUNT)) {
+            closeCount = Integer.parseInt(ActionUtil.getParam(event, COUNT).toString());
+        } else {
+            return;
+        }
+        
+        FacesContext context = FacesContext.getCurrentInstance();
+        context.getApplication().getNavigationHandler().handleNavigation(context, "closeBreadcrumbItem", "dialog:close[" + closeCount + "]");
+        
     }
 
     public void processTaskItems() {
@@ -277,6 +301,8 @@ public class MenuBean implements Serializable {
         MenuItem item = getActiveMainMenuItem();
         if(Integer.parseInt(activeItemId) == DOCUMENT_REGISTER_ID) {
             collapseMenuItems(item);
+        } else if(Integer.parseInt(activeItemId) == MY_TASKS_AND_DOCUMENTS_ID) {
+            collapseMenuItems(item.getSubItems().get(MY_DOCUMENTS_ID));
         }
 
         // Let's go to the clicked link

@@ -7,8 +7,7 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="send-out-block-panel" label="#{msg.document_send_title}" styleClass="panel-100" progressive="true" rendered="#{SendOutBlockBean.rendered}"
-   expanded="#{SendOutBlockBean.expanded}" expandedActionListener="#{SendOutBlockBean.expandedAction}">
+<a:panel id="send-out-block-panel" label="#{msg.document_send_title}" styleClass="panel-100" progressive="true" rendered="#{SendOutBlockBean.rendered}" expanded="false">
 
    <a:richList id="sendOutList" viewMode="details" value="#{SendOutBlockBean.sendInfos}" var="r" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="sendDateTime">

@@ -173,6 +173,16 @@ public interface GeneralService {
 
     String getUniqueFileName(NodeRef folder, String fileName);
 
+    /**
+     * Shortens the given filename by taking first part that fits in limit and inserts the marker between base name and extension
+     * 
+     * @param filename name to shorten
+     * @param maxLength maximum length of the name including extension
+     * @param marker string to insert between base name and extension, if <code>null</code>, defaults to "..."
+     * @return shortened filename or <code>null</code> if given name is <code>null</code>
+     */
+    String limitFileNameLength(String filename, int maxLength, String marker);
+
     NodeRef getAncestorNodeRefWithType(NodeRef childRef, QName ancestorType);
 
     /**

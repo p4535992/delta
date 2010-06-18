@@ -691,6 +691,10 @@ public class WorkflowBlockBean implements Serializable {
         HtmlPanelGroup workflowWrapper = (HtmlPanelGroup) app.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
 
         for (Workflow workflow : compound.getWorkflows()) {
+            if (WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW.equals(workflow.getNode().getType())) {
+                continue; // Don't display registration workflows
+            }
+            
             WorkflowSummaryItem summaryItem = new WorkflowSummaryItem(workflow);
             summaryItem.setRaisedRights(checkRights(workflow));
             HtmlPanelGrid grid = (HtmlPanelGrid) app.createComponent(HtmlPanelGrid.COMPONENT_TYPE);

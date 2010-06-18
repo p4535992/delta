@@ -13,7 +13,7 @@ public class DocumentTypeConverter extends MultiSelectConverterBase {
     private transient DocumentTypeService documentTypeService;
 
     @Override
-    protected String convertSelectedValueToString(Object value) {
+    public String convertSelectedValueToString(Object value) {
         final DocumentType documentType = getDocumentTypeService().getDocumentType((QName) value);
         if (documentType == null) {
             return value.toString();

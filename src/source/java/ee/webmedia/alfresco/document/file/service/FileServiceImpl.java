@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.file.service;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,6 +16,7 @@ import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentIOException;
 import org.alfresco.service.cmr.repository.ContentReader;
@@ -23,13 +25,13 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthenticationService;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -175,11 +177,13 @@ public class FileServiceImpl implements FileService {
             return null;
         }
         String filename = (String) nodeService.getProperty(file, ContentModel.PROP_NAME);
-        return transformToPdf(parent, reader, filename);
+        String displayName = (String) nodeService.getProperty(file, File.DISPLAY_NAME);
+        displayName = (displayName == null) ? filename : displayName;
+        return transformToPdf(parent, reader, filename, displayName);
     }
 
     @Override
-    public FileInfo transformToPdf(NodeRef parent, ContentReader reader, String filename) {
+    public FileInfo transformToPdf(NodeRef parent, ContentReader reader, String filename, String displayName) {
         ContentWriter writer = contentService.getWriter(null, null, false);
         writer.setMimetype(MimetypeMap.MIMETYPE_PDF);
         ContentTransformer transformer = contentService.getTransformer(reader.getMimetype(), writer.getMimetype());
@@ -201,11 +205,16 @@ public class FileServiceImpl implements FileService {
             return null;
         }
 
+        String name = generalService.getUniqueFileName(parent, FilenameUtils.removeExtension(filename) + ".pdf");
         FileInfo createdFile = fileFolderService.create(
                 parent,
-                generalService.getUniqueFileName(parent, FilenameUtils.removeExtension(filename) + ".pdf"),
+                name,
                 ContentModel.TYPE_CONTENT);
         nodeService.setProperty(createdFile.getNodeRef(), ContentModel.PROP_CONTENT, writer.getContentData());
+        displayName = FilenameUtils.removeExtension(displayName);
+        displayName += ".pdf";
+        nodeService.setProperty(createdFile.getNodeRef(), File.DISPLAY_NAME, getUniqueFileDisplayName(parent, displayName));
+        
         return createdFile;
     }
 
@@ -242,6 +251,19 @@ public class FileServiceImpl implements FileService {
                         ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
             }
         }, AuthenticationUtil.getSystemUserName());
+    }
+
+    @Override
+    public NodeRef addFileToDocument(String name, java.io.File file, NodeRef documentNodeRef, String mimeType) {
+        FileInfo fileInfo = fileFolderService.create(
+              documentNodeRef,
+              name,
+              ContentModel.TYPE_CONTENT);
+        NodeRef fileNodeRef = fileInfo.getNodeRef();
+        ContentWriter writer = fileFolderService.getWriter(fileNodeRef);
+        generalService.writeFile(writer, file, name, mimeType);
+        
+        return fileNodeRef;
     }
 
     @Override
@@ -323,6 +345,32 @@ public class FileServiceImpl implements FileService {
         path.append("/").append(URLEncoder.encode(name));
 
         return path.toString();
+    }
+    
+    @Override
+    public String getUniqueFileDisplayName(NodeRef folder, String displayName) {
+        String baseName = FilenameUtils.getBaseName(displayName);
+        String extension = FilenameUtils.getExtension(displayName);
+        if (StringUtils.isBlank(extension)) {
+            extension = MimetypeMap.EXTENSION_BINARY;
+        }
+        String suffix = "";
+        int i = 1;
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(folder);
+        List<String> childDisplayNames = new ArrayList<String>(childAssocs.size());
+        
+        for(ChildAssociationRef caRef : childAssocs) {
+            Serializable property = nodeService.getProperty(caRef.getChildRef(), File.DISPLAY_NAME);
+            if(property != null) {
+                childDisplayNames.add(property.toString());
+            }
+        }
+        
+        while (childDisplayNames.contains(baseName + suffix + "." + extension)) {
+            suffix = " (" + i + ")";
+            i++;
+        }
+        return baseName + suffix + "." + extension;
     }
 
     // START: getters / setters

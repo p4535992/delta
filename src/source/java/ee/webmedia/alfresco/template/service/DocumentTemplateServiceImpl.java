@@ -156,8 +156,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         Map<QName, Serializable> docProp = nodeService.getProperties(documentNodeRef);
 
         String name = FilenameUtil.buildFileName((String) docProp.get(DocumentCommonModel.Props.DOC_NAME), mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD));
+        String displayName = fileService.getUniqueFileDisplayName(documentNodeRef, name);
+        name = generalService.limitFileNameLength(name, 20, null);
         name = generalService.getUniqueFileName(documentNodeRef, name);
-
         String templName = "";
         if (docProp.get(DocumentSpecificModel.Props.TEMPLATE_NAME) != null) {
             templName = (String) docProp.get(DocumentSpecificModel.Props.TEMPLATE_NAME);
@@ -178,10 +179,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         ee.webmedia.alfresco.document.file.model.File populatedTemplate = new ee.webmedia.alfresco.document.file.model.File(fileFolderService.create(
                 documentNodeRef, name, ContentModel.TYPE_CONTENT));
         nodeService.setProperty(populatedTemplate.getNodeRef(), ee.webmedia.alfresco.document.file.model.File.GENERATED, true); // Set generated flag so we can
-        // process it during document
-        // registration
-        documentLogService.addDocumentLog(documentNodeRef, I18NUtil.getMessage("document_log_status_fileAdded", name));
-        log.debug("Created new node: " + populatedTemplate.getNodeRef() + "\nwith name: " + name);
+        // process it during document registration
+        nodeService.setProperty(populatedTemplate.getNodeRef(), ee.webmedia.alfresco.document.file.model.File.DISPLAY_NAME, displayName);
+
+        documentLogService.addDocumentLog(documentNodeRef, I18NUtil.getMessage("document_log_status_fileAdded", displayName));
+        log.debug("Created new node: " + populatedTemplate.getNodeRef() + "\nwith name: " + name + "; displayName: " + displayName);
         // Set document content's mimetype and encoding from template
         ContentWriter documentWriter = fileFolderService.getWriter(populatedTemplate.getNodeRef());
         documentWriter.setMimetype(MimetypeMap.MIMETYPE_WORD);

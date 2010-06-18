@@ -1,3 +1,8 @@
+/* http://www.456bereastreet.com/archive/200608/base_elements_cause_text_selection_problems_in_ie/#comment31 */
+body {
+	position: relative;
+}
+
 /*
 	LOGO, CONTROL PANEL AND NAVIGATION
 	*************************************************************************/
@@ -332,8 +337,7 @@ hr {
 	margin-left: 133px;
 }
 
-#document-search-panel .inline-property-group input,
-#task-search-panel .inline-property-group input {
+.inline-property-group input {
 	vertical-align: top !important;
 }
 
@@ -353,4 +357,18 @@ hr {
 
 .long-content {
 	top: -4px;
+}
+
+.generic-picker {
+	table-layout: fixed;
+}
+
+#add-authority-search {
+	margin-left: -1px;
+}
+
+.left44, .left99 {
+	display: inline-block;
+	zoom: 1;
+	*display: inline;
 }

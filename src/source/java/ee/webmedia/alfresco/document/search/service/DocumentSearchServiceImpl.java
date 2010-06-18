@@ -441,16 +441,18 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     @Override
     public List<Task> searchTasksDueAfterDate(Date dueDate) {
         long startTime = System.currentTimeMillis();
+        Date fromDate = Calendar.getInstance().getTime(); // Set time frame from today, tasks that are due today are also due in e.g. 2 weeks
         if(dueDate == null) { // If no due date is specified search for tasks that are due
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.DATE, -1);
             dueDate = cal.getTime();
+            fromDate = null; // If due date isn't set then we must include result from the glory days of past
         }
         
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringExactQuery(Status.IN_PROGRESS.getName(), WorkflowCommonModel.Props.STATUS));
         queryParts.add(generateStringNotEmptyQuery(WorkflowCommonModel.Props.OWNER_ID));
-        queryParts.add(generateDatePropertyRangeQuery(null, dueDate, WorkflowSpecificModel.Props.DUE_DATE));
+        queryParts.add(generateDatePropertyRangeQuery(fromDate, dueDate, WorkflowSpecificModel.Props.DUE_DATE));
         String query = generateTaskSearchQuery(queryParts);
         List<Task> results = searchTasksImpl(query, false);
         if (log.isDebugEnabled()) {

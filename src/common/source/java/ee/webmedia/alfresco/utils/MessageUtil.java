@@ -73,6 +73,16 @@ public class MessageUtil {
         addStatusMessage(currentInstance, string, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
     }
 
+    public static void addStatusMessage(FacesContext facesContext, FeedbackWrapper feedbackWrapper) {
+        for (FeedbackVO feedbackVO : feedbackWrapper) {
+            addStatusMessage(facesContext, feedbackVO);
+        }
+    }
+
+    private static void addStatusMessage(FacesContext facesContext, FeedbackVO feedbackVO) {
+        addStatusMessage(facesContext, feedbackVO.getSeverity(), feedbackVO.getMessageKey(), feedbackVO.getMessageValuesForHolders());
+    }
+
     /**
      * Add statusMessage to the faces context(to be shown to the user). Message text is retrieved from message bundle based on key <code>e.getMessage()</code>
      * and possible valuces could be set using <code>e.getMessageValuesForHolders()</code>. Severity of message is determined by <code>e.getSeverity()</code>
@@ -81,7 +91,11 @@ public class MessageUtil {
      * @param e - exception object used to create message
      */
     public static void addStatusMessage(FacesContext facesContext, UnableToPerformException e) {
-        final MessageSeverity severity = e.getSeverity();
+        addStatusMessage(facesContext, e.getSeverity(), e.getMessage(), e.getMessageValuesForHolders());
+    }
+
+    private static void addStatusMessage(FacesContext facesContext, final MessageSeverity severity, final String message,
+            final Object... messageValuesForHolders) {
         final FacesMessage.Severity facesSeverity;
         if (severity == MessageSeverity.INFO) {
             facesSeverity = FacesMessage.SEVERITY_INFO;
@@ -94,11 +108,12 @@ public class MessageUtil {
         } else {
             throw new RuntimeException("Unexpected severity: " + severity);
         }
-        addStatusMessage(facesContext, e.getMessage(), facesSeverity, e.getMessageValuesForHolders());
+        addStatusMessage(facesContext, message, facesSeverity, messageValuesForHolders);
     }
 
     /**
      * Add error message by concatenating messages retrieved from the messageKeys
+     * 
      * @param currentInstance
      * @param messageKeys
      */

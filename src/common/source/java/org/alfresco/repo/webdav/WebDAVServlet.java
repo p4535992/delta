@@ -65,7 +65,7 @@ public class WebDAVServlet extends HttpServlet
     private static final long serialVersionUID = 6900069445027527165L;
 
     // Logging
-    private static Log logger = LogFactory.getLog("org.alfresco.webdav.protocol");
+    protected static Log logger = LogFactory.getLog("org.alfresco.webdav.protocol");
     
     // Constants
     public static final String WEBDAV_PREFIX = "webdav"; 

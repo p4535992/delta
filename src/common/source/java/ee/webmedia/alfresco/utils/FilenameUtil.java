@@ -34,6 +34,9 @@ public class FilenameUtil {
         // Windows kernel forbids the use of characters in range 1-31 (i.e., 0x01-0x1F) and
         // characters " * : < > ? \ / |
         String name = filename.replaceAll("\\p{Cntrl}", "");
+        // On some server environments(concrete case with GlassFish on Linux server - on other Linux/Windows machine there were no such problem) when using encoded "+" ("%2B") in url's request.getRequestURI() returns unEncoded value of "+" (instead of "%2B") and
+        // further decoding will replace + with space. Hence when looking for file by name there is " " instead of "+" and file will not be found.
+        name = name.replace('+', '-');
         name = name.replace(':', '_');
         name = name.replace('"', '\'');
         name = name.replace('/', '-');

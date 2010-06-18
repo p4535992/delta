@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
@@ -24,7 +23,6 @@ public class SendOutBlockBean implements Serializable {
     
     private NodeRef document;
     private List<SendInfo> sendInfos;
-    private boolean expanded = false;
 
     public void init(Node node) {
         reset();
@@ -39,11 +37,6 @@ public class SendOutBlockBean implements Serializable {
     public void reset() {
         document = null;
         sendInfos = null;
-        expanded = false;
-    }
-
-    public void expandedAction(ActionEvent event) {
-        this.expanded = !this.expanded;
     }
 
     public boolean isRendered() {
@@ -51,10 +44,6 @@ public class SendOutBlockBean implements Serializable {
     }
 
     // START: getters / setters
-    
-    public boolean isExpanded() {
-        return this.expanded;
-    }
     
     public List<SendInfo> getSendInfos() {
         return this.sendInfos;

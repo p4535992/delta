@@ -640,7 +640,16 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
      */
     protected void handleDialogOrWizardClose(FacesContext context, String fromAction, String outcome, boolean dialog) {
         String closingItem = dialog ? "dialog" : "wizard";
-
+        DialogManager dialogManager = null;
+        if (dialog) {
+            dialogManager = Application.getDialogManager();
+        }
+        
+        boolean explicitCancel = false; 
+        if(dialogManager != null && "closeBreadcrumbItem".equals(fromAction)) {
+            explicitCancel = true;
+        }
+        
         // if we are closing a wizard or dialog take the view off the
         // top of the stack then decide whether to use the view
         // or any overridden outcome that may be present
@@ -663,6 +672,9 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                     if (mb != null) {
                         mb.removeBreadcrumbItem();
                     }
+                    if(explicitCancel) {
+                        dialogManager.cancel();
+                    }
 
                     if (logger.isDebugEnabled())
                         logger.debug("Popped item from the top of the view stack: " + stackObject);
@@ -683,6 +695,9 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                     // pop the right object from the stack
                     for (int x = 1; x <= numberToClose; x++) {
                         stackObject = viewStack.pop();
+                        if(explicitCancel) {
+                            dialogManager.cancel();
+                        }
                     }
                     MenuBean mb = getMenuBean(context);
                     if (mb != null) {
@@ -712,6 +727,9 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 // We need to close this dialog, restore second state from stack
                 // XXX - this may break something, thorough testing needed
                 String previousViewId = getViewIdFromStackObject(context, getViewStack(context).pop());
+                if(explicitCancel) {
+                    dialogManager.cancel();
+                }
                 
                 MenuBean mb = getMenuBean(context);
                 if (mb != null) {

@@ -26,6 +26,7 @@ import javax.faces.model.SelectItem;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
@@ -75,6 +76,12 @@ public class ComponentUtil {
         final Map<String, Object> attributes = component.getAttributes();
         attributes.put(key, value);
         return attributes;
+    }
+
+    public static <T> T gettAttribute(UIComponent component, String key, Class<T> requiredClazz) {
+        @SuppressWarnings("unchecked")
+        final Map<String, Object> attributes = component.getAttributes();
+        return DefaultTypeConverter.INSTANCE.convert(requiredClazz, attributes.get(key));
     }
 
     /**

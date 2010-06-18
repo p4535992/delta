@@ -38,6 +38,7 @@ import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
@@ -138,6 +139,8 @@ public class DeleteContentDialog extends BaseDialogBean
 
       Node document = this.browseBean.getDocument();
       String documentName = document.getName();
+      String displayName = (String) getNodeService().getProperty(document.getNodeRef(), File.DISPLAY_NAME);
+      documentName = (displayName == null) ? documentName : displayName;
 
       if(document.getType().equals(ContentModel.TYPE_MULTILINGUAL_CONTAINER))
       {

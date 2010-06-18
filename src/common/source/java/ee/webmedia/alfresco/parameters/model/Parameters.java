@@ -73,7 +73,8 @@ public enum Parameters {
     DOC_PROP_MANAGEMENTS_ORDER_DOC_NAME("docPropManagementsOrderDocName"), 
     DOC_PROP_VACATION_ORDER_DOC_NAME("docPropVacationOrderDocName"),
     DOC_PROP_VACATION_ORDER_LEGAL_BASIS_NAME("docPropVacationOrderLegalBasisName"),
-    DOC_PROP_CHANCELLORS_ORDER_SIGNER_NAME("docPropChancellorsOrderSignerName");
+    DOC_PROP_CHANCELLORS_ORDER_SIGNER_NAME("docPropChancellorsOrderSignerName"),
+    SEARCH_RESULTS_LIMIT("searchResultsLimit");
 
     private String xPath;
     private String parameterName;

@@ -13,6 +13,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class PermissionsListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
@@ -24,6 +25,7 @@ public class PermissionsListDialog extends BaseDialogBean {
     private String permission;
     private List<Authority> authorities;
     private String alternateConfigId;
+    private String alternateDialogTitleId;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -46,7 +48,18 @@ public class PermissionsListDialog extends BaseDialogBean {
         if(ActionUtil.hasParam(event, "alternateConfigId")) {
             alternateConfigId = ActionUtil.getParam(event, "alternateConfigId");
         }
+        if(ActionUtil.hasParam(event, "alternateDialogTitleId")) {
+            alternateDialogTitleId = ActionUtil.getParam(event, "alternateDialogTitleId");
+        }
         restored();
+    }
+    
+    @Override
+    public String getContainerTitle() {
+        if(alternateDialogTitleId != null) {
+            return MessageUtil.getMessage(alternateDialogTitleId);
+        }
+        return null;
     }
     
     @Override

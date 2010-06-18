@@ -69,6 +69,8 @@ public interface FileService {
      */
     NodeRef addFileToDocument(String name, NodeRef fileNodeRef, NodeRef documentNodeRef);
 
+    NodeRef addFileToDocument(String name, java.io.File file, NodeRef documentNodeRef, String mimeType);
+
     List<File> getScannedFolders();
 
     List<File> getAllScannedFiles();
@@ -97,9 +99,10 @@ public interface FileService {
      * @param parent folder where PDF file is created
      * @param reader source file that is converted to PDF
      * @param filename the name that the created PDF file will have
+     * @param displayName the name to be displayed in UI
      * @return created PDF file. If transformation was not possible or failed, returns {@code null}.
      */
-    FileInfo transformToPdf(NodeRef parent, ContentReader reader, String filename);
+    FileInfo transformToPdf(NodeRef parent, ContentReader reader, String filename, String displayName);
 
     /**
      * @param nodeRef
@@ -110,5 +113,7 @@ public interface FileService {
     List<NodeRef> getAllActiveFilesNodeRefs(NodeRef nodeRef);
 
     void setAllFilesInactiveExcept(NodeRef parent, NodeRef activeFile);
+
+    String getUniqueFileDisplayName(NodeRef folder, String displayName);
 
 }

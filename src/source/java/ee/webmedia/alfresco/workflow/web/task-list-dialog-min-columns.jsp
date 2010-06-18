@@ -7,7 +7,7 @@
 <%@ page isELIgnored="false"%>
       
       <%-- dueDate --%>
-      <a:column id="dueDate" primary="true" styleClass="#{r.task.cssStyleClass}" >
+      <a:column id="dueDate" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;">
          <f:facet name="header">
             <a:sortLink id="dueDate-sort" label="#{msg.task_property_dueDate}" value="dueDate" styleClass="header" />
          </f:facet>
@@ -17,7 +17,7 @@
       </a:column>
       
       <%-- resolution --%>
-      <a:column id="resolution" primary="true" styleClass="#{r.task.cssStyleClass}" >
+      <a:column id="resolution" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 35%;">
          <f:facet name="header">
             <a:sortLink id="resolution-sort" label="#{msg.task_property_resolution}" value="resolution" styleClass="header" />
          </f:facet>
@@ -27,7 +27,7 @@
       </a:column>
       
       <%-- creatorName --%>
-      <a:column id="creatorName" primary="true" styleClass="#{r.task.cssStyleClass}" >
+      <a:column id="creatorName" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;">
          <f:facet name="header">
             <a:sortLink id="creatorName-sort" label="#{msg.task_property_creator_name}" value="creatorName" styleClass="header" />
          </f:facet>
@@ -37,7 +37,7 @@
       </a:column>
 
       <%-- Sender/owner --%>
-      <a:column id="col4" primary="true" styleClass="#{r.task.cssStyleClass}" >
+      <a:column id="col4" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;">
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
@@ -47,7 +47,7 @@
       </a:column>
 
       <%-- Title --%>
-      <a:column id="col6" styleClass="#{r.task.cssStyleClass}" >
+      <a:column id="col6" styleClass="#{r.task.cssStyleClass}" style="width: 25%;">
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
@@ -57,7 +57,7 @@
       </a:column>
 
       <%-- Document type --%>
-      <a:column id="col3" primary="true" styleClass="#{r.task.cssStyleClass}" >
+      <a:column id="col3" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;">
          <f:facet name="header">
             <a:sortLink id="col3-sort" label="#{msg.document_docType}" value="documentTypeName" styleClass="header" />
          </f:facet>

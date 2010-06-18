@@ -289,12 +289,12 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       out.write("\" cellspacing=\"0\" cellpadding=\"0\" width=\"100%\" class=\"generic-picker\">");
       
       // top row
-      out.write("<tr valign=\"top\">");
+      out.write("<tr valign=\"top\"><td>");
       
       // filter drop-down
       if (getShowFilter() == true)
       {
-         out.write("<td><select name='");
+         out.write("<select class=\"ff-margin-right-2\" name='");
          out.write(clientId + FIELD_FILTER);
          out.write("' size='1'");
          
@@ -329,9 +329,8 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
             }
          }
          
-         out.write("</select></td>");
+         out.write("</select>");
       }
-      out.write("<td>");
       
       // Contains textbox
       if (getShowContains() == true)
@@ -354,7 +353,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       // information row
       if (this.currentResults != null && getShowContains() == true)
       {
-         out.write("<tr><td colspan=\"9\">");
+         out.write("<tr><td>");
          out.write("<a href='#' onclick=\"");
          out.write(generateFormSubmit(context, ACTION_CLEAR, 0));
          out.write("\">");
@@ -363,7 +362,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       }
       
       // results list row
-      out.write("<tr><td colspan=\"9\">");
+      out.write("<tr><td>");
       out.write("<select size=\"" + getSize() + "\"");
       out.write(" style='width:100%;height:auto;' name='");
       out.write(clientId + FIELD_RESULTS);
@@ -402,7 +401,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       // help text
       if (getMultiSelect() == true)
       {
-          out.write("<tr><td colspan=\"2\">");
+          out.write("<tr><td>");
           out.write(Utils.encode(bundle.getString("help_select_multiple_rows")));
           out.write("</td></tr>");
       }
@@ -410,7 +409,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       // bottom row - add button
       if (getShowAddButton() == true)
       {
-         out.write("<tr><td colspan=\"2\">");
+         out.write("<tr><td>");
          out.write("<input type='submit' value='");
          String msg = getAddButtonLabel();
          if (msg == null || msg.length() == 0)

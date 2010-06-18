@@ -54,44 +54,11 @@
    <r:propertySheetGrid labelStyleClass="propertiesLabel" columns="1" mode="view" value="#{UserDetailsDialog.user}" externalConfig="true" />
 </a:panel>
 
-<a:panel label="#{msg.general_pref}" id="pref-panel" rendered="#{NavigationBean.isGuest == false || UserPreferencesBean.allowGuestConfig == true}"
-   border="white" bgcolor="white" titleBorder="lbgrey" expandedTitleBorder="dotted" titleBgcolor="white" styleClass="column panel-65">
+<h:outputText value="#{AssignResponsibilityBean.setFromOwnerUserConsole}" />
 
-   <h:panelGrid columns="2" cellpadding="2" cellspacing="2" columnClasses="propertiesLabel,">
-      <h:outputText value="#{msg.start_location}" styleClass="no-wrap" />
-      <%-- Start Location drop-down selector --%>
-      <h:selectOneMenu id="start-location" value="#{UserPreferencesBean.startLocation}" onchange="document.forms['dialog'].submit(); return true;">
-         <f:selectItems value="#{UserPreferencesBean.startLocations}" />
-      </h:selectOneMenu>
-
-      <h:outputText value="#{msg.interface_language}" rendered="#{LoginBean.languageSelect}" styleClass="no-wrap" />
-      <h:selectOneMenu id="language" value="#{UserPreferencesBean.language}" rendered="#{LoginBean.languageSelect}"
-         onchange="document.forms['dialog'].submit(); return true;">
-         <f:selectItems value="#{UserPreferencesBean.languages}" />
-      </h:selectOneMenu>
-
-      <h:outputText value="#{msg.content_language_filter}" styleClass="no-wrap" />
-      <%-- Content Language Filter drop-down selector --%>
-      <h:selectOneMenu id="content-filter-language" value="#{UserPreferencesBean.contentFilterLanguage}"
-         onchange="document.forms['dialog'].submit(); return true;">
-         <f:selectItems value="#{UserPreferencesBean.contentFilterLanguages}" />
-      </h:selectOneMenu>
-   </h:panelGrid>
-
-   <%-- Download automatically checkbox --%>
-   <f:verbatim>
-      <br />
-   </f:verbatim>
-
-   <h:outputText value="#{msg.offline_editing}" />
-
-   <h:panelGrid columns="2">
-      <h:selectBooleanCheckbox id="download-automatically" value="#{UserPreferencesBean.downloadAutomatically}"
-         onchange="document.forms['dialog'].submit(); return true;" />
-
-      <h:outputText value="#{msg.download_automatically}" />
-   </h:panelGrid>
-</a:panel>
+<f:verbatim><div class="panel panel-65"></f:verbatim>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/assignresponsibility/web/assign-responsibility.jsp" />
+<f:verbatim></div></f:verbatim>
 
 <a:panel label="#{msg.user_management}" id="man-panel" rendered="#{NavigationBean.isGuest == false}" border="white" bgcolor="white" titleBorder="lbgrey"
    expandedTitleBorder="dotted" titleBgcolor="white" styleClass="column panel-35-f">
@@ -112,6 +79,3 @@
       style="margin-top: 20px; display: block;" />
 
 </a:panel>
-
-<h:outputText value="#{AssignResponsibilityBean.setFromOwnerUserConsole}" />
-<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/assignresponsibility/web/assign-responsibility.jsp" />

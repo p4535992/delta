@@ -26,6 +26,8 @@ package org.alfresco.web.bean;
 
 import java.io.File;
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Bean to hold the results of a file upload
@@ -38,6 +40,7 @@ public final class FileUploadBean implements Serializable
    private static final long serialVersionUID = 7667383955924957544L;
    
    public static final String FILE_UPLOAD_BEAN_NAME = "alfresco.UploadBean";
+   private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(FileUploadBean.class);
 
    public static String getKey(final String id)
    {
@@ -46,17 +49,24 @@ public final class FileUploadBean implements Serializable
         : FILE_UPLOAD_BEAN_NAME + "-" + id);
    }
    
-   private File file;
-   private String fileName;
-   private String filePath;
-   private String contentType;
+   private List<File> file;
+   private List<String> fileName;
+   private List<String> fileNameWithoutExtension;
+   private List<String> filePath;
+   private List<String> contentType;
+   private boolean multiple = false;
    
    /**
     * @return Returns the file
     */
    public File getFile()
    {
-      return file;
+      if(!multiple)
+      return file.get(0);
+      
+      String msg = "FileUploadBean is in multiple files mode,fetching single file is not supported!";
+      log.debug(msg);
+      throw new RuntimeException(msg);
    }
    
    /**
@@ -64,7 +74,22 @@ public final class FileUploadBean implements Serializable
     */
    public void setFile(File file)
    {
-      this.file = file;
+        if(this.file == null) 
+            this.file = new ArrayList<File>();
+        
+        if (!multiple) {
+            this.file.add(0, file);
+        } else {
+            this.file.add(file);
+        }
+   }
+   
+   public List<File> getFiles() {
+       return file;
+   }
+
+   public void setFile(List<File> file) {
+       this.file = file;
    }
 
    /**
@@ -72,7 +97,12 @@ public final class FileUploadBean implements Serializable
     */
    public String getFileName()
    {
-      return fileName;
+        if (!multiple)
+            return fileName.get(0);
+
+        String msg = "FileUploadBean is in multiple files mode, fetching single filename is not supported!";
+        log.debug(msg);
+        throw new RuntimeException(msg);
    }
 
    /**
@@ -80,15 +110,49 @@ public final class FileUploadBean implements Serializable
     */
    public void setFileName(String fileName)
    {
-      this.fileName = fileName;
+       if(this.fileName == null) 
+           this.fileName = new ArrayList<String>(10);
+           
+       if(this.fileNameWithoutExtension == null)
+           this.fileNameWithoutExtension = new ArrayList<String>(10);
+
+        if (!multiple) {
+            this.fileName.add(0, fileName);
+            this.fileNameWithoutExtension.add(0, fileName.substring(0, fileName.lastIndexOf(".")));
+        } else {
+            this.fileName.add(fileName);
+            this.fileNameWithoutExtension.add(fileName.substring(0, fileName.lastIndexOf(".")));
+        }
+        
    }
 
-   /**
+    public List<String> getFileNames() {
+        return fileName;
+    }
+
+    public void setFileName(List<String> fileName) {
+        this.fileName = fileName;
+    }
+
+    public List<String> getFileNameWithoutExtension() {
+        return fileNameWithoutExtension;
+    }
+
+    public void setFileNameWithoutExtension(List<String> fileNameWithoutExtension) {
+        this.fileNameWithoutExtension = fileNameWithoutExtension;
+    }
+
+/**
     * @return Returns the path of the file uploaded
     */
    public String getFilePath()
    {
-      return filePath;
+        if (!multiple)
+            return filePath.get(0);
+
+        String msg = "FileUploadBean is in multiple files mode, fetching single file path is not supported!";
+        log.debug(msg);
+        throw new RuntimeException(msg);
    }
 
    /**
@@ -96,20 +160,79 @@ public final class FileUploadBean implements Serializable
     */
    public void setFilePath(String filePath)
    {
-      this.filePath = filePath;
+        if(this.filePath == null) 
+            this.filePath = new ArrayList<String>(10);
+
+        if (!multiple) {
+            this.filePath.add(0, filePath);
+        } else {
+            this.filePath.add(filePath);
+        }
+  }
+   
+   public List<String> getFilePaths() {
+       return filePath;
+   }
+
+   public void setFilePath(List<String> filePath) {
+       this.filePath = filePath;
    }
 
    /**
     * @return Returns the content type of the file uploaded
     */
    public String getContentType() {
-       return contentType;
+        if (!multiple) {
+            return contentType.get(0);
+        }
+
+        String msg = "FileUploadBean is in multiple files mode, fetching single content type is not supported!";
+        log.debug(msg);
+        throw new RuntimeException(msg);
    }
     
    /**
     * @param contentType The content type of the uploaded file
     */
    public void setContentType(String contentType) {
+       
+       if(this.contentType == null) 
+           this.contentType = new ArrayList<String>(10);
+       
+       if (!multiple) {
+           this.contentType.add(0, contentType);
+       } else {
+           this.contentType.add(contentType);
+       }
+   }
+   
+   public List<String> getContentTypes() {
+       return contentType;
+   }
+
+   public void setContentType(List<String> contentType) {
        this.contentType = contentType;
    }
+
+   /**
+    * @return Returns true if multiple file mode should be used 
+    */
+   public boolean isMultiple() {
+       return multiple;
+   }
+    
+   /**
+    * @param multiple set whether multiple file mode should be used
+    */
+   public void setMultiple(boolean multiple) {
+       this.multiple = multiple;
+   }
+
+    public void removeFile(int index) {
+        getFiles().remove(index);
+        getFileNames().remove(index);
+        getFileNameWithoutExtension().remove(index);
+        getContentTypes().remove(index);
+        getFilePaths().remove(index);
+    }
 }

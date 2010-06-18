@@ -106,7 +106,7 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         if (StringUtils.isNotBlank(filterIndex) && StringUtils.isNumeric(filterIndex)) {
             picker.setDefaultFilterIndex(Integer.parseInt(filterIndex));
         }
-        
+
         picker.addActionListener(new PickerFinishActionListener());
 
         children.add(picker);
@@ -138,10 +138,10 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
 
         String preprocessCallback = (String) getAttributes().get(PREPROCESS_CALLBACK);
         if (StringUtils.isNotBlank(preprocessCallback)) {
-            MethodBinding preprocessBind = getFacesContext().getApplication().createMethodBinding(preprocessCallback, new Class[] { String[].class, Integer.class});
-            results = (String[]) preprocessBind.invoke(context, new Object[] { results, picker.getFilterIndex()});            
+            MethodBinding preprocessBind = getFacesContext().getApplication().createMethodBinding(
+                    preprocessCallback, new Class[] { String[].class, Integer.class });
+            results = (String[]) preprocessBind.invoke(context, new Object[] { results, picker.getFilterIndex() });
         }
-
 
         List<String> propNames = getPropNames();
         List<List<Object>> columnLists = new ArrayList<List<Object>>(propNames.size());
@@ -251,6 +251,9 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             requestMap.put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex);
             componentPropVO.getCustomAttributes().put(VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex.toString());
             final UIComponent component = ComponentUtil.generateAndAddComponent(context, componentPropVO, propertySheet, rowContainerChildren);
+            // save valueIndex also to component, as it can be used in MandatoryIfValidator,
+            // to find other UIInputs based on given property name and valueIndex(if component is multiValued)
+            ComponentUtil.putAttribute(component, VALUE_INDEX_IN_MULTIVALUED_PROPERTY, rowIndex);
             requestMap.remove(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
             if (!componentPropVO.isUseComponentGenerator()) {
                 // component was not generated using componentGenerator, so we have to add bindings manually

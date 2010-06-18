@@ -272,9 +272,10 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
         ContentReader reader = tempWriter.getReader();
 
-        FileInfo createdFile = fileService.transformToPdf(document, reader, I18NUtil.getMessage("imap.letter_body_filename"));
+        String filename = I18NUtil.getMessage("imap.letter_body_filename");
+        FileInfo createdFile = fileService.transformToPdf(document, reader, filename, filename);
         if (createdFile == null) {
-            createAttachment(document, p, I18NUtil.getMessage("imap.letter_body_filename"));
+            createAttachment(document, p, filename);
         }
     }
 

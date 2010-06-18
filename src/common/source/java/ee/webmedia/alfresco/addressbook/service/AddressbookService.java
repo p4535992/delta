@@ -6,6 +6,9 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
+import ee.webmedia.alfresco.utils.FeedbackWrapper;
+
 /**
  * @author Keit Tehvan
  */
@@ -24,9 +27,8 @@ public interface AddressbookService {
      * @return list of nodes of type ab:organization
      */
     List<Node> listOrganization();
-    
+
     /**
-     * 
      * @return list of nodes of type ab:contactGroups
      */
     List<Node> listContactGroups();
@@ -65,16 +67,19 @@ public interface AddressbookService {
      * @return the nodeRef of the newly created node
      */
     NodeRef addOrUpdateNode(Node node, NodeRef parent);
-    
+
     /**
      * Add a member to the group by creating an association from groupNodeRef to memberNodeRef.
+     * 
      * @param groupNodeRef
-     * @param memberNodeRef
+     * @param usersForGroup
+     * @return feedback about items that already existed in the group
      */
-    void addToGroup(NodeRef groupNodeRef, NodeRef memberNodeRef);
-    
+    FeedbackWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup);
+
     /**
      * Remove a member from the group by deleting the association from groupNodeRef to memberNodeRef.
+     * 
      * @param groupNodeRef
      * @param memberNodeRef
      */
@@ -111,7 +116,7 @@ public interface AddressbookService {
      * @return list of node results
      */
     List<Node> searchContactGroups(String searchCriteria);
-    
+
     /**
      * returns the parent of the given node
      * 
@@ -124,14 +129,16 @@ public interface AddressbookService {
 
     /**
      * Returns a list of nodes of a given type that nodeRef if associated with.
+     * 
      * @param type
      * @param nodeRef
      * @return
      */
     List<Node> getContactsByType(QName type, NodeRef nodeRef);
-    
+
     /**
      * Returns a list of all nodeRef's associations.
+     * 
      * @param nodeRef
      * @return
      */

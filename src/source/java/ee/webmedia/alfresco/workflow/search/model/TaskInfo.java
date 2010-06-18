@@ -5,10 +5,10 @@ import java.util.Date;
 
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.DateUtils;
 
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.type.web.DocumentTypeConverter;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -60,6 +60,11 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     }
 
     // LIST FIELD GETTERS:
+    
+    public Object getDocType() {
+        DocumentTypeConverter docTypeConverter = new DocumentTypeConverter();
+        return docTypeConverter.convertSelectedValueToString(document.getType());
+    }
     
     public Object getRegNum() {
         return document.getProperties().get(DocumentCommonModel.Props.REG_NUMBER);

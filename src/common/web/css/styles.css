@@ -735,6 +735,10 @@ select[disabled] {
 	border-bottom: solid 1px #efefef;
 }
 
+.block {
+	display: block;
+}
+
 /*
 	LOGIN
 	************************************/
@@ -833,7 +837,7 @@ hr {
 	text-align: right;
 	font-weight: bold;
 	vertical-align: top;
-	line-height: 20px;
+	line-height: 15px;
 	/* width: 10%; */
 	padding-top: 3px;
 	padding-bottom: 3px;
@@ -858,7 +862,7 @@ hr {
 }
 
 .propertiesLabel + td {
-	line-height: 20px;
+	line-height: 15px;
 	padding: 3px 10px;
 	/*vertical-align: bottom;*/
 	vertical-align: middle;
@@ -920,6 +924,11 @@ span.small input, input.small, textarea.small, select.small {
 .width120 {
 	width: 120px !important;
 	min-width: 120px !important; 
+}
+
+.width250 {
+	width: 250px !important;
+	min-width: 250px !important; 
 }
 
 span.medium input, input.medium, textarea.medium, select.medium {
@@ -1216,8 +1225,9 @@ table.expand19-200 {
 	width: 100%;
 }
 
-table.table-padding td {
-	padding: 3px 0;
+.table-padding td {
+	padding-top: 3px;
+	padding-bottom: 3px;
 }
 
 table.recipient td {
@@ -1230,7 +1240,7 @@ table.recipient td {
 }
 
 .recipient.cells2 textarea {
-	width: 197px !important;
+	width: 193px !important;
 }
 
 .recipient.tasks thead tr th {
@@ -1267,7 +1277,6 @@ table.recipient td {
 
 .overflow-wrapper {
 	overflow-y: scroll;
-	margin-bottom: 20px;
 }
 
 .overflow-wrapper th, 
@@ -1747,14 +1756,16 @@ DIV.modalpopup-footer P.action {
 #tooltip,
 #tooltip * {
 	color: #000;
-	font-size: 13px;
+	font-size: 12px;
 	font-family: Arial, Helvetica, sans-serif;
+	font-weight: normal;
 }
+
 #tooltip {
 	position: absolute;
 	z-index: 3000;
 	max-width: 320px;
-	padding: 8px 10px;
+	padding: 5px;
 	border: 1px solid;
 	border-color: #D7D9DB;
 	background: #F1F1F1;
@@ -2008,7 +2019,7 @@ TH A.header-wrap {
 }
 
 #add-authority-search table.generic-picker select {
-	min-width: 165px;
+	min-width: 160px;
 }
 
 .workflow-task-block .propertiesLabel {
@@ -2061,4 +2072,12 @@ TH A.header-wrap {
 
 .no-underline:hover {
 	text-decoration: none;
+}
+
+.left99 {
+	margin-left: 99px;
+}
+
+.left44 {
+	margin-left: 44px;
 }

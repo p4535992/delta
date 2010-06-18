@@ -31,7 +31,7 @@
    <a:genericPicker id="picker" showFilter="false" queryCallback="#{DialogManager.bean.pickerCallback}" actionListener="#{DialogManager.bean.addSelectedUsers}" />
 </a:panel>
 
-<a:panel id="add-user-list" styleClass="column panel-50" label="#{msg.selected_users}">
+<a:panel id="add-user-list" styleClass="column panel-50-f" label="#{msg.selected_users}">
 
    <h:dataTable value="#{DialogManager.bean.usersDataModel}" var="row" rowClasses="selectedItemsRow,selectedItemsRowAlt" styleClass="selectedItems"
       headerClass="selectedItemsHeader" cellspacing="0" cellpadding="4" rendered="#{DialogManager.bean.usersDataModel.rowCount != 0}" width="100%">

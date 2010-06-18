@@ -60,7 +60,6 @@ import org.alfresco.web.config.ActionsConfigElement.ActionGroup;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
-import org.alfresco.web.ui.common.renderer.ActionLinkRenderer;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -253,11 +252,6 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
             link.setActionListener(application.createMethodBinding(actionDef.ActionListener, new Class[] { javax.faces.event.ActionEvent.class }));
             String tooltip = actionDef.TooltipMsg != null ? MessageUtil.getMessage(context, actionDef.TooltipMsg) : actionDef.Tooltip;
             link.setTooltip(tooltip);
-            
-            @SuppressWarnings("unchecked")
-            Map<String, Object> linkAttributes = link.getAttributes();
-            linkAttributes.put(ActionLinkRenderer.AJAX_SUBMIT_COMPONENT_ID_ATTR, getParent().getId());
-            linkAttributes.put(ActionLinkRenderer.AJAX_SUBMIT_COMPONENT_CLIENT_ID_ATTR, getParent().getClientId(context));
 
             final AddRemoveActionListener listener = new AddRemoveActionListener();
             link.addActionListener(listener);

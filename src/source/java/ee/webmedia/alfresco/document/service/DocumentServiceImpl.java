@@ -275,12 +275,19 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     }
 
     @Override
-    public void reopenDocument(NodeRef documentRef) {
+    public void reopenDocument(final NodeRef documentRef) {
         if (log.isDebugEnabled())
             log.debug("Reopening document:" + documentRef);
         Assert.notNull(documentRef, "Reference to document must be provided");
         getAdrService().addDeletedDocument(documentRef);
-        nodeService.setProperty(documentRef, DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
+        // XXX: pole vist kõige kavalam lahendus, aga kuna uut töövoogu käivitades pannakse dok-omanikuks esimene täitja, siis dokumendi omaniku õigusi käivitajal enam pole 
+        AuthenticationUtil.runAs(new RunAsWork<NodeRef>() { 
+            @Override
+            public NodeRef doWork() throws Exception {
+                nodeService.setProperty(documentRef, DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
+                return null;
+            }
+        }, AuthenticationUtil.getSystemUserName());
         if (log.isDebugEnabled())
             log.debug("Document reopened");
     }

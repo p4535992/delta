@@ -88,7 +88,6 @@ public class UploadFileServlet extends BaseServlet
       String returnPage = null;
       final RequestContext requestContext = new ServletRequestContext(request);
       boolean isMultipart = ServletFileUpload.isMultipartContent(requestContext);
-      
       try
       {
          AuthenticationStatus status = servletAuthenticate(request, response);
@@ -114,7 +113,37 @@ public class UploadFileServlet extends BaseServlet
          
          List<FileItem> fileItems = upload.parseRequest(request);
          
-         FileUploadBean bean = new FileUploadBean();
+         FileUploadBean bean = null;
+         if (Application.inPortalServer() == false)
+         {
+            bean = (FileUploadBean) session.getAttribute(FileUploadBean.getKey(uploadId));
+         }
+         else
+         {
+            // naff solution as we need to enumerate all session keys until we find the one that
+            // should match our User objects - this is weak but we don't know how the underlying
+            // Portal vendor has decided to encode the objects in the session
+            Enumeration enumNames = session.getAttributeNames();
+            while (enumNames.hasMoreElements())
+            {
+               String name = (String)enumNames.nextElement();
+               // find an Alfresco value we know must be there...
+               if (name.startsWith("javax.portlet.p") && name.endsWith(AuthenticationHelper.AUTHENTICATION_USER))
+               {
+                  String key = name.substring(0, name.lastIndexOf(AuthenticationHelper.AUTHENTICATION_USER));
+                  bean = (FileUploadBean) session.getAttribute(key + FileUploadBean.getKey(uploadId));
+                  break;
+               }
+            }
+         }
+         
+         // XXX - dialog that uses this bean must remove it from session after cancel/complete condition
+         if (bean == null) {
+             bean = new FileUploadBean();
+         } else {
+             bean.setMultiple(true);
+         }
+
          for (FileItem item : fileItems)
          {
             if(item.isFormField())
@@ -191,7 +220,7 @@ public class UploadFileServlet extends BaseServlet
             }
          }
          
-         if (bean.getFile() == null && uploadId != null && logger.isWarnEnabled())
+         if (bean.getFiles() == null && uploadId != null && logger.isWarnEnabled())
          {
             logger.warn("no file uploaded for upload id: " + uploadId);
          }
@@ -216,6 +245,16 @@ public class UploadFileServlet extends BaseServlet
             out.println(returnPage);
             out.println("</script></body></html>");
             out.close();
+         }
+         else if(returnPage.equals("ajax")) // Send response, so flash understands, that upload is successful
+         {
+             response.setContentType(MimetypeMap.MIMETYPE_HTML);
+             response.setCharacterEncoding("utf-8");
+             final PrintWriter out = response.getWriter();
+             out.println("<html><body>");
+             out.println("OK");
+             out.println("</body></html>");
+             out.close();
          }
          else
          {

@@ -24,8 +24,10 @@ public class File implements Serializable {
     public static final String URI = "http://alfresco.webmedia.ee/model/file/1.0";
     public static final QName GENERATED = QName.createQName(URI, "generated");
     public static final QName ACTIVE = QName.createQName(URI, "active");
+    public static final QName DISPLAY_NAME = QName.createQName(URI, "displayName");
 
     private String name;
+    private String displayName;
     private String downloadUrl;
     private String creator;
     private String modifier;
@@ -50,6 +52,7 @@ public class File implements Serializable {
 
     public File(FileInfo fileInfo) {
         name = fileInfo.getName();
+        displayName = (fileInfo.getProperties().get(DISPLAY_NAME) == null) ? name : fileInfo.getProperties().get(DISPLAY_NAME).toString();
         created = fileInfo.getCreatedDate();
         modified = fileInfo.getModifiedDate();
         if (!fileInfo.isFolder()) {
@@ -73,6 +76,14 @@ public class File implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+    
+    public String getDisplayName() {
+        return displayName;
+    }
+
+    public void setDisplayName(String displayName) {
+        this.displayName = displayName;
     }
 
     public String getDownloadUrl() {

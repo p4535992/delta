@@ -20,6 +20,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.file.web.AddFileDialog;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -42,28 +43,28 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         setEmailTemplate(true);
         start(event);
     }
-    
+
     public void startSystem(ActionEvent event) {
         setEmailTemplate(false);
         setSystemTemplate(true);
         start(event);
     }
-    
+
     @Override
     public String cancel() {
         reset();
         return super.cancel();
     }
-    
+
     @Override
     public void start(ActionEvent event) {
-        
+
         // Set the templates root space as parent node
         this.navigator.setCurrentNodeId(getGeneralService().getNodeRef(DocumentTemplateModel.Repo.TEMPLATES_SPACE).getId());
         setDocTemplateNode(TransientNode.createNew(getDictionaryService(), getDictionaryService().getType(ContentModel.TYPE_CONTENT), "",
                 new HashMap<QName, Serializable>(0)));
         docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE);
-        if(isSystemTemplate()) {
+        if (isSystemTemplate()) {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_SYSTEM);
         } else if (isEmailTemplate()) {
             docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE_EMAIL);
@@ -80,7 +81,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
     protected String doPostCommitProcessing(FacesContext context, String outcome) {
         clearUpload();
         reset();
-        
+
         if (this.showOtherProperties) {
             this.browseBean.setDocument(new Node(this.createdNode));
         }
@@ -91,6 +92,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         Map<String, Object> templProp = docTemplateNode.getProperties();
         String newName = templProp.get(DocumentTemplateModel.Prop.NAME).toString() + "." + FilenameUtils.getExtension(super.fileName);
+        AddFileDialog.checkPlusInFileName(newName);
         try {
             setFileName(newName);
             saveContent(this.file, null);
@@ -102,11 +104,11 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         Map<QName, Serializable> prop = new HashMap<QName, Serializable>();
         prop.put(DocumentTemplateModel.Prop.NAME, newName);
         prop.put(DocumentTemplateModel.Prop.COMMENT, templProp.get(DocumentTemplateModel.Prop.COMMENT).toString());
-        
-        if(isSystemTemplate()) {
+
+        if (isSystemTemplate()) {
             prop.put(DocumentTemplateModel.Prop.DOCTYPE_ID, MessageUtil.getMessage("template_system_template"));
             getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE_SYSTEM, prop);
-        } else if(isEmailTemplate()) {
+        } else if (isEmailTemplate()) {
             prop.put(DocumentTemplateModel.Prop.DOCTYPE_ID, MessageUtil.getMessage("template_email_template"));
             getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE_EMAIL, prop);
         } else {
@@ -118,27 +120,27 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
         return outcome;
     }
-    
+
     @Override
     protected String getErrorOutcome(Throwable exception) {
-        if(exception instanceof IntegrityException) {
+        if (exception instanceof IntegrityException) {
             Utils.addErrorMessage(MessageUtil.getMessage(FacesContext.getCurrentInstance(), ERR_INVALID_FILE_NAME));
             return "";
         }
         return super.getErrorOutcome(exception);
     }
-    
+
     @Override
     public String getContainerTitle() {
         if (isEmailTemplate())
             return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_add_new_email_template");
-        
+
         if (isSystemTemplate())
             return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_add_new_system_template");
-        
+
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_add_new_doc_template");
     }
-    
+
     private void reset() {
         docTemplateNode = null;
         firstLoad = false;
@@ -148,12 +150,13 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
     /**
      * Must be called in jsp file to update the Node
+     * 
      * @param name
      */
     public void updateNodeFileName(String name) {
         docTemplateNode.getProperties().put(DocumentTemplateModel.Prop.NAME.toString(), FilenameUtils.removeExtension(name));
     }
-    
+
     // START: getters / setters
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
@@ -161,7 +164,8 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
     protected GeneralService getGeneralService() {
         if (generalService == null) {
-            generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(GeneralService.BEAN_NAME);
+            generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
+                    GeneralService.BEAN_NAME);
         }
         return generalService;
     }
@@ -189,7 +193,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
     public void setEmailTemplate(boolean emailTemplate) {
         this.emailTemplate = emailTemplate;
     }
-    
+
     public boolean isSystemTemplate() {
         return systemTemplate;
     }

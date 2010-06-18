@@ -40,6 +40,8 @@ public class EmailServiceImpl implements EmailService {
     public void sendEmail(List<String> toEmails, List<String> toNames, String fromEmail, String subject, String content, boolean isHtml, NodeRef document,
             List<String> fileNodeRefs, boolean zipIt, String zipFileName) throws EmailException {
 
+        long step0 = System.currentTimeMillis();
+
         if (toEmails == null || toEmails.isEmpty()) {
             throw new EmailException("Parameter toEmails is mandatory.");
         }
@@ -147,7 +149,13 @@ public class EmailServiceImpl implements EmailService {
         }
 
         try {
+            long step1 = System.currentTimeMillis();
             mailService.send(message);
+            long step2 = System.currentTimeMillis();
+            if (log.isDebugEnabled()) {
+                log.debug("sendEmail service call took " + (step2 - step0) + " ms\n    prepare message - " + (step1 - step0) + " ms\n    send message - "
+                        + (step2 - step1) + " ms");
+            }
         } catch (AlfrescoRuntimeException e) {
             throw e;
         } catch (Exception e) {

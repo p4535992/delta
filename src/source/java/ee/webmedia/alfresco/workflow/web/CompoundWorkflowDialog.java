@@ -167,7 +167,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         log.debug("stopWorkflow");
         try {
             removeEmptyTasks();
-            workflow = getWorkflowService().saveAndStopCompoundWorkflow(workflow);
+            if (validate(FacesContext.getCurrentInstance(), true)) {
+                workflow = getWorkflowService().saveAndStopCompoundWorkflow(workflow);
+            }
         } catch (Exception e) {
             handleException(e, "workflow_compound_stop_workflow_failed");
         }
@@ -392,13 +394,13 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             boolean activeResponsibleAssigneeNeeded = blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)
                     && !activeResponsibleAssignedInSomeWorkFlow && !isActiveResponsibleAssignedForDocument(false);
             boolean activeResponsibleAssigneeAssigned = !activeResponsibleAssigneeNeeded;
-            
-            if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(blockType) || 
-                    WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(blockType) || 
+
+            if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(blockType) ||
+                    WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(blockType) ||
                     WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(blockType)) {
                 hasForbiddenFlowsForFinished = true;
             }
-            
+
             for (Task task : block.getTasks()) {
                 final boolean activeResponsible = WorkflowUtil.isActiveResponsible(task);
                 if (activeResponsibleAssigneeNeeded && StringUtils.isNotBlank(task.getOwnerName()) && activeResponsible) {
@@ -477,7 +479,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                 MessageUtil.addErrorMessage(context, msgKey);
             }
         }
-        
+
         if (checkFinished && hasForbiddenFlowsForFinished) {
             String docStatus = (String) getDocumentDialog().getNode().getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
             if (DocumentStatus.FINISHED.equals(docStatus)) {

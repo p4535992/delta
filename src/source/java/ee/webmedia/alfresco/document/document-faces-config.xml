@@ -195,32 +195,8 @@
       <managed-bean-class>ee.webmedia.alfresco.document.file.web.AddFileDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
       <managed-property>
-         <property-name>nodeService</property-name>
-         <value>#{NodeService}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>fileFolderService</property-name>
-         <value>#{FileFolderService}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>searchService</property-name>
-         <value>#{SearchService}</value>
-      </managed-property>
-      <managed-property>
          <property-name>navigator</property-name>
          <value>#{NavigationBean}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>browseBean</property-name>
-         <value>#{BrowseBean}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>contentService</property-name>
-         <value>#{ContentService}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>dictionaryService</property-name>
-         <value>#{DictionaryService}</value>
       </managed-property>
       <managed-property>
          <property-name>userService</property-name>
@@ -230,7 +206,7 @@
          <property-name>fileService</property-name>
          <value>#{FileService}</value>
       </managed-property>
-       <managed-property>
+      <managed-property>
          <property-name>imapServiceExt</property-name>
          <value>#{ImapServiceExt}</value>
       </managed-property>

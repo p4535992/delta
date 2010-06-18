@@ -37,7 +37,11 @@ import org.apache.lucene.queryParser.QueryParser;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Assocs;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
+import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
+import ee.webmedia.alfresco.utils.FeedbackVO;
+import ee.webmedia.alfresco.utils.FeedbackWrapper;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
  * @author Keit Tehvan
@@ -90,14 +94,31 @@ public class AddressbookServiceImpl implements AddressbookService {
         return output;
     }
 
-    @Override
-    public void addToGroup(NodeRef groupNodeRef, NodeRef memberNodeRef) {
+    private void addToGroup(NodeRef groupNodeRef, NodeRef memberNodeRef) {
         QName type = nodeService.getType(memberNodeRef);
         if (Types.ORGANIZATION.equals(type)) {
             nodeService.createAssociation(groupNodeRef, memberNodeRef, Assocs.CONTACT_ORGANIZATION);
         } else {
             nodeService.createAssociation(groupNodeRef, memberNodeRef, Assocs.CONTACT_PERSON_BASE);
         }
+    }
+
+    @Override
+    public FeedbackWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup) {
+        List<AssociationRef> assocRefs = nodeService.getTargetAssocs(groupNodeRef, RegexQNamePattern.MATCH_ALL);
+        final HashSet<String> existingRefs = new HashSet<String>();
+        for (AssociationRef assocRef : assocRefs) {
+            existingRefs.add(assocRef.getTargetRef().toString());
+        }
+        FeedbackWrapper feedBack = new FeedbackWrapper();
+        for (UserDetails wrapper : usersForGroup) {
+            if (existingRefs.contains(wrapper.getNodeRef())) {
+                feedBack.addFeedbackItem(new FeedbackVO(MessageSeverity.INFO, "addressbook_contactgroup_add_contactExisted", wrapper.getName()));
+            } else {
+                addToGroup(groupNodeRef, new NodeRef(wrapper.getNodeRef()));
+            }
+        }
+        return feedBack;
     }
 
     @Override

@@ -391,40 +391,10 @@ public class GeneralServiceImpl implements GeneralService {
                 FileWithContentType container = (FileWithContentType) value;
 
                 String mimetype = container.contentType.toLowerCase(); // Alfresco keeps mimetypes lowercase
-                // use container.mimeType; if our mimetype map has it, then use it; otherwise guess based on filename
-                if (MimetypeMap.MIMETYPE_BINARY.equals(mimetype) || !mimetypeService.getExtensionsByMimetype().containsKey(mimetype)) {
-                    String oldMimetype = mimetype;
-                    String fileName = container.fileName;
-                    mimetype = mimetypeService.guessMimetype(fileName);
-                    if (log.isDebugEnabled()) {
-                        log.debug("User provided mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '" + fileName + "' => '"
-                                + mimetype + "'");
-                    }
-                }
-
+                String fileName = container.fileName;
                 File file = container.file;
-                String encoding;
-                InputStream is = null;
-                try {
-                    is = new BufferedInputStream(new FileInputStream(file));
-                    Charset charset = mimetypeService.getContentCharsetFinder().getCharset(is, mimetype);
-                    encoding = charset.name();
-                } catch (FileNotFoundException e) {
-                    throw new RuntimeException(e);
-                } finally {
-                    try {
-                        if (is != null) {
-                            is.close();
-                        }
-                    } catch (IOException e) {
-                        // Do nothing
-                    }
-                }
-
                 ContentWriter writer = contentService.getWriter(null, null, false);
-                writer.setMimetype(mimetype);
-                writer.setEncoding(encoding);
-                writer.putContent(file);
+                writeFile(writer, file, fileName, mimetype);
                 ContentData contentData = writer.getContentData();
                 if (log.isDebugEnabled()) {
                     log.debug("Saved file: " + contentData);
@@ -458,7 +428,7 @@ public class GeneralServiceImpl implements GeneralService {
         writeFile(writer, file, file.getName(), null);
         return fileRef;
     }
-
+    
     @Override
     public void writeFile(ContentWriter writer, File file, String fileName, String mimetype) {
         // use container.mimeType; if our mimetype map has it, then use it; otherwise guess based on filename
@@ -586,7 +556,20 @@ public class GeneralServiceImpl implements GeneralService {
         }
         return baseName + suffix + "." + extension;
     }
-
+    
+    @Override
+    public String limitFileNameLength(String filename, int maxLength, String marker) {
+        marker = (marker == null) ? "...." : marker; 
+        
+        if(filename != null && filename.length() > maxLength) {
+            String baseName = FilenameUtils.getBaseName(filename);
+            String extension = FilenameUtils.getExtension(filename);
+            baseName = baseName.substring(0, maxLength - extension.length() - marker.length());
+            filename = baseName + marker + extension;
+        }
+        return filename;
+    }
+    
     @Override
     public void updateParentContainingDocsCount(final NodeRef parentNodeRef, final QName propertyName, boolean added, Integer count) {
         if (parentNodeRef == null)

@@ -8,9 +8,9 @@
 
 <%-- This JSP can be used from multiple dialogs, that's why DialogManager.bean reference is used --%>
 
-<a:panel id="document-panel" styleClass="panel-100" label="#{DialogManager.bean.listTitle}" progressive="true">
+<a:panel id="document-panel" styleClass="panel-100" label="#{DialogManager.bean.listTitle}" progressive="true" styleClass="with-pager">
    
-   <a:panel id="document-panel-search-results" styleClass="overflow-wrapper with-pager">   
+   <a:panel id="document-panel-search-results" styleClass="overflow-wrapper">   
    <%-- Main List --%>
    <a:richList id="documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       value="#{DialogManager.bean.documents}" var="r">

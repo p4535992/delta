@@ -54,6 +54,7 @@ public class WebDAVCustomServlet extends WebDAVServlet {
 
     @Override
     protected void sendErrorResponse(HttpServletResponse response, WebDAVServerException error) throws IOException {
+        logger.error("Failed to serve webdav request - sending error page", error);
         response.setStatus(error.getHttpStatusCode());
         response.getWriter().append(getResponseText(error));
     }

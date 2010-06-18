@@ -6,8 +6,8 @@
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="task-panel" styleClass="panel-100" label="#{msg.task_search_results}" progressive="true">
-   <a:panel id="task-panel-search-results" styleClass="overflow-wrapper with-pager">   
+<a:panel id="task-panel" styleClass="panel-100" label="#{msg.task_search_results}" progressive="true" styleClass="with-pager">
+   <a:panel id="task-panel-search-results" styleClass="overflow-wrapper">   
 
    <a:richList id="taskList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       value="#{TaskSearchResultsDialog.tasks}" var="r" initialSortColumn="ownerName">
@@ -32,9 +32,7 @@
          <f:facet name="header">
             <a:sortLink id="col3-header" label="#{msg.task_search_result_docType}" value="docType" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-txt" value="#{r.document.type}">
-            <f:converter converterId="ee.webmedia.alfresco.document.type.web.DocumentTypeConverter" />
-         </h:outputText>
+         <h:outputText id="col3-txt" value="#{r.docType}" />
       </a:column>
       
       <a:column id="col4" primary="true" styleClass="#{r.cssStyleClass}" >

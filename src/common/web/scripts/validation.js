@@ -22,7 +22,7 @@ function informUser(control, message, showMessage)
  * @author Ats Uiboupin
  */
 function validateSearchMandatory(control, message, showMessage) {
-   if (control.value == null || control.value.length == 0) {
+   if (control != null && (control.value == null || control.value.length == 0)) {
       var hiddenIn = $jQ(control);
       var inputs = hiddenIn.prev().find("tbody tr td input");
       if(null != inputs.get(0)) {
@@ -64,7 +64,7 @@ function validateNumberRange(control, min, max, message, showMessage)
 {
    var result = true;
    
-   if (isNaN(control.value) || control.value < min || control.value > max)
+   if (control != null && (isNaN(control.value) || control.value < min || control.value > max))
    {
       informUser(control, message, showMessage);
       result = false;
@@ -81,24 +81,27 @@ function validateNumberRange(control, min, max, message, showMessage)
  */
 function validateIsLongNumber(control, message, showMessage)
 {
-   var input = control.value;
-   var validChars = "0123456789";
    var isNumber=true;
-   var char;
-   var longMaxValue =  9223372036854775807;
-   var longMinValue = -9223372036854775808;
-   for (var i = 0; i < input.length && isNumber == true; i++) { 
-      char = input.charAt(i); 
-      if (validChars.indexOf(char) == -1) {
-         if(!(i == 0 && char =="-")) {
-            isNumber = false;
+   if (control != null)
+   {
+      var input = control.value;
+      var validChars = "0123456789";
+      var char;
+      var longMaxValue =  9223372036854775807;
+      var longMinValue = -9223372036854775808;
+      for (var i = 0; i < input.length && isNumber == true; i++) { 
+         char = input.charAt(i); 
+         if (validChars.indexOf(char) == -1) {
+            if(!(i == 0 && char =="-")) {
+               isNumber = false;
+            }
          }
       }
-   }
-   //   no point of validating range, as in js max and min values seem to be smaller than in Java: [-9223372036854776000;9223372036854776000]
-   //   var isNumber = (isNumber && input <= longMaxValue && input >= longMinValue);
-   if(!isNumber) {
-      informUser(control, message, showMessage);
+      //   no point of validating range, as in js max and min values seem to be smaller than in Java: [-9223372036854776000;9223372036854776000]
+      //   var isNumber = (isNumber && input <= longMaxValue && input >= longMinValue);
+      if(!isNumber) {
+         informUser(control, message, showMessage);
+      }
    }
    return isNumber;
 }
@@ -113,7 +116,7 @@ function validateIsNumber(control, message, showMessage)
 {
    var result = true;
    
-   if (isNaN(control.value))
+   if (control != null && isNaN(control.value))
    {
       informUser(control, message, showMessage);
       result = false;
@@ -131,11 +134,14 @@ function validateStringLength(control, min, max, message, showMessage)
 {
    var result = true;
 
-   var controlValLength = jQuery.trim(control.value).length;
-   if (controlValLength < min || controlValLength > max)
+   if (control != null)
    {
-      informUser(control, message, showMessage);
-      result = false;
+      var controlValLength = jQuery.trim(control.value).length;
+      if (controlValLength < min || controlValLength > max)
+      {
+         informUser(control, message, showMessage);
+         result = false;
+      }
    }
    
    return result;
@@ -151,21 +157,24 @@ function validateRegex(control, expression, requiresMatch, matchMessage, noMatch
 {
    var result = true;
    
-   var pattern = new RegExp(decode(expression));
-   var matches = pattern.test(control.value);
-   
-   if (matches != requiresMatch)
+   if (control != null)
    {
-      if (requiresMatch)
-      {
-         informUser(control, noMatchMessage, showMessage);
-      }
-      else
-      {
-         informUser(control, matchMessage, showMessage);
-      }
+      var pattern = new RegExp(decode(expression));
+      var matches = pattern.test(control.value);
       
-      result = false;
+      if (matches != requiresMatch)
+      {
+         if (requiresMatch)
+         {
+            informUser(control, noMatchMessage, showMessage);
+         }
+         else
+         {
+            informUser(control, matchMessage, showMessage);
+         }
+         
+         result = false;
+      }
    }
    
    return result;
@@ -179,13 +188,16 @@ function validateRegex(control, expression, requiresMatch, matchMessage, noMatch
 function validateName(control, message, showMessage)
 {
    var result = true;
-   var pattern = /([\"\*\\\>\<\?\/\:\|]+)|([ ]+$)|([\.]?[\.]+$)/;
-   var trimed = control.value.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
-   var idx = trimed.search(pattern);
-   if (idx != -1)
+   if (control != null)
    {
-      informUser(control, "'" + trimed.charAt(idx) + "' " + message, showMessage);
-      result = false;
+      var pattern = /([\"\*\\\>\<\?\/\:\|]+)|([ ]+$)|([\.]?[\.]+$)/;
+      var trimed = control.value.replace(/^\s\s*/, '').replace(/\s\s*$/, '');
+      var idx = trimed.search(pattern);
+      if (idx != -1)
+      {
+         informUser(control, "'" + trimed.charAt(idx) + "' " + message, showMessage);
+         result = false;
+      }
    }
    
    return result;
@@ -198,23 +210,26 @@ function validateName(control, message, showMessage)
  */
 function validateDate(control, message, showMessage)
 {
-   // PropertySheet must handle mandatory fields left blank
-   if(control.value.length < 1)
-   {
-	   return true;
-   }
-   
    var result = true;
-    
-   // http://www.regexlib.com/REDetails.aspx?regexp_id=762
-   var pattern = 
-/^(?=\d)(?:(?!(?:(?:0?[5-9]|1[0-4])(?:\.|-|\/)10(?:\.|-|\/)(?:1582))|(?:(?:0?[3-9]|1[0-3])(?:\.|-|\/)0?9(?:\.|-|\/)(?:1752)))(31(?!(?:\.|-|\/)(?:0?[2469]|11))|30(?!(?:\.|-|\/)0?2)|(?:29(?:(?!(?:\.|-|\/)0?2(?:\.|-|\/))|(?=\D0?2\D(?:(?!000[04]|(?:(?:1[^0-6]|[2468][^048]|[3579][^26])00))(?:(?:(?:\d\d)(?:[02468][048]|[13579][26])(?!\x20BC))|(?:00(?:42|3[0369]|2[147]|1[258]|09)\x20BC))))))|2[0-8]|1\d|0?[1-9])([-.\/])(1[012]|(?:0?[1-9]))\2((?=(?:00(?:4[0-5]|[0-3]?\d)\x20BC)|(?:\d{4}(?:$|(?=\x20\d)\x20)))\d{4}(?:\x20BC)?)(?:$|(?=\x20\d)\x20))?$/;
-   var matches = pattern.test(control.value);
    
-   if (!matches)
+   if (control != null)
    {
-      informUser(control, message, showMessage);
-      result = false;
+      // PropertySheet must handle mandatory fields left blank
+      if(control.value.length < 1)
+      {
+   	   return true;
+      }
+      
+      // http://www.regexlib.com/REDetails.aspx?regexp_id=762
+      var pattern = 
+   /^(?=\d)(?:(?!(?:(?:0?[5-9]|1[0-4])(?:\.|-|\/)10(?:\.|-|\/)(?:1582))|(?:(?:0?[3-9]|1[0-3])(?:\.|-|\/)0?9(?:\.|-|\/)(?:1752)))(31(?!(?:\.|-|\/)(?:0?[2469]|11))|30(?!(?:\.|-|\/)0?2)|(?:29(?:(?!(?:\.|-|\/)0?2(?:\.|-|\/))|(?=\D0?2\D(?:(?!000[04]|(?:(?:1[^0-6]|[2468][^048]|[3579][^26])00))(?:(?:(?:\d\d)(?:[02468][048]|[13579][26])(?!\x20BC))|(?:00(?:42|3[0369]|2[147]|1[258]|09)\x20BC))))))|2[0-8]|1\d|0?[1-9])([-.\/])(1[012]|(?:0?[1-9]))\2((?=(?:00(?:4[0-5]|[0-3]?\d)\x20BC)|(?:\d{4}(?:$|(?=\x20\d)\x20)))\d{4}(?:\x20BC)?)(?:$|(?=\x20\d)\x20))?$/;
+      var matches = pattern.test(control.value);
+      
+      if (!matches)
+      {
+         informUser(control, message, showMessage);
+         result = false;
+      }
    }
    
    return result;

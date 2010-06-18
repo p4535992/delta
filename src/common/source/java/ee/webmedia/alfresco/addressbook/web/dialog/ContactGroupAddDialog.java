@@ -11,6 +11,7 @@ import javax.faces.model.DataModel;
 import javax.faces.model.ListDataModel;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.service.cmr.repository.AssociationExistsException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.Application;
@@ -20,13 +21,15 @@ import org.alfresco.web.ui.common.component.UIGenericPicker;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.FeedbackWrapper;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 public class ContactGroupAddDialog extends ContactGroupBaseDialog {
-    
+
     private static final long serialVersionUID = 1L;
     public static final String PARAM_GROUP_NODEREF = "nodeRef";
-    
+
     /** selected users to be added to a group */
     protected List<UserDetails> usersForGroup;
 
@@ -36,45 +39,49 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
     @Override
     public void init(Map<String, String> parameters) {
         super.init(parameters);
-        
+
         usersDataModel = null;
         usersForGroup = new ArrayList<UserDetails>();
     }
-    
+
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // add each selected user to the current group in turn
-        for (UserDetails wrapper : usersForGroup) {
-            getAddressbookService().addToGroup(getCurrentNode().getNodeRef(), new NodeRef(wrapper.getNodeRef()));
+        try {
+            final FeedbackWrapper feedback = getAddressbookService().addToGroup(getCurrentNode().getNodeRef(), usersForGroup);
+            MessageUtil.addStatusMessage(context, feedback);
+        } catch (RuntimeException e) {
+            System.out.println(e);
+            throw e;
         }
         reset();
         return outcome;
     }
-    
+
     @Override
     public boolean getFinishButtonDisabled() {
         return false;
     }
-    
+
     @Override
     protected void reset() {
         super.reset();
         usersDataModel = null;
         usersForGroup = null;
     }
-    
+
     public void setupAddGroup(ActionEvent event) {
         String groupNodeRef = ActionUtil.getParam(event, PARAM_GROUP_NODEREF);
         setCurrentNode(getAddressbookService().getNode(new NodeRef(groupNodeRef)));
     }
-    
+
     public SelectItem[] pickerCallback(int filterIndex, final String contains) {
         final String privPersonLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_private_person").toLowerCase();
         final String organizationLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_org").toLowerCase();
         List<Node> nodes = getAddressbookService().search(contains);
         return AddressbookMainViewDialog.transformNodesToSelectItems(nodes, privPersonLabel, organizationLabel);
     }
-    
+
     public void addSelectedUsers(ActionEvent event) {
         UIGenericPicker picker = (UIGenericPicker) event.getComponent().findComponent("picker");
         String[] results = picker.getSelectedResults();
@@ -110,7 +117,7 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
             }
         }
     }
-    
+
     public void removeUserSelection(ActionEvent event) {
         UserDetails wrapper = (UserDetails) this.usersDataModel.getRowData();
         if (wrapper != null) {
@@ -129,8 +136,9 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
         }
         return usersDataModel;
     }
+
     // END: setters/getters
-    
+
     /**
      * Simple wrapper bean exposing contact name and nodeRef for JSF results list.
      */
@@ -154,4 +162,3 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
         }
     }
 }
-

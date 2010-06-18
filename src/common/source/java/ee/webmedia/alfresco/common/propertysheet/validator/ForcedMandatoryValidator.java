@@ -28,7 +28,7 @@ public class ForcedMandatoryValidator implements Validator {
         if (Utils.isRequestValidationDisabled(context)) {
             return; // we don't want to validate before for example Search component is starting searching
         }
-        
+
         UIInput input = (UIInput) component;
         if (!isFilled(input)) {
             UIProperty thisUIProperty = ComponentUtil.getAncestorComponent(component, UIProperty.class, true);
@@ -39,6 +39,8 @@ public class ForcedMandatoryValidator implements Validator {
     }
 
     protected boolean isFilled(UIInput dependant) {
+        // XXX: võiks selle ka sarnaselt MandatoryIfValidator'ile ümber teha, et valideerimine lükataks edasi PhaseId.UPDATE_MODEL_VALUES, et vältida probleeme
+        // teise komponendi väärtuse lugemisel
         Object submittedValue = dependant.getSubmittedValue();
         if (submittedValue instanceof String) {
             return StringUtils.isNotBlank((String) submittedValue);
