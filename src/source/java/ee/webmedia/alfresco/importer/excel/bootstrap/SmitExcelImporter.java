@@ -174,6 +174,7 @@ public class SmitExcelImporter {
         } catch (Exception e) {
             throw new RuntimeException("Can't write to file", e);
         } finally {
+            IOUtils.closeQuietly(inp);
             IOUtils.closeQuietly(fileOut);
         }
     }
@@ -251,7 +252,7 @@ public class SmitExcelImporter {
      * @return instances of &lt;IDoc&gt; read from the sheets of <code>excelFile</code>
      */
     private <IDoc extends ImportDocument> List<List<IDoc>> getDocuments(final File excelFile, SheetFinder sheetFinder, ExcelRowMapper<IDoc> excelRowMapper) {
-        InputStream inp;
+        InputStream inp = null;
         try {
             inp = new FileInputStream(excelFile);
             final Workbook wb = WorkbookFactory.create(inp);
@@ -277,8 +278,9 @@ public class SmitExcelImporter {
             return documentsBySheets;
         } catch (Exception e) {
             throw new RuntimeException("Failed to read from file " + excelFile, e);
+        } finally {
+            IOUtils.closeQuietly(inp);
         }
-
     }
 
     private void handleExceptions(final File excelFile, final HashMap<String, Set<RuntimeException>> exceptionsBySheets) {
