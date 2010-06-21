@@ -214,10 +214,10 @@ public class SmitExcelImporter {
         final Map<File, SheetFinder> sheetsToImport = new HashMap<File, SheetFinder>();
         sheetsToImport.put(excelFile, new SheetFinder("Operatiivsete nõup. protokollid"));
         sheetsToImport.put(new File(importFolderLocation, "Erilahenduste konsolideerimise protokollide register.xls"), new SheetFinder());
-        sheetsToImport.put(new File(importFolderLocation, "Juhtkonna nõupidamiste protokollide register.xls"), new SheetFinder());
-        sheetsToImport.put(new File(importFolderLocation, "Operatiivsete nõupidamiste protokollide register 2008-2009.xls"), new SheetFinder());
+        sheetsToImport.put(new File(importFolderLocation, "Juhtkonna noupidamiste protokollide register.xls"), new SheetFinder());
+        sheetsToImport.put(new File(importFolderLocation, "Operatiivsete noupidamiste protokollide register 2008-2009.xls"), new SheetFinder());
         sheetsToImport.put(new File(importFolderLocation, "ORS-i protokollide register.xls"), new SheetFinder());
-        sheetsToImport.put(new File(importFolderLocation, "Projektinõukogu nõupidamiste protokollide register.xls"), new SheetFinder());
+        sheetsToImport.put(new File(importFolderLocation, "Projektinoukogu noupidamiste protokollide register.xls"), new SheetFinder());
         sheetsToImport.put(new File(importFolderLocation, "SIM valitsemisala IKT konsolideerimise protokollide register.xls"), new SheetFinder());
         sheetsByMappers.put((ExcelRowMapper<IDoc>) mapper, sheetsToImport);
     }
