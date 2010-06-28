@@ -34,6 +34,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
@@ -47,6 +48,7 @@ import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.importer.excel.vo.CaseImportVO;
+import ee.webmedia.alfresco.importer.excel.vo.ContractSmitDocument;
 import ee.webmedia.alfresco.importer.excel.vo.ImportDocument;
 import ee.webmedia.alfresco.importer.excel.vo.IncomingLetter;
 import ee.webmedia.alfresco.importer.excel.vo.SendInfo;
@@ -87,6 +89,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
     // END: fields that hold values to fields that need to be restored if something fails
 
     private LocationCache locationCache = new LocationCache();
+    private LocationCache locationCacheBeforeFailure;
 
     private String attachmentFilesLocationBase;
     private ClassificatorService classificatorService;
@@ -124,6 +127,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         processRunning = true;
         casesCacheBeforeFailure = new HashMap<NodeRef, CasesByVolumeHolder>(casesCache);
         assocsToCreateBeforeFailure = new HashMap<String, AssocVO>(assocsToCreate);
+        locationCacheBeforeFailure = locationCache.clone();
         HashMap<NodeRef /* volumeRef */, CasesByVolumeHolder> newCasesCache = new HashMap<NodeRef, CasesByVolumeHolder>();
         final HashMap<String, AssocVO> newAssocsToCreate = new HashMap<String, AssocVO>();
         try {
@@ -236,6 +240,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         } catch (RuntimeException e) {
             // restore fields that are affected by the failure of transaction
             assocsToCreate = assocsToCreateBeforeFailure;
+            locationCache = locationCacheBeforeFailure;
             casesCache = casesCacheBeforeFailure;
             processRunning = false;
             throw e;
@@ -435,7 +440,6 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         final Series series = locationCache.getSeries(doc, functionRef, false);
         final Node seriesNode = series.getNode();
         final Volume volume = locationCache.getVolume(doc, seriesNode.getNodeRef(), false);
-
         setAccessRestrictionFromSeriesIfNeeded(doc, series);
         return new ExtendedDocumentParentNodesVO(new Node(functionRef), seriesNode, volume.getNode(), null, volume);
     }
@@ -445,10 +449,21 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
      * 
      * @author Ats Uiboupin
      */
-    private class LocationCache {
+    private class LocationCache implements IClonable<LocationCache> {
         private HashMap<String /* functionMark */, NodeRef> functionsCache;
         private HashMap<NodeRef /* functionRef */, Map<String /* seriesIdentifier */, Series>> seriesCache = new HashMap<NodeRef, Map<String, Series>>();
         private HashMap<NodeRef /* seriesRef */, Map<String /* volume... */, Volume>> volumesCache = new HashMap<NodeRef, Map<String, Volume>>();
+
+        @Override
+        public LocationCache clone() {
+            final LocationCache clone = new LocationCache();
+            if (functionsCache != null) {
+                clone.functionsCache = new HashMap<String /* functionMark */, NodeRef>(functionsCache);
+            }
+            clone.seriesCache = new HashMap<NodeRef /* functionRef */, Map<String /* seriesIdentifier */, Series>>(seriesCache);
+            clone.volumesCache = new HashMap<NodeRef /* seriesRef */, Map<String /* volume... */, Volume>>(volumesCache);
+            return clone;
+        }
 
         private void reset() {
             functionsCache = null;
@@ -512,11 +527,22 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                 }
                 volumesCache.put(seriesRef, volumesMap);
             }
-            Volume volume = volumesMap.get(doc.getVolume());
+            final String volumeMark = doc.getVolume();
+            Volume volume = volumesMap.get(volumeMark);
             if (volume == null) {
+                if (doc instanceof ContractSmitDocument) {
+                    final Volume newVolume = volumeService.createVolume(seriesRef);
+                    newVolume.setVolumeMark(volumeMark);
+                    newVolume.setTitle(((ContractSmitDocument) doc).getVolumeTitle());
+                    newVolume.setVolumeType(VolumeType.YEAR_BASED.getValueName());
+                    newVolume.setContainsCases(false);
+                    volumeService.saveOrUpdate(newVolume, false);
+                    volumesMap.put(newVolume.getVolumeMark(), newVolume);
+                    return newVolume;
+                }
                 if (forceRefresh) {
                     debugExistingContent("Volumes", seriesRef, volumesMap);
-                    throw new IllegalStateException("No volume exists with volumeMark '" + doc.getVolume() + "' - unable to import document:\n" + doc);
+                    throw new IllegalStateException("No volume exists with volumeMark '" + volumeMark + "' - unable to import document:\n" + doc);
                 }
                 volume = getVolume(doc, seriesRef, true);
             }

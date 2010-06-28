@@ -138,7 +138,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
                     label = ComponentUtil.getPropertyLabel(thisUIProperty, component.getId());
                 }
                 String msg = MessageUtil.getMessage(context, MESSAGE_ID, label);
-                throw new ValidatorException(new FacesMessage(msg));
+                handleValidationException(input, new FacesMessage(msg), context);
             }
             input.setRequired(false);
         }

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,6 +19,8 @@ import javax.faces.component.html.HtmlOutputText;
 import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
+import javax.faces.el.MethodBinding;
+import javax.faces.el.ValueBinding;
 import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
@@ -29,6 +32,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
@@ -36,6 +40,7 @@ import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.ConstantMethodBinding;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
+import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -43,8 +48,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateFormatUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
+import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
@@ -72,7 +79,6 @@ import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-
 /**
  * @author Dmitri Melnikov
  */
@@ -209,7 +215,7 @@ public class WorkflowBlockBean implements Serializable {
             outcomeIndex = (Integer) task.getNode().getProperties().get(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString());
         } else if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
             if (outcomeIndex == 1) {
-                
+
                 // signing requires that at least 1 active file exists within this document
                 long step0 = System.currentTimeMillis();
                 List<File> activeFiles = getFileService().getAllActiveFiles(document);
@@ -217,7 +223,7 @@ public class WorkflowBlockBean implements Serializable {
                     MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_required");
                     return;
                 }
-                
+
                 signatureTask = (SignatureTask) task;
                 try {
                     long step1 = System.currentTimeMillis();
@@ -487,6 +493,7 @@ public class WorkflowBlockBean implements Serializable {
                 param.setName(PARAM_NODEREF);
                 param.setValue(myTask.getParent().getParent().getNode().getNodeRef().toString());
                 delegateButton.getChildren().add(param);
+                testDelegationComponents(myTask, node, index, panel);
 
                 panelGrid.getChildren().add(delegateButton);
             }
@@ -494,6 +501,197 @@ public class WorkflowBlockBean implements Serializable {
             panel.getChildren().add(panelGrid);
             dataTableGroup.getChildren().add(panel);
         }
+    }
+
+    private void testDelegationComponents(Task task, Node node, int index, UIPanel panel) {
+        final FacesContext context = FacesContext.getCurrentInstance();
+        final Application application = context.getApplication();
+        // final UIComponent form = application.createComponent(HtmlForm.COMPONENT_TYPE);
+        // {
+        // @SuppressWarnings("unchecked")
+        // final List<UIComponent> children = panel.getChildren();
+        // children.add(form);
+        // form.setId("delegateForm");
+        // }
+        // UIPropertySheet sheet = createDelegationPropertySheet(node, index, form);
+
+        UIPropertySheet sheet = createDelegationPropertySheet(context, node, index, panel);
+
+        @SuppressWarnings("unchecked")
+        final List<UIComponent> propSheetChildren = sheet.getChildren();
+        final boolean activeResponsible = WorkflowUtil.isActiveResponsible(task);
+        if (activeResponsible) {
+            { // creating delegation resolution components
+                /*
+                 * <wm:multiValueEditor
+                 * varName="DocumentSendOutDialog.model"
+                 * propsGeneration="
+                 * additionalRecipientName¤TextAreaGenerator¤styleClass=expand19-200 medium
+                 * ,additionalRecipientEmail¤TextAreaGenerator¤styleClass=expand19-200 medium
+                 * ,additionalRecipientSendMode¤ClassificatorSelectorGenerator¤classificatorName=sendMode¤styleClass=small
+                 * "
+                 * titles="document_name,document_email,document_send_mode"
+                 * pickerCallback="#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}"
+                 * preprocessCallback="#{DocumentSendOutDialog.preprocessSearchResult}"
+                 * setterCallback="#{DocumentSendOutDialog.fetchContactData}"
+                 * dialogTitleId="contacts_search_title"
+                 * filters="#{DocumentSendOutDialog.recipientSearchFilters}"
+                 * />
+                 * <show-property pickerCallback="#{TaskSearchDialog.executeOwnerSearch}" setterCallback="#{TaskSearchDialog.processOwnerSearchResults}"
+                 * dialogTitleId="task_search_owner_title"
+                 */
+                final WMUIProperty property = new WMUIProperty();
+                property.setParent(sheet);
+                property.setComponentGenerator("SearchGenerator");
+                property.setDisplayLabel(MessageUtil.getMessage("delegateOwner"));
+                property.setIgnoreIfMissing(false);
+                property.setName("{temp}delegateOwner");
+                final HashMap<String, String> propertySheetItemAttributes = new HashMap<String, String>();
+                // propertySheetItemAttributes.put(Search.PICKER_CALLBACK_KEY, "#{TaskSearchDialog.executeResponsibleOwnerSearch}");
+                propertySheetItemAttributes.put(Search.PICKER_CALLBACK_KEY, "#{TaskSearchDialog.executeOwnerSearch}");
+                // preprocessCallback="#{DocumentSendOutDialog.preprocessSearchResult}"
+                propertySheetItemAttributes.put(Search.SETTER_CALLBACK, "#{DocumentDialog.workflow.processOwnerSearchResults}");
+                property.setCustomAttributes(propertySheetItemAttributes);
+                propSheetChildren.add(property);
+
+                String listId = context.getViewRoot().createUniqueId(); // FIXME: test
+                final UIGenericPicker ownerPickerComponent = createOwnerPickerComponent(application, listId, index, activeResponsible);
+                propSheetChildren.add(ownerPickerComponent);
+                // ownerPickerComponent.setParent(sheet);
+                // FIXME:
+                delayOwnerSearchLinkGeneration(context, application, listId, ownerPickerComponent, index, propSheetChildren);
+            }
+        }
+        { // creating delegation resolution components
+            final WMUIProperty property = new WMUIProperty();
+            property.setParent(sheet);
+            property.setComponentGenerator("TextAreaGenerator");
+            property.setDisplayLabel(MessageUtil.getMessage("delegateResolution"));
+            property.setIgnoreIfMissing(false);
+            property.setName("{temp}delegateResolution");
+            final HashMap<String, String> propertySheetItemAttributes = new HashMap<String, String>();
+            propertySheetItemAttributes.put(BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS, "expand19-200");
+            property.setCustomAttributes(propertySheetItemAttributes);
+            propSheetChildren.add(property);
+        }
+    }
+
+    private void delayOwnerSearchLinkGeneration(final FacesContext context, final Application application, final String listId,
+            final UIGenericPicker ownerPickerComponent, final int index, final List<UIComponent> propSheetChildren) {
+//        final UIPropertySheet propSheet = ComponentUtil.getAncestorComponent(ownerPickerComponent, UIPropertySheet.class);
+//        ActionEvent event = new ActionEvent(propSheet) {
+//            private static final long serialVersionUID = 1L;
+//            boolean notExecuted = true;
+//
+//            @Override
+//            public void processListener(FacesListener faceslistener) {
+//                notExecuted = false;
+//                final UIActionLink ownerSearchLink = TaskListGenerator.createOwnerSearchLink(context, application, listId, ownerPickerComponent, index);
+//                propSheetChildren.add(ownerSearchLink);
+//            }
+//
+//            @Override
+//            public boolean isAppropriateListener(FacesListener faceslistener) {
+//                return notExecuted; // process listeners only once
+//            }
+//        };
+//        event.setPhaseId(PhaseId.ANY_PHASE);
+//        propSheet.queueEvent(event);
+
+    }
+
+    public static UIGenericPicker createOwnerPickerComponent(Application application, String listId, int taskIndex, boolean isResponsibleTask) {
+        UIGenericPicker picker = (UIGenericPicker) application.createComponent("org.alfresco.faces.GenericPicker");
+        picker.setId("task-picker-" + listId);
+        picker.setShowFilter(false);
+        picker.setWidth(400);
+        picker.setMultiSelect(!isResponsibleTask);
+        MethodBinding pickerB = null;
+        if (isResponsibleTask) {
+            // pickerB = application.createMethodBinding("#{DialogManager.bean.executeResponsibleOwnerSearch}", new Class[] { int.class, String.class });
+            pickerB = application.createMethodBinding("#{CompoundWorkflowDefinitionDialog.executeResponsibleOwnerSearch}", new Class[] { int.class,
+                    String.class });
+        } else {
+            // pickerB = application.createMethodBinding("#{DialogManager.bean.executeOwnerSearch}", new Class[] { int.class, String.class });
+            pickerB = application.createMethodBinding("#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}", new Class[] { int.class, String.class });
+        }
+        picker.setQueryCallback(pickerB);
+        picker.setActionListener(application.createMethodBinding("#{DocumentDialog.workflow.processOwnerSearchResults}", UIActions.ACTION_CLASS_ARGS));
+        picker.getAttributes().put(TaskListGenerator.ATTR_WORKFLOW_INDEX, taskIndex);
+        picker.setShowFilter(true);
+        ValueBinding pickerV = null;
+        if (isResponsibleTask) {
+            // pickerV = application.createValueBinding("#{DialogManager.bean.responsibleOwnerSearchFilters}");
+            pickerV = application.createValueBinding("#{CompoundWorkflowDefinitionDialog.responsibleOwnerSearchFilters}");
+        } else {
+            // pickerV = application.createValueBinding("#{DialogManager.bean.ownerSearchFilters}");
+            pickerV = application.createValueBinding("#{CompoundWorkflowDefinitionDialog.ownerSearchFilters}");
+        }
+        picker.setValueBinding("filters", pickerV);
+        return picker;
+    }
+
+    // private void testDelegationComponents(UIPropertySheet sheet, int index) {
+    // final WMUIProperty property = new WMUIProperty();
+    // property.setParent(sheet);
+    // property.setComponentGenerator("TaskListGenerator");
+    // property.setDisplayLabel("test-taskList");
+    // property.setIgnoreIfMissing(false);
+    // property.setName("{temp}testTaskList");
+    // // {forcedMandatory=true, responsible=true, ignore-if-missing=false, styleClass=showOne, name={temp}workflowTasks
+    // // , component-generator=TaskListGenerator, show=#{CompoundWorkflowDialog.showAssignmentWorkflowWorkflowTasks},
+    // display-label-id=assignmentWorkflow_tasks}
+    // final HashMap<String, String> propertySheetItemAttributes = new HashMap<String, String>();
+    // // final String index = (String) sheet.getAttributes().get(TaskListGenerator.ATTR_WORKFLOW_INDEX);
+    // // propertySheetItemAttributes.put(TaskListGenerator.ATTR_WORKFLOW_INDEX, String.valueOf(index));
+    // sheet.getAttributes().put(TaskListGenerator.ATTR_WORKFLOW_INDEX, index);
+    // property.setCustomAttributes(propertySheetItemAttributes);
+    // sheet.getChildren().add(property);
+    // // final TaskListGenerator taskListGenerator = new TaskListGenerator();
+    // // taskListGenerator.generateAndAdd(context, propertySheet, item)
+    // }
+
+    public void processOwnerSearchResults(String searchResult) {
+        log.debug("processOwnerSearchResults: " + searchResult);
+        // if (StringUtils.isBlank(searchResult)) {
+        // return;
+        // }
+        // Serializable name = null;
+        // if (searchResult.indexOf('/') > -1) { // contact
+        // NodeRef contact = new NodeRef(searchResult);
+        // Map<QName, Serializable> resultProps = getNodeService().getProperties(contact);
+        // QName resultType = getNodeService().getType(contact);
+        // if (resultType.equals(Types.ORGANIZATION)) {
+        // name = resultProps.get(AddressbookModel.Props.ORGANIZATION_NAME);
+        // } else {
+        // name = UserUtil.getPersonFullName((String) resultProps.get(AddressbookModel.Props.PERSON_FIRST_NAME), (String) resultProps
+        // .get(AddressbookModel.Props.PERSON_LAST_NAME));
+        // }
+        // } else { // user
+        // Map<QName, Serializable> personProps = getUserService().getUserProperties(searchResult);
+        // name = UserUtil.getPersonFullName1(personProps);
+        // }
+        // filter.getProperties().put(TaskSearchModel.Props.OWNER_NAME.toString(), name);
+    }
+
+    private UIPropertySheet createDelegationPropertySheet(FacesContext context, Node node, int index, UIComponent parent) {
+        // the properties
+        UIPropertySheet sheet = new WMUIPropertySheet();
+        sheet.setId("task-sheet-" + node.getId() + "-delegateSheet");
+//        DictionaryService dictionaryService = (DictionaryService) FacesContextUtils.getRequiredWebApplicationContext(//
+//                FacesContext.getCurrentInstance()).getBean("\"DictionaryService\"");
+///*FIXME: */        QName ASSIGNMENT_WORKFLOW_DELEGATION_BLOCK = QName.createQName(WorkflowSpecificModel.URI, "assignmentWorkflowDelegationBlock");
+//        final HashMap<QName, Serializable> props = new HashMap<QName, Serializable>();
+//        TransientNode transientNode = TransientNode.createNew(dictionaryService, dictionaryService.getType(/*WorkflowSpecificModel.Types.*/ASSIGNMENT_WORKFLOW_DELEGATION_BLOCK), null, props);
+
+        sheet.setNode(node);
+        // this ensures we can use more than 1 property sheet on the page
+        sheet.setVar("taskNode" + index);
+        sheet.getAttributes().put("externalConfig", Boolean.TRUE);
+        sheet.getAttributes().put("labelStyleClass", "propertiesLabel");
+        sheet.getAttributes().put("columns", 1);
+        parent.getChildren().add(sheet);
+        return sheet;
     }
 
     public void showCompoundWorkflowDialog() {

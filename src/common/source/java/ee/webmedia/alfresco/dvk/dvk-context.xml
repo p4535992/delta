@@ -31,6 +31,16 @@
       </property>
    </bean>
 
+   <bean id="deleteDvkOrganizationRegNrParameterBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="name" value="deleteDvkOrganizationRegNrParameterBootstrap" />
+      <property name="sinceVersion" value="1.10.1.11" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="nodeXPath" value="/param:parameters/param:dvkOrganizationRegNr" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+   </bean>
+
    <bean id="dvkParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="name" value="parametersSpacesBootstrap" />
@@ -52,6 +62,8 @@
          </list>
       </property>
    </bean>
+   
+   
 
    <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
       <property name="source" ref="parameterRescheduledJobsBootstrap" />

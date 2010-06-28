@@ -39,10 +39,4 @@
       </view:properties>
    </param:stringParameter>
 
-   <param:stringParameter view:childName="param:dvkOrganizationRegNr">
-      <view:properties>
-         <param:value></param:value>
-      </view:properties>
-   </param:stringParameter>
-
 </view:view>

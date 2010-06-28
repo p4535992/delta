@@ -24,7 +24,6 @@ import ee.webmedia.alfresco.importer.excel.vo.SendInfo;
  * @author Ats Uiboupin
  */
 public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> extends ExcelRowMapper<IDoc> {
-    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AbstractSmitExcelMapper.class);
 
     // START: fields that are don't change the location for different importable excel sheets
     /** A: Sarja tähis (function&seires) */
@@ -73,7 +72,12 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         }
 
         setDocStatus(doc);
+        postProcess(doc);
         return doc;
+    }
+
+    protected void postProcess(@SuppressWarnings("unused") IDoc doc) {
+        // could override in subclass
     }
 
     /** Save the origin of the row */
@@ -131,6 +135,10 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         }
         String vol = get(row, Volume);
         assertFieldIsFilled("Volume", vol);
+        setVolume(doc, seriesMark, vol);
+    }
+
+    protected void setVolume(IDoc doc, final String seriesMark, String vol) {
         vol = seriesMark + "/" + vol;
         doc.setVolume(vol);
     }

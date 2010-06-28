@@ -91,7 +91,7 @@ public class MessageUtil {
      * @param e - exception object used to create message
      */
     public static void addStatusMessage(FacesContext facesContext, UnableToPerformException e) {
-        addStatusMessage(facesContext, e.getSeverity(), e.getMessage(), e.getMessageValuesForHolders());
+        addStatusMessage(facesContext, e.getSeverity(), e.getMessageKey(), e.getMessageValuesForHolders());
     }
 
     private static void addStatusMessage(FacesContext facesContext, final MessageSeverity severity, final String message,

@@ -404,6 +404,14 @@ public class GeneralServiceImpl implements GeneralService {
         }
     }
 
+
+
+
+
+
+
+
+
     @Override
     public NodeRef addFileOrFolder(File fileOrFolder, NodeRef parentNodeRef, boolean flatten) {
         if (fileOrFolder.isDirectory()) {
@@ -552,9 +560,16 @@ public class GeneralServiceImpl implements GeneralService {
         int i = 1;
         while (fileFolderService.searchSimple(folder, baseName + suffix + "." + extension) != null) {
             suffix = " (" + i + ")";
+
+
+
+
+
             i++;
         }
         return baseName + suffix + "." + extension;
+
+
     }
     
     @Override

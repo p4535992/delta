@@ -27,6 +27,7 @@
          </action>
 
          <action id="forum_permissions">
+            <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.CreateTopicEvaluator</evaluator>
             <permissions>
                <permission allow="true">ReadPermissions</permission>
             </permissions>
@@ -68,6 +69,17 @@
             <params>
                <param name="id">#{actionContext.id}</param>
             </params>
+         </action>
+
+         <!-- Create a Topic -->
+         <action id="create_topic">
+            <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.CreateTopicEvaluator</evaluator>
+            <permissions>
+               <permission allow="true">CreateChildren</permission>
+            </permissions>
+            <label-id>create_topic</label-id>
+            <image>/images/icons/create_topic.gif</image>
+            <action>dialog:createTopic</action>
          </action>
 
          <!-- Delete a Forum space -->

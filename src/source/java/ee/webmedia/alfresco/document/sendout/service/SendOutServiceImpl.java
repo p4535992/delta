@@ -170,7 +170,6 @@ public class SendOutServiceImpl implements SendOutService {
             // Construct DvkSendDocument
             DvkSendDocuments sd = new DvkSendDocumentsImpl();
             sd.setSenderOrgName(parametersService.getStringParameter(Parameters.DVK_ORGANIZATION_NAME));
-            sd.setSenderRegNr(parametersService.getStringParameter(Parameters.DVK_ORGANIZATION_REG_NUM));
             sd.setSenderEmail(fromEmail);
             sd.setLetterSenderDocNr((String) docProperties.get(DocumentCommonModel.Props.REG_NUMBER));
             sd.setLetterSenderDocSignDate((Date) docProperties.get(DocumentCommonModel.Props.REG_DATE_TIME));

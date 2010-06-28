@@ -248,6 +248,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         updateSelections(null, null, volumeRef, true);
     }
 
+    @Override
     public void selectedFilterValueChanged(ValueChangeEvent event) {
         super.selectedFilterValueChanged(event);
         

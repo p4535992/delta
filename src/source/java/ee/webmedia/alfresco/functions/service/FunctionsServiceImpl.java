@@ -23,6 +23,8 @@ import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
@@ -228,26 +230,39 @@ public class FunctionsServiceImpl implements FunctionsService {
         log.info("Starting to update documents count in documentList");
         for (Function function : getAllFunctions()) {
             long docCountInFunction = 0;
-            for (Series series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
+            final NodeRef functionRef = function.getNodeRef();
+            for (Series series : seriesService.getAllSeriesByFunction(functionRef)) {
                 long docCountInSeries = 0;
-                final NodeRef volumeRef = series.getNode().getNodeRef();
-                for (Volume volume : volumeService.getAllVolumesBySeries(volumeRef)) {
+                final NodeRef seriesRef = series.getNode().getNodeRef();
+                for (Volume volume : volumeService.getAllVolumesBySeries(seriesRef)) {
                     long docCountInVolume = 0;
+                    final NodeRef volumeRef = volume.getNode().getNodeRef();
                     if (volume.isContainsCases()) {
-                        for (Case aCase : caseService.getAllCasesByVolume(volume.getNode().getNodeRef())) {
+                        for (Case aCase : caseService.getAllCasesByVolume(volumeRef)) {
                             final NodeRef caseRef = aCase.getNode().getNodeRef();
-                            final int documentsCountByCase = documentService.getDocumentsCountByVolumeOrCase(caseRef);
+                            final List<Document> allDocumentsByCase = documentService.getAllDocumentsByCase(caseRef);
+                            for (Document doc : allDocumentsByCase) {
+                                final Map<String, Object> props = doc.getNode().getProperties();
+                                props.put(DocumentCommonModel.Props.CASE.toString(), caseRef.toString());
+                                setFunctionSeriesVolumeRefs(functionRef, seriesRef, volumeRef, doc.getNode().getNodeRef(), props);
+                            }
+                            final int documentsCountByCase = allDocumentsByCase.size();
                             nodeService.setProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, documentsCountByCase);
                             docCountInVolume += documentsCountByCase;
                         }
                     } else {
-                        final int documentsCountByVolume = documentService.getDocumentsCountByVolumeOrCase(volume.getNode().getNodeRef());
+                        final List<Document> allDocumentsByVolume = documentService.getAllDocumentsByVolume(volumeRef);
+                        final int documentsCountByVolume = allDocumentsByVolume.size();
+                        for (Document doc : allDocumentsByVolume) {
+                            final Map<String, Object> props = doc.getNode().getProperties();
+                            setFunctionSeriesVolumeRefs(functionRef, seriesRef, volumeRef, doc.getNode().getNodeRef(), props);
+                        }
                         docCountInVolume += documentsCountByVolume;
                     }
                     nodeService.setProperty(volumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, docCountInVolume);
                     docCountInSeries += docCountInVolume;
                 }
-                nodeService.setProperty(volumeRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, docCountInSeries);
+                nodeService.setProperty(seriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, docCountInSeries);
                 docCountInFunction += docCountInSeries;
             }
             docCountInRepo += docCountInFunction;
@@ -255,5 +270,15 @@ public class FunctionsServiceImpl implements FunctionsService {
         log.info("Updated documents count in documentList. Found " + docCountInRepo + " documents.");
         return docCountInRepo;
     }
+
     // END: getters / setters
+
+    private void setFunctionSeriesVolumeRefs(final NodeRef functionRef, final NodeRef seriesRef, final NodeRef volumeRef, NodeRef docRef,
+            final Map<String, Object> props) {
+        props.put(DocumentCommonModel.Props.FUNCTION.toString(), functionRef.toString());
+        props.put(DocumentCommonModel.Props.SERIES.toString(), seriesRef.toString());
+        props.put(DocumentCommonModel.Props.VOLUME.toString(), volumeRef.toString());
+        final Map<QName, Serializable> qNameProperties = RepoUtil.toQNameProperties(props);
+        nodeService.setProperties(docRef, qNameProperties);
+    }
 }

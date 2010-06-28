@@ -280,8 +280,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             log.debug("Reopening document:" + documentRef);
         Assert.notNull(documentRef, "Reference to document must be provided");
         getAdrService().addDeletedDocument(documentRef);
-        // XXX: pole vist kõige kavalam lahendus, aga kuna uut töövoogu käivitades pannakse dok-omanikuks esimene täitja, siis dokumendi omaniku õigusi käivitajal enam pole 
-        AuthenticationUtil.runAs(new RunAsWork<NodeRef>() { 
+        // XXX: pole vist kõige kavalam lahendus, aga kuna uut töövoogu käivitades pannakse dok-omanikuks esimene täitja,
+        // siis dokumendi omaniku õigusi käivitajal enam pole
+        AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
             @Override
             public NodeRef doWork() throws Exception {
                 nodeService.setProperty(documentRef, DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
@@ -1273,8 +1274,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             }
             if (!documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
                 props.put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
-                documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
-                        , I18NUtil.getMessage("document_log_creator_dhs"));
+                documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
             } else {
                 if (StringUtils.isNotBlank((String) props.get("{temp}logging"))) {
                     documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered") //

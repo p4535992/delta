@@ -19,6 +19,8 @@ public class ContractSmitDocument extends ImportDocument {
     //
     private String warranty;
     private String contractChange;
+    // 
+    private String volumeTitle;
 
     @Override
     public String toString() {
@@ -79,5 +81,13 @@ public class ContractSmitDocument extends ImportDocument {
 
     public String getContractChange() {
         return contractChange;
+    }
+
+    public void setVolumeTitle(String volumeTitle) {
+        this.volumeTitle = volumeTitle;
+    }
+
+    public String getVolumeTitle() {
+        return volumeTitle;
     }
 }

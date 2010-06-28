@@ -40,7 +40,11 @@ public class UnableToPerformException extends RuntimeException {
     public void setMessageValuesForHolders(Object... messageValuesForHolders) {
         this.messageValuesForHolders = messageValuesForHolders;
     }
-    
+
+    public String getMessageKey() {
+        return super.getMessage();
+    }
+
     @Override
     public String getMessage() {
         return super.getMessage() + Arrays.asList(messageValuesForHolders);

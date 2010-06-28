@@ -14,6 +14,7 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.NamespacePrefixResolver;
+import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.QNameNodeMap;
 import org.alfresco.web.bean.repository.TransientNode;
@@ -159,6 +160,37 @@ public class WmNode extends TransientNode {
                 if (o != null) {
                     s.append(StringUtils.replace(o.toString(), "\n", "\n    "));
                 }
+            }
+        }
+        return s.toString();
+    }
+
+    public static String toString(Collection<QName> collection, NamespaceService namespaceService) {
+        if (collection == null) {
+            return null;
+        }
+        StringBuilder s = new StringBuilder();
+        s.append("[").append(collection.size()).append("]");
+        if (collection.size() > 0) {
+            for (QName o : collection) {
+                s.append("\n    ");
+                s.append(o.toPrefixString(namespaceService));
+            }
+        }
+        return s.toString();
+    }
+
+    public static String toString(Map<QName, Serializable> collection, NamespaceService namespaceService) {
+        if (collection == null) {
+            return null;
+        }
+        StringBuilder s = new StringBuilder();
+        s.append("[").append(collection.size()).append("]");
+        if (collection.size() > 0) {
+            for (Entry<QName, Serializable> entry : collection.entrySet()) {
+                s.append("\n    ");
+                s.append(entry.getKey().toPrefixString(namespaceService));
+                s.append("=").append(entry.getValue());
             }
         }
         return s.toString();

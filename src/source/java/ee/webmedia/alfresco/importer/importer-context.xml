@@ -24,7 +24,7 @@
    <bean id="smitExcelImporter" class="ee.webmedia.alfresco.importer.excel.bootstrap.SmitExcelImporter">
       <property name="documentImportService" ref="DocumentImportService" />
       <property name="importFolderLocation" value="${importer.excel.excelFilesLocationBase}" />
-      <property name="batchSize" value="3" />
+      <property name="batchSize" value="${importer.excel.nrOfDocumentsInTransaction}" />
    </bean>
 
 </beans>

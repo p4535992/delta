@@ -8,16 +8,18 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.Map.Entry;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
-import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
+import org.springframework.util.Assert;
 
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
@@ -34,7 +36,6 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
     protected static final char OUTPUT_SEPARATOR = ';';
 
     protected GeneralService generalService;
-    protected FileFolderService fileFolderService;
 
     protected boolean enabled = false;
     protected StoreRef store;
@@ -42,7 +43,8 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
     protected String inputFolderPath;
 
     protected Map<String, NodeRef> functionCache = new LinkedHashMap<String, NodeRef>();
-    protected Map<Integer, NodeRef> seriesCache = new LinkedHashMap<Integer, NodeRef>();
+    protected Map<Integer, NodeRef> volumeCache = new TreeMap<Integer, NodeRef>();
+    protected Map<String, NodeRef> volumeCacheByRegistrationNumber = new HashMap<String, NodeRef>();
     protected DateFormat ppDateFormat = new SimpleDateFormat("dd/MM/yy");
     {
         ppDateFormat.setLenient(false);
@@ -55,7 +57,17 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
         }
 
         createFunctions();
-        createSeries();
+        createVolumes();
+    }
+
+    protected CsvWriter getCsvWriter(String filename) throws IOException {
+        OutputStream outputStream = new FileOutputStream(filename);
+
+        // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
+        outputStream.write("\ufeff".getBytes(OUTPUT_ENCODING));
+
+        CsvWriter writer = new CsvWriter(outputStream, OUTPUT_SEPARATOR, Charset.forName(OUTPUT_ENCODING));
+        return writer;
     }
 
     protected void createFunctions() throws Exception {
@@ -78,8 +90,8 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
             public void afterCommit() {
                 CsvWriter writer = null;
                 try {
-                    String logFilePath = inputFilePath + "_log.csv";
-                    log.info("Creating log file " + logFilePath);
+                    String logFilePath = inputFolderPath + "/struktuur_completed.csv";
+                    log.info("Writing log file " + logFilePath);
                     writer = getCsvWriter(logFilePath);
                     writer.writeRecord(new String[] { "functionId", "nodeRef" });
                     for (Entry<String, NodeRef> entry : functionCache.entrySet()) {
@@ -92,19 +104,9 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
                         writer.close();
                     }
                 }
-                log.info("Completed importing Postipoiss functions file and committed successfully. Please DISABLE FUNCTIONS IMPORT from now on!");
+                log.info("Completed importing Postipoiss functions file and committed successfully (created " + functionCache.size() + " functions). Please DISABLE FUNCTIONS IMPORT from now on!");
             }
         });
-    }
-
-    protected CsvWriter getCsvWriter(String filename) throws IOException {
-        OutputStream outputStream = new FileOutputStream(filename);
-
-        // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
-        outputStream.write("\ufeff".getBytes(OUTPUT_ENCODING));
-
-        CsvWriter writer = new CsvWriter(outputStream, OUTPUT_SEPARATOR, Charset.forName(OUTPUT_ENCODING));
-        return writer;
     }
 
     protected void createFunction(CsvReader reader) throws IOException {
@@ -113,36 +115,37 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
         String parentFunctionId = reader.get(2);
         NodeRef functionRef = createFunction(functionId, title, parentFunctionId);
         functionCache.put(functionId, functionRef);
-        log.debug("Created functionId=" + functionId + " nodeRef=" + functionRef);
+        log.debug("Created functionId=" + functionId); // + " nodeRef=" + functionRef);
     }
 
     protected abstract NodeRef createFunction(String functionId, String title, String parentFunctionId);
 
-    protected void createSeries() throws Exception {
+    protected void createVolumes() throws Exception {
         final String inputFilePath = inputFolderPath + "/toimikud.csv";
-        log.info("Reading Postipoiss series file '" + inputFilePath + "' with encoding " + INPUT_ENCODING);
+        log.info("Reading Postipoiss volumes file '" + inputFilePath + "' with encoding " + INPUT_ENCODING);
         CsvReader reader = new CsvReader(inputFilePath, ';', Charset.forName(INPUT_ENCODING));
         try {
             while (reader.readRecord()) {
                 try {
-                    createSeries(reader);
+                    createVolume(reader);
                 } catch (Exception e) {
-                    throw new RuntimeException("Error while importing series from row index " + reader.getCurrentRecord() + " in file " + inputFilePath, e);
+                    throw new RuntimeException("Error while importing volume from row index " + reader.getCurrentRecord() + " in file " + inputFilePath, e);
                 }
             }
         } finally {
             reader.close();
         }
+        Assert.isTrue(volumeCache.size() == volumeCacheByRegistrationNumber.size());
         AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
             @Override
             public void afterCommit() {
                 CsvWriter writer = null;
                 try {
-                    String logFilePath = inputFilePath + "_log.csv";
-                    log.info("Creating log file " + logFilePath);
+                    String logFilePath = inputFolderPath + "/toimikud_completed.csv";
+                    log.info("Writing log file " + logFilePath);
                     writer = getCsvWriter(logFilePath);
-                    writer.writeRecord(new String[] { "seriesId", "nodeRef" });
-                    for (Entry<Integer, NodeRef> entry : seriesCache.entrySet()) {
+                    writer.writeRecord(new String[] { "volumeId", "nodeRef" });
+                    for (Entry<Integer, NodeRef> entry : volumeCache.entrySet()) {
                         writer.writeRecord(new String[] { Integer.toString(entry.getKey()), entry.getValue().toString() });
                     }
                 } catch (IOException e) {
@@ -152,16 +155,16 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
                         writer.close();
                     }
                 }
-                log.info("Completed importing Postipoiss series file and committed successfully. Please DISABLE SERIES IMPORT from now on!");
+                log.info("Completed importing Postipoiss volumes file and committed successfully (created " + volumeCache.size() + " volumes). Please DISABLE VOLUMES IMPORT from now on!");
             }
         });
     }
 
-    protected void createSeries(CsvReader reader) throws IOException, ParseException {
+    protected void createVolume(CsvReader reader) throws IOException, ParseException {
         if (reader.getColumnCount() < 5) {
             return;
         }
-        int seriesId = Integer.parseInt(reader.get(0));
+        int volumeId = Integer.parseInt(reader.get(0));
         String functionId = reader.get(1);
         String registrationNumber = reader.get(2);
         String title = reader.get(3);
@@ -182,19 +185,15 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
         }
 
         NodeRef functionRef = functionCache.get(functionId);
-        NodeRef seriesRef = createSeries(seriesId, functionRef, registrationNumber, title, multipleYears, validFrom, validTo);
-        seriesCache.put(seriesId, seriesRef);
-        log.debug("Created seriesId=" + seriesId + " nodeRef=" + seriesRef);
+        NodeRef volumeRef = createVolume(volumeId, functionRef, registrationNumber, title, multipleYears, validFrom, validTo);
+        volumeCache.put(volumeId, volumeRef);
+        log.debug("Created volumeId=" + volumeId); // + " nodeRef=" + volumeRef);
     }
 
-    protected abstract NodeRef createSeries(int seriesId, NodeRef functionRef, String registrationNumber, String title, boolean multipleYears, Date validFrom, Date validTo);
+    protected abstract NodeRef createVolume(int volumeId, NodeRef functionRef, String registrationNumber, String title, boolean multipleYears, Date validFrom, Date validTo);
 
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
-    }
-
-    public void setFileFolderService(FileFolderService fileFolderService) {
-        this.fileFolderService = fileFolderService;
     }
 
     public void setEnabled(boolean enabled) {

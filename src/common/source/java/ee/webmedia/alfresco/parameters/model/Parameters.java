@@ -19,7 +19,6 @@ public enum Parameters {
     /** period in minutes */
     DVK_RECEIVE_DOC_SEND_STATUSES("dvkReceiveDocSendStatusesInterval"),
     DVK_ORGANIZATION_NAME("dvkOrganizationName"), // kui tühi, kasutatakse xtee confist
-    DVK_ORGANIZATION_REG_NUM("dvkOrganizationRegNr"), // see on üsna mõtetu, kuna kui valesti panna, siis viskab DVK tala
     EMPLOYEE_REG_RECEIVE_STRUCT_UNITS_TIME("employeeRegReceiveStructUnitsTime"),
     /** period that is used to update users registry */
     EMPLOYEE_REG_RECEIVE_USERS_PERIOD("employeeRegReceiveUsersPeriod"),
@@ -74,7 +73,12 @@ public enum Parameters {
     DOC_PROP_VACATION_ORDER_DOC_NAME("docPropVacationOrderDocName"),
     DOC_PROP_VACATION_ORDER_LEGAL_BASIS_NAME("docPropVacationOrderLegalBasisName"),
     DOC_PROP_CHANCELLORS_ORDER_SIGNER_NAME("docPropChancellorsOrderSignerName"),
-    SEARCH_RESULTS_LIMIT("searchResultsLimit");
+    SEARCH_RESULTS_LIMIT("searchResultsLimit"),
+    /** 
+     * TK Parameters
+     */
+    EMPIS_CONTRACT_DOCUMENT("empisContractDocumentRecieveInterval"),
+    EMPIS_SCHEMA_NAME("empisSchemaName");
 
     private String xPath;
     private String parameterName;

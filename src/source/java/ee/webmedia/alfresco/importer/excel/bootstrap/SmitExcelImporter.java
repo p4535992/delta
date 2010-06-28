@@ -299,6 +299,13 @@ public class SmitExcelImporter {
                 for (Exception exception : exceptions) {
                     exceptionNr++;
                     log.error(exceptionNr + ". problem with document, that prevented importing. Exception :\n", exception);
+                    // XXX: could also paint columns red where the problem is(if exception indirectly caused by FieldMismatchException)
+                    /*
+                     * kliendil kulus vigade leidmiseks ca kaks täis tööpäeva...
+                     * CellStyle style = wb.createCellStyle();
+                     * style.setFillBackgroundColor(IndexedColors.RED.getIndex());
+                     * cell.setCellStyle(style);
+                     */
                 }
                 log.error("Correct input files to be imported!");
                 lastException = exceptions.iterator().next();
