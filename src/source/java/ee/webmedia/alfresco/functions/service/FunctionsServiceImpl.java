@@ -28,6 +28,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.importer.excel.service.DocumentImportServiceImpl;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
@@ -60,7 +61,7 @@ public class FunctionsServiceImpl implements FunctionsService {
     }
 
     public List<Function> getFunctions(NodeRef functionsRoot) {
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(functionsRoot, RegexQNamePattern.MATCH_ALL, FunctionsModel.Associations.FUNCTION);
+        List<ChildAssociationRef> childRefs = getFunctionAssocs(functionsRoot);
         List<Function> functions = new ArrayList<Function>(childRefs.size());
         for (ChildAssociationRef childRef : childRefs) {
             functions.add(getFunctionByNodeRef(childRef.getChildRef()));
@@ -70,6 +71,10 @@ public class FunctionsServiceImpl implements FunctionsService {
         }
         Collections.sort(functions);
         return functions;
+    }
+
+    private List<ChildAssociationRef> getFunctionAssocs(NodeRef functionsRoot) {
+        return nodeService.getChildAssocs(functionsRoot, RegexQNamePattern.MATCH_ALL, FunctionsModel.Associations.FUNCTION);
     }
 
     @Override
@@ -199,6 +204,8 @@ public class FunctionsServiceImpl implements FunctionsService {
         this.documentService = documentService;
     }
 
+    // END: getters / setters
+
     @Override
     public long createNewYearBasedVolumes() {
         log.info("creating copy of year-based volumes that are opened.");
@@ -271,7 +278,54 @@ public class FunctionsServiceImpl implements FunctionsService {
         return docCountInRepo;
     }
 
-    // END: getters / setters
+    @Override
+    public long deleteAllDocuments() {
+        long deletedDocCount = 0;
+        log.info("Starting to delete all documents from documentList");
+        for (ChildAssociationRef function : getFunctionAssocs(getFunctionsRoot())) {
+            long docCountInFunction = 0;
+            final NodeRef functionRef = function.getChildRef();
+            for (ChildAssociationRef series : seriesService.getAllSeriesAssocsByFunction(functionRef)) {
+                long docCountInSeries = 0;
+                final NodeRef seriesRef = series.getChildRef();
+                for (ChildAssociationRef volume : volumeService.getAllVolumeRefsBySeries(seriesRef)) {
+                    long docCountInVolume = 0;
+                    final NodeRef volumeRef = volume.getChildRef();
+                    Boolean containsCases = (Boolean) nodeService.getProperty(volumeRef, VolumeModel.Props.CONTAINS_CASES);
+                    if (containsCases != null && containsCases) {
+                        for (ChildAssociationRef aCase : caseService.getCaseRefsByVolume(volumeRef)) {
+                            final NodeRef caseRef = aCase.getChildRef();
+                            List<ChildAssociationRef> docsOfCaseAssocs = nodeService.getChildAssocs(caseRef, RegexQNamePattern.MATCH_ALL,
+                                    RegexQNamePattern.MATCH_ALL);
+                            final int documentsCountByCase = deleteChildAssocs(docsOfCaseAssocs);
+                            nodeService.setProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, 0);
+                            docCountInVolume += documentsCountByCase;
+                        }
+                    } else {
+                        List<ChildAssociationRef> docsOfVolumeAssocs = nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL,
+                                RegexQNamePattern.MATCH_ALL);
+                        final int documentsCountByVolume = deleteChildAssocs(docsOfVolumeAssocs);
+                        docCountInVolume += documentsCountByVolume;
+                    }
+                    nodeService.setProperty(volumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, 0);
+                    docCountInSeries += docCountInVolume;
+                }
+                nodeService.setProperty(seriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, 0);
+                docCountInFunction += docCountInSeries;
+            }
+            deletedDocCount += docCountInFunction;
+        }
+        nodeService.setProperty(getFunctionsRoot(), DocumentImportServiceImpl.smitDocListImported, null);
+        log.info("Deleted all " + deletedDocCount + " documents from documentList.");
+        return deletedDocCount;
+    }
+
+    private int deleteChildAssocs(List<ChildAssociationRef> docsOfCaseAssocs) {
+        for (ChildAssociationRef childAssociationRef : docsOfCaseAssocs) {
+            nodeService.deleteNode(childAssociationRef.getChildRef());
+        }
+        return docsOfCaseAssocs.size();
+    }
 
     private void setFunctionSeriesVolumeRefs(final NodeRef functionRef, final NodeRef seriesRef, final NodeRef volumeRef, NodeRef docRef,
             final Map<String, Object> props) {

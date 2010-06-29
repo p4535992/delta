@@ -28,5 +28,6 @@ public interface VolumeModel {
         QName ARCHIVING_NOTE = QName.createQName(URI, "archivingNote");
         QName SEND_TO_DESTRUCTION = QName.createQName(URI, "sendToDestruction");
         QName CONTAINING_DOCS_COUNT = QName.createQName(URI, "containingDocsCount");
+        QName CONTAINS_CASES = QName.createQName(URI, "containsCases");
     }
 }

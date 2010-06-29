@@ -41,10 +41,15 @@ public class VolumeServiceImpl implements VolumeService {
     private GeneralService generalService;
     private SeriesService seriesService;
     private CaseService caseService;
+    
+    @Override
+    public List<ChildAssociationRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef) {
+        return nodeService.getChildAssocs(seriesNodeRef, RegexQNamePattern.MATCH_ALL, VolumeModel.Associations.VOLUME);
+    }
 
     @Override
     public List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef) {
-        List<ChildAssociationRef> volumeAssocs = nodeService.getChildAssocs(seriesNodeRef, RegexQNamePattern.MATCH_ALL, VolumeModel.Associations.VOLUME);
+        List<ChildAssociationRef> volumeAssocs = getAllVolumeRefsBySeries(seriesNodeRef);
         List<Volume> volumeOfSeries = new ArrayList<Volume>(volumeAssocs.size());
         for (ChildAssociationRef volume : volumeAssocs) {
             NodeRef volumeNodeRef = volume.getChildRef();

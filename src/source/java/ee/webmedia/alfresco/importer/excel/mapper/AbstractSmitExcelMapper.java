@@ -35,12 +35,12 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
     /** C: Reg Nr. (regNumber) */
     @ExcelColumn('C')
     private Integer RegNumber;
-    /** D: Kuupäev (regDateTime) - süsteemis dokumendi registreerimise kuupäev */
-    @ExcelColumn('D')
-    private Integer RegDateTime;
     // END: fields that are don't change the location for different importable excel sheets
 
     // START: fields that change the location for different importable excel sheets(Value set by )
+    /** D: Kuupäev (regDateTime) - süsteemis dokumendi registreerimise kuupäev */
+    @ExcelColumn('D')
+    private Integer RegDateTime;
     /** Pealkiri (docName) */
     @ExcelColumn(/* value set by subclass */)
     private Integer DocName;
@@ -105,10 +105,15 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         doc.addFileLocation(get(row, Link));
         addToComment(doc, "Märkused", get(row, Comment));
         setStorageType(doc);
-
+        doc.setRegNumber(get(row, RegNumber));
+        setRegDateTime(row, doc);
         { // ühised va. lepingud
-            fillRegistrationInfoAndAccessRestrictions(row, doc);
+            fillAccessRestrictions(row, doc);
         }
+    }
+
+    private void setRegDateTime(Row row, final IDoc doc) {
+        doc.setRegDateTime(get(row, RegDateTime, Date.class));
     }
 
     protected void addToComment(final IDoc doc, String commentFieldName, String comment) {
@@ -128,7 +133,7 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         assertFieldIsFilled("SeriesMark", seriesMark);
         final int splitIndex = seriesMark.indexOf("-");
         if (splitIndex >= 0) {
-            doc.setFunction(seriesMark.substring(0, splitIndex));
+            doc.setFunction(seriesMark.substring(0, splitIndex).trim());
             assertFieldIsFilled("Function (parsed from seriesMark '" + seriesMark + "')", doc.getFunction());
             doc.setSeries(seriesMark);
             assertFieldIsFilled("Series (parsed from seriesMark '" + seriesMark + "')", doc.getSeries());
@@ -178,9 +183,7 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         doc.setStorageType(storageType);
     }
 
-    protected void fillRegistrationInfoAndAccessRestrictions(Row row, final IDoc doc) {
-        doc.setRegNumber(get(row, RegNumber));
-        doc.setRegDateTime(get(row, RegDateTime, Date.class));
+    protected void fillAccessRestrictions(Row row, final IDoc doc) {
         fillAccessRestriction(doc, get(row, AccessRestriction));
         if (StringUtils.isBlank(doc.getRegNumber()) != (null == doc.getRegDateTime())) {
             final FieldMismatchException fieldMismatchException = new FieldMismatchException(
@@ -193,7 +196,7 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
     /**
      * NB! Assumes that doc.setRegDateTime() is already called
      */
-    private void fillAccessRestriction(IDoc doc, String accessRestriction) {
+    protected void fillAccessRestriction(IDoc doc, String accessRestriction) {
         if (StringUtils.isBlank(accessRestriction)) {
             doc.setAccessRestriction(ee.webmedia.alfresco.classificator.enums.AccessRestriction.OPEN.getValueName());
         } else {
@@ -229,6 +232,14 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
 
     private void assertFieldIsFilled(String field, String value) {
         if (isBlank(value)) {
+            final FieldMismatchException fieldMismatchException = new FieldMismatchException(field + " must be filled, but value is empty: '" + value + "'");
+            fieldMismatchException.setColumnName(field);
+            throw fieldMismatchException;
+        }
+    }
+
+    protected void assertNotNull(String field, Object value) {
+        if (value == null) {
             final FieldMismatchException fieldMismatchException = new FieldMismatchException(field + " must be filled, but value is empty: '" + value + "'");
             fieldMismatchException.setColumnName(field);
             throw fieldMismatchException;

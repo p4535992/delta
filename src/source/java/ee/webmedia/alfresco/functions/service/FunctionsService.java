@@ -14,11 +14,12 @@ import ee.webmedia.alfresco.functions.model.Function;
  * @author Dmitri Melnikov
  */
 public interface FunctionsService {
-    
+
     public static final String BEAN_NAME = "FunctionsService";
 
     /**
      * Returns a list of all found functions.
+     * 
      * @return
      */
     List<Function> getAllFunctions();
@@ -29,31 +30,36 @@ public interface FunctionsService {
 
     /**
      * Returns a function by its string nodeRef;
+     * 
      * @return
      */
     Function getFunctionByNodeRef(String nodeRef);
-    
+
     /**
      * Returns a function by its nodeRef;
+     * 
      * @return
      */
     Function getFunctionByNodeRef(NodeRef nodeRef);
-    
+
     /**
      * Updates or saves the function.
+     * 
      * @param fn
      */
     void saveOrUpdate(Function fn);
-    
+
     /**
      * Created a new function.
+     * 
      * @return
      */
     Function createFunction();
-    
+
     /**
-     * Closes the function. 
+     * Closes the function.
      * False if there are unclosed series under the function, true otherwise.
+     * 
      * @param function
      * @return
      */
@@ -61,6 +67,7 @@ public interface FunctionsService {
 
     /**
      * Reopen the function by setting DocListUnitStatus.OPEN status
+     * 
      * @param function
      */
     void reopenFunction(Function function);
@@ -73,8 +80,11 @@ public interface FunctionsService {
 
     /**
      * Update fields that contain documents count
+     * 
      * @return number of documents in documentList
      */
     long updateDocCounters();
+
+    long deleteAllDocuments();
 
 }

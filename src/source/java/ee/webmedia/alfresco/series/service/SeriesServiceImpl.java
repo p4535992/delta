@@ -53,8 +53,13 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private FunctionsService _functionsService;
 
     @Override
+    public List<ChildAssociationRef> getAllSeriesAssocsByFunction(NodeRef functionRef) {
+        return nodeService.getChildAssocs(functionRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
+    }
+
+    @Override
     public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef) {
-        List<ChildAssociationRef> seriesAssocs = nodeService.getChildAssocs(functionNodeRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
+        List<ChildAssociationRef> seriesAssocs = getAllSeriesAssocsByFunction(functionNodeRef);
         List<Series> seriesOfFunction = new ArrayList<Series>(seriesAssocs.size());
         for (ChildAssociationRef series : seriesAssocs) {
             NodeRef seriesNodeRef = series.getChildRef();
@@ -75,7 +80,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         }
         return series;
     }
-    
+
     @Override
     public List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, Integer structUnitId) {
         List<ChildAssociationRef> seriesAssocs = nodeService.getChildAssocs(functionNodeRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
@@ -84,8 +89,8 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             NodeRef seriesNodeRef = series.getChildRef();
             @SuppressWarnings("unchecked")
             List<Integer> structUnits = (List<Integer>) nodeService.getProperty(seriesNodeRef, SeriesModel.Props.STRUCT_UNIT);
-            
-            if(structUnits.contains(structUnitId)) {
+
+            if (structUnits.contains(structUnitId)) {
                 seriesOfFunction.add(getSeriesByNoderef(seriesNodeRef, functionNodeRef));
             }
         }
@@ -249,7 +254,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         }
         return maxOrder + 1;
     }
-    
+
     @Override
     public void updateContainingDocsCountByVolume(NodeRef seriesNodeRef, NodeRef volumeNodeRef, boolean volumeAdded) {
         Integer count = (Integer) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT);

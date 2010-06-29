@@ -84,6 +84,11 @@ public class FunctionsListDialog extends BaseDialogBean {
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
     }
 
+    public void deleteAllDocuments(@SuppressWarnings("unused") ActionEvent event) {
+        final long docCount = getFunctionsService().deleteAllDocuments();
+        MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_deleteAllDocuments_success", docCount);
+    }
+
     // START: JSP event handlers
     public void export(@SuppressWarnings("unused") ActionEvent event) {
         log.info("docList export started");

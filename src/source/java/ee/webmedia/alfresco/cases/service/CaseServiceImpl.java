@@ -42,7 +42,7 @@ public class CaseServiceImpl implements CaseService {
 
     @Override
     public List<Case> getAllCasesByVolume(NodeRef volumeRef) {
-        List<ChildAssociationRef> caseAssocs = nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL, CaseModel.Associations.CASE);
+        List<ChildAssociationRef> caseAssocs = getCaseRefsByVolume(volumeRef);
         List<Case> caseOfVolume = new ArrayList<Case>(caseAssocs.size());
         for (ChildAssociationRef caseARef : caseAssocs) {
             NodeRef caseNodeRef = caseARef.getChildRef();
@@ -50,6 +50,11 @@ public class CaseServiceImpl implements CaseService {
         }
         Collections.sort(caseOfVolume);
         return caseOfVolume;
+    }
+
+    @Override
+    public List<ChildAssociationRef> getCaseRefsByVolume(NodeRef volumeRef) {
+        return nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL, CaseModel.Associations.CASE);
     }
 
     @Override

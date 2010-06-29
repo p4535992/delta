@@ -123,4 +123,20 @@ public class FieldMismatchException extends RuntimeException {
     public void setFile(String file) {
         this.file = file;
     }
+    
+    public String getFile() {
+        return file;
+    }
+    
+    public String getSheetName() {
+        return sheetName;
+    }
+    
+    public int getRowIndex() {
+        return rowIndex;
+    }
+    
+    public int getColumnIndex() {
+        return columnIndex;
+    }
 }

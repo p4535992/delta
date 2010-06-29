@@ -35,6 +35,15 @@
             <action-listener>#{FunctionsListDialog.importSmitDocList}</action-listener>
          </action>
 
+         <action id="docList_deleteAllDocuments">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.SmitExcelImportEvaluator</evaluator>
+            <label-id>docList_deleteAllDocuments</label-id>
+            <tooltip-id>docList_deleteAllDocuments_tooltip</tooltip-id>
+            <image>/images/icons/delete.png</image>
+            <style-class>docList_deleteAllDocuments</style-class>
+            <action-listener>#{FunctionsListDialog.deleteAllDocuments}</action-listener>
+         </action>
+
          <action id="docList_updateDocCounters">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
             <label-id>docList_updateDocCounters</label-id>
@@ -59,6 +68,7 @@
             <action idref="docList_createNewYearBasedVolumes" />
             <action idref="docList_updateDocCounters" />
             <action idref="docList_import_smitExcel" />
+            <action idref="docList_deleteAllDocuments" />
          </action-group>
 
       </actions>

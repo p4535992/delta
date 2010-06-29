@@ -14,6 +14,10 @@ public class ContractSmitMapper extends AbstractSmitExcelMapper<ContractSmitDocu
     @ExcelColumn('C')
     Integer DocName;
 
+    /** F: Leping sõlmiti (comment) */
+    @ExcelColumn('F')
+    Integer RegDateTime;
+
     /** K : Leping */
     @ExcelColumn('K')
     Integer Link;
@@ -28,7 +32,15 @@ public class ContractSmitMapper extends AbstractSmitExcelMapper<ContractSmitDocu
 
     /** D PartyNames */
     @ExcelColumn('D')
-    Integer PartyNames;
+    Integer PartyNameFirst;
+
+    /** M PartyNames */
+    @ExcelColumn('M')
+    Integer PartyNameSecond;
+
+    /** N PartyNames */
+    @ExcelColumn('N')
+    Integer PartyNameThird;
 
     /** G: Lepingu lõpp */
     @ExcelColumn('G')
@@ -46,21 +58,18 @@ public class ContractSmitMapper extends AbstractSmitExcelMapper<ContractSmitDocu
     @ExcelColumn('E')
     Integer ContractObject;
 
-    /** F: Leping sõlmiti (comment) */
-    @ExcelColumn('F')
-    Integer ContractSigned;
+    private static final String ACCESS_RESTRICTION_REASON = "AvTS § 35 lg 1";
 
     @Override
     protected ContractSmitDocument createDocument(Row row) {
         final ContractSmitDocument doc = new ContractSmitDocument();
         doc.setDocumentTypeId(DocumentSubtypeModel.Types.CONTRACT_SMIT);
-        setPartyNames(doc, get(row, PartyNames));
+        setPartyNames(doc, row);
         setContractEnd(row, doc);
         doc.setWarranty(get(row, Warranty));
         doc.setContractChange(get(row, ContractChange));
         doc.addFileLocation(get(row, ContractDoc));
         addToComment(doc, "Leping objekt", get(row, ContractObject));
-        addToComment(doc, "Leping sõlmiti", get(row, ContractSigned));
         return doc;
     }
 
@@ -92,32 +101,35 @@ public class ContractSmitMapper extends AbstractSmitExcelMapper<ContractSmitDocu
         }
     }
 
-    private void setPartyNames(ContractSmitDocument doc, String partyNames) {
-        if (partyNames != null) {
-            partyNames = partyNames.trim();
-            int index = partyNames.indexOf('/');
-            if (index >= 0) {
-                doc.setFirstPartyName(StringUtils.trimToNull(partyNames.substring(0, index)));
-                partyNames = StringUtils.trimToEmpty(partyNames.substring(index + 1).trim());
-                if (partyNames.length() > 0) {
-                    index = partyNames.indexOf('/');
-                    if (index >= 0) {
-                        doc.setSecondPartyName(StringUtils.trimToNull(partyNames.substring(0, index)));
-                        partyNames = StringUtils.trimToEmpty(partyNames.trim().substring(index + 1));
-                        doc.setThirdPartyName(StringUtils.trimToNull(partyNames));
-                    } else {
-                        doc.setSecondPartyName(StringUtils.trimToNull(partyNames));
-                    }
-                }
-            } else {
-                doc.setFirstPartyName(StringUtils.trimToNull(partyNames));
-            }
-        }
+    private void setPartyNames(ContractSmitDocument doc, Row row) {
+        doc.setFirstPartyName(get(row, PartyNameFirst));
+        doc.setSecondPartyName(get(row, PartyNameSecond));
+        doc.setThirdPartyName(get(row, PartyNameThird));
     }
 
     @Override
-    protected void fillRegistrationInfoAndAccessRestrictions(Row row, ContractSmitDocument doc) {
-        // ContractSmit doesn't have some of the fields that all the other documents have, so just skipping it
+    protected void fillAccessRestrictions(Row row, ContractSmitDocument doc) {
+        fillAccessRestriction(doc, null);
+    }
+
+    @Override
+    protected void fillAccessRestriction(ContractSmitDocument doc, String empty) {
+        doc.setAccessRestriction(ee.webmedia.alfresco.classificator.enums.AccessRestriction.AK.getValueName());
+        doc.setAccessRestrictionReason(ACCESS_RESTRICTION_REASON);
+        Date accessRestrictionBeginDate = doc.getRegDateTime();
+        assertNotNull("ContractDate", accessRestrictionBeginDate);
+        doc.setAccessRestrictionBeginDate(accessRestrictionBeginDate);
+
+        final int accessRestrictionYears;
+        if (StringUtils.equals("01", doc.getFunction())) {
+            accessRestrictionYears = 75;
+        } else {
+            accessRestrictionYears = 5;
+        }
+        final Calendar cal = Calendar.getInstance();
+        cal.setTime(accessRestrictionBeginDate);
+        cal.add(Calendar.YEAR, accessRestrictionYears);
+        doc.setAccessRestrictionEndDate(cal.getTime());
     }
 
     @Override

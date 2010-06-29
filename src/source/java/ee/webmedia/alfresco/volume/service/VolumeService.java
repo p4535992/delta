@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.volume.service;
 
 import java.util.List;
 
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
@@ -28,6 +29,8 @@ public interface VolumeService {
      * @param fromNodeProps
      */
     void saveOrUpdate(Volume volume, boolean fromNodeProps);
+    
+    List<ChildAssociationRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef);
 
     List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef);
 

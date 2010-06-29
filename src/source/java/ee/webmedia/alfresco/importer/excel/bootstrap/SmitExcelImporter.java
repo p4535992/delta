@@ -63,6 +63,7 @@ public class SmitExcelImporter {
         executeInternal(true);// first test (not much point of optimizing, as reading from excel is very fast compared to importing to repository)
         processRunning = true;
         AbstractSmitExcelMapper.resetOrderOfAppearance();
+        nrOfDocsTotalToImport = 0;
         executeInternal(false); // second real import
     }
 
@@ -133,12 +134,11 @@ public class SmitExcelImporter {
                 }
             }
             if (!onlyTestReading) {
+                nrOfDocsTotalToImport = nrOfDocsTotal;
                 documentImportService.createAssocs();
                 if (nrOfSheetsImported > 0) {
                     MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_import_smitExcel_success", nrOfDocsTotalToImport);
                 }
-            } else {
-                nrOfDocsTotalToImport = nrOfDocsTotal;
             }
 
             duration = System.currentTimeMillis() - startTime;

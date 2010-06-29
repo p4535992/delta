@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.cases.service;
 
 import java.util.List;
 
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 
@@ -64,5 +65,7 @@ public interface CaseService {
     boolean isClosed(Node node);
 
     boolean isCaseNameUsed(final String newCaseTitle, NodeRef volumeRef);
+
+    List<ChildAssociationRef> getCaseRefsByVolume(NodeRef volumeRef);
 
 }

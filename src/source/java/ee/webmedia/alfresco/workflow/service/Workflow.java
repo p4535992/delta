@@ -113,6 +113,9 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     public boolean isParallelTasks() {
         Boolean parallelTasks = getProp(WorkflowCommonModel.Props.PARALLEL_TASKS);
+        if (parallelTasks == null) {
+            return false;
+        }
         return parallelTasks;
     }
 
@@ -138,7 +141,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
     @Override
     protected void preSave() {
         super.preSave();
-        
+
         if (getChangedProperties().containsKey(WorkflowSpecificModel.Props.RESOLUTION)) {
             for (Task task : getTasks()) {
                 task.setProp(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION, getProp(WorkflowSpecificModel.Props.RESOLUTION));
