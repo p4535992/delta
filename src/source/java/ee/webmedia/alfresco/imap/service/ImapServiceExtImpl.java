@@ -72,7 +72,7 @@ import ee.webmedia.alfresco.utils.FilenameUtil;
 
 /**
  * SimDhs specific IMAP logic.
- *
+ * 
  * @author Romet Aidla
  */
 public class ImapServiceExtImpl implements ImapServiceExt {
@@ -99,7 +99,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         try {
             String name = AlfrescoImapConst.MESSAGE_PREFIX + GUID.generate();
             FileInfo docInfo = null;
-            if(incomingEmail) {
+            if (incomingEmail) {
                 docInfo = fileFolderService.create(folderNodeRef, name, DocumentSubtypeModel.Types.INCOMING_LETTER);
             } else {
                 docInfo = fileFolderService.create(folderNodeRef, name, DocumentSubtypeModel.Types.OUTGOING_LETTER);
@@ -111,7 +111,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
                 subject = I18NUtil.getMessage("imap.letter_subject_missing");
             }
             properties.put(DocumentCommonModel.Props.DOC_NAME, subject);
-            if(incomingEmail) {
+            if (incomingEmail) {
                 if (mimeMessage.getFrom() != null) {
                     InternetAddress sender = (InternetAddress) mimeMessage.getFrom()[0];
                     properties.put(DocumentSpecificModel.Props.SENDER_DETAILS_NAME, sender.getPersonal());
@@ -119,18 +119,18 @@ public class ImapServiceExtImpl implements ImapServiceExt {
                 }
             } else {
                 Address[] allRecipients = mimeMessage.getAllRecipients();
-                
+
                 List<String> names = new ArrayList<String>(allRecipients.length);
                 List<String> emails = new ArrayList<String>(allRecipients.length);
-                if(allRecipients != null) {
+                if (allRecipients != null) {
                     for (int i = 0; i < allRecipients.length; i++) {
-                        names.add(((InternetAddress)allRecipients[i]).getPersonal());
-                        emails.add(((InternetAddress)allRecipients[i]).getAddress());
+                        names.add(((InternetAddress) allRecipients[i]).getPersonal());
+                        emails.add(((InternetAddress) allRecipients[i]).getAddress());
                     }
                 }
                 properties.put(DocumentCommonModel.Props.RECIPIENT_NAME, (Serializable) names);
                 properties.put(DocumentCommonModel.Props.RECIPIENT_EMAIL, (Serializable) emails);
-                
+
             }
             properties.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.EMAIL.getValueName());
             properties.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
@@ -144,7 +144,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
                     , I18NUtil.getMessage("document_log_creator_imap"));
 
             return (Long) nodeService.getProperty(docRef, ContentModel.PROP_NODE_DBID);
-        } catch (Exception e) { //todo: improve exception handling
+        } catch (Exception e) { // todo: improve exception handling
             log.warn("Cannot save email, folderNodeRef=" + folderNodeRef, e);
             throw new FolderException("Cannot save email: " + e.getMessage());
         }
@@ -154,8 +154,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
     public Collection<MailFolder> createAndListFolders(AlfrescoImapUser user, String mailboxPattern) {
         try {
             return addBehaviour(filter(imapService.listSubscribedMailboxes(user, mailboxPattern)));
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
@@ -191,7 +190,18 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         String contentTypeString = part.getContentType();
         try {
             ContentType contentType = new ContentType(contentTypeString);
-            mimeType = contentType.getBaseType();
+            String mimetype = contentType.getBaseType();
+            if (MimetypeMap.MIMETYPE_BINARY.equals(mimetype) /* || !mimetypeService.getExtensionsByMimetype().containsKey(mimetype) */) {
+                // digidoc files come from outlook with binary content-type
+                String oldMimetype = mimetype;
+                mimetype = mimetypeService.guessMimetype(part.getFileName());
+                if (log.isDebugEnabled() && !StringUtils.equals(oldMimetype, mimetype)) {
+                    log.debug("Original mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '" + part.getFileName() + "' => '"
+                            + mimetype + "'");
+                }
+            } else {
+                mimeType = contentType.getBaseType();
+            }
         } catch (ParseException e) {
             log.warn("Error parsing contentType '" + contentTypeString + "'", e);
         }

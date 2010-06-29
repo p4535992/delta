@@ -443,7 +443,7 @@ public class GeneralServiceImpl implements GeneralService {
         if (MimetypeMap.MIMETYPE_BINARY.equals(mimetype) || !mimetypeService.getExtensionsByMimetype().containsKey(mimetype)) {
             String oldMimetype = mimetype;
             mimetype = mimetypeService.guessMimetype(fileName);
-            if (log.isDebugEnabled()) {
+            if (log.isDebugEnabled() && !StringUtils.equals(oldMimetype, mimetype)) {
                 log.debug("User provided mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '" + fileName + "' => '"
                         + mimetype + "'");
             }
