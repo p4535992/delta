@@ -121,7 +121,7 @@ public class ContractSmitMapper extends AbstractSmitExcelMapper<ContractSmitDocu
         doc.setAccessRestrictionBeginDate(accessRestrictionBeginDate);
 
         final int accessRestrictionYears;
-        if (StringUtils.equals("01", doc.getFunction())) {
+        if (StringUtils.equals("4-4", doc.getSeries())) {
             accessRestrictionYears = 75;
         } else {
             accessRestrictionYears = 5;
