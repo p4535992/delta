@@ -11,6 +11,7 @@
 
    <namespaces>
       <namespace uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+      <namespace uri="temp" prefix="temp" />
    </namespaces>
 
    <types>

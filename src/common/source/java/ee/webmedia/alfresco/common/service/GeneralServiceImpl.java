@@ -430,10 +430,11 @@ public class GeneralServiceImpl implements GeneralService {
 
     @Override
     public NodeRef addFile(File file, NodeRef parentNodeRef) {
-        final FileInfo fileInfo = fileFolderService.create(parentNodeRef, file.getName(), ContentModel.TYPE_CONTENT);
+        String fileName = getUniqueFileName(parentNodeRef, file.getName());
+        final FileInfo fileInfo = fileFolderService.create(parentNodeRef, fileName, ContentModel.TYPE_CONTENT);
         final NodeRef fileRef = fileInfo.getNodeRef();
         final ContentWriter writer = fileFolderService.getWriter(fileRef);
-        writeFile(writer, file, file.getName(), null);
+        writeFile(writer, file, fileName, null);
         return fileRef;
     }
     

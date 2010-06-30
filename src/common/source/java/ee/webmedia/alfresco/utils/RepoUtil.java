@@ -31,7 +31,8 @@ public class RepoUtil {
     public static final String TRANSIENT_PROPS_NAMESPACE = "temp";
 
     public static boolean isSystemProperty(QName propName) {
-        return StringUtils.equals(TRANSIENT_PROPS_NAMESPACE, propName.getNamespaceURI()) || NamespaceService.SYSTEM_MODEL_1_0_URI.equals(propName.getNamespaceURI()) || ContentModel.PROP_NAME.equals(propName);
+        return StringUtils.equals(TRANSIENT_PROPS_NAMESPACE, propName.getNamespaceURI())
+                || NamespaceService.SYSTEM_MODEL_1_0_URI.equals(propName.getNamespaceURI()) || ContentModel.PROP_NAME.equals(propName);
     }
 
     /**
@@ -58,9 +59,16 @@ public class RepoUtil {
     }
 
     public static Map<QName, Serializable> toQNameProperties(Map<String, Object> props, boolean copy) {
+        return toQNameProperties(props, copy, false);
+    }
+
+    public static Map<QName, Serializable> toQNameProperties(Map<String, Object> props, boolean copy, boolean excludeTempAndSystem) {
         Map<QName, Serializable> results = new HashMap<QName, Serializable>(props.size());
         for (String strQName : props.keySet()) {
             QName qName = QName.createQName(strQName);
+            if (excludeTempAndSystem && isSystemProperty(qName)) {
+                continue;
+            }
             Serializable value = copy ? copyProperty((Serializable) props.get(strQName)) : (Serializable) props.get(strQName);
             results.put(qName, value);
         }
@@ -84,7 +92,8 @@ public class RepoUtil {
         if (property == null) {
             return null;
 
-        } else if (property instanceof String || property instanceof Integer || property instanceof Long || property instanceof Float || property instanceof Double || property instanceof Boolean || property instanceof QName || property instanceof NodeRef) {
+        } else if (property instanceof String || property instanceof Integer || property instanceof Long || property instanceof Float
+                || property instanceof Double || property instanceof Boolean || property instanceof QName || property instanceof NodeRef) {
             // immutable object
             return property;
 
@@ -93,7 +102,8 @@ public class RepoUtil {
 
         } else if (property instanceof ContentData) {
             ContentData contentData = (ContentData) property;
-            return new ContentData(contentData.getContentUrl(), contentData.getMimetype(), contentData.getSize(), contentData.getEncoding(), contentData.getLocale());
+            return new ContentData(contentData.getContentUrl(), contentData.getMimetype() //
+                    , contentData.getSize(), contentData.getEncoding(), contentData.getLocale());
 
         } else if (property instanceof List<?>) {
             @SuppressWarnings("unchecked")
@@ -105,7 +115,7 @@ public class RepoUtil {
             return newList;
 
         } else if (property instanceof IClonable<?>) {
-            return (Serializable) ((IClonable<?>)property).clone();
+            return (Serializable) ((IClonable<?>) property).clone();
         }
         throw new RuntimeException("Copying property not supported: " + property.getClass());
     }

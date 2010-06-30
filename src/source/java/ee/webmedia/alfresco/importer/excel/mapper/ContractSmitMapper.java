@@ -10,8 +10,12 @@ import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.importer.excel.vo.ContractSmitDocument;
 
 public class ContractSmitMapper extends AbstractSmitExcelMapper<ContractSmitDocument> {
-    /** C: Pealkiri (docName) */
+    /** Lepingu number */
     @ExcelColumn('C')
+    Integer RegNumber;
+
+    /** E: Leping objekt (docName) */
+    @ExcelColumn('E') // FIXME
     Integer DocName;
 
     /** F: Leping sõlmiti (comment) */
@@ -54,10 +58,6 @@ public class ContractSmitMapper extends AbstractSmitExcelMapper<ContractSmitDocu
     @ExcelColumn('I')
     Integer ContractChange;
 
-    /** E: Leping objekt (comment) */
-    @ExcelColumn('E')
-    Integer ContractObject;
-
     private static final String ACCESS_RESTRICTION_REASON = "AvTS § 35 lg 1";
 
     @Override
@@ -69,7 +69,6 @@ public class ContractSmitMapper extends AbstractSmitExcelMapper<ContractSmitDocu
         doc.setWarranty(get(row, Warranty));
         doc.setContractChange(get(row, ContractChange));
         addFileIfExists(doc, get(row, ContractDoc), ContractDoc);
-        addToComment(doc, "Leping objekt", get(row, ContractObject));
         return doc;
     }
 

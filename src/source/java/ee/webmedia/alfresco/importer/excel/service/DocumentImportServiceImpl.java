@@ -120,7 +120,8 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
      * This implementation is much more complex just because we can't expect that all documents that must be created under the same case
      * would be passed into the method at once.
      */
-    public <IDoc extends ImportDocument> void importDocuments(List<IDoc> documents) {
+    public <IDoc extends ImportDocument> long importDocuments(List<IDoc> documents) {
+        long nrOfDocsProcessed = 0;
         if (processRunning) {
             throw new RuntimeException("Another instance is already running, can't import documents");
         }
@@ -229,6 +230,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                             }
                         }
                         addRelatedNodes(doc, createdDocNode);
+                        nrOfDocsProcessed++;
                     } catch (RuntimeException e) {
                         throw new RuntimeException("Failed to store document to repository:\n" + doc, e);
                     }
@@ -248,6 +250,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         casesCache.putAll(newCasesCache);
         assocsToCreate.putAll(newAssocsToCreate);
         processRunning = false;
+        return nrOfDocsProcessed;
     }
 
     private <IDoc extends ImportDocument> void saveNoderefsToSourceFile(List<IDoc> documents) {
@@ -271,6 +274,19 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                     throw new RuntimeException("Document has still no nodeRef: doc=\n" + doc);
                 }
                 cell.setCellValue(docRef);
+                final Map<String, String> fileLocationsMissing = doc.getFileLocationsMissing();
+                if (fileLocationsMissing != null && fileLocationsMissing.size() > 0) {
+                    String filesMissing = "";
+                    String debugInformation = "";
+                    for (Entry<String, String> entry : fileLocationsMissing.entrySet()) {
+                        filesMissing += entry.getKey() + "\n\n";
+                        debugInformation += entry.getValue() + "\n===================================\n===================================\n";
+                    }
+                    final Cell missingFilesCell = row.createCell(/* col X */23);
+                    final Cell debugInformationCell = row.createCell(/* col Y */24);
+                    missingFilesCell.setCellValue(filesMissing);
+                    debugInformationCell.setCellValue(debugInformation);
+                }
             }
             final boolean canWrite = rowSourceFile.canWrite();
             if (!canWrite) {

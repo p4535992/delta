@@ -67,6 +67,8 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
 
     abstract protected IDoc createDocument(Row row);
 
+    private static boolean resumeOnMissingFile = true;
+
     @Override
     public IDoc mapRow(Row row, long rowNr, File rowSourceFile, String rowSourceSheetName) {
         orderOfAppearance++;
@@ -130,19 +132,20 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         fileLocation = fileLocation.replace('\\', '/');
         final String attachmentFilesLocationBase = (String) mapperContext.get("ATTACHMENT_FILES_LOCATION_BASE");
         File file = DocumentImportServiceImpl.getFile(attachmentFilesLocationBase, fileLocation);
-        handleMissingFileReference(attachmentFilesLocationBase + fileLocation, file, columnNumber);
-        doc.addFileLocation(fileLocation);
+        final String missingFileText = handleMissingFileReference(attachmentFilesLocationBase + fileLocation, file);
+        if (missingFileText == null) {
+            doc.addFileLocation(fileLocation);
+        } else {
+            if (!resumeOnMissingFile) {
+                final FieldMismatchException fieldMismatchException = new FieldMismatchException(missingFileText);
+                fieldMismatchException.setColumnIndex(columnNumber);
+                throw fieldMismatchException;
+            }
+            doc.addFileLocationsMissing(fileLocation, missingFileText);
+        }
     }
 
-    public static void main(String[] args) {
-        final String base = "C:\\tmp\\atstest\\importExcel\\attachments\\";
-        final String dir = "Dokumentide asukoht\\Kirjad\\Kirjavahetus riigiasutuste, org. ja kodanikega. 1.2-6\\kirjavahetus 2008\\";
-        final String dir2 = base + dir;
-        final String file = dir2 + ".žõäöüš ŠÕÄÖÜŽ 12.06.08_reg_nr_51_Siseministri 26.08.05 kk nr 348 'VIS töörühma moodustamine' muutmine.msgx";
-        handleMissingFileReference(file, new File(file), 3);
-    }
-
-    private static void handleMissingFileReference(String fileLocation, File file, int columnIndex) {
+    private static String handleMissingFileReference(String fileLocation, File file) {
         if (file == null) {
             file = new File(fileLocation);
         }
@@ -168,10 +171,9 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
             } else {
                 sb.append("\n-\t\"" + "Even root doesn't exists");
             }
-            final FieldMismatchException fieldMismatchException = new FieldMismatchException(sb.toString());
-            fieldMismatchException.setColumnIndex(columnIndex);//
-            throw fieldMismatchException;
+            return sb.toString();
         }
+        return null;
     }
 
     private void setRegDateTime(Row row, final IDoc doc) {

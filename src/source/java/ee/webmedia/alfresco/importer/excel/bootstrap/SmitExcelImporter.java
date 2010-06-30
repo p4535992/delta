@@ -100,17 +100,20 @@ public class SmitExcelImporter {
                                 continue;
                             }
                             long batchStart = System.currentTimeMillis();
+                            final long nrOfDocsImported;
                             if (!onlyTestReading) {
-                                documentImportService.importDocuments(documentsBatch);
+                                nrOfDocsImported = documentImportService.importDocuments(documentsBatch);
+                            } else {
+                                nrOfDocsImported = currentBatchSize;
                             }
-                            numberOfDocumentsOnSheet += currentBatchSize;
+                            numberOfDocumentsOnSheet += nrOfDocsImported;
                             if (!onlyTestReading) {
-                                nrOfDocsFromFirstLaunch += currentBatchSize;
+                                nrOfDocsFromFirstLaunch += nrOfDocsImported;
                             }
                             duration = System.currentTimeMillis() - batchStart;
                             if (log.isInfoEnabled()) {
                                 sheetName = documentsBatch.get(0).getRowSourceSheet();
-                                log.info("Batch completed: " + (onlyTestReading ? "tested " : "imported ") + currentBatchSize + " documents from "
+                                log.info("Batch completed: " + (onlyTestReading ? "tested " : "imported ") + nrOfDocsImported + " documents from "
                                         + importFile.getName() + "[" + sheetName + "] sheet in " + duration + "ms - avg " + (duration / currentBatchSize)
                                         + "ms per doc");
                             }
@@ -385,7 +388,7 @@ public class SmitExcelImporter {
     public void setImportFolderLocation(String importFolderLocation) {
         this.importFolderLocation = importFolderLocation;
     }
-    
+
     public void setAttachmentFilesLocationBase(String attachmentFilesLocationBase) {
         attachmentFilesLocationBase = attachmentFilesLocationBase.replace('\\', '/');
         if (!attachmentFilesLocationBase.endsWith("/")) {

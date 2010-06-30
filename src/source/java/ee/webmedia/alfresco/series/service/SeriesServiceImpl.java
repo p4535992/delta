@@ -117,7 +117,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         if (series.getNode() instanceof TransientNode) { // save
             NodeRef seriesNodeRef = nodeService.createNode(series.getFunctionNodeRef(),
                     SeriesModel.Associations.SERIES, SeriesModel.Associations.SERIES, SeriesModel.Types.SERIES,
-                    RepoUtil.toQNameProperties(series.getNode().getProperties())).getChildRef();
+                    RepoUtil.toQNameProperties(stringQNameProperties, false, true)).getChildRef();
             series.setNode(generalService.fetchNode(seriesNodeRef));
             logService.addSeriesLog(seriesNodeRef, I18NUtil.getMessage("series_log_status_created"));
         } else { // update

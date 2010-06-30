@@ -2,7 +2,9 @@ package ee.webmedia.alfresco.importer.excel.vo;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ToStringBuilder;
@@ -21,13 +23,15 @@ public class ImportDocument extends CommonDocument {
     private SendInfo sendInfo;
     @AlfrescoModelProperty(isMappable = false)
     private List<String> fileLocations;
+    private Map<String/* fileName */, String/* debugInformation */> fileLocationsMissing;
     @AlfrescoModelProperty(isMappable = false)
     private long orderOfAppearance;
+    @AlfrescoModelProperty(isMappable = false)
+    private String nodeRefInRepo;
     private File rowSourceFile;
     private String rowSourceSheet;
     /** NB! 0-based PHYSICAL (not logical/visible) number of excel row */
     private int rowSourceNumber;
-    private String nodeRefInRepo;
 
     public void setSendInfo(SendInfo sendInfo) {
         this.sendInfo = sendInfo;
@@ -49,6 +53,24 @@ public class ImportDocument extends CommonDocument {
 
     public List<String> getFileLocations() {
         return fileLocations;
+    }
+
+    public void addFileLocationsMissing(String fileLocationMissing, String debugInformation) {
+        if (StringUtils.isBlank(fileLocationMissing)) {
+            return;
+        }
+        if (fileLocationsMissing == null) {
+            fileLocationsMissing = new HashMap<String, String>(1);
+        }
+        fileLocationsMissing.put(fileLocationMissing, debugInformation);
+    }
+
+    public Map<String, String> getFileLocationsMissing() {
+        return fileLocationsMissing;
+    }
+
+    public void setFileLocationsMissing(Map<String, String> fileLocationsMissing) {
+        this.fileLocationsMissing = fileLocationsMissing; // method needed form mapper
     }
 
     @Override

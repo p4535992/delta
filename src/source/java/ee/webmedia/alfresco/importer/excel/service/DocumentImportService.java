@@ -9,8 +9,9 @@ public interface DocumentImportService extends DocumentService {
     /**
      * @param documents - NB! expected that the iterator of the documents list returns documents in the order they appear in the documents list
      *            (to be able to name case for document based on the registration date or order of appearance if the registration dates are equal)
+     * @return number of documents imported
      */
-    <IDoc extends ImportDocument> void importDocuments(List<IDoc> documents);
+    <IDoc extends ImportDocument> long importDocuments(List<IDoc> documents);
 
     /**
      * Call this method after the last transaction of importing documents has been completed
