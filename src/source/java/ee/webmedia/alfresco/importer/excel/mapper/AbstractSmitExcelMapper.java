@@ -123,10 +123,11 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         }
     }
 
-    protected void addFileIfExists(final IDoc doc, final String fileLocation, int columnNumber) {
+    protected void addFileIfExists(final IDoc doc, String fileLocation, int columnNumber) {
         if (StringUtils.isBlank(fileLocation)) {
             return;
         }
+        fileLocation = fileLocation.replace('\\', '/');
         final String attachmentFilesLocationBase = (String) mapperContext.get("ATTACHMENT_FILES_LOCATION_BASE");
         File file = DocumentImportServiceImpl.getFile(attachmentFilesLocationBase, fileLocation);
         handleMissingFileReference(attachmentFilesLocationBase + fileLocation, file, columnNumber);
@@ -141,7 +142,7 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         handleMissingFileReference(file, new File(file), 3);
     }
 
-    private static void handleMissingFileReference(final String fileLocation, File file, int columnIndex) {
+    private static void handleMissingFileReference(String fileLocation, File file, int columnIndex) {
         if (file == null) {
             file = new File(fileLocation);
         }
@@ -162,7 +163,7 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
                 sb.append("\nfiles in existing parent dir:");
                 final File[] listFiles = file.listFiles();
                 for (File file2 : listFiles) {
-                    sb.append("\n+"+(file2.isDirectory()?"D":"")+"\t\"").append(file2.getAbsolutePath()).append(END_CONST);
+                    sb.append("\n+" + (file2.isDirectory() ? "D" : "") + "\t\"").append(file2.getAbsolutePath()).append(END_CONST);
                 }
             } else {
                 sb.append("\n-\t\"" + "Even root doesn't exists");
