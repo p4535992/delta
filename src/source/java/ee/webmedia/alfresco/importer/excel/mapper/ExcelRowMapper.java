@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,6 +46,10 @@ public abstract class ExcelRowMapper<G> {
             );
 
     public abstract G mapRow(Row row, long rowNr, File excelFile, String string);
+    
+    public void setMapperContext(@SuppressWarnings("unused") Map<String, Object> mapperContext) {
+        //could be overridden in subclassses
+    }
 
     protected String get(Row row, int colIndex) {
         return StringUtils.trimToNull(get(row, colIndex, String.class));

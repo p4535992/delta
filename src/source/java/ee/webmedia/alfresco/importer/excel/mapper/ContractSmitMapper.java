@@ -68,7 +68,7 @@ public class ContractSmitMapper extends AbstractSmitExcelMapper<ContractSmitDocu
         setContractEnd(row, doc);
         doc.setWarranty(get(row, Warranty));
         doc.setContractChange(get(row, ContractChange));
-        doc.addFileLocation(get(row, ContractDoc));
+        addFileIfExists(doc, get(row, ContractDoc), ContractDoc);
         addToComment(doc, "Leping objekt", get(row, ContractObject));
         return doc;
     }

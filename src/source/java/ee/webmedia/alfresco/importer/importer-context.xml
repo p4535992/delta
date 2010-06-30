@@ -25,6 +25,7 @@
       <property name="documentImportService" ref="DocumentImportService" />
       <property name="importFolderLocation" value="${importer.excel.excelFilesLocationBase}" />
       <property name="batchSize" value="${importer.excel.nrOfDocumentsInTransaction}" />
+      <property name="attachmentFilesLocationBase" value="${importer.excel.attachmentFilesLocationBase}" />
    </bean>
 
 </beans>

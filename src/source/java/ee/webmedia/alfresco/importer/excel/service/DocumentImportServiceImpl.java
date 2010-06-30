@@ -750,28 +750,38 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         final List<String> fileLocations = doc.getFileLocations();
         if (fileLocations != null) {
             for (String fileLocation : fileLocations) {
-                if (StringUtils.isNotBlank(fileLocation)) {
-                    File file = new File(fileLocation);
-                    if (!file.exists()) {
-                        fileLocation = fileLocation.replace('\\', '/');
-                        if (fileLocation.startsWith("\\") || fileLocation.startsWith("/")) {
-                            fileLocation = fileLocation.substring(1);
-                        }
-                        String filePath = attachmentFilesLocationBase + fileLocation;
-                        file = new File(filePath);
-                        if (!file.exists()) {
-                            throw new RuntimeException("file not found - Can't add file '" + filePath + "' to document:\n" + doc);
-                        }
-                    } else {
-                        log.info("Adding file/folder from network, this might take a while: " + file.getAbsolutePath());
-                    }
-                    generalService.addFileOrFolder(file, docNode.getNodeRef(), true);
+                File fileToAdd = getFile(attachmentFilesLocationBase, fileLocation);
+                if (fileToAdd != null) {
+                    generalService.addFileOrFolder(fileToAdd, docNode.getNodeRef(), true);
+                } else {
+                    throw new RuntimeException("file not found - Can't add file '" + attachmentFilesLocationBase + fileLocation + "' to document:\n" + doc);
                 }
             }
         }
         if (doc instanceof IncomingLetter) {
             setTransmittalMode((IncomingLetter) doc);
         }
+    }
+
+    public static File getFile(String attachmentFilesLocationBase, String fileLocation) {
+        if (StringUtils.isNotBlank(fileLocation)) {
+            File file = new File(fileLocation);
+            if (!file.exists()) {
+                fileLocation = fileLocation.replace('\\', '/');
+                if (fileLocation.startsWith("\\") || fileLocation.startsWith("/")) {
+                    fileLocation = fileLocation.substring(1);
+                }
+                String filePath = attachmentFilesLocationBase + fileLocation;
+                file = new File(filePath);
+                if (!file.exists()) {
+                    return null;
+                }
+            } else {
+                log.info("File/folder from network, adding might take a while: " + file.getAbsolutePath());
+            }
+            return file;
+        }
+        return null;
     }
 
     private void setTransmittalMode(IncomingLetter in) {

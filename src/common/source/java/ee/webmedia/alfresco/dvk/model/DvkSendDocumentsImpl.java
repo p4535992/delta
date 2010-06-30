@@ -13,7 +13,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
  * @author Ats Uiboupin
- *
  */
 public class DvkSendDocumentsImpl extends AbstractDocument implements DvkSendDocuments {
 
@@ -38,14 +37,16 @@ public class DvkSendDocumentsImpl extends AbstractDocument implements DvkSendDoc
             throw new UnableToPerformException(MessageSeverity.ERROR, "dvk_send_error_notRegistered", e);
         }
         try {
-            Assert.assertNotNull("SenderOrgName must be given", getSenderOrgName()); // XXX: tegelikult võks olla tühi string, kuna täidetakse regNr järgi
-            Assert.assertNotNull("SenderRegNr must be given", getSenderRegNr());
-            Assert.assertNotNull("SenderEmail must be given", getSenderEmail());
-            Assert.assertNotNull("RecipientsRegNrs must be given", getRecipientsRegNrs());
-            Assert.assertTrue("There have to be at least one recipient", getRecipientsRegNrs().size()>0);
+            Assert.assertNotNull("dvk_send_error_missingData_senderEmail_null", getSenderEmail());
+            Assert.assertNotNull("dvk_send_error_missingData_recipientsRegNrs_null", getRecipientsRegNrs());
+            Assert.assertTrue("dvk_send_error_missingData_recipients_notAdded", getRecipientsRegNrs().size() > 0);
         } catch (AssertionFailedError e) {
             log.debug("Object that was validated: '" + ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE) + "'");
-            throw new RuntimeException("Some of the compulsory fields have not been filled that are needed for the outgoing message", e);
+            final UnableToPerformException unableToPerformException = new UnableToPerformException(MessageSeverity.ERROR, "dvk_send_error_missingData", e);
+            final UnableToPerformException.UntransaltedMessageValueHolder untransalted = new UnableToPerformException.UntransaltedMessageValueHolder(e
+                    .getMessage());
+            unableToPerformException.setMessageValuesForHolders(untransalted);
+            throw unableToPerformException;
         }
     }
 

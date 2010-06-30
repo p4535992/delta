@@ -50,6 +50,7 @@ public class SmitExcelImporter {
     private boolean processRunning;
     private long nrOfDocsFromFirstLaunch;
     private long nrOfDocsTotalToImport;
+    private String attachmentFilesLocationBase;
 
     public <IDoc extends ImportDocument> void importSmitDocList() {
         if (!new SmitExcelImportEvaluator().evaluate(null)) {
@@ -327,6 +328,7 @@ public class SmitExcelImporter {
         Row lastRow = null;
 
         final String fileAndSheet = excelFile.getAbsolutePath() + "'[" + sheet.getSheetName() + "]";
+        excelRowMapper.setMapperContext(getMapperContext());
         for (Row row : sheet) {
             try {
                 lastRow = row;
@@ -344,6 +346,12 @@ public class SmitExcelImporter {
             }
         }
         return fileAndSheet;
+    }
+
+    private Map<String, Object> getMapperContext() {
+        Map<String, Object> mapperContext = new HashMap<String, Object>(1);
+        mapperContext.put(AbstractSmitExcelMapper.ATTACHMENT_FILES_LOCATION_BASE, attachmentFilesLocationBase);
+        return mapperContext;
     }
 
     private <IDoc extends ImportDocument> void printResultsInformation(String fileName, final SheetFinder sheetFinder, final List<IDoc> documents) {
@@ -376,6 +384,14 @@ public class SmitExcelImporter {
 
     public void setImportFolderLocation(String importFolderLocation) {
         this.importFolderLocation = importFolderLocation;
+    }
+    
+    public void setAttachmentFilesLocationBase(String attachmentFilesLocationBase) {
+        attachmentFilesLocationBase = attachmentFilesLocationBase.replace('\\', '/');
+        if (!attachmentFilesLocationBase.endsWith("/")) {
+            attachmentFilesLocationBase = attachmentFilesLocationBase + "/";
+        }
+        this.attachmentFilesLocationBase = attachmentFilesLocationBase;
     }
 
 }

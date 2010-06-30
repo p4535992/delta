@@ -95,7 +95,7 @@ public class MessageUtil {
     }
 
     private static void addStatusMessage(FacesContext facesContext, final MessageSeverity severity, final String message,
-            final Object... messageValuesForHolders) {
+            final Object... maybeUntransaltedMessageValuesForHolders) {
         final FacesMessage.Severity facesSeverity;
         if (severity == MessageSeverity.INFO) {
             facesSeverity = FacesMessage.SEVERITY_INFO;
@@ -108,7 +108,17 @@ public class MessageUtil {
         } else {
             throw new RuntimeException("Unexpected severity: " + severity);
         }
-        addStatusMessage(facesContext, message, facesSeverity, messageValuesForHolders);
+        Object[] translatedMessageValuesForHolders = new Object[maybeUntransaltedMessageValuesForHolders.length];
+        for (int i = 0; i < maybeUntransaltedMessageValuesForHolders.length; i++) {
+            Object maybeUntranslated = maybeUntransaltedMessageValuesForHolders[i];
+            if(maybeUntranslated instanceof UnableToPerformException.UntransaltedMessageValueHolder) {
+                final String messageKey = ((UnableToPerformException.UntransaltedMessageValueHolder)maybeUntranslated).getMessageKey();
+                translatedMessageValuesForHolders[i] = getMessage(messageKey);
+            } else {
+                translatedMessageValuesForHolders[i] = maybeUntranslated;
+            }
+        }
+        addStatusMessage(facesContext, message, facesSeverity, translatedMessageValuesForHolders);
     }
 
     /**

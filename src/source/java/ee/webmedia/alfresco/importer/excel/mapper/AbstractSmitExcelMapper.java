@@ -5,6 +5,7 @@ import static org.apache.commons.lang.StringUtils.isBlank;
 import java.io.File;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.poi.ss.usermodel.Row;
@@ -12,6 +13,7 @@ import org.apache.poi.ss.usermodel.Row;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.document.model.LetterDocument;
+import ee.webmedia.alfresco.importer.excel.service.DocumentImportServiceImpl;
 import ee.webmedia.alfresco.importer.excel.vo.ImportDocument;
 import ee.webmedia.alfresco.importer.excel.vo.IncomingLetter;
 import ee.webmedia.alfresco.importer.excel.vo.OutgoingLetter;
@@ -60,6 +62,9 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
     private Integer DocNodeRefInRepo;
     private static long orderOfAppearance;
 
+    protected Map<String, Object> mapperContext;
+    public static final String ATTACHMENT_FILES_LOCATION_BASE = "ATTACHMENT_FILES_LOCATION_BASE";
+
     abstract protected IDoc createDocument(Row row);
 
     @Override
@@ -74,6 +79,11 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         setDocStatus(doc);
         postProcess(doc);
         return doc;
+    }
+
+    @Override
+    public void setMapperContext(Map<String, Object> mapperContext) {
+        this.mapperContext = mapperContext;
     }
 
     protected void postProcess(@SuppressWarnings("unused") IDoc doc) {
@@ -102,13 +112,64 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         final String docName = get(row, DocName);
         assertFieldIsFilled("DocName", docName);
         doc.setDocName(docName);
-        doc.addFileLocation(get(row, Link));
+        final String fileLocation = get(row, Link);
+        addFileIfExists(doc, fileLocation, Link);
         addToComment(doc, "Märkused", get(row, Comment));
         setStorageType(doc);
         doc.setRegNumber(get(row, RegNumber));
         setRegDateTime(row, doc);
         { // ühised va. lepingud
             fillAccessRestrictions(row, doc);
+        }
+    }
+
+    protected void addFileIfExists(final IDoc doc, final String fileLocation, int columnNumber) {
+        if (StringUtils.isBlank(fileLocation)) {
+            return;
+        }
+        final String attachmentFilesLocationBase = (String) mapperContext.get("ATTACHMENT_FILES_LOCATION_BASE");
+        File file = DocumentImportServiceImpl.getFile(attachmentFilesLocationBase, fileLocation);
+        handleMissingFileReference(attachmentFilesLocationBase + fileLocation, file, columnNumber);
+        doc.addFileLocation(fileLocation);
+    }
+
+    public static void main(String[] args) {
+        final String base = "C:\\tmp\\atstest\\importExcel\\attachments\\";
+        final String dir = "Dokumentide asukoht\\Kirjad\\Kirjavahetus riigiasutuste, org. ja kodanikega. 1.2-6\\kirjavahetus 2008\\";
+        final String dir2 = base + dir;
+        final String file = dir2 + ".žõäöüš ŠÕÄÖÜŽ 12.06.08_reg_nr_51_Siseministri 26.08.05 kk nr 348 'VIS töörühma moodustamine' muutmine.msgx";
+        handleMissingFileReference(file, new File(file), 3);
+    }
+
+    private static void handleMissingFileReference(final String fileLocation, File file, int columnIndex) {
+        if (file == null) {
+            file = new File(fileLocation);
+        }
+        if (!file.exists()) {
+            final String END_CONST = "\"";
+            final String START_CONST = "\n-\t\"";
+            final StringBuilder sb = new StringBuilder("File doesn't exist:" + START_CONST)
+                    .append(file).append(END_CONST);
+            do {
+                file = file.getParentFile();
+                if (file == null || file.exists()) {
+                    break;
+                }
+                sb.append(START_CONST).append(file.getAbsolutePath()).append(END_CONST);
+            } while (!file.exists());
+            if (file != null) {
+                sb.append("\nFollowing parent exists:\n+\t\"").append(file.getAbsolutePath()).append(END_CONST);
+                sb.append("\nfiles in existing parent dir:");
+                final File[] listFiles = file.listFiles();
+                for (File file2 : listFiles) {
+                    sb.append("\n+"+(file2.isDirectory()?"D":"")+"\t\"").append(file2.getAbsolutePath()).append(END_CONST);
+                }
+            } else {
+                sb.append("\n-\t\"" + "Even root doesn't exists");
+            }
+            final FieldMismatchException fieldMismatchException = new FieldMismatchException(sb.toString());
+            fieldMismatchException.setColumnIndex(columnIndex);//
+            throw fieldMismatchException;
         }
     }
 

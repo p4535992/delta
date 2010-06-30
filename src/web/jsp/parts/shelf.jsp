@@ -33,4 +33,5 @@
 <%-- Sidebar --%>
 <a:panel id="sidebar" rendered="#{NavigationBean.shelfExpanded}">
    <jsp:include page="../sidebar/shelf.jsp" />
+   <h:graphicImage url="/images/logo/el_logo.jpg" style="margin-top: 10px;" alt="EL_image" />
 </a:panel>
