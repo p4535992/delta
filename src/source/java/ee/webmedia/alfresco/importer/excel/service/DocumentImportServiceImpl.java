@@ -273,7 +273,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                 if (StringUtils.isBlank(docRef)) {
                     throw new RuntimeException("Document has still no nodeRef: doc=\n" + doc);
                 }
-                cell.setCellValue(docRef);
+                setCellValueTruncateIfNeeded(cell, docRef.toString());
                 final Map<String, String> fileLocationsMissing = doc.getFileLocationsMissing();
                 if (fileLocationsMissing != null && fileLocationsMissing.size() > 0) {
                     String filesMissing = "";
@@ -284,8 +284,8 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                     }
                     final Cell missingFilesCell = row.createCell(/* col X */23);
                     final Cell debugInformationCell = row.createCell(/* col Y */24);
-                    missingFilesCell.setCellValue(filesMissing);
-                    debugInformationCell.setCellValue(debugInformation);
+                    setCellValueTruncateIfNeeded(missingFilesCell, filesMissing);
+                    setCellValueTruncateIfNeeded(debugInformationCell, debugInformation);
                 }
             }
             final boolean canWrite = rowSourceFile.canWrite();
@@ -304,6 +304,20 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
             IOUtils.closeQuietly(inp);
             IOUtils.closeQuietly(fileOut);
         }
+    }
+
+    private final int EXCEL_CELL_MAX_SIZE = 32767;
+    private final String EXCEL_CELL_MAX_SIZE_NOTIFICATION_SUFFIX = "\n\n\nNB! end of the input was removed, as it exceeded maximum length that excel cell can hold("
+            + EXCEL_CELL_MAX_SIZE + " characters)";
+
+    private void setCellValueTruncateIfNeeded(final Cell debugInformationCell, String textToWrite) {
+        if (textToWrite == null || textToWrite.length() == 0) {
+            return;
+        }
+        if (textToWrite.length() >= EXCEL_CELL_MAX_SIZE) {
+            textToWrite = textToWrite.substring(0, (EXCEL_CELL_MAX_SIZE - EXCEL_CELL_MAX_SIZE_NOTIFICATION_SUFFIX.length() - 1));
+        }
+        debugInformationCell.setCellValue(textToWrite);
     }
 
     @Override
