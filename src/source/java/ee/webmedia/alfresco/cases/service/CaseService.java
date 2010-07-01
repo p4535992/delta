@@ -66,6 +66,8 @@ public interface CaseService {
 
     boolean isCaseNameUsed(final String newCaseTitle, NodeRef volumeRef);
 
+    Case getCaseByTitle(final String newCaseTitle, NodeRef volumeRef, NodeRef caseRef);
+
     List<ChildAssociationRef> getCaseRefsByVolume(NodeRef volumeRef);
 
 }

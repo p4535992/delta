@@ -163,16 +163,21 @@ public class CaseServiceImpl implements CaseService {
     }
 
     private boolean isCaseNameUsed(final String newCaseTitle, NodeRef volumeRef, NodeRef caseRef) {
+        return getCaseByTitle(newCaseTitle, volumeRef, caseRef) != null;
+    }
+
+    @Override
+    public Case getCaseByTitle(final String newCaseTitle, NodeRef volumeRef, NodeRef caseRef) {
         final List<Case> cases = getAllCasesByVolume(volumeRef);
         for (Case theCase : cases) {
             if (StringUtils.equals(theCase.getTitle(), newCaseTitle) && (caseRef == null || !caseRef.equals(theCase.getNode().getNodeRef()))) {
                 if (log.isDebugEnabled()) {
                     log.debug("found case that has the same name as name being checked for availability:\n" + theCase);
                 }
-                return true;
+                return theCase;
             }
         }
-        return false;
+        return null;
     }
 
     @Override

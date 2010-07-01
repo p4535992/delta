@@ -710,15 +710,23 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                 if (targetCaseCandidate != null) {
                     return changeCaseNameIfNeeded((CaseImportVO) targetCaseCandidate, doc);
                 }
-                String caseTitle = createUniqueCaseTitle(doc);
+                final String caseTitle = doc.getDocName();
                 CaseImportVO importCase = new CaseImportVO(); // create new case, that is probably used by many documents
-                importCase.setTitle(caseTitle);
+                final Case existingCaseWithSameTitle = getCaseService().getCaseByTitle(caseTitle, volumeRef, null);
+                if (existingCaseWithSameTitle != null) {
+                    importCase.setNode(existingCaseWithSameTitle.getNode());
+                    importCase.setContainingDocsCount(existingCaseWithSameTitle.getContainingDocsCount());
+                } else {
+                    importCase.setTitle(caseTitle);
+                }
+                importCase.setStatus(DocListUnitStatus.OPEN.getValueName());
                 importCase.setVolumeNodeRef(volumeRef);
+                //
                 importCase.setRegNumber(regNumber);
                 importCase.setDateOfEarliestDocRegistration(doc.getRegDateTime());
                 casesByRegNumber.put(regNrWoIndividualizingNr, importCase);
                 targetCaseCandidate = importCase;
-                getCaseService().saveOrUpdate(targetCaseCandidate);
+                getCaseService().saveOrUpdate(targetCaseCandidate, false);
                 casesByTitle.put(caseTitle, targetCaseCandidate);
             }
             return targetCaseCandidate;
