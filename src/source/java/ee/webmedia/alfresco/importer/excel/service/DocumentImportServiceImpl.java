@@ -512,7 +512,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                 final List<Series> allOpenedSeries = seriesService.getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, null);
                 seriesMap = new HashMap<String, Series>(allOpenedSeries.size());
                 for (Series series : allOpenedSeries) {
-                    seriesMap.put(series.getSeriesIdentifier(), series);
+                    seriesMap.put(StringUtils.trim(series.getSeriesIdentifier()), series);
                 }
                 seriesCache.put(functionRef, seriesMap);
             }
