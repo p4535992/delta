@@ -295,11 +295,9 @@ public class FunctionsServiceImpl implements FunctionsService {
                     if (containsCases != null && containsCases) {
                         for (ChildAssociationRef aCase : caseService.getCaseRefsByVolume(volumeRef)) {
                             final NodeRef caseRef = aCase.getChildRef();
-                            List<ChildAssociationRef> docsOfCaseAssocs = nodeService.getChildAssocs(caseRef, RegexQNamePattern.MATCH_ALL,
-                                    RegexQNamePattern.MATCH_ALL);
-                            final int documentsCountByCase = deleteChildAssocs(docsOfCaseAssocs);
-                            nodeService.setProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, 0);
-                            docCountInVolume += documentsCountByCase;
+                            Integer docsUnderCase = (Integer) nodeService.getProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT);
+                            nodeService.deleteNode(caseRef);
+                            docCountInVolume += docsUnderCase != null ? docsUnderCase : 0;
                         }
                     } else {
                         List<ChildAssociationRef> docsOfVolumeAssocs = nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL,

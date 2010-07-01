@@ -306,8 +306,8 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         }
     }
 
-    private final int EXCEL_CELL_MAX_SIZE = 32767;
-    private final String EXCEL_CELL_MAX_SIZE_NOTIFICATION_SUFFIX = "\n\n\nNB! end of the input was removed, as it exceeded maximum length that excel cell can hold("
+    private final static int EXCEL_CELL_MAX_SIZE = 32767;
+    private final static String EXCEL_CELL_MAX_SIZE_NOTIFICATION_SUFFIX = "\n\n\nNB! end of the input was removed, as it exceeded maximum length that excel cell can hold("
             + EXCEL_CELL_MAX_SIZE + " characters)";
 
     private void setCellValueTruncateIfNeeded(final Cell debugInformationCell, String textToWrite) {
@@ -315,6 +315,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
             return;
         }
         if (textToWrite.length() >= EXCEL_CELL_MAX_SIZE) {
+            log.warn("Following text is too long to fit into excel cell(trunkating it):\n" + textToWrite);
             textToWrite = textToWrite.substring(0, (EXCEL_CELL_MAX_SIZE - EXCEL_CELL_MAX_SIZE_NOTIFICATION_SUFFIX.length() - 1));
         }
         debugInformationCell.setCellValue(textToWrite);
