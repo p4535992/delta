@@ -280,11 +280,12 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                     String debugInformation = "";
                     for (Entry<String, String> entry : fileLocationsMissing.entrySet()) {
                         filesMissing += entry.getKey() + "\n\n";
-                        debugInformation += entry.getValue() + "\n===================================\n===================================\n";
+                        debugInformation += entry.getValue() + "\n============žõäöüš ŠÕÄÖÜŽ==========\n===================================\n";
                     }
                     final Cell missingFilesCell = row.createCell(/* col X */23);
                     final Cell debugInformationCell = row.createCell(/* col Y */24);
                     setCellValueTruncateIfNeeded(missingFilesCell, filesMissing);
+                    log.warn(debugInformation);
                     setCellValueTruncateIfNeeded(debugInformationCell, debugInformation);
                 }
             }
@@ -367,10 +368,11 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
             }
             if (log.isInfoEnabled() && assocs.size() > 0) {
                 log.info("Created assocs from " + assocs.size() + " documents in total to " + totalNrOfFollowUps + " followups and " + totalNrOfReplies
-                        + " replies");
+                            + " replies");
             }
             final NodeRef functionsRoot = getFunctionsService().getFunctionsRoot();
             nodeService.setProperty(functionsRoot, smitDocListImported, Boolean.TRUE);
+            assocsToCreate.clear();
         } finally {
             processRunning = false;
         }
