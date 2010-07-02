@@ -20,10 +20,12 @@ import org.alfresco.repo.exporter.ACPExportPackageHandler;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.MimetypeService;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.view.ExportPackageHandler;
 import org.alfresco.service.cmr.view.ExporterCrawlerParameters;
 import org.alfresco.service.cmr.view.ExporterService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
@@ -31,6 +33,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
@@ -49,6 +52,7 @@ public class FunctionsListDialog extends BaseDialogBean {
     private transient FunctionsService functionsService;
     private transient ExporterService exporterService;
     private transient UserService userService;
+    private transient GeneralService generalService;
     protected List<Function> functions;
 
     @Override
@@ -85,7 +89,20 @@ public class FunctionsListDialog extends BaseDialogBean {
     }
 
     public void deleteAllDocuments(@SuppressWarnings("unused") ActionEvent event) {
-        final long docCount = getFunctionsService().deleteAllDocuments();
+        final Pair<List<NodeRef>, Long> allDocumentAndCaseRefs = getFunctionsService().getAllDocumentAndCaseRefs();
+        final List<NodeRef> refsToDelete = allDocumentAndCaseRefs.getFirst();
+        final int batchMaxSize = 30;
+        ArrayList<NodeRef> nodeRefsBatch = new ArrayList<NodeRef>(batchMaxSize);
+        for (int i = 0; i < refsToDelete.size(); i++) {
+            nodeRefsBatch.add(refsToDelete.get(i));
+            if (i == (refsToDelete.size() - 1) || (i % batchMaxSize == 0)) {
+                log.info("Deleting "+nodeRefsBatch.size()+" case or document nodeRefs");
+                generalService.deleteNodeRefs(nodeRefsBatch);
+                log.info("Deleted "+nodeRefsBatch.size()+" case or document nodeRefs");
+                nodeRefsBatch.clear();
+            }
+        }
+        final long docCount = allDocumentAndCaseRefs.getSecond();
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_deleteAllDocuments_success", docCount);
     }
 
@@ -213,6 +230,14 @@ public class FunctionsListDialog extends BaseDialogBean {
                     .getBean(FunctionsService.BEAN_NAME);
         }
         return functionsService;
+    }
+
+    protected GeneralService getGeneralService() {
+        if (generalService == null) {
+            generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(GeneralService.BEAN_NAME);
+        }
+        return generalService;
     }
 
     protected ExporterService getExporterService() {

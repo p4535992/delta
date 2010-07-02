@@ -12,6 +12,7 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -404,14 +405,6 @@ public class GeneralServiceImpl implements GeneralService {
         }
     }
 
-
-
-
-
-
-
-
-
     @Override
     public NodeRef addFileOrFolder(File fileOrFolder, NodeRef parentNodeRef, boolean flatten) {
         if (fileOrFolder.isDirectory()) {
@@ -437,7 +430,7 @@ public class GeneralServiceImpl implements GeneralService {
         writeFile(writer, file, fileName, null);
         return fileRef;
     }
-    
+
     @Override
     public void writeFile(ContentWriter writer, File file, String fileName, String mimetype) {
         // use container.mimeType; if our mimetype map has it, then use it; otherwise guess based on filename
@@ -562,22 +555,17 @@ public class GeneralServiceImpl implements GeneralService {
         while (fileFolderService.searchSimple(folder, baseName + suffix + "." + extension) != null) {
             suffix = " (" + i + ")";
 
-
-
-
-
             i++;
         }
         return baseName + suffix + "." + extension;
 
-
     }
-    
+
     @Override
     public String limitFileNameLength(String filename, int maxLength, String marker) {
-        marker = (marker == null) ? "...." : marker; 
-        
-        if(filename != null && filename.length() > maxLength) {
+        marker = (marker == null) ? "...." : marker;
+
+        if (filename != null && filename.length() > maxLength) {
             String baseName = FilenameUtils.getBaseName(filename);
             String extension = FilenameUtils.getExtension(filename);
             baseName = baseName.substring(0, maxLength - extension.length() - marker.length());
@@ -585,7 +573,7 @@ public class GeneralServiceImpl implements GeneralService {
         }
         return filename;
     }
-    
+
     @Override
     public void updateParentContainingDocsCount(final NodeRef parentNodeRef, final QName propertyName, boolean added, Integer count) {
         if (parentNodeRef == null)
@@ -608,6 +596,13 @@ public class GeneralServiceImpl implements GeneralService {
                 return null;
             }
         }, AuthenticationUtil.getSystemUserName());
+    }
+
+    @Override
+    public void deleteNodeRefs(Collection<NodeRef> nodeRefs) {
+        for (NodeRef nodeRef : nodeRefs) {
+            nodeService.deleteNode(nodeRef);
+        }
     }
 
     // START: getters / setters

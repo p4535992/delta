@@ -15,6 +15,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.view.Location;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.TransientNode;
 
 import ee.webmedia.alfresco.cases.model.Case;
@@ -279,9 +280,10 @@ public class FunctionsServiceImpl implements FunctionsService {
     }
 
     @Override
-    public long deleteAllDocuments() {
+    public Pair<List<NodeRef>, Long> getAllDocumentAndCaseRefs() {
         long deletedDocCount = 0;
-        log.info("Starting to delete all documents from documentList");
+        log.info("Starting to gather all noderefs of documents and cases to be removed");
+        final ArrayList<NodeRef> c = new ArrayList<NodeRef>(4000);
         for (ChildAssociationRef function : getFunctionAssocs(getFunctionsRoot())) {
             long docCountInFunction = 0;
             final NodeRef functionRef = function.getChildRef();
@@ -296,13 +298,16 @@ public class FunctionsServiceImpl implements FunctionsService {
                         for (ChildAssociationRef aCase : caseService.getCaseRefsByVolume(volumeRef)) {
                             final NodeRef caseRef = aCase.getChildRef();
                             Integer docsUnderCase = (Integer) nodeService.getProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT);
-                            nodeService.deleteNode(caseRef);
+                            c.add(caseRef);
                             docCountInVolume += docsUnderCase != null ? docsUnderCase : 0;
                         }
                     } else {
                         List<ChildAssociationRef> docsOfVolumeAssocs = nodeService.getChildAssocs(volumeRef, RegexQNamePattern.MATCH_ALL,
                                 RegexQNamePattern.MATCH_ALL);
-                        final int documentsCountByVolume = deleteChildAssocs(docsOfVolumeAssocs);
+                        final int documentsCountByVolume = docsOfVolumeAssocs.size();
+                        for (ChildAssociationRef childAssociationRef : docsOfVolumeAssocs) {
+                            c.add(childAssociationRef.getChildRef());
+                        }
                         docCountInVolume += documentsCountByVolume;
                     }
                     nodeService.setProperty(volumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, 0);
@@ -315,14 +320,7 @@ public class FunctionsServiceImpl implements FunctionsService {
         }
         nodeService.setProperty(getFunctionsRoot(), DocumentImportServiceImpl.smitDocListImported, null);
         log.info("Deleted all " + deletedDocCount + " documents from documentList.");
-        return deletedDocCount;
-    }
-
-    private int deleteChildAssocs(List<ChildAssociationRef> docsOfCaseAssocs) {
-        for (ChildAssociationRef childAssociationRef : docsOfCaseAssocs) {
-            nodeService.deleteNode(childAssociationRef.getChildRef());
-        }
-        return docsOfCaseAssocs.size();
+        return new Pair<List<NodeRef>, Long>(c, deletedDocCount);
     }
 
     private void setFunctionSeriesVolumeRefs(final NodeRef functionRef, final NodeRef seriesRef, final NodeRef volumeRef, NodeRef docRef,

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.view.Location;
+import org.alfresco.util.Pair;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.functions.model.Function;
@@ -85,6 +86,6 @@ public interface FunctionsService {
      */
     long updateDocCounters();
 
-    long deleteAllDocuments();
+    Pair<List<NodeRef>, Long> getAllDocumentAndCaseRefs();
 
 }

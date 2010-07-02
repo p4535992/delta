@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.common.service;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -209,4 +210,6 @@ public interface GeneralService {
     NodeRef addFileOrFolder(File file, NodeRef parentNodeRef, boolean flatten);
 
     NodeRef addFile(File file, NodeRef parentNodeRef);
+
+    void deleteNodeRefs(Collection<NodeRef> nodeRefs);
 }
