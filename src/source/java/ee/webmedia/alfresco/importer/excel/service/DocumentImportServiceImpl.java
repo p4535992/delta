@@ -47,6 +47,7 @@ import ee.webmedia.alfresco.document.service.DocumentServiceImpl;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
+import ee.webmedia.alfresco.importer.excel.mapper.AbstractSmitExcelMapper;
 import ee.webmedia.alfresco.importer.excel.vo.CaseImportVO;
 import ee.webmedia.alfresco.importer.excel.vo.ContractSmitDocument;
 import ee.webmedia.alfresco.importer.excel.vo.ImportDocument;
@@ -145,11 +146,12 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                 for (ImportDocument doc : entry.getValue()) {
                     docNrInSamePlace++;
                     if (StringUtils.isNotBlank(doc.getNodeRefInRepo())) {
-                        if (!nodeService.exists(new NodeRef(doc.getNodeRefInRepo()))) {
+                        final NodeRef docRefInRepoFromPreviousImport = new NodeRef(doc.getNodeRefInRepo());
+                        if (!nodeService.exists(docRefInRepoFromPreviousImport)) {
                             throw new RuntimeException(
                                     "According to importfile this document is was already stored in repository, but according nodeRef is not found:\n" + doc);
                         }
-                        log.info("skipping document, as it is already stored to " + volumeAndRegNumber);
+                        tryToAddPreviouslyMissingFiles(volumeAndRegNumber, doc, docRefInRepoFromPreviousImport);
                         continue; // already imported
                     }
                     try {
@@ -251,6 +253,41 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         assocsToCreate.putAll(newAssocsToCreate);
         processRunning = false;
         return nrOfDocsProcessed;
+    }
+
+    private List<String> tryToAddPreviouslyMissingFiles(final String volumeAndRegNumber, ImportDocument doc, final NodeRef docRefInRepoFromPreviousImport) {
+        final List<String> fileLocationsMissingFromPreviousImport = doc.getFileLocationsMissingFromPreviousImport();
+        if (fileLocationsMissingFromPreviousImport != null) {
+            final List<String> fileLocationsToGetImported = doc.getFileLocations();
+            if (fileLocationsToGetImported == null || fileLocationsMissingFromPreviousImport.size() > fileLocationsToGetImported.size()) {
+                throw new RuntimeException(
+                        "There are more files referenced in missing fils cell than references to files to be imported:\nfileLinks\t"
+                                + fileLocationsToGetImported + "\nmissingFiles=\t" + fileLocationsMissingFromPreviousImport + "\nDocument="
+                                + doc);
+            }
+            log.info("Just trying to add files, that were missing last time, to document:\n" + fileLocationsMissingFromPreviousImport);
+            final Map<String, String> fileLocationsStillMissing = new HashMap<String, String>(fileLocationsMissingFromPreviousImport.size());
+            for (String fileWasMissing : fileLocationsMissingFromPreviousImport) {
+                fileWasMissing = fileWasMissing.replace('\\', '/');
+                if (!fileLocationsToGetImported.contains(fileWasMissing)) {
+                    throw new RuntimeException(
+                            "File referenced in missing files cell is not referenced by other cells that refer to files.\nFileReference=\t"
+                                    + fileWasMissing + "\nfileLocationsToGetImported=\t" + fileLocationsToGetImported + "\nDocument=" + doc);
+                }
+                try {
+                    addAttachmentFile(doc, docRefInRepoFromPreviousImport, fileWasMissing);
+                    log.debug("Found file, that was previously missing: \n" + fileWasMissing);
+                } catch (RuntimeException e) {
+                    // file still doesn't exist
+                    fileLocationsStillMissing.put(fileWasMissing, AbstractSmitExcelMapper.handleMissingFileReference(
+                            attachmentFilesLocationBase + fileWasMissing, null));
+                }
+            }
+            doc.setFileLocationsMissing(fileLocationsStillMissing);
+        } else {
+            log.info("skipping document, as it is already stored to " + volumeAndRegNumber);
+        }
+        return fileLocationsMissingFromPreviousImport;
     }
 
     private <IDoc extends ImportDocument> void saveNoderefsToSourceFile(List<IDoc> documents) {
@@ -788,19 +825,32 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
             props.put(DocumentCommonModel.Props.SEND_INFO_SEND_MODE, sendInfo.getSendMode());
             sendOutService.addSendinfo(docNode.getNodeRef(), props);
         }
+        final Map<String, String> fileLocationsMissing2 = doc.getFileLocationsMissing();
+        final Set<String> filesMissing;
+        if (fileLocationsMissing2 != null) {
+            filesMissing = fileLocationsMissing2.keySet();
+        } else {
+            filesMissing = Collections.<String> emptySet();
+        }
         final List<String> fileLocations = doc.getFileLocations();
         if (fileLocations != null) {
             for (String fileLocation : fileLocations) {
-                File fileToAdd = getFile(attachmentFilesLocationBase, fileLocation);
-                if (fileToAdd != null) {
-                    generalService.addFileOrFolder(fileToAdd, docNode.getNodeRef(), true);
-                } else {
-                    throw new RuntimeException("file not found - Can't add file '" + attachmentFilesLocationBase + fileLocation + "' to document:\n" + doc);
+                if (filesMissing == null || !filesMissing.contains(fileLocation)) {
+                    addAttachmentFile(doc, docNode.getNodeRef(), fileLocation);
                 }
             }
         }
         if (doc instanceof IncomingLetter) {
             setTransmittalMode((IncomingLetter) doc);
+        }
+    }
+
+    private void addAttachmentFile(ImportDocument doc, NodeRef docRef, String fileLocation) {
+        File fileToAdd = getFile(attachmentFilesLocationBase, fileLocation);
+        if (fileToAdd != null) {
+            generalService.addFileOrFolder(fileToAdd, docRef, true);
+        } else {
+            throw new RuntimeException("file not found - Can't add file '" + attachmentFilesLocationBase + fileLocation + "' to document:\n" + doc);
         }
     }
 

@@ -25,6 +25,8 @@ public class ImportDocument extends CommonDocument {
     private List<String> fileLocations;
     private Map<String/* fileName */, String/* debugInformation */> fileLocationsMissing;
     @AlfrescoModelProperty(isMappable = false)
+    private List<String> fileLocationsMissingFromPreviousImport;
+    @AlfrescoModelProperty(isMappable = false)
     private long orderOfAppearance;
     @AlfrescoModelProperty(isMappable = false)
     private String nodeRefInRepo;
@@ -53,6 +55,21 @@ public class ImportDocument extends CommonDocument {
 
     public List<String> getFileLocations() {
         return fileLocations;
+    }
+
+    public void addFileLocationsMissingFromPreviousImport(String fileMissingFromPreviousImport) {
+        if (fileLocationsMissingFromPreviousImport == null) {
+            fileLocationsMissingFromPreviousImport = new ArrayList<String>();
+        }
+        fileLocationsMissingFromPreviousImport.add(fileMissingFromPreviousImport);
+    }
+
+    public void setFileLocationsMissingFromPreviousImport(List<String> fileLocationsMissingFromPreviousImport) {
+        this.fileLocationsMissingFromPreviousImport = fileLocationsMissingFromPreviousImport;
+    }
+
+    public List<String> getFileLocationsMissingFromPreviousImport() {
+        return fileLocationsMissingFromPreviousImport;
     }
 
     public void addFileLocationsMissing(String fileLocationMissing, String debugInformation) {

@@ -57,6 +57,8 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
     private Integer AccessRestriction;
     // END: fields that change the location for different importable excel sheets
 
+    @ExcelColumn('X')
+    private Integer FilesNotFound;
     /** Used to write nodeRef of imported document back to repo */
     @ExcelColumn('Z')
     private Integer DocNodeRefInRepo;
@@ -76,11 +78,22 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         { // ühised
             fillRowOriginInformation(doc, rowSourceFile, rowSourceSheetName, row);
             fillCommonFields(row, doc);
+            fillMissinFilesFromLastImport(doc, row);
         }
 
         setDocStatus(doc);
         postProcess(doc);
         return doc;
+    }
+
+    private void fillMissinFilesFromLastImport(IDoc doc, Row row) {
+        final String filesNotFound = get(row, FilesNotFound);
+        if (filesNotFound != null) {
+            final String[] filesNotFoundArray = StringUtils.split(filesNotFound, '\n');
+            for (String fileNotFound : filesNotFoundArray) {
+                doc.addFileLocationsMissingFromPreviousImport(fileNotFound.trim());
+            }
+        }
     }
 
     @Override
@@ -133,9 +146,8 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         final String attachmentFilesLocationBase = (String) mapperContext.get("ATTACHMENT_FILES_LOCATION_BASE");
         File file = DocumentImportServiceImpl.getFile(attachmentFilesLocationBase, fileLocation);
         final String missingFileText = handleMissingFileReference(attachmentFilesLocationBase + fileLocation, file);
-        if (missingFileText == null) {
-            doc.addFileLocation(fileLocation);
-        } else {
+        doc.addFileLocation(fileLocation);
+        if (missingFileText != null) {
             if (!resumeOnMissingFile) {
                 final FieldMismatchException fieldMismatchException = new FieldMismatchException(missingFileText);
                 fieldMismatchException.setColumnIndex(columnNumber);
@@ -145,7 +157,7 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
         }
     }
 
-    private static String handleMissingFileReference(String fileLocation, File file) {
+    public static String handleMissingFileReference(String fileLocation, File file) {
         if (file == null) {
             file = new File(fileLocation);
         }
@@ -165,8 +177,12 @@ public abstract class AbstractSmitExcelMapper<IDoc extends ImportDocument> exten
                 sb.append("\nFollowing parent exists:\n+\t\"").append(file.getAbsolutePath()).append(END_CONST);
                 sb.append("\nfiles in existing parent dir:");
                 final File[] listFiles = file.listFiles();
-                for (File file2 : listFiles) {
-                    sb.append("\n+" + (file2.isDirectory() ? "D" : "") + "\t\"").append(file2.getAbsolutePath()).append(END_CONST);
+                if (listFiles != null) {
+                    for (File file2 : listFiles) {
+                        sb.append("\n+" + (file2.isDirectory() ? "D" : "") + "\t\"").append(file2.getAbsolutePath()).append(END_CONST);
+                    }
+                } else {
+                    sb.append("\n- [" + (file.isDirectory() ? "no files in existing parent directory" : "parent is not a directory") + "]");
                 }
             } else {
                 sb.append("\n-\t\"" + "Even root doesn't exists");
