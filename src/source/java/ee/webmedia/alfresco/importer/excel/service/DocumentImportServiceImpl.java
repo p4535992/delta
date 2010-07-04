@@ -312,19 +312,19 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                 }
                 setCellValueTruncateIfNeeded(cell, docRef.toString());
                 final Map<String, String> fileLocationsMissing = doc.getFileLocationsMissing();
+                String filesMissing = "";
+                String debugInformation = "";
                 if (fileLocationsMissing != null && fileLocationsMissing.size() > 0) {
-                    String filesMissing = "";
-                    String debugInformation = "";
                     for (Entry<String, String> entry : fileLocationsMissing.entrySet()) {
                         filesMissing += entry.getKey() + "\n\n";
                         debugInformation += entry.getValue() + "\n============žõäöüš ŠÕÄÖÜŽ==========\n===================================\n";
                     }
-                    final Cell missingFilesCell = row.createCell(/* col X */23);
-                    final Cell debugInformationCell = row.createCell(/* col Y */24);
-                    setCellValueTruncateIfNeeded(missingFilesCell, filesMissing);
                     log.warn(debugInformation);
-                    setCellValueTruncateIfNeeded(debugInformationCell, debugInformation);
                 }
+                final Cell missingFilesCell = row.createCell(/* col X */23);
+                final Cell debugInformationCell = row.createCell(/* col Y */24);
+                setCellValueTruncateIfNeeded(missingFilesCell, filesMissing);
+                setCellValueTruncateIfNeeded(debugInformationCell, debugInformation);
             }
             final boolean canWrite = rowSourceFile.canWrite();
             if (!canWrite) {
