@@ -97,7 +97,7 @@ public class FunctionsListDialog extends BaseDialogBean {
             nodeRefsBatch.add(refsToDelete.get(i));
             if (i == (refsToDelete.size() - 1) || (i % batchMaxSize == 0)) {
                 log.info("Deleting "+nodeRefsBatch.size()+" case or document nodeRefs");
-                generalService.deleteNodeRefs(nodeRefsBatch);
+                getGeneralService().deleteNodeRefs(nodeRefsBatch);
                 log.info("Deleted "+nodeRefsBatch.size()+" case or document nodeRefs");
                 nodeRefsBatch.clear();
             }

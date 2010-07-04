@@ -310,15 +310,12 @@ public class FunctionsServiceImpl implements FunctionsService {
                         }
                         docCountInVolume += documentsCountByVolume;
                     }
-                    nodeService.setProperty(volumeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT, 0);
                     docCountInSeries += docCountInVolume;
                 }
-                nodeService.setProperty(seriesRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, 0);
                 docCountInFunction += docCountInSeries;
             }
             deletedDocCount += docCountInFunction;
         }
-        nodeService.setProperty(getFunctionsRoot(), DocumentImportServiceImpl.smitDocListImported, null);
         log.info("Deleted all " + deletedDocCount + " documents from documentList.");
         return new Pair<List<NodeRef>, Long>(c, deletedDocCount);
     }
