@@ -39,7 +39,6 @@ public class SmitExcelImportEvaluator extends BaseActionEvaluator {
         FunctionsService functionsService = (FunctionsService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
                 .getBean(FunctionsService.BEAN_NAME);
         Boolean smitDocListImported = (Boolean) nodeService.getProperty(functionsService.getFunctionsRoot(), DocumentImportServiceImpl.smitDocListImported);
-        smitDocListImported = false; // FIXME: teadlikult välja lülitatud, et lives saaks jupi kaupa importida
         return smitDocListImported != null && smitDocListImported == true;
     }
 
