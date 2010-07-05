@@ -56,7 +56,7 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
                 final FileNameSplitter fileNameSplitter = new FileNameSplitter(fileName);
                 final String userIdCode = fileNameSplitter.getSSN().toString();
                 if (!userService.isDocumentManager(userIdCode)) {
-                    log.debug("User '" + userIdCode + "' is not a documentManager");
+                    log.info("User '" + userIdCode + "' is not a documentManager, not adding attachments!");
                     continue;
                 }
                 AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {

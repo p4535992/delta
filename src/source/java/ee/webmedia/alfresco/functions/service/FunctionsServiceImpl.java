@@ -316,7 +316,7 @@ public class FunctionsServiceImpl implements FunctionsService {
             }
             deletedDocCount += docCountInFunction;
         }
-        log.info("Deleted all " + deletedDocCount + " documents from documentList.");
+        log.info("found " + deletedDocCount + " documents from documentList to delete.");
         return new Pair<List<NodeRef>, Long>(c, deletedDocCount);
     }
 

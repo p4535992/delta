@@ -323,20 +323,25 @@ public class NotificationServiceImpl implements NotificationService {
         if (StringUtils.isNotEmpty(task.getOwnerId())) {
             // Check for substitutes
             List<Substitute> substitutes = substituteService.getSubstitutes(userService.getUser(task.getOwnerId()).getNodeRef());
-            if(substitutes.size() > 0) {
-                int daysForSubstitutionTasksCalc = (int) (parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC) * 1);
-                Calendar calendar = Calendar.getInstance();
-                for(Substitute sub : substitutes) {
-                    calendar.setTime(sub.getSubstitutionEndDate());
-                    calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
-                    if(sub.getSubstitutionStartDate().before(task.getDueDate()) && calendar.getTime().after(task.getDueDate())) {
-                        notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
+            if (substitutes.size() > 0) {
+                if (!(task.getDueDate() == null && WorkflowSpecificModel.Types.INFORMATION_TASK.equals(task.getNode().getType()))) {
+                    int daysForSubstitutionTasksCalc = (int) (parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC) * 1);
+                    Calendar calendar = Calendar.getInstance();
+                    for (Substitute sub : substitutes) {
+                        calendar.setTime(sub.getSubstitutionEndDate());
+                        calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
+                        if (task.getDueDate() == null) {
+                            log.error("Duedate is null for task: " + task);
+                        }
+                        if (sub.getSubstitutionStartDate().before(task.getDueDate()) && calendar.getTime().after(task.getDueDate())) {
+                            notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
+                        }
                     }
+                    notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 2);
                 }
-                notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 2);
                 return notification;
             }
-            
+
             // Send to system user
             if (!isSubscribed(task.getOwnerId(), NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION)) {
                 return null;
@@ -345,14 +350,14 @@ public class NotificationServiceImpl implements NotificationService {
             notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
             return notification;
         }
-        
+
         // Send to third party
         notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 1);
         notification.setSenderEmail(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
         notification.setAttachFiles(true);
         notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
         return notification;
-        
+
     }
 
     /**
@@ -581,7 +586,7 @@ public class NotificationServiceImpl implements NotificationService {
         for (Task task : tasks) {
             Notification notification = processDueDateNotification(new Notification(), taskDue);
             notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
-            
+
             Workflow workflow = task.getParent();
             NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflow.getNode().getNodeRef())).getParentRef();
             NodeRef docRef = (nodeService.getPrimaryParent(compoundWorkflowRef)).getParentRef();
@@ -614,7 +619,7 @@ public class NotificationServiceImpl implements NotificationService {
         Date dispositionDate = cal.getTime();
 
         List<Volume> volumesDispositionedAfterDate = documentSearchService.searchVolumesDispositionedAfterDate(dispositionDate);
-        if(volumesDispositionedAfterDate.size() == 0) {
+        if (volumesDispositionedAfterDate.size() == 0) {
             return 0;
         }
         sendVolumesDispositionDateNotifications(volumesDispositionedAfterDate);
@@ -625,15 +630,16 @@ public class NotificationServiceImpl implements NotificationService {
     private int sendVolumesDispositionDateNotifications(List<Volume> volumesDispositionedAfterDate) {
         Notification notification = setupNotification(new Notification(), NotificationModel.NotificationType.VOLUME_DISPOSITION_DATE);
         notification = addDocumentManagersAsRecipients(notification);
-        
-        if(notification.getToEmails() == null || notification.getToEmails().isEmpty()) {
+
+        if (notification.getToEmails() == null || notification.getToEmails().isEmpty()) {
             return 0; // no doc managers available
         }
 
         NodeRef systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
         if (systemTemplateByName == null) {
             if (log.isDebugEnabled()) {
-                log.debug("Volumes disposition date notification email template '" + notification.getTemplateName() + "' not found, no notification email is sent");
+                log.debug("Volumes disposition date notification email template '" + notification.getTemplateName()
+                        + "' not found, no notification email is sent");
             }
             return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
@@ -656,7 +662,7 @@ public class NotificationServiceImpl implements NotificationService {
         Date restrictionEndDate = cal.getTime();
 
         List<Document> documents = documentSearchService.searchAccessRestictionEndsAfterDate(restrictionEndDate);
-        if(documents == null || documents.isEmpty()) {
+        if (documents == null || documents.isEmpty()) {
             return 0;
         }
         Map<String, List<Document>> documentsByUser = new HashMap<String, List<Document>>();
@@ -681,7 +687,8 @@ public class NotificationServiceImpl implements NotificationService {
         NodeRef systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
         if (systemTemplateByName == null) {
             if (log.isDebugEnabled()) {
-                log.debug("Access restriction end date notification email template '" + notification.getTemplateName() + "' not found, no notification email is sent");
+                log.debug("Access restriction end date notification email template '" + notification.getTemplateName()
+                        + "' not found, no notification email is sent");
             }
             return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
@@ -713,7 +720,8 @@ public class NotificationServiceImpl implements NotificationService {
         systemTemplateByName = templateService.getSystemTemplateByName(notification.getTemplateName());
         if (systemTemplateByName == null) {
             if (log.isDebugEnabled()) {
-                log.debug("Access restriction end date notification email template '" + notification.getTemplateName() + "' not found, no notification email is sent");
+                log.debug("Access restriction end date notification email template '" + notification.getTemplateName()
+                        + "' not found, no notification email is sent");
             }
             return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
@@ -748,9 +756,9 @@ public class NotificationServiceImpl implements NotificationService {
     private Notification addDocumentManagersAsRecipients(Notification notification) {
         Set<String> documentManagers =
                 authorityService.
-                getContainedAuthorities(
-                AuthorityType.USER,
-                userService.getDocumentManagersGroup(), true);
+                        getContainedAuthorities(
+                                AuthorityType.USER,
+                                userService.getDocumentManagersGroup(), true);
         for (String documentManager : documentManagers) {
             String userName = authorityService.getShortName(documentManager);
             notification.addRecipient(userService.getUserFullName(userName), userService.getUserEmail(userName));
@@ -793,12 +801,14 @@ public class NotificationServiceImpl implements NotificationService {
         sendEmail(notification, content, docRef, null, false, null);
     }
 
-    private void sendEmail(Notification notification, String content, NodeRef docRef, List<String> fileRefs, boolean zipIt, String zipName) throws EmailException {
+    private void sendEmail(Notification notification, String content, NodeRef docRef, List<String> fileRefs, boolean zipIt, String zipName)
+            throws EmailException {
         if (log.isDebugEnabled()) {
             log.debug("Sending notification e-mail\nnotification=" + notification + "\ncontent=" + WmNode.toString(content) + "\ndocRef=" + docRef
                     + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipName);
         }
-        emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail(), notification.getSubject(), content, true, docRef, fileRefs, zipIt, zipName);
+        emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail() //
+                , notification.getSubject(), content, true, docRef, fileRefs, zipIt, zipName);
     }
 
     // START: setters/getters
@@ -838,7 +848,7 @@ public class NotificationServiceImpl implements NotificationService {
     public void setAuthorityService(AuthorityService authorityService) {
         this.authorityService = authorityService;
     }
-    
+
     public void setSubstituteService(SubstituteService substituteService) {
         this.substituteService = substituteService;
     }

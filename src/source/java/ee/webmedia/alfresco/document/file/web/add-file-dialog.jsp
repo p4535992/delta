@@ -70,6 +70,19 @@
 		   document.forms[1].submit();
 	   }
    } 
+
+   $jQ("#" + escapeId4JQ("dialog:confirmFileSelectionButton")).live("mousedown", function(event) {
+      event.stopImmediatePropagation();
+      var attachment = $jQ("#" + escapeId4JQ("dialog:dialog-body:select_attachment"));
+      var scanned = $jQ("#" + escapeId4JQ("dialog:dialog-body:select_scanned_file"));
+      var file = document.jumpLoaderApplet.getUploader().getFile(0);
+
+      if((file != null && file.getStatus() == 2) || attachment[0].selectedIndex != -1 || scanned[0].selectedIndex != -1) {
+         return true;
+      }
+      alert('</f:verbatim><h:outputText value="#{msg.file_no_files_selected}" /><f:verbatim>');
+      return false;
+   });
    
    </script>
    </f:verbatim>
@@ -77,14 +90,14 @@
 
     <a:panel styleClass="column panel-50" id="attachment-upload" label="#{msg.file_add_attachment}">
        <h:outputText id="out_attachment" value="#{msg.file_add_attachment_label}" styleClass="dialogpanel-title block"/>
-       <h:selectManyMenu id="select_attachment" style="width: 100%; height: 200px;" binding="#{AddFileDialog.attachmentSelect}">
+       <h:selectManyMenu id="select_attachment" style="width: 100%; height: 200px;" binding="#{AddFileDialog.attachmentSelect}" validator="#{AddFileDialog.validate}">
            <f:selectItems value="#{DialogManager.bean.attachments}"/>
        </h:selectManyMenu>
     </a:panel>
 
     <a:panel styleClass="column panel-50-f" id="scanned-file-upload" label="#{msg.file_add_scanned}">
        <h:outputText id="out_scanned_file" value="#{msg.file_add_scanned_label}" styleClass="dialogpanel-title block"/>
-       <h:selectManyMenu id="select_scanned_file" style="width: 100%; height: 200px;" binding="#{AddFileDialog.scannedSelect}">
+       <h:selectManyMenu id="select_scanned_file" style="width: 100%; height: 200px;" binding="#{AddFileDialog.scannedSelect}" validator="#{AddFileDialog.validate}">
            <f:selectItems value="#{DialogManager.bean.scannedFiles}"/>
        </h:selectManyMenu>
     </a:panel>

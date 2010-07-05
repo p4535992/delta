@@ -88,6 +88,13 @@ public class FunctionsListDialog extends BaseDialogBean {
         MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "docList_updateDocCounters_success", docCount);
     }
 
+    /**
+     * NB! this method doesn't delete files associated with cases or documents that will get deleted - hence wasting disk usage. <br>
+     * But as at the moment this method is meant to be called only in cases where repository and DB backups will be restored(before final successful import), it
+     * is not an issue.
+     * 
+     * @param event
+     */
     public void deleteAllDocuments(@SuppressWarnings("unused") ActionEvent event) {
         final Pair<List<NodeRef>, Long> allDocumentAndCaseRefs = getFunctionsService().getAllDocumentAndCaseRefs();
         final List<NodeRef> refsToDelete = allDocumentAndCaseRefs.getFirst();
@@ -96,9 +103,9 @@ public class FunctionsListDialog extends BaseDialogBean {
         for (int i = 0; i < refsToDelete.size(); i++) {
             nodeRefsBatch.add(refsToDelete.get(i));
             if (i == (refsToDelete.size() - 1) || (i % batchMaxSize == 0)) {
-                log.info("Deleting "+nodeRefsBatch.size()+" case or document nodeRefs");
+                log.info("Deleting " + nodeRefsBatch.size() + " case or document nodeRefs");
                 getGeneralService().deleteNodeRefs(nodeRefsBatch);
-                log.info("Deleted "+nodeRefsBatch.size()+" case or document nodeRefs");
+                log.info("Deleted " + nodeRefsBatch.size() + " case or document nodeRefs");
                 nodeRefsBatch.clear();
             }
         }

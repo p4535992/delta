@@ -79,20 +79,32 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         } catch (NoSuchPersonException e) {
             // fall-through: creating new person
         }
-        properties.put(ContentModel.PROP_USERNAME, ametnik.getIsikukood());
-        properties.put(ContentModel.PROP_FIRSTNAME, ametnik.getEesnimi());
-        properties.put(ContentModel.PROP_LASTNAME, ametnik.getPerekonnanimi());
+        fillPropertiesFromAmetnik(ametnik, properties);
+        return person;
+    }
+
+    /**
+     * Reads properties from <code>Ametnik</code> object and puts them into <code>properties</code>
+     * 
+     * @param ametnik
+     * @param properties
+     */
+    public void fillPropertiesFromAmetnik(Ametnik ametnik, Map<QName, Serializable> properties) {
         String email = ametnik.getEmail();
+        BigInteger yksusId = ametnik.getYksusId();
         if (applicationService.isTest()) {
             email = testEmail;
         }
-        properties.put(ContentModel.PROP_EMAIL, email);
-        BigInteger yksusId = ametnik.getYksusId();
-        if(BigInteger.valueOf(-1).equals(yksusId)) {
+        if (BigInteger.valueOf(-1).equals(yksusId)) {
             yksusId = null;
         }
         properties.put(ContentModel.PROP_ORGID, yksusId);
-        return person;
+        properties.put(ContentModel.PROP_EMAIL, email);
+        properties.put(ContentModel.PROP_USERNAME, ametnik.getIsikukood());
+        properties.put(ContentModel.PROP_FIRSTNAME, ametnik.getEesnimi());
+        properties.put(ContentModel.PROP_LASTNAME, ametnik.getPerekonnanimi());
+        properties.put(ContentModel.PROP_TELEPHONE, ametnik.getKontakttelefon());
+        properties.put(ContentModel.PROP_JOBTITLE, ametnik.getAmetikoht());
     }
 
     // START: getters / setters

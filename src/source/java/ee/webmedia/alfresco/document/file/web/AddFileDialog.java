@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.application.Application;
+import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlInputText;
@@ -22,6 +23,8 @@ import javax.faces.component.html.HtmlSelectManyMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
+import javax.faces.validator.Validator;
+import javax.faces.validator.ValidatorException;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.node.integrity.IntegrityException;
@@ -33,6 +36,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.FileUploadBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
@@ -48,6 +52,7 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -60,7 +65,7 @@ import ee.webmedia.alfresco.versions.model.VersionsModel;
  * @author Dmitri Melnikov
  * @author Kaarel Jõgeva
  */
-public class AddFileDialog extends BaseDialogBean {
+public class AddFileDialog extends BaseDialogBean implements Validator {
     private static final long serialVersionUID = 1L;
 
     private static final String ERR_EXISTING_FILE = "add_file_existing_file";
@@ -86,6 +91,25 @@ public class AddFileDialog extends BaseDialogBean {
     public String cancel() {
         reset();
         return "dialog:close#files-panel";
+    }
+
+    /**
+     * Used by scanned and attachment lists
+     *
+     * @see javax.faces.validator.Validator#validate(javax.faces.context.FacesContext, javax.faces.component.UIComponent, java.lang.Object)
+     */
+    @Override
+    public void validate(FacesContext context, UIComponent component, Object value) throws ValidatorException {
+        String[] values = (String[]) value;
+        for (String val : values) {
+            NodeRef nodeRef = new NodeRef(val);
+            NodeRef parentRef = getNodeService().getPrimaryParent(nodeRef).getParentRef();
+            boolean hasAspect = getNodeService().hasAspect(parentRef, DocumentCommonModel.Aspects.COMMON);
+            if(parentRef != null && hasAspect) {
+                String msg = MessageUtil.getMessage("file_file_already_added_to_document", getFileService().getFile(nodeRef).getName()); 
+                throw new ValidatorException(new FacesMessage(msg));
+            }
+        }
     }
 
     public void start(ActionEvent event) {

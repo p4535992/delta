@@ -1182,8 +1182,10 @@ public class MetadataBlockBean implements Serializable {
         }
         if (volume.isContainsCases() && StringUtils.isNotBlank(caseLabel)) {
             List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef);
+            NodeRef caseRef = null;
             for (Case tmpCase : allCases) {
                 if (StringUtils.equalsIgnoreCase(caseLabel, tmpCase.getTitle())) {
+                    caseRef = tmpCase.getNode().getNodeRef();
                     if (tmpCase.isClosed()) {
                         if (log.isDebugEnabled()) {
                             log.warn("validation failed: document_validationMsg_closed_case");
@@ -1193,6 +1195,7 @@ public class MetadataBlockBean implements Serializable {
                     break;
                 }
             }
+            props.put(TransientProps.CASE_NODEREF, caseRef);
         }
         props.put(TransientProps.CASE_LABEL_EDITABLE, caseLabel);
 
@@ -1339,6 +1342,13 @@ public class MetadataBlockBean implements Serializable {
         setOwnerCurrentUser();
         setDocumentName(nodeRef);
         getDocumentService().setTransientProperties(document, getDocumentService().getAncestorNodesByDocument(nodeRef));
+        { // make sure that not only properties get updated, but also visual components
+            final NodeRef funRef = (NodeRef) document.getProperties().get(TransientProps.FUNCTION_NODEREF);
+            final NodeRef seriesRef = (NodeRef) document.getProperties().get(TransientProps.SERIES_NODEREF);
+            final NodeRef volumeRef = (NodeRef) document.getProperties().get(TransientProps.VOLUME_NODEREF);
+            final String caseLabel = (String) document.getProperties().get(TransientProps.CASE_LABEL);
+            updateFnSerVol(funRef, seriesRef, volumeRef, caseLabel, false);
+        }
         final Map<String, Object> docProps = document.getProperties();
         updateAccessRestrictionProperties((NodeRef) docProps.get(TransientProps.SERIES_NODEREF));
     }

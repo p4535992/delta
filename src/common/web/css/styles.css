@@ -2081,3 +2081,13 @@ TH A.header-wrap {
 .left44 {
 	margin-left: 44px;
 }
+
+#el-logo {
+	margin: 20px 0 0 25px;
+	padding: 20px;
+	background: #fff url(../images/logo/logo_euro2.png) no-repeat scroll 20px 20px;
+	overflow: hidden;
+	height: 51px;
+	text-indent: -5000px;
+	width: 116px;
+}
