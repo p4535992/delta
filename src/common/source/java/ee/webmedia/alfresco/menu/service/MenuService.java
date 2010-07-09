@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.menu.service;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -29,7 +30,6 @@ public interface MenuService {
 
     int getNodeChildrenCount(NodeRef nodeRef);
 
-
     /**
      * Add a processor that gets executed after (re-)loading the menu. Processors are executed in registration order. More than one processor can be registered
      * with the same {@code menuItemId}.
@@ -48,33 +48,32 @@ public interface MenuService {
     void setTreeItemProcessor(TreeItemProcessor processor);
 
     public interface TreeItemProcessor {
-        
+
         List<NodeRef> openTreeItem(DropdownMenuItem dd, NodeRef nodeRef);
-        
+
         void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef);
 
     }
-    
+
     public interface MenuItemFilter {
-        
+
         boolean passesFilter(MenuItem menuItem, NodeRef childNodeRef);
 
         /**
          * Provides ability to execute third party actions when opening a MenuItem. For example call some dialog's method
-         *   
-         * @param nodeRef NodeRef this item represents 
+         * 
+         * @param nodeRef NodeRef this item represents
          * @param dd DropdownMenuItem that is being opened
          * @param type QName on item that is being opened
-         * 
-         * @return returns null if further processing is not needed 
+         * @return returns null if further processing is not needed
          */
         String openItemActionsForType(DropdownMenuItem dd, NodeRef nodeRef, QName type);
     }
-    
+
     List<NodeRef> openTreeItem(DropdownMenuItem menuItem, NodeRef nodeRef);
-    
+
     void setupTreeItem(DropdownMenuItem dd, NodeRef nodeRef);
-    
+
     /**
      * Measure to check if bean has the latest menu configuration
      * 
@@ -83,11 +82,13 @@ public interface MenuService {
     int getUpdateCount();
 
     /**
-     * When a menu update is needed, this method invalidates beans menu configurations so it's reloaded from MenuService 
+     * When a menu update is needed, this method invalidates beans menu configurations so it's reloaded from MenuService
      */
     void menuUpdated();
 
     void processTasks(Menu menu);
+
+    void processTasks(Menu menu, Collection<String> onlyMenuItemIds);
 
     List<String> getShortcuts();
 

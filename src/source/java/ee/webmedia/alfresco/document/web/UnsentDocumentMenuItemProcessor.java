@@ -14,10 +14,11 @@ public class UnsentDocumentMenuItemProcessor extends CountAddingMenuItemProcesso
     
         private MenuService menuService;
         private DocumentSearchService documentSearchService;
+        public static final String UNSENT_DOCUMENT = "unsentDocument";
 
         @Override
         public void afterPropertiesSet() throws Exception {
-            menuService.addProcessor("unsentDocument", this, false);
+            menuService.addProcessor(UNSENT_DOCUMENT, this, false);
         }
 
         @Override

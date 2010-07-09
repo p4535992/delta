@@ -167,7 +167,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         log.debug("stopWorkflow");
         try {
             removeEmptyTasks();
-            if (validate(FacesContext.getCurrentInstance(), true)) {
+            if (validate(FacesContext.getCurrentInstance(), false)) {
                 workflow = getWorkflowService().saveAndStopCompoundWorkflow(workflow);
             }
         } catch (Exception e) {
@@ -183,7 +183,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         log.debug("continueWorkflow");
         try {
             removeEmptyTasks();
-            workflow = getWorkflowService().saveAndContinueCompoundWorkflow(workflow);
+            if (validate(FacesContext.getCurrentInstance(), true)) {
+                workflow = getWorkflowService().saveAndContinueCompoundWorkflow(workflow);
+            }
         } catch (Exception e) {
             handleException(e, "workflow_compound_continue_workflow_failed");
         }

@@ -67,10 +67,10 @@
             <action idref="docList_import" />
             <action idref="docList_createNewYearBasedVolumes" />
             <action idref="docList_updateDocCounters" />
-	    <!--
+            <!-- disabled to prevent accidental deleting(importing) after import has completed 
             <action idref="docList_import_smitExcel" />
             <action idref="docList_deleteAllDocuments" />
-	    -->
+             -->
          </action-group>
 
       </actions>

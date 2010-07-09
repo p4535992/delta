@@ -3,8 +3,10 @@ package ee.webmedia.alfresco.menu.ui;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -122,7 +124,7 @@ public class MenuBean implements Serializable {
         } catch (NullPointerException npe) {
             // XXX is any action necessary?
         }
-        
+
         addBreadcrumbItem(title);
     }
 
@@ -245,7 +247,7 @@ public class MenuBean implements Serializable {
         link.getAttributes().put(COUNT, closeCount);
         return link;
     }
-    
+
     public void closeBreadcrumbItem(ActionEvent event) {
         Integer closeCount = null;
         if (ActionUtil.hasParam(event, COUNT)) {
@@ -253,10 +255,21 @@ public class MenuBean implements Serializable {
         } else {
             return;
         }
-        
+
         FacesContext context = FacesContext.getCurrentInstance();
         context.getApplication().getNavigationHandler().handleNavigation(context, "closeBreadcrumbItem", "dialog:close[" + closeCount + "]");
-        
+
+    }
+
+    public void processTaskItem(String... menuItemIds) {
+        final Collection<String> menuItemsListToProcess;
+        if(menuItemIds != null) {
+            menuItemsListToProcess = new HashSet<String>(menuItemIds.length);
+            menuItemsListToProcess.addAll(Arrays.asList(menuItemIds));
+        } else {
+            menuItemsListToProcess = null;
+        }
+        getMenuService().processTasks(menu, menuItemsListToProcess);
     }
 
     public void processTaskItems() {
@@ -299,9 +312,9 @@ public class MenuBean implements Serializable {
         String[] path = lastLinkId.substring(MenuRenderer.SECONDARY_MENU_PREFIX.length()).split(UIMenuComponent.VALUE_SEPARATOR);
 
         MenuItem item = getActiveMainMenuItem();
-        if(Integer.parseInt(activeItemId) == DOCUMENT_REGISTER_ID) {
+        if (Integer.parseInt(activeItemId) == DOCUMENT_REGISTER_ID) {
             collapseMenuItems(item);
-        } else if(Integer.parseInt(activeItemId) == MY_TASKS_AND_DOCUMENTS_ID) {
+        } else if (Integer.parseInt(activeItemId) == MY_TASKS_AND_DOCUMENTS_ID) {
             collapseMenuItems(item.getSubItems().get(MY_DOCUMENTS_ID));
         }
 

@@ -898,7 +898,8 @@ hr {
 
 .propertiesLabel + td td,
 .propertiesLabel + td td span input {
-	line-height: 20px;
+/*	line-height: 20px; used to be 20px, but ruined label and value alignment in subpropsheets*/
+	line-height: 15px;
 	/*vertical-align: top; -- ruined workflow dialog on document (stopOnFinish)*/
 	vertical-align: middle; 
 }
@@ -982,6 +983,11 @@ input.readonly {
 }
 
 .center {
+	text-align: center;
+}
+
+.inline-center {
+	display: block;
 	text-align: center;
 }
 

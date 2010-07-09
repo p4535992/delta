@@ -112,6 +112,8 @@ public interface GeneralService {
      */
     Node getParentWithType(NodeRef childRef, QName parentType);
 
+    Node getPrimaryParent(NodeRef nodeRef);
+
     /**
      * Return default property values defined in model.
      * 
@@ -212,4 +214,5 @@ public interface GeneralService {
     NodeRef addFile(File file, NodeRef parentNodeRef);
 
     void deleteNodeRefs(Collection<NodeRef> nodeRefs);
+
 }

@@ -54,6 +54,9 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
+import ee.webmedia.alfresco.document.web.OutboxDocumentMenuItemProcessor;
+import ee.webmedia.alfresco.document.web.UnsentDocumentMenuItemProcessor;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
@@ -178,13 +181,13 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         List<String> selectedFiles = new ArrayList<String>();
         SortedMap<String, String> files = new TreeMap<String, String>();
         final List<File> allFiles = getFileService().getAllActiveFiles(node.getNodeRef());
-        ByteSizeConverter converter = (ByteSizeConverter)context.getApplication().createConverter(ByteSizeConverter.CONVERTER_ID);
+        ByteSizeConverter converter = (ByteSizeConverter) context.getApplication().createConverter(ByteSizeConverter.CONVERTER_ID);
         for (File file : allFiles) {
             final String fileRef = file.getNodeRef().toString();
-            
+
             String fileName = file.getName();
             fileName += " (" + converter.getAsString(context, null, file.getSize()) + ")";
-            
+
             files.put(fileName, fileRef);
             boolean isDdoc = file.isDigiDocContainer();
             if (isDdoc) {
@@ -237,12 +240,12 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             names = new ArrayList<String>();
             emails = new ArrayList<String>();
         }
-        
+
         List<String> namesAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), false);
         names.addAll(namesAdd);
         List<String> emailsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), false);
         emails.addAll(emailsAdd);
-        
+
         if (names.isEmpty()) {
             names.add("");
         }
@@ -257,7 +260,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                 recSendModes.add("");
             }
         }
-        
+
         properties.put(PROP_KEYS[0], names);
         properties.put(PROP_KEYS[1], emails);
         properties.put(PROP_KEYS[2], recSendModes);
@@ -477,6 +480,9 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             MessageUtil.addErrorMessage(context, "document_send_failed");
         } else {
             getDocumentLogService().addDocumentLog(model.getNodeRef(), MessageUtil.getMessage("document_log_status_sent"));
+            ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItem(
+                    OutboxDocumentMenuItemProcessor.OUTBOX_DOCUMENT,
+                    UnsentDocumentMenuItemProcessor.UNSENT_DOCUMENT);
         }
         return result;
     }

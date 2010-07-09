@@ -260,8 +260,8 @@
             addLabelId="document_errandsAbroad_addCatering" styleClass="add-catering" readOnlyIf="parent.doccom:docStatus!=töös"
             component-generator="MultiValueEditorGenerator" propsGeneration="
              docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceCateringCount¤styleClass=width120
-            ,docspec:dailyAllowanceDays¤¤styleClass=small
-            ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceRate¤styleClass=small
+            ,docspec:dailyAllowanceDays¤¤styleClass=small inline-center
+            ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceRate¤styleClass=small inline-center
             ,docspec:dailyAllowanceFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=trainingAppDailyAllowanceFinancingSource¤styleClass=medium
             "
          />
@@ -306,8 +306,8 @@
             addLabelId="document_errandsAbroad_addCatering" styleClass="add-catering" readOnlyIf="parent.parent.doccom:docStatus!=töös"
             component-generator="MultiValueEditorGenerator" propsGeneration="
              docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceCateringCount¤styleClass=width120
-            ,docspec:dailyAllowanceDays¤¤styleClass=small center
-            ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceRate¤styleClass=small
+            ,docspec:dailyAllowanceDays¤¤styleClass=small inline-center
+            ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceRate¤styleClass=small inline-center
             ,docspec:dailyAllowanceFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=errandAbroadDailyAllowanceFinancingSource¤styleClass=medium
             "
          />
@@ -531,16 +531,16 @@
    <config evaluator="aspect-name" condition="doccom:signer">
       <property-sheet>
          <show-property name="signer" show-in-edit-mode="false" display-label-id="document_signer" />
-         <show-property name="doccom:signerName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setSigner}" dialogTitleId="users_search_title" styleClass="long" />
+         <show-property name="doccom:signerName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setSigner}" dialogTitleId="users_search_title" styleClass="long" ajaxParentLevel="1" />
          <!-- doccom:signerJobTitle moved dow, so it doesn't affect the order of properties in contract-->
       </property-sheet>
    </config>
-      
+
    <!-- labelStyleClass="secondary" with these types -->
    <config evaluator="node-type" condition="docsub:contractSim,docsub:contractSmit">
       <property-sheet>
          <show-property name="signer" show-in-edit-mode="false" display-label-id="document_signer" labelStyleClass="secondary" styleClass="medium" />
-         <show-property name="doccom:signerName" show-in-view-mode="false" labelStyleClass="secondary" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setSigner}" dialogTitleId="users_search_title" display="inline" styleClass="medium" />
+         <show-property name="doccom:signerName" show-in-view-mode="false" labelStyleClass="secondary" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setSigner}" dialogTitleId="users_search_title" display="inline" styleClass="medium" ajaxParentLevel="1" />
       </property-sheet>
    </config>
       

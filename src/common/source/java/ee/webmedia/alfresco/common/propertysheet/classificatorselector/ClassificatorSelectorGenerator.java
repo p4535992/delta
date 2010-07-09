@@ -4,8 +4,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
 import javax.faces.component.UISelectItem;
+import javax.faces.component.html.HtmlSelectManyListbox;
+import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
@@ -27,11 +30,29 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * @author Ats Uiboupin
  */
 public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
+    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ClassificatorSelectorGenerator.class);
 
     public static final String ATTR_CLASSIFICATOR_NAME = "classificatorName";
 
     private transient ClassificatorService classificatorService;
     private transient GeneralService generalService;
+
+    @Override
+    public UIComponent generateSelectComponent(FacesContext context, String id, boolean multiValued) {
+        if (!log.isDebugEnabled()) {
+            return super.generateSelectComponent(context, id, multiValued);
+        }
+        // for debugging purpose in development
+        final UIComponent selectComponent = super.generateSelectComponent(context, id, multiValued);
+        if (selectComponent instanceof HtmlSelectOneMenu) {
+            HtmlSelectOneMenu selectOne = (HtmlSelectOneMenu) selectComponent;
+            selectOne.setTitle(MessageUtil.getMessage("classificator_source", getClassificatorName()));
+        } else if (selectComponent instanceof HtmlSelectManyListbox) {
+            HtmlSelectManyListbox selectMany = (HtmlSelectManyListbox) selectComponent;
+            selectMany.setTitle(MessageUtil.getMessage("classificator_source", getClassificatorName()));
+        }
+        return selectComponent;
+    }
 
     @Override
     protected List<UISelectItem> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,

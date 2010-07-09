@@ -130,6 +130,12 @@ public class GeneralServiceImpl implements GeneralService {
     }
 
     @Override
+    public Node getPrimaryParent(NodeRef nodeRef) {
+        final NodeRef parentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+        return fetchNode(parentRef);
+    }
+
+    @Override
     public NodeRef getAncestorNodeRefWithType(NodeRef childRef, QName ancestorType) {
         final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
         final QName realParentType = nodeService.getType(parentRef);
