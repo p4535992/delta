@@ -15,6 +15,7 @@ import ee.webmedia.alfresco.notification.model.GeneralNotification;
 import ee.webmedia.alfresco.notification.service.NotificationService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class NotificationDetailsDialog extends BaseDialogBean {
 
@@ -29,6 +30,7 @@ public class NotificationDetailsDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         notificationService.updateGeneralNotification(notification);
         notification = null;
+        MessageUtil.addInfoMessage("save_success");
         return outcome;
     }
 

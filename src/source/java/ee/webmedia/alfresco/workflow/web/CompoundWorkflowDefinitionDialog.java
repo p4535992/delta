@@ -135,6 +135,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         try {
             removeEmptyTasks();
             getWorkflowService().saveCompoundWorkflowDefinition((CompoundWorkflowDefinition) workflow);
+            MessageUtil.addInfoMessage("save_success");
         } catch (Exception e) {
             log.debug("Failed to save " + workflow, e);
             throw e;
@@ -161,7 +162,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     /**
      * Action listener for JSP.
      */
-    public void setupNewWorkflow(ActionEvent event) {
+    public void setupNewWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         resetState();
         workflow = getWorkflowService().getNewCompoundWorkflowDefinition();
         updateFullAccess();
@@ -200,11 +201,11 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     public void addWorkflowTask(ActionEvent event) {
         int blockIndex = Integer.parseInt(ActionUtil.getParam(event, "index"));
         int taskIndex = -1;
-        if(ActionUtil.hasParam(event, "taskIndex")) {
+        if (ActionUtil.hasParam(event, "taskIndex")) {
             taskIndex = Integer.parseInt(ActionUtil.getParam(event, "taskIndex"));
         }
         log.debug("addWorkflowTask: blockIndex=" + blockIndex + "; taskIndex=" + taskIndex);
-        if(taskIndex > -1) {
+        if (taskIndex > -1) {
             workflow.getWorkflows().get(blockIndex).addTask(taskIndex);
         } else {
             workflow.getWorkflows().get(blockIndex).addTask();
@@ -351,7 +352,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     /**
      * Getter for parallel checkbox values.
      */
-    public List<SelectItem> getParallelSelections(FacesContext context, UIInput selectComponent) {
+    public List<SelectItem> getParallelSelections(@SuppressWarnings("unused") FacesContext context, @SuppressWarnings("unused") UIInput selectComponent) {
         return parallelSelections;
     }
 
@@ -482,7 +483,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         sheetC.getAttributes().put("styleClass", "panel-100");
         sheetC.getAttributes().put("externalConfig", Boolean.TRUE);
         sheetC.getAttributes().put("columns", 1);
-        //sheetC.getAttributes().put(HTML.WIDTH_ATTR, "100%");
+        // sheetC.getAttributes().put(HTML.WIDTH_ATTR, "100%");
         sheetC.setConfigArea(getConfigArea());
         if (!fullAccess) {
             sheetC.setMode(UIPropertySheet.VIEW_MODE);
@@ -529,9 +530,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             panelW.setId("workflow-panel-" + counter);
             panelW.getAttributes().put("styleClass", "panel-100 ie7-workflow workflow-panel");
             String panelLabel = MessageUtil.getMessage(block.getNode().getType().getLocalName() + "_title");
-            if(StringUtils.isBlank(getConfigArea())) {
+            if (StringUtils.isBlank(getConfigArea())) {
                 String workflowDescription = (String) block.getNode().getProperties().get(WorkflowSpecificModel.Props.DESCRIPTION);
-                panelLabel = (StringUtils.isBlank(workflowDescription)) ? panelLabel : panelLabel + " - " + workflowDescription; 
+                panelLabel = (StringUtils.isBlank(workflowDescription)) ? panelLabel : panelLabel + " - " + workflowDescription;
             }
             panelW.setLabel(panelLabel);
             panelW.setProgressive(true);

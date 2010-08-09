@@ -16,7 +16,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
-import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -38,14 +37,16 @@ public class DeleteFileDialog extends DeleteContentDialog {
         super.finishImpl(context, outcome);
         try {
 
+            final String fileName = file != null ? file.getName() : "";
             if (document != null && getDictionaryService().isSubClass(getNodeService().getType(document), DocumentCommonModel.Types.DOCUMENT)) {
-                getDocumentLogService().addDocumentLog(document, MessageUtil.getMessage(context, "document_log_status_fileDeleted", file.getName()));
+                getDocumentLogService().addDocumentLog(document, MessageUtil.getMessage(context, "document_log_status_fileDeleted", fileName));
                 getDocumentService().updateSearchableFiles(document);
             }
 
             if (file != null && (file.getType().equals(DocumentSubtypeModel.Types.OUTGOING_LETTER) || file.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER) || file.getType().equals(ContentModel.TYPE_CONTENT))) {
                 ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItems();
             }
+            MessageUtil.addInfoMessage("file_delete_success", fileName);
         } catch (NodeLockedException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_delete_error_locked");
         }

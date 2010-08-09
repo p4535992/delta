@@ -88,6 +88,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                     isUnsavedWorkFlow = false;
                 }
                 resetState();
+                MessageUtil.addInfoMessage("save_success");
                 return outcome;
             } catch (NodeLockedException e) {
                 log.debug("Compound workflow action failed: document locked!", e);
@@ -147,12 +148,15 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         if (validate(FacesContext.getCurrentInstance(), true)) {
             try {
                 removeEmptyTasks();
-                workflow = getWorkflowService().saveAndStartCompoundWorkflow(workflow);
                 if (isUnsavedWorkFlow) {
                     getDocumentLogService().addDocumentLog(workflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
+                }
+                workflow = getWorkflowService().saveAndStartCompoundWorkflow(workflow);
+                if (isUnsavedWorkFlow) {
                     isUnsavedWorkFlow = false;
                 }
                 getDocumentDialog().reopenDocument(event);
+                MessageUtil.addInfoMessage("workflow_compound_start_success");
             } catch (Exception e) {
                 handleException(e, "workflow_compound_start_workflow_failed");
             }
@@ -169,6 +173,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             removeEmptyTasks();
             if (validate(FacesContext.getCurrentInstance(), false)) {
                 workflow = getWorkflowService().saveAndStopCompoundWorkflow(workflow);
+                MessageUtil.addInfoMessage("workflow_compound_stop_success");
             }
         } catch (Exception e) {
             handleException(e, "workflow_compound_stop_workflow_failed");
@@ -185,6 +190,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             removeEmptyTasks();
             if (validate(FacesContext.getCurrentInstance(), true)) {
                 workflow = getWorkflowService().saveAndContinueCompoundWorkflow(workflow);
+                MessageUtil.addInfoMessage("workflow_compound_continue_success");
             }
         } catch (Exception e) {
             handleException(e, "workflow_compound_continue_workflow_failed");
@@ -200,6 +206,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         try {
             removeEmptyTasks();
             workflow = getWorkflowService().saveAndFinishCompoundWorkflow(workflow);
+            MessageUtil.addInfoMessage("workflow_compound_finish_success");
         } catch (Exception e) {
             handleException(e, "workflow_compound_finish_workflow_failed");
         }
@@ -231,6 +238,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             removeEmptyTasks();
             getWorkflowService().deleteCompoundWorkflow(workflow.getNode().getNodeRef());
             resetState();
+            MessageUtil.addInfoMessage("workflow_compound_delete_compound_success");
             return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
         } catch (Exception e) {
             handleException(e, "workflow_compound_delete_workflow_failed");
@@ -330,6 +338,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         } else if (getDocumentService().isDocumentOwner(workflow.getParent(), AuthenticationUtil.getRunAsUser())) {
             fullAccess = true;
         } else if (StringUtils.equals(workflow.getOwnerId(), AuthenticationUtil.getRunAsUser())) {
+            fullAccess = true;
+        } else if (StringUtils.equals(workflow.getOwnerId(), AuthenticationUtil.getFullyAuthenticatedUser())) {
+            // user is probably substituting someone else (but workFlow owner is still user that logged in)
             fullAccess = true;
         } else if (hasTask(AuthenticationUtil.getRunAsUser(), true)) {
             fullAccess = true;

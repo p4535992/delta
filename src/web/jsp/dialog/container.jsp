@@ -82,7 +82,7 @@
                <%-- Status and Actions inner contents table --%>
                <%-- Generally this consists of an icon, textual summary and actions for the current object --%>
                <h2 class="title-icon">
-                  <a:actionLink id="doc-logo1" value="#{DialogManager.bean.name}" href="#{DialogManager.bean.url}" target="new"
+                  <a:actionLink id="doc-logo1" value="#{DialogManager.bean.name}" href="#{DialogManager.bean.url}" target="_blank"
                      image="#{DialogManager.bean.document.properties.fileType32}" showLink="false"
                      rendered="#{DialogManager.currentDialog.name eq 'showDocDetails'}" />
                   <h:graphicImage id="dialog-logo" url="#{DialogManager.icon}"
@@ -238,7 +238,7 @@
                <%-- Status and Actions inner contents table --%>
                <%-- Generally this consists of an icon, textual summary and actions for the current object --%>
                <h2 class="title-icon">
-                  <a:actionLink id="footer-doc-logo1" value="#{DialogManager.bean.name}" href="#{DialogManager.bean.url}" target="new"
+                  <a:actionLink id="footer-doc-logo1" value="#{DialogManager.bean.name}" href="#{DialogManager.bean.url}" target="_blank"
                      image="#{DialogManager.bean.document.properties.fileType32}" showLink="false"
                      rendered="#{DialogManager.currentDialog.name eq 'showDocDetails'}" />
                   <h:graphicImage id="footer-dialog-logo" url="#{DialogManager.icon}"

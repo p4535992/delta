@@ -27,17 +27,19 @@ import ee.webmedia.alfresco.workflow.service.Task;
  */
 public interface DocumentService {
 
-    public interface TransientProps {
-        String FUNCTION_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function_Lbl").toString();
-        String SERIES_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series_Lbl").toString();
-        String VOLUME_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume_Lbl").toString();
-        String CASE_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case_Lbl").toString();
-        String CASE_LABEL_EDITABLE = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case_Lbl_Editable").toString();
+    public abstract class TransientProps { // using abstract class instead of interface to be able to add/change constants without reDeploy
+        public static final String FUNCTION_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function_Lbl").toString();
+        public static final String SERIES_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series_Lbl").toString();
+        public static final String VOLUME_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume_Lbl").toString();
+        public static final String CASE_LABEL = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case_Lbl").toString();
+        public static final String CASE_LABEL_EDITABLE = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case_Lbl_Editable").toString();
         //
-        String FUNCTION_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function").toString();
-        String SERIES_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series").toString();
-        String VOLUME_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume").toString();
-        String CASE_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case").toString();
+        public static final String FUNCTION_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "function").toString();
+        public static final String SERIES_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series").toString();
+        public static final String VOLUME_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume").toString();
+        public static final String CASE_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case").toString();
+        public static final String TEMP_DOCUMENT_IS_DRAFT = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "isDraft").toString();
+        public static final String TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED = "{temp}logging_disabled_docMetadataChanged";
     }
 
     String BEAN_NAME = "DocumentService";

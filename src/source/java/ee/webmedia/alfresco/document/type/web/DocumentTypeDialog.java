@@ -16,6 +16,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * @author Alar Kvell
@@ -37,6 +38,7 @@ public class DocumentTypeDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         getDocumentTypeService().updateDocumentTypes(documentTypes);
         documentTypes = null;
+        MessageUtil.addInfoMessage("save_success");
         // We need to stay on the same dialog
         return "dialog:close:dialog:documentTypeDialog";
     }
@@ -51,7 +53,7 @@ public class DocumentTypeDialog extends BaseDialogBean {
     public boolean getFinishButtonDisabled() {
         return false;
     }
-    
+
     /**
      * Query callback method executed by the Generic Picker component.
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
@@ -66,16 +68,16 @@ public class DocumentTypeDialog extends BaseDialogBean {
     }
 
     /**
-     * Used by the property sheet as a callback. 
+     * Used by the property sheet as a callback.
      */
-    public List<SelectItem> getUsedDocTypes(FacesContext context, UIInput selectComponent) {
+    public List<SelectItem> getUsedDocTypes(@SuppressWarnings("unused") FacesContext context, @SuppressWarnings("unused") UIInput selectComponent) {
         return Arrays.asList(searchUsedDocTypes(null, true));
     }
-    
+
     private SelectItem[] searchUsedDocTypes(String substring, boolean addEmptyItem) {
         final List<DocumentType> usedDocTypes = getDocumentTypeService().getAllDocumentTypes(true);
         substring = StringUtils.trimToNull(substring);
-        substring = (substring !=null ? substring.toLowerCase() : null);
+        substring = (substring != null ? substring.toLowerCase() : null);
         int size = addEmptyItem ? usedDocTypes.size() + 1 : usedDocTypes.size();
         final ArrayList<SelectItem> results = new ArrayList<SelectItem>(size);
         if (addEmptyItem) {
@@ -83,7 +85,7 @@ public class DocumentTypeDialog extends BaseDialogBean {
         }
         for (DocumentType documentType : usedDocTypes) {
             final String name = documentType.getName();
-            if(substring ==null || name.toLowerCase().contains(substring)) {
+            if (substring == null || name.toLowerCase().contains(substring)) {
                 results.add(new SelectItem(documentType.getId().toString(), name));
             }
         }

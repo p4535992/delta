@@ -37,6 +37,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
         getSeriesService().saveOrUpdate(series);
         resetFields();
         getMenuService().menuUpdated(); // We need to refresh the left-hand sub-menu
+        MessageUtil.addInfoMessage("save_success");
         return outcome;
     }
 
@@ -88,6 +89,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
                 MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "series_validationMsg_closeNotPossible");
                 return null;
             }
+            MessageUtil.addInfoMessage("series_close_success");
             return getDefaultFinishOutcome();
         }
         return null;

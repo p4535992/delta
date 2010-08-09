@@ -113,8 +113,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             }
             if (success) {
                 resetState();
-                // Does not work as intended. Will display the normal error message "error_dialog" first and only then the info message.
-                // MessageUtil.addStatusMessage(context, "Saatmine onnestus!", FacesMessage.SEVERITY_INFO);
+                MessageUtil.addInfoMessage("document_sendOut_success");
                 return outcome;
             }
         }
@@ -298,14 +297,14 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         return emailTemplates;
     }
 
-    public void updateSendModes(ActionEvent event) {
+    public void updateSendModes(@SuppressWarnings("unused") ActionEvent event) {
         List<String> recSendModes = model.getProperties().get(PROP_KEYS[2]);
         for (int i = 0; i < recSendModes.size(); i++) {
             recSendModes.set(i, model.getSendMode());
         }
     }
 
-    public void updateTemplate(ActionEvent event) {
+    public void updateTemplate(@SuppressWarnings("unused") ActionEvent event) {
         if (StringUtils.isNotBlank(model.getTemplate())) {
             LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
             nodeRefs.put("default", model.getNodeRef());
@@ -645,6 +644,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         private static final long serialVersionUID = 1L;
 
         public SendOutModel() {
+            // default constructor
         }
 
         private NodeRef nodeRef;

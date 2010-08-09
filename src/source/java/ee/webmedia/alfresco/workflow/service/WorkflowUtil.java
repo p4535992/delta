@@ -67,6 +67,12 @@ public class WorkflowUtil {
             this.objects = objects;
         }
 
+        /**
+         * Result remains the same no matter what
+         * FIXME: Alar: mis selle meetodi mõte on, kas tõesti ainult indexi suurendamine? praegu pole vahet, mis sodi sellele meetodile parameetrina ette söödetakse.
+         * @param statuses
+         * @return
+         */
         public StatusOrderChecker requireAny(Status... statuses) {
             if (!result) {
                 return this;
@@ -143,7 +149,7 @@ public class WorkflowUtil {
                                     + workflow);
                 }
             } else {
-                if (!isStatusOrder(tasks).requireAny(Status.FINISHED, status.UNFINISHED).requireOne(Status.IN_PROGRESS).requireAny(Status.NEW).check()) {
+                if (!isStatusOrder(tasks).requireAny(Status.FINISHED, Status.UNFINISHED).requireOne(Status.IN_PROGRESS).requireAny(Status.NEW).check()) {
                     throw new WorkflowChangedException(
                             "If workflow status is IN_PROGRESS, then tasks must have the following statuses, in order: 0..* FINISHED or UNFINISHED, 1 IN_PROGRESS, 0..* NEW\n"
                                     + workflow);

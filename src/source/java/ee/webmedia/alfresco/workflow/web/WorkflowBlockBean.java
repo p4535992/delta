@@ -57,9 +57,9 @@ import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
 import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
-import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
@@ -92,7 +92,6 @@ public class WorkflowBlockBean implements Serializable {
     private MetadataBlockBean metadataBlockBean;
 
     private transient DocumentService documentService;
-    private transient DocumentTemplateService documentTemplateService;
     private transient WorkflowService workflowService;
     private transient UserService userService;
     private transient FileService fileService;
@@ -192,6 +191,7 @@ public class WorkflowBlockBean implements Serializable {
         Integer index = (Integer) event.getComponent().getAttributes().get(ATTRIB_INDEX);
         try {
             getWorkflowService().saveInProgressTask(getMyTasks().get(index));
+            MessageUtil.addInfoMessage("save_success");
         } catch (WorkflowChangedException e) {
             log.debug("Saving task failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
@@ -209,7 +209,7 @@ public class WorkflowBlockBean implements Serializable {
             outcomeIndex = (Integer) task.getNode().getProperties().get(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString());
         } else if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
             if (outcomeIndex == 1) {
-                
+
                 // signing requires that at least 1 active file exists within this document
                 long step0 = System.currentTimeMillis();
                 List<File> activeFiles = getFileService().getAllActiveFiles(document);
@@ -217,7 +217,7 @@ public class WorkflowBlockBean implements Serializable {
                     MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_required");
                     return;
                 }
-                
+
                 signatureTask = (SignatureTask) task;
                 try {
                     long step1 = System.currentTimeMillis();
@@ -233,6 +233,7 @@ public class WorkflowBlockBean implements Serializable {
                 } catch (UnableToPerformException e) {
                     MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
                 }
+                MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
                 return;
             }
         }
@@ -246,6 +247,7 @@ public class WorkflowBlockBean implements Serializable {
         // finish the task
         try {
             getWorkflowService().finishInProgressTask(task, outcomeIndex);
+            MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "task_finish_error_docDeleted");
@@ -361,6 +363,7 @@ public class WorkflowBlockBean implements Serializable {
                         + " ms\n    reload file list - " + (step2 - step1) + " ms\n    reload document - " + (step3 - step2) + " ms\n    reload workflows - "
                         + (step4 - step3) + " ms");
             }
+            MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
         } catch (WorkflowChangedException e) {
             log.debug("Finishing signature task failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
@@ -386,7 +389,7 @@ public class WorkflowBlockBean implements Serializable {
     /**
      * Callback to generate the drop down of outcomes for reviewTask.
      */
-    public List<SelectItem> getReviewTaskOutcomes(FacesContext context, UIInput selectComponent) {
+    public List<SelectItem> getReviewTaskOutcomes(@SuppressWarnings("unused") FacesContext context, @SuppressWarnings("unused") UIInput selectComponent) {
         int outcomes = getWorkflowService().getWorkflowTypes().get(WorkflowSpecificModel.Types.REVIEW_WORKFLOW).getTaskOutcomes();
         List<SelectItem> selectItems = new ArrayList<SelectItem>(outcomes);
 
@@ -673,7 +676,9 @@ public class WorkflowBlockBean implements Serializable {
             children.add(createOutput(app, MessageUtil.getMessage("workflow_creator")));
 
             // Values
-            children.add(createOutput(app, MessageUtil.getMessage("workflow_compound")));
+            final UIComponent compundWFOtuput = createOutput(app, MessageUtil.getMessage("workflow_compound"));
+            ComponentUtil.setTooltip(compundWFOtuput, MessageUtil.getMessage("compoundWorkflow_status", compound.getStatus()));
+            children.add(compundWFOtuput);
             children.add(createOutput(app, formatDate(compound.getStartedDateTime())));
             children.add(createOutput(app, formatDate(compound.getStoppedDateTime())));
             children.add(createOutput(app, compound.getCreatorName()));
@@ -694,7 +699,7 @@ public class WorkflowBlockBean implements Serializable {
             if (WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW.equals(workflow.getNode().getType())) {
                 continue; // Don't display registration workflows
             }
-            
+
             WorkflowSummaryItem summaryItem = new WorkflowSummaryItem(workflow);
             summaryItem.setRaisedRights(checkRights(workflow));
             HtmlPanelGrid grid = (HtmlPanelGrid) app.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
@@ -803,7 +808,8 @@ public class WorkflowBlockBean implements Serializable {
             }
             children.add(createOutput(app, formatDate(task.getDueDate())));
             children.add(createOutput(app, formatDate(task.getCompletedDateTime())));
-            children.add(createOutput(app, task.getOutcomeAndComments()));
+            final UIComponent outcomeAndComments = createOutput(app, task.getOutcomeAndComments());
+            children.add(ComponentUtil.makeCondenced(outcomeAndComments, 150));
             children.add(createOutput(app, task.getStatus()));
         }
 

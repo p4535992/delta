@@ -4,21 +4,28 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.web.app.servlet.FacesHelper;
 
-import ee.webmedia.alfresco.document.file.web.DeleteFileDialog;
+import ee.webmedia.alfresco.common.web.InformingDeleteNodeDialog;
 
 /**
  * The bean that backs up the Delete notification
+ * 
  * @author Ats Uiboupin
  */
-public class DeleteNotificationDialog extends DeleteFileDialog {
+public class DeleteNotificationDialog extends InformingDeleteNodeDialog {
     private static final long serialVersionUID = 1L;
-    
+
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         super.finishImpl(context, outcome);
         NotificationBean notificationBean = (NotificationBean) FacesHelper
-        .getManagedBean(FacesContext.getCurrentInstance(), "NotificationBean");
+                .getManagedBean(FacesContext.getCurrentInstance(), "NotificationBean");
         notificationBean.setUpdateCount(-1);
         return outcome;
     }
+
+    @Override
+    protected String getDefaultMsgKey() {
+        return "notification_delete_success";
+    }
+
 }

@@ -4,13 +4,10 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
 
-import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -51,13 +48,6 @@ public class CompoundWorkflowDefinitionListDialog extends BaseDialogBean {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         throw new RuntimeException("OK button not supported here.");
-    }
-
-    /**
-     * Action listener for JSP.
-     */
-    public void delete(ActionEvent event) {
-        browseBean.setupContentAction((new NodeRef(ActionUtil.getParam(event, "nodeRef")).getId()), true);
     }
 
     /**

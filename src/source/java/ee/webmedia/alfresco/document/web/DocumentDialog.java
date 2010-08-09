@@ -127,7 +127,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     public void populateTemplate(ActionEvent event) {
         try {
-            getDocumentTemplateService().populateTemplate(new NodeRef(ActionUtil.getParam(event, PARAM_DOCUMENT_NODE_REF)));
+            final String wordFileDisplayName = getDocumentTemplateService().populateTemplate(new NodeRef(ActionUtil.getParam(event, PARAM_DOCUMENT_NODE_REF)));
+            MessageUtil.addInfoMessage("document_createWordFile_success", wordFileDisplayName);
         } catch (FileNotFoundException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), ERR_TEMPLATE_NOT_FOUND);
         } catch (InvalidNodeRefException e) {
@@ -186,21 +187,30 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public void endDocument(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(node, "No current document");
         getDocumentService().endDocument(node.getNodeRef());
-        // change property status of Node as well(in addition to changing it in repository) to avoid fetching node again just to reload single property needed for file-block
+        // change property status of Node as well(in addition to changing it in repository) to avoid fetching node again just to reload single property needed
+        // for file-block
         node.getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
         // refresh metadata block
         metadataBlockBean.init(node.getNodeRef(), isDraft);
         logBlockBean.restore();
         fileBlockBean.restore();
+        MessageUtil.addInfoMessage("document_end_success");
     }
 
     public void reopenDocument(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(node, "No current document");
+        final Map<String, Object> docProps = node.getProperties();
+        final String docStatusBeforeReopen = (String) docProps.get(DocumentCommonModel.Props.DOC_STATUS.toString());
         getDocumentService().reopenDocument(node.getNodeRef());
-        // change property status of Node as well(in addition to changing it in repository) to avoid fetching node again just to reload single property needed for file-block
-        node.getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.WORKING.getValueName());
+        // change property status of Node as well(in addition to changing it in repository) to avoid fetching node again just to reload single property needed
+        // for file-block
+        final String docStatusAfterReopen = DocumentStatus.WORKING.getValueName();
+        docProps.put(DocumentCommonModel.Props.DOC_STATUS.toString(), docStatusAfterReopen);
         // refresh metadata block
         metadataBlockBean.init(node.getNodeRef(), isDraft);
+        if (!StringUtils.equals(docStatusBeforeReopen, docStatusAfterReopen)) {
+            MessageUtil.addInfoMessage("document_reopen_success");
+        }
     }
 
     public void deleteDocument(@SuppressWarnings("unused") ActionEvent event) {
@@ -224,6 +234,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         FacesContext fc = FacesContext.getCurrentInstance();
         NavigationHandler navigationHandler = fc.getApplication().getNavigationHandler();
         navigationHandler.handleNavigation(fc, null, getDefaultCancelOutcome());
+        MessageUtil.addInfoMessage("document_delete_success");
     }
 
     public String getDownloadType() {
@@ -370,9 +381,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 /** It's possible to change the type of the node that came from DVK */
                 getDocumentService().changeType(node);
             }
-            metadataBlockBean.save();
-            getDocumentLogService().addDocumentLog(node.getNodeRef(),
-                    MessageUtil.getMessage(isDraft ? "document_log_status_created" : "document_log_status_changed"));
+            metadataBlockBean.save(isDraft);
             logBlockBean.restore();
             isDraft = false;
             isFinished = false;
@@ -414,12 +423,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         return (String) node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString());
     }
 
-    public void saveAndRegisterContinue() {
-        // similar documents were found before, finish registering
-        metadataBlockBean.saveAndRegister();
-        searchBlockBean.setFoundSimilar(false);
-    }
-
     public void saveAndRegister() {
         // search for similar documents if it's an incoming letter
         if (metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
@@ -429,9 +432,10 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
         // just register if not an incoming letter or no similar documents found
         if (!searchBlockBean.isFoundSimilar()) {
-            metadataBlockBean.saveAndRegister();
+            metadataBlockBean.saveAndRegister(isDraft);
             isDraft = false;
         }
+        logBlockBean.restore();
     }
 
     public void registerDocument(ActionEvent event) {
@@ -553,6 +557,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         }
         getNodeService().createAssociation(sourceRef, targetRef, assocType);
         assocsBlockBean.restore();
+        MessageUtil.addInfoMessage("document_assocAdd_success");
     }
 
     public void searchDocsAndCases(@SuppressWarnings("unused") ActionEvent event) {
@@ -566,6 +571,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         assocsBlockBean.getDocAssocInfos().add(docAssocInfo);
         setupAction(true); // FIXME: dmitri, miks seda meetodit välja kutsusid? kui ainult lisatud seose kuvamiseks enne salvestamist, siis
         metadataBlockBean.updateFollowUpOrReplyProperties(targetRef);
+        MessageUtil.addInfoMessage("document_assocAdd_success");
     }
 
     /**

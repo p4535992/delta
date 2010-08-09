@@ -55,6 +55,7 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
 import ee.webmedia.alfresco.document.service.DocumentService.TransientProps;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
@@ -1072,8 +1073,10 @@ public class MetadataBlockBean implements Serializable {
         documentTypeName = null;
     }
 
-    public void saveAndRegister() {
-        if (save()) {
+    public void saveAndRegister(boolean isDraft) {
+        if (save(isDraft)) {
+            document.getProperties().put(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT, isDraft);
+            EventsLoggingHelper.disableLogging(document, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
             registerDocument(null);
             // We need to refresh the propertySheetgrid
             clearPropertySheet();
@@ -1112,7 +1115,7 @@ public class MetadataBlockBean implements Serializable {
         afterModeChange();
     }
 
-    public boolean save() {
+    public boolean save(boolean isDraft) {
         log.debug("save: docNodeRef=" + document.getNodeRefAsString());
         if (!inEditMode) {
             throw new RuntimeException("Document metadata block is not in edit mode");
@@ -1120,6 +1123,7 @@ public class MetadataBlockBean implements Serializable {
         if (validate()) {
             try {
                 log.debug("save: doc NodeRef=" + document.getNodeRefAsString());
+                document.getProperties().put(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT, isDraft);
                 document = getDocumentService().updateDocument(document);
                 inEditMode = false;
             } catch (UnableToPerformException e) {
@@ -1135,6 +1139,7 @@ public class MetadataBlockBean implements Serializable {
             propertySheet.setMode(getMode());
             clearPropertySheet();
             afterModeChange();
+            MessageUtil.addInfoMessage("save_success");
             return true;
         }
         return false;
@@ -1236,17 +1241,14 @@ public class MetadataBlockBean implements Serializable {
         getDocumentService().setTransientProperties(document, parentNodes);
     }
 
-    /**
-     * Web-client action
-     * 
-     * @param event
-     */
-    public void registerDocument(ActionEvent event) {
+    /** Web-client action */
+    public void registerDocument(@SuppressWarnings("unused") ActionEvent event) {
         try {
             document = getDocumentService().registerDocument(document);
             nodeRef = document.getNodeRef(); // reloadDoc uses NodeRef
             getDocumentTemplateService().updateGeneratedFilesOnRegistration(document.getNodeRef());
             ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
+            MessageUtil.addInfoMessage("document_registerDoc_success");
         } catch (UnableToPerformException e) {
             if (log.isDebugEnabled()) {
                 log.warn("failed to register: " + e.getMessage());

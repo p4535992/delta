@@ -41,6 +41,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         getVolumeService().saveOrUpdate(currentEntry);
         resetFields();
+        MessageUtil.addInfoMessage("save_success");
         return outcome;
     }
 
@@ -72,23 +73,25 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     }
 
     public String close() {
-        if(currentEntry.getNode() instanceof TransientNode) {
+        if (currentEntry.getNode() instanceof TransientNode) {
             return null;
         }
         if (!isClosed()) {
             getVolumeService().closeVolume(currentEntry);
+            MessageUtil.addInfoMessage("volume_close_success");
             return getDefaultFinishOutcome();
         }
         return null;
     }
 
-    public void archive(ActionEvent event) {
+    public void archive(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(currentEntry, "No current volume");
         DateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm");
         NodeRef archivedVolumeNodeRef = getArchivalsService().archiveVolume(currentEntry.getNode().getNodeRef(),
                 String.format(MessageUtil.getMessage("volume_archiving_note"), df.format(new Date())));
         currentEntry = getVolumeService().getVolumeByNodeRef(archivedVolumeNodeRef); // refresh screen with archived volume data
         ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).updateTree();
+        MessageUtil.addInfoMessage("volume_archive_success");
     }
 
     public boolean isClosed() {

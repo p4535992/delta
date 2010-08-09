@@ -86,8 +86,9 @@ public interface GeneralService {
      * @param properties
      * @param nodeRef
      * @see #setPropertiesIgnoringSystem(NodeRef, Map)
+     * @return properties without system properties
      */
-    void setPropertiesIgnoringSystem(Map<QName, Serializable> properties, NodeRef nodeRef);
+    Map<QName, Serializable> setPropertiesIgnoringSystem(Map<QName, Serializable> properties, NodeRef nodeRef);
 
     Map<QName, Serializable> getPropertiesIgnoringSystem(Map<String, Object> nodeProps);
 
@@ -134,14 +135,19 @@ public interface GeneralService {
 
     TypeDefinition getAnonymousType(Node node);
 
-    void saveAddedAssocs(Node node);
+    /**
+     * @param node
+     * @return number of new associations created to repository
+     */
+    int saveAddedAssocs(Node node);
 
     /**
      * Remove all child association removed in the UI
      * 
      * @param node - node that previously had some childAssociations in repository that should be removed
+     * @return number of associations that were deleted from repository
      */
-    public void saveRemovedChildAssocs(Node node);
+    public int saveRemovedChildAssocs(Node node);
 
     /**
      * @param nodeRef

@@ -31,28 +31,18 @@
             <a:sortLink id="col3-header" label="#{msg.workflow_file}" value="file" styleClass="header" />
          </f:facet>
          <%-- TODO actually point to a file --%>
-         <a:actionLink value="#{msg.workflow_task_opinion_file}" image="/images/icons/attachment.gif" showLink="false" href="#{r.fileDownloadUrl}" target="new" rendered="#{not empty r.fileDownloadUrl}" />
+         <a:actionLink value="#{msg.workflow_task_opinion_file}" image="/images/icons/attachment.gif" showLink="false" href="#{r.fileDownloadUrl}" target="_blank" rendered="#{not empty r.fileDownloadUrl}" />
       </a:column>
 
       <a:column id="col4" style="width: 60%;">
          <f:facet name="header">
             <a:sortLink id="col4-header" label="#{msg.workflow_task_opinion_note}" value="outcome" styleClass="header" />
          </f:facet>
-         
-         <h:panelGroup styleClass="review-note-trimmed-comment">
-            <h:outputText value="#{r.shortComment}" />
-            <a:booleanEvaluator id="col4-short-text-eval" value="#{r.commentLength > 149}">
-               <h:outputLink value="#" title="#{msg.workflow_task_review_show_all}" onclick="javascript: return false;"><h:outputText value=" #{msg.workflow_task_review_show_all}" /></h:outputLink>
-            </a:booleanEvaluator>
+
+         <h:panelGroup styleClass="review-note-comment" >
+            <h:outputText value="#{r.comment} " styleClass="condence150"/>
          </h:panelGroup>
 
-         <a:booleanEvaluator id="col4-text-eval" value="#{r.commentLength > 149}">
-            <h:panelGroup styleClass="review-note-comment" style="display: none;">
-               <h:outputText value="#{r.comment} " />
-               <h:outputLink value="#" title="#{msg.workflow_task_review_show_trimmed}" onclick="javascript: return false;"><h:outputText value="#{msg.workflow_task_review_show_trimmed}" /></h:outputLink>
-            </h:panelGroup>
-         </a:booleanEvaluator>
-                  
       </a:column>
 
       <a:dataPager id="opinionNotePager" styleClass="pager" />

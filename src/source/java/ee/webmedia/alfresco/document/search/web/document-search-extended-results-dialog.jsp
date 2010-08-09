@@ -312,7 +312,7 @@
               <a:param value="false"/>
           </f:facet>
          <r:permissionEvaluator value="#{r.files[0].node}" allow="ReadContent">
-            <a:actionLink id="col35-act1" value="#{r.files[0].name}" href="#{r.files[0].downloadUrl}" target="new" showLink="false"
+            <a:actionLink id="col35-act1" value="#{r.files[0].name}" href="#{r.files[0].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[0].node}" deny="ReadContent">
@@ -320,7 +320,7 @@
                title="#{r.files[0].name}" rendered="#{r.files[0] != null}" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[1].node}" allow="ReadContent">
-            <a:actionLink id="col35-act2" value="#{r.files[1].name}" href="#{r.files[1].downloadUrl}" target="new" showLink="false"
+            <a:actionLink id="col35-act2" value="#{r.files[1].name}" href="#{r.files[1].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[1].node}" deny="ReadContent">
@@ -328,7 +328,7 @@
                title="#{r.files[1].name}" rendered="#{r.files[1] != null}" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[2].node}" allow="ReadContent">
-            <a:actionLink id="col35-act3" value="#{r.files[2].name}" href="#{r.files[2].downloadUrl}" target="new" showLink="false"
+            <a:actionLink id="col35-act3" value="#{r.files[2].name}" href="#{r.files[2].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[2].node}" deny="ReadContent">
@@ -336,7 +336,7 @@
                title="#{r.files[2].name}" rendered="#{r.files[2] != null}" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[3].node}" allow="ReadContent">
-            <a:actionLink id="col35-act4" value="#{r.files[3].name}" href="#{r.files[3].downloadUrl}" target="new" showLink="false"
+            <a:actionLink id="col35-act4" value="#{r.files[3].name}" href="#{r.files[3].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[3].node}" deny="ReadContent">
@@ -344,7 +344,7 @@
                title="#{r.files[3].name}" rendered="#{r.files[3] != null}" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[4].node}" allow="ReadContent">
-            <a:actionLink id="col35-act5" value="#{r.files[4].name}" href="#{r.files[4].downloadUrl}" target="new" showLink="false"
+            <a:actionLink id="col35-act5" value="#{r.files[4].name}" href="#{r.files[4].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.files[4].node}" deny="ReadContent">

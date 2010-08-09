@@ -15,7 +15,7 @@
          <f:facet name="header">
             <a:sortLink id="sortLinkFilename" label="#{msg.ddoc_datafile_name}" value="filename" styleClass="header" />
          </f:facet>
-         <a:actionLink id="downloadLink" value="#{dataFile.name}" href="#{dataFile.downloadUrl}" target="new" verticalAlign="middle" />
+         <a:actionLink id="downloadLink" value="#{dataFile.name}" href="#{dataFile.downloadUrl}" target="_blank" verticalAlign="middle" />
       </a:column>
 
       <a:column id="sizeCol" width="120" style="text-align:left">

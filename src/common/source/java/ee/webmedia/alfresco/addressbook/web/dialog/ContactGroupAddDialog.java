@@ -11,7 +11,6 @@ import javax.faces.model.DataModel;
 import javax.faces.model.ListDataModel;
 import javax.faces.model.SelectItem;
 
-import org.alfresco.service.cmr.repository.AssociationExistsException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.Application;
@@ -49,7 +48,10 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
         // add each selected user to the current group in turn
         try {
             final FeedbackWrapper feedback = getAddressbookService().addToGroup(getCurrentNode().getNodeRef(), usersForGroup);
-            MessageUtil.addStatusMessage(context, feedback);
+            final boolean isErrorAdded = MessageUtil.addStatusMessage(context, feedback);
+            if(!isErrorAdded) {
+                MessageUtil.addInfoMessage("save_success");
+            }
         } catch (RuntimeException e) {
             System.out.println(e);
             throw e;
@@ -75,7 +77,7 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
         setCurrentNode(getAddressbookService().getNode(new NodeRef(groupNodeRef)));
     }
 
-    public SelectItem[] pickerCallback(int filterIndex, final String contains) {
+    public SelectItem[] pickerCallback(@SuppressWarnings("unused") int filterIndex, final String contains) {
         final String privPersonLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_private_person").toLowerCase();
         final String organizationLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_org").toLowerCase();
         List<Node> nodes = getAddressbookService().search(contains);
@@ -118,7 +120,7 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
         }
     }
 
-    public void removeUserSelection(ActionEvent event) {
+    public void removeUserSelection(@SuppressWarnings("unused") ActionEvent event) {
         UserDetails wrapper = (UserDetails) this.usersDataModel.getRowData();
         if (wrapper != null) {
             this.usersForGroup.remove(wrapper);

@@ -41,6 +41,7 @@ public class CaseDetailsDialog extends BaseDialogBean {
         try {
             getCaseService().saveOrUpdate(currentEntry);
             resetFields();
+            MessageUtil.addInfoMessage("save_success");
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(context, e);
             outcome = null;
@@ -81,6 +82,7 @@ public class CaseDetailsDialog extends BaseDialogBean {
         }
         if (!isClosed()) {
             getCaseService().closeCase(currentEntry);
+            MessageUtil.addInfoMessage("case_close_success");
             return getDefaultFinishOutcome();
         }
         return null;

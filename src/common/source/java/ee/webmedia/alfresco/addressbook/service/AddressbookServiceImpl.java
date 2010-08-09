@@ -41,6 +41,7 @@ import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDet
 import ee.webmedia.alfresco.utils.FeedbackVO;
 import ee.webmedia.alfresco.utils.FeedbackWrapper;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
@@ -78,9 +79,10 @@ public class AddressbookServiceImpl implements AddressbookService {
 
     @Override
     public NodeRef addOrUpdateNode(Node node, NodeRef parent) {
-        if (nodeService.exists(node.getNodeRef())) {
+        final NodeRef nodeRef = node.getNodeRef();
+        if (nodeService.exists(nodeRef)) {
             updateNode(node);
-            return node.getNodeRef();
+            return nodeRef;
         }
         NodeRef output = null;
         if (node.getType().equals(Types.ORGANIZATION)) {
@@ -92,6 +94,47 @@ public class AddressbookServiceImpl implements AddressbookService {
             output = createContactGroup(convertProps(node.getProperties()));
         }
         return output;
+    }
+
+    @Override
+    public void checkIfContactExists(Node contactNode) {
+        final NodeRef contactRef = contactNode.getNodeRef();
+        if (contactNode.getType().equals(Types.PRIV_PERSON)) {
+            final String messageKey = "addressbook_save_person_error_nameExists";
+            String fullName = getFullName(contactNode);
+            final List<Node> persons = listPerson();
+            for (Node person : persons) {
+                final String otherfullName = getFullName(person);
+                checkDuplicate(fullName, otherfullName, contactRef, person, messageKey);
+            }
+        }
+        if (contactNode.getType().equals(Types.ORGANIZATION)) {
+            final String duplicateMessageKey = "addressbook_save_organization_error_nameExists";
+            final List<Node> orgs = listOrganization();
+            final String orgName = (String) contactNode.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME);
+            for (Node org : orgs) {
+                final String otherOrgName = (String) org.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME);
+                checkDuplicate(orgName, otherOrgName, contactRef, org, duplicateMessageKey);
+            }
+        }
+    }
+
+    private void checkDuplicate(final String name, final String otherName, final NodeRef contactRef, Node otherContactRef, final String duplicateMessageKey) {
+        if (!contactRef.equals(otherContactRef.getNodeRef())) {
+            if (StringUtils.equalsIgnoreCase(name, otherName)) {
+                final UnableToPerformException unableToPerformException = new UnableToPerformException( //
+                        MessageSeverity.ERROR, duplicateMessageKey);
+                unableToPerformException.setMessageValuesForHolders(name);
+                throw unableToPerformException;
+            }
+        }
+    }
+
+    private String getFullName(Node node) {
+        final String pFirstName = (String) node.getProperties().get(AddressbookModel.Props.PERSON_FIRST_NAME);
+        final String pLastName = (String) node.getProperties().get(AddressbookModel.Props.PERSON_LAST_NAME);
+        String fullName = pFirstName + " " + pLastName;
+        return fullName;
     }
 
     private void addToGroup(NodeRef groupNodeRef, NodeRef memberNodeRef) {

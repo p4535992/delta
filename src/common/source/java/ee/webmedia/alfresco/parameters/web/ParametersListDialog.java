@@ -57,6 +57,7 @@ public class ParametersListDialog extends BaseDialogBean {
         } else {
             try {
                 getParametersService().updateParameters(parameters);
+                MessageUtil.addInfoMessage("save_success");
             } catch (UnableToPerformException e) {
                 MessageUtil.addStatusMessage(context, e);
             }

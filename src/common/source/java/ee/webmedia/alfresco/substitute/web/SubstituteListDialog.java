@@ -108,6 +108,7 @@ public class SubstituteListDialog extends BaseDialogBean {
             sendNotificationEmails(savedSubstitutes);
             refreshData();
             if (log.isDebugEnabled()) log.debug("Substitutes changes saved");
+            MessageUtil.addInfoMessage("save_success");
         }
     }
 
@@ -194,6 +195,7 @@ public class SubstituteListDialog extends BaseDialogBean {
         }
         substitutes.remove(findSubstitute(subsNodeRef));
         if (log.isDebugEnabled()) log.debug(String.format("Substitute with nodeRef = %s deleted.", ref));
+        MessageUtil.addInfoMessage("substitute_remove_success");
     }
 
     private Substitute findSubstitute(NodeRef subsNodeRef) {
@@ -256,7 +258,7 @@ public class SubstituteListDialog extends BaseDialogBean {
     }
 
     // used from JSP
-    public Map getEmailAddress() {
+    public Map<String, String> getEmailAddress() {
         return emailAddresses;
     }
 

@@ -90,7 +90,7 @@
             <%-- Summary --%>
             <a:panel id="additional">
                <span>
-                  <a:actionLink image="/images/icons/opennetwork.gif" value="#{msg.network_folder} #{NavigationBean.nodeProperties.cifsPathLabel}" showLink="false" href="#{NavigationBean.nodeProperties.cifsPath}" rendered="#{NavigationBean.nodeProperties.cifsPath != null}" target="new" id="cifs" />&nbsp;
+                  <a:actionLink image="/images/icons/opennetwork.gif" value="#{msg.network_folder} #{NavigationBean.nodeProperties.cifsPathLabel}" showLink="false" href="#{NavigationBean.nodeProperties.cifsPath}" rendered="#{NavigationBean.nodeProperties.cifsPath != null}" target="_blank" id="cifs" />&nbsp;
                   <a:actionLink id="actRSS" value="#{msg.rss_feed_link}" showLink="false" image="/images/icons/rss.gif" href="#{NavigationBean.RSSFeedURL}" rendered="#{NavigationBean.RSSFeed == true}" />
                   <%-- Additional summary info --%>
                   <h:graphicImage id="img-rule" url="/images/icons/rule.gif" width="16" height="16" title="#{msg.rules_count}" /> <h:outputText value="(#{NavigationBean.ruleCount})" id="rulemsg1" style="vertical-align:20%" />
@@ -350,10 +350,10 @@
                      <a:sortLink id="col10-sort" label="#{msg.name}" value="name" mode="case-insensitive" styleClass="header" />
                   </f:facet>
                   <f:facet name="small-icon">
-                     <a:actionLink id="col10-act1" value="#{r.name}" href="#{r.url}" target="new" image="#{r.fileType16}" showLink="false"
+                     <a:actionLink id="col10-act1" value="#{r.name}" href="#{r.url}" target="_blank" image="#{r.fileType16}" showLink="false"
                         styleClass="inlineAction" />
                   </f:facet>
-                  <a:actionLink id="col10-act2" value="#{r.name}" href="#{r.url}" target="new" />
+                  <a:actionLink id="col10-act2" value="#{r.name}" href="#{r.url}" target="_blank" />
                   <r:lockIcon id="col10-lock" value="#{r.nodeRef}" align="absmiddle" />
                   <h:outputLabel id="col10-lang" value="#{r.lang}" styleClass="langCode" rendered="#{r.lang != null}" />
                </a:column>
@@ -361,10 +361,10 @@
                <%-- Primary column for icons view mode --%>
                <a:column id="col11" primary="true" style="padding:2px;text-align:left;vertical-align:top;" rendered="#{BrowseBean.browseViewMode == 'icons'}">
                   <f:facet name="large-icon">
-                     <a:actionLink id="col11-act1" padding="10" value="#{r.name}" href="#{r.url}" target="new" image="#{r.fileType32}" showLink="false"
+                     <a:actionLink id="col11-act1" padding="10" value="#{r.name}" href="#{r.url}" target="_blank" image="#{r.fileType32}" showLink="false"
                         styleClass="inlineAction" />
                   </f:facet>
-                  <a:actionLink id="col11-act2" value="#{r.name}" href="#{r.url}" target="new" styleClass="header" />
+                  <a:actionLink id="col11-act2" value="#{r.name}" href="#{r.url}" target="_blank" styleClass="header" />
                   <r:lockIcon id="col11-lock" value="#{r.nodeRef}" align="absmiddle" />
                   <h:outputLabel id="col11-lang" value="#{r.lang}" styleClass="langCode" rendered="#{r.lang != null}" />
                </a:column>
@@ -372,10 +372,10 @@
                <%-- Primary column for list view mode --%>
                <a:column id="col12" primary="true" style="padding:2px;text-align:left" rendered="#{BrowseBean.browseViewMode == 'list'}">
                   <f:facet name="large-icon">
-                     <a:actionLink id="col12-act1" value="#{r.name}" href="#{r.url}" target="new" image="#{r.fileType32}" padding="10" showLink="false"
+                     <a:actionLink id="col12-act1" value="#{r.name}" href="#{r.url}" target="_blank" image="#{r.fileType32}" padding="10" showLink="false"
                         styleClass="inlineAction" />
                   </f:facet>
-                  <a:actionLink id="col12-act2" value="#{r.name}" href="#{r.url}" target="new" styleClass="title" />
+                  <a:actionLink id="col12-act2" value="#{r.name}" href="#{r.url}" target="_blank" styleClass="title" />
                   <r:lockIcon id="col12-lock" value="#{r.nodeRef}" align="absmiddle" />
                   <h:outputLabel id="col12-lang" value="#{r.lang}" styleClass="langCode" rendered="#{r.lang != null}" />
                </a:column>

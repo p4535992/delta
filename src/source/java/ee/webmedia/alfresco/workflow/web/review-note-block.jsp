@@ -31,23 +31,12 @@
          <f:facet name="header">
             <a:sortLink id="col3-header" label="#{msg.workflow_task_review_note}" value="outcome" styleClass="header" />
          </f:facet>
-         
-         <h:panelGroup styleClass="review-note-trimmed-comment">
+
+         <h:panelGroup styleClass="review-note-comment">
             <h:outputText value="#{r.outcome}: " />
-            <h:outputText value="#{r.shortComment}" />
-            <a:booleanEvaluator id="col4-short-text-eval" value="#{r.commentLength > 149}">
-               <h:outputLink value="#" title="#{msg.workflow_task_review_show_all}" onclick="javascript: return false;"><h:outputText value=" #{msg.workflow_task_review_show_all}" /></h:outputLink>
-            </a:booleanEvaluator>
+            <h:outputText value="#{r.comment} " styleClass="condence150"/>
          </h:panelGroup>
 
-         <a:booleanEvaluator id="col4-text-eval" value="#{r.commentLength > 149}">
-            <h:panelGroup styleClass="review-note-comment" style="display: none;">
-               <h:outputText value="#{r.outcome}: " />
-               <h:outputText value="#{r.comment} " />
-               <h:outputLink value="#" title="#{msg.workflow_task_review_show_trimmed}" onclick="javascript: return false;"><h:outputText value="#{msg.workflow_task_review_show_trimmed}" /></h:outputLink>
-            </h:panelGroup>
-         </a:booleanEvaluator>
-                  
       </a:column>
 
       <a:dataPager id="reviewNotePager" styleClass="pager" />

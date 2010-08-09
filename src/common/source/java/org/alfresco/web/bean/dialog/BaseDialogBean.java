@@ -27,6 +27,7 @@ package org.alfresco.web.bean.dialog;
 import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -71,6 +72,20 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    transient private SearchService searchService;
    transient private DictionaryService dictionaryService;
    transient private NamespaceService namespaceService;
+
+   private Map<String, Object> customAttributes = new HashMap<String, Object>();
+
+   public Object getCustomAttribute(String key) {
+       return customAttributes.get(key);
+   }
+
+   public void addCustomAttribute(String key, Object value) {
+       customAttributes.put(key, value);
+   }
+
+   private void clearCustomAttributes() {
+       customAttributes = new HashMap<String, Object>();
+   }
    
    public void init(Map<String, String> parameters)
    {
@@ -99,7 +114,7 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       // remove container variable
       FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove(
                 AlfrescoNavigationHandler.EXTERNAL_CONTAINER_SESSION);
-      
+      clearCustomAttributes();
       return getDefaultCancelOutcome();
    }
    
@@ -136,6 +151,7 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
             // remove container variable
             context.getExternalContext().getSessionMap().remove(
                     AlfrescoNavigationHandler.EXTERNAL_CONTAINER_SESSION);
+            clearCustomAttributes();
          }
          catch (Throwable e)
          {

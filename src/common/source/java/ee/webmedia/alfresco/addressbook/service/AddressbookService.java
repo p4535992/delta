@@ -8,6 +8,7 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
 import ee.webmedia.alfresco.utils.FeedbackWrapper;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * @author Keit Tehvan
@@ -57,6 +58,12 @@ public interface AddressbookService {
      * @return list of nodes of type ab:orgPerson
      */
     List<Node> listPerson(NodeRef organization);
+
+    /**
+     * @param node
+     * @throws UnableToPerformException when contact with the same name already exists
+     */
+    void checkIfContactExists(Node node) throws UnableToPerformException;
 
     /**
      * creates a new node in the repository,

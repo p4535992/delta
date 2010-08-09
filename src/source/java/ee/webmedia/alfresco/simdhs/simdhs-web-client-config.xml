@@ -1,5 +1,13 @@
 <alfresco-config>
    <config>
+      <dialogs>
+         <dialog name="informingDeleteNodeDialog" page="/jsp/dialog/delete.jsp" managed-bean="InformingDeleteNodeDialog" icon="/images/icons/delete.gif" />
+<!-- 
+         title-id="notification_delete"
+         description-id="delete_file_info"
+ -->   
+   
+      </dialogs>
       <actions>
          <!-- These groups are used in group list dialog, since adding subgroups is not allowed per spec.  -->
          <action-group id="group_inline_actions_no_subgroup">

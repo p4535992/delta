@@ -44,6 +44,7 @@
       </managed-property>
    </managed-bean>
    
+      <!-- 
    <managed-bean>
       <managed-bean-name>NotificationBean</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.notification.web.NotificationBean</managed-bean-class>
@@ -94,5 +95,6 @@
          <value>#{MultilingualContentService}</value>
       </managed-property>
    </managed-bean>
+       -->
 
 </faces-config>

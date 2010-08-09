@@ -159,5 +159,12 @@
          </bean>
       </property>
    </bean>
-   
+
+   <!-- START: web beans: -->
+
+   <bean id="NotificationBean" class="ee.webmedia.alfresco.notification.web.NotificationBean" scope="session" />
+
+   <bean id="DeleteNotificationDialog" class="ee.webmedia.alfresco.notification.web.DeleteNotificationDialog" scope="session" />
+
+   <!-- END: web beans: -->
 </beans>

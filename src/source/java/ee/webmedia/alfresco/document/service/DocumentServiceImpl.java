@@ -1,5 +1,36 @@
 package ee.webmedia.alfresco.document.service;
 
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.CASE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_NAME;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_STATUS;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_NAMES;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FUNCTION;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_EMAIL;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_JOB_TITLE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_NAME;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_PHONE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.RECIPIENT_EMAIL;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.RECIPIENT_NAME;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_SEND_MODE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERIES;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLUME;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,9 +39,11 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -95,6 +128,7 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -112,6 +146,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  * @author Alar Kvell
  */
 public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
+
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentServiceImpl.class);
 
     private DictionaryService dictionaryService;
@@ -146,6 +181,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
     private static final String REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX = "-1";
     private static final DateFormat userDateFormat = new SimpleDateFormat("dd.MM.yyyy");
+    private static final String TEMP_LOGGING_DISABLED_REGISTERED_BY_USER = "{temp}logging_registeredByUser";
+    private PropertyChangesMonitorHelper propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();
 
     @Override
     public Node getDocument(NodeRef nodeRef) {
@@ -268,7 +305,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         if (log.isDebugEnabled())
             log.debug("Ending document:" + documentRef);
         Assert.notNull(documentRef, "Reference to document must be provided");
-        nodeService.setProperty(documentRef, DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.FINISHED.getValueName());
+        nodeService.setProperty(documentRef, DOC_STATUS, DocumentStatus.FINISHED.getValueName());
         documentLogService.addDocumentLog(documentRef, I18NUtil.getMessage("document_log_status_proceedingFinish"));
         if (log.isDebugEnabled())
             log.debug("Document ended");
@@ -285,7 +322,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
             @Override
             public NodeRef doWork() throws Exception {
-                nodeService.setProperty(documentRef, DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
+                nodeService.setProperty(documentRef, DOC_STATUS, DocumentStatus.WORKING.getValueName());
                 return null;
             }
         }, AuthenticationUtil.getSystemUserName());
@@ -297,11 +334,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         Map<String, Object> props = node.getProperties();
         if (node.hasAspect(DocumentCommonModel.Aspects.RECIPIENT)) {
             @SuppressWarnings("unchecked")
-            List<String> list1 = (List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME);
+            List<String> list1 = (List<String>) props.get(RECIPIENT_NAME);
             list1 = DocumentSendOutDialog.newListIfNull(list1, true);
 
             @SuppressWarnings("unchecked")
-            List<String> list2 = (List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL);
+            List<String> list2 = (List<String>) props.get(RECIPIENT_EMAIL);
             list2 = DocumentSendOutDialog.newListIfNull(list2, true);
 
             props.put(DocumentCommonModel.Props.RECIPIENT_NAME.toString(), list1);
@@ -309,15 +346,15 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         }
         if (node.hasAspect(DocumentCommonModel.Aspects.ADDITIONAL_RECIPIENT)) {
             @SuppressWarnings("unchecked")
-            List<String> list1 = (List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+            List<String> list1 = (List<String>) props.get(ADDITIONAL_RECIPIENT_NAME);
             list1 = DocumentSendOutDialog.newListIfNull(list1, true);
 
             @SuppressWarnings("unchecked")
-            List<String> list2 = (List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL);
+            List<String> list2 = (List<String>) props.get(ADDITIONAL_RECIPIENT_EMAIL);
             list2 = DocumentSendOutDialog.newListIfNull(list2, true);
 
-            props.put(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.toString(), list1);
-            props.put(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.toString(), list2);
+            props.put(ADDITIONAL_RECIPIENT_NAME.toString(), list1);
+            props.put(ADDITIONAL_RECIPIENT_EMAIL.toString(), list2);
         }
     }
 
@@ -369,55 +406,70 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         if (!functionType.equals(FunctionsModel.Types.FUNCTION)) {
             throw new RuntimeException("Series parent is not function, but " + functionType + " - " + function);
         }
-        docProps.put(DocumentCommonModel.Props.FUNCTION.toString(), function);
-        docProps.put(DocumentCommonModel.Props.SERIES.toString(), series);
-        docProps.put(DocumentCommonModel.Props.VOLUME.toString(), volumeNodeRef);
-        docProps.put(DocumentCommonModel.Props.CASE.toString(), caseNodeRef);
+        docProps.put(FUNCTION.toString(), function);
+        docProps.put(SERIES.toString(), series);
+        docProps.put(VOLUME.toString(), volumeNodeRef);
+        docProps.put(CASE.toString(), caseNodeRef);
 
         // If document is updated for the first time, add SEARCHABLE aspect to document and it's children files.
         if (!nodeService.hasAspect(docNodeRef, DocumentCommonModel.Aspects.SEARCHABLE)) {
             nodeService.addAspect(docNodeRef, DocumentCommonModel.Aspects.SEARCHABLE, null);
-            docProps.put(DocumentCommonModel.Props.FILE_NAMES.toString(), getSearchableFileNames(docNodeRef));
-            docProps.put(DocumentCommonModel.Props.FILE_CONTENTS.toString(), getSearchableFileContents(docNodeRef));
+            docProps.put(FILE_NAMES.toString(), getSearchableFileNames(docNodeRef));
+            docProps.put(FILE_CONTENTS.toString(), getSearchableFileContents(docNodeRef));
         }
         if (docNode.hasAspect(DocumentSpecificModel.Aspects.COMPLIENCE)) {
             Date complienceDate = (Date) docProps.get(DocumentSpecificModel.Props.COMPLIENCE_DATE);
             if (complienceDate != null) {
-                docProps.put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
+                docProps.put(DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
             }
         }
         docProps.putAll(getSearchableOtherProps(docNode));
 
-        saveChildNodes(docNode);
+        boolean propsChanged = saveChildNodes(docNode);
 
         // add any associations added in the UI
-        generalService.saveAddedAssocs(docNode);
+        propsChanged |= generalService.saveAddedAssocs(docNode) > 0;
 
         // If accessRestriction changes from OPEN/AK to INTERNAL
-        if (AccessRestriction.INTERNAL.equals((String) docProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION))) {
-            String oldAccessRestriction = (String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
+        if (AccessRestriction.INTERNAL.equals((String) docProps.get(ACCESS_RESTRICTION))) {
+            String oldAccessRestriction = (String) nodeService.getProperty(docNodeRef, ACCESS_RESTRICTION);
             if (!AccessRestriction.INTERNAL.equals(oldAccessRestriction)) {
 
                 // And if document was FINISHED
-                String oldStatus = (String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.DOC_STATUS);
+                String oldStatus = (String) nodeService.getProperty(docNodeRef, DOC_STATUS);
                 if (DocumentStatus.FINISHED.equals(oldStatus)) {
                     getAdrService().addDeletedDocument(docNodeRef);
                 }
             }
         }
 
-        final String previousAccessrestriction = (String) nodeService.getProperty(docNodeRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
+        boolean isDraft = RepoUtil.getPropertyBooleanValue(docProps, DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT);
+        { // update properties and log changes made in properties
+            final String previousAccessrestriction = (String) nodeService.getProperty(docNodeRef, ACCESS_RESTRICTION);
 
-        // Write document properties to repository
-        // XXX If owner is changed to another user, then after this call we don't have permissions any more to write document properties
-        // ==================================================================================================================================
-        // ==================================================================================================================================
-        // XXX If owner is changed to another user, then after previous call we don't have permissions any more to write document properties
+            // Write document properties to repository
+            // XXX If owner is changed to another user, then after this call we don't have permissions any more to write document properties
+            // ==================================================================================================================================
+            // ==================================================================================================================================
+            // XXX If owner is changed to another user, then after previous call we don't have permissions any more to write document properties
 
-        generalService.setPropertiesIgnoringSystem(docNodeRef, docProps);
-        final String newAccessrestriction = (String) docProps.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
-        if (!StringUtils.equals(previousAccessrestriction, newAccessrestriction)) {
-            documentLogService.addDocumentLog(docNodeRef, I18NUtil.getMessage("document_log_status_accessRestrictionChanged"));
+            propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();// FIXME:
+            propsChanged |= propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(docNodeRef, docProps //
+                    , FUNCTION, SERIES, VOLUME, CASE // location changes
+                    , REG_NUMBER, REG_DATE_TIME // registration changes
+                    , ACCESS_RESTRICTION // access restriction changed
+                    );
+            if (!EventsLoggingHelper.isLoggingDisabled(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {
+                if (isDraft) {
+                    documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_status_created"));
+                } else if (propsChanged) {
+                    documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_status_changed"));
+                }
+                final String newAccessrestriction = (String) docProps.get(ACCESS_RESTRICTION);
+                if (!isDraft && !StringUtils.equals(previousAccessrestriction, newAccessrestriction)) {
+                    documentLogService.addDocumentLog(docNodeRef, I18NUtil.getMessage("document_log_status_accessRestrictionChanged"));
+                }
+            }
         }
 
         if (existingParentNode == null || !targetParentRef.equals(existingParentNode.getNodeRef())) {
@@ -448,9 +500,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                     if (isInitialDocWithRepliesOrFollowUps) {
                         throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_hasReplyOrFollowUp");
                     }
-                    final String existingRegNr = (String) docProps.get(DocumentCommonModel.Props.REG_NUMBER.toString());
+                    final String existingRegNr = (String) docProps.get(REG_NUMBER.toString());
                     if (StringUtils.isNotBlank(existingRegNr)) {
+                        EventsLoggingHelper.disableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
                         registerDocument(docNode, true);
+                        EventsLoggingHelper.enableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
                     }
                 } else {
                     // Make sure that the node's volume is same as it's followUp's or reply's
@@ -475,6 +529,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             } catch (RuntimeException e) {
                 log.error("Failed to move document to volumes folder", e);
                 throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp", e);
+            }
+
+            if (!isDraft) {
+                documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_location_changed"));
             }
         }
         makeChildNodesSearchable(docNodeRef);
@@ -511,11 +569,12 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         return caseNodeRef;
     }
 
-    private void saveChildNodes(Node docNode) {
+    private boolean saveChildNodes(Node docNode) {
+        boolean propsChanged = false;
         final boolean isErrandDocAbroad = DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(docNode.getType());
         final boolean isErrandDocDomestic = DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(docNode.getType());
         final boolean isTraining = DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(docNode.getType());
-        generalService.saveRemovedChildAssocs(docNode);
+        propsChanged |= saveRemovedChildAssocsAndReturnCount(docNode) > 0;
         if (isErrandDocAbroad || isErrandDocDomestic || isTraining) {
             final QName applicantAssoc;
             final QName errandAssocType;
@@ -534,16 +593,18 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
             final List<Node> applicants = docNode.getAllChildAssociations(applicantAssoc);
             if (applicants == null || applicants.size() == 0) {
-                return;
+                return propsChanged;
             }
             for (int i = 0; i < applicants.size(); i++) {
                 Node applicantNode = applicants.get(i);
-                generalService.saveRemovedChildAssocs(applicantNode);
+                propsChanged |= saveRemovedChildAssocsAndReturnCount(docNode) > 0;
                 Node newApplicantNode = saveChildNode(docNode, applicantNode, applicantAssoc, applicants, i);
                 final List<Node> errandNodes = errandAssocType == null ? null : applicantNode.getAllChildAssociations(errandAssocType);
                 if (newApplicantNode == null) {
-                    generalService.setPropertiesIgnoringSystem(applicantNode.getNodeRef(), applicantNode.getProperties());
+                    propsChanged |= propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(applicantNode.getNodeRef(), applicantNode
+                            .getProperties());
                 } else {
+                    propsChanged = true;
                     applicantNode = newApplicantNode;
                 }
                 if (errandAssocType == null) {
@@ -551,11 +612,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 }
                 for (int j = 0; j < errandNodes.size(); j++) {
                     Node errandNode = errandNodes.get(j);
-                    generalService.saveRemovedChildAssocs(errandNode);
+                    propsChanged |= saveRemovedChildAssocsAndReturnCount(docNode) > 0;
                     try {
                         Node newErrandNode = saveChildNode(applicantNode, errandNode, errandAssocType, errandNodes, j);
                         if (newErrandNode == null) {
-                            generalService.setPropertiesIgnoringSystem(errandNode.getNodeRef(), errandNode.getProperties());
+                            propsChanged |= propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(errandNode.getNodeRef(), errandNode
+                                    .getProperties());
+                        } else {
+                            propsChanged = true;
                         }
                     } catch (AlfrescoRuntimeException e) {
                         final String msg = "failed to set properties for nodeRef=" + errandNode.getNodeRef() + "; properties: " + errandNode.getProperties();
@@ -565,11 +629,16 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 }
             }
         }
+        return propsChanged;
+    }
+
+    private int saveRemovedChildAssocsAndReturnCount(Node applicantNode) {
+        return generalService.saveRemovedChildAssocs(applicantNode);
     }
 
     private void makeChildNodesSearchable(final NodeRef docRef) {
         String childProps = getChildNodesPropsForIndexing(docRef, new StringBuilder()).toString();
-        nodeService.setProperty(docRef, DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES, childProps);
+        nodeService.setProperty(docRef, SEARCHABLE_SUB_NODE_PROPERTIES, childProps);
     }
 
     private Node saveChildNode(Node docNode, Node applicantNode, final QName assocTypeAndNameQName, final List<Node> applicants, int i) {
@@ -645,8 +714,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     public void updateSearchableFiles(NodeRef document) {
         if (nodeService.hasAspect(document, DocumentCommonModel.Aspects.SEARCHABLE)) {
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-            props.put(DocumentCommonModel.Props.FILE_NAMES, (Serializable) getSearchableFileNames(document));
-            props.put(DocumentCommonModel.Props.FILE_CONTENTS, getSearchableFileContents(document));
+            props.put(FILE_NAMES, (Serializable) getSearchableFileNames(document));
+            props.put(FILE_CONTENTS, getSearchableFileContents(document));
             nodeService.addProperties(document, props);
         }
     }
@@ -665,7 +734,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         if (files.size() == 0) {
             return null;
         }
-        ContentWriter allWriter = contentService.getWriter(document, DocumentCommonModel.Props.FILE_CONTENTS, false);
+        ContentWriter allWriter = contentService.getWriter(document, FILE_CONTENTS, false);
         allWriter.setMimetype(MimetypeMap.MIMETYPE_TEXT_PLAIN);
         allWriter.setEncoding("UTF-8");
         OutputStream allOutput = allWriter.getContentOutputStream();
@@ -787,13 +856,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         /** Substitute and choose properties */
         if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(docType)) {
             @SuppressWarnings("unchecked")
-            List<String> recipientNames = (List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME);
+            List<String> recipientNames = (List<String>) props.get(RECIPIENT_NAME);
             if (recipientNames.size() > 0) {
                 recipientNames.remove(0);
             }
             recipientNames.add((String) docProps.get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME.toString()));
             @SuppressWarnings("unchecked")
-            List<String> recipientEmails = (List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL);
+            List<String> recipientEmails = (List<String>) props.get(RECIPIENT_EMAIL);
             if (recipientEmails.size() > 0) {
                 recipientEmails.remove(0);
             }
@@ -849,7 +918,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         // ANCESTORS
         setTransientProperties(copiedDoc, getAncestorNodesByDocument(doc.getNodeRef()));
         // DEFAULT VALUES
-        copiedDoc.getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.WORKING.getValueName());
+        copiedDoc.getProperties().put(DOC_STATUS.toString(), DocumentStatus.WORKING.getValueName());
 
         if (log.isDebugEnabled())
             log.debug("Copied document: " + copiedDoc.toString());
@@ -1073,7 +1142,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     }
 
     private String getDocumentOwner(NodeRef document) {
-        return (String) nodeService.getProperty(document, DocumentCommonModel.Props.OWNER_ID);
+        return (String) nodeService.getProperty(document, OWNER_ID);
     }
 
     @Override
@@ -1093,13 +1162,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         Map<QName, Serializable> personProps = userService.getUserProperties(userName);
         Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
         // same logic as OwnerPropertiesModifierCallback#doWithProperties
-        properties.put(DocumentCommonModel.Props.OWNER_ID, personProps.get(ContentModel.PROP_USERNAME));
-        properties.put(DocumentCommonModel.Props.OWNER_NAME, UserUtil.getPersonFullName1(personProps));
-        properties.put(DocumentCommonModel.Props.OWNER_JOB_TITLE, personProps.get(ContentModel.PROP_JOBTITLE));
+        properties.put(OWNER_ID, personProps.get(ContentModel.PROP_USERNAME));
+        properties.put(OWNER_NAME, UserUtil.getPersonFullName1(personProps));
+        properties.put(OWNER_JOB_TITLE, personProps.get(ContentModel.PROP_JOBTITLE));
         String orgstructName = organizationStructureService.getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        properties.put(DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT, orgstructName);
-        properties.put(DocumentCommonModel.Props.OWNER_EMAIL, personProps.get(ContentModel.PROP_EMAIL));
-        properties.put(DocumentCommonModel.Props.OWNER_PHONE, personProps.get(ContentModel.PROP_TELEPHONE));
+        properties.put(OWNER_ORG_STRUCT_UNIT, orgstructName);
+        properties.put(OWNER_EMAIL, personProps.get(ContentModel.PROP_EMAIL));
+        properties.put(OWNER_PHONE, personProps.get(ContentModel.PROP_TELEPHONE));
         generalService.setPropertiesIgnoringSystem(properties, document);
     }
 
@@ -1129,26 +1198,26 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
     @Override
     public boolean isRegistered(Node docNode) {
-        final String existingRegNr = (String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER.toString());
+        final String existingRegNr = (String) docNode.getProperties().get(REG_NUMBER.toString());
         return StringUtils.isNotBlank(existingRegNr);
     }
 
     public boolean isRegistered(NodeRef docRef) {
-        final String existingRegNr = (String) nodeService.getProperty(docRef, DocumentCommonModel.Props.REG_NUMBER);
+        final String existingRegNr = (String) nodeService.getProperty(docRef, REG_NUMBER);
         return StringUtils.isNotBlank(existingRegNr);
     }
 
     @Override
-    public void registerDocumentIfNotRegistered(NodeRef document, boolean logging) {
+    public void registerDocumentIfNotRegistered(NodeRef document, boolean triggeredAutomatically) {
         Node docNode = getDocument(document);
-        if (logging) {
-            docNode.getProperties().put("{temp}logging", "true");
+        if (triggeredAutomatically) {
+            EventsLoggingHelper.disableLogging(docNode, TEMP_LOGGING_DISABLED_REGISTERED_BY_USER);
         }
         if (!isRegistered(docNode)) {
             registerDocument(docNode);
         }
-        if (logging) {
-            docNode.getProperties().remove("{temp}logging");
+        if (triggeredAutomatically) {
+            EventsLoggingHelper.enableLogging(docNode, TEMP_LOGGING_DISABLED_REGISTERED_BY_USER);
         }
     }
 
@@ -1157,7 +1226,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         return registerDocument(docNode, false);
     }
 
-    public Node registerDocument(Node docNode, boolean isRelocating) {
+    private Node registerDocument(Node docNode, boolean isRelocating) {
         final Map<String, Object> props = docNode.getProperties();
         if (isRegistered(docNode) && !isRelocating) {
             throw new RuntimeException("Document already registered! docNode=" + docNode);
@@ -1191,7 +1260,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             log.debug("Starting to register " + (replyAssocs.size() > 0 ? "reply" : "followUp") + " document, docRef=" + docRef);
             final Node initialDoc = getDocument(getInitialDocument(docRef));
             final Map<String, Object> initDocProps = initialDoc.getProperties();
-            final String initDocRegNr = (String) initDocProps.get(DocumentCommonModel.Props.REG_NUMBER.toString());
+            final String initDocRegNr = (String) initDocProps.get(REG_NUMBER.toString());
             if (StringUtils.isNotBlank(initDocRegNr)) {
                 final NodeRef initDocSeriesNodeRef = (NodeRef) initDocProps.get(TransientProps.SERIES_NODEREF.toString());
 
@@ -1243,9 +1312,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                             if (complienceDate == null) {
                                 nodeService.setProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE, new Date());
 
-                                String docStatus = (String) nodeService.getProperty(originalDocRef, DocumentCommonModel.Props.DOC_STATUS);
+                                String docStatus = (String) nodeService.getProperty(originalDocRef, DOC_STATUS);
                                 if (!DocumentStatus.FINISHED.equals(docStatus)) {
-                                    nodeService.setProperty(originalDocRef, DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.FINISHED.getValueName());
+                                    nodeService.setProperty(originalDocRef, DOC_STATUS, DocumentStatus.FINISHED.getValueName());
                                     documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
                                             , I18NUtil.getMessage("document_log_creator_dhs"));
                                 }
@@ -1256,27 +1325,31 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             }
         }
         if (StringUtils.isNotBlank(regNumber)) {
-            String oldRegNumber = (String) nodeService.getProperty(docNode.getNodeRef(), DocumentCommonModel.Props.REG_NUMBER);
+            String oldRegNumber = (String) nodeService.getProperty(docNode.getNodeRef(), REG_NUMBER);
             boolean adrDeletedDocumentAdded = false;
             if (oldRegNumber != null && !StringUtils.equals(oldRegNumber, regNumber)) {
                 getAdrService().addDeletedDocument(docNode.getNodeRef());
                 adrDeletedDocumentAdded = true;
             }
 
-            props.put(DocumentCommonModel.Props.REG_NUMBER.toString(), regNumber);
+            props.put(REG_NUMBER.toString(), regNumber);
+            propertyChangesMonitorHelper.addIgnoredProps(props, REG_NUMBER);
             if (!isRelocating) {
-                Date oldRegDateTime = (Date) nodeService.getProperty(docNode.getNodeRef(), DocumentCommonModel.Props.REG_DATE_TIME);
+                Date oldRegDateTime = (Date) nodeService.getProperty(docNode.getNodeRef(), REG_DATE_TIME);
                 if (oldRegDateTime != null && !adrDeletedDocumentAdded) {
                     getAdrService().addDeletedDocument(docNode.getNodeRef());
                 }
 
-                props.put(DocumentCommonModel.Props.REG_DATE_TIME.toString(), new Date());
+                props.put(REG_DATE_TIME.toString(), new Date());
+                propertyChangesMonitorHelper.addIgnoredProps(props, REG_DATE_TIME);
             }
+
             if (!documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
-                props.put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
+                props.put(DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
+                propertyChangesMonitorHelper.addIgnoredProps(props, DOC_STATUS);
                 documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));
             } else {
-                if (StringUtils.isNotBlank((String) props.get("{temp}logging"))) {
+                if (EventsLoggingHelper.isLoggingDisabled(docNode, TEMP_LOGGING_DISABLED_REGISTERED_BY_USER)) {
                     documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered") //
                             , I18NUtil.getMessage("document_log_creator_dhs"));
                 } else {
@@ -1323,7 +1396,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             }
             if (!assocInf.isCase()) {// document association, not case
                 final Node otherDocNode = new Node(sourceRef);
-                assocInf.setTitle((String) nodeService.getProperty(sourceRef, DocumentCommonModel.Props.DOC_NAME));
+                assocInf.setTitle((String) nodeService.getProperty(sourceRef, DOC_NAME));
                 assocInf.setType(documentTypeService.getDocumentType(otherDocNode.getType()).getName());
             }
         } else {
@@ -1339,7 +1412,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             }
             final Node otherDocNode = new Node(targetRef);
             final Map<String, Object> otherDocProps = otherDocNode.getProperties();
-            assocInf.setTitle((String) otherDocProps.get(DocumentCommonModel.Props.DOC_NAME));
+            assocInf.setTitle((String) otherDocProps.get(DOC_NAME));
             assocInf.setType(documentTypeService.getDocumentType(otherDocNode.getType()).getName());
             assocInf.setNodeRef(assocRef.getTargetRef());
         }
@@ -1393,6 +1466,113 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             }
         }
         return targetRef;
+    }
+
+    /**
+     * Helps to identify if properties(that should not be ignored for given properties map) that have been changed
+     * 
+     * @author Ats Uiboupin
+     */
+    private class PropertyChangesMonitorHelper {
+        private final QName TEMP_PROPERTY_CHANGES_IGNORED_PROPS = QName.createQName("{temp}propertyChanges_ignoredProps");
+
+        /**
+         * Add given property names to ignore list when checking changes in property values
+         * 
+         * @param props
+         * @param newIgnoredProps
+         */
+        private void addIgnoredProps(final Map<String, Object> props, QName... newIgnoredProps) {
+            if (newIgnoredProps == null) {
+                return;
+            }
+            @SuppressWarnings("unchecked")
+            Collection<QName> ignoredProps = (Collection<QName>) props.get(TEMP_PROPERTY_CHANGES_IGNORED_PROPS);
+            if (ignoredProps == null) {
+                ignoredProps = new ArrayList<QName>(newIgnoredProps.length);
+            }
+            for (QName qName : newIgnoredProps) {
+                ignoredProps.add(qName);
+            }
+            props.put(TEMP_PROPERTY_CHANGES_IGNORED_PROPS.toString(), ignoredProps);
+        }
+
+        /**
+         * @param nodeRef
+         * @param propsToSave
+         * @param ignoredProps
+         * @return true, if some property was changed <br>
+         *         This method ignores properties that
+         *         <ul>
+         *         <li>are given as an argument to this method call</li>
+         *         <li>added to <code>propsToSave</code> using {@link #addIgnoredProps(Map, QName...)}</li>
+         *         </ul>
+         */
+        private boolean setPropertiesIgnoringSystemAndReturnIfChanged(final NodeRef nodeRef, final Map<String, Object> propsToSave, QName... ignoredProps) {
+            final List<QName> ignored = ignoredProps == null ? Collections.<QName> emptyList() : Arrays.asList(ignoredProps);
+            final Map<QName, Serializable> oldProps = generalService.getPropertiesIgnoringSys(nodeService.getProperties(nodeRef));
+            final Map<QName, Serializable> docQNameProps = RepoUtil.toQNameProperties(propsToSave);
+            final Map<QName, Serializable> propsIgnoringSystem = generalService.setPropertiesIgnoringSystem(docQNameProps, nodeRef);
+            @SuppressWarnings("unchecked")
+            final ArrayList<QName> propertyChangesIgnoredProps = (ArrayList<QName>) propsToSave.get(TEMP_PROPERTY_CHANGES_IGNORED_PROPS);
+            if (propertyChangesIgnoredProps != null) {
+                oldProps.put(TEMP_PROPERTY_CHANGES_IGNORED_PROPS, propertyChangesIgnoredProps);
+            }
+            return checkPropertyChanges(oldProps, propsIgnoringSystem, ignored);
+        }
+
+        private boolean checkPropertyChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps, final List<QName> ignoredProps) {
+            if (oldProps.size() != newProps.size()) {
+                if (isPropNamesDifferent(oldProps, newProps, ignoredProps, "removed ignored props: ")) {
+                    return true;
+                }
+                if (isPropNamesDifferent(newProps, oldProps, ignoredProps, "added ignored props: ")) {
+                    return true;
+                }
+            }
+            return isChanges(oldProps, newProps, ignoredProps);
+        }
+
+        private boolean isPropNamesDifferent(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps, final List<QName> ignoredProps,
+                String debugPrefix) {
+            boolean differentPropNames = false;
+            HashSet<QName> oldKeys = new HashSet<QName>(oldProps.keySet());
+            final HashSet<QName> newKeys = new HashSet<QName>(newProps.keySet());
+            oldKeys.removeAll(newKeys);
+            if (oldKeys.size() > 0) {
+                if (!ignoredProps.containsAll(oldKeys)) {
+                    differentPropNames = isChanges(oldProps, newProps, ignoredProps);
+                    if (differentPropNames && log.isDebugEnabled()) {
+                        log.debug(debugPrefix + oldKeys);
+                    }
+                }
+            }
+            return differentPropNames;
+        }
+
+        private boolean isChanges(final Map<QName, Serializable> oldProps, final Map<QName, Serializable> newProps, final List<QName> ignoredProps) {
+            Collection<QName> extraIgnoredProps = null;
+            for (Entry<QName, Serializable> entry : newProps.entrySet()) {
+                final QName key = entry.getKey();
+                final Serializable newValue = entry.getValue();
+                final Serializable oldValue = oldProps.get(key);
+                if (!EqualsHelper.nullSafeEquals(oldValue, newValue) && !key.getNamespaceURI().equals(NamespaceService.CONTENT_MODEL_1_0_URI)
+                        && !ignoredProps.contains(key) && !TEMP_PROPERTY_CHANGES_IGNORED_PROPS.equals(key)) {
+                    if (extraIgnoredProps == null) {
+                        @SuppressWarnings("unchecked")
+                        final Collection<QName> ignoreCollection = (Collection<QName>) oldProps.get(TEMP_PROPERTY_CHANGES_IGNORED_PROPS);
+                        extraIgnoredProps = ignoreCollection;
+                    }
+                    if (extraIgnoredProps != null) {
+                        if (extraIgnoredProps.contains(key)) {
+                            continue;
+                        }
+                    }
+                    return true;
+                }
+            }
+            return false;
+        }
     }
 
     /**
@@ -1454,14 +1634,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
     @Override
     public void stopDocumentPreceedingAndUpdateStatus(NodeRef nodeRef) {
-        nodeService.setProperty(nodeRef, DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.STOPPED.getValueName());
+        nodeService.setProperty(nodeRef, DOC_STATUS, DocumentStatus.STOPPED.getValueName());
         workflowService.stopAllCompoundWorkflows(nodeRef);
         documentLogService.addDocumentLog(nodeRef, I18NUtil.getMessage("document_log_status_proceedingStop"));
     }
 
     @Override
     public void continueDocumentPreceedingAndUpdateStatus(NodeRef nodeRef) {
-        nodeService.setProperty(nodeRef, DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
+        nodeService.setProperty(nodeRef, DOC_STATUS, DocumentStatus.WORKING.getValueName());
         workflowService.continueAllCompoundWorkflows(nodeRef);
         documentLogService.addDocumentLog(nodeRef, I18NUtil.getMessage("document_log_status_proceedingContinue"));
     }
@@ -1582,10 +1762,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         StringBuilder sb = new StringBuilder();
         Node docNode = getDocument(document);
 
-        String existingRegNr = (String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER.toString());
+        String existingRegNr = (String) docNode.getProperties().get(REG_NUMBER.toString());
         sb.append(existingRegNr);
 
-        Date existingRegDate = (Date) docNode.getProperties().get(DocumentCommonModel.Props.REG_DATE_TIME.toString());
+        Date existingRegDate = (Date) docNode.getProperties().get(REG_DATE_TIME.toString());
         sb.append(" ");
         sb.append(Utils.getDateFormat(FacesContext.getCurrentInstance()).format(existingRegDate));
 
@@ -1664,14 +1844,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     private Map<String, Object> getSearchableOtherProps(Node document) {
         Map<String, Object> props = new HashMap<String, Object>();
         // searchableSendMode is updated in SendOutServiceImpl#sendOut
-        setCollectedProps(document, props, DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER, DocumentSpecificModel.Props.COST_MANAGER);
-        setCollectedProps(document, props, DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME, DocumentSpecificModel.Props.APPLICANT_NAME,
+        setCollectedProps(document, props, SEARCHABLE_COST_MANAGER, DocumentSpecificModel.Props.COST_MANAGER);
+        setCollectedProps(document, props, SEARCHABLE_APPLICANT_NAME, DocumentSpecificModel.Props.APPLICANT_NAME,
                 DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME);
-        setCollectedProps(document, props, DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE, DocumentSpecificModel.Props.ERRAND_BEGIN_DATE);
-        setCollectedProps(document, props, DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE, DocumentSpecificModel.Props.ERRAND_END_DATE);
-        setCollectedProps(document, props, DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY, DocumentSpecificModel.Props.ERRAND_COUNTRY);
-        setCollectedProps(document, props, DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY, DocumentSpecificModel.Props.ERRAND_COUNTY);
-        setCollectedProps(document, props, DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY, DocumentSpecificModel.Props.ERRAND_CITY);
+        setCollectedProps(document, props, SEARCHABLE_ERRAND_BEGIN_DATE, DocumentSpecificModel.Props.ERRAND_BEGIN_DATE);
+        setCollectedProps(document, props, SEARCHABLE_ERRAND_END_DATE, DocumentSpecificModel.Props.ERRAND_END_DATE);
+        setCollectedProps(document, props, SEARCHABLE_ERRAND_COUNTRY, DocumentSpecificModel.Props.ERRAND_COUNTRY);
+        setCollectedProps(document, props, SEARCHABLE_ERRAND_COUNTY, DocumentSpecificModel.Props.ERRAND_COUNTY);
+        setCollectedProps(document, props, SEARCHABLE_ERRAND_CITY, DocumentSpecificModel.Props.ERRAND_CITY);
         return props;
     }
 
@@ -1716,24 +1896,24 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     private static Map<QName/* searchable */, List<QName>/* filter */> searchableToFilter = new HashMap<QName, List<QName>>();
     private static Map<QName/* searchable */, List<QName>/* document */> searchableToDocument = new HashMap<QName, List<QName>>();
     static {
-        searchableToFilter.put(DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER, Arrays.asList(DocumentSearchModel.Props.COST_MANAGER));
-        searchableToFilter.put(DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME, Arrays.asList(DocumentSearchModel.Props.APPLICANT_NAME));
-        searchableToFilter.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE, Arrays.asList(DocumentSearchModel.Props.ERRAND_BEGIN_DATE_BEGIN,
+        searchableToFilter.put(SEARCHABLE_COST_MANAGER, Arrays.asList(DocumentSearchModel.Props.COST_MANAGER));
+        searchableToFilter.put(SEARCHABLE_APPLICANT_NAME, Arrays.asList(DocumentSearchModel.Props.APPLICANT_NAME));
+        searchableToFilter.put(SEARCHABLE_ERRAND_BEGIN_DATE, Arrays.asList(DocumentSearchModel.Props.ERRAND_BEGIN_DATE_BEGIN,
                 DocumentSearchModel.Props.ERRAND_BEGIN_DATE_END));
-        searchableToFilter.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE, Arrays.asList(DocumentSearchModel.Props.ERRAND_END_DATE_BEGIN,
+        searchableToFilter.put(SEARCHABLE_ERRAND_END_DATE, Arrays.asList(DocumentSearchModel.Props.ERRAND_END_DATE_BEGIN,
                 DocumentSearchModel.Props.ERRAND_END_DATE_END));
-        searchableToFilter.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY, Arrays.asList(DocumentSearchModel.Props.ERRAND_COUNTRY));
-        searchableToFilter.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY, Arrays.asList(DocumentSearchModel.Props.ERRAND_COUNTY));
-        searchableToFilter.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY, Arrays.asList(DocumentSearchModel.Props.ERRAND_CITY));
+        searchableToFilter.put(SEARCHABLE_ERRAND_COUNTRY, Arrays.asList(DocumentSearchModel.Props.ERRAND_COUNTRY));
+        searchableToFilter.put(SEARCHABLE_ERRAND_COUNTY, Arrays.asList(DocumentSearchModel.Props.ERRAND_COUNTY));
+        searchableToFilter.put(SEARCHABLE_ERRAND_CITY, Arrays.asList(DocumentSearchModel.Props.ERRAND_CITY));
 
-        searchableToDocument.put(DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER, Arrays.asList(DocumentSpecificModel.Props.COST_MANAGER));
-        searchableToDocument.put(DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME, Arrays.asList(DocumentSpecificModel.Props.APPLICANT_NAME,
+        searchableToDocument.put(SEARCHABLE_COST_MANAGER, Arrays.asList(DocumentSpecificModel.Props.COST_MANAGER));
+        searchableToDocument.put(SEARCHABLE_APPLICANT_NAME, Arrays.asList(DocumentSpecificModel.Props.APPLICANT_NAME,
                 DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME));
-        searchableToDocument.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE, Arrays.asList(DocumentSpecificModel.Props.ERRAND_BEGIN_DATE));
-        searchableToDocument.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE, Arrays.asList(DocumentSpecificModel.Props.ERRAND_END_DATE));
-        searchableToDocument.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_COUNTRY));
-        searchableToDocument.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_COUNTY));
-        searchableToDocument.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_CITY));
+        searchableToDocument.put(SEARCHABLE_ERRAND_BEGIN_DATE, Arrays.asList(DocumentSpecificModel.Props.ERRAND_BEGIN_DATE));
+        searchableToDocument.put(SEARCHABLE_ERRAND_END_DATE, Arrays.asList(DocumentSpecificModel.Props.ERRAND_END_DATE));
+        searchableToDocument.put(SEARCHABLE_ERRAND_COUNTRY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_COUNTRY));
+        searchableToDocument.put(SEARCHABLE_ERRAND_COUNTY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_COUNTY));
+        searchableToDocument.put(SEARCHABLE_ERRAND_CITY, Arrays.asList(DocumentSpecificModel.Props.ERRAND_CITY));
     }
 
     @Override
@@ -1783,7 +1963,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             // when no filter is specified, all results match
             if (sendModes == null || sendModes.size() == 0 || !isNotMatch(sendMode, sendModes)) {
                 Document row = new Document(document);
-                row.setSearchableProperty(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendMode);
+                row.setSearchableProperty(SEARCHABLE_SEND_MODE, sendMode);
                 results.add(row);
             }
         }

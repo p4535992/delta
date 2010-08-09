@@ -24,7 +24,7 @@
          <f:facet name="small-icon">
             <h:panelGroup>
                <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
-                  <a:actionLink id="col1-act1" value="#{r.name}" href="#{r.downloadUrl}" target="new" image="#{r.fileType16}" showLink="false"
+                  <a:actionLink id="col1-act1" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
                      styleClass="inlineAction" />
                </r:permissionEvaluator>
                <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
@@ -33,7 +33,7 @@
             </h:panelGroup>
          </f:facet>
          <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
-            <a:actionLink id="col1-act2" value="#{r.name}" href="#{r.downloadUrl}" target="new"/>
+            <a:actionLink id="col1-act2" value="#{r.name}" href="#{r.downloadUrl}" target="_blank"/>
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
             <h:outputText value="#{r.name}" />

@@ -64,6 +64,7 @@ public class DeleteAssocDialog extends DeleteContentDialog {
             log.error("Deleting association failed!", e);
             throw new RuntimeException(e);
         }
+        MessageUtil.addInfoMessage("document_assocDelete_success");
         return null;
     }
     

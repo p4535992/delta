@@ -1,3 +1,22 @@
+var delta = [];
+delta['translations'] = [];
+
+function addTranslation(key, value) {
+   delta.translations[key] = value;
+}
+
+function getTranslation(key, defaultValue) {
+   var translation = delta.translations[key];
+   if(translation==null) {
+      if(defaultValue!=undefined) {
+         translation = defaultValue;
+      } else {
+         translation = "$$"+key+"$$";
+      }
+   }
+   return translation;
+}
+
 // http://www.hunlock.com/blogs/Mastering_The_Back_Button_With_Javascript
 window.onbeforeunload = function () {
    // This fucntion does nothing.  It won't spawn a confirmation dialog
@@ -632,7 +651,29 @@ $jQ(document).ready(function() {
    window.dhtmlHistory.add(randomHistoryHash(), null);
 
    handleHtmlLoaded(null);
+
+   extendCondencePlugin();
 });
+
+/**
+ * extend jQuery Condence plugin so that condencing to specific number of chars could be performed based on styleClass :)
+ */
+function extendCondencePlugin() {
+   var condencers = jQuery("[class*=condence]" /*, context*/);
+   condencers.each(function(){
+      var p = this.className.match(/condence(\d+)/i);
+      var condenceAtChar = p ? parseInt('0'+p[1], 10) : 200;
+      jQuery(this).condense({
+         moreSpeed: 0,
+         lessSpeed: 0,
+         moreText: getTranslation('jQuery.condence.moreText'),
+         lessText: getTranslation('jQuery.condence.lessText'),
+         ellipsis: "",
+         condensedLength: condenceAtChar
+         }
+       );
+   });
+}
 
 // These things need to be performed
 // 1) once after full page load
@@ -720,16 +761,6 @@ function handleHtmlLoaded(context) {
       });
    });
    
-   $jQ(".review-note-trimmed-comment a", context).click(function() {
-      $jQ(this).parent().css("display", "none").next().css("display", "block");
-      return false;
-   });
-   
-   $jQ(".review-note-comment a", context).click(function() {
-      $jQ(this).parent().css("display", "none").prev().css("display", "block");
-      return false;
-   });
-
    $jQ(".admin-user-search-input", context).keyup(function(event) {
        updateButtonState();
        if (event.keyCode == '13') {

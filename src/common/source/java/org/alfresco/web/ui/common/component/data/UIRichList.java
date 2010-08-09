@@ -38,6 +38,8 @@ import javax.faces.component.NamingContainer;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
+import javax.faces.el.EvaluationException;
+import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.AbortProcessingException;
 import javax.faces.event.FacesEvent;
@@ -46,6 +48,7 @@ import javax.faces.event.PhaseId;
 import javax.transaction.UserTransaction;
 
 import org.alfresco.web.app.Application;
+import org.alfresco.web.bean.dialog.IDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ViewsConfigElement;
@@ -138,6 +141,7 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
     */
    public Object saveState(FacesContext context)
    {
+      savePageNumber(context);
       Object values[] = new Object[] {
             // standard component attributes are saved by the super class
             super.saveState(context),
@@ -155,7 +159,70 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
       
       return (values);
    }
+
+
+    /**
+     * Problem: when selecting page number X (where X is other than 1)
+     * and navigating away from the view and later navigating back the page that is shown in the list is not X, but 1.
+     * Workaround that saves page number into Dialog(unless it doesn't exist for first request) for later use
+     * (by id of the UIRichList, to support multiple Lists)
+     * 
+     * @param context
+     */
+    private void savePageNumber(FacesContext context) {
+        try {
+            MethodBinding mb = context.getApplication().createMethodBinding("#{DialogManager.getBean}", null);
+            IDialogBean dialogBean = (IDialogBean) mb.invoke(context, null);
+            @SuppressWarnings("unchecked")
+            Map<String, Integer> pageNumberMap = (Map<String, Integer>) dialogBean.getCustomAttribute("RichList-pageNr-bookmarks");
+            if (currentPage != 0) {
+                if (pageNumberMap == null) {
+                    pageNumberMap = new HashMap<String, Integer>();
+                    dialogBean.addCustomAttribute("RichList-pageNr-bookmarks", pageNumberMap);
+                }
+                pageNumberMap.put(getId(), currentPage);
+            } else {
+                if (pageNumberMap != null) {
+                    pageNumberMap.remove(getId());
+                }
+            }
+        } catch (EvaluationException e) {
+            // must be first request since DialogManager not initialized. This is not a problem - this method gets called once more during next submit
+            // and meanwhile page number (that we failed to save) is not needed
+        }
+    }
+
+    private boolean currentPageRestored;
+
+    private void restoreCurrentPageNumber() {
+        final FacesContext context = FacesContext.getCurrentInstance();
+        try {
+            MethodBinding mb = context.getApplication().createMethodBinding("#{DialogManager.getBean}", null);
+            IDialogBean dialogBean = (IDialogBean) mb.invoke(context, null);
+            @SuppressWarnings("unchecked")
+            Map<String, Integer> pageNumberMap = (Map<String, Integer>) dialogBean.getCustomAttribute("RichList-pageNr-bookmarks");
+            if (pageNumberMap != null) {
+                final Integer savedPageNumber = pageNumberMap.get(getId());
+                if (savedPageNumber != null && currentPage == 0) {
+                    this.currentPage = savedPageNumber;
+                    currentPageRestored = true;
+                } else {
+                    pageNumberMap.remove(getId());
+                }
+            }
+        } catch (EvaluationException e) {
+            // must be first request since DialogManager not initialized. This is not a problem - there is no page number to be restored anyway
+        }
+    }
    
+    @Override
+    public void setId(String id) {
+        super.setId(id);
+        if (currentPage == 0) {
+            restoreCurrentPageNumber();
+        }
+    }
+
    /**
     * Get the value (for this component the value is an object used as the DataModel)
     *
@@ -358,8 +425,12 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
    {
       if (val >= -1)
       {
+         if(this.pageSize != -1) {
+             // changing previous page size - hence previously set current page might be misleading
+             int currentPageAfterResize = 0; // TODO: could also calculate based on size of existing datamodel
+             setCurrentPage(currentPageAfterResize);
+         }
          this.pageSize = val;
-         setCurrentPage(0);
       }
    }
    
@@ -618,7 +689,9 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
          // reset current page
          if (this.sortOrPageChanged == false)
          {
+                if (!currentPageRestored) { // hack to avoid reseting current page, as it is restored from session
             this.currentPage = 0;
+                }
          }
          this.sortOrPageChanged = false;
       }

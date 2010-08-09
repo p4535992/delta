@@ -137,4 +137,18 @@ public class RepoUtil {
         }
     }
 
+    public static boolean getPropertyBooleanValue(final Map<String, Object> properties, String property) {
+        final Object val = properties.get(property);
+        if (val == null) {
+            return false;
+        }
+        if (val instanceof Boolean) {
+            return (Boolean) val;
+        } else if (val instanceof String) {
+            return Boolean.valueOf((String) val);
+        } else {
+            throw new RuntimeException("Can't convert property '" + property + "' class '" + val.getClass() + " to boolean! property value='\n" + val + "'\n");
+        }
+    }
+
 }

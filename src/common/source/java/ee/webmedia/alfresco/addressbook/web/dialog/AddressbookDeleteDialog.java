@@ -7,6 +7,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.Application;
 
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * @author Keit Tehvan
@@ -20,6 +21,7 @@ public class AddressbookDeleteDialog extends AddressbookBaseDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         getAddressbookService().deleteNode(getCurrentNode().getNodeRef());
         reset();
+        MessageUtil.addInfoMessage("addressbook_contactgroup_remove_contact_success");
         return outcome;
     }
 

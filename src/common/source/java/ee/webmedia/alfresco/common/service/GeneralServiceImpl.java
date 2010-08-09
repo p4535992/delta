@@ -40,6 +40,7 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentService;
 import org.alfresco.service.cmr.repository.ContentWriter;
+import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -58,6 +59,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.UnicodeExtraFieldPolicy;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
@@ -156,23 +158,36 @@ public class GeneralServiceImpl implements GeneralService {
     }
 
     @Override
-    public void saveAddedAssocs(Node node) {
+    public int saveAddedAssocs(Node node) {
         Map<String, Map<String, AssociationRef>> addedAssocs = node.getAddedAssociations();
+        int nrOfAddedAssocs = 0;
         for (Map<String, AssociationRef> typedAssoc : addedAssocs.values()) {
             for (AssociationRef assoc : typedAssoc.values()) {
                 nodeService.createAssociation(assoc.getSourceRef(), assoc.getTargetRef(), assoc.getTypeQName());
+                nrOfAddedAssocs++;
             }
         }
+        return nrOfAddedAssocs;
     }
 
     @Override
-    public void saveRemovedChildAssocs(Node node) {
+    public int saveRemovedChildAssocs(Node node) {
         Map<String, Map<String, ChildAssociationRef>> removedChildAssocs = node.getRemovedChildAssociations();
+        int removedAssocs = 0;
         for (Map<String, ChildAssociationRef> typedAssoc : removedChildAssocs.values()) {
             for (ChildAssociationRef assoc : typedAssoc.values()) {
-                nodeService.removeChild(assoc.getParentRef(), assoc.getChildRef());
+                final NodeRef childRef = assoc.getChildRef();
+                try {
+                    nodeService.removeChild(assoc.getParentRef(), childRef);
+                    removedAssocs++;
+                } catch (InvalidNodeRefException e) {
+                    if (!WmNode.NOT_SAVED_STORE.equals(childRef.getStoreRef())) {
+                        throw e;
+                    }
+                }
             }
         }
+        return removedAssocs;
     }
 
     /**
@@ -336,9 +351,10 @@ public class GeneralServiceImpl implements GeneralService {
     }
 
     @Override
-    public void setPropertiesIgnoringSystem(Map<QName, Serializable> properties, NodeRef nodeRef) {
-        Map<QName, Serializable> props = getPropertiesIgnoringSys(properties);
-        nodeService.addProperties(nodeRef, props);
+    public Map<QName, Serializable> setPropertiesIgnoringSystem(Map<QName, Serializable> properties, NodeRef nodeRef) {
+        properties = getPropertiesIgnoringSys(properties);
+        nodeService.addProperties(nodeRef, properties);
+        return properties;
     }
 
     @Override
@@ -537,14 +553,8 @@ public class GeneralServiceImpl implements GeneralService {
             log.warn("Failed to zip up files.", e);
             throw new RuntimeException("Failed to zip up files.", e);
         } finally {
-            try {
-                out.close();
-            } catch (IOException e) {
-            }
-            try {
-                in.close();
-            } catch (Exception e) {
-            }
+            IOUtils.closeQuietly(out);
+            IOUtils.closeQuietly(in);
         }
         return byteStream;
     }
@@ -581,6 +591,8 @@ public class GeneralServiceImpl implements GeneralService {
     }
 
     @Override
+    // TODO: current implementation doesn't worry about situation where more than one transaction tries to update documents count on same object
+    // (but maybe alfresco prevents it?)
     public void updateParentContainingDocsCount(final NodeRef parentNodeRef, final QName propertyName, boolean added, Integer count) {
         if (parentNodeRef == null)
             return;

@@ -69,18 +69,30 @@ public class MessageUtil {
         context.addMessage(null, new FacesMessage(severity, msg, msg));
     }
 
-    public static void addInfoMessage(FacesContext currentInstance, String string, Object... messageValuesForHolders) {
-        addStatusMessage(currentInstance, string, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
+    public static void addInfoMessage(String msgKey, Object... messageValuesForHolders) {
+        addStatusMessage(FacesContext.getCurrentInstance(), msgKey, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
+    }
+    public static void addInfoMessage(FacesContext currentInstance, String msgKey, Object... messageValuesForHolders) {
+        addStatusMessage(currentInstance, msgKey, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
     }
 
-    public static void addStatusMessage(FacesContext facesContext, FeedbackWrapper feedbackWrapper) {
+    public static boolean addStatusMessage(FacesContext facesContext, FeedbackWrapper feedbackWrapper) {
+        boolean isErrorAdded = false;
         for (FeedbackVO feedbackVO : feedbackWrapper) {
-            addStatusMessage(facesContext, feedbackVO);
+            isErrorAdded |= addStatusMessage(facesContext, feedbackVO);
         }
+        return isErrorAdded;
     }
 
-    private static void addStatusMessage(FacesContext facesContext, FeedbackVO feedbackVO) {
-        addStatusMessage(facesContext, feedbackVO.getSeverity(), feedbackVO.getMessageKey(), feedbackVO.getMessageValuesForHolders());
+    /**
+     * @param facesContext
+     * @param feedbackVO
+     * @return true if added message with error or fatal severity
+     */
+    private static boolean addStatusMessage(FacesContext facesContext, FeedbackVO feedbackVO) {
+        final MessageSeverity severity = feedbackVO.getSeverity();
+        addStatusMessage(facesContext, severity, feedbackVO.getMessageKey(), feedbackVO.getMessageValuesForHolders());
+        return severity == MessageSeverity.ERROR || severity == MessageSeverity.FATAL;
     }
 
     /**

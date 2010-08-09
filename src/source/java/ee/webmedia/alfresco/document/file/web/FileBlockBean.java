@@ -8,11 +8,13 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
+import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.NavigationBean;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.Repository;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -33,21 +35,27 @@ public class FileBlockBean implements Serializable {
     private NavigationBean navigationBean;
     private List<File> files;
     private NodeRef nodeRef;
-    
+
     public void toggleActive(ActionEvent event) {
         NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         try {
-            getFileService().toggleActive(fileNodeRef);
+            final boolean active = getFileService().toggleActive(fileNodeRef);
             restore(); // refresh the files list
+            MessageUtil.addInfoMessage(active ? "file_toggle_active_success" : "file_toggle_deactive_success", getFileName(fileNodeRef));
         } catch (NodeLockedException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_inactive_toggleFailed");
         }
     }
 
+    private String getFileName(NodeRef fileNodeRef) {
+        return Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getFileFolderService().getFileInfo(fileNodeRef).getName();
+    }
+
     public void transformToPdf(ActionEvent event) {
         NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        getFileService().transformToPdf(nodeRef);
+        final FileInfo pdfFileInfo = getFileService().transformToPdf(nodeRef);
         restore(); // refresh the files list
+        MessageUtil.addInfoMessage("file_generate_pdf_success", pdfFileInfo.getName());
     }
 
     public void init(Node node) {
@@ -68,7 +76,7 @@ public class FileBlockBean implements Serializable {
     public void restore() {
         files = getFileService().getAllFiles(nodeRef);
     }
-    
+
     public boolean moveAllFiles(NodeRef toRef) {
         try {
             getFileService().moveAllFiles(nodeRef, toRef);
@@ -96,11 +104,11 @@ public class FileBlockBean implements Serializable {
     public void setFileService(FileService fileService) {
         this.fileService = fileService;
     }
-    
+
     public FileService getFileService() {
         if (fileService == null) {
             fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(FileService.BEAN_NAME);
+                    .getBean(FileService.BEAN_NAME);
         }
         return fileService;
     }

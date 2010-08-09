@@ -19,9 +19,9 @@
             <a:sortLink id="col1-sort" label="#{msg.template_name_doc}" value="name" mode="case-insensitive" />
          </f:facet>
          <f:facet name="small-icon">
-            <a:actionLink id="col1-act1" value="#{r.name}" tooltip="#{msg.template_download}" image="/images/icons/template.gif" showLink="false" href="#{r.downloadUrl}" target="new" />
+            <a:actionLink id="col1-act1" value="#{r.name}" tooltip="#{msg.template_download}" image="/images/icons/template.gif" showLink="false" href="#{r.downloadUrl}" target="_blank" />
          </f:facet>
-         <a:actionLink id="col1-act2" value="#{r.name}" tooltip="#{msg.template_download}" href="#{r.downloadUrl}" target="new" />
+         <a:actionLink id="col1-act2" value="#{r.name}" tooltip="#{msg.template_download}" href="#{r.downloadUrl}" target="_blank" />
       </a:column>
 
       <%-- Comment column --%>

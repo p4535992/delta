@@ -6,7 +6,6 @@ import java.util.List;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
@@ -52,10 +51,11 @@ public interface DocumentTemplateService {
      * Fills documents template file with metadata
      * 
      * @param documentNodeRef
+     * @return display name(that doesn't have OS-dependent filename length constraints) of generated word file
      * @throws FileNotFoundException throws when document has a template which has been deleted
      * @throws Exception
      */
-    void populateTemplate(NodeRef documentNodeRef) throws FileNotFoundException;
+    String populateTemplate(NodeRef documentNodeRef) throws FileNotFoundException;
 
     String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template);
 

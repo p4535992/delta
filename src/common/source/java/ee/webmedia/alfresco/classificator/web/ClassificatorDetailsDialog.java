@@ -33,13 +33,13 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 public class ClassificatorDetailsDialog extends BaseDialogBean implements IContextListener {
 
     private static final long serialVersionUID = 1L;
-    
+
     private static final Log log = LogFactory.getLog(ClassificatorDetailsDialog.class);
     private static final String ADD_VALUE_ACTION_GROUP = "browse_classificator_values";
-    
+
     private transient ClassificatorService classificatorService;
     private transient UIRichList richList;
-    
+
     private List<ClassificatorValue> classificatorValues;
     private Map<String, ClassificatorValue> originalValues;
     private Classificator selectedClassificator;
@@ -60,21 +60,21 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
         }
         return classificatorService;
     }
-    
+
     /**
      * Used in JSP pages.
      */
     public List<ClassificatorValue> getClassificatorValues() {
         return classificatorValues;
     }
-    
+
     /**
      * Used in JSP pages.
      */
     public UIRichList getRichList() {
         return richList;
     }
-    
+
     /**
      * Used in JSP pages.
      */
@@ -109,11 +109,10 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
             }
 
             // check for duplicated values
-            String valueName = classificatorValue.getValueName();
+            String valueName = StringUtils.trim(classificatorValue.getValueName());
             if (distinctValues.contains(valueName)) {
                 duplicatedValues.add(valueName);
-            }
-            else {
+            } else {
                 distinctValues.add(valueName);
             }
         }
@@ -136,21 +135,22 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
         } else {
             updateClassificatorValues();
             resetData();
+            MessageUtil.addInfoMessage("save_success");
         }
         return outcome;
     }
-    
+
     @Override
     public String cancel() {
         resetData();
         return super.cancel();
     }
-    
+
     @Override
     public boolean getFinishButtonDisabled() {
         return false;
     }
-    
+
     @Override
     public String getContainerTitle() {
         if (selectedClassificator != null) {
@@ -158,7 +158,7 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
         }
         return super.getContainerTitle();
     }
-    
+
     @Override
     public String getActionsConfigId() {
         if (selectedClassificator != null && selectedClassificator.isAddRemoveValues()) {
@@ -166,20 +166,22 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
         }
         return null;
     }
-    
+
     /**
      * JSP event handler.
-     * Called before displaying classificator value list. 
+     * Called before displaying classificator value list.
+     * 
      * @param event
      */
     public void select(ActionEvent event) {
         selectedClassificator = getClassificatorByNodeRef(ActionUtil.getParam(event, "nodeRef"));
         loadClassificatorValues();
     }
-    
+
     /**
      * JSP event handler.
      * Removes the selected value and updates the UI model.
+     * 
      * @param event
      */
     public void removeValue(ActionEvent event) {
@@ -190,26 +192,26 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
         if (originalValues.containsKey(ref)) {
             originalValues.remove(ref);
             getClassificatorService().removeClassificatorValueByNodeRef(selectedClassificator, ref);
-        }
-        else {
+        } else {
             addedClassificators.remove(classificatorValue);
         }
-
+        MessageUtil.addInfoMessage("classificator_value_remove_success");
         if (log.isDebugEnabled()) {
             log.debug("Classificator value with nodeRef = " + ref + " deleted.");
         }
     }
-    
+
     /**
-     * JSP event handler. 
-     * Adds new value to the model and temporary list before saving. 
+     * JSP event handler.
+     * Adds new value to the model and temporary list before saving.
+     * 
      * @param event
      */
     public void addNewValue(ActionEvent event) {
         ClassificatorValue addedClassificatorValue = new ClassificatorValue();
         addedClassificatorValue.setActive(true);
         addedClassificatorValue.setOrder(getMaxClassificatorValueOrder() + 1);
-        // set the temporary random unique ID to be used in the UI form 
+        // set the temporary random unique ID to be used in the UI form
         addedClassificatorValue.setNodeRef(new NodeRef(addedClassificatorValue.hashCode() + "", event.hashCode() + "", GUID.generate()));
         classificatorValues.add(addedClassificatorValue);
         addedClassificators.add(addedClassificatorValue);
@@ -232,14 +234,14 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
             getRichList().setValue(null);
         }
     }
-    
+
     private void updateClassificatorValues() {
         for (ClassificatorValue mod : classificatorValues) {
             ClassificatorValue orig = originalValues.get(mod.getNodeRef().toString());
             if (orig == null) {
                 continue;
             }
-            
+
             if (!orig.equals(mod)) {
                 if (log.isDebugEnabled()) {
                     log.debug("Updating the classificator value with nodeRef = " + mod.getNodeRef());
@@ -248,7 +250,7 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
                 getClassificatorService().addClassificatorValue(selectedClassificator, mod);
             }
         }
-        //save the added new value
+        // save the added new value
         if (addedClassificators != null && addedClassificators.size() > 0) {
             for (ClassificatorValue add : addedClassificators) {
                 getClassificatorService().addClassificatorValue(selectedClassificator, add);
@@ -286,12 +288,12 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
         }
         return maxOrder;
     }
-    
+
     private Classificator getClassificatorByNodeRef(String ref) {
         Assert.notNull(ref);
         return getClassificatorService().getClassificatorByNodeRef(ref);
     }
-    
+
     private ClassificatorValue getClassificatorValueByNodeRef(String ref) {
         Assert.notNull(ref);
         NodeRef nodeRef = new NodeRef(ref);

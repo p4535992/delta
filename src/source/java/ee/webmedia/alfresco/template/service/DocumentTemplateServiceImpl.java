@@ -150,7 +150,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     @Override
-    public void populateTemplate(NodeRef documentNodeRef) throws FileNotFoundException {
+    public String populateTemplate(NodeRef documentNodeRef) throws FileNotFoundException {
 
         log.debug("Creating a file from template for document: " + documentNodeRef);
         Map<QName, Serializable> docProp = nodeService.getProperties(documentNodeRef);
@@ -200,6 +200,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             fileFolderService.delete(populatedTemplate.getNodeRef());
             throw new RuntimeException(e);
         }
+        return displayName;
     }
 
     public String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template) {

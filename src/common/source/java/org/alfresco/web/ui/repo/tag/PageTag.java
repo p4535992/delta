@@ -81,6 +81,7 @@ public class PageTag extends TagSupport
                 "/scripts/jquery/jquery.textmetrix.js",
                 "/scripts/jquery/jquery.autocomplete.js",
                 "/scripts/jquery/jquery.jLog-min.js",
+                "/scripts/jquery/jquery.condense.js",
                                 // menu javascript
                 "/scripts/menu.js",
                                 // webdav javascript
@@ -344,7 +345,7 @@ public class PageTag extends TagSupport
       return EVAL_BODY_INCLUDE;
    }
 
-   /**
+/**
     * @see javax.servlet.jsp.tagext.TagSupport#doEndTag()
     */
    public int doEndTag() throws JspException

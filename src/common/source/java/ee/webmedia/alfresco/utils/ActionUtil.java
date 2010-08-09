@@ -13,25 +13,42 @@ import org.alfresco.web.ui.common.component.UIActionLink;
  */
 public class ActionUtil {
 
+    public static String getParam(ActionEvent event, String key, String defaultValue) {
+        return getParamInternal(event, key, defaultValue);
+    }
+
     public static String getParam(ActionEvent event, String key) {
+        return getParamInternal(event, key, null);
+    }
+
+    private static String getParamInternal(ActionEvent event, String key, String defaultValue) {
         UIComponent c = event.getComponent();
         Map<String, String> params = null;
-        
-        if(c instanceof UIActionLink) {
+
+        if (c instanceof UIActionLink) {
             UIActionLink link = (UIActionLink) c;
             params = link.getParameterMap();
         } else if (c.getChildCount() != 0) { // CommandButton or something else
-            for(Object child : c.getChildren()) {
-                if(child instanceof UIParameter && ((UIParameter) child).getName().equals(key)) {
+            for (Object child : c.getChildren()) {
+                if (child instanceof UIParameter && ((UIParameter) child).getName().equals(key)) {
                     return ((UIParameter) child).getValue().toString();
                 }
             }
         }
-        
-        if (params != null && !params.containsKey(key)) {
+        if (params != null && !params.containsKey(key) && defaultValue == null) {
             throw new RuntimeException("UIActionLink parameterMap does not contain key: " + key);
         }
-        return params.get(key);
+        final String paramValue;
+        if(params != null) {
+            if(params.containsKey(key)) {
+                paramValue = params.get(key);
+            } else {
+                paramValue = defaultValue;
+            }
+        } else {
+            paramValue = defaultValue;
+        }
+        return paramValue;
     }
 
     public static boolean hasParam(ActionEvent event, String key) {

@@ -20,8 +20,9 @@ public interface FileService {
      * Marks the file as active/inactive
      * 
      * @param nodeRef
+     * @return true, if new status is active, false otherwise
      */
-    void toggleActive(NodeRef nodeRef);
+    boolean toggleActive(NodeRef nodeRef);
 
     /**
      * Returns all children of this nodeRef as file items.
@@ -92,7 +93,7 @@ public interface FileService {
      */
     void transformActiveFilesToPdf(NodeRef nodeRef);
 
-    void transformToPdf(NodeRef nodeRef);
+    FileInfo transformToPdf(NodeRef nodeRef);
 
     /**
      * Transform a source file to PDF. Original source file is preserved and a new PDF file is created.

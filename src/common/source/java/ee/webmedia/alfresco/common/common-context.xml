@@ -64,6 +64,14 @@
       </property>
    </bean>
 
+   <bean id="commonWebResourceBundles" class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.common.web.common-webclient</value>
+         </list>
+      </property>
+   </bean>
+
    <bean id="commonResourceBundles" class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
       <property name="resourceBundles">
          <list>

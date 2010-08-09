@@ -86,4 +86,11 @@
       </property>
    </bean>
 
+
+   <!-- START: web beans: -->
+
+   <bean id="ConfirmAddDuplicateDialog" class="ee.webmedia.alfresco.addressbook.web.dialog.ConfirmAddDuplicateDialog" scope="session" />
+
+   <!-- END: web beans: -->
+
 </beans>

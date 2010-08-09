@@ -17,6 +17,6 @@
 
    <a:panel id="update-content-size-field" style="display: none">
       <!-- There should be only one link here for JQuery to click -->
-      <a:actionLink value="" actionListener="#{BrowseBean.updateContentPageSize}" />
+      <a:actionLink id="updateContentPageSize" value="" actionListener="#{BrowseBean.updateContentPageSize}" />
    </a:panel>
 </a:panel>

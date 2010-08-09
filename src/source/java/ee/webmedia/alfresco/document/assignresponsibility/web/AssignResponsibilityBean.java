@@ -8,8 +8,13 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.security.PersonService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
@@ -20,6 +25,8 @@ import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.user.web.UserDetailsDialog;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * @author Alar Kvell
@@ -32,6 +39,8 @@ public class AssignResponsibilityBean implements Serializable {
     private transient AssignResponsibilityService assignResponsibilityService;
     private transient ParametersService parametersService;
     private transient UserService userService;
+    private transient PersonService personService;
+    private transient NodeService nodeService;
 
     private Node node;
     private String fromOwnerId;
@@ -54,9 +63,10 @@ public class AssignResponsibilityBean implements Serializable {
         return StringUtils.isBlank((String) getNode().getProperties().get(OWNER_ID));
     }
 
-    public void execute(ActionEvent event) {
+    public void execute(@SuppressWarnings("unused") ActionEvent event) {
         String toOwnerId = (String) getNode().getProperties().get(OWNER_ID);
         getAssignResponsibilityService().changeOwnerOfAllDocumentsAndTasks(fromOwnerId, toOwnerId);
+        MessageUtil.addInfoMessage("assign_responsibility_perform_success", UserUtil.getPersonFullName1(getPersonProps(toOwnerId)));
     }
 
     public String getInstruction() {
@@ -78,9 +88,30 @@ public class AssignResponsibilityBean implements Serializable {
         return "";
     }
 
+    private Map<QName, Serializable> getPersonProps(String userName) {
+        NodeRef person = getPersonService().getPerson(userName);
+        Map<QName, Serializable> personProps = getNodeService().getProperties(person);
+        return personProps;
+    }
+
+    private PersonService getPersonService() {
+        if (personService == null) {
+            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
+        }
+        return personService;
+    }
+
+    private NodeService getNodeService() {
+        if (nodeService == null) {
+            nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
+        }
+        return nodeService;
+    }
+
     protected AssignResponsibilityService getAssignResponsibilityService() {
         if (assignResponsibilityService == null) {
-            assignResponsibilityService = (AssignResponsibilityService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(AssignResponsibilityService.BEAN_NAME);
+            assignResponsibilityService = (AssignResponsibilityService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(AssignResponsibilityService.BEAN_NAME);
         }
         return assignResponsibilityService;
     }

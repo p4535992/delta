@@ -15,6 +15,7 @@ import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.ws.client.WebServiceTransportException;
 import org.springframework.ws.soap.client.SoapFaultClientException;
 
 import smit.ametnik.services.Ametnik;
@@ -62,6 +63,12 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             userRegistry.fillPropertiesFromAmetnik(user, personProperties);
             getPersonService().setPersonProperties(userName, personProperties);
             addToAuthorityZone(person, userName, "AUTH.EXT.amr1");
+        } catch (WebServiceTransportException e) {
+            if(StringUtils.equals(e.getMessage(), "Not Found [404]")) {
+                log.warn("AMRService is not responding", e);
+            } else {
+                throw e;
+            }
         } catch (SoapFaultClientException e) {
             log.error("Didn't manage to get user with id '" + userName + "' from AMRService.", e);
             throw new AMRAuthenticationException("Didn't manage to get user with id '" + userName + "' from AMRService.", e);
@@ -71,10 +78,11 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
     private void addToAuthorityZone(NodeRef personRef, String userName, String zone) {
         // Add the person to an authentication zone (corresponding to an external user registry)
         // Let's preserve case on this child association
-        final List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(authorityService.getOrCreateZone(zone) //
+        final NodeRef authZone = authorityService.getOrCreateZone(zone);
+        final List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(authZone //
                 , ContentModel.ASSOC_IN_ZONE, QName.createQName("cm", userName, namespacePrefixResolver));
         if (childAssocs.size() == 0) { // is person already added to given zone ?
-            getNodeService().addChild(authorityService.getOrCreateZone(zone), personRef //
+            getNodeService().addChild(authZone, personRef //
                     , ContentModel.ASSOC_IN_ZONE, QName.createQName("cm", userName, namespacePrefixResolver));
         }
     }

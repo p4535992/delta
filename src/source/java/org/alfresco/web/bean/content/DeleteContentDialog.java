@@ -24,12 +24,11 @@
  */
 package org.alfresco.web.bean.content;
 
-import java.text.MessageFormat;
-
 import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.ml.MultilingualContentService;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
@@ -41,9 +40,7 @@ import org.apache.commons.logging.LogFactory;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
  * Bean implementation for the "Delete Content" dialog
@@ -73,7 +70,7 @@ public class DeleteContentDialog extends BaseDialogBean
          throws Exception
    {
       // get the content to delete
-      Node node = this.browseBean.getDocument();
+      Node node = getNodeToDelete();
       if (node != null)
       {
          if(ContentModel.TYPE_MULTILINGUAL_CONTAINER.equals(node.getType()))
@@ -135,40 +132,36 @@ public class DeleteContentDialog extends BaseDialogBean
     */
    public String getConfirmMessage()
    {
+      final Pair<String, Object[]> pair = getConfirmMessageKeyAndPlaceholders();
+      return MessageUtil.getMessage(pair.getFirst(), pair.getSecond());
+   }
+
+   protected Pair<String, Object[]> getConfirmMessageKeyAndPlaceholders() {
       String fileConfirmMsg = null;
 
-      Node document = this.browseBean.getDocument();
+      Node document = getNodeToDelete();
       String documentName = document.getName();
       String displayName = (String) getNodeService().getProperty(document.getNodeRef(), File.DISPLAY_NAME);
       documentName = (displayName == null) ? documentName : displayName;
 
       if(document.getType().equals(ContentModel.TYPE_MULTILINGUAL_CONTAINER))
       {
-          fileConfirmMsg = Application.getMessage(FacesContext.getCurrentInstance(),
-              "delete_ml_container_confirm");
+          fileConfirmMsg = "delete_ml_container_confirm";
       }
       else if(document.hasAspect(ContentModel.ASPECT_MULTILINGUAL_EMPTY_TRANSLATION))
       {
-          fileConfirmMsg = Application.getMessage(FacesContext.getCurrentInstance(),
-              "delete_empty_translation_confirm");
+          fileConfirmMsg = "delete_empty_translation_confirm";
       }
       else if(document.hasAspect(ContentModel.ASPECT_MULTILINGUAL_DOCUMENT))
       {
-          fileConfirmMsg = Application.getMessage(FacesContext.getCurrentInstance(),
-              "delete_translation_confirm");
-      }
-      else if (document.getType().equals(WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION)) {
-          fileConfirmMsg = MessageUtil.getMessage("delete_compound_workflow_confirm");
-          documentName = (String)document.getProperties().get(WorkflowCommonModel.Props.NAME);
-      }
-      else if (document.getType().equals(NotificationModel.Types.GENERAL_NOTIFICATION)) {
-          // FIXME: kaarel - see küll õige koht ei tohiks olla.. pigem DeleteFileDialog'is
-          fileConfirmMsg = MessageUtil.getMessage("notification_delete_notification_confirm");
+          fileConfirmMsg = "delete_translation_confirm";
+          
+      // XXX: could decouple getting confirmation message in a generic way, so this class could be moved to common
       } else if (document.getType().equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
-          fileConfirmMsg = MessageUtil.getMessage("imap_delete_outgoing_letter_confirm");
+          fileConfirmMsg = "imap_delete_outgoing_letter_confirm";
           documentName = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
       } else if (document.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
-          fileConfirmMsg = MessageUtil.getMessage("imap_delete_incoming_letter_confirm");
+          fileConfirmMsg = "imap_delete_incoming_letter_confirm";
           documentName = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
       }
       else
@@ -176,39 +169,44 @@ public class DeleteContentDialog extends BaseDialogBean
           String strHasMultipleParents = this.parameters.get("hasMultipleParents");
           if (strHasMultipleParents != null && "true".equals(strHasMultipleParents))
           {
-             fileConfirmMsg = Application.getMessage(FacesContext.getCurrentInstance(),
-                "delete_file_multiple_parents_confirm");
+             fileConfirmMsg = "delete_file_multiple_parents_confirm";
           }
           else
           {
-             fileConfirmMsg = Application.getMessage(FacesContext.getCurrentInstance(),
-                 "delete_file_confirm");
+             fileConfirmMsg = "delete_file_confirm";
           }
       }
-
-      return MessageFormat.format(fileConfirmMsg, new Object[] {documentName});
+      final Pair<String, Object[]> pair = new Pair<String, Object[]>(fileConfirmMsg, new Object[] {documentName});
+      return pair;
    }
    
+    protected Node getNodeToDelete() {
+        return this.browseBean.getDocument();
+    }
+
    @Override
     public String getContainerTitle() {
-       String title = null;
-       Node document = this.browseBean.getDocument();
-       
-       if (document.getType().equals(NotificationModel.Types.GENERAL_NOTIFICATION)) {
-           title = MessageUtil.getMessage("notification_delete_notification");
+       String title = getContainerTitleMsgKey();
+       if(title!=null) {
+           return MessageUtil.getMessage(title);
        }
-       else if (document.getType().equals(WorkflowCommonModel.Types.COMPOUND_WORKFLOW_DEFINITION)) {
-           title = MessageUtil.getMessage("delete_compound_workflow");
-       } else if (document.getType().equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
+       Node document = getNodeToDelete();
+       
+       // XXX: could decouple getting container title in a generic way, so this class could be moved to common
+       if (document.getType().equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
            title = MessageUtil.getMessage("imap_delete_outgoing_letter_title");
        } else if (document.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
            title = MessageUtil.getMessage("imap_delete_incoming_letter_title");
        }
-       
-       
        return title;
     }
-   
+
+   /**
+    * Container title for confirm page
+    */
+   public String getContainerTitleMsgKey() {
+       return null;
+   }
 
    /**
    * @param multilingualContentService the Multilingual Content Service to set

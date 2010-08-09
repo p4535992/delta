@@ -39,6 +39,11 @@ a {
 	color: #0860b0;
 }
 
+span.condense_control{
+	text-decoration: none;
+	color: #0860b0;
+}
+
 a:hover,a:focus {
 	text-decoration: underline;
 	color: #0860b0;

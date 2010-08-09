@@ -114,8 +114,9 @@ public class MenuBean implements Serializable {
         }
 
         try {
-            if (dialog.getContainerTitle() != null) {
-                title = dialog.getContainerTitle();
+            final String containerTitle = dialog.getContainerTitle();
+            if (containerTitle != null) {
+                title = containerTitle;
             } else if (config.getTitle() != null) {
                 title = config.getTitle();
             } else {
@@ -592,7 +593,7 @@ public class MenuBean implements Serializable {
         return 1;
     }
 
-    public void addShortcut(ActionEvent event) {
+    public void addShortcut(@SuppressWarnings("unused") ActionEvent event) {
         String shortcut = getShortcutFromClickedId();
         if (shortcut == null || shortcuts.contains(shortcut)) {
             return;
@@ -603,7 +604,7 @@ public class MenuBean implements Serializable {
         }
     }
 
-    public void removeShortcut(ActionEvent event) {
+    public void removeShortcut(@SuppressWarnings("unused") ActionEvent event) {
         String shortcut = getShortcutFromClickedId();
         if (shortcut == null || !shortcuts.contains(shortcut)) {
             return;
@@ -735,7 +736,7 @@ public class MenuBean implements Serializable {
 
     // END: getters / setters
 
-    public class DropdownMenuComparator implements Comparator<MenuItem> {
+    public static class DropdownMenuComparator implements Comparator<MenuItem> {
         @Override
         public int compare(MenuItem o1, MenuItem o2) {
             if (o1 != null && o2 != null && o1 instanceof DropdownMenuItem && o2 instanceof DropdownMenuItem) {

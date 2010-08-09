@@ -9,6 +9,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class RegisterDetailsDialog extends BaseDialogBean {
 
@@ -41,7 +42,7 @@ public class RegisterDetailsDialog extends BaseDialogBean {
         setRegister(getRegisterService().getRegisterNode(id));
     }
 
-    public void setupNewRegister(ActionEvent event) {
+    public void setupNewRegister(@SuppressWarnings("unused") ActionEvent event) {
         setRegister(getRegisterService().createRegister());
     }
 
@@ -56,7 +57,7 @@ public class RegisterDetailsDialog extends BaseDialogBean {
         // set updated values
         getRegisterService().updateProperties(register);
         this.register = null;
-
+        MessageUtil.addInfoMessage("save_success");
         return outcome;
     }
 

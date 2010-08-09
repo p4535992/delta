@@ -20,8 +20,8 @@
          <f:facet name="header">
             <h:outputText id="col1-sort" value="#{msg.classificator_value_name}" />
          </f:facet>
-         <h:inputText id="col1-in-txt" value="#{clValue.valueName}" readonly="#{clValue.readOnly}"
-            styleClass="#{(clValue.lastNameValidationSuccess) ? '' : 'error' }" />
+         <h:inputTextarea id="col1-in-txt" value="#{clValue.valueName}" readonly="#{clValue.readOnly}"
+            styleClass="expand19-200 #{(clValue.lastNameValidationSuccess) ? '' : 'error' }" />
       </a:column>
 
       <%-- Order column --%>

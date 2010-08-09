@@ -44,7 +44,7 @@
          <f:facet name="header">
             <h:outputText id="col4-sort" value="#{msg.version_view}" />
          </f:facet>
-         <a:actionLink id="col4-act1" value="#{r.version}" href="#{r.downloadUrl}" target="new" showLink="false" image="#{r.fileType16}"
+         <a:actionLink id="col4-act1" value="#{r.version}" href="#{r.downloadUrl}" target="_blank" showLink="false" image="#{r.fileType16}"
             styleClass="inlineAction" />
       </a:column>
 

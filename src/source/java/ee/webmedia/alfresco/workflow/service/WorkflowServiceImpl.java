@@ -14,6 +14,7 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.requireStatusUn
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -31,6 +32,7 @@ import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
@@ -62,6 +64,8 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
  */
 public class WorkflowServiceImpl implements WorkflowService, WorkflowModifications {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(WorkflowServiceImpl.class);
+    private static final int SIGNATURE_TASK_OUTCOME_NOT_SIGNED = 0;
+    private static final int REVIEW_TASK_OUTCOME_REJECTED = 2;
 
     /*
      * There are two ways to be notified of events:
@@ -134,7 +138,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     public List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(QName documentType, String documentStatus) {
         boolean isFinished = DocumentStatus.FINISHED.equals(documentStatus);
         List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = getCompoundWorkflowDefinitions();
-        outer:
+        outer: //
         for (Iterator<CompoundWorkflowDefinition> i = compoundWorkflowDefinitions.iterator(); i.hasNext();) {
             CompoundWorkflowDefinition compoundWorkflowDefinition = i.next();
             if (!compoundWorkflowDefinition.getDocumentTypes().contains(documentType)) {
@@ -144,8 +148,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             if (isFinished) {
                 for (Workflow workflow : compoundWorkflowDefinition.getWorkflows()) {
                     QName workflowType = workflow.getNode().getType();
-                    if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(workflowType) || 
-                            WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(workflowType) || 
+                    if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(workflowType) ||
+                            WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(workflowType) ||
                             WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(workflowType)) {
                         i.remove();
                         continue outer;
@@ -520,6 +524,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         // operate on compoundWorkflow that was fetched fresh from repo
         CompoundWorkflow compoundWorkflow = getCompoundWorkflow(task.getParent().getParent().getNode().getNodeRef());
         stepAndCheck(queue, compoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
+
         changed = saveCompoundWorkflow(queue, compoundWorkflow, null);
         if (log.isDebugEnabled()) {
             log.debug("Saved " + compoundWorkflow);
@@ -1197,11 +1202,20 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private void setTaskFinishedOrUnfinished(WorkflowEventQueue queue, Task task, Status newStatus, String outcomeLabelId, int outcomeIndex) {
-        if (!(newStatus == Status.FINISHED || newStatus == newStatus.UNFINISHED) || isStatus(task, Status.FINISHED, newStatus)) {
+        if (!(newStatus == Status.FINISHED || newStatus == Status.UNFINISHED) || isStatus(task, Status.FINISHED, newStatus)) {
             throw new RuntimeException("New or old status is illegal, new='" + newStatus.getName() + "', old " + task);
         }
 
         setStatus(queue, task, newStatus);
+        if (outcomeIndex == SIGNATURE_TASK_OUTCOME_NOT_SIGNED && WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(task.getNode().getType())) {
+            stopIfNeeded(task, queue);
+        } else if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(task.getNode().getType())) {
+            // sometimes here value of TEMP_OUTCOME is Integer, sometimes String
+            final Integer tempOutcome = DefaultTypeConverter.INSTANCE.convert(Integer.class, task.getProp(WorkflowSpecificModel.Props.TEMP_OUTCOME));
+            if (tempOutcome == REVIEW_TASK_OUTCOME_REJECTED) {
+                stopIfNeeded(task, queue);
+            }
+        }
         task.setCompletedDateTime(queue.getNow());
 
         String outcomeText = null;
@@ -1213,6 +1227,39 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
         }
         task.setOutcome(outcomeText, outcomeIndex);
+    }
+
+    /**
+     * Common logic when signature task is not signed or review task is not accepted(rejected)
+     * @param task - signature task or review task that was rejected
+     * @param queue
+     */
+    private void stopIfNeeded(Task task, WorkflowEventQueue queue) {
+        final Workflow parentWorkFlow = task.getParent();
+        final CompoundWorkflow compoundWorkflow = parentWorkFlow.getParent();
+        final Date stoppedDateTime = queue.getNow();
+        compoundWorkflow.setStoppedDateTime(stoppedDateTime);
+        setStatus(queue, compoundWorkflow, Status.STOPPED);
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            if (WorkflowUtil.isStatus(workflow, Status.NEW)) {
+                workflow.setStoppedDateTime(stoppedDateTime);
+            }
+            boolean isParentWorkflow = parentWorkFlow.getNode().getNodeRef().equals(workflow.getNode().getNodeRef()) ? true : false;
+            boolean forceStopParentWorkflow = false;
+            for (Task aTask : workflow.getTasks()) {
+                if (WorkflowUtil.isStatus(aTask, Status.NEW)) {
+                    aTask.setStoppedDateTime(stoppedDateTime);
+                    if (isParentWorkflow) {
+                        forceStopParentWorkflow = true;
+                    }
+                }
+            }
+            if (forceStopParentWorkflow) {
+                setStatus(queue, parentWorkFlow, Status.STOPPED);
+                parentWorkFlow.setStoppedDateTime(stoppedDateTime);
+            }
+        }
+        saveCompoundWorkflow(queue, compoundWorkflow, null);
     }
 
     private void setTaskFinished(WorkflowEventQueue queue, Task task, int outcomeIndex) {

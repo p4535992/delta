@@ -36,6 +36,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
         getFunctionsService().saveOrUpdate(function);
         resetData();
         getMenuService().menuUpdated(); // We need to refresh the left-hand sub-menu
+        MessageUtil.addInfoMessage("save_success");
         return outcome;
     }
 
@@ -80,6 +81,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
                 MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), ERROR_MESSAGE_SERIES_EXIST);
                 return null;
             }
+            MessageUtil.addInfoMessage("function_close_success");
             propertySheet.getChildren().clear();
         }
         return null;
@@ -89,6 +91,7 @@ public class FunctionsDetailsDialog extends BaseDialogBean {
         if (isClosed()) {
             propertySheet.getChildren().clear();
             getFunctionsService().reopenFunction(function);
+            MessageUtil.addInfoMessage("function_reopen_success");
         }
         return null;
     }

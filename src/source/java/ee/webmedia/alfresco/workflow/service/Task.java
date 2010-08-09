@@ -27,7 +27,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
  */
 public class Task extends BaseWorkflowObject implements Serializable, Comparable<Task>, CssStylable {
     private static final long serialVersionUID = 1L;
-    
+
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
     public static enum Action {
@@ -138,13 +138,9 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
     public String getOutcomeAndComments() {
         final String outcome = getOutcome();
         final String comment = getComment();
-        if(StringUtils.isNotBlank(comment)) {
+        if (StringUtils.isNotBlank(comment)) {
             String outcomeWithSeparator = (StringUtils.isNotBlank(outcome)) ? (outcome + ": ") : "";
-            String outcomeAndComment = outcomeWithSeparator + comment;
-            if(outcomeAndComment.length() > 150) {
-                outcomeAndComment = outcomeAndComment.substring(0, 150) + "...";
-            }
-            return outcomeAndComment;
+            return outcomeWithSeparator + comment;
         }
         return outcome;
     }
@@ -172,7 +168,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
     public Date getDueDate() {
         return getProp(WorkflowSpecificModel.Props.DUE_DATE);
     }
-    
+
     public String getDueDateStr() {
         return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
     }
@@ -182,45 +178,20 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         Object resolution = getNode().getProperties().get(PROP_RESOLUTION);
         return (resolution != null) ? resolution.toString() : "";
     }
-    
-    public String getShortResolution() {
-        String resolution = getResolution();
-        if(resolution.length() > 150) {
-            return resolution.substring(0, 150).concat("...");
-        }
-        return resolution;
-    }
-    
-    public int getResolutionLength() {
-        return getResolution().length();
-    }
-    
+
     public void setComment(String comment) {
         if (getNode().hasAspect(WorkflowSpecificModel.Aspects.COMMENT)) {
             setProp(WorkflowSpecificModel.Props.COMMENT, comment);
-        }
-        else {
+        } else {
             throw new RuntimeException("Can not set COMMENT value, task does not have COMMENT aspect.");
         }
     }
-    
+
     public String getComment() {
-        if(getNode().hasAspect(WorkflowSpecificModel.Aspects.COMMENT) && getProp(WorkflowSpecificModel.Props.COMMENT) != null) {
+        if (getNode().hasAspect(WorkflowSpecificModel.Aspects.COMMENT) && getProp(WorkflowSpecificModel.Props.COMMENT) != null) {
             return getProp(WorkflowSpecificModel.Props.COMMENT).toString();
         }
         return "";
-    }
-    
-    public String getShortComment() {
-        String comment = getComment();
-        if(comment.length() > 150) {
-            return comment.substring(0, 150).concat("...");
-        }
-        return comment;
-    }
-    
-    public int getCommentLength() {
-        return getComment().length();
     }
 
     // Can only be called from web layer
@@ -280,16 +251,16 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
             completedOverdue = completedDay.after(dueDay);
         }
         setProp(WorkflowSpecificModel.Props.COMPLETED_OVERDUE, completedOverdue);
-        
+
         // Set workflowResolution value which is used in task search
         if (getNode().getNodeRef() == null) {
             setProp(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION, parent.getProp(WorkflowSpecificModel.Props.RESOLUTION));
         }
-        
+
         // Check if the new task is under CompoundWorkflow (not Definition) then add Searchable aspect
         if (getNode().getNodeRef() == null && !(getParent().getParent() instanceof CompoundWorkflowDefinition)) {
             getNode().getAspects().add(WorkflowSpecificModel.Aspects.SEARCHABLE);
         }
     };
-    
+
 }

@@ -7,18 +7,17 @@ import java.util.Map;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import ee.webmedia.alfresco.substitute.model.Substitute;
-import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.users.UsersBeanProperties;
 import org.alfresco.web.bean.users.UsersDialog;
-import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 
@@ -48,12 +47,12 @@ public class UserDetailsDialog extends BaseDialogBean {
                 (SubstituteListDialog.NotificationSender) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), NOTIFICATION_SENDER_LABEL);
         if (notificationSender != null) {
             substituteListDialog.setNotificationSender(notificationSender);
-        }        
+        }
     }
 
     /*
-    * This is a read-only dialog, so we have nothing to do here (Save/OK button isn't displayed)
-    */
+     * This is a read-only dialog, so we have nothing to do here (Save/OK button isn't displayed)
+     */
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         substituteListDialog.save(context);
@@ -68,7 +67,7 @@ public class UserDetailsDialog extends BaseDialogBean {
         return super.cancel();
     }
 
-     @Override
+    @Override
     public Object getActionsContext() {
         // since we are using actions, but not action context,
         // we don't need instance of NavigationBean that is used in the overloadable method
@@ -86,19 +85,18 @@ public class UserDetailsDialog extends BaseDialogBean {
      * Person Node in setPerson() which can be retrieved on the action page from
      * UsersDialog.getCurrentUserNode().
      */
-    public void setupCurrentUser(ActionEvent event)
-    {
-       Node node = new Node(properties.getPersonService().getPerson(AuthenticationUtil.getRunAsUser()));
-       // Eagerly load properties
-       node.getProperties();
+    public void setupCurrentUser(@SuppressWarnings("unused") ActionEvent event) {
+        Node node = new Node(properties.getPersonService().getPerson(AuthenticationUtil.getRunAsUser()));
+        // Eagerly load properties
+        node.getProperties();
 
-       // take care of UsersDialog
-       UsersDialog dialog = (UsersDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UsersDialog.BEAN_NAME);
-       dialog.setupUserAction(node.getId());
-       
-       List<Node> users = new ArrayList<Node>(1);
-       users.add(node);
-       this.user = getOrganizationStructureService().setUsersUnit(users).get(0);
+        // take care of UsersDialog
+        UsersDialog dialog = (UsersDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UsersDialog.BEAN_NAME);
+        dialog.setupUserAction(node.getId());
+
+        List<Node> users = new ArrayList<Node>(1);
+        users.add(node);
+        this.user = getOrganizationStructureService().setUsersUnit(users).get(0);
     }
 
     /**
@@ -138,7 +136,7 @@ public class UserDetailsDialog extends BaseDialogBean {
         this.user = user;
     }
 
-    ////
+    // //
     public List<Substitute> getSubstitutes() {
         return substituteListDialog.getSubstitutes();
     }
@@ -148,7 +146,7 @@ public class UserDetailsDialog extends BaseDialogBean {
     }
 
     public void setPersonToSubstitute(String userName, Substitute substitute) {
-        substituteListDialog.setPersonToSubstitute(userName, substitute);        
+        substituteListDialog.setPersonToSubstitute(userName, substitute);
     }
 
     public void addNewValue(ActionEvent event) {
@@ -159,10 +157,11 @@ public class UserDetailsDialog extends BaseDialogBean {
         return substituteListDialog.getEmailSubject();
     }
 
-    public Map getEmailAddress() {
+    public Map<String, String> getEmailAddress() {
         return substituteListDialog.getEmailAddress();
     }
-    /////
+
+    // ///
 
     protected UserService getUserService() {
         if (userService == null) {

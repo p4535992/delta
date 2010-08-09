@@ -60,6 +60,7 @@ public class UploadFileInput extends UIInput implements NamingContainer {
             writer.write(Utils.generateFormSubmit(context, this, uniqueId, EVENT_REMOVE));
             writer.write("\">");
             writer.write("</a>");
+            // FIXME: Kaarel - see pole küll õige koht töövoo spetsiifiliste teadete jaoks(pealegi seda teadet common'i projektis pole)
             writer.write(Application.getMessage(context, "opinion_file_uploaded"));
         } else {
             //Javascript functions with unique names

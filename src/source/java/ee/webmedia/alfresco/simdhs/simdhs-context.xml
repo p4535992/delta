@@ -71,4 +71,9 @@
       </property>
    </bean>
 
+   <!-- START: web beans: -->
+
+   <bean id="InformingDeleteNodeDialog" class="ee.webmedia.alfresco.common.web.InformingDeleteNodeDialog" scope="session" />
+
+   <!-- END: web beans: -->
 </beans>

@@ -17,7 +17,7 @@
          </action>
 
           <action id="volume_archive">
-              <evaluator>ee.webmedia.alfresco.volume.web.evaluator.VolumeClosedActionEvaluator</evaluator>
+              <evaluator>ee.webmedia.alfresco.volume.web.evaluator.CanArchiveVolumeEvaluator</evaluator>
               <label-id>volume_archive</label-id>
               <image>/images/icons/versioned_properties.gif</image>
               <action-listener>#{VolumeDetailsDialog.archive}</action-listener>

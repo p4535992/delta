@@ -39,8 +39,12 @@
             <h:outputText id="col3-txt" value="#{msg.workflow_compound_actions}" />
          </f:facet>
          <a:actionLink id="col3-act2" value="#{msg.workflow_compound_delete}" tooltip="#{msg.workflow_compound_delete}"
-            actionListener="#{CompoundWorkflowDefinitionListDialog.delete}" action="dialog:deleteFile" showLink="false" image="/images/icons/delete.gif">
+            actionListener="#{InformingDeleteNodeDialog.setupDelete}" action="dialog:informingDeleteNodeDialog" showLink="false" image="/images/icons/delete.gif">
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
+            <f:param name="containerTitleMsgKey" value="delete_compound_workflow" />
+            <f:param name="confirmMsgKey" value="notification_delete_notification_confirm" />
+            <f:param name="deletableObjectNameProp" value="wfc:name" />
+            <f:param name="successMsgKey" value="workflow_compound_delete_compound_success" />
          </a:actionLink>
       </a:column>
 

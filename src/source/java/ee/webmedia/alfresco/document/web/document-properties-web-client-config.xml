@@ -512,7 +512,7 @@
          <separator name="vacsep2" component-generator="SeparatorGenerator" />
          <show-property name="{temp}vacationSubstitute" show-in-edit-mode="false" display-label-id="document_vacationSubstitute" component-generator="UnescapedOutputTextGenerator"  />
          <show-property name="docspec:substituteName" show-in-view-mode="false" display-label-id="document_vacationSubstitute" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setVacationSubstitute}" dialogTitleId="users_search_title" 
-         component-generator="MultiValueEditorGenerator" addLabelId="document_add_substitute" propsGeneration="
+         component-generator="MultiValueEditorGenerator" addLabelId="document_add_substitute" ajaxParentLevel="1" propsGeneration="
           docspec:substituteName¤¤styleClass=medium
          ,docspec:substituteJobTitle¤TextAreaGenerator¤styleClass=expand19-200 width120¤read-only=true
          ,docspec:substitutionBeginDate¤DatePickerGenerator¤mandatoryIf=docspec:substituteName!=null¤mandatoryIfLabelId=document_substitutionBeginDate_mandatoryIf
@@ -532,7 +532,8 @@
       <property-sheet>
          <show-property name="signer" show-in-edit-mode="false" display-label-id="document_signer" />
          <show-property name="doccom:signerName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setSigner}" dialogTitleId="users_search_title" styleClass="long" ajaxParentLevel="1" />
-         <!-- doccom:signerJobTitle moved dow, so it doesn't affect the order of properties in contract-->
+         <!-- doccom:signerJobTitle moved dow, so it doesn't affect the order of properties in contract
+-->
       </property-sheet>
    </config>
 
@@ -544,14 +545,16 @@
       </property-sheet>
    </config>
       
-    <!-- docspec:firstPartyContactPerson IS MANDATORY for docsub:contractSim-->
+    <!-- docspec:firstPartyContactPerson IS MANDATORY for docsub:contractSim
+-->
    <config evaluator="node-type" condition="docsub:contractSim">
       <property-sheet>
          <show-property name="docspec:firstPartyContactPerson" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" forcedMandatory="true" />
       </property-sheet>
    </config>
 
-    <!-- docspec:firstPartyContactPerson IS NOT MANDATORY for docsub:contractSmit-->  
+    <!-- docspec:firstPartyContactPerson IS NOT MANDATORY for docsub:contractSmit
+-->  
    <config evaluator="node-type" condition="docsub:contractSmit">
       <property-sheet>
          <show-property name="docspec:firstPartyContactPerson" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
@@ -671,7 +674,8 @@
       </property-sheet>
    </config>
    
-   <!-- For these types only additional recipient aspect is present, but the info message is needed-->
+   <!-- For these types only additional recipient aspect is present, but the info message is needed
+-->
    <config evaluator="node-type" condition="docsub:contractSmit,docsub:contractSim">
       <property-sheet>
          <separator name="recipient-note-sep" component-generator="RecipientNoteGenerator" show-in-view-mode="false" />

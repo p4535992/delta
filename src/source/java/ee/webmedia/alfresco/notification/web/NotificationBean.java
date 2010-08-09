@@ -20,7 +20,7 @@ public class NotificationBean implements Serializable {
     private int updateCount = 0;
     
     private boolean isUpdated() {
-            return updateCount != notificationService.getUpdateCount();
+            return updateCount != getNotificationService().getUpdateCount();
     }
 
     //START: setters/getters
@@ -39,8 +39,8 @@ public class NotificationBean implements Serializable {
 
     public List<GeneralNotification> getGeneralNotifications() {
         if(generalNotifications == null || isUpdated()) {
-            generalNotifications = notificationService.getActiveGeneralNotifications();
-            setUpdateCount(notificationService.getUpdateCount());
+            generalNotifications = getNotificationService().getActiveGeneralNotifications();
+            setUpdateCount(getNotificationService().getUpdateCount());
         }
         return generalNotifications;
     }

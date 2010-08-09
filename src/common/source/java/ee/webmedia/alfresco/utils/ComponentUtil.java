@@ -63,6 +63,11 @@ public class ComponentUtil {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ComponentUtil.class);
     private static GeneralService generalService;
 
+    public static UIComponent makeCondenced(final UIComponent component, int condenceSize) {
+        ComponentUtil.putAttribute(component, "styleClass", "condence" + condenceSize);
+        return component;
+    }
+
     /**
      * Put attribute to given component
      * 
@@ -82,6 +87,11 @@ public class ComponentUtil {
         @SuppressWarnings("unchecked")
         final Map<String, Object> attributes = component.getAttributes();
         return DefaultTypeConverter.INSTANCE.convert(requiredClazz, attributes.get(key));
+    }
+
+    public static UIComponent setTooltip(final UIComponent component, final String tooltip) {
+        putAttribute(component, "title", tooltip);
+        return component;
     }
 
     /**

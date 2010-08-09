@@ -7,8 +7,6 @@ import java.util.List;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
 import javax.faces.component.UISelectItem;
-import javax.faces.component.html.HtmlSelectManyListbox;
-import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
@@ -21,6 +19,7 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -39,19 +38,12 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
 
     @Override
     public UIComponent generateSelectComponent(FacesContext context, String id, boolean multiValued) {
+        final UIComponent selectComponent = super.generateSelectComponent(context, id, multiValued);
         if (!log.isDebugEnabled()) {
-            return super.generateSelectComponent(context, id, multiValued);
+            return selectComponent;
         }
         // for debugging purpose in development
-        final UIComponent selectComponent = super.generateSelectComponent(context, id, multiValued);
-        if (selectComponent instanceof HtmlSelectOneMenu) {
-            HtmlSelectOneMenu selectOne = (HtmlSelectOneMenu) selectComponent;
-            selectOne.setTitle(MessageUtil.getMessage("classificator_source", getClassificatorName()));
-        } else if (selectComponent instanceof HtmlSelectManyListbox) {
-            HtmlSelectManyListbox selectMany = (HtmlSelectManyListbox) selectComponent;
-            selectMany.setTitle(MessageUtil.getMessage("classificator_source", getClassificatorName()));
-        }
-        return selectComponent;
+        return ComponentUtil.setTooltip(selectComponent, MessageUtil.getMessage("classificator_source", getClassificatorName()));
     }
 
     @Override

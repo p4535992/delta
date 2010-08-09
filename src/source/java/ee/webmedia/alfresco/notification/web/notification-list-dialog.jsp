@@ -52,9 +52,12 @@
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          
-         <a:actionLink id="col5-act2" value="#{msg.notification_delete}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteNotification" showLink="false"
+         <a:actionLink id="col5-act2" value="#{msg.notification_delete}" actionListener="#{DeleteNotificationDialog.setupDelete}" action="dialog:deleteNotification" showLink="false"
             image="/images/icons/delete.gif">
-            <f:param name="id" value="#{r.nodeRef.id}" />
+            <f:param name="nodeRef" value="#{r.nodeRef}" />
+            <f:param name="containerTitleMsgKey" value="notification_delete_notification" />
+            <f:param name="confirmMsgKey" value="notification_delete_notification_confirm" />
+            <f:param name="successMsgKey" value="notification_delete_success" />
          </a:actionLink>
          
       </a:column>

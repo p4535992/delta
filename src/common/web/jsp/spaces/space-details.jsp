@@ -68,8 +68,8 @@
       <a:panel label="#{msg.links}" id="links-panel" progressive="true" expanded='#{DialogManager.bean.panels["links-panel"]}'
          expandedActionListener="#{DialogManager.bean.expandPanel}">
 
-   <a:actionLink value="#{msg.view_in_webdav}" href="#{DialogManager.bean.webdavUrl}" target="new" id="link2" />
-   <a:actionLink value="#{msg.view_in_cifs}" href="#{DialogManager.bean.cifsPath}" target="new" id="link3" />
+   <a:actionLink value="#{msg.view_in_webdav}" href="#{DialogManager.bean.webdavUrl}" target="_blank" id="link2" />
+   <a:actionLink value="#{msg.view_in_cifs}" href="#{DialogManager.bean.cifsPath}" target="_blank" id="link3" />
    
    <f:verbatim>
    <a href='

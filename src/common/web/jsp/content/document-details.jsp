@@ -66,10 +66,10 @@
 <a:panel label="#{msg.view_links}" id="preview-panel" progressive="true" expanded='#{DialogManager.bean.panels["preview-panel"]}'
    expandedActionListener="#{DialogManager.bean.expandPanel}">
 
-   <a:actionLink value="#{msg.view_in_browser}" href="#{DialogManager.bean.browserUrl}" target="new" id="link1" />
-   <a:actionLink value="#{msg.view_in_webdav}" href="#{DialogManager.bean.webdavUrl}" target="new" id="link2" />
-   <a:actionLink value="#{msg.view_in_cifs}" href="#{DialogManager.bean.cifsPath}" target="new" id="link3" />
-   <a:actionLink value="#{msg.download_content}" href="#{DialogManager.bean.downloadUrl}" target="new" id="link4" />
+   <a:actionLink value="#{msg.view_in_browser}" href="#{DialogManager.bean.browserUrl}" target="_blank" id="link1" />
+   <a:actionLink value="#{msg.view_in_webdav}" href="#{DialogManager.bean.webdavUrl}" target="_blank" id="link2" />
+   <a:actionLink value="#{msg.view_in_cifs}" href="#{DialogManager.bean.cifsPath}" target="_blank" id="link3" />
+   <a:actionLink value="#{msg.download_content}" href="#{DialogManager.bean.downloadUrl}" target="_blank" id="link4" />
    
    <f:verbatim>
    <a href='
@@ -121,7 +121,7 @@
 <a:panel label="#{msg.properties}" id="properties-panel-locked" progressive="true" rendered="#{DialogManager.bean.locked}"
    expanded='#{DialogManager.bean.panels["properties-panel-locked"]}' expandedActionListener="#{DialogManager.bean.expandPanel}">
 
-   <a:actionLink id="doc-logo2" value="#{DialogManager.bean.name}" href="#{DialogManager.bean.url}" target="new"
+   <a:actionLink id="doc-logo2" value="#{DialogManager.bean.name}" href="#{DialogManager.bean.url}" target="_blank"
       image="#{DialogManager.bean.document.properties.fileType32}" showLink="false" />
    <r:propertySheetGrid id="document-props-locked" value="#{DialogManager.bean.document}" var="documentProps" columns="1" mode="view"
       labelStyleClass="propertiesLabel" externalConfig="true" />
@@ -170,7 +170,7 @@
             <f:facet name="header">
                <a:sortLink label="#{msg.name}" value="Name" mode="case-insensitive" styleClass="header" />
             </f:facet>
-            <a:actionLink id="view-name" value="#{r.name}" href="#{r.url}" target="new" />
+            <a:actionLink id="view-name" value="#{r.name}" href="#{r.url}" target="_blank" />
          </a:column>
 
          <%-- Language columns --%>
@@ -186,7 +186,7 @@
             <f:facet name="header">
                <h:outputText value="#{msg.actions}" />
             </f:facet>
-            <a:actionLink id="view-link" value="#{msg.view}" href="#{r.url}" target="new" />
+            <a:actionLink id="view-link" value="#{msg.view}" href="#{r.url}" target="_blank" />
             <%--
                                              Start the new edition wizard from this translation
                                           --%>
@@ -267,7 +267,7 @@
          <f:facet name="header">
             <a:sortLink label="#{msg.version}" value="versionLabel" mode="case-insensitive" styleClass="header" />
          </f:facet>
-         <a:actionLink id="label-link" value="#{r.versionLabel}" href="#{r.url}" target="new" rendered="#{r.url != null}" />
+         <a:actionLink id="label-link" value="#{r.versionLabel}" href="#{r.url}" target="_blank" rendered="#{r.url != null}" />
          <a:actionLink id="label-no-link" value="#{r.versionLabel}" rendered="#{r.url == null}" />
       </a:column>
 
@@ -308,7 +308,7 @@
             <f:param id="pm2" name="versionLabel" value="#{r.versionLabel}" />
          </a:actionLink>
          <h:outputText id="space" value=" " />
-         <a:actionLink id="view-link" value="#{msg.view}" href="#{r.url}" target="new" rendered="#{r.url != null}" />
+         <a:actionLink id="view-link" value="#{msg.view}" href="#{r.url}" target="_blank" rendered="#{r.url != null}" />
       </a:column>
 
       <a:dataPager styleClass="pager" id="pager-version-history" />

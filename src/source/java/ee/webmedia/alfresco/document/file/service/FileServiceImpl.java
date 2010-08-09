@@ -26,7 +26,6 @@ import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AuthenticationService;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
@@ -53,7 +52,6 @@ public class FileServiceImpl implements FileService {
     private UserService userService;
     private SignatureService signatureService;
     private AuthenticationService authenticationService;
-    private PermissionService permissionService;
     private ContentService contentService;
     private GeneralService generalService;
     private DocumentLogService documentLogService;
@@ -61,12 +59,14 @@ public class FileServiceImpl implements FileService {
     private String scannedFilesPath;
 
     @Override
-    public void toggleActive(NodeRef nodeRef) {
+    public boolean toggleActive(NodeRef nodeRef) {
         boolean active = true; // If file doesn't have the flag set, then it hasn't been toggled yet, thus active
         if (nodeService.getProperty(nodeRef, File.ACTIVE) != null) {
             active = Boolean.parseBoolean(nodeService.getProperty(nodeRef, File.ACTIVE).toString());
         }
-        nodeService.setProperty(nodeRef, File.ACTIVE, !active);
+        active = !active;
+        nodeService.setProperty(nodeRef, File.ACTIVE, active);
+        return active;
     }
 
     @Override
@@ -167,8 +167,8 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public void transformToPdf(NodeRef file) {
-        generatePdf(nodeService.getPrimaryParent(file).getParentRef(), file);
+    public FileInfo transformToPdf(NodeRef file) {
+        return generatePdf(nodeService.getPrimaryParent(file).getParentRef(), file);
     }
 
     private FileInfo generatePdf(NodeRef parent, NodeRef file) {
@@ -392,10 +392,6 @@ public class FileServiceImpl implements FileService {
 
     public void setAuthenticationService(AuthenticationService authenticationService) {
         this.authenticationService = authenticationService;
-    }
-
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
     }
 
     public void setContentService(ContentService contentService) {

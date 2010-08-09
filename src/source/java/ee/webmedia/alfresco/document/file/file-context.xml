@@ -37,7 +37,6 @@
       <property name="userService" ref="UserService" />
       <property name="signatureService" ref="SignatureService" />
       <property name="authenticationService" ref="AuthenticationService" />
-      <property name="permissionService" ref="PermissionService" />
       <property name="contentService" ref="ContentService" />
       <property name="generalService" ref="GeneralService"/>
       <property name="documentLogService" ref="DocumentLogService"/>

@@ -23,6 +23,7 @@ public class ContactGroupDeleteDialog extends ContactGroupBaseDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         getAddressbookService().deleteNode(getCurrentNode().getNodeRef());
         reset();
+        MessageUtil.addInfoMessage("addressbook_contactgroup_delete_success");
         return outcome;
     }
     

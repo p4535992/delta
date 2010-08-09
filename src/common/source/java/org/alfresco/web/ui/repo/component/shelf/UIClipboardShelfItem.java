@@ -227,7 +227,7 @@ public class UIClipboardShelfItem extends UIShelfItem
                out.write("<a href='");
                out.write(context.getExternalContext().getRequestContextPath());
                out.write(DownloadContentServlet.generateBrowserURL(item.getNodeRef(), item.getName()));
-               out.write("' target='new'>");
+               out.write("' target='_blank'>");
                out.write(Utils.cropEncode(item.getName(), 28));
                out.write("</a>");
             }

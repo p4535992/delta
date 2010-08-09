@@ -72,6 +72,18 @@
    <config>
       <actions>
 
+         <action id="addressbook_add_contact">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>addressbook_contactgroup_add_title</label-id>
+            <tooltip-id>addressbook_contactgroup_add_title</tooltip-id>
+            <image>/images/icons/add_group.gif</image>
+            <action>dialog:addressbookAddContactGroup</action>
+            <action-listener>#{ContactGroupAddDialog.setupAddGroup}</action-listener>
+            <params>
+               <param name="nodeRef">#{ContactGroupContactsDialog.actionsContext.nodeRef}</param>
+            </params>
+         </action>
+
          <!-- Addressbook action-->
          <action id="addressbook_add_org">
             <evaluator>ee.webmedia.alfresco.addressbook.web.evaluator.AddressbookCreateChildrenEvaluator</evaluator>
@@ -156,6 +168,10 @@
             <action idref="addressbook_contactgroup_add" />
          </action-group>
 
+         <action-group id="addressbook_contactgroup_contacts_menu">
+            <action idref="addressbook_add_contact" />
+         </action-group>
+
       </actions>
       <dialogs>
 
@@ -178,7 +194,7 @@
             icon="/images/icons/users_large.gif" title-id="addressbook_contactgroup_title" actions-config-id="addressbook_contactgroup_menu" show-ok-button="false" />
             
          <dialog name="addressbookManageContacts" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-contacts-dialog.jsp" managed-bean="ContactGroupContactsDialog"
-            icon="/images/icons/users_large.gif" title-id="addressbook_contactgroup_title" />
+            icon="/images/icons/users_large.gif" title-id="addressbook_contactgroup_title" actions-config-id="addressbook_contactgroup_contacts_menu" />
             
          <dialog name="addressbookCreateContactGroup" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-create-dialog.jsp" managed-bean="ContactGroupCreateDialog"
             icon="/images/icons/create_group_large.gif" title-id="addressbook_contactgroup_create_title" />
@@ -188,6 +204,8 @@
             
          <dialog name="addressbookDeleteContactGroup" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-delete-dialog.jsp" managed-bean="ContactGroupDeleteDialog"
             icon="/images/icons/delete_group_large.gif" />
+
+         <dialog name="confirmAddDuplicate" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/confirmAddDuplicate.jsp" managed-bean="ConfirmAddDuplicateDialog" icon="/images/icons/approve.gif" title-id="confirm_addDuplicate" />
 
       </dialogs>
    </config>

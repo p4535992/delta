@@ -30,6 +30,7 @@
 <%@ taglib uri="/WEB-INF/wm.tld" prefix="wm" %> 
 
 <r:loadBundle var="msg"/>
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/translations.jsp" />
 <div class="submit-protection-layer"></div>
 <%-- Begin Header --%>
 <a:panel id="header">
