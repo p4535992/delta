@@ -11,6 +11,8 @@ import javax.faces.model.DataModel;
 import javax.faces.model.ListDataModel;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
@@ -55,9 +57,20 @@ public class PermissionsAddDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        for (Authority authority : authorities) {
-            getPermissionService().setPermission(nodeRef, authority.getAuthority(), permission, true);
-        }
+        // We need to run this in elevated rights, so regular users could use PermissionAddDialog
+        // TODO - Assign correct permissions 
+        AuthenticationUtil.runAs(new RunAsWork<Void>() {
+
+            @Override
+            public Void doWork() throws Exception {
+                for (Authority authority : authorities) {
+                    getPermissionService().setPermission(nodeRef, authority.getAuthority(), permission, true);
+                }
+                return null;
+            }
+
+        }, AuthenticationUtil.getSystemUserName());
+    
         reset();
         return outcome;
     }

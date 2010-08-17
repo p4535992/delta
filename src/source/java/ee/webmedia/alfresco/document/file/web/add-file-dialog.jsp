@@ -46,7 +46,7 @@
 	   <applet class="file-upload-applet" width="750" height="400" archive='<c:url value="/applet/jumploader_z.jar" />' code="jmaster.jumploader.app.JumpLoaderApplet.class" name="jumpLoaderApplet">
 	    	<param value="false" name="uc_imageEditorEnabled" />
 			<param value="<c:url value='/uploadFileServlet' />" name="uc_uploadUrl" />
-			<param value="1000000" name="uc_partitionLength" />
+			<param value="-1" name="uc_partitionLength" />
 			<param name="ac_fireUploaderStatusChanged" value="false" />
 			<param name="ac_messagesZipUrl" value='<c:url value="/applet/messages_et.zip" />'/>
 			<param name="vc_lookAndFeel" value="system" />

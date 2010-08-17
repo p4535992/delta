@@ -15,6 +15,7 @@ import org.alfresco.model.ApplicationModel;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.configuration.ConfigurableService;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -191,18 +192,26 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<Authority> getAuthorities(NodeRef nodeRef, String permission) {
-        List<Authority> authorities = new ArrayList<Authority>();
-        Set<AccessPermission> permissions = permissionService.getAllSetPermissions(nodeRef);
-        for (AccessPermission accessPermission : permissions) {
+    public List<Authority> getAuthorities(final NodeRef nodeRef, final String permission) {
+        
+        // We need to run this in elevated rights, so regular users could use PermissionListDialog 
+        return AuthenticationUtil.runAs(new RunAsWork<List<Authority>>() {
+            @Override
+            public List<Authority> doWork() throws Exception {
+                List<Authority> authorities = new ArrayList<Authority>();
 
-            if (accessPermission.isSetDirectly() && accessPermission.getAccessStatus() == AccessStatus.ALLOWED && accessPermission.getPermission().equals(permission) &&
-                    (accessPermission.getAuthorityType() == AuthorityType.USER || accessPermission.getAuthorityType() == AuthorityType.GROUP)) {
+                Set<AccessPermission> permissions = permissionService.getAllSetPermissions(nodeRef);
+                for (AccessPermission accessPermission : permissions) {
 
-                authorities.add(getAuthority(accessPermission.getAuthority(), accessPermission.getAuthorityType(), false));
+                    if (accessPermission.isSetDirectly() && accessPermission.getAccessStatus() == AccessStatus.ALLOWED && accessPermission.getPermission().equals(permission) &&
+                            (accessPermission.getAuthorityType() == AuthorityType.USER || accessPermission.getAuthorityType() == AuthorityType.GROUP)) {
+
+                        authorities.add(getAuthority(accessPermission.getAuthority(), accessPermission.getAuthorityType(), false));
+                    }
+                }
+                return authorities;
             }
-        }
-        return authorities;
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     @Override

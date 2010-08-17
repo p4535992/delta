@@ -84,7 +84,7 @@ public class UploadFileServlet extends BaseServlet
    protected void service(HttpServletRequest request, HttpServletResponse response)
       throws ServletException, IOException
    {
-      String uploadId = null;
+      String uploadId = null; 
       String returnPage = null;
       final RequestContext requestContext = new ServletRequestContext(request);
       boolean isMultipart = ServletFileUpload.isMultipartContent(requestContext);

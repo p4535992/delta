@@ -854,9 +854,6 @@ public class ForumsBean extends BaseDialogBean implements IContextListener
            }
        }
       
-      
-      FacesContext context = FacesContext.getCurrentInstance();
-      
       NodeRef nodeRef = new NodeRef(Repository.getStoreRef(), id);
       documentNodeRef = nodeRef;
          
@@ -1177,7 +1174,7 @@ public class ForumsBean extends BaseDialogBean implements IContextListener
          ResponseWriter out = context.getResponseWriter();
          
          out.write("<tr><td colspan='99' align='center'>");
-         for (Iterator i = richList.getChildren().iterator(); i.hasNext(); /**/)
+         for (Iterator<?> i = richList.getChildren().iterator(); i.hasNext(); /**/)
          {
             // output all remaining child components that are not UIColumn
             UIComponent child = (UIComponent)i.next();

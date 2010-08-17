@@ -32,14 +32,18 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ForumModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.Application;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.ReportedException;
@@ -47,6 +51,7 @@ import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -149,10 +154,30 @@ public class CreateDiscussionDialog extends CreateTopicDialog
                forumNodeRef = discussionAssoc.getChildRef();
             }
             
+            final NodeRef finalNodeRef = forumNodeRef;
+            
             if (logger.isDebugEnabled())
                logger.debug("created forum for content: " + discussingNodeRef.toString());
             
-            return forumNodeRef;
+            // Set this, so user can perform further actions
+            ForumsBean forumsBean = (ForumsBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "ForumsBean");
+            forumsBean.setForumNodeRef(finalNodeRef);
+
+            // Set permission so document managers can also delete forums and manage remove users
+            AuthenticationUtil.runAs(new RunAsWork<Void>() {
+                @Override
+                public Void doWork() throws Exception {
+                    PermissionService permissionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPermissionService();
+                    permissionService.setPermission(finalNodeRef, PermissionService.GROUP_PREFIX + UserService.DOCUMENT_MANAGERS_GROUP, 
+                            PermissionService.DELETE, true);
+
+                    permissionService.setPermission(finalNodeRef, PermissionService.GROUP_PREFIX + UserService.DOCUMENT_MANAGERS_GROUP, 
+                            PermissionService.CHANGE_PERMISSIONS, true);
+                    return null;
+                }
+            }, AuthenticationUtil.getSystemUserName());
+
+            return finalNodeRef;
          }
       };
       

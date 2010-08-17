@@ -4,7 +4,7 @@ import java.util.List;
 
 import javax.faces.context.FacesContext;
 
-import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.app.servlet.FacesHelper;
@@ -57,8 +57,13 @@ public boolean evaluate(Object obj) {
         if (hasUserRights) {
             return true;
         }
-        final NodeRef docRef = getNodeService().getPrimaryParent(node.getNodeRef()).getParentRef();
-        final List<CompoundWorkflow> compoundWorkflows = getWorkflowService().getCompoundWorkflows(docRef);
+        final List<CompoundWorkflow> compoundWorkflows = getWorkflowService().getCompoundWorkflows(node.getNodeRef());
+        // Check if owner is compoundWorkflow owner 
+        for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
+            if(AuthenticationUtil.getRunAsUser().equals(compoundWorkflow.getOwnerName()))
+                return true;
+        }
+        // Check if user has any tasks in workflows
         final List<Task> myTasks = getWorkflowService().getMyTasksInProgress(compoundWorkflows);
         if (myTasks.size() > 0) {
             return true;

@@ -541,7 +541,7 @@ public class MetadataBlockBean implements Serializable {
                             name = names.get(i);
                         }
                         String jobTitle = "";
-                        if (jobTitles.get(i) != null) {
+                        if (jobTitles != null && jobTitles.get(i) != null) {
                             jobTitle = jobTitles.get(i);
                         }
                         String begin = "";

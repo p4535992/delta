@@ -42,7 +42,7 @@
             actionListener="#{InformingDeleteNodeDialog.setupDelete}" action="dialog:informingDeleteNodeDialog" showLink="false" image="/images/icons/delete.gif">
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
             <f:param name="containerTitleMsgKey" value="delete_compound_workflow" />
-            <f:param name="confirmMsgKey" value="notification_delete_notification_confirm" />
+            <f:param name="confirmMsgKey" value="delete_compound_workflow_confirm" />
             <f:param name="deletableObjectNameProp" value="wfc:name" />
             <f:param name="successMsgKey" value="workflow_compound_delete_compound_success" />
          </a:actionLink>

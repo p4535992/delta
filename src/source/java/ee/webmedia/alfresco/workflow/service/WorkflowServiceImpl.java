@@ -1212,7 +1212,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         } else if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(task.getNode().getType())) {
             // sometimes here value of TEMP_OUTCOME is Integer, sometimes String
             final Integer tempOutcome = DefaultTypeConverter.INSTANCE.convert(Integer.class, task.getProp(WorkflowSpecificModel.Props.TEMP_OUTCOME));
-            if (tempOutcome == REVIEW_TASK_OUTCOME_REJECTED) {
+            if (tempOutcome != null && tempOutcome == REVIEW_TASK_OUTCOME_REJECTED) { // KAAREL: What is tempOutcome and why was it null?
                 stopIfNeeded(task, queue);
             }
         }
@@ -1241,14 +1241,21 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         compoundWorkflow.setStoppedDateTime(stoppedDateTime);
         setStatus(queue, compoundWorkflow, Status.STOPPED);
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-            if (WorkflowUtil.isStatus(workflow, Status.NEW)) {
+            if (isStatus(workflow, Status.NEW)) {
                 workflow.setStoppedDateTime(stoppedDateTime);
             }
             boolean isParentWorkflow = parentWorkFlow.getNode().getNodeRef().equals(workflow.getNode().getNodeRef()) ? true : false;
             boolean forceStopParentWorkflow = false;
             for (Task aTask : workflow.getTasks()) {
-                if (WorkflowUtil.isStatus(aTask, Status.NEW)) {
+                boolean isReviewWorkflow = aTask.getParent().getNode().getType().equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW);
+                boolean isParallelTasks = aTask.getParent().isParallelTasks();
+                boolean inProgress = isStatus(aTask, Status.IN_PROGRESS);
+                if (isStatus(aTask, Status.NEW) || (inProgress && isReviewWorkflow)) {
                     aTask.setStoppedDateTime(stoppedDateTime);
+                    // We must change parallel task's statuses from in progress to stopped
+                    if(isParallelTasks && inProgress) {
+                        setStatus(queue, aTask, Status.STOPPED);
+                    }
                     if (isParentWorkflow) {
                         forceStopParentWorkflow = true;
                     }

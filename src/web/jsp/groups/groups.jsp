@@ -31,7 +31,7 @@
    <%-- Groups List --%>
    <a:panel id="groups-panel" label="#{msg.groups}" styleClass="with-pager" rendered="#{not empty DialogManager.bean.groups}">
 
-      <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="details" pageSize="12" rowStyleClass="recordSetRow"
+      <a:richList id="groups-list" binding="#{DialogManager.bean.groupsRichList}" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
          altRowStyleClass="odd" width="100%" value="#{DialogManager.bean.groups}" var="r" initialSortColumn="id">
          
          <%-- Primary column for details view mode --%>
@@ -62,14 +62,15 @@
                
          </a:column>
          
-         <a:dataPager styleClass="pager" />
+         <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
+         <a:dataPager id="pager1" styleClass="pager" />
       </a:richList>
    </a:panel>
 
    <%-- Users in Group list --%>
    <a:panel id="users-panel" label="#{msg.users}" styleClass="with-pager" rendered="#{not empty DialogManager.bean.users}">
    
-      <a:richList id="users-list" binding="#{DialogManager.bean.usersRichList}" viewMode="details" pageSize="12" rowStyleClass="recordSetRow"
+      <a:richList id="users-list" binding="#{DialogManager.bean.usersRichList}" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
          altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.users}" var="r" initialSortColumn="name">
          
          <%-- Primary column for details view mode --%>
@@ -101,6 +102,7 @@
             </a:actionLink>
          </a:column>
          
-         <a:dataPager styleClass="pager" />
+         <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
+         <a:dataPager id="pager2" styleClass="pager" />
       </a:richList>
    </a:panel>
