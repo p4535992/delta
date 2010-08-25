@@ -34,7 +34,7 @@
          <f:facet name="header">
             <a:sortLink id="paramDescCol-sort" label="#{msg.parameters_desc}" value="paramDescription" mode="case-insensitive" />
          </f:facet>
-         <h:inputTextarea rows="1" cols="45" value="#{sParameter.paramDescription}" styleClass="#{sParameter.paramName} #{(sParameter.lastValidationSuccessful) ? '' : 'error' } expand19-200 medium" />
+         <h:inputTextarea rows="1" cols="45" value="#{sParameter.paramDescription}" styleClass="#{(sParameter.lastValidationSuccessful) ? '' : 'error' } expand19-200 medium" />
       </a:column>
 
       <a:column id="paramValCol">

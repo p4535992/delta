@@ -164,22 +164,6 @@ public class GroupsDialog extends BaseDialogBean
        return MessageUtil.getMessage("groups_management");
     }
    
-//   @Override
-//    public String getActionsConfigId() {
-//        if(this.group == null) { // default
-//            return "group_actions";
-//        } else if(this.group.equals(UserService.ALFRESCO_ADMINISTRATORS_DISPLAY_NAME) || this.group.equals(UserService.DOCUMENT_MANAGERS_GROUP)) {
-//            return "base_group_inline_actions";
-//        } else {
-//            return "group_inline_actions_subgroup";
-//        }
-//    }
-//   
-//   @Override
-//    public String getMoreActionsConfigId() {
-//       return ""; // disable more actions context menu
-//    }
-   
    @Override
     public String cancel() {
         setCurrentGroup(null, Application.getMessage(FacesContext.getCurrentInstance(), MSG_ROOT_GROUPS));

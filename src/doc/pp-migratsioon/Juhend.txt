@@ -1,0 +1,39 @@
+1.Tekitada struktuuri: nt:
+mig/
+mig/csv/
+mig/docs/
+
+WM poolt antud csv.zip failist kõik failid panna csv kausta
+Impordi xml ja muud faile panna docs kausta.
+
+Veenduda, et on olemas järgmised properties (alfresco-global.properties failis), kus <path_to_mig> on mig kausta asukoht süsteemis:
+
+import.postipoiss.structure.enabled=true
+import.postipoiss.structure.inputFolderPath=<path_to_mig>/csv
+import.postipoiss.documents.enabled=true
+import.postipoiss.documents.inputFolderPath=<path_to_mig>/docs
+import.postipoiss.documents.mappingsFileName=<path_to_mig>/csv/mappings.xml
+import.postipoiss.documents.stopAfterDocumentId=999999
+
+
+1.5 (Ainult smit-testi jaoks (s.t. juhul kui live andmed ei ole veel baasis)): teha repo tühjaks
+
+2. Deployda rakendust serverile. Ning logida sisse System või administraatori privileegiga kasutajana.
+
+2.5 (Ainult smit-testi jaoks (s.t. juhul kui live andmed ei ole veel baasis)): importida Live andmed acp failist (selleks on vaja administraatori privileegi)
+
+3. Nupud asuvad siin: Dokumendiregister->Dokumentide loetelu.
+
+4. Vajutada "Alusta Postipoisi struktuuri importi". 
+Toimub kontaktide, funktsioonide, sarjade ning toimikute import.
+Võtab alla tundi aega.
+Impordi progressi saab jälgida rakenduse logist, kuni "Structure import is COMPLETED."
+lauseni.
+
+
+5. Vajutada  "Alusta Postipoisi dokumentide importi".
+Toimub dokumentide import.
+Võtab 2-4 päeva.
+Enne pannakse xml-d sisse, siis nende failid.
+Impordi progressi saab jälgida rakenduse logist, kuni "Import completed."
+lauseni.

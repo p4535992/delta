@@ -70,6 +70,8 @@ public interface DocumentService {
      * @return created document
      */
     Node createDocument(QName documentTypeId, NodeRef parentFolderRef, Map<QName, Serializable> props);
+    
+    Node createPPImportDocument(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties);
 
     /**
      * Save new values for document properties to repository.

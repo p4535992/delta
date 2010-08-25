@@ -252,7 +252,7 @@ public class FunctionsServiceImpl implements FunctionsService {
                             for (Document doc : allDocumentsByCase) {
                                 final Map<String, Object> props = doc.getNode().getProperties();
                                 props.put(DocumentCommonModel.Props.CASE.toString(), caseRef.toString());
-                                setFunctionSeriesVolumeRefs(functionRef, seriesRef, volumeRef, doc.getNode().getNodeRef(), props);
+                                setFunctionSeriesVolumeRefs(functionRef, seriesRef, volumeRef, doc.getNodeRef(), props);
                             }
                             final int documentsCountByCase = allDocumentsByCase.size();
                             nodeService.setProperty(caseRef, CaseModel.Props.CONTAINING_DOCS_COUNT, documentsCountByCase);
@@ -263,7 +263,7 @@ public class FunctionsServiceImpl implements FunctionsService {
                         final int documentsCountByVolume = allDocumentsByVolume.size();
                         for (Document doc : allDocumentsByVolume) {
                             final Map<String, Object> props = doc.getNode().getProperties();
-                            setFunctionSeriesVolumeRefs(functionRef, seriesRef, volumeRef, doc.getNode().getNodeRef(), props);
+                            setFunctionSeriesVolumeRefs(functionRef, seriesRef, volumeRef, doc.getNodeRef(), props);
                         }
                         docCountInVolume += documentsCountByVolume;
                     }

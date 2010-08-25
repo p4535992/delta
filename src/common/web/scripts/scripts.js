@@ -641,6 +641,9 @@ $jQ(document).ready(function() {
 	   });
    }
    
+   extendCondencePlugin();
+   // extendCondencePlugin() MUST be called before tooltips are added on the following lines,
+   // as condence plugin will make a copy of element for condenced text that would not get tooltips if created later
    $jQ(".tooltip").tooltip({
 	   track: true
    });
@@ -651,25 +654,32 @@ $jQ(document).ready(function() {
    window.dhtmlHistory.add(randomHistoryHash(), null);
 
    handleHtmlLoaded(null);
-
-   extendCondencePlugin();
 });
 
 /**
- * extend jQuery Condence plugin so that condencing to specific number of chars could be performed based on styleClass :)
+ * extend jQuery Condence plugin so that 
+ * 1) condencing to specific number of chars could be performed based on styleClass (number of characters must be specified in the styleclass right after the text "condence"):)
+ * 2) showMore/showLess text could be left out if condence styleclass ends with "-"
  */
 function extendCondencePlugin() {
    var condencers = jQuery("[class*=condence]" /*, context*/);
    condencers.each(function(){
-      var p = this.className.match(/condence(\d+)/i);
+      var p = this.className.match(/condence(\d+)?(\-)?/i);
       var condenceAtChar = p ? parseInt('0'+p[1], 10) : 200;
+      var condenceAtChar = p ? parseInt('0'+p[1], 10) : 200;
+      var condence = p ? parseInt('0'+p[1], 10) : 200;
+      var moreTxt = "... ";
+      if(!(p && p[2] == "-")){
+         moreTxt = getTranslation('jQuery.condence.moreText');
+      }
       jQuery(this).condense({
          moreSpeed: 0,
          lessSpeed: 0,
-         moreText: getTranslation('jQuery.condence.moreText'),
+         moreText: moreTxt,
          lessText: getTranslation('jQuery.condence.lessText'),
          ellipsis: "",
-         condensedLength: condenceAtChar
+         condensedLength: condenceAtChar,
+         minTrail: moreTxt.length
          }
        );
    });

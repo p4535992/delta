@@ -37,7 +37,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
-         <h:outputText id="col4-text-1" value="#{r.shortSender}" title="#{r.sender}" styleClass="tooltip" />
+         <h:outputText id="col4-text-1" value="#{r.sender}" title="#{r.sender}" styleClass="tooltip condence20-" />
       </a:column>
       
       <%-- All Recipients --%>
@@ -45,7 +45,7 @@
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.document_allRecipients}" value="allRecipients" styleClass="header" />
          </f:facet>
-         <h:outputText id="col5-text-1" value="#{r.shortAllRecipients}" title="#{r.allRecipients}" styleClass="tooltip" />
+         <h:outputText id="col5-text-1" value="#{r.allRecipients}" title="#{r.allRecipients}" styleClass="tooltip condence20-" />
       </a:column>
 
       <%-- Title --%>
@@ -53,13 +53,13 @@
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col6-text-1" value="#{r.shortDocName}" action="dialog:document" tooltip="#{r.docName}"
-            actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass ne 'case'}" styleClass="tooltip" >
+         <a:actionLink id="col6-text-1" value="#{r.docName}" action="dialog:document" tooltip="#{r.docName}"
+            actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass ne 'case'}" styleClass="tooltip condence20-" >
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
          <!-- if row item is not document, but case, create link to documents list of case (row item is subclass of Document, to be shown as listItem in document list) -->
-         <a:actionLink id="col6-link2docList-1" value="#{r.shortDocName}" action="dialog:documentListDialog" tooltip="#{r.shortDocName}"
-            actionListener="#{DocumentListDialog.setup}" rendered="#{r.cssStyleClass == 'case'}">
+         <a:actionLink id="col6-link2docList-1" value="#{r.docName}" action="dialog:documentListDialog" tooltip="#{r.docName}"
+            actionListener="#{DocumentListDialog.setup}" rendered="#{r.cssStyleClass == 'case'}" styleClass="condence20-" >
             <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
       </a:column>

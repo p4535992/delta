@@ -338,7 +338,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         // XXX TODO FIXME is additional optimization needed? postprocessing could be eliminated and this condition added directly to lucene query
         for (Iterator<Document> it = results.iterator(); it.hasNext(); ) {
             Document doc = it.next();
-            List<ChildAssociationRef> sendInfo = nodeService.getChildAssocs(doc.getNode().getNodeRef(), RegexQNamePattern.MATCH_ALL,
+            List<ChildAssociationRef> sendInfo = nodeService.getChildAssocs(doc.getNodeRef(), RegexQNamePattern.MATCH_ALL,
                     DocumentCommonModel.Assocs.SEND_INFO);
             if (sendInfo.size() > 0) {
                 it.remove();
@@ -524,13 +524,19 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         List<Document> results = searchGeneralImpl(DOCUMENTS_FOR_REGISTERING_QUERY, false, new SearchCallback<Document>() {
             @Override
             public Document addResult(ResultSetRow row) {
-                return workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef()) && !documentService.isRegistered(generalService.fetchNode(row.getNodeRef()))
-                        ? documentService.getDocumentByNodeRef(row.getNodeRef())
-                        : null;
+                Document result = null;
+                if (workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef())) {
+                    final Document doc = documentService.getDocumentByNodeRef(row.getNodeRef());
+                    if (!documentService.isRegistered(doc)) {
+                        result = doc;
+                    }
+                }
+                return result;
             }
         });
         if (log.isDebugEnabled()) {
-            log.debug(String.format("Documents for registering search total time %d ms, query: %s", (System.currentTimeMillis() - startTime), DOCUMENTS_FOR_REGISTERING_QUERY));
+            log.debug(String.format("Documents for registering search total time %d ms, query: %s", (System.currentTimeMillis() - startTime),
+                    DOCUMENTS_FOR_REGISTERING_QUERY));
         }
         return results;
     }
@@ -999,8 +1005,10 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
                 final NodeRef nodeRef = row.getNodeRef();
                 final QName resultType = nodeService.getType(nodeRef);
                 if (!dictionaryService.isSubClass(resultType, DocumentCommonModel.Types.DOCUMENT)) {
-                    final FakeDocument fakeDocument = new FakeDocument(generalService.fetchNode(nodeRef));
-                    log.debug("fakeDocument="+fakeDocument);
+                    final FakeDocument fakeDocument = new FakeDocument(nodeRef);
+                    if(log.isDebugEnabled()) {
+                        log.debug("fakeDocument="+fakeDocument);
+                    }
                     return fakeDocument;
                 }
                 return documentService.getDocumentByNodeRef(nodeRef);

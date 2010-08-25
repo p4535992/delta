@@ -59,11 +59,11 @@ public class SearchBlockBean implements Serializable {
         if (newAssoc == null) {
             newAssoc = new HashMap<String, AssociationRef>(1);
         }
-        final AssociationRef assocInfo = new AssociationRef(node.getNodeRef(), assocType, targetRef);
-        newAssoc.put(node.getNodeRefAsString(), assocInfo);
+        final AssociationRef assocRef = new AssociationRef(node.getNodeRef(), assocType, targetRef);
+        newAssoc.put(node.getNodeRefAsString(), assocRef);
         addedAssociations.put(assocType.toString(), newAssoc);
         show = false;
-        return getDocumentService().getDocAssocInfo(assocInfo, true);
+        return getDocumentService().getDocAssocInfo(assocRef, true);
     }
 
     // START: snapshot logic

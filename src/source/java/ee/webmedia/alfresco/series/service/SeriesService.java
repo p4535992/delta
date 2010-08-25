@@ -19,6 +19,7 @@ public interface SeriesService {
     String BEAN_NAME = "SeriesService";
 
     void saveOrUpdate(Series series);
+    void saveOrUpdate(Series series, boolean propsFromNode);
 
     List<Series> getAllSeriesByFunction(NodeRef functionNodeRef);
 

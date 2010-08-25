@@ -10,6 +10,7 @@ import java.util.Map;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
@@ -21,36 +22,54 @@ import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 
-public class Document implements Serializable, Comparable<Document>, CssStylable {
+public class Document extends Node implements Comparable<Document>, CssStylable {
     private static final long serialVersionUID = 1L;
 
     public static final String LIST_SEPARATOR = ", ";
     public static final int SHORT_PROP_LENGTH = 20;
-
     public static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
-    private Node node;
-    private DocumentType documentType;
     private List<File> files; // load lazily
     private Map<QName, Serializable> searchableProperties;
+    private boolean initialized;
 
+    /** To be only accessed using {@link #getDocumentType()} */
+    private DocumentType _documentType;
+    private transient DocumentTypeService documentTypeService;
+
+    /**
+     * Copy constructory
+     * 
+     * @param source
+     */
     public Document(Document source) {
+        super(source.nodeRef);
+        this.nodeRef = source.nodeRef;
         Assert.notNull(source, "Source document is mandatory");
-        this.node = source.getNode();
-        this.documentType = source.getDocumentType();
         this.files = source.getFiles();
         this.searchableProperties = new HashMap<QName, Serializable>(source.getSearchableProperties());
+        this.initialized = source.initialized;
+        this._documentType = source.getDocumentType();
     }
 
-    public Document(Node document, DocumentType documentType) {
-        Assert.notNull(document, "Document node is mandatory");
-        this.node = document;
-        this.documentType = documentType;
-        this.searchableProperties = new HashMap<QName, Serializable>();
+    public Document(NodeRef nodeRef) {
+        super(nodeRef);
+        this.nodeRef = nodeRef;
+    }
+
+    protected void lazyInit() {
+        if (!initialized) {
+            if (searchableProperties == null) {
+                searchableProperties = new HashMap<QName, Serializable>();
+            }
+            initialized = true;
+        }
     }
 
     private Map<QName, Serializable> getSearchableProperties() {
+        lazyInit();
         return searchableProperties;
     }
 
@@ -59,19 +78,25 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
     }
 
     public Node getNode() {
-        return node;
+        lazyInit();
+        return this;
     }
 
     public DocumentType getDocumentType() {
-        return documentType;
+        lazyInit();
+        if (_documentType == null) {
+            this._documentType = getDocumentTypeService().getDocumentType(getType());
+        }
+        return _documentType;
     }
 
     public String getDocumentTypeName() {
+        final DocumentType documentType = getDocumentType();
         return documentType != null ? documentType.getName() : null;
     }
 
     private String getDocTypeLocalName() {
-        return documentType.getId().getLocalName();
+        return getDocumentType().getId().getLocalName();
     }
 
     @Override
@@ -88,32 +113,20 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
     public Date getRegDateTime() {
         return (Date) getNode().getProperties().get(DocumentCommonModel.Props.REG_DATE_TIME);
     }
-    
+
     public String getRegDateTimeStr() {
         return getRegDateTime() != null ? dateFormat.format(getRegDateTime()) : "";
     }
 
-    public String getShortSender() {
-        return shortenProp(getSender());
-    }
-
     public String getSender() {
-        if (documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
-            return (String) getNode().getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
+        if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
+            return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
         }
-        return (String) getNode().getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
-    }
-
-    public String getShortAllRecipients() {
-        return shortenProp(getAllRecipients());
+        return (String) getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
     }
 
     public String getAllRecipients() {
         return join(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
-    }
-
-    public String getShortDocName() {
-        return shortenProp(getDocName());
     }
 
     public String getDocName() {
@@ -124,9 +137,10 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
         // Only docsub:incomingLetter has this property
         return (Date) getNode().getProperties().get(DocumentSpecificModel.Props.DUE_DATE);
     }
-    
+
     public String getDueDateStr() {
-        return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
+        final Date dueDate = getDueDate();
+        return dueDate != null ? dateFormat.format(dueDate) : "";
     }
 
     public Date getComplienceDate() {
@@ -151,14 +165,15 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
     }
 
     public Date getDueDate2() {
+        lazyInit();
         if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
-            return (Date) getNode().getProperties().get(DocumentSpecificModel.Props.DUE_DATE);
+            return (Date) getProperties().get(DocumentSpecificModel.Props.DUE_DATE);
         } else if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.MANAGEMENTS_ORDER)) {
-            return (Date) getNode().getProperties().get(DocumentSpecificModel.Props.MANAGEMENTS_ORDER_DUE_DATE);
+            return (Date) getProperties().get(DocumentSpecificModel.Props.MANAGEMENTS_ORDER_DUE_DATE);
         } else if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.CONTRACT_SIM)) {
-            return (Date) getNode().getProperties().get(DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE);
+            return (Date) getProperties().get(DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE);
         } else if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.CONTRACT_SMIT)) {
-            return (Date) getNode().getProperties().get(DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE);
+            return (Date) getProperties().get(DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE);
         }
         return null;
     }
@@ -268,7 +283,7 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
         // Only docsub:tenderingApplication has this property
         return (String) getNode().getProperties().get(DocumentSpecificModel.Props.PROCUREMENT_TYPE);
     }
-    
+
     public Date getCreated() {
         return (Date) getNode().getProperties().get(ContentModel.PROP_CREATED);
     }
@@ -280,13 +295,14 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
             // probably not the best idea to call service from model, but alternatives get probably too complex
             FileService fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(FileService.BEAN_NAME);
-            files = fileService.getAllActiveFiles(getNode().getNodeRef());
+            files = fileService.getAllActiveFiles(getNodeRef());
         }
         return files;
     }
 
     @Override
     public int compareTo(Document other) {
+        lazyInit();
         if (StringUtils.equals(getRegNumber(), other.getRegNumber())) {
             if (getRegDateTime() != null) {
                 if (other.getRegDateTime() == null) {
@@ -304,6 +320,15 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
         return getRegNumber().compareTo(other.getRegNumber());
     }
 
+    // XXX: performance hit... if need to init other Document as well that is otherwise uninitialized
+    // @Override
+    // public boolean equals(Object obj) {
+    // if (obj instanceof Document) {
+    // return this.compareTo((Document) obj) == 0;
+    // }
+    // return false;
+    // }
+
     @Override
     public String toString() {
         return new StringBuilder("Document:")//
@@ -313,9 +338,10 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
     }
 
     private String join(QName... props) {
+        lazyInit();
         StringBuilder result = new StringBuilder();
         for (QName prop : props) {
-            Object item = getNode().getProperties().get(prop);
+            Object item = getProperties().get(prop);
             if (item instanceof Collection<?>) {
                 @SuppressWarnings("unchecked")
                 Collection<String> list = (Collection<String>) item;
@@ -377,8 +403,11 @@ public class Document implements Serializable, Comparable<Document>, CssStylable
         return result.toString();
     }
 
-    public static String shortenProp(String propValue) {
-        return (StringUtils.isBlank(propValue) || propValue.length() <= SHORT_PROP_LENGTH) ? propValue : propValue.substring(0, SHORT_PROP_LENGTH) + "...";
+    protected DocumentTypeService getDocumentTypeService() {
+        if (documentTypeService == null) {
+            documentTypeService = (DocumentTypeService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
+                    DocumentTypeService.BEAN_NAME);
+        }
+        return documentTypeService;
     }
-
 }

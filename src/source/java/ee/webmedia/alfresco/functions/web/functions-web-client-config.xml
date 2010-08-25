@@ -1,7 +1,7 @@
 <alfresco-config>
    <config>
       <actions>
-
+      
          <action id="function_add_new">
             <permissions>
                <permission allow="true">CreateChildren</permission>
@@ -60,6 +60,22 @@
             <action-listener>#{FunctionsListDialog.createNewYearBasedVolumes}</action-listener>
             <style-class>docList_createNewYearBasedVolumes</style-class>
          </action>
+         
+         <action id="postipoiss_structure_import">
+            <evaluator>ee.webmedia.alfresco.postipoiss.evaluator.IsStructureImportEnabledEvaluator</evaluator>
+            <label>Alusta Postipoisi struktuuri importi</label>
+            <action-listener>#{FunctionsListDialog.startPostipoissStructureImport}</action-listener>
+            <style-class>docList_importPP</style-class>
+            <target>no_wait_workaround</target>
+         </action>
+
+         <action id="postipoiss_documents_import">
+            <evaluator>ee.webmedia.alfresco.postipoiss.evaluator.IsDocumentsImportEnabledEvaluator</evaluator>
+            <label>Alusta Postipoisi dokumentide importi</label>
+            <action-listener>#{FunctionsListDialog.startPostipoissDocumentsImport}</action-listener>
+            <style-class>docList_importPP</style-class>
+            <target>no_wait_workaround</target>
+         </action>
 
          <action-group id="browse_actions_functions">
             <action idref="function_add_new" />
@@ -67,6 +83,8 @@
             <action idref="docList_import" />
             <action idref="docList_createNewYearBasedVolumes" />
             <action idref="docList_updateDocCounters" />
+            <action idref="postipoiss_structure_import" />
+            <action idref="postipoiss_documents_import" />
             <!-- disabled to prevent accidental deleting(importing) after import has completed 
             <action idref="docList_import_smitExcel" />
             <action idref="docList_deleteAllDocuments" />

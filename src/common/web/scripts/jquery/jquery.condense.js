@@ -10,8 +10,8 @@
 *
 * usage:
 *  
-*   $(document).ready(function(){     
-*     $('#example1').condense();
+*   jQuery(document).ready(function(){     
+*     jQuery('#example1').condense();
 *   });
 *
 * Options:
@@ -26,21 +26,21 @@
 *  easing: Easing algorith. Default: "linear"
 */
 
-(function($) {
+(function(jQuery) {
 
   // plugin definition
-  $.fn.condense = function(options) {
+  jQuery.fn.condense = function(options) {
     
-    $.metadata ? debug('metadata plugin detected') : debug('metadata plugin not present');//detect the metadata plugin?
+    jQuery.metadata ? debug('metadata plugin detected') : debug('metadata plugin not present');//detect the metadata plugin?
 
-    var opts = $.extend({}, $.fn.condense.defaults, options); // build main options before element iteration
+    var opts = jQuery.extend({}, jQuery.fn.condense.defaults, options); // build main options before element iteration
 
     // iterate each matched element
     return this.each(function() {
-	    $this = $(this);
+	    $this = jQuery(this);
 
       // support metadata plugin (v2.0)
-	    var o = $.metadata ? $.extend({}, opts, $this.metadata()) : opts; // build element specific options
+	    var o = jQuery.metadata ? jQuery.extend({}, opts, $this.metadata()) : opts; // build element specific options
      
       debug('Condensing ['+$this.text().length+']: '+$this.text());
       
@@ -55,14 +55,14 @@
         clone.append(o.ellipsis + controlMore);
         $this.after(clone).hide().append(controlLess);
 
-        $('.condense_control_more',clone).click(function(){
+        jQuery('.condense_control_more',clone).click(function(){
           debug('moreControl clicked.');
-          triggerExpand($(this),o)
+          triggerExpand(jQuery(this),o)
         });
 
-        $('.condense_control_less',$this).click(function(){
+        jQuery('.condense_control_less',$this).click(function(){
           debug('lessControl clicked.');
-          triggerCondense($(this),o)
+          triggerCondense(jQuery(this),o)
         });
       }
 
@@ -73,13 +73,13 @@
     // Try to clone and condense the element.  if not possible because of the length/minTrail options, return false.
     // also, dont count tag declarations as part of the text length.
     // check the length of the text first, return false if too short.
-    if ($.trim(elem.text()).length <= opts.condensedLength + opts.minTrail){
+    if (jQuery.trim(elem.text()).length <= opts.condensedLength + opts.minTrail){
       debug('element too short: skipping.');
       return false;
     } 
 
-    var fullbody = $.trim(elem.html());
-    var fulltext = $.trim(elem.text());
+    var fullbody = jQuery.trim(elem.html());
+    var fulltext = jQuery.trim(elem.text());
     var delim = opts.delim; 
     var clone = elem.clone();
     var delta = 0;
@@ -88,7 +88,7 @@
       // find the location of the next potential break-point.
       var loc = findDelimiterLocation(fullbody, opts.delim, (opts.condensedLength + delta));
       //set the html of the clone to the substring html of the original
-      clone.html($.trim(fullbody.substring(0,(loc+1))));
+      clone.html(jQuery.trim(fullbody.substring(0,(loc+1))));
       var cloneTextLength = clone.text().length;
       var cloneHtmlLength = clone.html().length;
       delta = clone.html().length - cloneTextLength; 
@@ -177,7 +177,7 @@
 
 
   // plugin defaults
-  $.fn.condense.defaults = {
+  jQuery.fn.condense.defaults = {
     condensedLength: 200,  
     minTrail: 20,
     delim: " ",

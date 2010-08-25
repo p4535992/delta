@@ -26,6 +26,8 @@ public interface FunctionsModel {
         QName ORDER = QName.createQName(URI, "order");
         QName TITLE = QName.createQName(URI, "title");
         QName MARK = QName.createQName(URI, "mark");
+        QName TYPE = QName.createQName(URI, "type");
+        QName DESCRIPTION = QName.createQName(URI, "description");
     }
 
 }

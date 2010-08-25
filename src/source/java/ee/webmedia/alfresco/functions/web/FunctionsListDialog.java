@@ -38,6 +38,8 @@ import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.importer.excel.bootstrap.SmitExcelImporter;
+import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsImporter;
+import ee.webmedia.alfresco.postipoiss.PostipoissStructureImporter;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -55,7 +57,7 @@ public class FunctionsListDialog extends BaseDialogBean {
     private transient GeneralService generalService;
     protected List<Function> functions;
 
-    @Override
+    
     public void init(Map<String, String> params) {
         reset();
         super.init(params);
@@ -66,18 +68,18 @@ public class FunctionsListDialog extends BaseDialogBean {
         functions = null;
     }
 
-    @Override
+    
     public void restored() {
         loadFunctions();
     }
 
-    @Override
+    
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // save button not used or shown
         return null;
     }
 
-    @Override
+    
     public String cancel() {
         functions = null;
         return super.cancel();
@@ -185,9 +187,39 @@ public class FunctionsListDialog extends BaseDialogBean {
         return outputStream;
     }
 
-    @Override
+    
     public Object getActionsContext() {
         return new Node(getFunctionsService().getFunctionsRoot());
+    }
+
+    public void startPostipoissStructureImport(javax.faces.event.ActionEvent ev) {
+        PostipoissStructureImporter importer = (PostipoissStructureImporter) 
+            FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+            .getBean("postipoissStructureImporter");
+        if (importer.isStarted()) {
+            log.info("Not running structure import, already started");
+            return;
+        }
+        try {
+            importer.runImport();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void startPostipoissDocumentsImport(javax.faces.event.ActionEvent ev) {
+        PostipoissDocumentsImporter importer = (PostipoissDocumentsImporter) 
+            FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+            .getBean("postipoissDocumentsImporter");
+        if (importer.isStarted()) {
+            log.info("Not running documents import, already started");
+            return;
+        }
+        try {
+            importer.runImport();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // START: private methods

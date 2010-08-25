@@ -246,6 +246,38 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         }
         return documentNode;
     }
+    
+    public Node createPPImportDocument(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties) {
+
+        if (properties == null) {
+            properties = new HashMap<QName, Serializable>();
+        }
+
+        Set<QName> aspects = generalService.getDefaultAspects(documentTypeId);
+        // Add document type id. Now it's possible to modify props by doc type
+        aspects.add(documentTypeId);
+
+        for (QName docAspect : aspects) {
+            callbackAspectProperiesModifier(docAspect, properties);
+        }
+
+        NodeRef document = nodeService.createNode(parentRef, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT //
+                , documentTypeId, properties).getChildRef();
+        nodeService.addAspect(document, DocumentCommonModel.Aspects.SEARCHABLE, null);
+        updateParentNodesContainingDocsCount(document, true);
+
+        final Node documentNode = getDocument(document);
+        // first iterate over callbacks to be able to predict in which order callbacks will be called (that is registration order).
+        for (QName callbackAspect : creationPropertiesModifierCallbacks.keySet()) {
+            for (QName docAspect : aspects) {
+                if (dictionaryService.isSubClass(docAspect, callbackAspect)) {
+                    PropertiesModifierCallback callback = creationPropertiesModifierCallbacks.get(docAspect);
+                    callback.doWithNode(documentNode);
+                }
+            }
+        }
+        return documentNode;
+    }
 
     @Override
     public void callbackAspectProperiesModifier(QName docAspect, Map<QName, Serializable> properties) {
@@ -999,9 +1031,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         for (AssociationRef srcAssocRef : sourceAssocs) {
             if (DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(srcAssocRef.getTypeQName()) ||
                     DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(srcAssocRef.getTypeQName())) {
-
-                Document doc = getDocumentByNodeRef(srcAssocRef.getSourceRef());
-                docs.add(doc);
+                docs.add(getDocumentByNodeRef(srcAssocRef.getSourceRef()));
             }
         }
         return docs;
@@ -1033,6 +1063,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     /*
      * NOTE: association with case is defined differently
      */
+    @Override
     public void deleteAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef, QName assocQName) {
         if (assocQName == null) {
             assocQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
@@ -1049,11 +1080,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     public List<Document> getIncomingEmails() {
         NodeRef incomingNodeRef = generalService.getNodeRef(incomingEmailPath);
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(incomingNodeRef);
-        List<Document> docs = new ArrayList<Document>();
+        List<Document> docs = new ArrayList<Document>(childAssocs.size());
         for (ChildAssociationRef assocRef : childAssocs) {
-            final Node doc = getDocument(assocRef.getChildRef());
-            docs.add(0, getDocumentByNodeRef(doc.getNodeRef())); // flips the list, so newest are first
-
+            docs.add(0, getDocumentByNodeRef(assocRef.getChildRef())); // flips the list, so newest are first
         }
         return docs;
     }
@@ -1068,11 +1097,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     public List<Document> getSentEmails() {
         NodeRef sentNodeRef = generalService.getNodeRef(sentEmailPath);
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(sentNodeRef);
-        List<Document> docs = new ArrayList<Document>();
+        List<Document> docs = new ArrayList<Document>(childAssocs.size());
         for (ChildAssociationRef assocRef : childAssocs) {
-            final Node doc = getDocument(assocRef.getChildRef());
-            docs.add(0, getDocumentByNodeRef(doc.getNodeRef())); // flips the list, so newest are first
-
+            docs.add(0, getDocumentByNodeRef(assocRef.getChildRef())); // flips the list, so newest are first
         }
         return docs;
     }
@@ -1085,9 +1112,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
     @Override
     public Document getDocumentByNodeRef(NodeRef docRef) {
-        final Node documentNode = getDocument(docRef);
-        DocumentType documentType = documentTypeService.getDocumentType(documentNode.getType());
-        Document doc = new Document(documentNode, documentType);
+        Document doc = new Document(docRef);
         if (log.isDebugEnabled()) {
             log.debug("Document: " + doc);
         }
@@ -1275,7 +1300,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                         final NodeRef initDocParentRef = caseNodeRef != null ? caseNodeRef : volumeNodeRef;
                         int maxIndivNr = initDocRegNrHolder.getIndividualizingNr();
                         for (Document anotherDoc : getAllDocumentsByParentNodeRef(initDocParentRef)) {
-                            if (!docRef.equals(anotherDoc.getNode().getNodeRef())) {
+                            if (!docRef.equals(anotherDoc.getNodeRef())) {
                                 final RegNrHolder anotherDocRegNrHolder = new RegNrHolder(anotherDoc.getRegNumber());
                                 if (StringUtils.equals(initDocRegNrHolder.getRegNrWithoutIndividualizingNr() //
                                         , anotherDocRegNrHolder.getRegNrWithoutIndividualizingNr())) {
@@ -1953,7 +1978,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     private List<Document> getSendModeRows(Document document, Node filter) {
         @SuppressWarnings("unchecked")
         List<String> sendModes = (List<String>) filter.getProperties().get(DocumentSearchModel.Props.SEND_MODE);
-        List<SendInfo> sendInfos = sendOutService.getSendInfos(document.getNode().getNodeRef());
+        List<SendInfo> sendInfos = sendOutService.getSendInfos(document.getNodeRef());
         List<Document> results = new ArrayList<Document>(sendInfos.size());
         if (sendInfos.size() == 0) {
             results.add(document);

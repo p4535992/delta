@@ -1,0 +1,736 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+	<generalType>
+		<prop from="jpp" to="accessRestriction" />
+		<prop from="jpp_algus_kpv" to="accessRestrictionBeginDate" />
+		<prop from="jpp_lopp_kpv" to="accessRestrictionEndDate" />
+		<prop from="jpp_lopp_alus" to="accessRestrictionReason" />
+		<prop from="reg_kpv" to="regDateTime" />
+	</generalType>
+
+	<documentType from="Akt" to="instrumentOfDeliveryAndReceipt">
+		<prop from="pealkiri" to="docName" />
+		<prop from="uleandja_asutus" to="delivererName" />
+		<prop from="andis_ule" to="delivererName" />
+		<prop from="vastuvotja_asutus" to="receiverName" />
+		<prop from="vottis_vastu" to="receiverName" />
+		<prop from="teise_poole_indeks" to="secondPartyRegNumber" />
+		<prop from="teise_poole_kpv" to="secondPartyRegDate" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="kinnitaja" to="comment" prefix="Kinnitaja" />
+		<prop from="kinnitaja_d" to="comment" prefix="Kinnitaja" />
+		<prop from="juures_viibis_id" to="comment" prefix="Juures viibisid" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+		<prop from="saatmisvii" to="comment" prefix="Saatmisviis" />
+	</documentType>
+
+	<documentType from="Järelevalve_akt" to="supervisionReport">
+		<prop from="pealkiri" to="docName" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+		<prop from="akti_kuupaev" to="comment" prefix="Akti kpv" />
+		<prop from="jarelevalvealune_asutus" to="comment" prefix="Järelevalvealune asutus" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="allkirjastaja2" to="signerName" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+		<prop from="akti_saajad" to="recipientName" />
+		<prop from="akti_saajad2" to="additionalRecipientName" />
+	</documentType>
+
+	<documentType from="Kantsleri_käskkiri_(personal-p)" to="personelleOrderSim">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+		<prop from="kaskkirja_saajad" to="recipientName" />
+		<prop from="kaskkirja_saajad2" to="additionalRecipientName" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+	</documentType>
+
+	<documentType from="Kantsleri_käskkiri_(personal-pl)_kuni_31.12.2009"
+		to="personelleOrderSim">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="kaskkirja_saajad" to="recipientName" />
+		<prop from="kaskkirja_saajad2" to="additionalRecipientName" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+	</documentType>
+
+	<documentType from="Regionaalministri_käskkiri_(personal-p)"
+		to="personelleOrderSim">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="kaskkirja_saajad" to="recipientName" />
+		<prop from="kaskkirja_saajad2" to="additionalRecipientName" />
+	</documentType>
+
+	<documentType
+		from="Regionaalministri_käskkiri_(personal-pl)_kuni_31.12.2009" to="personelleOrderSim">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="kaskkirja_saajad_ministeeriumid_haldusala" to="recipientName" />
+		<prop from="kaskkirja_saajad_teised_asutused" to="additionalRecipientName" />
+		<prop from="taidetud" to="comment" prefix="Täidetud" />
+		<prop from="taitmismarge" to="comment" prefix="Täitmismärge" />
+	</documentType>
+
+	<documentType from="Siseministri_käskkiri_(personal-p)"
+		to="personelleOrderSim">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+		<prop from="kaskkirja_saajad" to="recipientName" />
+		<prop from="kaskkirja_saajad2" to="additionalRecipientName" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+	</documentType>
+
+	<documentType from="Siseministri_käskkiri_(personal-pl)_kuni_31.12.2009"
+		to="personelleOrderSim">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="kaskkirja_saajad" to="recipientName" />
+		<prop from="kaskkirja_saajad2" to="additionalRecipientName" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+	</documentType>
+
+	<documentType from="SM_konkursi-_ja_atesteerimiskomisjoni_käskkirjad"
+		to="personelleOrderSim">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="kaskkirja_saajad" to="recipientName" />
+		<prop from="kaskkirja_saajad2" to="additionalRecipientName" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+	</documentType>
+
+	<documentType from="Kantsleri_käskkiri_(põhitegevust_korraldav)"
+		to="ministersOrder">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop
+			from="kaskkirja_saajad_ministeeriumi_osakonnad_haldusala_ministeeriumid"
+			to="recipientName" />
+		<prop from="koopia_saajad_teised_asutused" to="additionalRecipientName" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+		<prop from="taiendatud" to="comment" prefix="Täiendatud" />
+		<prop from="taitmismarge" to="comment" prefix="Täitmismärge" />
+	</documentType>
+
+	<documentType from="Kantsleri_käskkiri_(üksikküsimuses_-_L)_kuni_31.12.2009"
+		to="ministersOrder">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="kaskkirja_saajad_ministeerium_haldusala" to="recipientName" />
+		<prop from="kaskkirja_saajad_teised_asutused" to="additionalRecipientName" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+		<prop from="taiendatud" to="comment" prefix="Täiendatud" />
+		<prop from="taitmismarge" to="comment" prefix="Täitmismärge" />
+	</documentType>
+
+	<documentType from="Regionaalministri_käskkiri_(põhitegevust_korraldav)"
+		to="ministersOrder">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop
+			from="kaskkirja_saajad_ministeeriumi_osakonnad_haldusala_ministeeriumid"
+			to="recipientName" />
+		<prop from="kaskkirja_saajad_teised_asutused" to="additionalRecipientName" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+		<prop from="taidetud" to="comment" prefix="Täidetud" />
+		<prop from="taitmismarge" to="comment" prefix="Täitmismärge" />
+	</documentType>
+
+	<documentType
+		from="Regionaalministri_käskkiri_(üksikküsimuses_-_L)_kuni_31.12.2009"
+		to="ministersOrder">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="koopia_saajad" to="recipientName" />
+		<prop from="koopia_saajad2" to="additionalRecipientName" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+	</documentType>
+
+	<documentType from="Siseministri_käskkiri_(põhitegevust_korraldav)"
+		to="ministersOrder">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop
+			from="kaskkirja_saajad_ministeeriumi_osakonnad_haldusala_ministeeriumid"
+			to="recipientName" />
+		<prop from="kaskkirja_saajad_teised_asutused" to="additionalRecipientName" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+		<prop from="taidetud" to="comment" prefix="Täidetud" />
+		<prop from="taitmismarge" to="comment" prefix="Täitmismärge" />
+	</documentType>
+
+	<documentType
+		from="Siseministri_käskkiri_(üksikküsimuses_-_L)_kuni_31.12.2009" to="ministersOrder">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="kaskkirja_saajad_ministeerium_haldusala" to="recipientName" />
+		<prop from="kaskkirja_saajad_teised_asutused" to="additionalRecipientName" />
+		<prop from="taidetud" to="comment" prefix="Täidetud" />
+		<prop from="taitmismarge" to="comment" prefix="Täitmismärge" />
+	</documentType>
+
+	<documentType from="Kiri-sissetulev" to="incomingLetter">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="asutus_isik" to="senderName" />
+		<prop from="isik" to="comment" prefix="Allkirjastaja" />
+		<prop from="aadress" to="comment" prefix="Aadress" />
+		<prop from="meiliaadress" to="senderEmail" />
+		<prop from="saatja_kirja_kpv" to="senderRegDate" />
+		<prop from="saatja_indeks" to="senderRegNumber" />
+		<prop from="saatmisviis" to="transmittalMode" />
+		<prop from="tegelik_saatmisviis" to="comment" prefix="Tegelik saatmisviis" />
+		<prop from="kellele" to="ownerName" />
+		<prop from="osakond" to="ownerOrgStructUnit" />
+		<prop from="sisu" to="comment" />
+		<prop from="tahtaeg" to="dueDate" />
+		<prop from="vastamise_kpv" to="complienceDate" />
+		<prop from="taitmismarge" to="complienceNotation" />
+		<prop from="edastaja_asutus" to="comment" prefix="Edastav asutus" />
+		<prop from="kaaskirja_kpv" to="comment" prefix="Kaaskirja kpv" />
+		<prop from="kaaskirja_nr" to="comment" prefix="Kaaskirja nr" />
+		<prop from="resolutsioon" to="comment" prefix="Resolutsioon" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+	</documentType>
+
+	<documentType from="Kiri-väljaminev" to="outgoingLetter">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="asutus_isik" to="recipientName" />
+		<prop from="aadress_meiliaadress" to="recipientEmail" />
+		<prop from="lisaadressaadid" to="comment" prefix="Lisaadressaadid" />
+		<prop from="saatja_kirja_kpv" to="senderRegDate" />
+		<prop from="saatja_indeks" to="senderRegNumber" />
+		<prop from="tegelik_saatmisviis" to="comment" prefix="Tegelik saatmisviis" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="allkirjastaja2" to="comment" prefix="Allkirjastaja" />
+		<prop from="sisu" to="comment" />
+		<prop from="edastaja_asutus" to="comment" prefix="Edastav asutus" />
+		<prop from="kaaskirja_kpv" to="comment" prefix="Kaaskirja kpv" />
+		<prop from="kaaskirja_nr" to="comment" prefix="Kaaskirja nr" />
+		<prop from="resolutsioon" to="comment" prefix="Resolutsioon" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+		<child to="sendInfo" prefix="doccom">
+			<prop from="saatmisviis" to="sendMode" />
+			<prop from="asutus_isik" to="recipient" />
+		</child>
+	</documentType>
+
+	<documentType from="Koolitustaotlus" to="trainingApplication">
+		<prop from="info" to="comment" />
+		<prop from="koolituse_nimetus" to="docName" />
+		<prop from="taotleja_te_ees_ja_perekonnanimi_ametinimetus" to="docName" />
+		<prop from="koolituse_nimetus" to="trainingName" />
+		<prop from="koolitaja_asutus_voi_isik" to="trainingOrganizer" />
+		<prop from="koolitusvajadus" to="trainingNeed" />
+		<prop from="koolituse_toimumise_kuupaev_ad" toFirst="trainingBeginDate"
+			toSecond="trainingEndDate" splitter="period" to="comment"
+			prefix="Koolituse toimumise kpv" />
+		<prop from="maht_paevades_voi_tundides" to="trainingHours" />
+		<prop from="toimumiskoht" to="trainingLocation" />
+		<prop from="koolituse_maksumus_koos_lahetuskuludega" to="comment"
+			prefix="Maksumus" />
+		<child to="trainingApplicationApplicantType">
+			<prop from="taotleja_te_ees_ja_perekonnanimi_ametinimetus" to="applicantName" />
+			<prop from="osakonna_nimetus" to="applicantStructUnitName" />
+			<prop from="lahetuse_aeg" toFirst="errandBeginDate" toSecond="errandEndDate"
+				splitter="period" to="errandComment" prefix="Lähetuse aeg" />
+			<prop from="lisainfo_internetilink_jne" to="errandComment"
+				prefix="Link" />
+			<prop from="lisamarkused" to="errandComment" prefix="Märkused" />
+			<prop from="taidab_koolitusnounik" to="errandComment" prefix="Koolitusnõuniku märkus" />
+		</child>
+	</documentType>
+
+	<documentType from="Korraldus" to="managementsOrder">
+		<prop from="pealkiri" to="docName" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+		<prop from="kellele" to="managementsOrderWhoseName" />
+		<prop from="asutus" to="responsibleOrganization" />
+		<prop from="sisu" to="comment" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="kontroll" to="comment" prefix="Kontroll" />
+		<prop from="koopiad" to="additionalRecipientName" />
+		<prop from="tahtaeg" to="managementsOrderDueDate" />
+		<prop from="vastatud" to="managementsOrderComplienceDate" />
+		<prop from="taitmismarge" to="managementsOrderComplienceNotation" />
+	</documentType>
+
+	<documentType from="Lahkumisleht_alates_01.01.2010" to="leavingLetter">
+		<prop from="lahkumislehe_esitaja" to="docName" />
+		<prop from="lahkumislehe_esitaja" to="ownerName" />
+		<prop from="ametinimetus" to="ownerJobTitle" />
+		<prop from="osakonna_nimi" to="ownerOrgStructUnit" />
+		<prop from="lahkumise_peataumise_pohjus" to="leaveReason" />
+		<prop from="lahkumise_peatumise_kpv" to="leaveDate" />
+		<prop from="sisu" to="comment" />
+		<prop from="koolitusnounik" to="trainingAdviser" />
+		<prop from="rho_juhataja_asetaitja_raamatupidamise_alal" to="financialDepartmentHeadOnAccounting" />
+		<prop from="arhiivinounik" to="adviserGeneralDepartmentOnArchives" />
+		<prop from="riigisaladuse_nounik" to="adviserGeneralDepartmentOnClassifiedRecords" />
+		<prop from="ou_juhataja_asetaitja" to="deputyHeadOfTheGeneralDepartment" />
+		<prop from="asjaajamise_vastuvotja" to="documentaryProceduresRecipient" />
+		<prop from="it_nounik" to="adviserOnICT" />
+		<prop from="oho_hooldusteeninduse_nounik" to="deputyHeadOfTheAdmDeptOnMaintenance" />
+		<prop from="ametniku_vahetu_juht" to="officialsDirectManager" />
+	</documentType>
+
+	<documentType from="Kooskõlastusleht_kuni_31.12.2009" to="leavingLetter">
+		<prop from="/document/tegevused/tegevus[tegevus_liik=35]/kellelt_tekst"
+			to="docName" expr="xpath" />
+		<prop from="sisu" to="comment" />
+		<prop from="koolitusnounik" to="trainingAdviser" />
+		<prop from="yo_juhataja_asetaitja" to="deputyHeadOfTheGeneralDepartment" />
+		<prop from="asjaajamise_vastuvotja" to="documentaryProceduresRecipient" />
+		<prop from="it_nounik" to="adviserOnICT" />
+		<prop from="ho_juhataja_asetaitja_hooldusteeninduse_alal" to="deputyHeadOfTheAdmDeptOnMaintenance" />
+		<prop from="ametniku_vahetu_juht" to="officialsDirectManager" />
+		<prop from="rho_juhataja_asetaitja_raamatupidamise_alal" to="financialDepartmentHeadOnAccounting" />
+		<prop from="arhiivinounik" to="adviserGeneralDepartmentOnArchives" />
+		<prop from="riigisaladuse_nounik" to="adviserGeneralDepartmentOnClassifiedRecords" />
+	</documentType>
+
+	<documentType from="Leping" to="contractSim">
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+		<prop from="lepingu_pool" to="firstPartyName" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="kontaktisik" to="firstPartyContactPerson" />
+		<prop from="lepingu_pool2" to="secondPartyName" />
+		<prop from="allkirjastaja2" to="secondPartySigner" />
+		<prop from="e_maili_aadress" to="secondPartyEmail" />
+		<prop from="kontaktisik2" to="secondPartyContactPerson" />
+		<prop from="lepingu_pool3" to="thirdPartyName" />
+		<prop from="allkirjastaja3" to="thirdPartySigner" />
+		<prop from="e_maili_aadress3" to="thirdPartyEmail" />
+		<prop from="kontaktisik3" to="thirdPartyContactPerson" />
+		<prop from="teise_poole_lepingu_kpv" to="secondPartyContractDate" />
+		<prop from="teise_poole_lepingu_nr" to="secondPartyContractNumber" />
+		<prop from="lepingu_pealkiri" to="docName" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="lepingu_loppsumma_kaibemaksuta" to="inclusivePriceExclVat" />
+		<prop from="kulujuht_nimi" to="costManager" />
+		<prop from="finantseerimise_allikas" to="financingSource" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+		<prop from="lepingu_lopp_tahtaeg" to="contractSimEndDate" />
+		<prop from="akti_reg_kpv" to="finalTermOfDeliveryAndReceipt" />
+		<prop from="kaaskirja_andmed" to="comment" prefix="Kaaskiri" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+	</documentType>
+	
+	<documentType from="Leping_kuni_31.12.2008" to="contractSim">
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+		<prop from="lepingu_pool" to="firstPartyName" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="kontaktisik" to="firstPartyContactPerson" />
+		<prop from="lepingu_pool2" to="secondPartyName" />
+		<prop from="allkirjastaja2" to="secondPartySigner" />
+		<prop from="e_maili_aadress" to="secondPartyEmail" />
+		<prop from="kontaktisik2" to="secondPartyContactPerson" />
+		<prop from="lepingu_pool3" to="thirdPartyName" />
+		<prop from="allkirjastaja3" to="thirdPartySigner" />
+		<prop from="e_maili_aadress3" to="thirdPartyEmail" />
+		<prop from="kontaktisik3" to="thirdPartyContactPerson" />
+		<prop from="teise_poole_lepingu_kpv" to="secondPartyContractDate" />
+		<prop from="teise_poole_lepingu_nr" to="secondPartyContractNumber" />
+		<prop from="lepingu_pealkiri" to="docName" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="lepingu_loppsumma_kaibemaksuta" to="inclusivePriceExclVat" />
+		<prop from="kulujuht_nimi" to="costManager" />
+		<prop from="finantseerimise_allikas" to="financingSource" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+		<prop from="lepingu_lopp_tahtaeg" to="contractSimEndDate" />
+		<prop from="akti_reg_kpv" to="finalTermOfDeliveryAndReceipt" />
+		<prop from="kaaskirja_andmed" to="comment" prefix="Kaaskiri" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+	</documentType>
+
+	<documentType from="Lepingud_füüsiliste_isikutega_kuni_31.12.2009"
+		to="contractSim">
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+		<prop from="lepingu_pool" to="firstPartyName" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="kontaktisik" to="firstPartyContactPerson" />
+		<prop from="lepingu_pool2" to="secondPartyName" />
+		<prop from="allkirjastaja2" to="secondPartySigner" />
+		<prop from="e_maili_aadress" to="secondPartyEmail" />
+		<prop from="kontaktisik2" to="secondPartyContactPerson" />
+		<prop from="teise_poole_lepingu_kpv" to="secondPartyContractDate" />
+		<prop from="teise_poole_lepingu_nr" to="secondPartyContractNumber" />
+		<prop from="lepingu_pealkiri" to="docName" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="lepingu_lopp_tahtaeg" to="contractSimEndDate" />
+		<prop from="akti_reg_kpv" to="finalTermOfDeliveryAndReceipt" />
+		<prop from="lepingu_loppsumma_kaibemaksuta" to="inclusivePriceExclVat" />
+		<prop from="kulujuht_nimi" to="costManager" />
+		<prop from="finantseerimise_allikas" to="financingSource" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+		<prop from="kaaskirja_andmed" to="comment" prefix="Kaaskiri" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+	</documentType>
+
+	<documentType
+		from="Koostöölepingud_maavalitsustega_ja_riigieelarvelise_eraldise_kasutamise_lepingud_kuni_31.12.2009"
+		to="contractSim">
+		<prop from="allkirjastamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+		<prop from="lepingu_pool" to="firstPartyName" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="kontaktisik" to="firstPartyContactPerson" />
+		<prop from="lepingu_pool2" to="secondPartyName" />
+		<prop from="allkirjastaja2" to="secondPartySigner" />
+		<prop from="e_maili_aadress" to="secondPartyEmail" />
+		<prop from="kontaktisik2" to="secondPartyContactPerson" />
+		<prop from="lepingu_pool3" to="thirdPartyName" />
+		<prop from="allkirjastaja3" to="thirdPartySigner" />
+		<prop from="e_maili_aadress3" to="thirdPartyEmail" />
+		<prop from="kontaktisik3" to="thirdPartyContactPerson" />
+		<prop from="teise_poole_lepingu_kpv" to="secondPartyContractDate" />
+		<prop from="teise_poole_lepingu_nr" to="secondPartyContractNumber" />
+		<prop from="lepingu_pealkiri" to="docName" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="lepingu_loppsumma_kaibemaksuta" to="inclusivePriceExclVat" />
+		<prop from="kulujuht_nimi" to="costManager" />
+		<prop from="finantseerimise_allikas" to="financingSource" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+		<prop from="lepingu_lopp_tahtaeg" to="contractSimEndDate" />
+		<prop from="akti_reg_kpv" to="finalTermOfDeliveryAndReceipt" />
+		<prop from="kaaskirja_andmed" to="comment" prefix="Kaaskiri" />
+	</documentType>
+
+	<documentType from="Luba_alates_01.01.2010" to="licence">
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="valja_antud_kellele" to="docName" />
+		<prop from="valja_antud_kellele" to="givenOutTo" />
+		<prop from="relvade_liik" to="licenceType" />
+		<prop from="kuhu_viiakse" to="comment" prefix="Kuhu viiakse" />
+		<prop from="veo_eest_vastutab" to="comment" prefix="Veo eest vastutab" />
+		<prop from="luba_kehtiv" to="comment" prefix="Loa kehtivus" />
+		<prop from="allkirjastaja" to="comment" prefix="Allkirjastaja" />
+		<prop from="allkirjastaja2" to="comment" prefix="Allkirjastaja" />
+	</documentType>
+
+	<documentType from="Sisse-_ja_väljaveo_luba_kuni_31.12.2009"
+		to="licence">
+		<prop from="valja_antud_kellele" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="valja_antud_kellele" to="givenOutTo" />
+		<prop from="relvade_liik" to="licenceType" />
+		<prop from="kuhu_viiakse" to="comment" prefix="Kuhu viiakse" />
+		<prop from="veo_eest_vastutab" to="comment" prefix="Veo eest vastutab" />
+		<prop from="luba_kehtiv" to="comment" prefix="Loa kehtivus" />
+		<prop from="allkirjastaja" to="comment" prefix="Allkirjastaja" />
+		<prop from="allkirjastaja2" to="comment" prefix="Allkirjastaja" />
+	</documentType>
+
+	<documentType from="Soetamise_luba_kuni_31.12.2009" to="licence">
+		<prop from="valja_antud_kellele" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="valja_antud_kellele" to="givenOutTo" />
+		<prop from="relvade_liik" to="licenceType" />
+		<prop from="soetamiseks_kellele" to="comment" prefix="Soetaja" />
+		<prop from="kellelt_soetatakse" to="comment" prefix="Kellelt soetatakse" />
+		<prop from="tehningu_eest_vastutab" to="comment" prefix="Vastutav isik" />
+		<prop from="luba_kehtiv" to="comment" prefix="Loa kehtivus" />
+		<prop from="allkirjastaja" to="comment" prefix="Allkirjastaja" />
+		<prop from="allkirjastaja2" to="comment" prefix="Allkirjastaja" />
+	</documentType>
+
+	<documentType from="aruanne_audit" to="report">
+		<prop from="pealkiri" to="docName" />
+		<prop from="asutus" to="rapporteur" />
+		<prop from="saatja_kpv" to="rapporteurRegDate" />
+		<prop from="auditi_aruande_nr" to="rapporteurRegNumber" />
+		<prop from="auditi_aruande_periood" to="comment" prefix="Periood" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+	</documentType>
+
+	<documentType from="majasisene_taotlus_avaldus_kiri" to="internalApplication">
+		<prop from="pealkiri" to="docName" />
+		<prop from="kellele" to="applicationRecipient" />
+		<prop from="sisu" to="applicationContentData" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="koostaja" to="signerName" />
+		<prop from="osakond" to="ownerOrgStructUnit" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+		<prop from="tahtaeg" to="comment" prefix="Tähtaeg" />
+		<prop from="vastatud" to="comment" prefix="Vastatud kpv" />
+		<prop from="taitmismarge" to="comment" prefix="Täitmismärge" />
+	</documentType>
+
+
+
+	<documentType from="Memo" to="memo">
+		<prop from="kellele" to="whomName" />
+		<prop from="kellelt" to="comment" prefix="Kellelt" />
+		<prop from="osakond" to="ownerOrgStructUnit" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="koostamise_kpv" to="comment" prefix="Koostamise kpv" />
+		<prop from="saatja_reg_nr" to="comment" prefix="Saatja nr" />
+		<prop from="teema" to="docName" />
+		<prop from="asutus_kust_saadetakse" to="comment" prefix="Saatja" />
+		<prop from="saatja_kpv" to="comment" prefix="Saatja kpv" />
+		<prop from="saatja_nr" to="comment" prefix="Saatja nr" />
+		<prop from="asutus" to="recipientName" />
+		<prop from="asutus_valja_saatmiseks" to="recipientName" />
+	</documentType>
+
+	<documentType from="Protokoll" to="minutes">
+		<prop from="toimumise_kpv" to="comment" prefix="Toimumise kpv" />
+		<prop from="protokoll_nr" to="minutesNo" />
+		<prop from="komisjoni_nimi" to="comment" prefix="Komisjon" />
+		<prop from="pealkiri_sisu" to="docName" />
+		<prop from="koosoleku_juhataja" to="signerName" />
+		<prop from="protokollija" to="ownerName" />
+		<prop from="lisad" to="comment" prefix="Lisad" />
+		<prop from="protokolli_saajad" to="recipientName" />
+	</documentType>
+
+	<documentType from="Puhkuse_avaldus_alates_01.01.2010" to="vacationOrder">
+		<prop from="ees_ja_perekonnanimi" to="docName" />
+		<prop from="ees_ja_perekonnanimi" to="ownerName" />
+		<prop from="ametinimetus" to="ownerJobTitle" />
+		<prop from="osakonna_nimi" to="ownerOrgStructUnit" />
+		<prop from="info" to="comment" />
+		<prop from="nr1" to="comment" prefix=".spaced" />
+		<prop from="nr1_1" to="comment" prefix=".spaced" />
+		<prop from="nr1_2" to="comment" prefix=".spaced" />
+		<prop from="nr1_3" to="comment" prefix=".spaced" />
+		<prop from="nr1_4" to="comment" prefix=".spaced" />
+		<prop from="nr2" to="comment" prefix=".spaced" />
+		<prop from="nr2_1" to="comment" prefix=".spaced" />
+		<prop from="nr2_2" to="comment" prefix=".spaced" />
+		<prop from="nr3" to="comment" prefix=".spaced" />
+		<prop from="asendaja_ees_ja_perekonnanimi" to="comment" prefix="Asendaja" />
+		<prop from="periood" to="comment" prefix="Asendaja" />
+		<prop from="asendaja_ees_ja_perekonnanimi2" to="comment" prefix="Asendaja" />
+		<prop from="periood2" to="comment" prefix="Asendaja" />
+		<prop from="asendaja_ees_ja_perekonnanimi3" to="comment" prefix="Asendaja" />
+		<prop from="periood3" to="comment" prefix="Asendaja" />
+		<prop from="taiendav_info" to="comment" />
+	</documentType>
+
+	<documentType from="Puhkuse_käskkiri_alates_01.01.2010"
+		to="vacationOrder" defaultVolume="3-4">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="comment" prefix="Allkirjastaja" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="kantsleri" expr="const" to="whoseName" />
+	</documentType>
+
+	<documentType from="Puhkuseavaldus_kuni_31.12.2009" to="vacationOrder">
+		<prop from="ees_ja_perekonnanimi" to="docName" />
+		<prop from="ees_ja_perekonnanimi" to="ownerName" />
+		<prop from="osakonna_nimi" to="ownerOrgStructUnit" />
+		<prop from="ametinimetus" to="ownerJobTitle" />
+		<prop from="sisu_puhkuse_avaldus" to="comment" />
+		<prop from="kokku_kalendripaeva" to="comment" prefix="Kokku kalendripäevi" />
+		<prop from="sisu_graafiku_muutmine" to="comment" prefix="Graafiku muutmine" />
+		<prop from="muudetav_aeg" to="comment" prefix="Muudetav aeg" />
+		<prop from="sisu_taita_koos_graafiku_muutmise_avaldusega" to="comment"
+			prefix="Graafiku muutmine" />
+		<prop from="uus_aeg" to="comment" prefix="Uus aeg" />
+		<prop from="asendamine" to="comment" prefix="Asendaja" />
+		<prop from="asjaajamise_vastuvotja1" to="comment" prefix="Asendaja" />
+		<prop from="periood1" to="comment" prefix="Asendaja" />
+		<prop from="ei_taida_asendustasu1" to="comment" prefix="Asendaja" />
+		<prop from="asjaajamise_vastuvotja2" to="comment" prefix="Asendaja" />
+		<prop from="periood2" to="comment" prefix="Asendaja" />
+		<prop from="ei_taida_asendustasu2" to="comment" prefix="Asendaja" />
+		<prop from="asjaajamise_vastuvotja3" to="comment" prefix="Asendaja" />
+		<prop from="periood3" to="comment" prefix="Asendaja" />
+		<prop from="ei_taida_asendustasu3" to="comment" prefix="Asendaja" />
+		<prop from="taiendav_info" to="comment" />
+	</documentType>
+
+	<documentType from="Regionaalministri_määrus" to="decree">
+		<prop from="pealkiri" to="docName" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="allkirjastaja2" to="comment" prefix="Allkirjastaja" />
+		<prop from="koostaja" to="ownerName" />
+		<prop from="kaskkirja_saajad" to="recipientName" />
+		<prop from="kaskkirja_saajad2" to="additionalRecipientName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+	</documentType>
+
+	<documentType from="Siseministri_määrus" to="decree"
+		defaultVolume="1-1">
+		<prop from="pealkiri" to="docName" />
+		<prop from="plangi_nr" to="comment" prefix="Plangi nr" />
+		<prop from="allakirjutamise_kpv" to="comment" prefix="Allkirjastamise kpv" />
+		<prop from="saatmisviis" to="comment" prefix="Saatmisviis" />
+		<prop from="markused" to="comment" prefix="Märkused" />
+		<prop from="allkirjastaja" to="signerName" />
+		<prop from="allkirjastaja2" to="comment" prefix="Allkirjastaja" />
+		<prop from="koostaja" to="ownerName" />
+		<prop
+			from="maaruse_saajad_ministeeriumi_osakonnad_haldusala_ministeeriumid"
+			to="recipientName" />
+		<prop from="maaruse_saajad_teised_asutused" to="additionalRecipientName" />
+		<prop from="kooskolastajad" to="comment" prefix="Kooskõlastajad" />
+		<prop from="taidetud" to="comment" prefix="Täidetud" />
+		<prop from="taitmismarge" to="comment" prefix="Täitmismärge" />
+	</documentType>
+
+	<documentType from="Siselähetuse_taotlus" to="errandApplicationDomestic">
+		<prop from="taotleja_te_ees_ja_perekonnanimi_ametinimetus" to="docName" />
+		<prop from="osakonna_nimetus" to="ownerOrgStructUnit" />
+		<prop from="urituse_nimi" to="eventName" />
+		<prop from="korraldaja" to="eventOrganizer" />
+		<prop from="urituse_toimumise_kuupaev" toFirst="eventBeginDate"
+			toSecond="eventEndDate" splitter="period" to="comment" prefix="Ürituse toimumise kpv" />
+		<prop from="info" to="comment" />
+		<prop from="taidab_osakonnajuhataja_e_kulujuht" to="comment"
+			prefix="Osakonnajuhataja märkus" />
+		<child to="errandApplicationDomesticApplicantType">
+			<prop from="taotleja_te_ees_ja_perekonnanimi_ametinimetus" to="applicantName" />
+			<child to="errandsDomesticType">
+				<prop from="lisainfo_vajadusel_markida_asendaja_internetilink_jne"
+					to="errandSubstituteName" />
+				<prop from="palun_maksta_mulle_avanssi" to="advancePaymentSum" />
+				<prop from="lahetuse_pohjendus" to="travelPurpose" />
+				<prop from="maakonn_na_d_kus_lahetuses_viibitakse" to="errandComment"
+					prefix="Lähetuskoht" />
+				<prop from="lahetuse_oleku_kuupaevad" to="errandComment"
+					prefix="Lähetuse kpv" />
+				<prop from="hinnagulised_lahetuskulud" to="expenseDesc" />
+				<prop from="finantseerimise_allikas" to="expenseFinancingSource" />
+			</child>
+		</child>
+	</documentType>
+
+
+	<documentType from="Välislähetuse_korraldus" to="errandOrderAbroad">
+		<prop from="taotlejate_nimi_amet_osakond" to="docName" />
+		<prop from="oiguslik_alus_ametnikud" to="legalBasisForOfficials" />
+		<prop from="oiguslik_alus_abiteenistujad" to="legalBasisForSupportStaff" />
+		<prop from="urituse_toimumise_aeg" to="comment" prefix="Ürituse toimumise aeg" />
+		<prop from="lahetuse_aeg" toFirst="eventBeginDate" toSecond="eventEndDate"
+			splitter="period" to="comment" prefix="Lähetuse aeg" />
+		<prop from="info" to="comment" />
+		<prop from="taidab_personaliosakonna_peaspetsialist" to="comment"
+			prefix="Personaliosakonna märkus" />
+		<prop from="aruande_esitamise_kpv" to="comment" prefix="Aruande esitamise kpv" />
+		<prop from="markus" to="comment" prefix="Märkused" />
+		<prop from="lahetuse_eesmark_ja_vajaduse_pohjendus" to="travelPurpose" />
+		<prop from="aruande_lisamise_tahtaeg" to="reportDueDate" />
+		<child to="errandOrderApplicantAbroadType">
+			<prop from="taotlejate_nimi_amet_osakond" to="applicantName" />
+			<prop from="osakonna_nimetus" to="applicantStructUnitName" />
+			<child to="errandsAbroadType">
+				<prop from="riik_ja_linn_kus_lahetuses_viibitakse" to="country" />
+				<prop from="lahetuse_kulud" to="expenseDesc" />
+				<prop from="lisamarkused" to="expenseDesc" />
+				<prop from="finantseerimise_allikas" to="expenseFinancingSource" />
+				<prop from="lahetuse_aeg" to="errandComment" prefix="Lähetuse aeg" />
+			</child>
+		</child>
+	</documentType>
+
+	<documentType from="Välislähetuse_korralduse_muutmine" to="errandOrderAbroad">
+		<prop from="taotlejate_nimi_amet_osakond" to="docName" />
+		<prop from="oiguslik_alus_ametnikud" to="legalBasisForOfficials" />
+		<prop from="oiguslik_alus_abiteenistujad" to="legalBasisForSupportStaff" />
+		<prop from="sisu" to="comment" />
+		<prop from="taidab_personaliosakonna_peaspetsialist" to="comment"
+			prefix="Personaliosakonna märkus" />
+		<prop from="korraldus_edastada" to="comment" prefix="Edastada" />
+		<child to="errandOrderApplicantAbroadType">
+			<prop from="taotlejate_nimi_amet_osakond" to="applicantName" />
+		</child>
+	</documentType>
+
+
+
+
+	<documentType from="Taotlus_hanke_läbiviimiseks" to="tenderingApplication">
+		<prop from="hanke_nimetus" to="docName" />
+		<prop from="info" to="comment" />
+		<prop from="taotleja" to="procurementApplicantName" />
+		<prop from="taotleja_amet_osakond" to="procurementApplicantOrgStructUnit" />
+		<prop from="hankemenetluse_liik" to="procurementType" />
+		<prop from="alus" to="procurementLegalBasis" />
+		<prop from="hanke_yldiseloomustus" to="procurementDesc" />
+		<prop from="hankelepingu_eeldatav_maksumus" to="procurementSumEstimated" />
+		<prop from="artikkel_asutuse_eelarves" to="procurementBudgetClassification" />
+		<prop from="yhtne_rh_objektide_klassif_kood" to="procurementObjectClassCode" />
+		<prop from="andmed_pakkujate_kohta" to="procurementTenderData" />
+		<prop from="hankelepingu_solmimise_tahtaeg" to="procurementContractDateEstimated" />
+		<prop from="hanke_eest_vastutav_isik_osakonnas" to="procurementOfficialResponsible" />
+		<prop from="rahastamine_EL_või_valisabi_kaasfinantseerimisega"
+			to="linkedToEuProject" />
+		<prop from="struktuurtoetuste_projektivaline_identifitseerimise_nr"
+			to="structuralAidIdOutsideProject" />
+		<prop from="toote_teenuse_tehniline_kirjeldus" to="objectTechnicalDesc" />
+		<prop from="hindamiskriteeriumid" to="evaluationCriteria" />
+		<prop from="pakkumuste_esitamise_tahtaeg" to="offeringEndDate" />
+		<prop from="pakkujate_kompetentsuse_kvalifitseerimistingimused"
+			to="qualificationTermsForTenders" />
+		<prop from="lisamarkused" to="comment" prefix="Märkused" />
+		<prop from="lepingu_solmimise_kpv" to="contractBeginDate" />
+		<prop from="riigihanke_viitenumber" to="procurementNumber" />
+	</documentType>
+
+</root>

@@ -61,7 +61,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.document_sender}" value="sender" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col4-text" value="#{r.document.shortSender}" action="dialog:document" tooltip="#{r.document.sender}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
+         <a:actionLink id="col4-text" value="#{r.document.sender}" action="dialog:document" tooltip="#{r.document.sender}" actionListener="#{DocumentDialog.open}" styleClass="no-underline condence20-" >
             <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
          </a:actionLink>
       </a:column>

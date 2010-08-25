@@ -79,5 +79,8 @@
       prependOnclick($jQ(".docList_deleteAllDocuments"), function(){
          return confirm('<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("docList_deleteAllDocuments_confirmProceed")%>');
       });
+      prependOnclick($jQ(".docList_importPP"), function(){
+          return confirm('<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("doclist_import_PP_confirmProceed")%>');
+       });
    </script>
 </f:verbatim>

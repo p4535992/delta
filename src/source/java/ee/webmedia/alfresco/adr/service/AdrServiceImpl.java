@@ -156,7 +156,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             s.append(", regNr='").append(viit);
             s.append("', regDateTime=").append(regDateTime);
             for (Document doc : docs) {
-                s.append("\n    nodeRef=" + doc.getNode().getNodeRef());
+                s.append("\n    nodeRef=" + doc.getNodeRef());
             }
             log.warn(s.toString());
         }
@@ -181,7 +181,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             return null;
         }
 
-        List<File> files = fileService.getAllActiveFiles(doc.getNode().getNodeRef());
+        List<File> files = fileService.getAllActiveFiles(doc.getNodeRef());
         for (Iterator<File> i = files.iterator(); i.hasNext(); ) {
             File file = i.next();
             // 5.1.2.5. faili pealkiri = failRequest.failinimi
@@ -245,29 +245,20 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         dokumentDetailidega.setJuurdepaasuPiiranguLopp(getNullIfEmpty(doc.getAccessRestrictionEndDesc()));
         if (isIncomingLetter) {
             dokumentDetailidega.setVastamiseKuupaev(isIncomingLetter ? convertToXMLGergorianCalendar(doc.getComplienceDate()) : null);
-            dokumentDetailidega.setTahtaeg(convertToXMLGergorianCalendar(doc.getDueDate()));
-        } else if (DocumentSubtypeModel.Types.MANAGEMENTS_ORDER.equals(doc.getDocumentType().getId())) {
-            dokumentDetailidega.setTahtaeg(convertToXMLGergorianCalendar((Date) doc.getNode().getProperties().get(
-                    DocumentSpecificModel.Props.MANAGEMENTS_ORDER_DUE_DATE)));
-        } else if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(doc.getDocumentType().getId())) {
-            dokumentDetailidega.setTahtaeg(convertToXMLGergorianCalendar((Date) doc.getNode().getProperties().get(
-                    DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE)));
-        } else if (DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(doc.getDocumentType().getId())) {
-            dokumentDetailidega.setTahtaeg(convertToXMLGergorianCalendar((Date) doc.getNode().getProperties().get(
-                    DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE)));
         }
+        dokumentDetailidega.setTahtaeg(convertToXMLGergorianCalendar(doc.getDueDate2()));
         if (!isIncomingLetter) {
             dokumentDetailidega.setKoostaja(getNullIfEmpty(getWithParenthesis(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
         }
         dokumentDetailidega.setAllkirjastaja(getNullIfEmpty(doc.getSignerName()));
 
-        dokumentDetailidega.getSeotudDokument().addAll(otsiDokumendidSamasTeemas(doc.getNode().getNodeRef(), includeSeotudDokumentAdditionalProperties));
+        dokumentDetailidega.getSeotudDokument().addAll(otsiDokumendidSamasTeemas(doc.getNodeRef(), includeSeotudDokumentAdditionalProperties));
 
         // 5.1.2.3. failiga seotud dokumendi accessRestriction = Avalik
         if (!AccessRestriction.OPEN.equals(doc.getAccessRestriction())) {
             includeFileContent = false;
         }
-        List<File> allActiveFiles = fileService.getAllActiveFiles(doc.getNode().getNodeRef());
+        List<File> allActiveFiles = fileService.getAllActiveFiles(doc.getNodeRef());
         for (File file : allActiveFiles) {
             Fail fail = new Fail();
             setFailProperties(fail, file, includeFileContent);

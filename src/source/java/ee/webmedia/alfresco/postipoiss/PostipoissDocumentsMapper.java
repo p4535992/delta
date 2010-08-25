@@ -1,0 +1,659 @@
+package ee.webmedia.alfresco.postipoiss;
+
+import java.io.File;
+import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.namespace.NamespaceService;
+import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.ObjectUtils;
+import org.apache.commons.lang.StringUtils;
+import org.dom4j.Document;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.util.Assert;
+
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+
+/**
+ * @author Aleksei Lissitsin
+ */
+public class PostipoissDocumentsMapper implements BeanFactoryAware {
+    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsMapper.class);
+
+    static class Mapping {
+        String from;
+        QName to;
+        List<PropMapping> props;
+        Set<Mapping> subMappings = new HashSet<Mapping>();
+        TypeInfo typeInfo;
+        String defaultVolume;
+
+        @Override
+        public String toString() {
+            StringBuilder s = new StringBuilder(String.format("[%s -> %s :\n", from, to));
+            for (PropMapping m : props) {
+                s.append(m);
+                s.append("\n");
+            }
+            s.append("]");
+            return s.toString();
+        }
+
+        public Mapping() {
+            props = new ArrayList<PropMapping>();
+        }
+
+        public Mapping(Mapping m) {
+            props = new ArrayList<PropMapping>(m.props);
+        }
+
+        public Mapping(String from, TypeInfo typeInfo) {
+            this.from = from;
+            this.typeInfo = typeInfo;
+            this.to = typeInfo.qname;
+        }
+
+        public Mapping(Mapping m, String from, TypeInfo typeInfo) {
+            if (m != null) {
+                props = new ArrayList<PropMapping>(m.props);
+            } else {
+                props = new ArrayList<PropMapping>();
+            }
+            this.from = from;
+            this.typeInfo = typeInfo;
+            this.to = typeInfo.qname;
+        }
+
+        public void add(PropMapping pm) {
+            props.add(pm);
+        }
+    }
+
+    static class PropMapping {
+        String from;
+        String to;
+        String toFirst;
+        String toSecond;
+        String prefix;
+        Splitter splitter;
+        String expression;
+
+        @Override
+        public String toString() {
+            if (splitter == null) {
+                if (prefix == null) {
+                    return String.format("[%s -> %s]", from, to);
+                } else {
+                    return String.format("[%s -> %s : %s]", from, to, prefix);
+                }
+            }
+            return String.format("[%s - %s -> (%s, %s)]", from, splitter, toFirst, toSecond);
+        }
+
+        public PropMapping() {
+        }
+
+        public PropMapping(String from, String to, String prefix, String expression) {
+            this.from = from;
+            this.to = to;
+            this.prefix = prefix;
+            this.expression = expression;
+        }
+
+        public PropMapping(String from, String to, String prefix, String toFirst, String toSecond, Splitter splitter, String expression) {
+            this.to = to;
+            this.prefix = prefix;
+            this.from = from;
+            this.toFirst = toFirst;
+            this.toSecond = toSecond;
+            this.splitter = splitter;
+            this.expression = expression;
+        }
+
+    }
+
+    private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+    private static DateFormat dateFormatWithoutYear = new SimpleDateFormat("dd.MM");
+    private static DateFormat dateFormatOnlyDay = new SimpleDateFormat("dd");
+
+    @SuppressWarnings("serial")
+    static class ConvertException extends Exception {
+    }
+
+    static interface Splitter {
+        Pair split(String s) throws ConvertException;
+    }
+
+    static class PeriodSplitter implements Splitter {
+        @Override
+        public Pair split(String s) throws ConvertException {
+            Date first = null;
+            Date second = null;
+            int i = s.indexOf('-');
+            if (i != -1) {
+                try {
+                    String sf = StringUtils.strip(s.substring(0, i), ". ");
+                    String ss = StringUtils.strip(s.substring(i + 1), ". ");
+                    second = dateFormat.parse(ss);
+                    try {
+                        first = dateFormat.parse(sf);
+                    } catch (ParseException e) {
+                        try {
+                            first = dateFormatWithoutYear.parse(sf);
+                            first = combine(first, second, false);
+                        } catch (ParseException ee) {
+                            first = dateFormatOnlyDay.parse(sf);
+                            first = combine(first, second, true);
+                        }
+                    }
+                    return new Pair(first, second);
+                } catch (ParseException e) {
+                }
+            } else {
+                try {
+                    first = dateFormat.parse(s);
+                    return new Pair(first, first);
+                } catch (ParseException e) {
+                }
+            }
+            throw new ConvertException();
+        }
+
+        private Date combine(Date dayDate, Date yearDate, boolean withMonthes) {
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(yearDate);
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            calendar.setTime(dayDate);
+            calendar.set(Calendar.YEAR, year);
+            if (withMonthes) {
+                calendar.set(Calendar.MONTH, month);
+            }
+            return calendar.getTime();
+        }
+
+        @Override
+        public String toString() {
+            return "'period' splitter";
+        }
+    }
+
+    static class Pair {
+        Object first;
+        Object second;
+
+        public Pair(Object first, Object second) {
+            this.first = first;
+            this.second = second;
+        }
+
+    }
+
+    static class StringValueAppender {
+        String s;
+        StringBuilder sb;
+        String separator = ", ";
+
+        public StringValueAppender() {
+        }
+
+        public StringValueAppender(String separator) {
+            this.separator = separator;
+        }
+
+        public void add(String s) {
+            if (StringUtils.isBlank(s)) {
+                return;
+            }
+            if (this.s == null) {
+                this.s = s;
+            } else {
+                if (sb == null) {
+                    sb = new StringBuilder(this.s);
+                }
+                sb.append(separator).append(s);
+            }
+        }
+
+        public String get() {
+            if (sb == null) {
+                return s;
+            } else {
+                return sb.toString();
+            }
+        }
+    }
+
+    static String join(String separator, String... strings) {
+        StringValueAppender app = new StringValueAppender(separator);
+        for (String s : strings) {
+            app.add(s);
+        }
+        return app.get();
+    }
+
+    static abstract class PropertyValueProvider {
+        QName qname;
+
+        PropertyValueProvider withQName(QName qname) {
+            this.qname = qname;
+            return this;
+        }
+
+        protected abstract PropertyValue provide();
+
+        @Override
+        public String toString() {
+            return ObjectUtils.toString(qname);
+        }
+    }
+
+    static class StringPropertyValueProvider extends PropertyValueProvider {
+
+        @Override
+        public PropertyValue provide() {
+            return new StringPropertyValue().withQName(qname);
+        }
+
+    }
+
+    static class CommentPropertyValueProvider extends PropertyValueProvider {
+
+        @Override
+        public PropertyValue provide() {
+            return new CommentPropertyValue().withQName(qname);
+        }
+
+    }
+
+    static class DatePropertyValueProvider extends PropertyValueProvider {
+
+        @Override
+        public PropertyValue provide() {
+            return new DatePropertyValue().withQName(qname);
+        }
+
+    }
+
+    static class NumberPropertyValueProvider extends PropertyValueProvider {
+
+        @Override
+        public PropertyValue provide() {
+            return new NumberPropertyValue().withQName(qname);
+        }
+
+    }
+
+    static class DocumentValue {
+        TypeInfo typeInfo;
+        Map<String, PropertyValue> props = new HashMap<String, PropertyValue>();
+
+        public DocumentValue(TypeInfo typeInfo) {
+            this.typeInfo = typeInfo;
+        }
+
+        void put(String s, String prop, String prefix) {
+            if (StringUtils.isNotBlank(s)) {
+                getPropertyValue(prop).put(s, prefix);
+            }
+        }
+
+        void putObject(Object o, String prop) {
+            if (o != null) {
+                getPropertyValue(prop).putObject(o);
+            }
+        }
+
+        private PropertyValue getPropertyValue(String prop) {
+            PropertyValue value = props.get(prop);
+            if (value == null) {
+                PropertyValueProvider valueProvider = typeInfo.props.get(prop);
+                Assert.notNull(valueProvider);
+                value = valueProvider.provide();
+                props.put(prop, value);
+            }
+            return value;
+        }
+    }
+
+    static abstract class PropertyValue {
+        QName qname;
+
+        PropertyValue withQName(QName qname) {
+            this.qname = qname;
+            return this;
+        }
+
+        abstract void put(String s);
+
+        void putWithPrefix(String s, String prefix) {
+            throw new UnsupportedOperationException("Could not put " + s + " with prefix " + prefix);
+        }
+
+        void put(String s, String prefix) {
+            if (prefix == null) {
+                put(s);
+            } else {
+                putWithPrefix(s, prefix);
+            }
+        }
+
+        void putObject(Object o) {
+            throw new UnsupportedOperationException();
+        }
+
+        abstract Serializable get();
+    }
+
+    static class StringPropertyValue extends PropertyValue {
+        StringValueAppender value = new StringValueAppender();
+
+        public void put(String s) {
+            value.add(s);
+        }
+
+        public Serializable get() {
+            return value.get();
+        }
+    }
+
+    static class CommentPropertyValue extends StringPropertyValue {
+        final static String SPACE_DELIMED = ".spaced";
+        List<String> prefixes = new ArrayList<String>();
+        Map<String, StringValueAppender> values = new HashMap<String, StringValueAppender>();
+        StringValueAppender spaceDelimedValue = new StringValueAppender(" ");
+        {
+            value = new StringValueAppender("\n");
+        }
+
+        @Override
+        public void putWithPrefix(String s, String prefix) {
+            Assert.notNull(prefix);
+            if (SPACE_DELIMED.equals(prefix)) {
+                spaceDelimedValue.add(s);
+                return;
+            }
+            if (!StringUtils.isBlank(s)) {
+                StringValueAppender app;
+                if (!values.containsKey(prefix)) {
+                    prefixes.add(prefix);
+                    app = new StringValueAppender();
+                    values.put(prefix, app);
+                } else {
+                    app = values.get(prefix);
+                }
+                app.add(s);
+            }
+        }
+
+        @Override
+        public Serializable get() {
+            value.add(spaceDelimedValue.get());
+            for (String prefix : prefixes) {
+                String prefixValue = values.get(prefix).get();
+                if (StringUtils.isNotBlank(prefixValue)) {
+                    value.add(prefix + ": " + prefixValue);
+                }
+            }
+            String string = value.get();
+            return string;
+        }
+    }
+
+    static class DatePropertyValue extends PropertyValue {
+        Date value;
+
+        @Override
+        public Serializable get() {
+            return value;
+        }
+
+        @Override
+        public void put(String s) {
+            try {
+                value = dateFormat.parse(s);
+            } catch (ParseException e) {
+                //throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public void putObject(Object o) {
+            if (o == null)
+                return;
+            Assert.isInstanceOf(Date.class, o);
+            value = (Date) o;
+        }
+
+    }
+
+    static class NumberPropertyValue extends PropertyValue {
+        String value;
+
+        @Override
+        public Serializable get() {
+            return value;
+        }
+
+        @Override
+        public void put(String s) {
+            String number = extractNumber(s);
+            try {
+                Integer.parseInt(number);
+            } catch (NumberFormatException e) {
+            }
+        }
+
+        private static String extractNumber(String s) {
+            StringBuilder sb = new StringBuilder();
+            for (Character c : s.toCharArray()) {
+                if (isGoodNumberCharacter(c)) {
+                    sb.append(c);
+                }
+            }
+            return sb.toString();
+        }
+
+        private static boolean isGoodNumberCharacter(Character c) {
+            return Character.isDigit(c) || '.' == c;
+        }
+    }
+
+    static class TypeInfo {
+        String name;
+        QName qname;
+        Map<String, PropertyValueProvider> props = new HashMap<String, PropertyValueProvider>();
+
+        public TypeInfo(String name, QName qname) {
+            this.name = name;
+            this.qname = qname;
+        }
+
+    }
+
+    TypeInfo createTypeInfo(String name, String prefix) {
+        QName qname = QName.createQName(prefix, name, namespaceService);
+        TypeInfo typeInfo = new TypeInfo(name, qname);
+        Collection<QName> aspects = generalService.getDefaultAspects(qname);
+        aspects.add(qname);
+        for (QName aspect : aspects) {
+            for (PropertyDefinition propDef : dictionaryService.getPropertyDefs(aspect).values()) {
+                QName prop = propDef.getName();
+                if (DocumentCommonModel.URI.equals(prop.getNamespaceURI()) || DocumentSpecificModel.URI.equals(prop.getNamespaceURI())) {
+                    PropertyValueProvider valueProvider = getProvider(prop.getLocalName(), propDef);
+                    typeInfo.props.put(prop.getLocalName(), valueProvider.withQName(prop));
+                }
+            }
+        }
+        return typeInfo;
+    }
+
+    static PropertyValueProvider getProvider(String name, PropertyDefinition propDef) {
+        if ("comment".equals(name) || "errandComment".equals(name) || "sendDesc".equals(name)) {
+            return new CommentPropertyValueProvider();
+        }
+        String javaClassName = propDef.getDataType().getJavaClassName();
+        if ("java.util.Date".equals(javaClassName)) {
+            return new DatePropertyValueProvider();
+        }
+        if ("java.lang.Double".equals(javaClassName) || "java.lang.Integer".equals(javaClassName)) {
+            return new NumberPropertyValueProvider();
+        }
+        return new StringPropertyValueProvider();
+    }
+
+    private Map<String, Splitter> splitters = new HashMap<String, Splitter>();
+    Map<String, TypeInfo> typeInfos = new HashMap<String, TypeInfo>();
+
+    private SAXReader xmlReader = new SAXReader();
+
+    protected PropMapping createPropMapping(Element el, TypeInfo typeInfo) {
+        String from = el.attributeValue("from");
+        Assert.notNull(from, "'From' must not be null!");
+        String expression = el.attributeValue("expr");
+        String to = el.attributeValue("to");
+        String prefix = null;
+        if (to != null) {
+            PropertyValueProvider propertyValueProvider = typeInfo.props.get(to);
+            Assert.notNull(propertyValueProvider, "Property " + to + " is not registered for the type " + typeInfo.name + "\n Registered properties are: "
+                    + typeInfo.props.keySet());
+            prefix = el.attributeValue("prefix");
+        }
+        String splitterName = el.attributeValue("splitter");
+        if (splitterName != null) {
+            Splitter splitter = splitters.get(splitterName);
+            Assert.notNull(splitter, "Splitter " + splitterName + " not found!");
+            String toFirst = el.attributeValue("toFirst");
+            PropertyValueProvider toFirstProvider = typeInfo.props.get(toFirst);
+            Assert.notNull(toFirstProvider, "Property " + toFirst + " is not registered for the type " + typeInfo.name);
+            String toSecond = el.attributeValue("toSecond");
+            PropertyValueProvider toSecondProvider = typeInfo.props.get(toSecond);
+            Assert.notNull(toSecondProvider, "Property " + toSecond + " is not registered for the type " + typeInfo.name);
+            return new PropMapping(from, to, prefix, toFirst, toSecond, splitter, expression);
+        } else {
+            if (to == null) {
+                throw new RuntimeException("Neither to nor splitter are specified for mapping " + from);
+            }
+            return new PropMapping(from, to, prefix, expression);
+        }
+    }
+
+    protected Mapping createMapping(Mapping base, Element el) {
+        return createMapping(base, el, "docsub");
+    }
+
+    protected Mapping createMapping(Mapping base, Element el, String prefix) {
+
+        String from = el.attributeValue("from");
+        String to = el.attributeValue("to");
+        String defaultVolume = el.attributeValue("defaultVolume");
+        
+        if (to == null) {
+            to = "memo";
+        }
+        TypeInfo typeInfo = typeInfos.get(to);
+        if (typeInfo == null) {
+            typeInfo = createTypeInfo(to, prefix);
+            typeInfos.put(to, typeInfo);
+        }
+
+        Mapping m = new Mapping(base, from, typeInfo);
+        m.defaultVolume = defaultVolume;
+
+        for (Object o : el.elements("prop")) {
+            m.add(createPropMapping((Element) o, typeInfo));
+        }
+
+        for (Object o : el.elements("child")) {
+            Element e = (Element) o;
+            String childPrefix = e.attributeValue("prefix");
+            if (childPrefix == null) {
+                childPrefix = "docspec";
+            }
+            Mapping subMapping = createMapping(null, e, childPrefix);
+            m.subMappings.add(subMapping);
+        }
+
+        return m;
+    }
+
+    protected Map<String, Mapping> loadMetadataMappings(File mappingsFile) throws Exception {
+        typeInfos = new HashMap<String, TypeInfo>();
+        Map<String, Mapping> mappings = new HashMap<String, Mapping>();
+        splitters.put("period", new PeriodSplitter());
+        Document document = xmlReader.read(mappingsFile);
+        Element root = document.getRootElement();
+
+        Element generalType = root.element("generalType");
+
+        Mapping base = createMapping(null, generalType);
+
+        for (Object o : root.elements("documentType")) {
+            Mapping m = createMapping(base, (Element) o);
+            mappings.put(m.from, m);
+        }
+
+        for (Mapping m : mappings.values()) {
+            System.out.println(m);
+        }
+        return mappings;
+    }
+
+    private BeanFactory beanFactory;
+    private NamespaceService namespaceService;
+    private DictionaryService dictionaryService;
+    private GeneralService generalService;
+
+    public void setNamespaceService(NamespaceService namespaceService) {
+        this.namespaceService = namespaceService;
+    }
+
+    public void setDictionaryService(DictionaryService dictionaryService) {
+        this.dictionaryService = dictionaryService;
+    }
+
+    public void setGeneralService(GeneralService generalService) {
+        this.generalService = generalService;
+    }
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.beanFactory = beanFactory;
+    }
+
+    private static void lo(Object o) {
+        log.info("\n\n" + o + "\n\n");
+    }
+
+    private Object b(String name) {
+        return beanFactory.getBean(name);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T b(Class<T> clazz) {
+        String simpleName = clazz.getSimpleName();
+        if (!beanFactory.containsBean(simpleName)) {
+            simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
+        }
+        return (T) b(simpleName);
+    }
+}

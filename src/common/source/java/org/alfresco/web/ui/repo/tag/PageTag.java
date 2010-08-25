@@ -362,13 +362,13 @@ public class PageTag extends TagSupport
          throw new JspException(ioe.toString());
       }
       
+      final int result = super.doEndTag();
       if (logger.isDebugEnabled())
       {
          long endTime = System.currentTimeMillis();
-         logger.debug("Time to generate page: " + (endTime - startTime) + "ms");
+         logger.debug("Time to generate JSF page: " + (endTime - startTime) + "ms");
       }
-      
-      return super.doEndTag();
+      return result;
    }
    
    /**

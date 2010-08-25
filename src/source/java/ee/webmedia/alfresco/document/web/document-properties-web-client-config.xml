@@ -711,7 +711,8 @@
    <config evaluator="aspect-name" condition="doccom:common">
       <property-sheet>
          <show-property name="doccom:docStatus" read-only="true" styleClass="width250" />
-         <show-property name="doccom:comment" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="{temp}comment" show-in-edit-mode="false" display-label-id="document_comment" component-generator="UnescapedOutputTextGenerator" />
+         <show-property name="doccom:comment" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="doccom:keywords" readOnlyIf="doccom:docStatus!=töös" component-generator="ClassificatorSelectorAndTextGenerator" classificatorName="keywords" styleClass="expand19-200" />
          <show-property name="doccom:storageType" show="#{MetadataBlockBean.showStorageType == true}" readOnlyIf="doccom:docStatus!=töös" component-generator="ClassificatorSelectorGenerator" classificatorName="storageType" />
       </property-sheet>

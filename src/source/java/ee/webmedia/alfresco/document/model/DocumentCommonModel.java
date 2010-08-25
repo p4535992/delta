@@ -87,6 +87,8 @@ public interface DocumentCommonModel {
 
         QName REG_NUMBER = QName.createQName(URI, "regNumber");
         QName REG_DATE_TIME = QName.createQName(URI, "regDateTime");
+        
+        QName COMMENT = QName.createQName(URI, "comment");
 
         QName RECIPIENT_NAME = QName.createQName(URI, "recipientName");
         QName RECIPIENT_EMAIL = QName.createQName(URI, "recipientEmail");

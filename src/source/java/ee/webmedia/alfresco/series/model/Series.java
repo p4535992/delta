@@ -35,6 +35,7 @@ public class Series implements Serializable, Comparable<Series> {
     }
 
     public void setType(String type) {
+        node.getProperties().put(SeriesModel.Props.TYPE.toString(), type);
         this.type = type;
     }
 
@@ -56,6 +57,7 @@ public class Series implements Serializable, Comparable<Series> {
     }
 
     public void setTitle(String title) {
+        node.getProperties().put(SeriesModel.Props.TITLE.toString(), title);
         this.title = title;
     }
 
@@ -104,6 +106,7 @@ public class Series implements Serializable, Comparable<Series> {
     }
 
     public void setDocType(List<QName> docType) {
+        node.getProperties().put(SeriesModel.Props.DOC_TYPE.toString(), docType);
         this.docType = docType;
     }
 

@@ -52,12 +52,12 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     /** NB! not injected - use getter to obtain instance of functionsService */
     private FunctionsService _functionsService;
 
-    @Override
+    
     public List<ChildAssociationRef> getAllSeriesAssocsByFunction(NodeRef functionRef) {
         return nodeService.getChildAssocs(functionRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
     }
 
-    @Override
+    
     public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef) {
         List<ChildAssociationRef> seriesAssocs = getAllSeriesAssocsByFunction(functionNodeRef);
         List<Series> seriesOfFunction = new ArrayList<Series>(seriesAssocs.size());
@@ -69,7 +69,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         return seriesOfFunction;
     }
 
-    @Override
+    
     public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, QName docTypeId) {
         List<Series> series = getAllSeriesByFunction(functionNodeRef);
         for (Iterator<Series> i = series.iterator(); i.hasNext();) {
@@ -81,7 +81,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         return series;
     }
 
-    @Override
+    
     public List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, Integer structUnitId) {
         List<ChildAssociationRef> seriesAssocs = nodeService.getChildAssocs(functionNodeRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
         List<Series> seriesOfFunction = new ArrayList<Series>(seriesAssocs.size());
@@ -101,17 +101,21 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         return getSeriesByNoderef(new NodeRef(seriesNodeRef), null);
     }
 
-    @Override
+    
     public Series getSeriesByNodeRef(NodeRef nodeRef) {
         return getSeriesByNoderef(nodeRef, null);
     }
 
-    @Override
+    
     public void saveOrUpdate(Series series) {
-        saveOrUpdate(series, true);
+        private_saveOrUpdate(series, true, false);
+    }
+    
+    public void saveOrUpdate(Series series, boolean propsFromNode) {
+        private_saveOrUpdate(series, true, propsFromNode);
     }
 
-    private void saveOrUpdate(Series series, boolean performReorder) {
+    private void private_saveOrUpdate(Series series, boolean performReorder, boolean propsFromNode) {
         Map<String, Object> stringQNameProperties = series.getNode().getProperties();
         final NodeRef seriesRef = series.getNode().getNodeRef();
         if (series.getNode() instanceof TransientNode) { // save
@@ -122,7 +126,11 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             logService.addSeriesLog(seriesNodeRef, I18NUtil.getMessage("series_log_status_created"));
         } else { // update
             final String previousAccessrestriction = (String) nodeService.getProperty(seriesRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
-            generalService.setPropertiesIgnoringSystem(seriesRef, stringQNameProperties);
+            if (propsFromNode) {
+                generalService.setPropertiesIgnoringSystem(seriesRef, stringQNameProperties);
+            } else {
+                generalService.setPropertiesIgnoringSystem(seriesRef, RepoUtil.toStringProperties(seriesBeanPropertyMapper.toProperties(series)));
+            }
             logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_changed"));
             final String newAccessrestriction = (String) stringQNameProperties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
             if (!StringUtils.equals(previousAccessrestriction, newAccessrestriction)) {
@@ -139,7 +147,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         final List<Series> allSeriesByFunction = getAllSeriesByFunction(series.getFunctionNodeRef());
         Collections.sort(allSeriesByFunction, new Comparator<Series>() {
 
-            @Override
+            
             public int compare(Series o1, Series o2) {
                 if (o1.getOrder() == o2.getOrder()) {
                     return 0;
@@ -164,14 +172,15 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             }
         }
     }
-
-    @Override
+    
     public Series createSeries(NodeRef functionNodeRef) {
-        Series series = new Series();
         Map<QName, Serializable> props = new HashMap<QName, Serializable>(1);
-        props.put(SeriesModel.Props.ORDER, getNextSeriesOrderNrByFunction(functionNodeRef));
+        int order = getNextSeriesOrderNrByFunction(functionNodeRef);
+        props.put(SeriesModel.Props.ORDER, order);
         TransientNode transientNode = TransientNode.createNew(dictionaryService, dictionaryService.getType(SeriesModel.Types.SERIES), null, props);
+        Series series = seriesBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(transientNode.getProperties()));
         series.setNode(transientNode);
+        series.setOrder(order);
         series.setFunctionNodeRef(functionNodeRef);
         final String functionMark = getFunctionsService().getFunctionByNodeRef(functionNodeRef).getMark();
         final String initialSeriesIdentifier = functionMark + "-";
@@ -179,13 +188,12 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         series.setInitialSeriesIdentifier(initialSeriesIdentifier);
         return series;
     }
-
-    @Override
+    
     public boolean isClosed(Node node) {
         return RepoUtil.isExistingPropertyValueEqualTo(node, SeriesModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName());
     }
 
-    @Override
+    
     public boolean closeSeries(Series series) {
         final Node seriesNode = series.getNode();
         if (isClosed(seriesNode)) {
@@ -213,7 +221,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         return true;
     }
 
-    @Override
+    
     public Node getSeriesNodeByRef(NodeRef seriesNodeRef) {
         return generalService.fetchNode(seriesNodeRef);
     }
@@ -240,7 +248,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         }
         series.setFunctionNodeRef(functionNodeRef);
         if (log.isDebugEnabled()) {
-            log.debug("Found series: " + series);
+            // XXX:ruins everything due to order being NULL log.debug("Found series: " + series);
         }
         return series;
     }
@@ -255,7 +263,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         return maxOrder + 1;
     }
 
-    @Override
+    
     public void updateContainingDocsCountByVolume(NodeRef seriesNodeRef, NodeRef volumeNodeRef, boolean volumeAdded) {
         Integer count = (Integer) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT);
         generalService.updateParentContainingDocsCount(seriesNodeRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, volumeAdded, count);
@@ -278,7 +286,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         this.logService = logService;
     }
 
-    @Override
+    
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
     }

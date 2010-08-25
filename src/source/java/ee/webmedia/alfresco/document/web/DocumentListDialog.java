@@ -1,16 +1,22 @@
 package ee.webmedia.alfresco.document.web;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -51,12 +57,25 @@ public class DocumentListDialog extends BaseDocumentListDialog {
 
     @Override
     public void restored() {
+        final NodeRef parentRef ;
         if (parentCase != null) {
-            documents = getDocumentService().getAllDocumentsByCase(parentCase.getNode().getNodeRef());
+            parentRef = parentCase.getNode().getNodeRef();
         } else {// assuming that parentVolume is volume
-            documents = getDocumentService().getAllDocumentsByVolume(parentVolume.getNode().getNodeRef());
+            parentRef = parentVolume.getNode().getNodeRef();
         }
-        Collections.sort(documents);
+        documents = getChildNodes(parentRef);
+        if(documents.size()<=2000) {//if sorting takes less than ca 6 sec (ca 15ms per document, 400doc*15ms==6sec)
+            Collections.sort(documents);// sorting needs properties to be fetched from repo
+        }
+    }
+
+    private List<Document> getChildNodes(NodeRef parentRef) {
+        List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
+        List<Document> docsOfParent = new ArrayList<Document>(childAssocs.size());
+        for (ChildAssociationRef childAssocRef : childAssocs) {
+            docsOfParent.add(new Document(childAssocRef.getChildRef()));
+        }
+        return docsOfParent;
     }
 
     @Override
@@ -98,4 +117,5 @@ public class DocumentListDialog extends BaseDocumentListDialog {
     }
 
     // END: getters / setters
+    
 }

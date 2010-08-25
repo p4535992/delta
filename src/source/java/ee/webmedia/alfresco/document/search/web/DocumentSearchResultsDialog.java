@@ -92,7 +92,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             List<List<String>> data = new ArrayList<List<String>>();
             while (list.isDataAvailable()) {
                 Document document = (Document) list.nextRow();
-                List<SendInfo> sendInfos = getSendOutService().getSendInfos(document.getNode().getNodeRef());
+                List<SendInfo> sendInfos = getSendOutService().getSendInfos(document.getNodeRef());
                 for (SendInfo sendInfo : sendInfos) {
                     if (EP_EXPORT_SEND_MODES.contains(sendInfo.getSendMode().toString())) {
                         data.add(Arrays.asList(sendInfo.getSendMode().toString(), document.getRegNumber(), sendInfo.getRecipient().toString()));

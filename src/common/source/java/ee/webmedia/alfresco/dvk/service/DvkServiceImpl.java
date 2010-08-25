@@ -409,7 +409,8 @@ public abstract class DvkServiceImpl implements DvkService {
             log.debug("altering dokument");
             final Letter letter = Letter.Factory.newInstance();
             final Addressee letterAddressees = letter.addNewAddressees();
-            final Transport transport = dokumentDocument.getDokument().getTransport();
+            final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
+            final Transport transport = dhlDokument.getTransport();
             // add senders information
             final AadressType transportSaatja = transport.getSaatja();
             final String senderRegNr = dvkSendDocuments.getSenderRegNr();
@@ -466,8 +467,6 @@ public abstract class DvkServiceImpl implements DvkService {
                 final PartyType letterAddressee = letterAddressees.addNewAddressee();
                 letterAddressee.addNewOrganisation().setOrganisationName(getOrganisationName(addresseeRegNum));
             }
-
-            final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
 
             final Metaxml metaxml = composeMetaxml(letter);
             dhlDokument.setMetaxml(metaxml);

@@ -326,6 +326,12 @@ public class MetadataBlockBean implements Serializable {
         Map<String, Object> props = document.getProperties();
         if (!inEditMode) {
 
+            String comment = (String) props.get(DocumentCommonModel.Props.COMMENT);
+            if (comment != null) {
+                comment = StringUtils.replace(encode(comment), "\n", "<br/>");
+            }
+            props.put("{temp}comment", comment);
+
             if (document.hasAspect(DocumentCommonModel.Aspects.ACCESS_RIGHTS)) {
                 Date accessRestrictionBeginDate = (Date) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE);
                 Date accessRestrictionEndDate = (Date) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE);

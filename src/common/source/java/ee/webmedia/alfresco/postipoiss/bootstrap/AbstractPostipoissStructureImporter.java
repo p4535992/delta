@@ -30,7 +30,7 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AbstractPostipoissStructureImporter.class);
 
     protected static final String ATTR_MULTIPLE_YEARS = "mitu asjaajamisaastat";
-    protected static final String ATTR_SINGLE_YEAR = "üks asjaajamis aasta";
+    protected static final String ATTR_SINGLE_YEAR = "üks asjaajamisaasta";
     protected static final String INPUT_ENCODING = "ISO-8859-1";
     protected static final String OUTPUT_ENCODING = "UTF-8";
     protected static final char OUTPUT_SEPARATOR = ';';
@@ -75,6 +75,7 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
         log.info("Reading Postipoiss functions file '" + inputFilePath + "' with encoding " + INPUT_ENCODING);
         CsvReader reader = new CsvReader(inputFilePath, ';', Charset.forName(INPUT_ENCODING));
         try {
+            reader.readHeaders();
             while (reader.readRecord()) {
                 try {
                     createFunction(reader);
@@ -112,13 +113,14 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
     protected void createFunction(CsvReader reader) throws IOException {
         String functionId = reader.get(0);
         String title = reader.get(1);
-        String parentFunctionId = reader.get(2);
-        NodeRef functionRef = createFunction(functionId, title, parentFunctionId);
+        String order = reader.get(2);
+        String parentFunctionId = reader.get(3);
+        NodeRef functionRef = createFunction(functionId, title, parentFunctionId, order);
         functionCache.put(functionId, functionRef);
         log.debug("Created functionId=" + functionId); // + " nodeRef=" + functionRef);
     }
 
-    protected abstract NodeRef createFunction(String functionId, String title, String parentFunctionId);
+    protected abstract NodeRef createFunction(String functionId, String title, String parentFunctionId, String order);
 
     protected void createVolumes() throws Exception {
         final String inputFilePath = inputFolderPath + "/toimikud.csv";

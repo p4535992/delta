@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.cases.web;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
