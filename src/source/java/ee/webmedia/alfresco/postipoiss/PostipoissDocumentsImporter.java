@@ -603,7 +603,6 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
     private void loadToimiks() throws IOException {
         toimikud = new HashMap<Integer, Map<String, Toimik>>();
         normedToimikud = new HashMap<Integer, Map<String, Toimik>>();
-        inputFolderCsv = "C:/wm/mig/csv";
         CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(new File(inputFolderCsv, "completed_toimikud.csv"))), CSV_SEPARATOR,
                 Charset.forName("UTF-8"));
         try {
