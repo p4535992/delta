@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
-import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -34,7 +33,6 @@ import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
-import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.AssociationRef;
@@ -42,7 +40,6 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.web.bean.repository.Node;
@@ -50,39 +47,28 @@ import org.apache.commons.lang.StringUtils;
 import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
-import ee.webmedia.alfresco.cases.model.Case;
-import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.functions.model.Function;
-import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.ConvertException;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.DocumentValue;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.Mapping;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.Pair;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropMapping;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropertyValue;
-import ee.webmedia.alfresco.series.model.Series;
-import ee.webmedia.alfresco.series.service.SeriesService;
-import ee.webmedia.alfresco.volume.model.Volume;
-import ee.webmedia.alfresco.volume.service.VolumeService;
 
 /**
  * Imports documents and files from postipoiss.
  * 
  * @author Aleksei Lissitsin
  */
-public class PostipoissDocumentsImporter implements BeanFactoryAware {
+public class PostipoissDocumentsImporter {
 
     protected static final int BATCH_SIZE = 50;
     protected static final String OPEN_VOLUME_YEAR = "10";
@@ -100,34 +86,23 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
     private String inputFolderPath;
     private int stopAfterDocumentId = 999999;
     private String mappingsFileName;
-    private String functionName;
 
     private TransactionService transactionService;
     private DocumentService documentService;
     private GeneralService generalService;
     private FileFolderService fileFolderService;
-    private NamespaceService namespaceService;
-    private DictionaryService dictionaryService;
     private SendOutService sendOutService;
     private NodeService nodeService;
     private PostipoissDocumentsMapper postipoissDocumentsMapper;
     private String inputFolderCsv;
 
     // INJECTORS
-    public void setFunctionName(String functionName) {
-        this.functionName = functionName;
-    }
-
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }
 
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
-    }
-
-    public void setDictionaryService(DictionaryService dictionaryService) {
-        this.dictionaryService = dictionaryService;
     }
 
     public void setDocumentService(DocumentService documentService) {
@@ -158,10 +133,6 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
         this.postipoissDocumentsMapper = postipoissDocumentsMapper;
     }
 
-    public void setNamespaceService(NamespaceService namespaceService) {
-        this.namespaceService = namespaceService;
-    }
-
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
     }
@@ -175,33 +146,6 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
     }
 
     // SPRING BEANS]
-
-    // [TEMPORARY STUFF
-    private BeanFactory beanFactory;
-
-    @Override
-    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
-    }
-
-    private static void lo(Object o) {
-        log.info("\n\n" + o + "\n\n");
-    }
-
-    private Object b(String name) {
-        return beanFactory.getBean(name);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T b(Class<T> clazz) {
-        String simpleName = clazz.getSimpleName();
-        if (!beanFactory.containsBean(simpleName)) {
-            simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
-        }
-        return (T) b(simpleName);
-    }
-
-    // TEMPORARY STUFF]
 
     /**
      * Runs documents import process
@@ -218,15 +162,6 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
         } finally {
             started = false;
         }
-    }
-
-    private void tryAssocs() {
-        NodeRef volume = new NodeRef("workspace://SpacesStore/56603519-7de2-440c-b0cd-9bc06f2e4425");
-
-        Case asi = b(CaseService.class).createCase(volume);
-        asi.setTitle("BLA");
-        b(CaseService.class).saveOrUpdate(asi, false);
-
     }
 
     private void init() {
@@ -319,6 +254,9 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
             }
         });
 
+        if (files == null){
+            throw new RuntimeException("Input folder " + inputFolder + " not found!");
+        }
         log.info("There are " + files.length + " non-xml entries, parsing them to files");
         int count = 0;
         for (File file : files) {
@@ -392,6 +330,7 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
         long totalStartTime;
         long startTime;
         String processName;
+        File stopFile;
 
         private void init() {
             totalSize = origin.size();
@@ -400,6 +339,15 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
             i = 0;
             completedSize = 0;
             batchList = new ArrayList<E>(batchSize);
+            stopFile = new File(inputFolder, "stop.file");
+        }
+        
+        private boolean isStopRequested(){
+            boolean f = stopFile.exists();
+            if (f){
+                log.info("Stop requested. Stopping.");
+            }
+            return f;
         }
 
         abstract void executeBatch() throws Exception;
@@ -430,11 +378,13 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
 
         public void run() {
             init();
+            if (isStopRequested()) return;
             for (E e : origin) {
                 batchList.add(e);
                 i++;
                 if (i >= batchSize) {
                     step();
+                    if (isStopRequested()) return;
                 }
             }
             step();
@@ -1034,33 +984,6 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
         }
     }
 
-    private List<Volume> getVolumes() {
-        FunctionsService functionsService = b(FunctionsService.class);
-        List<Function> allFunctions = functionsService.getAllFunctions();
-        SeriesService seriesService = b(SeriesService.class);
-        VolumeService volumeService = b(VolumeService.class);
-        List<Volume> volumes = new ArrayList<Volume>();
-        for (Function function : allFunctions) {
-            if (functionName.equals(function.getTitle())) {
-                List<Series> allSeriesByFunction = seriesService.getAllSeriesByFunction(function.getNodeRef());
-
-                for (Series series : allSeriesByFunction) {
-                    List<Volume> volumesBySeries = volumeService.getAllVolumesBySeries(series.getNode().getNodeRef());
-                    for (Volume vol : volumesBySeries) {
-                        if (vol.getVolumeMark() == null) {
-                            vol.setVolumeMark("UNKNOWN");
-                            volumeService.saveOrUpdate(vol, false);
-                        }
-                        volumes.add(vol);
-                    }
-                }
-                break;
-            }
-        }
-
-        return volumes;
-    }
-
     // [ASSOCS
 
     protected void loadPostponedAssocs() throws Exception {
@@ -1109,6 +1032,10 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
     private void writePostponedAssocs() {
         try {
             // Write created documents
+            if (postponedAssocsFile == null){
+                log.info("Postponed assocs file not defined.");
+                return;
+            }
             boolean exists = postponedAssocsFile.exists();
             if (exists) {
                 postponedAssocsFile.delete();
@@ -1212,40 +1139,6 @@ public class PostipoissDocumentsImporter implements BeanFactoryAware {
         final ContentWriter writer = fileFolderService.getWriter(fileRef);
         generalService.writeFile(writer, file, fileName, mimeType);
         return fileRef;
-    }
-
-    public NodeRef quasiAddFile(String fileName, File file, NodeRef parentNodeRef) throws IOException {
-        FileInfo fileInfo = fileFolderService.create(parentNodeRef, "k2.pdf", ContentModel.TYPE_CONTENT);
-        ContentWriter writer = fileFolderService.getWriter(fileInfo.getNodeRef());
-        String contentUrl = writer.getContentUrl();
-        writer.putContent("DUMMY");
-        lo("CONTENT URL = " + contentUrl);
-
-        String storePath = "C:/wm/alfdata/contentstore/";
-        String path = storePath + contentUrl.substring("store://".length());
-
-        lo("PATH TO FILE = " + path);
-
-        File newFile = new File(path);
-
-        lo("NEWFILE EXISTS = " + newFile.exists() + "\n" + newFile.canWrite() + "\n" + newFile.getAbsolutePath());
-        lo("FILE EXISTS = " + file.exists() + "\n" + file.canWrite() + "\n" + file.getAbsolutePath());
-
-        // boolean success = file.renameTo(newFile);
-
-        String cmd = "C:/cygwin/bin/mv.exe -f \"" + file.getAbsolutePath() + "\" \"" + newFile.getAbsolutePath() + "\"";
-        lo(cmd);
-        Runtime.getRuntime().exec(cmd);
-        return fileInfo.getNodeRef();
-    }
-
-    private void sendEmail(String title, String content, String to, String cc) {
-        String command = String.format("/bin/echo \"%s\" | /bin/mail -s \"%s\" -c %s %s", content, title, cc, to);
-        try {
-            Runtime.getRuntime().exec(command);
-        } catch (IOException e) {
-            lo("Could not send email with command " + command);
-        }
     }
 
     // HELPER METHODS

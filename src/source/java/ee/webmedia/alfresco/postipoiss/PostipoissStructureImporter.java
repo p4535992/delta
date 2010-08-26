@@ -18,10 +18,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
-import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -40,7 +40,6 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Assocs;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
-import ee.webmedia.alfresco.archivals.service.ArchivalsService;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -87,10 +86,8 @@ public class PostipoissStructureImporter {
 
     private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
-    private ArchivalsService archivalsService;
     private AddressbookService addressbookService;
     private FunctionsService functionsService;
-    private DictionaryService dictionaryService;
     private SeriesService seriesService;
     private VolumeService volumeService;
     private DocumentTypeService documentTypeService;
@@ -345,6 +342,7 @@ public class PostipoissStructureImporter {
     private Map<Integer, Map<String, Toimik>> toimikMap = new HashMap<Integer, Map<String, Toimik>>();
 
     private Map<String, Volume> preenteredVolumes = new HashMap<String, Volume>();
+    private Map<String, Case> preenteredCases = new HashMap<String, Case>();
 
     private void initialize() {
         reset();
@@ -380,6 +378,16 @@ public class PostipoissStructureImporter {
                 List<Volume> vols = volumeService.getAllVolumesBySeries(s.getNode().getNodeRef());
                 for (Volume v : vols) {
                     if (StringUtils.isNotEmpty(v.getVolumeMark()) && v.getValidFrom() != null && !v.getValidFrom().before(year2010)) {
+                        if (v.isContainsCases()){
+                            List<Case> casesByVolume = caseService.getAllCasesByVolume(v.getNode().getNodeRef());
+                            for (Case asi : casesByVolume){
+                                String title = asi.getTitle();
+                                if (StringUtils.isNotBlank(title)){
+                                    title = title.trim();
+                                    preenteredCases.put(title, asi);
+                                }
+                            }
+                        }
                         preenteredVolumes.put(v.getVolumeMark(), v);
                     }
                 }
@@ -465,6 +473,7 @@ public class PostipoissStructureImporter {
         props.put(FunctionsModel.Props.TYPE.toString(), functionType);
         props.put(FunctionsModel.Props.MARK.toString(), ppMark);
         props.put(FunctionsModel.Props.ORDER.toString(), funk.order);
+        props.put(FunctionsModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
         functionsService.saveOrUpdate(function);
 
         log.info(function.getNodeRef());
@@ -506,6 +515,14 @@ public class PostipoissStructureImporter {
             t.nodeRef = nodeRef;
             putToimik(t);
             return t;
+        } else {
+            for (Entry<String, Case> entry : preenteredCases.entrySet()){
+                if (entry.getKey().startsWith(t.volumeMarkNormed)){
+                    t.nodeRef = entry.getValue().getNode().getNodeRef();
+                    putToimik(t);
+                    return t;
+                }
+            }
         }
         return null;
     }
@@ -907,35 +924,6 @@ public class PostipoissStructureImporter {
         return result;
     }
 
-    private static String buildFolderNameFromTitle(String title) {
-        String folderName = stripDotsAndSpaces(stripForbiddenWindowsCharacters(title));
-        int maxLength = 255 - title.length();
-        if (folderName.length() > maxLength) {
-            folderName = folderName.substring(0, maxLength);
-        }
-        log.debug("received title '" + title + "' returning '" + title + "'");
-        return folderName;
-    }
-
-    private static String stripDotsAndSpaces(String filename) {
-        // In Windows the space and the period are not allowed as the final character of a filename
-
-        // remove dots and spaces from beginning and end of string
-        return filename.replaceAll("^([ \\.])+", "").replaceAll("([ \\.])+$", "");
-    }
-
-    private static String stripForbiddenWindowsCharacters(String filename) {
-        // Windows kernel forbids the use of characters in range 1-31 (i.e., 0x01-0x1F) and
-        // characters " * : < > ? \ / |
-        String name = filename.replaceAll("\\p{Cntrl}", "");
-        name = name.replace(':', '_');
-        name = name.replace('"', '\'');
-        name = name.replace('/', '-');
-        // [\"\*\<\>?\|]
-        name = name.replaceAll("[\\*\\\\\\>\\<\\?\\|]", "").replaceAll("\\s+", " ");
-        return name;
-    }
-
     private static void logAllCreation(String s, NodeRef node) {
         if (node == null) {
             log.warn("DHSPWarn: nodeRef NULL " + s);
@@ -972,10 +960,6 @@ public class PostipoissStructureImporter {
         this.functionsService = functionsService;
     }
 
-    public void setDictionaryService(DictionaryService dictionaryService) {
-        this.dictionaryService = dictionaryService;
-    }
-
     public void setSeriesService(SeriesService seriesService) {
         this.seriesService = seriesService;
     }
@@ -986,10 +970,6 @@ public class PostipoissStructureImporter {
 
     public void setDocumentTypeService(DocumentTypeService documentTypeService) {
         this.documentTypeService = documentTypeService;
-    }
-
-    public void setArchivalsService(ArchivalsService archivalsService) {
-        this.archivalsService = archivalsService;
     }
 
     public void setArchivalStore(String store) {

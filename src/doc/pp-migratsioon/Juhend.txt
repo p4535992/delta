@@ -15,7 +15,6 @@ import.postipoiss.documents.inputFolderPath=<path_to_mig>/docs
 import.postipoiss.documents.mappingsFileName=<path_to_mig>/csv/mappings.xml
 import.postipoiss.documents.stopAfterDocumentId=999999
 
-
 1.5 (Ainult smit-testi jaoks (s.t. juhul kui live andmed ei ole veel baasis)): teha repo tühjaks
 
 2. Deployda rakendust serverile. Ning logida sisse System või administraatori privileegiga kasutajana.
@@ -36,4 +35,18 @@ Toimub dokumentide import.
 Võtab 2-4 päeva.
 Enne pannakse xml-d sisse, siis nende failid.
 Impordi progressi saab jälgida rakenduse logist, kuni "Import completed."
-lauseni.
+lauseni. 
+5.1 Kui on vaja mingil põhjusel impordi katkestada, seda saab teha lisades
+docs kausta fail nimega "stop.file". 
+Enne uuesti käivitamist on vaja seda faili kustutada. 
+Uuesti käivitamisel protsess jätkub edasi.
+
+
+NB! 
+Kui tahetakse kõik uuesti teha (s.t. pärast repo tühjendamist), 
+siis peab veenduma, et docs kaustast on kustutatud failid:
+completed_docs.csv, postponed_assocs.csv, completed_files.csv,
+ning csv kaustast fail:
+completed_toimikud.csv.
+
+

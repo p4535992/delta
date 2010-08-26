@@ -8,12 +8,10 @@
 		<property name="generalService" ref="generalService" />
 		<property name="addressbookService" ref="AddressbookService" />
 		<property name="functionsService" ref="FunctionsService" />
-		<property name="dictionaryService" ref="DictionaryService" />
 		<property name="seriesService" ref="SeriesService" />
 		<property name="volumeService" ref="VolumeService" />
 		<property name="documentTypeService" ref="DocumentTypeService" />
 		<property name="registerService" ref="RegisterService" />
-		<property name="archivalsService" ref="ArchivalsService" />
 		<property name="transactionService" ref="TransactionService" />
 		<property name="nodeService" ref="NodeService" />
 		<property name="caseService" ref="CaseService" />
@@ -38,8 +36,6 @@
 		<property name="transactionService" ref="TransactionService" />
 		<property name="generalService" ref="GeneralService" />
 		<property name="fileFolderService" ref="FileFolderService" />
-		<property name="namespaceService" ref="NamespaceService" />
-		<property name="dictionaryService" ref="DictionaryService" />
 		<property name="nodeService" ref="NodeService" />
 		<property name="sendOutService" ref="SendOutService" />
 		<property name="postipoissDocumentsMapper" ref="postipoissDocumentsMapper" />

@@ -24,9 +24,6 @@ import org.apache.commons.lang.StringUtils;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.dom4j.io.SAXReader;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
-import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -36,8 +33,7 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 /**
  * @author Aleksei Lissitsin
  */
-public class PostipoissDocumentsMapper implements BeanFactoryAware {
-    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsMapper.class);
+public class PostipoissDocumentsMapper {
 
     static class Mapping {
         String from;
@@ -618,7 +614,6 @@ public class PostipoissDocumentsMapper implements BeanFactoryAware {
         return mappings;
     }
 
-    private BeanFactory beanFactory;
     private NamespaceService namespaceService;
     private DictionaryService dictionaryService;
     private GeneralService generalService;
@@ -633,27 +628,5 @@ public class PostipoissDocumentsMapper implements BeanFactoryAware {
 
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
-    }
-
-    @Override
-    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
-        this.beanFactory = beanFactory;
-    }
-
-    private static void lo(Object o) {
-        log.info("\n\n" + o + "\n\n");
-    }
-
-    private Object b(String name) {
-        return beanFactory.getBean(name);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> T b(Class<T> clazz) {
-        String simpleName = clazz.getSimpleName();
-        if (!beanFactory.containsBean(simpleName)) {
-            simpleName = simpleName.substring(0, 1).toLowerCase() + simpleName.substring(1);
-        }
-        return (T) b(simpleName);
     }
 }
