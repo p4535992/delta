@@ -71,8 +71,8 @@
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col6-text" value="#{r.document.shortDocName}" action="dialog:document" tooltip="#{r.document.docName}"
-            showLink="false" actionListener="#{DocumentDialog.open}" styleClass="#{(r.document.shortDocName eq r.document.docName) ? '' : 'tooltip'}">
+         <a:actionLink id="col6-text" value="#{r.document.docName}" action="dialog:document" tooltip="#{r.document.docName}"
+            showLink="false" actionListener="#{DocumentDialog.open}" styleClass="condence20- tooltip}">
             <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
          </a:actionLink>
       </a:column>

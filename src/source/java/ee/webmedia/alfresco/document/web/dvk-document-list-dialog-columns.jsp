@@ -58,13 +58,13 @@
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col6-text-1" value="#{r.shortDocName}" action="dialog:document" tooltip="#{r.docName}"
-            showLink="false" actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass ne 'case'}" styleClass="tooltip">
+         <a:actionLink id="col6-text-1" value="#{r.docName}" action="dialog:document" tooltip="#{r.docName}"
+            showLink="false" actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass ne 'case'}" styleClass="condence20- tooltip">
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
          <!-- if row item is not document, but case, create link to documents list of case (row item is subclass of Document, to be shown as listItem in document list) -->
-         <a:actionLink id="col6-link2docList-1" value="#{r.shortDocName}" action="dialog:documentListDialog" tooltip="#{r.docName}"
-            showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{r.cssStyleClass == 'case'}" styleClass="tooltip">
+         <a:actionLink id="col6-link2docList-1" value="#{r.docName}" action="dialog:documentListDialog" tooltip="#{r.docName}"
+            showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{r.cssStyleClass == 'case'}" styleClass="condence20- tooltip">
             <f:param name="caseNodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
       </a:column>
