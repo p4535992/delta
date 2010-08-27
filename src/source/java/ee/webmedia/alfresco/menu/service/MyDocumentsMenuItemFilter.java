@@ -59,7 +59,7 @@ public class MyDocumentsMenuItemFilter implements MenuItemFilter {
     private boolean isCurrentUsersSeries(NodeRef nodeRef) {
         @SuppressWarnings("unchecked")
         List<Integer> structUnits = (List<Integer>) nodeService.getProperty(nodeRef, SeriesModel.Props.STRUCT_UNIT);
-        return structUnits.contains(getCurrentUsersStructUnitId());
+        return structUnits != null && structUnits.contains(getCurrentUsersStructUnitId());
     }
 
     @Override

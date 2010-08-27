@@ -244,7 +244,7 @@ public class FunctionsListDialog extends BaseDialogBean {
             for (ChildAssociationRef caRef : childAssocs) {
                 @SuppressWarnings("unchecked")
                 List<Integer> structUnits = (List<Integer>) getNodeService().getProperty(caRef.getChildRef(), SeriesModel.Props.STRUCT_UNIT);
-                boolean contains = structUnits.contains(getCurrentUsersStructUnitId());
+                boolean contains = structUnits != null && structUnits.contains(getCurrentUsersStructUnitId());
                 if (contains) {
                     seriesFunctions.add(function);
                     break;

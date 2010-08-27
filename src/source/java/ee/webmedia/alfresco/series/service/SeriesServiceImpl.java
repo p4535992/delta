@@ -90,7 +90,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             @SuppressWarnings("unchecked")
             List<Integer> structUnits = (List<Integer>) nodeService.getProperty(seriesNodeRef, SeriesModel.Props.STRUCT_UNIT);
 
-            if (structUnits.contains(structUnitId)) {
+            if (structUnits != null && structUnits.contains(structUnitId)) {
                 seriesOfFunction.add(getSeriesByNoderef(seriesNodeRef, functionNodeRef));
             }
         }
