@@ -44,4 +44,19 @@ class PostipoissUtil {
         }
     }
 
+    static int inferLastNumber(String mark) throws NumberFormatException {
+        try {
+            int i = mark.lastIndexOf('-');
+            int j = mark.lastIndexOf('.');
+
+            if (j > i) {
+                i = j;
+            }
+
+            return Integer.parseInt(mark.substring(i + 1));
+        } catch (Exception e) {
+            return -1;
+        }
+    }
+
 }

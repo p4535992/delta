@@ -78,6 +78,9 @@ x-tee.institution=10391131
 # this must be registered in DVK system as well!
 x-tee.id-code=EE38509252736
 
+# if non-empty, then all DVK raw responses are saved as XML files to that folder, used for DVK debugging
+x-tee.receivedDocumentsFolder=
+
 #
 # IMAP Server Configuration
 #-------------

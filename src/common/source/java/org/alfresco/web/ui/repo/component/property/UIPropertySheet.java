@@ -870,6 +870,11 @@ public class UIPropertySheet extends UIPanel implements NamingContainer, AjaxUpd
          this.Params = params;
          this.RealTimeChecking = realTimeChecking;
       }
+      
+      @Override
+    public String toString() {
+        return (RealTimeChecking ? "+" : "-")+Type+Params+"\n";
+    }
    }
    
     /**

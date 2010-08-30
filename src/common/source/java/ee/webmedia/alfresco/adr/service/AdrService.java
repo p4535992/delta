@@ -10,6 +10,7 @@ import org.alfresco.service.namespace.QName;
 import ee.webmedia.alfresco.adr.Dokumendiliik;
 import ee.webmedia.alfresco.adr.Dokument;
 import ee.webmedia.alfresco.adr.DokumentDetailidega;
+import ee.webmedia.alfresco.adr.DokumentDetailidegaFailita;
 import ee.webmedia.alfresco.adr.Fail;
 
 public interface AdrService {
@@ -47,6 +48,7 @@ public interface AdrService {
     // kuupäevade vahemikus on nii algus- kui lõppkuupäeva kaasaarvatud (ehk aaaa-kk-ppT00:00:00 kuni aaaa-kk-ppT23:59:59)
     // kõik parameetrid on kohustuslikud
     List<DokumentDetailidega> koikDokumendidLisatudMuudetud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
+    List<DokumentDetailidegaFailita> koikDokumendidLisatudMuudetudFailita(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
 
     // XXX kui dokumenti on muudetud pärast perioodiLoppKuupaev'a, siis ta ei ole näha siin vastuses, olenemata sellest et registreeriti ta näiteks selles vahemikus
     // Aga ei tohiks olla oluline, sest ADR võtab samal öösel eelmise kuupäeva kohta, ehk vahemik on ainult paar tundi ja keegi siis enam ei muuda

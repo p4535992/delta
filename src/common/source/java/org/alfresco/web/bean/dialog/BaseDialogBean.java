@@ -59,6 +59,7 @@ import org.alfresco.web.ui.common.Utils;
  */
 public abstract class BaseDialogBean implements IDialogBean, Serializable
 {
+   private static final long serialVersionUID = 1L;
    protected Map<String, String> parameters;
    protected boolean isFinished = false;
    

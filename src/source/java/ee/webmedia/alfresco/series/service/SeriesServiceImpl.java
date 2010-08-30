@@ -114,6 +114,10 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     public void saveOrUpdate(Series series, boolean propsFromNode) {
         private_saveOrUpdate(series, true, propsFromNode);
     }
+    
+    public void saveOrUpdateWithoutReorder(Series series, boolean propsFromNode){
+        private_saveOrUpdate(series, false, propsFromNode);
+    }
 
     private void private_saveOrUpdate(Series series, boolean performReorder, boolean propsFromNode) {
         Map<String, Object> stringQNameProperties = series.getNode().getProperties();

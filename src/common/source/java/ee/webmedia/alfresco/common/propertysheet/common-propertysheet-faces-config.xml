@@ -49,12 +49,17 @@
       <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter</converter-id>
       <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter</converter-class>
    </converter>
-   
+
    <converter>
       <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter</converter-id>
       <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter</converter-class>
    </converter>
-   
+
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.StoreRefConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.StoreRefConverter</converter-class>
+   </converter>
+
    <converter>
       <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.BooleanToLabelConverter</converter-id>
       <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.BooleanToLabelConverter</converter-class>

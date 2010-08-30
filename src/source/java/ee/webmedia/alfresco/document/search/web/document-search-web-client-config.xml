@@ -45,6 +45,7 @@
 
    <config evaluator="node-type" condition="docsearch:filter" replace="true">
       <property-sheet>
+         <show-property name="docsearch:store" display-label-id="document_search_stores" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getStores}" converter="ee.webmedia.alfresco.common.propertysheet.converter.StoreRefConverter" />
          <show-property name="docsearch:input" display-label-id="document_search_input" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:regDateTimeBegin" display-label-id="document_regDateTime2" component-generator="InlinePropertyGroupGenerator" props="docsearch:regDateTimeBegin||styleClass=date,docsearch:regDateTimeEnd||styleClass=date" textId="document_search_from_to" />
          <show-property name="docsearch:regNumber" display-label-id="document_regNumber2" component-generator="TextAreaGenerator" styleClass="expand19-200" />

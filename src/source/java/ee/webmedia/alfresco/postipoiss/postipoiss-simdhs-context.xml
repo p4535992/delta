@@ -39,6 +39,7 @@
 		<property name="nodeService" ref="NodeService" />
 		<property name="sendOutService" ref="SendOutService" />
 		<property name="postipoissDocumentsMapper" ref="postipoissDocumentsMapper" />
+		<property name="behaviourFilter" ref="policyBehaviourFilter" />
 	</bean>
 
 	<bean id="postipoissDocumentsMapper"

@@ -1,11 +1,12 @@
 package ee.webmedia.alfresco.menu.model;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.ResourceBundle;
 import java.util.Map.Entry;
+import java.util.ResourceBundle;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIParameter;
@@ -22,6 +23,7 @@ import org.alfresco.web.ui.common.ConstantMethodBinding;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.evaluator.ActionInstanceEvaluator;
+import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
@@ -62,6 +64,8 @@ public class MenuItem implements Serializable {
     @XStreamOmitField
     private Map<String, String> params;
     private String processor;
+    @XStreamOmitField
+    private List<String> styleClass;
 
     @XStreamOmitField
     private static final String ACTION_CONTEXT = "actionContext";
@@ -197,6 +201,10 @@ public class MenuItem implements Serializable {
         MenuItemWrapper wrap = (MenuItemWrapper) application.createComponent(MenuItemWrapper.class.getCanonicalName());
         FacesHelper.setupComponentId(context, wrap, id + "-wrapper");
         wrap.setPlain(true);
+        if (getId() != null) {
+            wrap.setMenuId(getId());
+        }
+        wrap.getAttributes().put("styleClass", StringUtils.join(getStyleClass(), " "));
         @SuppressWarnings("unchecked")
         List<UIComponent> children = wrap.getChildren();
         children.add(link);
@@ -323,6 +331,17 @@ public class MenuItem implements Serializable {
     }
     public void setProcessor(String processor) {
         this.processor = processor;
+    }
+
+    public List<String> getStyleClass() {
+        if (styleClass == null) {
+            styleClass = new ArrayList<String>();
+        }
+        return styleClass;
+    }
+
+    public void setStyleClass(List<String> styleClass) {
+        this.styleClass = styleClass;
     }
 
 }

@@ -24,6 +24,11 @@
       <type name="docsearch:filter">
          <parent>sys:base</parent>
          <properties>
+            <!-- documentsList / achivedDocumentsList -->
+            <property name="docsearch:store">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
             <property name="docsearch:name">
                <type>d:text</type>
             </property>

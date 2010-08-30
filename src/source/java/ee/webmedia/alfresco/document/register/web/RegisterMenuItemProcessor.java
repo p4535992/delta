@@ -5,6 +5,7 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
+import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 
 /**
@@ -12,17 +13,17 @@ import ee.webmedia.alfresco.menu.service.MenuService;
  *
  * @author Romet Aidla
  */
-public class RegisterMenuItemProcessor extends CountAddingMenuItemProcessor implements InitializingBean {
+public class RegisterMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
     private MenuService menuService;
     private DocumentSearchService documentSearchService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        menuService.addProcessor("forRegisteringList", this, false);
+        menuService.setCountHandler("forRegisteringList", this);
     }
 
     @Override
-    protected int getCount(MenuItem menuItem) {
+    public int getCount(MenuItem menuItem) {
         return documentSearchService.getCountOfDocumentsForRegistering();
     }
 

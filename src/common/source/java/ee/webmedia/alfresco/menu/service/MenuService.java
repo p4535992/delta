@@ -39,6 +39,10 @@ public interface MenuService {
      */
     void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce);
 
+    void setCountHandler(String menuItemId, MenuItemCountHandler countHandler);
+
+    MenuItemCountHandler getCountHandler(String menuItemId);
+
     public interface MenuItemProcessor {
 
         void doWithMenuItem(MenuItem menuItem);

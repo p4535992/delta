@@ -92,6 +92,16 @@ public interface AvalikDokumendiRegister {
             XMLGregorianCalendar perioodiLoppKuupaev);
 
     @WebMethod
+    @WebResult(name = "dokumentDetailidegaFailita", targetNamespace = "http://alfresco/avalikdokumendiregister")
+    @RequestWrapper(localName = "koikDokumendidLisatudMuudetudFailita", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidLisatudMuudetudFailita")
+    @ResponseWrapper(localName = "koikDokumendidLisatudMuudetudFailitaResponse", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidLisatudMuudetudResponseFailita")
+    public List<DokumentDetailidegaFailita> koikDokumendidLisatudMuudetudFailita(
+            @WebParam(name = "perioodiAlgusKuupaev", targetNamespace = "http://alfresco/avalikdokumendiregister")
+            XMLGregorianCalendar perioodiAlgusKuupaev,
+            @WebParam(name = "perioodiLoppKuupaev", targetNamespace = "http://alfresco/avalikdokumendiregister")
+            XMLGregorianCalendar perioodiLoppKuupaev);
+
+    @WebMethod
     @WebResult(name = "dokumentKustutatud", targetNamespace = "http://alfresco/avalikdokumendiregister")
     @RequestWrapper(localName = "koikDokumendidKustutatud", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidKustutatud")
     @ResponseWrapper(localName = "koikDokumendidKustutatudResponse", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidKustutatudResponse")

@@ -55,7 +55,11 @@ public class FileBlockBean implements Serializable {
         NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         final FileInfo pdfFileInfo = getFileService().transformToPdf(nodeRef);
         restore(); // refresh the files list
-        MessageUtil.addInfoMessage("file_generate_pdf_success", pdfFileInfo.getName());
+        if (pdfFileInfo != null) {
+            MessageUtil.addInfoMessage("file_generate_pdf_success", pdfFileInfo.getName());
+        } else {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_generate_pdf_failed");
+        }
     }
 
     public void init(Node node) {

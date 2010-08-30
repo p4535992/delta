@@ -82,6 +82,7 @@ public class PageTag extends TagSupport
                 "/scripts/jquery/jquery.autocomplete.js",
                 "/scripts/jquery/jquery.jLog-min.js",
                 "/scripts/jquery/jquery.condense.js",
+                "/scripts/jquery/jquery.ajaxqueue.js",
                                 // menu javascript
                 "/scripts/menu.js",
                                 // webdav javascript

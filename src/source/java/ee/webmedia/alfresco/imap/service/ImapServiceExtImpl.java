@@ -37,6 +37,7 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.GUID;
 import org.apache.commons.collections.CollectionUtils;
@@ -56,6 +57,7 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -68,7 +70,6 @@ import ee.webmedia.alfresco.imap.IncomingFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.PermissionDeniedAppendBehaviour;
 import ee.webmedia.alfresco.imap.SentFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.model.ImapModel;
-import ee.webmedia.alfresco.utils.FilenameUtil;
 
 /**
  * SimDhs specific IMAP logic.
@@ -86,6 +87,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
     private GeneralService generalService;
     private FileService fileService;
     private MimetypeService mimetypeService;
+    private NamespaceService namespaceService;
 
     // todo: make this configurable with spring
     private Set<String> allowedFolders = null;
@@ -347,8 +349,14 @@ public class ImapServiceExtImpl implements ImapServiceExt {
     private MailFolder addBehaviour(AlfrescoImapFolder folder) {
 
         String appendBehaviour;
-        if (folder.getFolderInfo() != null) { // todo: why folder info is null?
-            appendBehaviour = (String) folder.getFolderInfo().getProperties().get(ImapModel.Properties.APPEND_BEHAVIOUR);
+        FileInfo folderInfo = folder.getFolderInfo();
+        if (folderInfo != null) { // todo: why folder info is null?
+            appendBehaviour = (String) folderInfo.getProperties().get(ImapModel.Properties.APPEND_BEHAVIOUR);
+            if (appendBehaviour == null) {
+                log.warn("Failed to get appendBehaviour for folder nodeRef=" + folderInfo.getNodeRef() + " name=" + folderInfo.getName() + " props="
+                        + WmNode.toString(folderInfo.getProperties(), namespaceService));
+                appendBehaviour = PermissionDeniedAppendBehaviour.BEHAVIOUR_NAME;   
+            }
         } else {
             appendBehaviour = PermissionDeniedAppendBehaviour.BEHAVIOUR_NAME;
         }
@@ -428,6 +436,10 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
     public void setMimetypeService(MimetypeService mimetypeService) {
         this.mimetypeService = mimetypeService;
+    }
+
+    public void setNamespaceService(NamespaceService namespaceService) {
+        this.namespaceService = namespaceService;
     }
 
 }

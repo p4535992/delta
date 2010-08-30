@@ -16,6 +16,7 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
@@ -24,6 +25,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -46,11 +48,11 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
  * @author Alar Kvell
  */
 public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<DocumentSearchFilterService> {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     public static String OUTPUT_EXTENDED = "extended";
-    
+
     private static String OUTPUT_SIMPLE = "simple";
 
     private DocumentSearchResultsDialog documentSearchResultsDialog;
@@ -62,7 +64,9 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     private transient CaseService caseService;
     private transient OrganizationStructureService organizationStructureService;
     private transient DocumentService documentService;
+    private transient GeneralService generalService;
 
+    private List<SelectItem> stores;
     private List<SelectItem> searchOutput;
     private List<SelectItem> documentTypes;
     private List<SelectItem> functions;
@@ -73,12 +77,18 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
-        
+
         // Search output types
         if (searchOutput == null) {
             searchOutput = new ArrayList<SelectItem>(2);
             searchOutput.add(new SelectItem(OUTPUT_SIMPLE, MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_search_output_simple")));
             searchOutput.add(new SelectItem(OUTPUT_EXTENDED, MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_search_output_extended")));
+        }
+
+        if (stores == null) {
+            stores = new ArrayList<SelectItem>(2);
+            stores.add(new SelectItem(getGeneralService().getStore(), MessageUtil.getMessage("functions_title")));
+            stores.add(new SelectItem(getGeneralService().getArchivalsStoreRef(), MessageUtil.getMessage("archivals_list")));
         }
 
         // Document types
@@ -143,6 +153,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         Node node = new TransientNode(DocumentSearchModel.Types.FILTER, null, null);
 
         // UISelectMany components don't want null as initial value
+        node.getProperties().put(DocumentSearchModel.Props.STORE.toString(), new ArrayList<StoreRef>());
         node.getProperties().put(DocumentSearchModel.Props.DOCUMENT_TYPE.toString(), new ArrayList<QName>());
         node.getProperties().put(DocumentSearchModel.Props.DOC_STATUS.toString(), new ArrayList<String>());
         node.getProperties().put(DocumentSearchModel.Props.ACCESS_RESTRICTION.toString(), new ArrayList<String>());
@@ -158,7 +169,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     @Override
     protected void reset() {
         super.reset();
-        // searchOutput doesn't need to be set to null, it never changes
+        // searchOutput, stores doesn't need to be set to null, they never change
         documentTypes = null;
         functions = null;
         series = null;
@@ -167,6 +178,16 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     }
 
     // GeneralSelectorGenerator 'selectionItems' method bindings
+
+    /**
+     * @param context
+     * @param selectComponent
+     * @return dropDown items for JSP
+     */
+    public List<SelectItem> getStores(FacesContext context, UIInput selectComponent) {
+        ((HtmlSelectManyListbox) selectComponent).setSize(5);
+        return stores;
+    }
 
     /**
      * @param context
@@ -204,7 +225,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     public List<SelectItem> getVolumes(FacesContext context, UIInput selectComponent) {
         return volumes;
     }
-    
+
     /**
      * @param context
      * @param selectComponent
@@ -213,7 +234,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     public List<SelectItem> getCases(FacesContext context, UIInput selectComponent) {
         return cases;
     }
-    
+
     /**
      * @param context
      * @param selectComponent
@@ -228,7 +249,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         series = Collections.emptyList();
         volumes = Collections.emptyList();
         cases = Collections.emptyList();
-        
+
         NodeRef functionRef = (NodeRef) event.getNewValue();
         updateSelections(functionRef, null, null, true);
     }
@@ -236,7 +257,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     public void seriesValueChanged(ValueChangeEvent event) {
         volumes = Collections.emptyList();
         cases = Collections.emptyList();
-        
+
         NodeRef seriesRef = (NodeRef) event.getNewValue();
         updateSelections(null, seriesRef, null, true);
     }
@@ -251,18 +272,18 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     @Override
     public void selectedFilterValueChanged(ValueChangeEvent event) {
         super.selectedFilterValueChanged(event);
-        
+
         series = Collections.emptyList();
         volumes = Collections.emptyList();
         cases = Collections.emptyList();
-     
+
         Map<String, Object> props = filter.getProperties();
         NodeRef functionRef = (NodeRef) props.get(DocumentSearchModel.Props.FUNCTION.toString());
         NodeRef seriesRef = (NodeRef) props.get(DocumentSearchModel.Props.SERIES.toString());
         NodeRef volumeRef = (NodeRef) props.get(DocumentSearchModel.Props.VOLUME.toString());
         updateSelections(functionRef, seriesRef, volumeRef, false);
     }
-    
+
     // SearchGenerator 'setterCallback' method bindings
 
     public void setOwner(String userName) {
@@ -328,7 +349,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         }
         return volumeService;
     }
-    
+
     protected CaseService getCaseService() {
         if (caseService == null) {
             caseService = (CaseService) FacesContextUtils.getRequiredWebApplicationContext( //
@@ -336,7 +357,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         }
         return caseService;
     }
-    
+
     protected OrganizationStructureService getOrganizationStructureService() {
         if (organizationStructureService == null) {
             organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext( //
@@ -352,7 +373,15 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         }
         return documentService;
     }
-        
+
+    protected GeneralService getGeneralService() {
+        if (generalService == null) {
+            generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
+                    GeneralService.BEAN_NAME);
+        }
+        return generalService;
+    }
+
     // END: getters / setters
 
     private void updateSelections(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, boolean updateComponents) {
@@ -373,7 +402,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
                 volumes.add(new SelectItem(volume.getNode().getNodeRef(), volume.getVolumeMark() + " " + volume.getTitle()));
             }
         }
-        
+
         if (volumeRef != null) {
             List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef);
             cases = new ArrayList<SelectItem>(allCases.size());
@@ -382,7 +411,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
                 cases.add(new SelectItem(tmpCase.getNode().getNodeRef(), tmpCase.getTitle()));
             }
         }
-        
+
         if (updateComponents) {
             @SuppressWarnings("unchecked")
             List<UIComponent> children = getPropertySheet().getChildren();

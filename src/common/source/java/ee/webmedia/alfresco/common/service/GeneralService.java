@@ -30,7 +30,15 @@ import ee.webmedia.alfresco.common.web.WmNode;
 public interface GeneralService {
     String BEAN_NAME = "GeneralService";
 
+    /**
+     * @return default store (where unarchived data is stored)
+     */
     StoreRef getStore();
+
+    /**
+     * @return store where archived documents are stored
+     */
+    StoreRef getArchivalsStoreRef();
 
     /**
      * Search for NodeRef with an XPath expression.

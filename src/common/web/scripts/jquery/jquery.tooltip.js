@@ -1,4 +1,13 @@
 /*
+ * Improvements to jQuery Tooltip plugin version 1.3 by Ats Uiboupin
+ * plugin modified:
+ * 1) replaced $ with jQuery to avoid conflicts
+ * 2) added support to enable html escaping in tooltip to avoid javaScript injection (escapeHtml setting)
+ * 3) added support to configure element name for tooltip container (tooltipContainerElemName setting) 
+ * so that styling could be done (for example when setting tooltipContainerElemName is set to "p") 
+ * using styleclasses or for example using <b>bold</b> elements. 
+ * NB! value of escapeHtml setting must then be set to default(flase)
+ * ==================================================================
  * jQuery Tooltip plugin 1.3
  *
  * http://bassistance.de/jquery-plugins/jquery-plugin-tooltip/
@@ -31,6 +40,8 @@
 	jQuery.tooltip = {
 		blocked: false,
 		defaults: {
+			escapeHtml: false, // by default tooltip content is not escaped, so styling based on html tags and styleclasses and also javascript injection could happen 
+			tooltipContainerElemName: "h3", // IE shows h3 as bold, to enable styling in IE as well, it is better to use "p" element (and leave setting escapeHtml=false)
 			delay: 200,
 			fade: false,
 			showURL: true,
@@ -96,8 +107,9 @@
 		// there can be only one tooltip helper
 		if( helper.parent )
 			return;
-		// create the helper, h3 for title, div for url
-		helper.parent = jQuery('<div id="' + settings.id + '"><h3></h3><div class="body"></div><div class="url"></div></div>')
+		// create the helper, h3(default element name for tooltip container) for title, div for url
+		var tooltipContainer = settings.tooltipContainerElemName;
+		helper.parent = jQuery('<div id="' + settings.id + '"><'+tooltipContainer+'></'+tooltipContainer+'><div class="body"></div><div class="url"></div></div>')
 			// add to document
 			.appendTo(jQuery("#wrapper"))
 			// hide it at first
@@ -108,7 +120,7 @@
 			helper.parent.bgiframe();
 		
 		// save references to title and url elements
-		helper.title = jQuery('h3', helper.parent);
+		helper.title = jQuery(tooltipContainer, helper.parent);
 		helper.body = jQuery('div.body', helper.parent);
 		helper.url = jQuery('div.url', helper.parent);
 	}
@@ -163,7 +175,11 @@
 			}
 			helper.body.hideWhenEmpty();
 		} else {
-			helper.title.html(title).show();
+		   if(settings(this).escapeHtml) {
+		      helper.title.text(title).show();
+		   } else {
+		      helper.title.html(title).show();
+		   }
 			helper.body.hide();
 		}
 		

@@ -5,21 +5,22 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
+import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 
-public class SentEmailMenuItemProcessor extends CountAddingMenuItemProcessor implements InitializingBean {
+public class SentEmailMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
 
     private MenuService menuService;
     private DocumentService documentService;
     
     @Override
-    protected int getCount(MenuItem menuItem) {
+    public int getCount(MenuItem menuItem) {
         return documentService.getSentEmailsCount();
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        menuService.addProcessor("sentEmails", this, false);
+        menuService.setCountHandler("sentEmails", this);
     }
     
     // START: getters / setters

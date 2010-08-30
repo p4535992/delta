@@ -36,7 +36,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -85,6 +84,7 @@ import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.hibernate.StaleObjectStateException;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
@@ -180,7 +180,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     private final Map<QName/* nodeType/nodeAspect */, PropertiesModifierCallback> creationPropertiesModifierCallbacks = new LinkedHashMap<QName, PropertiesModifierCallback>();
 
     private static final String REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX = "-1";
-    private static final DateFormat userDateFormat = new SimpleDateFormat("dd.MM.yyyy");
+    private static final FastDateFormat userDateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
     private static final String TEMP_LOGGING_DISABLED_REGISTERED_BY_USER = "{temp}logging_registeredByUser";
     private PropertyChangesMonitorHelper propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();
 
@@ -458,9 +458,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         docProps.putAll(getSearchableOtherProps(docNode));
 
         boolean propsChanged = saveChildNodes(docNode);
-
         // add any associations added in the UI
         propsChanged |= generalService.saveAddedAssocs(docNode) > 0;
+
+        makeChildNodesSearchable(docNodeRef);
 
         // If accessRestriction changes from OPEN/AK to INTERNAL
         if (AccessRestriction.INTERNAL.equals((String) docProps.get(ACCESS_RESTRICTION))) {
@@ -567,7 +568,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_location_changed"));
             }
         }
-        makeChildNodesSearchable(docNodeRef);
         return getDocument(docNodeRef);
     }
 

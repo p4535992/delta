@@ -103,14 +103,14 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     private VolumeService volumeService;
     private WorkflowService workflowService;
     private ParametersService parametersService;
-    private StoreRef archivalsStore;
-    
+
     @Override
     public List<Document> searchAdrDocuments(Date regDateBegin, Date regDateEnd, QName docType, String searchString, Set<QName> documentTypes) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(5);
         if (regDateBegin != null || regDateEnd != null) {
-            queryParts.add(generateDatePropertyRangeQuery(regDateBegin, regDateEnd, DocumentCommonModel.Props.REG_DATE_TIME, DocumentSpecificModel.Props.SENDER_REG_DATE));
+            queryParts.add(generateDatePropertyRangeQuery(regDateBegin, regDateEnd //
+                    , DocumentCommonModel.Props.REG_DATE_TIME, DocumentSpecificModel.Props.SENDER_REG_DATE));
         }
         queryParts.add(generateQuickSearchQuery(searchString));
         if (docType != null) {
@@ -127,7 +127,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
 
         String query = generateAdrDocumentSearchQuery(queryParts, documentTypes);
         List<Document> results = searchDocumentsImpl(query, false);
-        results.addAll(searchDocumentsImpl(query, false, archivalsStore));
+        results.addAll(searchDocumentsImpl(query, false, Arrays.asList(generalService.getArchivalsStoreRef())));
         if (log.isDebugEnabled()) {
             log.debug("ADR documents search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() + ", query: " + query);
         }
@@ -143,9 +143,10 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
 
         String query = generateAdrDocumentSearchQuery(queryParts, documentTypes);
         List<Document> results = searchDocumentsImpl(query, false);
-        results.addAll(searchDocumentsImpl(query, false, archivalsStore));
+        results.addAll(searchDocumentsImpl(query, false, Arrays.asList(generalService.getArchivalsStoreRef())));
         if (log.isDebugEnabled()) {
-            log.debug("ADR document details search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() + ", query: " + query);
+            log.debug("ADR document details search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() //
+                    + ", query: " + query);
         }
         return results;
     }
@@ -160,9 +161,10 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
 
         String query = generateAdrDocumentSearchQuery(queryParts, documentTypes);
         List<Document> results = searchDocumentsImpl(query, false);
-        results.addAll(searchDocumentsImpl(query, false, archivalsStore));
+        results.addAll(searchDocumentsImpl(query, false, Arrays.asList(generalService.getArchivalsStoreRef())));
         if (log.isDebugEnabled()) {
-            log.debug("ADR document details search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() + ", query: " + query);
+            log.debug("ADR document details search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() //
+                    + ", query: " + query);
         }
         return results;
     }
@@ -177,7 +179,8 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         String query = joinQueryPartsAnd(queryParts);
         List<NodeRef> results = searchNodes(query, false);
         if (log.isDebugEnabled()) {
-            log.debug("ADR deleted documents search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() + ", query: " + query);
+            log.debug("ADR deleted documents search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() //
+                    + ", query: " + query);
         }
         return results;
     }
@@ -192,7 +195,8 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         String query = joinQueryPartsAnd(queryParts);
         List<QName> results = searchAdrDocumentTypesImpl(query, false);
         if (log.isDebugEnabled()) {
-            log.debug("ADR deleted document types search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() + ", query: " + query);
+            log.debug("ADR deleted document types search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size()
+                    + ", query: " + query);
         }
         return results;
     }
@@ -207,7 +211,8 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         String query = joinQueryPartsAnd(queryParts);
         List<QName> results = searchAdrDocumentTypesImpl(query, false);
         if (log.isDebugEnabled()) {
-            log.debug("ADR added document types search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() + ", query: " + query);
+            log.debug("ADR added document types search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() //
+                    + ", query: " + query);
         }
         return results;
     }
@@ -251,7 +256,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         }
         return results;
     }
-    
+
     @Override
     public List<Document> searchTodayRegisteredDocuments() {
         long startTime = System.currentTimeMillis();
@@ -290,34 +295,34 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             } catch (Exception e) {
                 // Do nothing
             }
-        }        
+        }
         if (log.isDebugEnabled()) {
             log.debug("Current user's and WORKING documents count search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
         return count;
     }
-    
+
     @Override
     public List<Document> searchAccessRestictionEndsAfterDate(Date restrictionEndDate) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>();
         List<String> tempQueryParts = new ArrayList<String>();
-        
-        tempQueryParts.add(generateStringExactQuery("AK", DocumentCommonModel.Props.ACCESS_RESTRICTION)); // TODO this should come from classificator! 
+
+        tempQueryParts.add(generateStringExactQuery("AK", DocumentCommonModel.Props.ACCESS_RESTRICTION)); // TODO this should come from classificator!
         tempQueryParts.add(generatePropertyNullQuery(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
         tempQueryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC));
         queryParts.add(joinQueryPartsAnd(tempQueryParts));
         tempQueryParts.clear();
-        
-        tempQueryParts.add(generateStringExactQuery("AK", DocumentCommonModel.Props.ACCESS_RESTRICTION)); // TODO this should come from classificator! 
+
+        tempQueryParts.add(generateStringExactQuery("AK", DocumentCommonModel.Props.ACCESS_RESTRICTION)); // TODO this should come from classificator!
         tempQueryParts.add(generateDatePropertyRangeQuery(null, restrictionEndDate, DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
         queryParts.add(joinQueryPartsAnd(tempQueryParts));
         tempQueryParts.clear();
-        
+
         tempQueryParts.addAll(queryParts);
         queryParts.clear();
         queryParts.add(joinQueryPartsOr(tempQueryParts));
-        
+
         String query = generateDocumentSearchQuery(queryParts);
         List<Document> results = searchDocumentsImpl(query, false);
         if (log.isDebugEnabled()) {
@@ -325,8 +330,6 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         }
         return results;
     }
-    
-
 
     @Override
     public List<Document> searchRecipientFinishedDocuments() {
@@ -336,7 +339,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         // Make sure the document does not have sendInfo children
 
         // XXX TODO FIXME is additional optimization needed? postprocessing could be eliminated and this condition added directly to lucene query
-        for (Iterator<Document> it = results.iterator(); it.hasNext(); ) {
+        for (Iterator<Document> it = results.iterator(); it.hasNext();) {
             Document doc = it.next();
             List<ChildAssociationRef> sendInfo = nodeService.getChildAssocs(doc.getNodeRef(), RegexQNamePattern.MATCH_ALL,
                     DocumentCommonModel.Assocs.SEND_INFO);
@@ -367,11 +370,11 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             } catch (Exception e) {
                 // Do nothing
             }
-        }        
+        }
         // Make sure the document does not have sendInfo children
 
         // XXX TODO FIXME is additional optimization needed? postprocessing could be eliminated and this condition added directly to lucene query
-        for (Iterator<NodeRef> it = results.iterator(); it.hasNext(); ) {
+        for (Iterator<NodeRef> it = results.iterator(); it.hasNext();) {
             NodeRef docNodeRef = it.next();
             List<ChildAssociationRef> sendInfo = nodeService.getChildAssocs(docNodeRef, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Assocs.SEND_INFO);
             if (sendInfo.size() > 0) {
@@ -392,7 +395,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         String query = generateDocumentSearchQuery(queryParts);
         return query;
     }
-    
+
     @Override
     public List<Series> searchSeriesUnit(String unit) {
         long startTime = System.currentTimeMillis();
@@ -406,7 +409,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         }
         return results;
     }
-    
+
     @Override
     public List<Task> searchCurrentUsersTasksInProgress(QName taskType) {
         long startTime = System.currentTimeMillis();
@@ -417,7 +420,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         List<String> queryParts = getTaskQuery(taskType, ownerId, Status.IN_PROGRESS);
         addSubstitutionRestriction(queryParts);
         String query = generateTaskSearchQuery(queryParts);
-	
+
         List<Task> results = searchTasksImpl(query, false);
         if (log.isDebugEnabled()) {
             log.debug("Current user's and IN_PROGRESS tasks search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
@@ -433,7 +436,8 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         String query = generateVolumeSearchQuery(queryParts);
         List<Volume> results = searchVolumesImpl(query, false);
         if (log.isDebugEnabled()) {
-            log.debug("Search for volumes that are dispositioned between now and " + dispositionDate +" total time: " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+            log.debug("Search for volumes that are dispositioned between now and " + dispositionDate //
+                    + " total time: " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
         return results;
     }
@@ -442,13 +446,13 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     public List<Task> searchTasksDueAfterDate(Date dueDate) {
         long startTime = System.currentTimeMillis();
         Date fromDate = Calendar.getInstance().getTime(); // Set time frame from today, tasks that are due today are also due in e.g. 2 weeks
-        if(dueDate == null) { // If no due date is specified search for tasks that are due
+        if (dueDate == null) { // If no due date is specified search for tasks that are due
             Calendar cal = Calendar.getInstance();
             cal.add(Calendar.DATE, -1);
             dueDate = cal.getTime();
             fromDate = null; // If due date isn't set then we must include result from the glory days of past
         }
-        
+
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringExactQuery(Status.IN_PROGRESS.getName(), WorkflowCommonModel.Props.STATUS));
         queryParts.add(generateStringNotEmptyQuery(WorkflowCommonModel.Props.OWNER_ID));
@@ -460,7 +464,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         }
         return results;
     }
-    
+
     @Override
     public int getCurrentUsersTaskCount(QName taskType) {
         long startTime = System.currentTimeMillis();
@@ -480,7 +484,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             } catch (Exception e) {
                 // Do nothing
             }
-        }        
+        }
         if (log.isDebugEnabled()) {
             log.debug("Current user's and IN_PROGRESS tasks count search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
@@ -497,7 +501,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         }
         return results;
     }
-    
+
     private void addSubstitutionRestriction(List<String> queryParts) {
         SubstitutionInfo subInfo = SubstitutionInfoHolder.getSubstitutionInfo();
         if (subInfo.isSubstituting()) {
@@ -535,8 +539,8 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             }
         });
         if (log.isDebugEnabled()) {
-            log.debug(String.format("Documents for registering search total time %d ms, query: %s", (System.currentTimeMillis() - startTime),
-                    DOCUMENTS_FOR_REGISTERING_QUERY));
+            log.debug(String.format("Documents for registering search total time %d ms, query: %s" //
+                    , (System.currentTimeMillis() - startTime), DOCUMENTS_FOR_REGISTERING_QUERY));
         }
         return results;
     }
@@ -546,14 +550,16 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         int count = searchGeneralImpl(DOCUMENTS_FOR_REGISTERING_QUERY, false, new SearchCallback<String>() {
             @Override
             public String addResult(ResultSetRow row) {
-                return workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef()) && !documentService.isRegistered(generalService.fetchNode(row.getNodeRef())) 
+                return workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef())
+                        && !documentService.isRegistered(generalService.fetchNode(row.getNodeRef()))
                         ? row.getNodeRef().toString()
                         : null;
             }
         }).size();
 
         if (log.isDebugEnabled()) {
-            log.debug(String.format("Documents for registering count search total time %d ms, query: %s", (System.currentTimeMillis() - startTime), DOCUMENTS_FOR_REGISTERING_QUERY));
+            log.debug(String.format("Documents for registering count search total time %d ms, query: %s" //
+                    , (System.currentTimeMillis() - startTime), DOCUMENTS_FOR_REGISTERING_QUERY));
         }
         return count;
     }
@@ -561,8 +567,10 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     @Override
     public List<Document> searchDocuments(Node filter) {
         long startTime = System.currentTimeMillis();
+        @SuppressWarnings("unchecked")
+        final List<StoreRef> storeRefs = (List<StoreRef>) filter.getProperties().get(DocumentSearchModel.Props.STORE);
         String query = generateDocumentSearchQuery(filter);
-        List<Document> results = searchDocumentsImpl(query, true);
+        List<Document> results = searchDocumentsImpl(query, true, storeRefs);
         if (log.isDebugEnabled()) {
             log.debug("Documents search total time " + (System.currentTimeMillis() - startTime) + " ms");
         }
@@ -582,9 +590,9 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         log.debug("searchDocumentsInOutboxCount with query '" + query + "'");
         return searchDocumentsBySendInfoImplCount(query, false);
     }
-    
+
     @Override
-    public Map<NodeRef /*sendInfo*/, String /*dvkId*/> searchOutboxDvkIds() {
+    public Map<NodeRef /* sendInfo */, String /* dvkId */> searchOutboxDvkIds() {
         String query = getDvkOutboxQuery();
         log.debug("searchDocumentsInOutbox with query '" + query + "'");
         return searchDhlIdsBySendInfoImpl(query, false);
@@ -612,7 +620,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         }
         return results;
     }
-    
+
     private String getCaseByTitleQuery(String searchValue) {
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateTypeQuery(CaseModel.Types.CASE));
@@ -715,7 +723,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         });
         return nodeIds.size();
     }
-    
+
     private String generateDocumentSearchQuery(Node filter) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(50);
@@ -728,7 +736,8 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         queryParts.add(generateNodeRefQuery((NodeRef) props.get(DocumentSearchModel.Props.SERIES), DocumentCommonModel.Props.SERIES));
         queryParts.add(generateNodeRefQuery((NodeRef) props.get(DocumentSearchModel.Props.VOLUME), DocumentCommonModel.Props.VOLUME));
         queryParts.add(generateNodeRefQuery((NodeRef) props.get(DocumentSearchModel.Props.CASE), DocumentCommonModel.Props.CASE));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.REG_DATE_TIME_BEGIN), (Date) props.get(DocumentSearchModel.Props.REG_DATE_TIME_END), DocumentCommonModel.Props.REG_DATE_TIME));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.REG_DATE_TIME_BEGIN) //
+                , (Date) props.get(DocumentSearchModel.Props.REG_DATE_TIME_END), DocumentCommonModel.Props.REG_DATE_TIME));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.REG_NUMBER), DocumentCommonModel.Props.REG_NUMBER));
         @SuppressWarnings("unchecked")
         List<String> status = (List<String>) props.get(DocumentSearchModel.Props.DOC_STATUS);
@@ -738,24 +747,39 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         queryParts.add(generateMultiStringWordsWildcardQuery(senderNames, DocumentSpecificModel.Props.SENDER_DETAILS_NAME));
         @SuppressWarnings("unchecked")
         List<String> recipientNames = (List<String>) props.get(DocumentSearchModel.Props.RECIPIENT_NAME);
-        queryParts.add(generateMultiStringWordsWildcardQuery(recipientNames, DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME));
+        queryParts.add(generateMultiStringWordsWildcardQuery(recipientNames, DocumentCommonModel.Props.RECIPIENT_NAME,
+                DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.DOC_NAME), DocumentCommonModel.Props.DOC_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SENDER_REG_NUMBER), DocumentSpecificModel.Props.SENDER_REG_NUMBER));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.SENDER_REG_DATE_BEGIN), (Date) props.get(DocumentSearchModel.Props.SENDER_REG_DATE_END), DocumentSpecificModel.Props.SENDER_REG_DATE));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.DUE_DATE_BEGIN), (Date) props.get(DocumentSearchModel.Props.DUE_DATE_END), DocumentSpecificModel.Props.DUE_DATE, DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE, DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.COMPLIENCE_DATE_BEGIN), (Date) props.get(DocumentSearchModel.Props.COMPLIENCE_DATE_END), DocumentSpecificModel.Props.COMPLIENCE_DATE));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SENDER_REG_NUMBER),
+                DocumentSpecificModel.Props.SENDER_REG_NUMBER));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.SENDER_REG_DATE_BEGIN), //
+                (Date) props.get(DocumentSearchModel.Props.SENDER_REG_DATE_END), DocumentSpecificModel.Props.SENDER_REG_DATE));
+        queryParts.add(generateDatePropertyRangeQuery(
+                (Date) props.get(DocumentSearchModel.Props.DUE_DATE_BEGIN),
+                (Date) props.get(DocumentSearchModel.Props.DUE_DATE_END), DocumentSpecificModel.Props.DUE_DATE,
+                DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE,
+                DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.COMPLIENCE_DATE_BEGIN), //
+                (Date) props.get(DocumentSearchModel.Props.COMPLIENCE_DATE_END), DocumentSpecificModel.Props.COMPLIENCE_DATE));
         @SuppressWarnings("unchecked")
         List<String> accessRestriction = (List<String>) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION);
         queryParts.add(generateMultiStringExactQuery(accessRestriction, DocumentCommonModel.Props.ACCESS_RESTRICTION));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_REASON), DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_BEGIN_DATE_BEGIN), (Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_BEGIN_DATE_END), DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_END_DATE_BEGIN), (Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_END_DATE_END), DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_END_DESC), DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_REASON),
+                DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_BEGIN_DATE_BEGIN), //
+                (Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_BEGIN_DATE_END), DocumentCommonModel.Props.ACCESS_RESTRICTION_BEGIN_DATE));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_END_DATE_BEGIN), //
+                (Date) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_END_DATE_END), DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ACCESS_RESTRICTION_END_DESC),
+                DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.OWNER_NAME), DocumentCommonModel.Props.OWNER_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.OWNER_ORG_STRUCT_UNIT), DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.OWNER_JOB_TITLE), DocumentCommonModel.Props.OWNER_JOB_TITLE));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.OWNER_ORG_STRUCT_UNIT),
+                DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.OWNER_JOB_TITLE),
+                DocumentCommonModel.Props.OWNER_JOB_TITLE));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SIGNER_NAME), DocumentCommonModel.Props.SIGNER_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SIGNER_JOB_TITLE), DocumentCommonModel.Props.SIGNER_JOB_TITLE));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SIGNER_JOB_TITLE),
+                DocumentCommonModel.Props.SIGNER_JOB_TITLE));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.KEYWORDS), DocumentCommonModel.Props.KEYWORDS));
         @SuppressWarnings("unchecked")
         List<String> storageType = (List<String>) props.get(DocumentSearchModel.Props.STORAGE_TYPE);
@@ -766,17 +790,26 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         @SuppressWarnings("unchecked")
         List<String> costManager = (List<String>) props.get(DocumentSearchModel.Props.COST_MANAGER);
         queryParts.add(generateMultiStringExactQuery(costManager, DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.APPLICANT_NAME), DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ERRAND_BEGIN_DATE_BEGIN), (Date) props.get(DocumentSearchModel.Props.ERRAND_BEGIN_DATE_END), DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE));
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ERRAND_END_DATE_BEGIN), (Date) props.get(DocumentSearchModel.Props.ERRAND_END_DATE_END), DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ERRAND_COUNTRY), DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.APPLICANT_NAME),
+                DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ERRAND_BEGIN_DATE_BEGIN), //
+                (Date) props.get(DocumentSearchModel.Props.ERRAND_BEGIN_DATE_END), DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.ERRAND_END_DATE_BEGIN), //
+                (Date) props.get(DocumentSearchModel.Props.ERRAND_END_DATE_END), DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ERRAND_COUNTRY),
+                DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY));
         @SuppressWarnings("unchecked")
         List<String> errandCounty = (List<String>) props.get(DocumentSearchModel.Props.ERRAND_COUNTY);
         queryParts.add(generateMultiStringExactQuery(errandCounty, DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ERRAND_CITY), DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.RESPONSIBLE_NAME), DocumentSpecificModel.Props.RESPONSIBLE_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.CO_RESPONSIBLES), DocumentSpecificModel.Props.CO_RESPONSIBLES));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.CONTACT_PERSON), DocumentSpecificModel.Props.FIRST_PARTY_CONTACT_PERSON, DocumentSpecificModel.Props.SECOND_PARTY_CONTACT_PERSON, DocumentSpecificModel.Props.THIRD_PARTY_CONTACT_PERSON));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.ERRAND_CITY),
+                DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.RESPONSIBLE_NAME),
+                DocumentSpecificModel.Props.RESPONSIBLE_NAME));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.CO_RESPONSIBLES),
+                DocumentSpecificModel.Props.CO_RESPONSIBLES));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.CONTACT_PERSON),
+                DocumentSpecificModel.Props.FIRST_PARTY_CONTACT_PERSON, DocumentSpecificModel.Props.SECOND_PARTY_CONTACT_PERSON,
+                DocumentSpecificModel.Props.THIRD_PARTY_CONTACT_PERSON));
         @SuppressWarnings("unchecked")
         List<String> procurementType = (List<String>) props.get(DocumentSearchModel.Props.PROCUREMENT_TYPE);
         queryParts.add(generateMultiStringExactQuery(procurementType, DocumentSpecificModel.Props.PROCUREMENT_TYPE));
@@ -813,7 +846,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         List<QName> searchPropertiesDate = new ArrayList<QName>();
         addDocumentProperties(searchProperties, searchPropertiesDate);
         return generateQuery(searchWords, searchProperties, searchPropertiesDate);
-        }
+    }
 
     private List<String> generateQuery(List<String> searchWords, List<QName> searchProperties, List<QName> searchPropertiesDate) {
         /*
@@ -896,7 +929,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         queryParts.add(1, generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
         return joinQueryPartsAnd(queryParts);
     }
-    
+
     private static String generateVolumeSearchQuery(List<String> queryParts) {
         if (isBlank(queryParts)) {
             return null;
@@ -904,7 +937,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         queryParts.add(0, generateTypeQuery(VolumeModel.Types.VOLUME));
         return joinQueryPartsAnd(queryParts);
     }
-    
+
     private static String generateTaskSearchQuery(List<String> queryParts) {
         if (isBlank(queryParts)) {
             return null;
@@ -918,38 +951,45 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         List<String> queryParts = new ArrayList<String>(20);
         Map<String, Object> props = filter.getProperties();
 
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.STARTED_DATE_TIME_BEGIN), (Date) props.get(TaskSearchModel.Props.STARTED_DATE_TIME_END), WorkflowCommonModel.Props.STARTED_DATE_TIME));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.STARTED_DATE_TIME_BEGIN), //
+                (Date) props.get(TaskSearchModel.Props.STARTED_DATE_TIME_END), WorkflowCommonModel.Props.STARTED_DATE_TIME));
         queryParts.add(generateTypeQuery((List<QName>) props.get(TaskSearchModel.Props.TASK_TYPE)));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.OWNER_NAME), WorkflowCommonModel.Props.OWNER_NAME));        
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.CREATOR_NAME), WorkflowCommonModel.Props.CREATOR_NAME));        
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.ORGANIZATION_NAME), WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));        
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.JOB_TITLE), WorkflowCommonModel.Props.OWNER_JOB_TITLE));        
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.DUE_DATE_TIME_BEGIN), (Date) props.get(TaskSearchModel.Props.DUE_DATE_TIME_END), WorkflowSpecificModel.Props.DUE_DATE));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.OWNER_NAME), WorkflowCommonModel.Props.OWNER_NAME));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.CREATOR_NAME), WorkflowCommonModel.Props.CREATOR_NAME));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.ORGANIZATION_NAME),
+                WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.JOB_TITLE), WorkflowCommonModel.Props.OWNER_JOB_TITLE));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.DUE_DATE_TIME_BEGIN), //
+                (Date) props.get(TaskSearchModel.Props.DUE_DATE_TIME_END), WorkflowSpecificModel.Props.DUE_DATE));
         if (Boolean.TRUE.equals(props.get(TaskSearchModel.Props.ONLY_RESPONSIBLE))) {
             queryParts.add(generateAspectQuery(WorkflowSpecificModel.Aspects.RESPONSIBLE));
         }
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.COMPLETED_DATE_TIME_BEGIN), (Date) props.get(TaskSearchModel.Props.COMPLETED_DATE_TIME_END), WorkflowCommonModel.Props.COMPLETED_DATE_TIME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.COMMENT), WorkflowCommonModel.Props.OUTCOME, WorkflowSpecificModel.Props.COMMENT));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.RESOLUTION), WorkflowSpecificModel.Props.RESOLUTION, WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.COMPLETED_DATE_TIME_BEGIN), //
+                (Date) props.get(TaskSearchModel.Props.COMPLETED_DATE_TIME_END), WorkflowCommonModel.Props.COMPLETED_DATE_TIME));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.COMMENT), WorkflowCommonModel.Props.OUTCOME,
+                WorkflowSpecificModel.Props.COMMENT));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.RESOLUTION), WorkflowSpecificModel.Props.RESOLUTION,
+                WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION));
         queryParts.add(generateMultiStringExactQuery((List<String>) props.get(TaskSearchModel.Props.STATUS), WorkflowCommonModel.Props.STATUS));
         if (Boolean.TRUE.equals(props.get(TaskSearchModel.Props.COMPLETED_OVERDUE))) {
             queryParts.add(generatePropertyBooleanQuery(WorkflowSpecificModel.Props.COMPLETED_OVERDUE, true));
         }
-        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.STOPPED_DATE_TIME_BEGIN), (Date) props.get(TaskSearchModel.Props.STOPPED_DATE_TIME_END), WorkflowCommonModel.Props.STOPPED_DATE_TIME));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.STOPPED_DATE_TIME_BEGIN), //
+                (Date) props.get(TaskSearchModel.Props.STOPPED_DATE_TIME_END), WorkflowCommonModel.Props.STOPPED_DATE_TIME));
 
         if (isBlank(queryParts)) {
             return null;
         }
         queryParts.add(0, generateTypeQuery(WorkflowCommonModel.Types.TASK));
         queryParts.add(1, generateAspectQuery(WorkflowSpecificModel.Aspects.SEARCHABLE));
-        
+
         String query = joinQueryPartsAnd(queryParts);
         if (log.isDebugEnabled()) {
             log.debug("Tasks search query construction time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
         return query;
     }
-    
+
     private interface SearchCallback<E> {
         E addResult(ResultSetRow row);
     }
@@ -970,10 +1010,10 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             public TaskInfo addResult(ResultSetRow row) {
                 // If we start having performance problems then maybe the following optimizations will help some:
                 // 1) Load aspects only for task node, other nodes don't need aspects in task search results
-                // 2) Load only task nodes and create TaskInfos with NULL values for workflow and document node 
-                //    and after all the tasks are fetched then fetch workflow and document objects only one per 
-                //    unique workflow and document. If there are many tasks linked to same workflow or same document
-                //    then we can avoid some lookup roundtrips.
+                // 2) Load only task nodes and create TaskInfos with NULL values for workflow and document node
+                // and after all the tasks are fetched then fetch workflow and document objects only one per
+                // unique workflow and document. If there are many tasks linked to same workflow or same document
+                // then we can avoid some lookup roundtrips.
                 Node task = generalService.fetchNode(row.getNodeRef());
                 Node workflow = generalService.fetchNode(nodeService.getPrimaryParent(task.getNodeRef()).getParentRef());
                 NodeRef compoundWorkflowRef = nodeService.getPrimaryParent(workflow.getNodeRef()).getParentRef();
@@ -987,16 +1027,16 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         return searchDocumentsImpl(query, limited, null);
     }
 
-    private List<Document> searchDocumentsImpl(String query, boolean limited, StoreRef storeRef) {
+    private List<Document> searchDocumentsImpl(String query, boolean limited, Collection<StoreRef> storeRefs) {
         return searchGeneralImpl(query, limited, new SearchCallback<Document>() {
 
             @Override
             public Document addResult(ResultSetRow row) {
                 return documentService.getDocumentByNodeRef(row.getNodeRef());
             }
-        }, storeRef);
+        }, storeRefs);
     }
-    
+
     private List<Document> searchDocumentsAndCaseTitlesImpl(String query, boolean limited) {
         return searchGeneralImpl(query, limited, new SearchCallback<Document>() {
 
@@ -1060,13 +1100,33 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         return searchGeneralImpl(query, limited, callback, null);
     }
 
-    private <E extends Comparable<? super E>> List<E> searchGeneralImpl(String query, boolean limited, SearchCallback<E> callback, StoreRef storeRef) {
+    private <E extends Comparable<? super E>> List<E> searchGeneralImpl( //
+            String query, boolean limited, SearchCallback<E> callback, Collection<StoreRef> storeRefs) {
         if (StringUtils.isBlank(query)) {
             return Collections.emptyList();
         }
-
+        StoreRef singleStoreRef = null;
+        if (storeRefs == null) {
+            singleStoreRef = generalService.getStore();
+        } else if (storeRefs.size() == 1) {
+            singleStoreRef = storeRefs.iterator().next();
+        }
         long startTime = System.currentTimeMillis();
-        ResultSet resultSet = doSearch(query, limited, storeRef);
+        final List<ResultSet> resultSets;
+        if (singleStoreRef != null) {
+            resultSets = Arrays.asList(doSearch(query, limited, singleStoreRef));
+        } else {
+            resultSets = doSearches(query, limited, storeRefs);
+        }
+        final List<E> extractResults = new ArrayList<E>();
+        for (ResultSet resultSet : resultSets) {
+            extractResults.addAll(extractResults(callback, startTime, resultSet));
+        }
+        Collections.sort(extractResults);
+        return extractResults;
+    }
+
+    private <E> List<E> extractResults(SearchCallback<E> callback, long startTime, final ResultSet resultSet) {
         try {
             List<E> result = new ArrayList<E>(resultSet.length());
             if (log.isDebugEnabled()) {
@@ -1084,7 +1144,6 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             if (log.isDebugEnabled()) {
                 log.debug("Results construction time " + (System.currentTimeMillis() - startTime) + " ms, final results: " + result.size());
             }
-            Collections.sort(result);
             return result;
         } finally {
             try {
@@ -1107,19 +1166,37 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     }
 
     private ResultSet doSearch(String query, boolean limited, StoreRef storeRef) {
+        SearchParameters sp = buildSearchParameters(query, limited);
+        sp.addStore(storeRef == null ? generalService.getStore() : storeRef);
+        return searchService.query(sp);
+    }
+
+    private List<ResultSet> doSearches(String query, boolean limited, Collection<StoreRef> storeRefs) {
+        SearchParameters sp = buildSearchParameters(query, limited);
+        if (storeRefs == null || storeRefs.size() == 0) {
+            storeRefs = Arrays.asList(generalService.getStore());
+        }
+        final List<ResultSet> results = new ArrayList<ResultSet>(storeRefs.size());
+        for (StoreRef storeRef : storeRefs) {
+            sp.getStores().clear();
+            sp.addStore(storeRef);
+            results.add(searchService.query(sp));
+        }
+        return results;
+    }
+
+    private SearchParameters buildSearchParameters(String query, boolean limited) {
         // build up the search parameters
         SearchParameters sp = new SearchParameters();
         sp.setLanguage(SearchService.LANGUAGE_LUCENE);
         sp.setQuery(query);
-        sp.addStore(storeRef == null ? generalService.getStore() : storeRef);
         if (limited) {
             sp.setLimit(100);
             sp.setLimitBy(LimitBy.FINAL_SIZE);
         } else {
             sp.setLimitBy(LimitBy.UNLIMITED);
         }
-
-        return searchService.query(sp);
+        return sp;
     }
 
     // START: getters / setters
@@ -1158,10 +1235,6 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
 
     public void setParametersService(ParametersService parametersService) {
         this.parametersService = parametersService;
-    }
-
-    public void setArchivalsStore(String archivalsStore) {
-        this.archivalsStore = new StoreRef(archivalsStore);
     }
 
     // END: getters / setters

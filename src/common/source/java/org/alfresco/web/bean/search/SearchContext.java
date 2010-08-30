@@ -172,7 +172,7 @@ public class SearchContext implements Serializable
       String nameAttr = Repository.escapeQName(QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, ELEMENT_NAME));
       
       // match against content text
-      String text = this.text.trim();
+      String text = LuceneQueryParser.escape(this.text.trim());
       
       StringBuilder fullTextBuf = new StringBuilder(64);
       StringBuilder nameAttrBuf = new StringBuilder(128);

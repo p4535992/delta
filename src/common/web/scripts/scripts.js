@@ -17,13 +17,38 @@ function getTranslation(key, defaultValue) {
    return translation;
 }
 
+//NB! All background AJAX calls must use $jQ.ajax({ mode: 'queue' !!!!
+//This limits simultaneous AJAX calls to 1. This is needed because there may also be one "ajaxSubmit" request running
+//And server limit of simultaneous connections in one session is 2, when more connections are made, older ones get dropped
+
+var nextSubmitStaysOnSamePageFlag = false;
+function nextSubmitStaysOnSamePage() {
+   nextSubmitStaysOnSamePageFlag = true;
+}
+
 // http://www.hunlock.com/blogs/Mastering_The_Back_Button_With_Javascript
 window.onbeforeunload = function () {
    // This fucntion does nothing.  It won't spawn a confirmation dialog
    // But it will ensure that the page is not cached by the browser.
 
-   // When page is submitted, user sees an hourglass cursor
-   $jQ(".submit-protection-layer").show();
+   $jQ.log('window.onbeforeunload');
+
+   if (nextSubmitStaysOnSamePageFlag) {
+      nextSubmitStaysOnSamePageFlag = false;
+      
+      // Pause ajax queue for 20 seconds!
+      $jQ.ajaxPause();
+      window.setTimeout(function() {
+         $jQ.ajaxResume();
+      }, 20000);
+      
+   } else {
+      // When page is submitted, user sees an hourglass cursor
+      $jQ(".submit-protection-layer").show();
+      $jQ.ajaxDestroy(); // do not allow any new AJAX requests to start
+      // if we are navigating to another page, and one AJAX request was cancelled already but is still working on server, then that makes 2 requests in server simultaneously
+      // if any new AJAX requests would start, then RequestControlFilter connection limit 2 would be exceeded and user would see a blank page
+   }
 }
 
 function isIE() {
@@ -467,21 +492,35 @@ function togglePanelWithStateUpdate(divId, panelId, viewName) {
 function updateState(divId, panelId, viewName) {
     var uri = getContextPath() + '/ajax/invoke/PanelStateBean.updatePanelState?panelId=' + panelId +
               '&panelState=' + $jQ(divId).is(":visible") + '&viewName=' + viewName;
-    YAHOO.util.Connect.asyncRequest("GET", uri,
-    {
-        success: requestUpdatePanelStateSuccess
-        ,failure: requestUpdatePanelStateFailure
-    }, null);
+
+    $jQ.ajax({
+       type: 'POST',
+       url: uri,
+       mode: 'queue',
+       success: requestUpdatePanelStateSuccess,
+       error: requestUpdatePanelStateFailure,
+       dataType: 'xml'
+    });
 }
 
-function requestUpdatePanelStateSuccess(ajaxResponse) {
-   var xml = ajaxResponse.responseXML.documentElement;
+function requestUpdatePanelStateSuccess(xml) {
    // Set new value to view state, so when form is submitted next time, correct state is restored.
-   document.getElementById("javax.faces.ViewState").value = xml.getAttribute('view-state');
+   document.getElementById("javax.faces.ViewState").value = xml.documentElement.getAttribute('view-state');
 }
 
-function requestUpdatePanelStateFailure(ajaxResponse) {
+function requestUpdatePanelStateFailure() {
     $jQ.log("Updating panel status in server side failed");
+}
+
+function ajaxError(request, textStatus, errorThrown) {
+   var result = request.responseText.match(/<body>(.*)<\/body>/i);
+   if (result) {
+      $jQ(".submit-protection-layer").hide();
+      $jQ('#wrapper').html(result[1]);
+   } else {
+      alert('Error during submit: ' + textStatus + "\nAfter clicking OK, the page will reload!");
+      $jQ('#' + formClientId).submit();
+   }
 }
 
 function ajaxSubmit(componentId, componentClientId, componentContainerId, formClientId, viewName, submittableParams) {
@@ -526,17 +565,65 @@ function ajaxSubmit(componentId, componentClientId, componentContainerId, formCl
 
          $jQ(".submit-protection-layer").hide();
       },
-      error: function ajaxError(request, textStatus, errorThrown) {
-         var result = request.responseText.match(/<body>(.*)<\/body>/i);
-         if (result) {
-            $jQ(".submit-protection-layer").hide();
-            $jQ('#wrapper').html(result[1]);
-         } else {
-            alert('Error during submit: ' + textStatus + "\nAfter clicking OK, the page will reload!");
-            $jQ('#' + formClientId).submit();
-         }
-      },
+      error: ajaxError,
       dataType: 'html'
+   });
+}
+
+//-----------------------------------------------------------------------------
+//MENU ITEM COUNT UPDATE
+//-----------------------------------------------------------------------------
+
+// There is no concurrency in JS. One thread per page. Event handling is based on a queue.
+// http://stackoverflow.com/questions/2078235/ajax-concurrency
+
+function queueUpdateMenuItemCount(menuItemId, timeout) {
+   if ($jQ('.menuItemCount[menuitemid=' + menuItemId + ']').length == 0) {
+      return;
+   }
+   window.setTimeout(function () {
+         updateMenuItemCount(menuItemId);
+   }, timeout);
+}
+
+function updateMenuItemCount(menuItemId) {
+   var uri = getContextPath() + '/ajax/invoke/MenuItemCountBean.updateCount?menuItemId=' + menuItemId;
+   $jQ.ajax({
+      type: 'POST',
+      url: uri,
+      mode: 'queue',
+      success: function (responseText) {
+         if ($jQ('.menuItemCount[menuitemid=' + menuItemId + ']').length == 0) {
+            return;
+         }
+         if (responseText) { // check that response is not empty
+            // if response is empty, then
+            // * either user clicked on a link to navigate to another page and browser cancelled all in-progress AJAX requests but still fired this callback
+            // * or the request was dropped by RequestControlFilter. normally should not happen
+
+            var count = responseText == '0' ? '' : ' (' + responseText + ')';
+
+            // Construct element text
+            var text = $jQ($jQ('.menuItemCount[menuitemid=' + menuItemId + '] a')[0]).text();
+            var i = text.lastIndexOf(' (');
+            if (i == -1) {
+               text += count;
+            } else {
+               text = text.substr(0, i) + count;
+            }
+
+            // Update on all elements with same menuitemid
+            $jQ('.menuItemCount[menuitemid=' + menuItemId + '] a').text(text).attr('title', text);
+         }
+
+         //Continuous update disabled - if you stay on the same page, the counts are updated only once.
+         //queueUpdateMenuItemCount(menuItemId, menuItemUpdateTimeout);
+      },
+      error: function(request, textStatus, errorThrown) {
+         $jQ.ajaxDestroy();
+         ajaxError(request, textStatus, errorThrown);
+      },
+      dataType: 'text'
    });
 }
 
@@ -646,6 +733,8 @@ $jQ(document).ready(function() {
    // as condence plugin will make a copy of element for condenced text that would not get tooltips if created later
    $jQ(".tooltip").tooltip({
 	   track: true
+	   ,escapeHtml: true
+	   ,tooltipContainerElemName: "p"
    });
 
    // Realy simple history stuff for back button

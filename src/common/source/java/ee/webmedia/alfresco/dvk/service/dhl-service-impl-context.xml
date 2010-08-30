@@ -21,6 +21,7 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
       <property name="database" value="dhl" /><!-- can be unset - then read from the classname prefix -->
       <property name="xTeeServiceConfigurationProvider" ref="xTeeServiceConfigurationProvider" />
       <property name="xTeeConsumer" ref="xTeeConsumer" />
+      <property name="receivedDocumentsFolder" value="${x-tee.receivedDocumentsFolder}" />
    </bean>
 
    <!-- /XTee conf -->

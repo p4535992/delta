@@ -139,6 +139,10 @@
            <includePermissionGroup type="sys:base" permissionGroup="WriteContent"/>
       </permissionGroup>
 
+      <permissionGroup name="TopicCreator" expose="true" allowFullControl="false">
+           <includePermissionGroup type="sys:base" permissionGroup="DeleteNode"/>
+      </permissionGroup>
+
    </permissionSet>
 
    <permissionSet type="wfc:compoundWorkflow" expose="selected" >
@@ -196,5 +200,6 @@
    <globalPermission permission="WorkflowOwner" authority="ROLE_WORKFLOW_OWNER"/>
 
    <globalPermission permission="Forum" authority="ROLE_FORUM"/>
+   <globalPermission permission="TopicCreator" authority="ROLE_TOPIC_CREATOR"/>
 
 </permissions>

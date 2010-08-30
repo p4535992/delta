@@ -9,6 +9,7 @@ function handle_upload_helper(fileInputElement,
 {
   // When file upload has begun, user sees an hourglass cursor
   $jQ(".submit-protection-layer").show();
+  $jQ.ajaxDestroy(); // do not allow any new AJAX requests to start
   $jQ(fileInputElement).before('Faili laetakse üles, palun oodake...');
 
   var id = fileInputElement.getAttribute("name");

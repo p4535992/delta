@@ -10,9 +10,10 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
+import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 
-public class DvkCorruptMenuItemProcessor extends CountAddingMenuItemProcessor implements InitializingBean {
+public class DvkCorruptMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
     
     private MenuService menuService;
     private GeneralService generalService;
@@ -21,11 +22,11 @@ public class DvkCorruptMenuItemProcessor extends CountAddingMenuItemProcessor im
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        menuService.addProcessor("dvkCorrupt", this, false);
+        menuService.setCountHandler("dvkCorrupt", this);
     }
 
     @Override
-    protected int getCount(MenuItem menuItem) {
+    public int getCount(MenuItem menuItem) {
         List<FileInfo> fileInfos = fileFolderService.listFiles(generalService.getNodeRef(dvkService.getCorruptDvkDocumentsPath())); 
         return fileInfos != null ? fileInfos.size() : 0;
     }

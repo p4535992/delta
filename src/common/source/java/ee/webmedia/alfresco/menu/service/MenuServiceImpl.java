@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -46,6 +47,7 @@ public class MenuServiceImpl implements MenuService {
     private Menu menu;
     // doesn't need to be synchronized, because it is not modified after spring initialization
     private List<ProcessorWrapper> processors = new ArrayList<ProcessorWrapper>();
+    private Map<String, MenuItemCountHandler> countHandlers = new HashMap<String, MenuItemCountHandler>();
     private TreeItemProcessor treeItemProcessor;
     private Map<String, MenuItemFilter> menuItemFilters;
 
@@ -141,6 +143,17 @@ public class MenuServiceImpl implements MenuService {
     @Override
     public void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce) {
         processors.add(new ProcessorWrapper(menuItemId, processor, runOnce));
+    }
+
+    @Override
+    public void setCountHandler(String menuItemId, MenuItemCountHandler countHandler) {
+        countHandlers.put(menuItemId, countHandler);
+        addProcessor(menuItemId, countHandler, false);
+    }
+
+    @Override
+    public MenuItemCountHandler getCountHandler(String menuItemId) {
+        return countHandlers.get(menuItemId);
     }
 
     @Override

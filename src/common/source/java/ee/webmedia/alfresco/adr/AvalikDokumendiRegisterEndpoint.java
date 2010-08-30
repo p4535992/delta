@@ -140,6 +140,25 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
 
     @Override
     @WebMethod
+    @WebResult(name = "dokumentDetailidegaFailita", targetNamespace = "")
+    @RequestWrapper(localName = "koikDokumendidLisatudMuudetudFailita", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidLisatudMuudetudFailita")
+    @ResponseWrapper(localName = "koikDokumendidLisatudMuudetudFailitaResponse", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidLisatudMuudetudFailitaResponse")
+    public List<DokumentDetailidegaFailita> koikDokumendidLisatudMuudetudFailita(
+            @WebParam(name = "perioodiAlgusKuupaev", targetNamespace = "")
+            final XMLGregorianCalendar perioodiAlgusKuupaev,
+            @WebParam(name = "perioodiLoppKuupaev", targetNamespace = "")
+            final XMLGregorianCalendar perioodiLoppKuupaev) {
+
+        return AuthenticationUtil.runAs(new RunAsWork<List<DokumentDetailidegaFailita>>() {
+            @Override
+            public List<DokumentDetailidegaFailita> doWork() throws Exception {
+                return getAdrService().koikDokumendidLisatudMuudetudFailita(perioodiAlgusKuupaev, perioodiLoppKuupaev);
+            }
+        }, AuthenticationUtil.getSystemUserName());
+    }
+
+    @Override
+    @WebMethod
     @WebResult(name = "dokumentKustutatud", targetNamespace = "")
     @RequestWrapper(localName = "koikDokumendidKustutatud", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidKustutatud")
     @ResponseWrapper(localName = "koikDokumendidKustutatudResponse", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.KoikDokumendidKustutatudResponse")

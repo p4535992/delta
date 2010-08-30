@@ -12,12 +12,13 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
+import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 
 /**
  * @author Kaarel Jõgeva
  */
-public class ScannedDocumentsMenuItemProcessor extends CountAddingMenuItemProcessor implements InitializingBean {
+public class ScannedDocumentsMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
     private MenuService menuService;
     private FileFolderService fileFolderService;
     private GeneralService generalService;
@@ -26,11 +27,11 @@ public class ScannedDocumentsMenuItemProcessor extends CountAddingMenuItemProces
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        menuService.addProcessor("scannedDocuments", this, false);
+        menuService.setCountHandler("scannedDocuments", this);
     }
 
     @Override
-    protected int getCount(MenuItem menuItem) {
+    public int getCount(MenuItem menuItem) {
         List<FileInfo> folders = fileFolderService.listFolders(generalService.getNodeRef(scannedFilesPath));
         int count = 0;
         for (FileInfo fileInfo : folders) {

@@ -7,7 +7,6 @@
 
 <%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
-<script type="text/javascript" src="<%=request.getContextPath()%>/scripts/ajax/yahoo/dom/dom-min.js"> </script>
 
 <a:panel id="parameters-panel" label="#{msg.parameters_list}" styleClass="panel-100 with-pager">
    <a:richList id="parametersList" value="#{ParametersListDialog.parameters}" var="sParameter" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}"

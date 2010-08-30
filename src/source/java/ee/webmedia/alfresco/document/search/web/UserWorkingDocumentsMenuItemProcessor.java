@@ -5,23 +5,24 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
+import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 
 /**
  * @author Kaarel Jõgeva
  */
-public class UserWorkingDocumentsMenuItemProcessor extends CountAddingMenuItemProcessor implements InitializingBean {
+public class UserWorkingDocumentsMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
     
         private MenuService menuService;
         private DocumentSearchService documentSearchService;
 
         @Override
         public void afterPropertiesSet() throws Exception {
-            menuService.addProcessor("userWorkingDocuments", this, false);
+            menuService.setCountHandler("userWorkingDocuments", this);
         }
 
         @Override
-        protected int getCount(MenuItem menuItem) {
+        public int getCount(MenuItem menuItem) {
             return documentSearchService.searchUserWorkingDocumentsCount();
         }
 

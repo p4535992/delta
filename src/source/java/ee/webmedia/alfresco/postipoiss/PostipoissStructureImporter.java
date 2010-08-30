@@ -9,6 +9,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
@@ -45,12 +46,12 @@ import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.postipoiss.PostipoissUtil.Counter;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.model.RegisterModel;
 import ee.webmedia.alfresco.register.service.RegisterService;
@@ -348,13 +349,11 @@ public class PostipoissStructureImporter {
         reset();
         loadPreenteredVolumes();
     }
-    
-    private void reset(){
+
+    private void reset() {
         funks = new HashMap<String, Funk>();
         functions = new HashMap<String, NodeRef>();
         archivedFunctions = new HashMap<String, NodeRef>();
-        counts = new HashMap<String, Counter>();
-        archivedCounts = new HashMap<String, Counter>();
         seriesByIndex = new HashMap<String, Map<String, NodeRef>>();
         archivedSeriesByIndex = new HashMap<String, Map<String, NodeRef>>();
         toimikMap = new HashMap<Integer, Map<String, Toimik>>();
@@ -378,11 +377,11 @@ public class PostipoissStructureImporter {
                 List<Volume> vols = volumeService.getAllVolumesBySeries(s.getNode().getNodeRef());
                 for (Volume v : vols) {
                     if (StringUtils.isNotEmpty(v.getVolumeMark()) && v.getValidFrom() != null && !v.getValidFrom().before(year2010)) {
-                        if (v.isContainsCases()){
+                        if (v.isContainsCases()) {
                             List<Case> casesByVolume = caseService.getAllCasesByVolume(v.getNode().getNodeRef());
-                            for (Case asi : casesByVolume){
+                            for (Case asi : casesByVolume) {
                                 String title = asi.getTitle();
-                                if (StringUtils.isNotBlank(title)){
+                                if (StringUtils.isNotBlank(title)) {
                                     title = title.trim();
                                     preenteredCases.put(title, asi);
                                 }
@@ -516,8 +515,8 @@ public class PostipoissStructureImporter {
             putToimik(t);
             return t;
         } else {
-            for (Entry<String, Case> entry : preenteredCases.entrySet()){
-                if (entry.getKey().startsWith(t.volumeMarkNormed)){
+            for (Entry<String, Case> entry : preenteredCases.entrySet()) {
+                if (entry.getKey().startsWith(t.volumeMarkNormed)) {
                     t.nodeRef = entry.getValue().getNode().getNodeRef();
                     putToimik(t);
                     return t;
@@ -553,7 +552,7 @@ public class PostipoissStructureImporter {
         map.put(t.volumeMarkNormed, t);
     }
 
-    static class Toimik {
+    static class Toimik implements Comparable<Toimik> {
         String rowId;
         String functionId;
         String seriesIndex;
@@ -589,6 +588,7 @@ public class PostipoissStructureImporter {
             bestBefore = toBestBefore(r.get(11));
 
             archived = isArchived();
+            prepareOrderArray();
         }
 
         int year() {
@@ -630,6 +630,46 @@ public class PostipoissStructureImporter {
             return "Toimik [rowId=" + rowId + ", functionId=" + functionId + ", seriesIndex=" + seriesIndex + ", seriesTitle="
                     + seriesTitle + ", volumeMarkNormed=" + volumeMarkNormed + ", volumeTitleNormed=" + volumeTitleNormed + ", validFrom=" + validFrom
                     + ", volumeType=" + volumeType.getValueName() + ", validTo=" + validTo + ", bestBefore=" + bestBefore + "]";
+        }
+
+        private Integer[] orderArray;
+
+        private void prepareOrderArray() {
+            List<Integer> ints = new ArrayList<Integer>();
+            int curInt = 0;
+            for (char c : seriesIndex.toCharArray()) {
+                if (c == '.' || c == '-') {
+                    ints.add(curInt);
+                    curInt = 0;
+                } else {
+                    curInt = curInt * 10 + (c - '0');
+                }
+            }
+            if (curInt != 0) {
+                ints.add(curInt);
+            }
+            orderArray = ints.toArray(new Integer[0]);
+        }
+
+        @Override
+        public int compareTo(Toimik o) {
+            if (this.orderArray.length > o.orderArray.length) {
+                return compare(this.orderArray, o.orderArray);
+            } else {
+                return -compare(o.orderArray, this.orderArray);
+            }
+        }
+
+        private static int compare(Integer[] longArray, Integer[] shortArray) {
+            int length = shortArray.length;
+            for (int i = 0; i < length; i++) {
+                if (longArray[i] != shortArray[i]) {
+                    return longArray[i] > shortArray[i] ? 1 : -1;
+                }
+            }
+            if (longArray.length > length)
+                return 1;
+            return 0;
         }
     }
 
@@ -686,17 +726,6 @@ public class PostipoissStructureImporter {
     }
 
     private List<Toimik> toimikud = new ArrayList<Toimik>(6000);
-    private Map<String, Counter> counts = new HashMap<String, Counter>();
-    private Map<String, Counter> archivedCounts = new HashMap<String, Counter>();
-
-    private int nextCount(String functionId, boolean archived) {
-        Map<String, Counter> map = archived ? archivedCounts : counts;
-        Counter counter = map.get(functionId);
-        if (counter == null) {
-            map.put(functionId, counter = new Counter());
-        }
-        return counter.next();
-    }
 
     private void importToimik(Toimik t) {
         Toimik theOtherOne = getToimik(t);
@@ -709,7 +738,9 @@ public class PostipoissStructureImporter {
 
         if (series == null) {
             series = createSeries(t);
-            putSeries(t, series);
+            if (series != null) {
+                putSeries(t, series);
+            }
         }
         // This is the check for missing function
         if (series != null) {
@@ -748,6 +779,15 @@ public class PostipoissStructureImporter {
         return 20201;
     }
 
+    private boolean sameOrderExists(int order, NodeRef fRef) {
+        for (Series s : seriesService.getAllSeriesByFunction(fRef)) {
+            if (order == s.getOrder()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private NodeRef createSeries(Toimik t) {
         log.info("Creating series for toimik = " + t);
         NodeRef fRef = getFunction(t.functionId, t.archived);
@@ -763,8 +803,15 @@ public class PostipoissStructureImporter {
         props.put(SeriesModel.Props.TITLE.toString(), t.seriesTitle);
         props.put(SeriesModel.Props.STATUS.toString(), t.year() == 2010 ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
         props.put(SeriesModel.Props.RETENTION_PERIOD.toString(), t.bestBefore);
-        props.put(SeriesModel.Props.DOC_TYPE.toString(), allDocumentTypes);
-        props.put(SeriesModel.Props.ORDER.toString(), nextCount(t.functionId, t.archived));
+        props.put(SeriesModel.Props.DOC_TYPE.toString(), DocumentSubtypeModel.Types.MEMO);
+        try {
+            int order = PostipoissUtil.inferLastNumber(t.seriesIndex);
+            // If condition fails, the original order should be ok for insertion
+            if (order != -1 && !sameOrderExists(order, fRef)) {
+                props.put(SeriesModel.Props.ORDER.toString(), order);
+            }
+        } catch (Exception e) {
+        }
         props.put(SeriesModel.Props.REGISTER.toString(), getRegisterId());
 
         if (t.year() != 2010) {
@@ -772,16 +819,15 @@ public class PostipoissStructureImporter {
             props.put(SeriesModel.Props.INDIVIDUALIZING_NUMBERS.toString(), false);
         }
 
-        seriesService.saveOrUpdate(series, true);
+        // We check order ourselves above
+        seriesService.saveOrUpdateWithoutReorder(series, true);
         return series.getNode().getNodeRef();
     }
 
     private String toSeriesType(Toimik t) {
         if ("11302".equals(t.functionId)) {
-            switch (t.year()) {
-            case 2007:
-            case 2008:
-            case 2009:
+            int year = t.year();
+            if ((year == 2007) || (year == 2008) || (year == 2009)) {
                 return VolumeType.OBJECT.getValueName();
             }
         }
@@ -804,6 +850,7 @@ public class PostipoissStructureImporter {
 
             missingFunctions = new HashSet<String>();
             // toimikud = toimikud.subList(0, 20);
+            Collections.sort(toimikud);
             for (Toimik t : toimikud) {
                 importToimik(t);
             }
@@ -906,7 +953,7 @@ public class PostipoissStructureImporter {
                 ;
             return trimmedTitle.substring(0, i);
         }
-        return ""; // TODO: should never occur??
+        return "";
     }
 
     private static String trimPostipoissFunctionName(String name) {
@@ -999,7 +1046,7 @@ public class PostipoissStructureImporter {
     public void setInputFolderPath(String inputFolderPath) {
         this.inputFolderPath = inputFolderPath;
     }
-    
+
     public void setCaseService(CaseService caseService) {
         this.caseService = caseService;
     }

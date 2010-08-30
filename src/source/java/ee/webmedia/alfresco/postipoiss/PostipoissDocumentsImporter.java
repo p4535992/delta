@@ -29,6 +29,7 @@ import java.util.TreeSet;
 import java.util.Map.Entry;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
@@ -52,6 +53,8 @@ import org.springframework.util.Assert;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
@@ -74,6 +77,17 @@ public class PostipoissDocumentsImporter {
     protected static final String OPEN_VOLUME_YEAR = "10";
     protected static final char CSV_SEPARATOR = ';';
 
+    final private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+    final private static DateFormat longDateFormat = new SimpleDateFormat("dd.MM.yyyy:HH:mm:ss");
+    
+    final private static String IMPORTER_NAME = "Liivi Leomar (administraator)";
+    private Date openDocsDate;
+    {
+        try {
+            openDocsDate = dateFormat.parse("01.07.2010");
+        } catch (Exception e) {
+        }
+    }
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsImporter.class);
 
     private boolean started = false;
@@ -95,6 +109,7 @@ public class PostipoissDocumentsImporter {
     private NodeService nodeService;
     private PostipoissDocumentsMapper postipoissDocumentsMapper;
     private String inputFolderCsv;
+    private BehaviourFilter behaviourFilter;
 
     // INJECTORS
     public void setGeneralService(GeneralService generalService) {
@@ -139,6 +154,10 @@ public class PostipoissDocumentsImporter {
 
     public void setSendOutService(SendOutService sendOutService) {
         this.sendOutService = sendOutService;
+    }
+    
+    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
+        this.behaviourFilter = behaviourFilter;
     }
 
     public void setInputFolderCsv(String inputFolderCsv) {
@@ -188,8 +207,8 @@ public class PostipoissDocumentsImporter {
             reset();
         }
     }
-    
-    private void reset(){
+
+    private void reset() {
         documentsMap = new TreeMap<Integer, File>();
         filesMap = new TreeMap<Integer, List<File>>();
         completedDocumentsMap = new TreeMap<Integer, NodeRef>();
@@ -254,7 +273,7 @@ public class PostipoissDocumentsImporter {
             }
         });
 
-        if (files == null){
+        if (files == null) {
             throw new RuntimeException("Input folder " + inputFolder + " not found!");
         }
         log.info("There are " + files.length + " non-xml entries, parsing them to files");
@@ -341,10 +360,10 @@ public class PostipoissDocumentsImporter {
             batchList = new ArrayList<E>(batchSize);
             stopFile = new File(inputFolder, "stop.file");
         }
-        
-        private boolean isStopRequested(){
+
+        private boolean isStopRequested() {
             boolean f = stopFile.exists();
-            if (f){
+            if (f) {
                 log.info("Stop requested. Stopping.");
             }
             return f;
@@ -356,6 +375,7 @@ public class PostipoissDocumentsImporter {
             getTransactionHelper().doInTransaction(new RetryingTransactionCallback<Object>() {
                 @Override
                 public Object execute() throws Throwable {
+                    behaviourFilter.disableBehaviour(ContentModel.ASPECT_AUDITABLE);
                     executeBatch();
                     return null;
                 }
@@ -378,13 +398,15 @@ public class PostipoissDocumentsImporter {
 
         public void run() {
             init();
-            if (isStopRequested()) return;
+            if (isStopRequested())
+                return;
             for (E e : origin) {
                 batchList.add(e);
                 i++;
                 if (i >= batchSize) {
                     step();
-                    if (isStopRequested()) return;
+                    if (isStopRequested())
+                        return;
                 }
             }
             step();
@@ -732,7 +754,7 @@ public class PostipoissDocumentsImporter {
     private VolumeIndex inferVolumeIndex(Element root, Mapping m) {
         VolumeIndex vi = new VolumeIndex();
         String toimikSari = root.elementText("toimik_sari");
-        vi.regNumber = root.elementText("regNr");
+        vi.regNumber = root.elementText("reg_nr");
 
         if (toimikSari != null) {
             toimikSari = toimikSari.trim();
@@ -791,6 +813,19 @@ public class PostipoissDocumentsImporter {
         }
     }
 
+    private boolean isSissetulevKiriOpen(String regKpv) {
+        if (regKpv != null) {
+            try {
+                Date date = dateFormat.parse(regKpv);
+                if (!date.before(openDocsDate)) {
+                    return true;
+                }
+            } catch (ParseException e) {
+            }
+        }
+        return false;
+    }
+
     private Node importDoc(File xml, Map<String, Mapping> mappings, Integer documentId) throws DocumentException,
             ParseException {
         SAXReader xmlReader = new SAXReader();
@@ -798,6 +833,7 @@ public class PostipoissDocumentsImporter {
         String fileName = xml.getName();
         String type = fileName.substring(0, fileName.lastIndexOf('_'));
         Element root = xmlReader.read(xml).getRootElement();
+        boolean open = false;
         if ("Kiri".equals(type)) {
             Element el = root.element("suund");
             String suund = null;
@@ -806,6 +842,9 @@ public class PostipoissDocumentsImporter {
             }
             if (!"sissetulev".equals(suund)) {
                 suund = "väljaminev";
+            } else {
+                String regKpv = root.elementText("reg_kpv");
+                open = isSissetulevKiriOpen(regKpv);
             }
             type = "Kiri-" + suund;
         }
@@ -854,13 +893,20 @@ public class PostipoissDocumentsImporter {
 
         Map<QName, Serializable> propsMap = mapProperties(root, mapping);
 
+        propsMap.put(DocumentCommonModel.Props.DOC_STATUS, open ? DocumentStatus.WORKING.getValueName() : DocumentStatus.FINISHED.getValueName());
         propsMap.put(DocumentCommonModel.Props.REG_NUMBER, viit);
+        propsMap.put(ContentModel.PROP_CREATOR, "DELTA");
+        propsMap.put(ContentModel.PROP_MODIFIER, "DELTA");
 
         if (!propsMap.containsKey(DocumentCommonModel.Props.OWNER_NAME)) {
             String ownerName = PostipoissUtil.findAnyValue(root, "/document/tegevused/tegevus[tegevus_liik=1]/kellelt_tekst");
-            if (StringUtils.isNotBlank(ownerName)) {
-                propsMap.put(DocumentCommonModel.Props.OWNER_NAME, ownerName);
+            if (StringUtils.isBlank(ownerName)){
+                ownerName = (String) propsMap.get(DocumentCommonModel.Props.SIGNER_NAME);
             }
+            if (StringUtils.isBlank(ownerName)){
+                ownerName = IMPORTER_NAME;
+            }
+            propsMap.put(DocumentCommonModel.Props.OWNER_NAME, ownerName);
         }
 
         if (!propsMap.containsKey(DocumentCommonModel.Props.DOC_NAME)) {
@@ -872,13 +918,13 @@ public class PostipoissDocumentsImporter {
 
         if (!propsMap.containsKey(DocumentCommonModel.Props.STORAGE_TYPE)) {
             Element el = root.element("fail");
-            String storageType = "paberil";
+            StorageType storageType = StorageType.PAPER;
             if (el != null) {
                 if (StringUtils.isNotBlank(el.getStringValue())) {
-                    storageType = "digitaalne";
+                    storageType = StorageType.DIGITAL;
                 }
             }
-            propsMap.put(DocumentCommonModel.Props.STORAGE_TYPE, storageType);
+            propsMap.put(DocumentCommonModel.Props.STORAGE_TYPE, storageType.getValueName());
         }
 
         // curTime = System.currentTimeMillis();
@@ -890,7 +936,6 @@ public class PostipoissDocumentsImporter {
         // log.info("create: " + (curTime - time));
 
         // time = System.currentTimeMillis();
-        nodeService.addProperties(document.getNodeRef(), propsMap);
 
         // curTime = System.currentTimeMillis();
         // log.info("addprops: " + (curTime - time));
@@ -914,6 +959,7 @@ public class PostipoissDocumentsImporter {
         addAssociations(document.getNodeRef(), documentId, root);
         // curTime = System.currentTimeMillis();
         // log.info("assocs: " + (curTime - time));
+        nodeService.addProperties(document.getNodeRef(), propsMap);
         return document;
     }
 
@@ -952,7 +998,6 @@ public class PostipoissDocumentsImporter {
         return res;
     }
 
-    private DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
     private File inputFolder;
     private Map<Integer, ImportedDocument> batchCompletedDocumentsMap;
 
@@ -962,22 +1007,27 @@ public class PostipoissDocumentsImporter {
             for (Object o : root.element("tegevused").elements()) {
                 Element el = (Element) o;
                 String kuupaev = el.elementText("kuupaev");
+                String kellaaeg = el.elementText("kellaaeg");
+                String dateString = String.format("%s:%s",kuupaev,kellaaeg);
                 Date kpv = null;
                 try {
-                    kpv = dateFormat.parse(kuupaev);
+                    kpv = longDateFormat.parse(dateString);
                 } catch (ParseException e) {
                 }
-                String kellelt_tekst = el.elementText("kellelt_tekst");
                 String nimetus = el.elementText("nimetus");
                 if (nimetus.startsWith("Dokumendi eksportimine")) {
                     continue;
                 }
                 String resolutsioon = el.elementText("resolutsioon");
                 String kes = el.elementText("kes");
+                if (StringUtils.isBlank(kes)) {
+                    kes = el.elementText("kellelt_tekst");
+                }
+                String kellele_tekst = el.elementText("kellele_tekst");
                 Map<QName, Serializable> props = new HashMap<QName, Serializable>();
                 props.put(DocumentCommonModel.Props.CREATED_DATETIME, kpv);
-                props.put(DocumentCommonModel.Props.CREATOR_NAME, kellelt_tekst);
-                props.put(DocumentCommonModel.Props.EVENT_DESCRIPTION, PostipoissDocumentsMapper.join(",", nimetus, resolutsioon, kes));
+                props.put(DocumentCommonModel.Props.CREATOR_NAME, kes);
+                props.put(DocumentCommonModel.Props.EVENT_DESCRIPTION, PostipoissDocumentsMapper.join("; ", nimetus, kellele_tekst, resolutsioon));
                 nodeService.createNode(documentRef, DocumentCommonModel.Types.DOCUMENT_LOG, DocumentCommonModel.Types.DOCUMENT_LOG,
                             DocumentCommonModel.Types.DOCUMENT_LOG, props);
             }
@@ -1032,7 +1082,7 @@ public class PostipoissDocumentsImporter {
     private void writePostponedAssocs() {
         try {
             // Write created documents
-            if (postponedAssocsFile == null){
+            if (postponedAssocsFile == null) {
                 log.info("Postponed assocs file not defined.");
                 return;
             }
@@ -1138,6 +1188,10 @@ public class PostipoissDocumentsImporter {
         final NodeRef fileRef = fileInfo.getNodeRef();
         final ContentWriter writer = fileFolderService.getWriter(fileRef);
         generalService.writeFile(writer, file, fileName, mimeType);
+        Map<QName, Serializable> propsMap = new HashMap<QName, Serializable>();
+        propsMap.put(ContentModel.PROP_CREATOR, "DELTA");
+        propsMap.put(ContentModel.PROP_MODIFIER, "DELTA");
+        nodeService.addProperties(fileRef, propsMap);
         return fileRef;
     }
 

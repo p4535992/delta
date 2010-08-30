@@ -1,10 +1,9 @@
 package ee.webmedia.alfresco.menu.ui.component;
 
-import static ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty.REPO_NODE;
-
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -25,6 +24,7 @@ import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemFilter;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
 import ee.webmedia.alfresco.user.service.UserService;
 
 public class MenuRenderer extends BaseRenderer {
@@ -71,7 +71,21 @@ public class MenuRenderer extends BaseRenderer {
 
     @Override
     public void encodeEnd(FacesContext context, UIComponent component) throws IOException {
-        context.getResponseWriter().write("</ul>");
+        ResponseWriter out = context.getResponseWriter();
+        out.write("</ul>");
+
+        UIMenuComponent menuComponent = (UIMenuComponent) component;
+        boolean primary = ((Boolean) menuComponent.getAttributes().get(UIMenuComponent.PRIMARY_ATTRIBUTE_KEY));
+        if (!primary) {
+            MenuItemCountBean menuItemCountBean = (MenuItemCountBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuItemCountBean.BEAN_NAME);
+            out.write("<script type=\"text/javascript\">\n");
+            out.write("$jQ(document).ready(function() {\n");
+            for (Entry<String, Long> entry : menuItemCountBean.getNextUpdates().entrySet()) {
+                out.write("   queueUpdateMenuItemCount('" + entry.getKey() + "', " + entry.getValue() + ");\n");
+            }
+            out.write("});\n");
+            out.write("</script>\n");
+        }
     }
 
     @Override

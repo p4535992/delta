@@ -39,14 +39,22 @@ public class UserListDialog extends BaseDialogBean {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
+        reset();
         showAll();
     }
 
     @Override
     public String cancel() {
+        reset();
+        return super.cancel();
+    }
+
+    private void reset() {
         users = null;
         usersList = null;
-        return super.cancel();
+        if(properties!=null) {
+            properties.setSearchCriteria(null);
+        }
     }
 
     /**

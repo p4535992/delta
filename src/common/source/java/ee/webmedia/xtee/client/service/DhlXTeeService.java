@@ -41,7 +41,7 @@ import ee.webmedia.xtee.types.ee.sk.digiDoc.v13.SignedDocType;
 public interface DhlXTeeService {
 
     public enum SendStatus {
-                /** Document is sent to DVK, but some recipients have not received it(marked this document as read) */
+        /** Document is sent to DVK, but some recipients have not received it(marked this document as read) */
         SENT("saatmisel"),
                 /** Document is sent to DVK and all recipients have received it(marked it read) */
         RECEIVED("saadetud"),
@@ -71,7 +71,7 @@ public interface DhlXTeeService {
         public static SendStatus get(Edastus.Staatus.Enum staatus) {
             return get(staatus.toString());
         }
-        
+
         @Override
         public String toString() {
             return statusCode;
@@ -119,7 +119,7 @@ public interface DhlXTeeService {
      */
     void markDocumentsReceived(Collection<String> receivedDocumentIds);
 
-//    void runSystemCheck();
+    // void runSystemCheck();
 
     List<OccupationType> getOccupationList(List<String> institutionRegNrs);
 
@@ -275,6 +275,7 @@ public interface DhlXTeeService {
         private String fileName;
         private String mimeType;
         private InputStream inputStream;
+        private long size;
 
         public String getFileName() {
             return fileName;
@@ -298,6 +299,14 @@ public interface DhlXTeeService {
 
         public void setInputStream(InputStream inputStream) {
             this.inputStream = inputStream;
+        }
+
+        public long getSize() {
+            return size;
+        }
+
+        public void setSize(long size) {
+            this.size = size;
         }
     }
 

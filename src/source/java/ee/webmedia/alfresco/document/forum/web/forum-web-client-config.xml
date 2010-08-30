@@ -64,7 +64,7 @@
          <action id="delete_topic_admin">
             <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.DeleteTopicOrForumEvaluator</evaluator>
             <permissions>
-               <permission allow="true">Delete</permission>
+               <permission allow="true">DeleteNode</permission>
             </permissions>
             <label-id>delete_topic</label-id>
             <image>/images/icons/delete_topic.gif</image>
@@ -90,7 +90,7 @@
          <action id="delete_forum_admin">
             <evaluator>ee.webmedia.alfresco.document.forum.web.evaluator.DeleteTopicOrForumEvaluator</evaluator>
             <permissions>
-               <permission allow="true">Delete</permission>
+               <permission allow="true">DeleteNode</permission>
             </permissions>
             <label-id>delete_forum</label-id>
             <image>/images/icons/delete_forum.gif</image>

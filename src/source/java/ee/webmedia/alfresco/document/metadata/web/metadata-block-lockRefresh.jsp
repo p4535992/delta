@@ -18,15 +18,21 @@ $jQ(document).ready(function(){
 });
 
 function requestForLockRefresh() {
-   YAHOO.util.Connect.asyncRequest("GET", getContextPath() + '/ajax/invoke/MetadataBlockBean.refreshLockClientHandler', 
-         { 
-            success: requestForLockRefreshSuccess
-            ,failure: requestForLockRefreshFailure
-         }, 
-         null);
+   var uri = getContextPath() + '/ajax/invoke/MetadataBlockBean.refreshLockClientHandler';
+   $jQ.ajax({
+      type: 'POST',
+      url: uri,
+      mode: 'queue',
+      success: requestForLockRefreshSuccess,
+      error: requestForLockRefreshFailure,
+      dataType: 'xml'
+   });
 }
-function requestForLockRefreshSuccess(ajaxResponse) {
-   var xml = ajaxResponse.responseXML.documentElement;
+function requestForLockRefreshSuccess(xml) {
+   if (!xml) {
+      return;
+   }
+   xml = xml.documentElement;
    var success = xml.getAttribute('success');
    var nextReqInMs = xml.getAttribute('nextReqInMs');
    setTimeout(requestForLockRefresh, nextReqInMs); // start new request based on sugessted timeout
@@ -35,8 +41,8 @@ function requestForLockRefreshSuccess(ajaxResponse) {
       alert("failed to refresh lock on document: "+errMsg);
    }
 }
-function requestForLockRefreshFailure(ajaxResponse) {
-	// alert("response: "+ajaxResponse.responseText);
+function requestForLockRefreshFailure() {
+   $jQ.log("Refreshing lock in server side failed");
 }
 </script>
 </f:verbatim>

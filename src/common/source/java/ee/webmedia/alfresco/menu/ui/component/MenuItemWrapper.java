@@ -8,21 +8,24 @@ import javax.faces.context.ResponseWriter;
 
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.SelfRenderingComponent;
+import org.apache.commons.lang.StringUtils;
 
 public class MenuItemWrapper extends SelfRenderingComponent {
 
     private boolean dropdownWrapper = false, skinnable = false, expanded = false, plain = false;
     private String submenuId;
+    private String menuId;
 
     @Override
     public Object saveState(FacesContext context) {
-        Object values[] = new Object[6];
+        Object values[] = new Object[7];
         values[0] = super.saveState(context);
         values[1] = dropdownWrapper;
         values[2] = skinnable;
         values[3] = expanded;
         values[4] = plain;
         values[5] = submenuId;
+        values[6] = menuId;
         return values;
     }
 
@@ -35,6 +38,7 @@ public class MenuItemWrapper extends SelfRenderingComponent {
         expanded = (Boolean) values[3];
         plain = (Boolean) values[4];
         submenuId = (String) values[5];
+        menuId = (String) values[6];
     }
 
     @Override
@@ -47,7 +51,19 @@ public class MenuItemWrapper extends SelfRenderingComponent {
         ResponseWriter out = context.getResponseWriter();
 
         if (isPlain()) {
-            out.write("<li>");
+            out.write("<li");
+            if (getMenuId() != null) {
+                out.write(" menuitemid=\"");
+                out.write(getMenuId());
+                out.write("\"");
+            }
+            String styleClass = (String) getAttributes().get("styleClass");
+            if (StringUtils.isNotEmpty(styleClass)) {
+                out.write(" class=\"");
+                out.write(styleClass);
+                out.write("\"");
+            }
+            out.write(">");
             return;
         }
 
@@ -147,6 +163,14 @@ public class MenuItemWrapper extends SelfRenderingComponent {
 
     public void setPlain(boolean plain) {
         this.plain = plain;
+    }
+
+    public String getMenuId() {
+        return menuId;
+    }
+
+    public void setMenuId(String menuId) {
+        this.menuId = menuId;
     }
 
 }

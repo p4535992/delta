@@ -20,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.adr.Dokumendiliik;
 import ee.webmedia.alfresco.adr.Dokument;
 import ee.webmedia.alfresco.adr.DokumentDetailidega;
+import ee.webmedia.alfresco.adr.DokumentDetailidegaFailita;
 import ee.webmedia.alfresco.adr.Fail;
 import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
@@ -356,6 +357,11 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                     + perioodiLoppKuupaev);
         }
         return list;
+    }
+
+    @Override
+    public List<DokumentDetailidegaFailita> koikDokumendidLisatudMuudetudFailita(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev) {
+        throw new RuntimeException("Unsupported operation");
     }
 
     @Override

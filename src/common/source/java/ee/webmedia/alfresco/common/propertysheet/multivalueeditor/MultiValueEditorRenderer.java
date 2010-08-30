@@ -146,7 +146,14 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                 styleClass = "add-person";
             }
             out.write("<a class=\"icon-link " + styleClass + "\" onclick=\"");
-            out.write(ComponentUtil.generateAjaxFormSubmit(context, component, component.getClientId(context), Integer.toString(UIMultiValueEditor.ACTION_ADD)));
+            // TODO: optimeerimise võimalus
+            // siin seatakse ajaxParentLevel=1 ainult selle pärast, et ajax'iga uut rida lisades renderdataks ka valideerimise skriptid, 
+            // mis praegu lisatakse propertySheet'ile, aga mitte komponendile endale.
+            // Kui valideerimine teha nii ümber, et komponentide valideerimine delegeerida propertySheet'ide poolt komponentidele 
+            // ja komponendid renderdaksid ise(propertySheet'i asemel) oma valideerimise funktsioonid, siis võiks ajaxParentLevel'i muuta tagasi 0 peale.
+            // Kui ajaxParentLevel=0, siis poleks vaja kogu propertysheet'i koos kõigi tema alamkomponentidega (sh alam propertySheet'idega) vaja uuesti renderdada! 
+            int ajaxParentLevel = 1;
+            out.write(ComponentUtil.generateAjaxFormSubmit(context, component, component.getClientId(context), Integer.toString(UIMultiValueEditor.ACTION_ADD), null, ajaxParentLevel));
             out.write("\">");
             out.write(Application.getMessage(context, addLabelId));
             out.write("</a>");

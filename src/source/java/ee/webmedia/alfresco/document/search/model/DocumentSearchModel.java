@@ -27,6 +27,7 @@ public interface DocumentSearchModel {
     }
 
     interface Props {
+        QName STORE = QName.createQName(URI, "store");
         QName NAME = QName.createQName(URI, "name");
         QName INPUT = QName.createQName(URI, "input");
         QName DOCUMENT_TYPE = QName.createQName(URI, "documentType");

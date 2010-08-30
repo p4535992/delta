@@ -56,5 +56,5 @@ document.getElementById("dialog:finish-button").disabled = false;
       <span class="red">* </span>
    </f:verbatim>
    <h:outputText value="#{msg.message}:" />
-   <h:inputTextarea id="message" value="#{DialogManager.bean.content}" rows="6" cols="70" onkeyup="checkButtonState();" onchange="checkButtonState();" />
+   <h:inputTextarea id="message" value="#{DialogManager.bean.content}" rows="6" cols="70" onkeyup="checkButtonState();" onchange="checkButtonState();" styleClass="expand100-250 margin-top-10" />
 </a:panel>

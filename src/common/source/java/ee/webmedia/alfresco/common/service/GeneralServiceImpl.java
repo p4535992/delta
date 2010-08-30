@@ -75,6 +75,7 @@ public class GeneralServiceImpl implements GeneralService {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(GeneralServiceImpl.class);
 
     private StoreRef store;
+    private StoreRef archivalsStore;
     private NodeService nodeService;
     private NamespaceService namespaceService;
     private DictionaryService dictionaryService;
@@ -86,6 +87,11 @@ public class GeneralServiceImpl implements GeneralService {
     @Override
     public StoreRef getStore() {
         return store;
+    }
+
+    @Override
+    public StoreRef getArchivalsStoreRef() {
+        return archivalsStore;
     }
 
     @Override
@@ -360,9 +366,9 @@ public class GeneralServiceImpl implements GeneralService {
     @Override
     public void setPropertiesIgnoringSystem(NodeRef nodeRef, Map<String, Object> nodeProps) {
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        for (String key : nodeProps.keySet()) {
-            QName qname = QName.createQName(key);
-            addToPropsIfNotSystem(qname, (Serializable) nodeProps.get(key), props);
+        for (Entry<String, Object> entry : nodeProps.entrySet()) {
+            QName qname = QName.createQName(entry.getKey());
+            addToPropsIfNotSystem(qname, (Serializable) entry.getValue(), props);
         }
         nodeService.addProperties(nodeRef, getPropertiesIgnoringSystem(nodeProps));
     }
@@ -370,9 +376,9 @@ public class GeneralServiceImpl implements GeneralService {
     @Override
     public Map<QName, Serializable> getPropertiesIgnoringSystem(Map<String, Object> nodeProps) {
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        for (String key : nodeProps.keySet()) {
-            QName qname = QName.createQName(key);
-            addToPropsIfNotSystem(qname, (Serializable) nodeProps.get(key), props);
+        for (Entry<String, Object> entry : nodeProps.entrySet()) {
+            QName qname = QName.createQName(entry.getKey());
+            addToPropsIfNotSystem(qname, (Serializable) entry.getValue(), props);
         }
         return props;
     }
@@ -380,8 +386,8 @@ public class GeneralServiceImpl implements GeneralService {
     @Override
     public Map<QName, Serializable> getPropertiesIgnoringSys(Map<QName, Serializable> nodeProps) {
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
-        for (QName key : nodeProps.keySet()) {
-            addToPropsIfNotSystem(key, nodeProps.get(key), props);
+        for (Entry<QName, Serializable> entry : nodeProps.entrySet()) {
+            addToPropsIfNotSystem(entry.getKey(), entry.getValue(), props);
         }
         return props;
     }
@@ -626,6 +632,10 @@ public class GeneralServiceImpl implements GeneralService {
     // START: getters / setters
     public void setDefaultStore(String store) {
         this.store = new StoreRef(store);
+    }
+
+    public void setArchivalsStore(String archivalsStore) {
+        this.archivalsStore = new StoreRef(archivalsStore);
     }
 
     public void setNodeService(NodeService nodeService) {

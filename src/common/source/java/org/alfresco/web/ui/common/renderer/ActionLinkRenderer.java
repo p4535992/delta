@@ -379,14 +379,7 @@ public class ActionLinkRenderer extends BaseRenderer
                     getParameterComponents(link));
             
             if (link.getTarget() != null) {
-               boolean endsFalse = onclickStr.endsWith("return false;");  
-               if (endsFalse) {
-                  onclickStr = onclickStr.substring(0, onclickStr.length() - 13);
-               }
-               onclickStr += "$jQ('.submit-protection-layer').hide();";
-               if (endsFalse) {
-                   onclickStr += "return false;";
-               }
+               onclickStr = "nextSubmitStaysOnSamePage();" + onclickStr;
             }
             
             out.write(onclickStr);

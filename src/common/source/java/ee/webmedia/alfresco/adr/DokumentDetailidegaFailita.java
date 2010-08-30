@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.adr;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -41,7 +40,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "dokumentDetailidega", propOrder = {
+@XmlType(name = "dokumentDetailidegaFailita", propOrder = {
     "juurdepaasuPiirang",
     "juurdepaasuPiiranguAlus",
     "juurdepaasuPiiranguKehtivuseAlgusKuupaev",
@@ -49,13 +48,15 @@ import javax.xml.datatype.XMLGregorianCalendar;
     "juurdepaasuPiiranguLopp",
     "tahtaeg",
     "vastamiseKuupaev",
-    "koostaja",
+    "vastutaja",
     "allkirjastaja",
-    "fail",
+    "saatjaViit",
+    "lepinguObjekt",
+    "saatjaKuupaev",
     "seotudDokument"
 })
-public class DokumentDetailidega
-    extends Dokument
+public class DokumentDetailidegaFailita
+    extends TkDokument
 {
 
     @XmlElement(required = true)
@@ -70,10 +71,13 @@ public class DokumentDetailidega
     protected XMLGregorianCalendar tahtaeg;
     @XmlSchemaType(name = "date")
     protected XMLGregorianCalendar vastamiseKuupaev;
-    protected String koostaja;
+    protected String vastutaja;
     protected String allkirjastaja;
-    protected List<Fail> fail;
-    protected List<Dokument> seotudDokument;
+    private String saatjaViit;
+    private String lepinguObjekt;
+    @XmlSchemaType(name = "date")
+    private XMLGregorianCalendar saatjaKuupaev;
+    protected List<TkDokument> seotudDokument;
 
     /**
      * Gets the value of the juurdepaasuPiirang property.
@@ -251,8 +255,8 @@ public class DokumentDetailidega
      *     {@link String }
      *     
      */
-    public String getKoostaja() {
-        return koostaja;
+    public String getVastutaja() {
+        return vastutaja;
     }
 
     /**
@@ -263,8 +267,8 @@ public class DokumentDetailidega
      *     {@link String }
      *     
      */
-    public void setKoostaja(String value) {
-        this.koostaja = value;
+    public void setVastutaja(String value) {
+        this.vastutaja = value;
     }
 
     /**
@@ -291,40 +295,35 @@ public class DokumentDetailidega
         this.allkirjastaja = value;
     }
 
-    /**
-     * Gets the value of the fail property.
-     * 
-     * <p>
-     * This accessor method returns a reference to the live list,
-     * not a snapshot. Therefore any modification you make to the
-     * returned list will be present inside the JAXB object.
-     * This is why there is not a <CODE>set</CODE> method for the fail property.
-     * 
-     * <p>
-     * For example, to add a new item, do as follows:
-     * <pre>
-     *    getFail().add(newItem);
-     * </pre>
-     * 
-     * 
-     * <p>
-     * Objects of the following type(s) are allowed in the list
-     * {@link Fail }
-     * 
-     * 
-     */
-    public List<Fail> getFail() {
-        if (fail == null) {
-            fail = new ArrayList<Fail>();
-        }
-        return this.fail;
-    }
-
-    public List<Dokument> getSeotudDokument() {
+    public List<TkDokument> getSeotudDokument() {
         if (seotudDokument == null) {
-            seotudDokument = new ArrayList<Dokument>();
+            seotudDokument = new ArrayList<TkDokument>();
         }
         return seotudDokument;
+    }
+
+    public void setSaatjaViit(String saatjaViit) {
+        this.saatjaViit = saatjaViit;
+    }
+
+    public String getSaatjaViit() {
+        return saatjaViit;
+    }
+
+    public void setSaatjaKuupaev(XMLGregorianCalendar saatjaKuupaev) {
+        this.saatjaKuupaev = saatjaKuupaev;
+    }
+
+    public XMLGregorianCalendar getSaatjaKuupaev() {
+        return saatjaKuupaev;
+    }
+
+    public void setLepinguObjekt(String lepinguObjekt) {
+        this.lepinguObjekt = lepinguObjekt;
+    }
+
+    public String getLepinguObjekt() {
+        return lepinguObjekt;
     }
 
 }

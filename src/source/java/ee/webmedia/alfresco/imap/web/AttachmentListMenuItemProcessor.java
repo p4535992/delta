@@ -6,22 +6,23 @@ import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.CountAddingMenuItemProcessor;
+import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 
-public class AttachmentListMenuItemProcessor extends CountAddingMenuItemProcessor implements InitializingBean {
+public class AttachmentListMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
 
     private MenuService menuService;
     private FileService fileService;
     private ImapServiceExt imapServiceExt;
     
     @Override
-    protected int getCount(MenuItem menuItem) {
+    public int getCount(MenuItem menuItem) {
         return fileService.getAllFilesExcludingDigidocSubitems(imapServiceExt.getAttachmentRoot()).size();
     }
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        menuService.addProcessor("emailAttachments", this, false);
+        menuService.setCountHandler("emailAttachments", this);
     }
     
     // START: getters / setters

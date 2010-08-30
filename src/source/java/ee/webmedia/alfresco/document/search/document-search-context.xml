@@ -49,7 +49,6 @@
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="volumeService" ref="VolumeService" />
       <property name="parametersService" ref="ParametersService" />
-      <property name="archivalsStore" value="workspace://ArchivalsStore" />
    </bean>
 
    <bean id="DocumentSearchService" class="org.springframework.aop.framework.ProxyFactoryBean">

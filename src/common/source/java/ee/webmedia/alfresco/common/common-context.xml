@@ -126,6 +126,7 @@
 
    <bean id="generalService" class="ee.webmedia.alfresco.common.service.GeneralServiceImpl">
       <property name="defaultStore" value="${spaces.store}" />
+      <property name="archivalsStore" value="workspace://ArchivalsStore" />
       <property name="nodeService" ref="NodeService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="searchService" ref="SearchService" />

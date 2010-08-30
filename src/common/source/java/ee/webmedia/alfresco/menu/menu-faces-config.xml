@@ -22,6 +22,12 @@
       </managed-property>
    </managed-bean>
 
+   <managed-bean>
+      <managed-bean-name>MenuItemCountBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.menu.web.MenuItemCountBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>
+
    <!-- ==================== [ COMPONENTS] =================================== -->
    <component>
       <component-type>ee.webmedia.alfresco.menu.ui.component.UIMenuComponent</component-type>

@@ -20,6 +20,11 @@ public interface SeriesService {
 
     void saveOrUpdate(Series series);
     void saveOrUpdate(Series series, boolean propsFromNode);
+    
+    /**
+     * For PP import only. Assumes the order was checked beforehand.
+     */
+    void saveOrUpdateWithoutReorder(Series series, boolean propsFromNode);
 
     List<Series> getAllSeriesByFunction(NodeRef functionNodeRef);
 
