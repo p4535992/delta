@@ -560,7 +560,7 @@ public class PostipoissDocumentsImporter {
             log.info("There are no files to import.");
         } else {
             log.info("Starting files import. First documentId=" + headSet.first() + " stopAfterDocumentId=" + stopAfterDocumentId);
-            FilesBatchProgress batchProgress = new FilesBatchProgress(headSet);
+            FilesBatchProgress batchProgress = new FilesBatchProgress(headSet.descendingSet());
             batchProgress.run();
             log.info("Files IMPORT COMPLETE :)");
         }
