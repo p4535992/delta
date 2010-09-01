@@ -79,7 +79,7 @@ public class PostipoissDocumentsImporter {
 
     final private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
     final private static DateFormat longDateFormat = new SimpleDateFormat("dd.MM.yyyy:HH:mm:ss");
-    
+
     final private static String IMPORTER_NAME = "Liivi Leomar (administraator)";
     private Date openDocsDate;
     {
@@ -97,6 +97,7 @@ public class PostipoissDocumentsImporter {
 
     // [SPRING BEANS
     private boolean enabled = false;
+    private boolean indexingEnabled = false;
     private String inputFolderPath;
     private int stopAfterDocumentId = 999999;
     private String mappingsFileName;
@@ -128,6 +129,10 @@ public class PostipoissDocumentsImporter {
         this.enabled = enabled;
     }
 
+    public void setIndexingEnabled(boolean indexingEnabled) {
+        this.indexingEnabled = indexingEnabled;
+    }
+
     public void setInputFolderPath(String inputFolderPath) {
         this.inputFolderPath = inputFolderPath;
     }
@@ -155,7 +160,7 @@ public class PostipoissDocumentsImporter {
     public void setSendOutService(SendOutService sendOutService) {
         this.sendOutService = sendOutService;
     }
-    
+
     public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
         this.behaviourFilter = behaviourFilter;
     }
@@ -189,6 +194,7 @@ public class PostipoissDocumentsImporter {
 
     private void runInternal() throws Exception {
         init();
+        // Doc import
         try {
             loadDocuments();
             loadCompletedDocuments();
@@ -196,14 +202,41 @@ public class PostipoissDocumentsImporter {
             loadToimiks();
             loadPostponedAssocs();
             createDocuments();
+        } catch (Exception e) {
+            log.info("IMPORT FAILED: DOCUMENTS IMPORT FAILED");
+            throw e;
+        } finally {
+            writePostponedAssocs();
+            documentsMap = null;
+            toimikud = null;
+            normedToimikud = null;
+            mappings = null;
+            postponedAssocs = null;
+        }
+        // Files import
+        try {
             loadFiles();
             loadCompletedFiles();
             importFiles();
         } catch (Exception e) {
-            log.info("IMPORT FAILED");
+            log.info("IMPORT FAILED: FILES IMPORT FAILED");
             throw e;
         } finally {
-            writePostponedAssocs();
+            filesMap = null;
+        }
+
+        // Files indexing
+        try {
+            if (!indexingEnabled) {
+                log.info("INDEXING IS DISABLED");
+            } else {
+                loadIndexedFiles();
+                indexFiles();
+            }
+        } catch (Exception e) {
+            log.info("IMPORT FAILED: FILES INDEXING FAILED");
+            throw e;
+        } finally {
             reset();
         }
     }
@@ -216,6 +249,9 @@ public class PostipoissDocumentsImporter {
         mappings = null;
         toimikud = null;
         normedToimikud = null;
+        indexedFiles = null;
+        filesToProceed = null;
+        filesToIndex = null;
     }
 
     protected NavigableMap<Integer /* documentId */, File> documentsMap = new TreeMap<Integer, File>();
@@ -264,7 +300,6 @@ public class PostipoissDocumentsImporter {
 
     protected void loadFiles() {
         filesMap = new TreeMap<Integer, List<File>>();
-        completedFilesFile = new File(inputFolder, "completed_files.csv");
         log.info("Getting non-xml entries of " + inputFolder);
         File[] files = inputFolder.listFiles(new FilenameFilter() {
             @Override
@@ -288,7 +323,6 @@ public class PostipoissDocumentsImporter {
                 continue;
             try {
                 Integer documentId = new Integer(name.substring(i + 1));
-                log.info("Found documentId=" + documentId + " filename='" + filename + "'");
                 List<File> fileList = filesMap.get(documentId);
                 if (fileList == null) {
                     fileList = new ArrayList<File>();
@@ -303,10 +337,11 @@ public class PostipoissDocumentsImporter {
     }
 
     protected void loadCompletedFiles() throws Exception {
+        completedFilesFile = new File(inputFolder, "completed_files.csv");
         completedFiles = new HashSet<Integer>();
 
         if (!completedFilesFile.exists()) {
-            log.info("Skipping loading previously completed files, file does not exist: " + completedDocumentsFile);
+            log.info("Skipping loading previously completed files, file does not exist: " + completedFilesFile);
         } else {
 
             log.info("Loading previously completed files from file " + completedFilesFile);
@@ -337,6 +372,96 @@ public class PostipoissDocumentsImporter {
         filesToProceed.retainAll(completedDocumentsMap.keySet());
 
         log.info("Total documents with files to proceed: " + filesToProceed.size());
+    }
+
+    private File indexedFilesFile;
+    private Set<Integer> indexedFiles;
+    private NavigableSet<Integer> filesToIndex;
+
+    protected void loadIndexedFiles() throws Exception {
+        indexedFilesFile = new File(inputFolder, "indexed_files.csv");
+        indexedFiles = new HashSet<Integer>();
+
+        if (!indexedFilesFile.exists()) {
+            log.info("Skipping loading previously indexed files, file does not exist: " + indexedFilesFile);
+        } else {
+
+            log.info("Loading previously indexed files from file " + indexedFilesFile);
+
+            CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(indexedFilesFile)), CSV_SEPARATOR, Charset.forName("UTF-8"));
+            try {
+                reader.readHeaders();
+                while (reader.readRecord()) {
+                    Integer documentId = new Integer(reader.get(0));
+                    indexedFiles.add(documentId);
+                }
+            } finally {
+                reader.close();
+            }
+            log.info("Loaded " + indexedFiles.size() + " documents with previously indexed files");
+        }
+
+        filesToIndex = new TreeSet<Integer>(completedFiles);
+        filesToIndex.removeAll(indexedFiles);
+        filesToIndex.retainAll(completedDocumentsMap.keySet());
+
+        log.info("Total documents with files to index: " + filesToIndex.size());
+    }
+
+    private void indexFiles() {
+        int previousSize = filesToIndex.size();
+        NavigableSet<Integer> headSet = filesToIndex.headSet(stopAfterDocumentId, true);
+        log.info("Removed documentId-s after stopAfterDocumentId from current doc list: " + previousSize + " -> " + headSet.size());
+        if (headSet.size() == 0) {
+            log.info("There are no files to index.");
+        } else {
+            log.info("Starting files indexing. First documentId=" + headSet.first() + " stopAfterDocumentId=" + stopAfterDocumentId);
+            FilesIndexBatchProgress batchProgress = new FilesIndexBatchProgress(headSet);
+            batchProgress.run();
+            log.info("Files INDEXING COMPLETE :)");
+        }
+    }
+
+    private class FilesIndexBatchProgress extends BatchProgress<Integer> {
+
+        public FilesIndexBatchProgress(Set<Integer> origin) {
+            this.origin = origin;
+            processName = "Files indexing";
+        }
+
+        @Override
+        void executeBatch() {
+            createFilesIndexBatch(batchList);
+        }
+    }
+
+    protected void createFilesIndexBatch(final List<Integer> batchList) {
+        final Set<Integer> batchCompletedFiles = new HashSet<Integer>(BATCH_SIZE);
+        for (Integer documentId : batchList) {
+            if (log.isTraceEnabled()) {
+                log.trace("Processing files with docId = " + documentId);
+            }
+            NodeRef documentRef = completedDocumentsMap.get(documentId);
+            documentService.updateSearchableFiles(documentRef);
+            batchCompletedFiles.add(documentId);
+        }
+        bindCsvWriteAfterCommit(indexedFilesFile, new CsvWriterClosure() {
+
+            @Override
+            public void execute(CsvWriter writer) throws IOException {
+                for (Integer documentId : batchCompletedFiles) {
+                    writer.writeRecord(new String[] {
+                            documentId.toString()
+                    });
+                    indexedFiles.add(documentId);
+                }
+            }
+
+            @Override
+            public String[] getHeaders() {
+                return new String[] { "documentId" };
+            }
+        });
     }
 
     private abstract class BatchProgress<E> {
@@ -621,7 +746,7 @@ public class PostipoissDocumentsImporter {
             log.info("Starting documents import. First documentId=" + documentsMap.keySet().iterator().next() + " stopAfterDocumentId=" + stopAfterDocumentId);
             DocumensBatchProgress batchProgress = new DocumensBatchProgress();
             batchProgress.run();
-            log.info("Documents and files IMPORT COMPLETE :)");
+            log.info("Documents IMPORT COMPLETE :)");
         }
 
     }
@@ -900,10 +1025,10 @@ public class PostipoissDocumentsImporter {
 
         if (!propsMap.containsKey(DocumentCommonModel.Props.OWNER_NAME)) {
             String ownerName = PostipoissUtil.findAnyValue(root, "/document/tegevused/tegevus[tegevus_liik=1]/kellelt_tekst");
-            if (StringUtils.isBlank(ownerName)){
+            if (StringUtils.isBlank(ownerName)) {
                 ownerName = (String) propsMap.get(DocumentCommonModel.Props.SIGNER_NAME);
             }
-            if (StringUtils.isBlank(ownerName)){
+            if (StringUtils.isBlank(ownerName)) {
                 ownerName = IMPORTER_NAME;
             }
             propsMap.put(DocumentCommonModel.Props.OWNER_NAME, ownerName);
@@ -942,6 +1067,16 @@ public class PostipoissDocumentsImporter {
 
         // time = System.currentTimeMillis();
 
+        // Add sendInfo
+        String recipient = getRecipient(type, propsMap);
+        if (recipient != null) {
+            NodeRef childRef = sendOutService.addSendinfo(document.getNodeRef(), new HashMap<QName, Serializable>());
+            Map<QName, Serializable> properties = mapProperties(root, mappings.get("sendInfo"));
+            properties.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, recipient);
+            nodeService.addProperties(childRef, properties);
+
+        }
+
         for (Mapping subMapping : mapping.subMappings) {
             fillChild(root, document.getNodeRef(), subMapping);
         }
@@ -963,11 +1098,21 @@ public class PostipoissDocumentsImporter {
         return document;
     }
 
+    private String getRecipient(String type, Map<QName, Serializable> propsMap) {
+        if (propsMap != null) {
+            if ("Kiri-sissetulev".equals(type))
+                return null;
+            String recipientName = (String) propsMap.get(DocumentCommonModel.Props.RECIPIENT_NAME);
+            String additionalRecipientName = (String) propsMap.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+            if (StringUtils.isBlank(recipientName) && StringUtils.isBlank(additionalRecipientName))
+                return null;
+            return PostipoissDocumentsMapper.join(", ", recipientName, additionalRecipientName);
+        }
+        return null;
+    }
+
     private void fillChild(Element root, NodeRef nodeRef, Mapping mapping) {
         NodeRef childRef = findChild(nodeRef, mapping.to);
-        if (mapping.to.equals(DocumentCommonModel.Types.SEND_INFO)) {
-            childRef = sendOutService.addSendinfo(nodeRef, new HashMap<QName, Serializable>());
-        }
         if (childRef == null) {
             Assert.notNull(childRef, "No child of type " + mapping.to + " found!");
         }
@@ -1008,7 +1153,7 @@ public class PostipoissDocumentsImporter {
                 Element el = (Element) o;
                 String kuupaev = el.elementText("kuupaev");
                 String kellaaeg = el.elementText("kellaaeg");
-                String dateString = String.format("%s:%s",kuupaev,kellaaeg);
+                String dateString = String.format("%s:%s", kuupaev, kellaaeg);
                 Date kpv = null;
                 try {
                     kpv = longDateFormat.parse(dateString);

@@ -24,6 +24,7 @@
 	<bean id="postipoissDocumentsImporter"
 		class="ee.webmedia.alfresco.postipoiss.PostipoissDocumentsImporter">
 		<property name="enabled" value="${import.postipoiss.documents.enabled}" />
+		<property name="indexingEnabled" value="${import.postipoiss.documents.index_enabled}" />
 		<property name="inputFolderPath"
 			value="${import.postipoiss.documents.inputFolderPath}" />
 		<property name="inputFolderCsv"

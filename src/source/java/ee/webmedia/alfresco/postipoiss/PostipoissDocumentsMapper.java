@@ -602,6 +602,12 @@ public class PostipoissDocumentsMapper {
         Element generalType = root.element("generalType");
 
         Mapping base = createMapping(null, generalType);
+        
+        Element sendInfoType = root.element("sendInfoType");
+        
+        Mapping sendInfo = createMapping(null, sendInfoType, "doccom");
+        
+        mappings.put("sendInfo", sendInfo);
 
         for (Object o : root.elements("documentType")) {
             Mapping m = createMapping(base, (Element) o);

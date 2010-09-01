@@ -8,6 +8,12 @@
 		<prop from="reg_kpv" to="regDateTime" />
 	</generalType>
 
+	<sendInfoType to="sendInfo">
+		<prop from="saatmisviis" to="sendMode" />
+		<prop from="vastamise_kpv" to="sendDateTime" />
+		<prop from="saadetud" expr="const" to="sendStatus" />
+	</sendInfoType>
+
 	<documentType from="Akt" to="instrumentOfDeliveryAndReceipt">
 		<prop from="pealkiri" to="docName" />
 		<prop from="uleandja_asutus" to="delivererName" />
@@ -262,10 +268,6 @@
 		<prop from="kaaskirja_nr" to="comment" prefix="Kaaskirja nr" />
 		<prop from="resolutsioon" to="comment" prefix="Resolutsioon" />
 		<prop from="lisad" to="comment" prefix="Lisad" />
-		<child to="sendInfo" prefix="doccom">
-			<prop from="saatmisviis" to="sendMode" />
-			<prop from="asutus_isik" to="recipient" />
-		</child>
 	</documentType>
 
 	<documentType from="Koolitustaotlus" to="trainingApplication">
