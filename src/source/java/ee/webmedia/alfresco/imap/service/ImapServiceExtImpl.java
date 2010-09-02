@@ -57,7 +57,6 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -353,8 +352,6 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         if (folderInfo != null) { // todo: why folder info is null?
             appendBehaviour = (String) folderInfo.getProperties().get(ImapModel.Properties.APPEND_BEHAVIOUR);
             if (appendBehaviour == null) {
-                log.warn("Failed to get appendBehaviour for folder nodeRef=" + folderInfo.getNodeRef() + " name=" + folderInfo.getName() + " props="
-                        + WmNode.toString(folderInfo.getProperties(), namespaceService));
                 appendBehaviour = PermissionDeniedAppendBehaviour.BEHAVIOUR_NAME;   
             }
         } else {

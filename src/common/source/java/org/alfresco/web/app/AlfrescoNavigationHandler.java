@@ -653,7 +653,9 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
         // if we are closing a wizard or dialog take the view off the
         // top of the stack then decide whether to use the view
         // or any overridden outcome that may be present
-        if (getViewStack(context).empty() == false) {
+        @SuppressWarnings("unchecked")
+        final Stack<? extends Object> viewStack = getViewStack(context);
+        if (viewStack.empty() == false) {
             // is there an overidden outcome?
             String overriddenOutcome = getOutcomeOverride(outcome);
             if (overriddenOutcome == null) {
@@ -667,7 +669,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 Object stackObject = null;
                 if (numberToClose == 1) {
                     // just closing one dialog so get the item from the top of the stack
-                    stackObject = getViewStack(context).pop();
+                    stackObject = viewStack.pop();
                     MenuBean mb = getMenuBean(context);
                     if (mb != null) {
                         mb.removeBreadcrumbItem();
@@ -682,7 +684,6 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                     // check there are enough items on the stack, if there
                     // isn't just get the last one (effectively going back
                     // to the beginning)
-                    Stack viewStack = getViewStack(context);
                     int itemsOnStack = viewStack.size();
                     if (itemsOnStack < numberToClose) {
                         if (logger.isDebugEnabled())
@@ -726,7 +727,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                 
                 // We need to close this dialog, restore second state from stack
                 // XXX - this may break something, thorough testing needed
-                String previousViewId = getViewIdFromStackObject(context, getViewStack(context).pop());
+                String previousViewId = getViewIdFromStackObject(context, viewStack.pop());
                 if(explicitCancel) {
                     dialogManager.cancel();
                 }
@@ -747,7 +748,7 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
                     context.getViewRoot().setViewId(previousViewId);
 
                     if (logger.isDebugEnabled()) {
-                        logger.debug("view stack: " + getViewStack(context));
+                        logger.debug("view stack: " + viewStack);
                         logger.debug("Opening '" + overriddenOutcome + "' after " + closingItem +
                                 " close using view id: " + previousViewId);
                     }

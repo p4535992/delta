@@ -1070,11 +1070,13 @@ public class PostipoissDocumentsImporter {
         // Add sendInfo
         String recipient = getRecipient(type, propsMap);
         if (recipient != null) {
-            NodeRef childRef = sendOutService.addSendinfo(document.getNodeRef(), new HashMap<QName, Serializable>());
             Map<QName, Serializable> properties = mapProperties(root, mappings.get("sendInfo"));
             properties.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, recipient);
-            nodeService.addProperties(childRef, properties);
-
+            String sendMode = (String) properties.get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE);
+            if (StringUtils.isBlank(sendMode)){
+                properties.put(DocumentCommonModel.Props.SEND_INFO_SEND_MODE, "määramata");
+            }
+            sendOutService.addSendinfo(document.getNodeRef(), properties);
         }
 
         for (Mapping subMapping : mapping.subMappings) {

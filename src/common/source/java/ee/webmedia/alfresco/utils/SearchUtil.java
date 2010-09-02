@@ -197,6 +197,10 @@ public class SearchUtil {
     public static String generatePropertyNullQuery(QName documentPropName) {
         return "ISNULL:" + Repository.escapeQName(documentPropName);
     }
+    
+    public static String generatePropertyUnsetQuery(QName documentPropName) {
+        return "ISUNSET:" + Repository.escapeQName(documentPropName);
+    }
 
     public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean escape) {
         if (StringUtils.isBlank(value)) {
@@ -308,6 +312,14 @@ public class SearchUtil {
             queryParts.add(generatePropertyExactQuery(documentPropName, value, true));
         }
         return joinQueryPartsOr(queryParts, false);
+    }
+    
+    public static String generateStringNullQuery(QName ... documentPropNames) {
+        List<String> queryParts = new ArrayList<String>(documentPropNames.length);
+        for (QName documentPropName : documentPropNames) {
+            queryParts.add(generatePropertyNullQuery(documentPropName));
+        }
+        return joinQueryPartsOr(queryParts, false); 
     }
     
     public static String generateStringNotEmptyQuery(QName ... documentPropNames) {

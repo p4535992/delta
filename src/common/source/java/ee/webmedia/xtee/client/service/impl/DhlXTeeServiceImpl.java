@@ -3,7 +3,6 @@ package ee.webmedia.xtee.client.service.impl;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -98,6 +97,7 @@ import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.Occupation
 import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.OccupationType;
 import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.ReceiveDocumentsRequestType;
 import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.ReceiveDocumentsResponseTypeUnencoded;
+import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.ReceiveDocumentsV2RequestType;
 import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.SendDocumentsResponseType;
 import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.SendDocumentsV2RequestType;
 import ee.webmedia.xtee.types.ee.sk.digiDoc.v13.DataFileType;
@@ -509,6 +509,10 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
 
     @Override
     public List<Item> getSendStatuses(Set<String> ids) {
+        if (ids == null || ids.size() == 0) {
+            log.warn("No documents sent! sentDocIds=" + ids);
+            return Collections.<Item> emptyList();
+        }
         String queryMethod = getDatabase() + "." + XTEE_METHOD_GET_SEND_STATUS + "." + GET_SEND_STATUS_VERSION;
         try {
             DocumentRefsArrayType documentRefsArray = DocumentRefsArrayType.Factory.newInstance();

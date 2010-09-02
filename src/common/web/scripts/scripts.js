@@ -254,11 +254,20 @@ function appendSelection(source, targetId) {
  * @author Ats Uiboupin
  */
 var autocompleters = new Array();
-
 function addAutocompleter(inputId, valuesArray){
    autocompleters.push(function() {
       var jQInput = $jQ("#"+escapeId4JQ(inputId));
       var autoCompleter = jQInput.autocompleteArray(valuesArray, { minChars: -1, suggestAll: 1, delay: 50, onItemSelect: function(li) { processButtonState(); } });
+      autoCompleter.parent(".suggest-wrapper").click(function(){
+         autoCompleter.trigger("suggest");
+      });
+      autoCompleter.bind("autoComplete", function(e, data){
+         var ac = $jQ(this);
+         if(!ac.parent().hasClass('noValChangeTooltip')) {
+            var selected = ac.val();
+            ac.attr("title", data.newVal);
+         }
+      });
       jQInput.focus(function() {
          jQInput.keydown();
       });
@@ -601,6 +610,11 @@ function updateMenuItemCount(menuItemId) {
             // * either user clicked on a link to navigate to another page and browser cancelled all in-progress AJAX requests but still fired this callback
             // * or the request was dropped by RequestControlFilter. normally should not happen
 
+            if (responseText.length > 7) {
+               // Response is too big, something is wrong. Probably session expired and response is CAS login page
+               return;
+            }
+
             var count = responseText == '0' ? '' : ' (' + responseText + ')';
 
             // Construct element text
@@ -728,6 +742,24 @@ $jQ(document).ready(function() {
 	   });
    }
    
+   var suggesters = $jQ("span.suggest-wrapper>input");
+   suggesters.live("change", function(e){
+      var jqSuggester = $jQ(this);
+      if(!jqSuggester.parent().hasClass('noValChangeTooltip')) {
+         var selected = jqSuggester.val();
+         jqSuggester.attr("title", jqSuggester.val());
+      }
+   });
+   var selects = $jQ("select");
+   selects.live("change", function(){
+      var jqSelect = $jQ(this);
+      if(!jqSelect.hasClass('noValChangeTooltip')) {
+         var selected = jqSelect.find("option:selected");
+         jqSelect.attr("title", selected.text());
+      }
+   });
+
+   
    extendCondencePlugin();
    // extendCondencePlugin() MUST be called before tooltips are added on the following lines,
    // as condence plugin will make a copy of element for condenced text that would not get tooltips if created later
@@ -742,9 +774,21 @@ $jQ(document).ready(function() {
    window.dhtmlHistory.addListener(historyListener);
    window.dhtmlHistory.add(randomHistoryHash(), null);
 
-   handleHtmlLoaded(null);
+   handleHtmlLoaded(null, selects);
 });
 
+function initSelectTooltips(selects) {
+   selects.each(function(){
+      var jqSelect = $jQ(this);
+      if(!jqSelect.hasClass('noValChangeTooltip')) {
+         var existingTooltip = jqSelect.attr("title");
+         if(existingTooltip==null || existingTooltip.trim().length == 0) {
+            var selected = jqSelect.find("option:selected");
+            jqSelect.attr("title", selected.text());
+         }
+      }
+   });
+}
 /**
  * extend jQuery Condence plugin so that 
  * 1) condencing to specific number of chars could be performed based on styleClass (number of characters must be specified in the styleclass right after the text "condence"):)
@@ -777,8 +821,10 @@ function extendCondencePlugin() {
 // These things need to be performed
 // 1) once after full page load
 // *) each time an area is replaced inside the page
-function handleHtmlLoaded(context) {
+function handleHtmlLoaded(context, selects) {
    applyAutocompleters();
+
+   initSelectTooltips((selects==undefined) ? $jQ("select") : selects);
 
    //initialize all expanding textareas
    var expanders = jQuery("textarea[class*=expand]", context);

@@ -28,21 +28,21 @@ public abstract class CountAddingMenuItemProcessor implements MenuService.MenuIt
         MenuItemCountBean menuItemCountBean = (MenuItemCountBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuItemCountBean.BEAN_NAME);
         Integer count = menuItemCountBean.getCount(menuItem.getId());
 
-        if (count != null && count != 0) {
-            String title = menuItem.getTitle();
-            int firstBrace = -1;
-            if (title.endsWith(")")) {
-                firstBrace = title.lastIndexOf('(');
-            }
-            String titleSuffix = "";
-            if (count != 0) {
-                titleSuffix += " (" + count + ")";
-            }
-            if (firstBrace > 0) {
-                title = title.substring(0, firstBrace);
-            }
-            menuItem.setTitle(title + titleSuffix);
+        int countValue = count == null ? 0 : count.intValue();
+
+        String title = menuItem.getTitle();
+        int firstBrace = -1;
+        if (title.endsWith(")")) {
+            firstBrace = title.lastIndexOf('(');
         }
+        String titleSuffix = "";
+        if (countValue != 0) {
+            titleSuffix += " (" + countValue + ")";
+        }
+        if (firstBrace > 0) {
+            title = title.substring(0, firstBrace);
+        }
+        menuItem.setTitle(title + titleSuffix);
     }
 
 }

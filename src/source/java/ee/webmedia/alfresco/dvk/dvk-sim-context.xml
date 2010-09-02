@@ -27,4 +27,9 @@
       <property name="documentService" ref="DocumentService" />
    </bean>
 
+   <!-- START: web beans: -->
+
+   <bean id="DvkBean" class="ee.webmedia.alfresco.dvk.web.DvkBean" scope="session" />
+
+   <!-- END: web beans: -->
 </beans>

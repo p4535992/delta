@@ -84,26 +84,42 @@ public class SignatureServiceImpl implements SignatureService {
     
     @Override
     public List<SignatureItem> getSignatureItems(NodeRef nodeRef) throws SignatureException {
-        SignedDoc ddoc = getSignedDoc(nodeRef);
-        return getSignatureItems(nodeRef, ddoc);
+        try {
+            SignedDoc ddoc = getSignedDoc(nodeRef);
+            return getSignatureItems(nodeRef, ddoc);
+        } catch (RuntimeException e) {
+            throw new SignatureException("Failed to get ddoc signature items, nodeRef = " + nodeRef, e);
+        }
     }
 
     @Override
     public List<DataItem> getDataItems(NodeRef nodeRef, boolean includeData) throws SignatureException {
-        SignedDoc ddoc = getSignedDoc(nodeRef);
-        return getDataItems(nodeRef, ddoc, includeData);
+        try {
+            SignedDoc ddoc = getSignedDoc(nodeRef);
+            return getDataItems(nodeRef, ddoc, includeData);
+        } catch (RuntimeException e) {
+            throw new SignatureException("Failed to get ddoc data items, nodeRef = " + nodeRef + " includeData = " + includeData, e);
+        }
     }
 
     @Override
     public DataItem getDataItem(NodeRef nodeRef, int id, boolean includeData) throws SignatureException {
-        SignedDoc ddoc = getSignedDoc(nodeRef);
-        return getDataItem(nodeRef, ddoc, id, includeData);
+        try {
+            SignedDoc ddoc = getSignedDoc(nodeRef);
+            return getDataItem(nodeRef, ddoc, id, includeData);
+        } catch (RuntimeException e) {
+            throw new SignatureException("Failed to get ddoc data items, nodeRef = " + nodeRef + " id = " + id + " includeData = " + includeData, e);
+        }
     }
 
     @Override
     public SignatureItemsAndDataItems getDataItemsAndSignatureItems(NodeRef nodeRef, boolean includeData) throws SignatureException {
-        SignedDoc ddoc = getSignedDoc(nodeRef);
-        return getDataItemsAndSignatureItems(ddoc, nodeRef, includeData);
+        try {
+            SignedDoc ddoc = getSignedDoc(nodeRef);
+            return getDataItemsAndSignatureItems(ddoc, nodeRef, includeData);
+        } catch (RuntimeException e) {
+            throw new SignatureException("Failed to get ddoc data and signature items, nodeRef = " + nodeRef + " includeData = " + includeData, e);
+        }
     }
 
     @Override
@@ -112,9 +128,11 @@ public class SignatureServiceImpl implements SignatureService {
             SignedDoc ddoc = getSignedDoc(inputStream);
             return getDataItemsAndSignatureItems(ddoc, null, includeData);
         } catch (DigiDocException e) {
-            throw new SignatureException("Failed to parse ddoc file from InputStream", e);
+            throw new SignatureException("Failed to parse ddoc file from InputStream, includeData = " + includeData, e);
         } catch (IOException e) {
             throw new SignatureException("Failed to close the input stream");
+        } catch (RuntimeException e) {
+            throw new SignatureException("Failed to get ddoc data and signature items from InputStream, includeData = " + includeData, e);
         }
     }
 
@@ -124,6 +142,8 @@ public class SignatureServiceImpl implements SignatureService {
             return getSignatureDigest(getSignedDoc(nodeRef), certHex);
         } catch (DigiDocException e) {
             throw new SignatureException("Failed to calculate signed info digest of ddoc file, nodeRef = " + nodeRef, e);
+        } catch (RuntimeException e) {
+            throw new SignatureException("Failed to calculate signed info digest of ddoc file, nodeRef = " + nodeRef, e);
         }
     }
 
@@ -132,6 +152,8 @@ public class SignatureServiceImpl implements SignatureService {
         try {
             return getSignatureDigest(createSignedDoc(selectedNodeRefs), certHex);
         } catch (DigiDocException e) {
+            throw new SignatureException("Failed to calculate signed info digest from selected nodeRefs " + selectedNodeRefs, e);
+        } catch (RuntimeException e) {
             throw new SignatureException("Failed to calculate signed info digest from selected nodeRefs " + selectedNodeRefs, e);
         }
     }

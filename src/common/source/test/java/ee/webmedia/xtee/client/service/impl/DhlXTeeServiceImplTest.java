@@ -69,6 +69,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
 
     private static String SENDER_REG_NR;
     private static List<String> receivedDocumentIds;
+    private static boolean receivedDocumentsFailed;
     private static List<String> receiveFaileddDocumentIds;
     private static Set<String> sentDocIds = new HashSet<String>();
     private static Map<String, String> dvkOrgList;
@@ -159,9 +160,9 @@ public class DhlXTeeServiceImplTest extends TestCase {
             recipientsArray[i] = getRecipient(recipients.get(i));
         }
         sentDocIds = dhl.sendDocuments(contentsToSend, recipientsArray, getSenderAddress(), null, null);
-        assertTrue(sentDocIds.size() > 0);
+        assertTrue("Supprize! sendDocuments indeed can return multiple dhl_id's! sentDocIds=" + sentDocIds, sentDocIds.size() > 0);
         for (String dhlId : sentDocIds) {
-            log.debug("\tdocument sent to DVK, dhlId=" + dhlId);
+            log.info("\tdocument sent to DVK, dhlId=" + dhlId);
             assertTrue(StringUtils.isNotBlank(dhlId));
         }
     }
@@ -213,9 +214,11 @@ public class DhlXTeeServiceImplTest extends TestCase {
      * Test method for {@link ee.webmedia.xtee.client.service.impl.DhlXTeeServiceImpl#receiveDocuments()
      */
     public void testReceiveDocuments() {
+        receivedDocumentsFailed = true;
         receivedDocumentIds = new ArrayList<String>(); // using static field to be able to use the result in other tests
         receiveFaileddDocumentIds = new ArrayList<String>(); // using static field to be able to use the result in other tests
         // List<DhlDokumentType> receivedDocuments = dhl.receiveDocuments();
+        System.gc();// perform GC to free max memory for receiving documents 
         final ReceivedDocumentsWrapper receiveDocuments = dhl.receiveDocuments(300);
         assertTrue(receiveDocuments.size() > 0 || sentDocIds.size() == 0);
         for (String dhlId : receiveDocuments) {
@@ -276,10 +279,18 @@ public class DhlXTeeServiceImplTest extends TestCase {
         for (String dhlId : receiveFaileddDocumentIds) {
             assertFalse(sentDocIds.contains(dhlId));
         }
+        receivedDocumentsFailed = false;
     }
 
     public void testMarkDocumentsReceived() {
-        log.debug("receivedDocumentIds=" + receivedDocumentIds);
+        if (receivedDocumentsFailed) {
+            if (receivedDocumentIds == null) {
+                receivedDocumentIds = new ArrayList<String>();
+            }
+            // if call to receivedDocuments failed, then marking those documents read, that were sent for testing
+            receivedDocumentIds.addAll(sentDocIds); 
+        }
+        log.debug("Starting to mark document received - receivedDocumentIds=" + receivedDocumentIds);
         dhl.markDocumentsReceived(receivedDocumentIds);
     }
 
@@ -290,7 +301,8 @@ public class DhlXTeeServiceImplTest extends TestCase {
         final List<Item> items = dhl.getSendStatuses(sentDocIds);
         assertTrue("expected to receive at least one DVK dokument, but got " + items.size(), items.size() > 0 || sentDocIds.size() == 0);
         System.out.println(items.size());
-        Assert.assertTrue(items.size() > 0);
+        final List<String[]> unreceivedDhlIds = new ArrayList<String[]>();
+        Assert.assertTrue(items.size() > 0 || sentDocIds.size() == 0);
         for (Item item : items) {
             log.debug("--item=" + item);
             String dhlId = item.getDhlId();
@@ -325,7 +337,9 @@ public class DhlXTeeServiceImplTest extends TestCase {
                 final String asutuseNimi = saaja.getAsutuseNimi();
                 final SendStatus sendStatus = SendStatus.get(staatus);
                 if (regnr.equalsIgnoreCase(SENDER_REG_NR)) {
-                    Assert.assertTrue("Document has not been received - current status=" + sendStatus, sendStatus.equals(RECEIVED));
+                    if (!sendStatus.equals(RECEIVED)) {
+                        unreceivedDhlIds.add(new String[] { dhlId, "Document has not been received - current status=" + sendStatus });
+                    }
                 }
                 if (sendStatus.equals(SENT)) {
                     oneNotReceived = true;
@@ -335,6 +349,15 @@ public class DhlXTeeServiceImplTest extends TestCase {
             }
             assertTrue(oneNotReceived ? SendStatus.get(olek).equals(SENT) : SendStatus.get(olek).equals(RECEIVED)); // kui üle 1 saaja, siis ilmselt pole
             // saadetud
+        }
+        if (unreceivedDhlIds.size() > 0) {
+            String errMsg = null;
+            final Set<String> dhlIds = new HashSet<String>();
+            for (String[] objects : unreceivedDhlIds) {
+                errMsg = objects[1];
+                dhlIds.add(objects[0]);
+            }
+            assertTrue(errMsg + ". DhlIds=" + dhlIds, false);
         }
     }
 

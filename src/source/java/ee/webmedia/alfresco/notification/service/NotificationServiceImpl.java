@@ -169,12 +169,10 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void notifyTaskEvent(Task task) {
-
         Notification notification = processNotification(task, new Notification());
         if (notification == null) { // no need for sending out emails
             return;
         }
-
         NodeRef docRef = task.getParent().getParent().getParent();
         try {
             sendNotification(notification, docRef, setupTemplateData(task));
@@ -366,11 +364,12 @@ public class NotificationServiceImpl implements NotificationService {
     private Notification processInformationTask(Task task, Notification notification) {
         CompoundWorkflow compoundWorkflow = task.getParent().getParent();
 
-        if (StringUtils.isNotBlank(compoundWorkflow.getOwnerId())) {
-            if (!isSubscribed(compoundWorkflow.getOwnerId(), NotificationModel.NotificationType.TASK_INFORMATION_TASK_COMPLETED)) {
+        final String ownerId = compoundWorkflow.getOwnerId();
+        if (StringUtils.isNotBlank(ownerId)) {
+            if (!isSubscribed(ownerId, NotificationModel.NotificationType.TASK_INFORMATION_TASK_COMPLETED)) {
                 return null;
             }
-            notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(compoundWorkflow.getOwnerId()));
+            notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(ownerId));
             notification = setupNotification(notification, NotificationModel.NotificationType.TASK_INFORMATION_TASK_COMPLETED);
             return notification;
         }

@@ -102,6 +102,10 @@ jQuery.autocomplete = function(input, options) {
             active = -1;
             if (timeout) clearTimeout(timeout);
             timeout = setTimeout(function(){onChange();}, options.delay);
+            $input.bind("suggest", function(e, data){
+               hasFocus = true;
+               onChange(e);
+            });
             break;
       }
    })
@@ -117,11 +121,11 @@ jQuery.autocomplete = function(input, options) {
 
    hideResultsNow();
 
-   function onChange() {
+   function onChange(suggestEv) {
       // ignore if the following keys are pressed: [del] [shift] [capslock]
       if( lastKeyPressCode == 46 || (lastKeyPressCode > 8 && lastKeyPressCode < 32) ) return $results.hide();
       var v = $input.val();
-      if (v == prev && (!options.suggestAll || v!="")) return;
+      if (v == prev && (!options.suggestAll || v!="") && suggestEv == undefined) return;
       prev = v;
       if (v.length >= options.minChars) {
          $input.addClass(options.loadingClass);
@@ -184,7 +188,9 @@ jQuery.autocomplete = function(input, options) {
       input.lastSelected = v;
       prev = v;
       $results.html("");
+      var oldVal = $input.val();
       $input.val(v);
+      $input.trigger('autoComplete', {oldVal: oldVal,newVal: v});
       hideResultsNow();
 		if (options.onItemSelect) setTimeout(function() { options.onItemSelect(li); }, 1);
    };
@@ -227,7 +233,7 @@ jQuery.autocomplete = function(input, options) {
       // either use the specified width, or autocalculate based on form element
       var iWidth = (options.width > 0) ? options.width : $input.width();
       
-      var padding = 4; // hardcoded
+      var padding = jQuery.browser.mozilla ? 20 : 4; // hardcoded, also fix for firefox
       // determine with using textMetrics
       $results.find("li").each(function(index, element) {
          iWidth = Math.max($jQ.textMetrics(element).width + padding, iWidth);

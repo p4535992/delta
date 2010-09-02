@@ -38,7 +38,7 @@
 
             <doctype:documentType view:childName="docsub:vacationOrder">
                <view:properties>
-                  <doctype:name>Puhkuse käskkiri</doctype:name>
+                  <doctype:name>Puhkuse andmise korraldus</doctype:name>
                   <doctype:used>true</doctype:used>
                   <doctype:publicAdr>false</doctype:publicAdr>
                   <doctype:comment>SIM</doctype:comment>

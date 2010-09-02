@@ -12,6 +12,7 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyNullQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyWildcardQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringNotEmptyQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringNullQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringWordsWildcardQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.isBlank;
@@ -30,7 +31,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +40,6 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -50,7 +49,6 @@ import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -333,19 +331,33 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
 
     @Override
     public List<Document> searchRecipientFinishedDocuments() {
-        List<Document> results = new ArrayList<Document>();
+        long startTime = System.currentTimeMillis();
+        String query = generateRecipientFinichedQuery();
+        List<Document> results = searchDocumentsImpl(query, false);
+
+        if (log.isDebugEnabled()) {
+            log.debug("FINISHED documents search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+        }
         return results;
     }
 
     @Override
     public int searchRecipientFinishedDocumentsCount() {
-        return 0;
+        long startTime = System.currentTimeMillis();
+        String query = generateRecipientFinichedQuery();
+        List<NodeRef> results = searchNodes(query, false);
+
+        if (log.isDebugEnabled()) {
+            log.debug("FINISHED documents count search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+        }
+        return results.size();
     }
 
     private String generateRecipientFinichedQuery() {
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME));
         queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
+        queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE));
         String query = generateDocumentSearchQuery(queryParts);
         return query;
     }

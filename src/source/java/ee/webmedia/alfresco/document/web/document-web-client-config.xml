@@ -183,7 +183,7 @@
             <action-listener>#{DocumentDialog.reopenDocument}</action-listener>
          </action>
 
-          <action id="document_delete">
+         <action id="document_delete">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.DeleteDocumentEvaluator</evaluator>
             <label-id>document_delete</label-id>
             <image>/images/icons/versioned_properties.gif</image>
@@ -208,6 +208,27 @@
             <params>
                <param name="nodeRef">#{DocumentDialog.node.nodeRef}</param>
             </params>
+         </action>
+
+         <action id="dvk_receive">
+            <label-id>dvk_receive</label-id>
+            <image>/images/icons/project-icon-emailarchive-16.gif</image>
+            <evaluator>ee.webmedia.alfresco.dvk.web.DevelopmentEvaluator</evaluator>
+            <action-listener>#{DvkBean.receiveDocuments}</action-listener>
+         </action>
+
+         <action id="dvk_updateOrganizationsDvkCapability">
+            <label-id>dvk_updateOrganizationsDvkCapability</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <evaluator>ee.webmedia.alfresco.dvk.web.DevelopmentEvaluator</evaluator>
+            <action-listener>#{DvkBean.updateOrganizationsDvkCapability}</action-listener>
+         </action>
+
+         <action id="dvk_updateDocSendStatuses">
+            <label-id>dvk_updateDocSendStatuses</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <evaluator>ee.webmedia.alfresco.dvk.web.DevelopmentEvaluator</evaluator>
+            <action-listener>#{DvkBean.updateDocSendStatuses}</action-listener>
          </action>
 
          <action-group id="document_actions">
@@ -236,6 +257,12 @@
 	        <action idref="document_createFollowUp_instrumentOfDeliveryAndReceipt" />
         </action-group>
 
+        <action-group id="dvk_actions">
+	        <action idref="dvk_receive" />
+	        <action idref="dvk_updateOrganizationsDvkCapability" />
+	        <action idref="dvk_updateDocSendStatuses" />
+        </action-group>
+
       </actions>
       <dialogs>
 
@@ -253,7 +280,7 @@
             icon="/images/icons/versioned_properties_large.gif" title-id="document_outbox" show-ok-button="false" />
 
          <dialog name="dvkDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="DvkDocumentListDialog"
-            icon="/images/icons/versioned_properties_large.gif" title-id="document_dvk_documents" show-ok-button="false" />
+            icon="/images/icons/versioned_properties_large.gif" title-id="document_dvk_documents" show-ok-button="false" actions-config-id="dvk_actions" />
 
          <dialog name="unsentDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="UnsentDocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_unsent_list" show-ok-button="false" />

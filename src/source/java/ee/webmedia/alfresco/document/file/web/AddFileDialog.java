@@ -36,7 +36,6 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.FileUploadBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
-import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
@@ -112,7 +111,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         }
     }
 
-    public void start(ActionEvent event) {
+    public void start(@SuppressWarnings("unused") ActionEvent event) {
         reset();
     }
 
@@ -316,6 +315,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
      * @param app
      */
     private void refreshUploadedFilesPanelGroup() {
+        @SuppressWarnings("unchecked")
         List<UIComponent> groupChildren = uploadedFilesPanelGroup.getChildren();
         groupChildren.clear();
 
@@ -327,6 +327,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
         groupChildren.add(uploadedFilesGrid);
 
+        @SuppressWarnings("unchecked")
         List<UIComponent> gridChildren = uploadedFilesGrid.getChildren();
         int rowCount = 0, size = 0;
         FileUploadBean fileBean = getFileUploadBean();
@@ -421,7 +422,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         return selectedFileName;
     }
 
-    public void validateFileName(FacesContext context, UIComponent component, Object value) {
+    public void validateFileName(@SuppressWarnings("unused") FacesContext context, UIComponent component, Object value) {
         if (component instanceof HtmlInputText) {
             boolean isValid = true;
             if (!value.toString().equals(FilenameUtil.stripForbiddenWindowsCharacters(value.toString()))) {

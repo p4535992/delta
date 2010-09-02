@@ -71,4 +71,17 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
       <property name="namespaceService" ref="NamespaceService" />
    </bean>
 
+   <bean id="changeVacationOrderNameBootstrap" class="ee.webmedia.alfresco.document.type.bootstrap.ChangeVacationOrderNameBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="changeVacationOrderNameBootstrap" />
+      <property name="sinceVersion" value="1.9.1.13" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentTypeSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>
+
 </beans>
