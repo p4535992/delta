@@ -333,59 +333,13 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
 
     @Override
     public List<Document> searchRecipientFinishedDocuments() {
-        long startTime = System.currentTimeMillis();
-        String query = generateRecipientFinichedQuery();
-        List<Document> results = searchDocumentsImpl(query, false);
-        // Make sure the document does not have sendInfo children
-
-        // XXX TODO FIXME is additional optimization needed? postprocessing could be eliminated and this condition added directly to lucene query
-        for (Iterator<Document> it = results.iterator(); it.hasNext();) {
-            Document doc = it.next();
-            List<ChildAssociationRef> sendInfo = nodeService.getChildAssocs(doc.getNodeRef(), RegexQNamePattern.MATCH_ALL,
-                    DocumentCommonModel.Assocs.SEND_INFO);
-            if (sendInfo.size() > 0) {
-                it.remove();
-            }
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("FINISHED documents search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
-        }
+        List<Document> results = new ArrayList<Document>();
         return results;
     }
 
     @Override
     public int searchRecipientFinishedDocumentsCount() {
-        long startTime = System.currentTimeMillis();
-        String query = generateRecipientFinichedQuery();
-        List<NodeRef> results = new ArrayList<NodeRef>();
-        ResultSet resultSet = doSearch(query, false);
-        try {
-            for (ResultSetRow row : resultSet) {
-                results.add(row.getNodeRef());
-            }
-        } finally {
-            try {
-                resultSet.close();
-            } catch (Exception e) {
-                // Do nothing
-            }
-        }
-        // Make sure the document does not have sendInfo children
-
-        // XXX TODO FIXME is additional optimization needed? postprocessing could be eliminated and this condition added directly to lucene query
-        for (Iterator<NodeRef> it = results.iterator(); it.hasNext();) {
-            NodeRef docNodeRef = it.next();
-            List<ChildAssociationRef> sendInfo = nodeService.getChildAssocs(docNodeRef, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Assocs.SEND_INFO);
-            if (sendInfo.size() > 0) {
-                it.remove();
-            }
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("FINISHED documents count search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
-        }
-        return results.size();
+        return 0;
     }
 
     private String generateRecipientFinichedQuery() {
