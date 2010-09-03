@@ -10,7 +10,7 @@
    
    <config evaluator="node-type" condition="doctype:selector" replace="true">
       <property-sheet>
-         <show-property name="doctype:selected" show-in-view-mode="false" display-label-id="document_type_selected" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentTypeDialog.getUsedDocTypes}" valueChangeListener="#{DocumentDialog.selectedValueChanged}" />
+         <show-property name="doctype:selected" ajaxDisabled="true" show-in-view-mode="false" display-label-id="document_type_selected" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentTypeDialog.getUsedDocTypes}" valueChangeListener="#{DocumentDialog.selectedValueChanged}" />
       </property-sheet>
    </config>
 </alfresco-config>

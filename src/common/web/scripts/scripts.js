@@ -699,6 +699,20 @@ window.dhtmlHistory.create( {
    }
 });
 
+function allowMultiplePageSizeChangers(){ // otherwise the last pageSizeChanger would overwrite value of all others
+   var pageSizeSelects = $jQ("select[id$=selPageSize]");
+   pageSizeSelects.each(function(i, select) {
+   prependOnchange($jQ(select), function(){
+      var jqThis = $jQ(select);
+      pageSizeSelects.each(function(index, elem) {
+          $jQ(elem).val(jqThis.val());
+      });
+      jqThis.parent().find('a').click();
+      return true;
+   });
+   });
+}
+
 //-----------------------------------------------------------------------------
 // DOCUMENT-READY FUNCTIONS
 //-----------------------------------------------------------------------------
@@ -706,7 +720,7 @@ window.dhtmlHistory.create( {
 // These things need to be performed only once after full page load
 $jQ(document).ready(function() {
    showFooterTitlebar();
-   
+   allowMultiplePageSizeChangers();
    $jQ(".admin-user-search-input").keyup(function(event) {
 	   updateButtonState();
 	   if (event.keyCode == 13) {

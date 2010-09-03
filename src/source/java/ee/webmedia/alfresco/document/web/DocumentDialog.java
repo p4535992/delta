@@ -237,17 +237,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         MessageUtil.addInfoMessage("document_delete_success");
     }
 
-    public String getDownloadType() {
-        if (DocumentFileWriteDynamicAuthority.downloadFilesReadOnlyDocTypes.contains(node.getType())
-                && StringUtils.equals(DocumentStatus.FINISHED.getValueName(), getStatus())) {
-            return "webdav-readOnly";
-        }
-        if (isInprogressCompoundWorkflows()) {
-            return "webdav-readOnly";
-        }
-        return "webdav-open";
-    }
-
     public boolean isInprogressCompoundWorkflows() {
         return getWorkflowService().hasInprogressCompoundWorkflows(node.getNodeRef());
     }

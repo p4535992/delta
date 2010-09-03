@@ -42,7 +42,7 @@ function updateButtonState()
             <a:panel id="ab-org-panel" styleClass="column panel-50 with-pager" label="#{msg.addressbook_organizations}">
 
                         <a:richList id="ab-organizations-list" viewMode="details" binding="#{DialogManager.bean.orgRichList}"
-                           rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+                           rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" pageSize="#{BrowseBean.pageSizeContent}"
                            value="#{DialogManager.bean.organizations}" var="r" initialSortColumn="name" initialSortDescending="false">
 
                            <%-- Primary column with name --%>
@@ -83,14 +83,15 @@ function updateButtonState()
                               </r:permissionEvaluator>
                            </a:column>
 
-         <a:dataPager id="ab-org-list-pager" styleClass="pager" />
+                           <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
+                           <a:dataPager id="ab-org-list-pager" styleClass="pager" />
                         </a:richList>
 
                      </a:panel>
                      
                      <a:panel id="ab-person-panel" styleClass="column panel-50 with-pager" label="#{msg.addressbook_private_persons}">
 
-                        <a:richList id="ab-people-list" viewMode="details" binding="#{DialogManager.bean.peopleRichList}"
+                        <a:richList id="ab-people-list" viewMode="details" binding="#{DialogManager.bean.peopleRichList}" pageSize="#{BrowseBean.pageSizeContent}"
                            headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
                            value="#{DialogManager.bean.people}" var="r" initialSortColumn="name" initialSortDescending="false">
 
@@ -131,6 +132,7 @@ function updateButtonState()
                                  </a:actionLink>
                               </r:permissionEvaluator>
                            </a:column>
+                           <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
                            <a:dataPager id="ab-people-list-pager" styleClass="pager" />
                         </a:richList>
 
@@ -143,7 +145,7 @@ function updateButtonState()
 
                            <a:richList id="ab-people-list2" viewMode="details" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" 
                               value="#{DialogManager.bean.orgPeople}" var="r" initialSortColumn="name" initialSortDescending="false"
-                              binding="#{DialogManager.bean.orgPeopleRichList}">
+                              binding="#{DialogManager.bean.orgPeopleRichList}" pageSize="#{BrowseBean.pageSizeContent}" >
                               <%-- Primary column with name --%>
                               <a:column id="ab-people-list2-col" primary="true">
                                  <f:facet name="header">
@@ -203,6 +205,7 @@ function updateButtonState()
                                  </a:actionLink>
                               </a:column>
 
+                              <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
                               <a:dataPager id="ab-people-list2-pager" styleClass="pager" />
                            </a:richList>
                         </a:panel>

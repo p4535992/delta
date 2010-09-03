@@ -40,14 +40,21 @@ public class DocumentOwnerDynamicAuthority extends BaseDynamicAuthority {
         if (DocumentSubtypeModel.Types.LEAVING_LETTER.equals(type)) {
             return false; // no need to check isOwnerOfFirstInprogressSignatureTask() for leavingLetter
         }
-        final boolean hasAuthority = isOwnerOfFirstInprogressSignatureTask(nodeRef, userName);
+        final boolean hasAuthority = isOwnerOfInprogressReviewOrFirstSignatureTask(nodeRef, userName);
         if (!hasAuthority) {
             log.trace("No conditions met, refusing authority " + getAuthority());
         }
+        
+        // there are some differences between file-write permissions and document-metadata-edit (this) permissions:
+        // * document-owner and document-manager can edit metadata when any workflow is in progress
+        //   document-owner and document-manager can edit files when he is reviewer or first signer
+        // * document-owner and document-manager can't edit files when status=finished and docType=PERSONELLE_ORDER_SIM, REGULATION, DECREE
+        //   document-owner and document-manager can edit metadata even if the above is true
+        
         return hasAuthority;
     }
 
-    private boolean isOwnerOfFirstInprogressSignatureTask(final NodeRef nodeRef, final String userName) {
+    private boolean isOwnerOfInprogressReviewOrFirstSignatureTask(final NodeRef nodeRef, final String userName) {
         for (ChildAssociationRef compoundWorkflowAssoc : nodeService.getChildAssocs(nodeRef, WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                 WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW)) {
             NodeRef compoundWorkflow = compoundWorkflowAssoc.getChildRef();
@@ -60,6 +67,7 @@ public class DocumentOwnerDynamicAuthority extends BaseDynamicAuthority {
                 if (!Status.IN_PROGRESS.equals((String) nodeService.getProperty(workflow, WorkflowCommonModel.Props.STATUS))) {
                     continue;
                 }
+                // workFlow is in progress
                 QName workflowType = nodeService.getType(workflow);
                 if (!WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(workflowType) && !WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(workflowType)) {
                     continue;
@@ -74,9 +82,11 @@ public class DocumentOwnerDynamicAuthority extends BaseDynamicAuthority {
                     if (!Status.IN_PROGRESS.equals((String) nodeService.getProperty(task, WorkflowCommonModel.Props.STATUS))) {
                         continue;
                     }
+                    // task is in progress
                     if (userName.equals(nodeService.getProperty(task, WorkflowCommonModel.Props.OWNER_ID))) {
                         log.debug("User " + userName + " is owner of in-progress task of workflow '" + workflowType.toPrefixString(namespaceService)
                                 + "', granting authority " + getAuthority());
+                        // user is the owner of the task
                         return true;
                     }
                 }

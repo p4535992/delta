@@ -20,11 +20,14 @@ import javax.faces.model.SelectItem;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
+import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.converter.BooleanToLabelConverter;
+import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -80,7 +83,8 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
     public void setupSelectComponent(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,
             UIComponent component, boolean multiValued) {
 
-        ComponentUtil.createAndSetConverter(context, getCustomAttributes().get("converter"), component);
+        final Map<String, String> customAttributes = getCustomAttributes();
+        ComponentUtil.createAndSetConverter(context, customAttributes.get("converter"), component);
 
         String styleClass = getStyleClass();
         if (StringUtils.isNotBlank(styleClass)) {
@@ -88,8 +92,8 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
             attributes.put(STYLE_CLASS, styleClass);
         }
         
-        if (getCustomAttributes().containsKey(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX)) {
-            component.getAttributes().put(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX, getCustomAttributes().get(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX));
+        if (customAttributes.containsKey(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX)) {
+            component.getAttributes().put(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX, customAttributes.get(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX));
         }
 
         if (component instanceof UIInput) {
@@ -123,7 +127,12 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         if (StringUtils.isNotBlank(valueChangeListener)) {
             ((UIInput) component).setValueChangeListener(context.getApplication().createMethodBinding(valueChangeListener,
                     new Class[] { ValueChangeEvent.class }));
-            String onchange = ComponentUtil.generateAjaxFormSubmit(context, component);
+            final String onchange;
+            if(Boolean.valueOf(getCustomAttributes().get(AjaxUpdateable.AJAX_DISABLED_ATTR))) {
+                onchange = Utils.generateFormSubmit(context, component);
+            } else {
+                onchange = ComponentUtil.generateAjaxFormSubmit(context, component);
+            }
             if (component instanceof HtmlSelectOneMenu) {
                 ((HtmlSelectOneMenu) component).setOnchange(onchange);
             } else if (component instanceof HtmlSelectManyListbox) {

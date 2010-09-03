@@ -42,6 +42,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class MandatoryIfValidator extends ForcedMandatoryValidator implements StateHolder {
     private static final long serialVersionUID = 1L;
+    
+    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MandatoryIfValidator.class);
 
     private static final String MESSAGE_ID = "common_propertysheet_validator_mandatoryIf";
     public static final String ATTR_MANDATORY_IF = "mandatoryIf";
@@ -120,6 +122,9 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
         }
         propName = StringUtils.replace(propName, ":", "x003a_"); // colon is encoded, as it is also used as it is used in id to separate parent components
         UIInput otherInput = findOtherInputComponent(context, component, propName);
+        if(otherInput==null) {
+            return;
+        }
         // boolean required = true;
         if (checkEquals != null) {
 
@@ -180,6 +185,10 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
 
     private UIInput findOtherInputComponent(FacesContext context, UIComponent component, String otherPropertyName) {
         UIPropertySheet propSheetComponent = ComponentUtil.getAncestorComponent(component, UIPropertySheet.class, true);
+        if(propSheetComponent==null) {
+            log.info("No parent propSheetComponent found for component '"+component.getId()+"'");
+            return null;
+        }
         List<UIInput> inputs = new ArrayList<UIInput>();
         ComponentUtil.getChildrenByClass(inputs, propSheetComponent, UIInput.class, otherPropertyName);
         if (inputs.size() != 1) {

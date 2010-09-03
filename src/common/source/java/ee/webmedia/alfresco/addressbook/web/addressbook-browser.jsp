@@ -29,7 +29,7 @@ function setAddressbookDiv(id){
 
                         <a:actionLink id="add-org-button" value="#{msg.addressbook_add_org}" image="/images/icons/add_user.gif" showLink="false"
                            action="dialog:addressbookAddOrg" />
-                        <a:richList id="_organizations-list" viewMode="details" width="100%"
+                        <a:richList id="_organizations-list" viewMode="details" width="100%" pageSize="#{BrowseBean.pageSizeContent}"
                            binding="#{AddressbookDialog.orgRichList}" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow"
                            altRowStyleClass="recordSetRowAlt" value="#{AddressbookDialog.organizations}" var="r" initialSortColumn="name"
                            initialSortDescending="false">
@@ -69,6 +69,7 @@ function setAddressbookDiv(id){
                               </f:verbatim>
                            </a:column>
 
+                           <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
                            <a:dataPager id="org-pager" styleClass="pager" />
                         </a:richList>
 
@@ -84,7 +85,7 @@ function setAddressbookDiv(id){
 
                            <a:richList id="people-list2" viewMode="details" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
                               value="#{AddressbookDialog.orgPeople}" var="r" initialSortColumn="name" initialSortDescending="false"
-                              binding="#{AddressbookDialog.orgPeopleRichList}">
+                              binding="#{AddressbookDialog.orgPeopleRichList}" pageSize="#{BrowseBean.pageSizeContent}">
                               <%-- Primary column with name --%>
                               <a:column id="people-list2-column" primary="true" style="padding:2px;text-align:left">
                                  <f:facet name="header">
@@ -116,6 +117,7 @@ function setAddressbookDiv(id){
                                  </f:verbatim>
                               </a:column>
 
+                              <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
                               <a:dataPager id="person2-pager" styleClass="pager" />
                            </a:richList>
                         </a:panel>
@@ -128,7 +130,7 @@ function setAddressbookDiv(id){
                            action="dialog:addressbookAddPerson" />
 
                         <a:richList id="people-list" viewMode="details" binding="#{AddressbookDialog.peopleRichList}"
-                           rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
+                           rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" pageSize="#{BrowseBean.pageSizeContent}"
                            value="#{AddressbookDialog.people}" var="r" initialSortColumn="name" initialSortDescending="false">
 
                            <%-- Primary column with name --%>
@@ -162,6 +164,7 @@ function setAddressbookDiv(id){
                            </a:column>
 
 
+                           <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
                            <a:dataPager id="person-pager" styleClass="pager" />
                         </a:richList>
 

@@ -118,8 +118,9 @@
 
    <bean id="abstractDocChildCreator" abstract="true" parent="propertiesModifierCallback">
       <property name="nodeService" ref="NodeService" />
+      <property name="inMemoryChildNodeHelper" ref="inMemoryChildNodeHelper" />
    </bean>
-   
+
    <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandApplicantAbroadPropertiesModifierCallback" parent="abstractDocChildCreator">
       <property name="parametersService" ref="ParametersService" />
    </bean>
@@ -228,6 +229,10 @@ DaoAuthenticationProvider.authenticate()
    <bean class="ee.webmedia.alfresco.document.web.OutboxDocumentMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
+   </bean>
+
+   <bean id="inMemoryChildNodeHelper" class="ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper">
+      <property name="generalService" ref="generalService" />
    </bean>
 
 </beans>

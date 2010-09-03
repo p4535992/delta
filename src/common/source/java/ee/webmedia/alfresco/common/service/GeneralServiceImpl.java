@@ -183,13 +183,8 @@ public class GeneralServiceImpl implements GeneralService {
         for (Map<String, ChildAssociationRef> typedAssoc : removedChildAssocs.values()) {
             for (ChildAssociationRef assoc : typedAssoc.values()) {
                 final NodeRef childRef = assoc.getChildRef();
-                try {
+                if (!WmNode.NOT_SAVED_STORE.equals(childRef.getStoreRef())) {
                     nodeService.removeChild(assoc.getParentRef(), childRef);
-                    removedAssocs++;
-                } catch (InvalidNodeRefException e) {
-                    if (!WmNode.NOT_SAVED_STORE.equals(childRef.getStoreRef())) {
-                        throw e;
-                    }
                 }
             }
         }

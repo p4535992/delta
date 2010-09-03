@@ -1089,5 +1089,13 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     public void setCustomAttributes(Map<String, String> propertySheetItemAttributes) {
         this.propertySheetItemAttributes = propertySheetItemAttributes;
     }
+
+    @Override
+    public String toString() {
+        if (propertySheetItemAttributes == null) {
+            return super.toString();
+        }
+        return new StringBuilder("name=").append(propertySheetItemAttributes.get("name")).toString();
+    }
     // END: getters / setters
 }

@@ -12,7 +12,7 @@
 
             <a:panel id="people-panel" styleClass="column panel-100 with-pager" label="#{msg.addressbook_org_person}">
 
-               <a:richList id="people-list" viewMode="details" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+               <a:richList id="people-list" viewMode="details" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" pageSize="#{BrowseBean.pageSizeContent}"
                   value="#{DialogManager.bean.orgPeople}" var="r" initialSortColumn="name" initialSortDescending="false" width="100%">
                   <%-- Primary column with name --%>
                   <a:column primary="true">
@@ -53,6 +53,7 @@
                      </a:actionLink>
                   </a:column>
 
+                  <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
                   <a:dataPager styleClass="pager" />
                </a:richList>
             </a:panel>

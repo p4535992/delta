@@ -35,7 +35,7 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
     public boolean hasAuthority(final NodeRef nodeRef, final String userName) {
         QName type = nodeService.getType(nodeRef);
         if (!dictionaryService.isSubClass(type, ContentModel.TYPE_CONTENT)) {
-            log.trace("Node is not of type 'cm:content', type=" + type + ", refusing authority " + getAuthority());
+//            log.trace("Node is not of type 'cm:content', type=" + type + ", refusing authority " + getAuthority());
             return false;
         }
         NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();
@@ -54,15 +54,8 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
                     + getAuthority());
             return false;
         }
-        if (isDocumentManager()) {
-            log.debug("User " + userName + " is a document manager on node, type=" + type);
-            return isWriteAllowedByStatusAndDocType(parentType, parent);
-        }
-        String ownerId = (String) nodeService.getProperty(parent, DocumentCommonModel.Props.OWNER_ID);
-        if (EqualsHelper.nullSafeEquals(ownerId, userName)) {
-            log.debug("User " + userName + " matches document ownerId " + ownerId);
-            return isWriteAllowedByStatusAndDocType(parentType, parent);
-        }
+
+        boolean hasInProgressWorkflow = false;
         for (ChildAssociationRef compoundWorkflowAssoc : nodeService.getChildAssocs(parent, WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                 WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW)) {
             NodeRef compoundWorkflow = compoundWorkflowAssoc.getChildRef();
@@ -75,16 +68,16 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
                 if (!Status.IN_PROGRESS.equals((String) nodeService.getProperty(workflow, WorkflowCommonModel.Props.STATUS))) {
                     continue;
                 }
+                hasInProgressWorkflow = true;
                 // workFlow is in progress
                 QName workflowType = nodeService.getType(workflow);
                 if (!WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(workflowType) && !WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(workflowType)) {
                     continue;
                 }
-                // neither review nor signature task
+                // is review or signature task
                 boolean firstTask = true;
                 for (ChildAssociationRef taskAssoc : nodeService.getChildAssocs(workflow, WorkflowCommonModel.Assocs.TASK, WorkflowCommonModel.Assocs.TASK)) {
                     NodeRef task = taskAssoc.getChildRef();
-                    // FIXME: never true: WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(workflowType)
                     if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(workflowType) && !firstTask) {
                         break; // only first signatureTask is considered; all reviewTasks are considered
                     }
@@ -97,26 +90,36 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
                         log.debug("User " + userName + " is owner of in-progress task of workflow '" + workflowType.toPrefixString(namespaceService)
                                 + "', granting authority " + getAuthority());
                         // user is the owner of the task
-                        return isWriteAllowedByStatusAndDocType(parentType, parent);
+                        return true;
                     }
                 }
                 break; // only one workflow can be in progress under a compoundWorkflow
             }
         }
+
+        if (hasInProgressWorkflow) {
+            log.trace("Document has in-progress workflows, refusing authority " + getAuthority());
+            return false;
+        }
+
+        if (downloadFilesReadOnlyDocTypes.contains(parentType)
+                && StringUtils.equals(DocumentStatus.FINISHED.getValueName(), (String) nodeService.getProperty(parent, DocumentCommonModel.Props.DOC_STATUS))) {
+            log.trace("Document is finished and type=" + parentType + ", refusing authority " + getAuthority());
+            return false;
+        }
+
+        if (isDocumentManager()) {
+            log.debug("User " + userName + " is a document manager on node, type=" + type);
+            return true;
+        }
+        String ownerId = (String) nodeService.getProperty(parent, DocumentCommonModel.Props.OWNER_ID);
+        if (EqualsHelper.nullSafeEquals(ownerId, userName)) {
+            log.debug("User " + userName + " matches document ownerId " + ownerId);
+            return true;
+        }
+
         log.trace("No conditions met, refusing authority " + getAuthority());
         return false;
-    }
-
-    private boolean isWriteAllowedByStatusAndDocType(QName parentType, NodeRef docRef) {
-        if (downloadFilesReadOnlyDocTypes.contains(parentType)
-                && StringUtils.equals(DocumentStatus.FINISHED.getValueName(), (String) nodeService.getProperty(docRef, DocumentCommonModel.Props.DOC_STATUS))) {
-            return false;
-        }
-        if (workflowService.hasInprogressCompoundWorkflows(docRef)) {
-            return false;
-        }
-        log.debug("granting authority " + getAuthority());
-        return true;
     }
 
     @Override

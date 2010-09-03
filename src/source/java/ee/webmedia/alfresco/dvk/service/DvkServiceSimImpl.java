@@ -13,7 +13,6 @@ import java.util.Map.Entry;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.MimetypeMap;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;

@@ -52,6 +52,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.i18n.I18NUtil;
@@ -235,18 +236,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         final Node documentNode = getDocument(document);
         // first iterate over callbacks to be able to predict in which order callbacks will be called (that is registration order).
         if (!withoutPropModifyingCallbacks) {
-            for (QName callbackAspect : creationPropertiesModifierCallbacks.keySet()) {
-                for (QName docAspect : aspects) {
-                    if (dictionaryService.isSubClass(docAspect, callbackAspect)) {
-                        PropertiesModifierCallback callback = creationPropertiesModifierCallbacks.get(docAspect);
-                        callback.doWithNode(documentNode);
-                    }
-                }
-            }
+            modifyNode(documentNode, aspects, "docConstruction");
         }
         return documentNode;
     }
-    
+
     public Node createPPImportDocument(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties) {
 
         if (properties == null) {
@@ -267,16 +261,20 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         updateParentNodesContainingDocsCount(document, true);
 
         final Node documentNode = getDocument(document);
-        // first iterate over callbacks to be able to predict in which order callbacks will be called (that is registration order).
+
+        modifyNode(documentNode, aspects, "docConstruction");
+        return documentNode;
+    }
+
+    private void modifyNode(final Node documentNode, Set<QName> aspects, String phase) {
         for (QName callbackAspect : creationPropertiesModifierCallbacks.keySet()) {
             for (QName docAspect : aspects) {
                 if (dictionaryService.isSubClass(docAspect, callbackAspect)) {
                     PropertiesModifierCallback callback = creationPropertiesModifierCallbacks.get(docAspect);
-                    callback.doWithNode(documentNode);
+                    callback.doWithNode(documentNode, phase);
                 }
             }
         }
-        return documentNode;
     }
 
     @Override
@@ -323,13 +321,17 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     }
 
     @Override
-    public void changeTypeInMemory(Node node, QName newType) {
-        node.setType(newType);
-        Set<QName> aspects = node.getAspects();
+    public void changeTypeInMemory(Node docNode, QName newType) {
+        docNode.setType(newType);
+        Set<QName> aspects = docNode.getAspects();
         aspects.clear();
         aspects.addAll(generalService.getDefaultAspects(newType));
-
-        fillDefaultProperties(node);
+        fillDefaultProperties(docNode);
+        { // might need to create in-memory child associations or remove in-memory child-associations created when last time changed the document type
+            docNode.getAllChildAssociationsByAssocType().clear();
+            docNode.getRemovedChildAssociations().clear();
+            modifyNode(docNode, aspects, "docTypeChangeing"); // create childNodes for subPropSheets etc..
+        }
     }
 
     @Override

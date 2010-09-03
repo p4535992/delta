@@ -27,7 +27,7 @@
             <h:panelGroup>
                <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
                   <a:actionLink id="col1-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass="inlineAction #{DialogManager.bean.downloadType}" />
+                     styleClass="inlineAction webdav-open" />
                </r:permissionEvaluator>
                <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
                   <h:graphicImage value="#{r.fileType16}" />
@@ -35,7 +35,7 @@
             </h:panelGroup>
          </f:facet>
          <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
-            <a:actionLink id="col1-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="#{DialogManager.bean.downloadType}" />
+            <a:actionLink id="col1-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="webdav-open" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
             <h:outputText value="#{r.displayName}" />
@@ -193,7 +193,7 @@
             <h:panelGroup>
                <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
                   <a:actionLink id="col21-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
-                     styleClass="inlineAction #{DialogManager.bean.downloadType}" />
+                     styleClass="inlineAction webdav-open" />
                </r:permissionEvaluator>
                <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
                   <h:graphicImage value="#{r.fileType16}" />
@@ -201,7 +201,7 @@
             </h:panelGroup>
          </f:facet>
          <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
-            <a:actionLink id="col21-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="#{DialogManager.bean.downloadType}" />
+            <a:actionLink id="col21-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="webdav-open" />
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
             <h:outputText value="#{r.displayName}" />

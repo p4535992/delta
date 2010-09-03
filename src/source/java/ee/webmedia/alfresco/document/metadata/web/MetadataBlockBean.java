@@ -48,7 +48,6 @@ import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -56,6 +55,7 @@ import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
+import ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper;
 import ee.webmedia.alfresco.document.service.DocumentService.TransientProps;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
@@ -101,6 +101,7 @@ public class MetadataBlockBean implements Serializable {
     private transient DocumentTemplateService documentTemplateService;
     private transient ParametersService parametersService;
     private transient UIPropertySheet propertySheet;
+    private transient InMemoryChildNodeHelper inMemoryChildNodeHelper;
 
     private Node document;
     private boolean inEditMode;
@@ -645,108 +646,37 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public void removeApplicant(ActionEvent event) {
-        final QName applicantAssoc = getApplicantAssoc();
         final Node docNode = getParentNode(event);
         final String assocIndexParam = ActionUtil.getParam(event, SubPropertySheetItem.PARAM_ASSOC_INDEX);
         final int assocIndex = Integer.parseInt(assocIndexParam);
-        docNode.removeChildAssociations(applicantAssoc, assocIndex);
+        getInMemoryChildNodeHelper().removeApplicant(docNode, assocIndex);
     }
 
     /**
-     * Add applicant childNode to errand(abroad/domestic) document
+     * Add applicant childNode to errand(abroad/domestic) document or trainingApplication document
      * 
      * @param event
      */
     public void addApplicant(ActionEvent event) {
         final Node docNode = getParentNode(event);
-        final WmNode newApplicant = getGeneralService().createNewUnSaved(getApplicantType(), null);
-        log.debug("adding new Applicant to document.\n\tdocNodeRef=" + docNode.getNodeRefAsString() //
-                + "\n\tnewApplicantRef=" + newApplicant.getNodeRefAsString());
-        docNode.addChildAssociations(getApplicantAssoc(), newApplicant);
-        addErrand(newApplicant);
+        getInMemoryChildNodeHelper().addApplicant(docNode);
     }
 
     public void removeErrand(ActionEvent event) {
         final Node applicantNode = getParentNode(event);
         final String assocIndexParam = ActionUtil.getParam(event, SubPropertySheetItem.PARAM_ASSOC_INDEX);
         final int assocIndex = Integer.parseInt(assocIndexParam);
-        log.debug("removing errand (assocIndex=" + assocIndex + ") from applicant. ApplicantNodeRef=" + applicantNode.getNodeRefAsString());
-        applicantNode.removeChildAssociations(getErrandAssocType(applicantNode), assocIndex);
+        getInMemoryChildNodeHelper().removeErrand(applicantNode, assocIndex);
     }
 
     public void addErrand(ActionEvent event) {
         final Node applicantNode = getParentNode(event);
-        addErrand(applicantNode);
-    }
-
-    private void addErrand(final Node applicantNode) {
-        final QName errandType = getErrandType(applicantNode);
-        if (errandType == null) {
-            return;
-        }
-        final WmNode newErrand = getGeneralService().createNewUnSaved(errandType, null);
-        log.debug("adding new errand to applicant.\n\tapplicantNodeRef=" + applicantNode.getNodeRefAsString() //
-                + "\n\tnewApplicantRef=" + newErrand.getNodeRefAsString());
-        applicantNode.addChildAssociations(getErrandAssocType(applicantNode), newErrand);
+        getInMemoryChildNodeHelper().addErrand(applicantNode, document);
     }
 
     private Node getParentNode(ActionEvent event) {
         final SubPropertySheetItem propSheet = ComponentUtil.getAncestorComponent(event.getComponent(), SubPropertySheetItem.class);
         return propSheet.getParentPropSheetNode();
-    }
-
-    private QName getApplicantType() {
-        final QName applicantType;
-        if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType())) {
-            applicantType = DocumentSpecificModel.Types.ERRAND_ORDER_APPLICANT_ABROAD;
-        } else if (DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(document.getType())) {
-            applicantType = DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE;
-        } else if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(document.getType())) {
-            applicantType = DocumentSpecificModel.Types.TRAINING_APPLICATION_APPLICANT_TYPE;
-        } else {
-            throw new RuntimeException("Unimplemented adding applicant to document with type '" + document.getType() + "'");
-        }
-        return applicantType;
-    }
-
-    private QName getApplicantAssoc() {
-        final QName applicantAssoc;
-        if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType())) {
-            applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD;
-        } else if (DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(document.getType())) {
-            applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS;
-        } else if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(document.getType())) {
-            applicantAssoc = DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS;
-        } else {
-            throw new RuntimeException("Unimplemented adding applicant to document with type '" + document.getType() + "'");
-        }
-        return applicantAssoc;
-    }
-
-    private QName getErrandAssocType(final Node applicantNode) {
-        final QName errandAssocType;
-        if (DocumentSpecificModel.Types.ERRAND_ORDER_APPLICANT_ABROAD.equals(applicantNode.getType())) {
-            errandAssocType = DocumentSpecificModel.Assocs.ERRAND_ABROAD;
-        } else if (DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE.equals(applicantNode.getType())) {
-            errandAssocType = DocumentSpecificModel.Assocs.ERRAND_DOMESTIC;
-        } else {
-            throw new RuntimeException("Unimplemented adding errand to applicant with type '" + applicantNode.getType() + "'");
-        }
-        return errandAssocType;
-    }
-
-    private QName getErrandType(final Node applicantNode) {
-        final QName errandType;
-        if (DocumentSpecificModel.Types.ERRAND_ORDER_APPLICANT_ABROAD.equals(applicantNode.getType())) {
-            errandType = DocumentSpecificModel.Types.ERRAND_ABROAD_TYPE;
-        } else if (DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE.equals(applicantNode.getType())) {
-            errandType = DocumentSpecificModel.Types.ERRANDS_DOMESTIC_TYPE;
-        } else if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(document.getType())) {
-            return null; // trainingApplication document has applicant block, but not errand
-        } else {
-            throw new RuntimeException("Unimplemented adding errand to applicant with type '" + applicantNode.getType() + "'");
-        }
-        return errandType;
     }
 
     // ===============================================================================================================================
@@ -1561,6 +1491,14 @@ public class MetadataBlockBean implements Serializable {
                     FacesContext.getCurrentInstance()).getBean(CaseService.BEAN_NAME);
         }
         return caseService;
+    }
+
+    protected InMemoryChildNodeHelper getInMemoryChildNodeHelper() {
+        if (inMemoryChildNodeHelper == null) {
+            inMemoryChildNodeHelper = (InMemoryChildNodeHelper) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(InMemoryChildNodeHelper.BEAN_NAME);
+        }
+        return inMemoryChildNodeHelper;
     }
 
     // END: getters / setters

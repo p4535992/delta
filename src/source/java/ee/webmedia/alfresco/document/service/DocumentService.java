@@ -187,7 +187,7 @@ public interface DocumentService {
         /**
          * @param node - after node has been created
          */
-        public void doWithNode(Node node) {
+        public void doWithNode(Node node, String phase) {
             // do whatever you like after document with aspect defined by getAspectName() has been created
         }
 
@@ -207,7 +207,7 @@ public interface DocumentService {
          * @return QName of the aspect that the document must have for executing callbacks defined in this class
          */
         public abstract QName getAspectName();
-
+        
     }
 
     /**

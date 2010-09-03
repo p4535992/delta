@@ -152,8 +152,8 @@ public class EmailServiceImpl implements EmailService {
             long step1 = System.currentTimeMillis();
             mailService.send(message);
             long step2 = System.currentTimeMillis();
-            if (log.isDebugEnabled()) {
-                log.debug("sendEmail service call took " + (step2 - step0) + " ms\n    prepare message - " + (step1 - step0) + " ms\n    send message - "
+            if (log.isInfoEnabled()) {
+                log.info("sendEmail service call took " + (step2 - step0) + " ms\n    prepare message - " + (step1 - step0) + " ms\n    send message - "
                         + (step2 - step1) + " ms");
             }
         } catch (AlfrescoRuntimeException e) {
