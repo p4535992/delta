@@ -438,8 +438,8 @@ public class PostipoissDocumentsImporter {
     protected void createFilesIndexBatch(final List<Integer> batchList) {
         final Set<Integer> batchCompletedFiles = new HashSet<Integer>(BATCH_SIZE);
         for (Integer documentId : batchList) {
-            if (log.isTraceEnabled()) {
-                log.trace("Processing files with docId = " + documentId);
+            if (log.isInfoEnabled()) {
+                log.info("Processing files with docId = " + documentId);
             }
             NodeRef documentRef = completedDocumentsMap.get(documentId);
             documentService.updateSearchableFiles(documentRef);

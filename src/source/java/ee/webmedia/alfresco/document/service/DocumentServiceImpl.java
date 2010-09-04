@@ -774,6 +774,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         OutputStream allOutput = allWriter.getContentOutputStream();
 
         for (FileInfo file : files) {
+            if (log.isInfoEnabled()) {
+                log.info("Transforming fileName '" + file.getName() + "'");
+            }
             ContentReader reader = fileFolderService.getReader(file.getNodeRef());
             if (reader != null && reader.exists()) {
                 boolean readerReady = true;
