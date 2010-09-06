@@ -226,8 +226,8 @@ public class WorkflowBlockBean implements Serializable {
                     fileBlockBean.restore();
                     showModal();
                     long step3 = System.currentTimeMillis();
-                    if (log.isDebugEnabled()) {
-                        log.debug("prepareDocumentSigning took total time " + (step3 - step0) + " ms\n    load file list - " + (step1 - step0)
+                    if (log.isInfoEnabled()) {
+                        log.info("prepareDocumentSigning took total time " + (step3 - step0) + " ms\n    load file list - " + (step1 - step0)
                                 + " ms\n    service call - " + (step2 - step1) + " ms\n    reload file list - " + (step3 - step2) + " ms");
                     }
                 } catch (UnableToPerformException e) {
@@ -326,16 +326,16 @@ public class WorkflowBlockBean implements Serializable {
     public void processCert() {
         @SuppressWarnings("unchecked")
         Map<String, String> requestParameterMap = FacesContext.getCurrentInstance().getExternalContext().getRequestParameterMap();
-        String certHex = requestParameterMap.get("cert");
-        int selectedCertNumber = Integer.parseInt(requestParameterMap.get("selectedCertNumber"));
+        String certHex = requestParameterMap.get("certHex");
+        String certId = requestParameterMap.get("certId");
         try {
             long step0 = System.currentTimeMillis();
             SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(document, certHex);
             long step1 = System.currentTimeMillis();
-            showModal(signatureDigest.getDigestHex(), selectedCertNumber);
+            showModal(signatureDigest.getDigestHex(), certId);
             signatureTask.setSignatureDigest(signatureDigest);
-            if (log.isDebugEnabled()) {
-                log.debug("prepareDocumentDigest took total time " + (step1 - step0) + " ms\n    service call - " + (step1 - step0) + " ms");
+            if (log.isInfoEnabled()) {
+                log.info("prepareDocumentDigest took total time " + (step1 - step0) + " ms\n    service call - " + (step1 - step0) + " ms");
             }
         } catch (SignatureException e) {
             SignatureBlockBean.addSignatureError(e);
@@ -346,7 +346,7 @@ public class WorkflowBlockBean implements Serializable {
 
     public void signDocument() {
         FacesContext facesContext = FacesContext.getCurrentInstance();
-        String signatureHex = (String) facesContext.getExternalContext().getRequestParameterMap().get("signature");
+        String signatureHex = (String) facesContext.getExternalContext().getRequestParameterMap().get("signatureHex");
 
         try {
             long step0 = System.currentTimeMillis();
@@ -358,8 +358,8 @@ public class WorkflowBlockBean implements Serializable {
             long step3 = System.currentTimeMillis();
             restore();
             long step4 = System.currentTimeMillis();
-            if (log.isDebugEnabled()) {
-                log.debug("finishDocumentSigning took total time " + (step4 - step0) + " ms\n    service call - " + (step1 - step0)
+            if (log.isInfoEnabled()) {
+                log.info("finishDocumentSigning took total time " + (step4 - step0) + " ms\n    service call - " + (step1 - step0)
                         + " ms\n    reload file list - " + (step2 - step1) + " ms\n    reload document - " + (step3 - step2) + " ms\n    reload workflows - "
                         + (step4 - step3) + " ms");
             }
@@ -528,8 +528,8 @@ public class WorkflowBlockBean implements Serializable {
         getModalApplet().showModal();
     }
 
-    private void showModal(String digestHex, int selectedCertNumber) {
-        getModalApplet().showModal(digestHex, selectedCertNumber);
+    private void showModal(String digestHex, String certId) {
+        getModalApplet().showModal(digestHex, certId);
     }
 
     private void closeModal() {

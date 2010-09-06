@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
-import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -46,13 +45,12 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.i18n.I18NUtil;
@@ -133,8 +131,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -774,8 +772,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         OutputStream allOutput = allWriter.getContentOutputStream();
 
         for (FileInfo file : files) {
-            if (log.isInfoEnabled()) {
-                log.info("Transforming fileName '" + file.getName() + "'");
+            if (log.isTraceEnabled()) {
+                log.trace("Transforming fileName '" + file.getName() + "'");
             }
             ContentReader reader = fileFolderService.getReader(file.getNodeRef());
             if (reader != null && reader.exists()) {
@@ -1690,8 +1688,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 // Generate PDF-files for all the files that support it.
                 fileService.transformActiveFilesToPdf(document);
                 long step3 = System.currentTimeMillis();
-                if (log.isDebugEnabled()) {
-                    log.debug("prepareDocumentSigning service call took " + (step3 - step0) + " ms\n    register document - " + (step1 - step0)
+                if (log.isInfoEnabled()) {
+                    log.info("prepareDocumentSigning service call took " + (step3 - step0) + " ms\n    register document - " + (step1 - step0)
                             + " ms\n    update word files contents - " + (step2 - step1) + " ms\n    convert files to pdf - " + (step3 - step2) + " ms");
                 }
                 return null;
@@ -1719,8 +1717,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             debug += "\n    calculate digest for " + files.size() + " files - " + (step3 - step2) + " ms";
         }
         long step4 = System.currentTimeMillis();
-        if (log.isDebugEnabled()) {
-            log.debug("prepareDocumentDigest service call took " + (step4 - step0) + " ms\n    check for existing ddoc - " + (step1 - step0) + " ms" + debug);
+        if (log.isInfoEnabled()) {
+            log.info("prepareDocumentDigest service call took " + (step4 - step0) + " ms\n    check for existing ddoc - " + (step1 - step0) + " ms" + debug);
         }
         return signatureDigest;
     }
@@ -1771,8 +1769,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         long step7 = System.currentTimeMillis();
         workflowService.finishInProgressTask(task, 1);
         long step8 = System.currentTimeMillis();
-        if (log.isDebugEnabled()) {
-            log.debug("finishDocumentSigning service call took " + (step8 - step0) + " ms\n    generate ddoc filename - " + (step1 - step0) + " ms" + debug
+        if (log.isInfoEnabled()) {
+            log.info("finishDocumentSigning service call took " + (step8 - step0) + " ms\n    generate ddoc filename - " + (step1 - step0) + " ms" + debug
                     + "\n    finish workflow task - " + (step8 - step7) + " ms");
         }
     }

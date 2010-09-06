@@ -17,7 +17,6 @@ import org.alfresco.repo.configuration.ConfigurableService;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
-import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.SearchService;
@@ -152,14 +151,14 @@ public class UserServiceImpl implements UserService {
 
         List<Node> users = new ArrayList<Node>(nodeRefs.size());
         for (NodeRef nodeRef : nodeRefs) {
+            if (!nodeService.exists(nodeRef)) {
+                continue;
+            }
+
             MapNode node = new MapNode(nodeRef);
 
             // Eagerly load node properties from repository
-            try {
-                node.getProperties();
-            } catch (InvalidNodeRefException e) {
-                continue;
-            }
+            node.getProperties();
 
             users.add(node);
         }

@@ -60,10 +60,12 @@ public class PageTag extends TagSupport
    private final static String IE7COND_START = "<!--[if IE 7]>\n";
    private final static String IE7COND_END   = "<![endif]-->\n";
    
+   private final static long urlSuffix;
    private final static String[] SCRIPTS;
    static {
        List<String> scriptsList = getScripts();
        SCRIPTS = scriptsList.toArray(new String[scriptsList.size()]);
+       urlSuffix = System.currentTimeMillis();
    }
 
     private static List<String> getScripts() {
@@ -278,6 +280,7 @@ public class PageTag extends TagSupport
             out.write(STYLES_START);
             out.write(reqPath);
             out.write(css);
+            out.write("?r=" + urlSuffix);
             out.write(STYLES_MAIN);
          }
          
@@ -288,6 +291,7 @@ public class PageTag extends TagSupport
             out.write(STYLES_START);
             out.write(reqPath);
             out.write(ie7cond_css);
+            out.write("?r=" + urlSuffix);
             out.write(STYLES_MAIN);
          }
          out.write(IE7COND_END);
@@ -299,6 +303,7 @@ public class PageTag extends TagSupport
             out.write(STYLES_START);
             out.write(reqPath);
             out.write(ie6cond_css);
+            out.write("?r=" + urlSuffix);
             out.write(STYLES_MAIN);
          }
          out.write(IE6COND_END);
@@ -309,6 +314,7 @@ public class PageTag extends TagSupport
             out.write(SCRIPTS_START);
             out.write(reqPath);
             out.write(s);
+            out.write("?r=" + urlSuffix);
             out.write(SCRIPTS_END);
          }
          

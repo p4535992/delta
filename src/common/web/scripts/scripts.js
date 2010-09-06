@@ -44,7 +44,7 @@ window.onbeforeunload = function () {
       
    } else {
       // When page is submitted, user sees an hourglass cursor
-      $jQ(".submit-protection-layer").show();
+      $jQ(".submit-protection-layer").show().focus();
       $jQ.ajaxDestroy(); // do not allow any new AJAX requests to start
       // if we are navigating to another page, and one AJAX request was cancelled already but is still working on server, then that makes 2 requests in server simultaneously
       // if any new AJAX requests would start, then RequestControlFilter connection limit 2 would be exceeded and user would see a blank page
@@ -513,6 +513,9 @@ function updateState(divId, panelId, viewName) {
 }
 
 function requestUpdatePanelStateSuccess(xml) {
+   if (!xml) { // check that response is not empty
+      return;
+   }
    // Set new value to view state, so when form is submitted next time, correct state is restored.
    document.getElementById("javax.faces.ViewState").value = xml.documentElement.getAttribute('view-state');
 }
@@ -534,7 +537,7 @@ function ajaxError(request, textStatus, errorThrown) {
 
 function ajaxSubmit(componentId, componentClientId, componentContainerId, formClientId, viewName, submittableParams) {
    // When page is submitted, user sees an hourglass cursor
-   $jQ(".submit-protection-layer").show();
+   $jQ(".submit-protection-layer").show().focus();
 
    var uri = getContextPath() + '/ajax/invoke/AjaxBean.submit?componentId=' + componentId + '&componentClientId=' + componentClientId + '&viewName=' + viewName;
 
@@ -551,27 +554,28 @@ function ajaxSubmit(componentId, componentClientId, componentContainerId, formCl
       url: uri,
       data: componentChildFormElements.add(hiddenFormElements).serialize(),
       success: function (responseText) {
-         // Split response
-         var i = responseText.lastIndexOf('VIEWSTATE:');
-         var html = responseText.substr(0, i);
-         var viewState = responseText.substr(i + 10);
+         if (responseText) { // check that response is not empty
+            // Split response
+            var i = responseText.lastIndexOf('VIEWSTATE:');
+            var html = responseText.substr(0, i);
+            var viewState = responseText.substr(i + 10);
 
-         // Update HTML
-         $jQ('#' + escapeId4JQ(componentContainerId)).after(html).remove();
+            // Update HTML
+            $jQ('#' + escapeId4JQ(componentContainerId)).after(html).remove();
 
-         // Update ViewState
-         document.getElementById('javax.faces.ViewState').value = viewState;
+            // Update ViewState
+            document.getElementById('javax.faces.ViewState').value = viewState;
 
-         // Reset hidden fields
-         var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
-            return componentClientId == this.name.substring(0, componentClientId.length);
-         }).each(function() {
-            this.value = '';
-         });
+            // Reset hidden fields
+            var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
+               return componentClientId == this.name.substring(0, componentClientId.length);
+            }).each(function() {
+               this.value = '';
+            });
 
-         // Reattach behaviour
-         handleHtmlLoaded($jQ('#' + escapeId4JQ(componentContainerId)));
-
+            // Reattach behaviour
+            handleHtmlLoaded($jQ('#' + escapeId4JQ(componentContainerId)));
+         }
          $jQ(".submit-protection-layer").hide();
       },
       error: ajaxError,
@@ -934,16 +938,16 @@ function handleHtmlLoaded(context, selects) {
 //DIGITAL SIGNATURE
 //-----------------------------------------------------------------------------
 
-function processCert(cert, selectedCertNumber) {
+function processCert(certHex, certId) {
  $jQ('#signApplet').hide();
  $jQ('#signWait').show();
- return oamSubmitForm('dialog','dialog:dialog-body:processCert',null,[['cert', cert], ['selectedCertNumber', selectedCertNumber]]);
+ return oamSubmitForm('dialog','dialog:dialog-body:processCert',null,[['certHex', certHex], ['certId', certId]]);
 }
 
-function signDocument(signature) {   
+function signDocument(signatureHex) {   
  $jQ('#signApplet').hide();
  $jQ('#signWait').show();
-  return oamSubmitForm('dialog','dialog:dialog-body:signDocument',null,[['signature', signature]]);
+  return oamSubmitForm('dialog','dialog:dialog-body:signDocument',null,[['signatureHex', signatureHex]]);
 }
 
 function cancelSign() {
@@ -955,8 +959,9 @@ function cancelSign() {
 function driverError() {
 }
 
-//Some lines based on https://digidoc.sk.ee/include/JS/idCard.js
-function loadSigningPlugin(operation, hashHex, selectedCertNumber, path) {
+//Some parts based on https://digidoc.sk.ee/include/JS/idCard.js
+//Some parts based on https://id.smartlink.ee/plugin_tests/legacy-plugin/load-legacy.js
+function loadSigningPlugin(operation, hashHex, certId, path) {
 
  if (isIE())
  {
@@ -973,14 +978,14 @@ function loadSigningPlugin(operation, hashHex, selectedCertNumber, path) {
     if (operation == 'PREPARE') {
        var certHex = plugin.getSigningCertificate();
        if (certHex) {
-          var selectedCertNumber = plugin.selectedCertNumber;
-          processCert(certHex, selectedCertNumber);
+          var certId = plugin.selectedCertNumber;
+          processCert(certHex, certId);
        } else {
           $jQ('#signWait').html('Sertifikaati ei valitud või sertifikaadid on registreerimata!');
        }
 
     } else if (operation == 'FINALIZE') {
-       var signedHashHex = plugin.getSignedHash(hashHex, selectedCertNumber);
+       var signedHashHex = plugin.getSignedHash(hashHex, certId);
        if (signedHashHex) {
           signDocument(signedHashHex);
        } else {
@@ -988,8 +993,63 @@ function loadSigningPlugin(operation, hashHex, selectedCertNumber, path) {
        }
     }
  }
+ else if (navigator.userAgent.indexOf('Firefox') != -1)
+ {
+    navigator.plugins.refresh();
+    if (!navigator.mimeTypes['application/x-idcard-plugin']) {
+       $jQ('#signWait').html('ID-kaardi draiverid ei ole paigaldatud!');
+       return;
+    }
+
+    var s = document.createElement('embed');
+    s.id           = 'IdCardSigning';
+    s.type         = 'application/x-idcard-plugin';
+    s.style.width  = "1px";
+    s.style.height = "1px";
+    var b = document.getElementsByTagName("body")[0];
+    b.appendChild(s); // why does it work when appended here?
+
+    var plugin = document.getElementById('IdCardSigning');
+    $jQ.log('Loaded Mozilla plugin ' + plugin.getVersion());
+
+    if (operation == 'PREPARE') {
+       var response = eval('' + plugin.getCertificates());
+       if (response.returnCode != 0 || response.certificates.length < 1) {
+           firefoxSigningPluginError(response.returnCode);
+           return;
+       }
+
+       /* Find correct certificate */
+       var reg = new RegExp("(^| |,)Non-Repudiation($|,)");
+       var cert = null;
+       for (var i in response.certificates) {
+           cert = response.certificates[i];
+           if (reg.exec(cert.keyUsage)) break;
+       }
+
+       if (cert) {
+          var certHex = cert.cert;
+          var certId = cert.id;
+          processCert(certHex, certId);
+       } else {
+          $jQ('#signWait').html('Sertifikaati ei leitud!');
+       }
+
+    } else if (operation == 'FINALIZE') {
+       var response = eval('' + plugin.sign(certId, hashHex));
+       if (response.returnCode != 0) {
+          firefoxSigningPluginError(response.returnCode);
+          return;
+       }
+
+       var signedHashHex = response.signature; 
+       signDocument(signedHashHex);
+    }
+ }
  else
  {
+    $jQ('#signWait').html('Digiallkirjastamine ei ole toetatud!');
+/*
     //applet
     $jQ('#signWait').hide();
     $jQ('#pluginLocation').show();
@@ -1016,7 +1076,21 @@ function loadSigningPlugin(operation, hashHex, selectedCertNumber, path) {
        + ' TOKEN_ID=""'
        + ' LEGACY_LIFECYCLE="true"'
        + '><noembed></noembed></embed>';
+*/
  }  
+}
+
+function firefoxSigningPluginError(returnCode) {
+   $jQ.log('returnCode=' + returnCode);
+   if (returnCode == 1) {
+      $jQ('#signWait').html('Allkirjastamine katkestati!');
+   } else if (returnCode == 12) {
+      $jQ('#signWait').html('ID-kaart ei ole lugejas!');
+   } else if (returnCode == 16) {
+      $jQ('#signWait').html('Vale ID-kaart on lugejas!');
+   } else {
+      $jQ('#signWait').html('Allkirjastamine ebaõnnestus (vea kood ' + returnCode + ')!');
+   }
 }
 
 //https://digidoc.sk.ee/include/JS/idCard.js

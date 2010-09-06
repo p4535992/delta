@@ -29,7 +29,7 @@ function requestForLockRefresh() {
    });
 }
 function requestForLockRefreshSuccess(xml) {
-   if (!xml) {
+   if (!xml) { // check that response is not empty
       return;
    }
    xml = xml.documentElement;

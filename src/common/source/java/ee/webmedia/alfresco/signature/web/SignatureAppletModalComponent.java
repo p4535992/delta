@@ -14,24 +14,24 @@ public class SignatureAppletModalComponent extends UIOutputText {
 
     private String operation = "";
     private String digestHex = "";
-    private int selectedCertNumber = -1; 
+    private String certId = ""; 
     
     public void showModal() {
         operation = "PREPARE";
         digestHex = "";
-        selectedCertNumber = -1;
+        certId = "";
     }
 
-    public void showModal(String digestHex, int selectedCertNumber) {
+    public void showModal(String digestHex, String certId) {
         operation = "FINALIZE";
         this.digestHex = digestHex;
-        this.selectedCertNumber = selectedCertNumber;
+        this.certId = certId;
     }
 
     public void closeModal() {
         operation = "";
         digestHex = "";
-        selectedCertNumber = -1;
+        certId = "";
     }
 
     public String getOperation() {
@@ -42,8 +42,8 @@ public class SignatureAppletModalComponent extends UIOutputText {
         return digestHex;
     }
 
-    public int getSelectedCertNumber() {
-        return selectedCertNumber;
+    public String getCertId() {
+        return certId;
     }
 
     @Override
@@ -87,9 +87,9 @@ public class SignatureAppletModalComponent extends UIOutputText {
         sb.append(operation);
         sb.append("', '");
         sb.append(digestHex);
-        sb.append("', ");
-        sb.append(selectedCertNumber);
-        sb.append(", '");
+        sb.append("', '");
+        sb.append(certId);
+        sb.append("', '");
         sb.append(path);
         sb.append("') });\n");
         sb.append("</script>\n");
@@ -103,7 +103,7 @@ public class SignatureAppletModalComponent extends UIOutputText {
        values[0] = super.saveState(context);
        values[1] = operation;
        values[2] = digestHex;
-       values[3] = selectedCertNumber;
+       values[3] = certId;
        return values;
     }
 
@@ -113,7 +113,7 @@ public class SignatureAppletModalComponent extends UIOutputText {
        super.restoreState(context, values[0]);
        operation = (String) values[1];
        digestHex = (String) values[2];
-       selectedCertNumber = (Integer) values[3];
+       certId = (String) values[3];
     }
     
     private String getDialogId(FacesContext context) {
