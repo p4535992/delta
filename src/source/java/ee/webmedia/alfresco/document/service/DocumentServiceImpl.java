@@ -1269,6 +1269,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         final List<AssociationRef> replyAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
         final boolean isReplyOrFollowupDoc = isReplyOrFollowupDoc(docRef, replyAssocs);
         String regNumber = null;
+        final Date now = new Date();
         if (!isReplyOrFollowupDoc) {
             log.debug("Starting to register initialDocument, docRef=" + docRef);
             // registration of initial document ("Algatusdokument")
@@ -1327,7 +1328,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                         Date finalTermOfDeliveryAndReceiptDate = (Date) nodeService.getProperty(contractDocRef,
                                 DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT);
                         if (finalTermOfDeliveryAndReceiptDate == null) {
-                            nodeService.setProperty(contractDocRef, DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, new Date());
+                            AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
+                                @Override
+                                public NodeRef doWork() throws Exception {
+                                    nodeService.setProperty(contractDocRef, DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, now);
+                                    return null;
+                                }
+                            }, AuthenticationUtil.getSystemUserName());
                         }
                     }
                 }
@@ -1338,11 +1345,23 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                         if (nodeService.hasAspect(originalDocRef, DocumentSpecificModel.Aspects.COMPLIENCE)) {
                             Date complienceDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE);
                             if (complienceDate == null) {
-                                nodeService.setProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE, new Date());
+                                AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
+                                    @Override
+                                    public NodeRef doWork() throws Exception {
+                                        nodeService.setProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE, now);
+                                        return null;
+                                    }
+                                }, AuthenticationUtil.getSystemUserName());
 
                                 String docStatus = (String) nodeService.getProperty(originalDocRef, DOC_STATUS);
                                 if (!DocumentStatus.FINISHED.equals(docStatus)) {
-                                    nodeService.setProperty(originalDocRef, DOC_STATUS, DocumentStatus.FINISHED.getValueName());
+                                    AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
+                                        @Override
+                                        public NodeRef doWork() throws Exception {
+                                            nodeService.setProperty(originalDocRef, DOC_STATUS, DocumentStatus.FINISHED.getValueName());
+                                            return null;
+                                        }
+                                    }, AuthenticationUtil.getSystemUserName());
                                     documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
                                             , I18NUtil.getMessage("document_log_creator_dhs"));
                                 }
@@ -1368,7 +1387,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                     getAdrService().addDeletedDocument(docNode.getNodeRef());
                 }
 
-                props.put(REG_DATE_TIME.toString(), new Date());
+                props.put(REG_DATE_TIME.toString(), now);
                 propertyChangesMonitorHelper.addIgnoredProps(props, REG_DATE_TIME);
             }
 

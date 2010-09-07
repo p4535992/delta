@@ -29,7 +29,6 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -283,9 +282,9 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         List<Document> docs = documentService.getReplyOrFollowUpDocuments(document);
         List<Dokument> list = new ArrayList<Dokument>(docs.size());
         for (Document doc : docs) {
-            if (DocumentStatus.FINISHED.equals(doc.getDocStatus()) &&
-                    !AccessRestriction.INTERNAL.equals(doc.getAccessRestriction()) &&
-                    StringUtils.isNotBlank(doc.getRegNumber())) {
+            if (DocumentStatus.FINISHED.equals(doc.getDocStatus())
+                    && (AccessRestriction.OPEN.equals(doc.getAccessRestriction()) || AccessRestriction.AK.equals(doc.getAccessRestriction()))
+                    && StringUtils.isNotBlank(doc.getRegNumber())) {
 
                 Dokument dokument = new Dokument();
                 setDokumentProperties(dokument, doc, includeAdditionalProperties);
