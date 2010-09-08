@@ -28,7 +28,7 @@
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
 
 <a:panel id="add-user-search" styleClass="column panel-50" label="#{msg.select_users}">
-   <a:genericPicker id="picker" showFilter="false" queryCallback="#{DialogManager.bean.pickerCallback}" actionListener="#{DialogManager.bean.addSelectedUsers}" />
+   <a:genericPicker id="picker" showFilter="false" queryCallback="#{UserListDialog.searchUsers}" actionListener="#{DialogManager.bean.addSelectedUsers}" />
 </a:panel>
 
 <a:panel id="add-user-list" styleClass="column panel-50-f" label="#{msg.selected_users}">
