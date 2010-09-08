@@ -11,7 +11,7 @@
 
    <param:intParameter view:childName="param:employeeRegOrganisationId">
       <view:properties>
-         <param:value>1</param:value>
+         <param:value>6</param:value>
       </view:properties>
    </param:intParameter>
 

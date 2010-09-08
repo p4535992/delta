@@ -8,6 +8,9 @@ import java.io.Serializable;
 import java.util.Map;
 
 import org.alfresco.i18n.I18NUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -60,7 +63,7 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                         if (log.isDebugEnabled()) {
                             log.debug("Active responsible task created, setting document ownerId to " + task.getOwnerId());
                         }
-                        documentService.setDocumentOwner(task.getParent().getParent().getParent(), task.getOwnerId());
+                        setDocumentOwnerFromTask(task);
                     } else {
                         @SuppressWarnings("unchecked")
                         Map<QName, Serializable> props = (Map<QName, Serializable>) event.getExtras()[0];
@@ -68,12 +71,22 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                             if (log.isDebugEnabled()) {
                                 log.debug("Active responsible task ownerId updated, setting document ownerId to" + task.getOwnerId());
                             }
-                            documentService.setDocumentOwner(task.getParent().getParent().getParent(), task.getOwnerId());
+                            setDocumentOwnerFromTask(task);
                         }
                     }
                 }
             }
         }
+    }
+
+    private void setDocumentOwnerFromTask(final Task task) {
+        AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
+            @Override
+            public NodeRef doWork() throws Exception {
+                documentService.setDocumentOwner(task.getParent().getParent().getParent(), task.getOwnerId());
+                return null;
+            }
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     public void setDocumentService(DocumentService documentService) {
