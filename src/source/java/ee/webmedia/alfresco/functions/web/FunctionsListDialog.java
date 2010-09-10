@@ -222,6 +222,21 @@ public class FunctionsListDialog extends BaseDialogBean {
         }
     }
 
+    public void startPostipoissDocumentsFix(javax.faces.event.ActionEvent ev) {
+        PostipoissDocumentsImporter importer = (PostipoissDocumentsImporter) 
+            FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+            .getBean("postipoissDocumentsImporter");
+        if (importer.isStarted()) {
+            log.info("Not running documents fix, already started");
+            return;
+        }
+        try {
+            importer.runFixDocuments();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     // START: private methods
     protected void loadFunctions() {
         functions = getFunctionsService().getAllFunctions();

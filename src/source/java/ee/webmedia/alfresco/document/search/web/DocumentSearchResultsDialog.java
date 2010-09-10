@@ -1,18 +1,25 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.lucene.search.BooleanQuery;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.SendMode;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
@@ -22,12 +29,14 @@ import ee.webmedia.alfresco.simdhs.CSVExporter;
 import ee.webmedia.alfresco.simdhs.DataReader;
 import ee.webmedia.alfresco.simdhs.RichListDataReader;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * @author Alar Kvell
  */
 public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
+    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchResultsDialog.class);
 
     private static final List<String> EP_EXPORT_SEND_MODES = Arrays.asList(SendMode.MAIL.getValueName(), SendMode.REGISTERED_MAIL.getValueName());
 
@@ -44,7 +53,19 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
 
     @Override
     public void restored() {
-        documents = getDocumentSearchService().searchDocuments(searchFilter);
+        try {
+            documents = getDocumentSearchService().searchDocuments(searchFilter);
+        } catch (BooleanQuery.TooManyClauses e) {
+            Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(searchFilter.getProperties()));
+            filterProps.remove(DocumentSearchModel.Props.OUTPUT);
+            log.error("Document search of failed: "
+                    + e.getMessage()
+                    + "\n  searchFilter="
+                    + WmNode.toString(filterProps, Repository
+                            .getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService())); // stack trace is logged in the service
+            documents = Collections.emptyList();
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toomanyclauses");
+        }
         String dialog = "documentSearchResultsDialog";
         if (DocumentSearchDialog.OUTPUT_EXTENDED.equals(searchFilter.getProperties().get(DocumentSearchModel.Props.OUTPUT))) {
             dialog = "documentSearchExtendedResultsDialog";

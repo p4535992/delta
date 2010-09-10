@@ -32,4 +32,6 @@ public interface ApplicationService {
      */
     boolean isTest();
 
+    String getLogoutRedirectUrl();
+
 }

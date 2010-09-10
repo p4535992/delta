@@ -40,6 +40,7 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.search.impl.lucene.LuceneQueryParser;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
@@ -107,7 +108,14 @@ public class AddUsersDialog extends BaseDialogBean
       // add each selected user to the current group in turn
       for (UserAuthorityDetails wrapper : this.usersForGroup)
       {
-         this.getAuthService().addAuthority(this.group, wrapper.getAuthority());
+         try
+         {
+            this.getAuthService().addAuthority(this.group, wrapper.getAuthority());
+         } catch (DuplicateChildNodeNameException e) {
+            MessageUtil.addErrorMessage(context, "add_user_group_duplicate", wrapper.getName());
+            isFinished = false;
+            return null;
+         }
       }
       MessageUtil.addInfoMessage("save_success");
       return outcome;

@@ -1,5 +1,14 @@
 package ee.webmedia.alfresco.postipoiss;
 
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_EMAIL;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_JOB_TITLE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_NAME;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_PHONE;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -21,19 +30,19 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
-import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.AssociationRef;
@@ -41,6 +50,7 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.web.bean.repository.Node;
@@ -65,6 +75,7 @@ import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.Mapping;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.Pair;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropMapping;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropertyValue;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Imports documents and files from postipoiss.
@@ -108,6 +119,7 @@ public class PostipoissDocumentsImporter {
     private FileFolderService fileFolderService;
     private SendOutService sendOutService;
     private NodeService nodeService;
+    private PersonService personService;
     private PostipoissDocumentsMapper postipoissDocumentsMapper;
     private String inputFolderCsv;
     private BehaviourFilter behaviourFilter;
@@ -157,6 +169,10 @@ public class PostipoissDocumentsImporter {
         this.nodeService = nodeService;
     }
 
+    public void setPersonService(PersonService personService) {
+        this.personService = personService;
+    }
+
     public void setSendOutService(SendOutService sendOutService) {
         this.sendOutService = sendOutService;
     }
@@ -188,6 +204,20 @@ public class PostipoissDocumentsImporter {
         }
     }
 
+    public void runFixDocuments() throws Exception {
+        started = true;
+        if (!enabled) {
+            return;
+        }
+
+        try {
+            runFixDocumentsInternal();
+            log.info("\nImport fix completed\n");
+        } finally {
+            started = false;
+        }
+    }
+
     private void init() {
         inputFolder = new File(inputFolderPath);
     }
@@ -201,6 +231,7 @@ public class PostipoissDocumentsImporter {
             mappings = postipoissDocumentsMapper.loadMetadataMappings(new File(mappingsFileName));
             loadToimiks();
             loadPostponedAssocs();
+            loadUsers();
             createDocuments();
         } catch (Exception e) {
             log.info("IMPORT FAILED: DOCUMENTS IMPORT FAILED");
@@ -241,6 +272,24 @@ public class PostipoissDocumentsImporter {
         }
     }
 
+    private void runFixDocumentsInternal() throws Exception {
+        init();
+        try {
+            documentsMap = new TreeMap<Integer, File>();
+            loadCompletedDocuments(); // load this before, because it clears documentsMap
+            loadDocuments();
+            mappings = postipoissDocumentsMapper.loadMetadataMappings(new File(mappingsFileName));
+            loadFixedDocuments();
+            loadUsers();
+            fixDocuments();
+        } catch (Exception e) {
+            log.info("IMPORT FAILED: DOCUMENTS FIX FAILED");
+            throw e;
+        } finally {
+            reset();
+        }
+    }
+
     private void reset() {
         documentsMap = new TreeMap<Integer, File>();
         filesMap = new TreeMap<Integer, List<File>>();
@@ -267,7 +316,6 @@ public class PostipoissDocumentsImporter {
 
     protected void loadDocuments() {
         documentsMap = new TreeMap<Integer, File>();
-        completedDocumentsFile = new File(inputFolder, "completed_docs.csv");
         log.info("Getting xml entries of " + inputFolder);
         File[] files = inputFolder.listFiles(new FilenameFilter() {
             @Override
@@ -464,6 +512,342 @@ public class PostipoissDocumentsImporter {
         });
     }
 
+    private File fixedDocumentsFile;
+    private Set<Integer> fixedDocuments;
+    private NavigableSet<Integer> documentsToFix;
+    private Map<String /* ownerNameCleaned */, String /* ownerId */> allUsersByOwnerNameCleaned;
+    private Map<String /* ownerId */, String /* ownerName */> allUsersByOwnerId;
+    private Map<String /* ownerName */, Integer /* count */> usersFound;
+    private Map<String /* ownerName */, Integer /* count */> usersNotFound;
+
+    protected void loadUsers() {
+        log.info("Loading all users");
+        Set<NodeRef> userRefs = personService.getAllPeople();
+        allUsersByOwnerNameCleaned = new HashMap<String, String>(userRefs.size() * 2);
+        allUsersByOwnerId = new HashMap<String, String>(userRefs.size());
+        for (NodeRef nodeRef : userRefs) {
+            Map<QName, Serializable> props = nodeService.getProperties(nodeRef);
+            String ownerId = (String) props.get(ContentModel.PROP_USERNAME);
+            Assert.isTrue(StringUtils.isNotBlank(ownerId), nodeRef.toString());
+            String firstName = cleanUserFullName((String) props.get(ContentModel.PROP_FIRSTNAME));
+            String lastName = cleanUserFullName((String) props.get(ContentModel.PROP_LASTNAME));
+
+            String combination1 = firstName + lastName;
+            Assert.isTrue(!allUsersByOwnerNameCleaned.containsKey(combination1), combination1);
+
+            String combination2 = lastName + firstName;
+            Assert.isTrue(!allUsersByOwnerNameCleaned.containsKey(combination2), combination2);
+
+            allUsersByOwnerNameCleaned.put(combination1, ownerId);
+            allUsersByOwnerNameCleaned.put(combination2, ownerId);
+            allUsersByOwnerId.put(ownerId, UserUtil.getPersonFullName1(props));
+        }
+        log.info("Loaded " + allUsersByOwnerId.size() + " users");
+
+        usersFound = new HashMap<String, Integer>();
+        usersNotFound = new HashMap<String, Integer>();
+    }
+
+    protected void loadFixedDocuments() throws Exception {
+        fixedDocumentsFile = new File(inputFolder, "fixed_documents.csv");
+        fixedDocuments = new HashSet<Integer>();
+
+        if (!fixedDocumentsFile.exists()) {
+            log.info("Skipping loading previously fixed documents, file does not exist: " + fixedDocumentsFile);
+        } else {
+
+            log.info("Loading previously fixed documents from file " + fixedDocumentsFile);
+
+            CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(fixedDocumentsFile)), CSV_SEPARATOR, Charset.forName("UTF-8"));
+            try {
+                reader.readHeaders();
+                while (reader.readRecord()) {
+                    Integer documentId = new Integer(reader.get(0));
+                    fixedDocuments.add(documentId);
+                }
+            } finally {
+                reader.close();
+            }
+            log.info("Loaded " + fixedDocuments.size() + " fixed documents");
+        }
+
+        documentsToFix = new TreeSet<Integer>(completedDocumentsMap.keySet());
+        documentsToFix.removeAll(fixedDocuments);
+
+        log.info("Total documents to fix: " + documentsToFix.size());
+    }
+
+    private void fixDocuments() {
+        int previousSize = documentsToFix.size();
+        NavigableSet<Integer> headSet = documentsToFix.headSet(stopAfterDocumentId, true);
+        log.info("Removed documentId-s after stopAfterDocumentId from current documents to fix list: " + previousSize + " -> " + headSet.size());
+        if (headSet.size() == 0) {
+            log.info("There are no documents to fix.");
+        } else {
+            log.info("Starting fixing documents. First documentId=" + headSet.first() + " stopAfterDocumentId=" + stopAfterDocumentId);
+            DocumentsFixBatchProgress batchProgress = new DocumentsFixBatchProgress(headSet);
+            try {
+                batchProgress.run();
+            } finally {
+                writeUsersFound();
+            }
+            log.info("Document FIXING COMPLETE :)");
+        }
+    }
+
+    private void writeUsersFound() {
+        File usersFoundFile = new File(inputFolder, "users_found.csv");
+        try {
+            CsvWriter writer = new CsvWriter(new FileWriter(usersFoundFile, true), CSV_SEPARATOR);
+            try {
+                for (Entry<String, Integer> entry : usersFound.entrySet()) {
+                    writer.writeRecord(new String[] { entry.getKey(), entry.getValue().toString() });
+                }
+            } finally {
+                writer.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error writing CSV file '" + usersFoundFile + "': " + e.getMessage(), e);
+        }
+        File usersNotFoundFile = new File(inputFolder, "users_not_found.csv");
+        try {
+            CsvWriter writer = new CsvWriter(new FileWriter(usersNotFoundFile, true), CSV_SEPARATOR);
+            try {
+                for (Entry<String, Integer> entry : usersNotFound.entrySet()) {
+                    writer.writeRecord(new String[] { entry.getKey(), entry.getValue().toString() });
+                }
+            } finally {
+                writer.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error writing CSV file '" + usersNotFoundFile + "': " + e.getMessage(), e);
+        }
+    }
+
+    private class DocumentsFixBatchProgress extends BatchProgress<Integer> {
+
+        public DocumentsFixBatchProgress(Set<Integer> origin) {
+            this.origin = origin;
+            processName = "Documents fixing";
+        }
+
+        @Override
+        void executeBatch() throws Exception {
+            fixDocumentsBatch(batchList);
+        }
+    }
+
+    protected void fixDocumentsBatch(final List<Integer> batchList) throws Exception {
+        final List<String[]> batchInfo = new ArrayList<String[]>(BATCH_SIZE);
+        for (Integer documentId : batchList) {
+            String[] info = fixDocument(documentId);
+            batchInfo.add(info);
+        }
+        bindCsvWriteAfterCommit(fixedDocumentsFile, new CsvWriterClosure() {
+
+            @Override
+            public void execute(CsvWriter writer) throws IOException {
+                for (String[] info : batchInfo) {
+                    writer.writeRecord(info);
+                    // fixedDocuments.add(documentId);
+                }
+            }
+
+            @Override
+            public String[] getHeaders() {
+                return new String[] { "documentId" };
+            }
+        });
+    }
+
+    private String[] fixDocument(Integer documentId) throws Exception {
+        if (log.isDebugEnabled()) {
+            log.debug("Fixing document docId = " + documentId);
+        }
+        NodeRef documentRef = completedDocumentsMap.get(documentId);
+        File file = documentsMap.get(documentId);
+
+        Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
+        Map<QName, Serializable> origProps = nodeService.getProperties(documentRef);
+
+        String accessRestriction = (String) origProps.get(ACCESS_RESTRICTION);
+        setAccessRestriction(documentId, file, setProps, accessRestriction);
+
+        // ========= importDoc =========
+        
+        SAXReader xmlReader = new SAXReader();
+        String fileName = file.getName();
+        String type = fileName.substring(0, fileName.lastIndexOf('_'));
+        Element root = xmlReader.read(file).getRootElement();
+        if ("Kiri".equals(type)) {
+            Element el = root.element("suund");
+            String suund = null;
+            if (el != null) {
+                suund = el.getStringValue();
+            }
+            if (!"sissetulev".equals(suund)) {
+                suund = "väljaminev";
+            }
+            type = "Kiri-" + suund;
+        }
+        Mapping mapping = mappings.get(type);
+        Assert.notNull(mapping, type);
+
+        Map<QName, Serializable> ppProps = mapProperties(root, mapping);
+        if (!ppProps.containsKey(OWNER_NAME)) {
+            String ownerName = PostipoissUtil.findAnyValue(root, "/document/tegevused/tegevus[tegevus_liik=1]/kellelt_tekst");
+            if (StringUtils.isBlank(ownerName)) {
+                ownerName = (String) ppProps.get(DocumentCommonModel.Props.SIGNER_NAME);
+            }
+            if (StringUtils.isBlank(ownerName)) {
+                ownerName = IMPORTER_NAME;
+            }
+            ppProps.put(OWNER_NAME, ownerName);
+        }
+
+        // =============================
+
+        String origOwnerName = (String) origProps.get(OWNER_NAME);
+        String ppOwnerName = (String) ppProps.get(OWNER_NAME);
+        if (StringUtils.equals(origOwnerName, ppOwnerName)) {
+
+            setOwnerProperties(ppProps, setProps);
+
+            setProps.put(OWNER_JOB_TITLE, ppProps.get(OWNER_JOB_TITLE));
+            setProps.put(OWNER_ORG_STRUCT_UNIT, ppProps.get(OWNER_ORG_STRUCT_UNIT));
+            setProps.put(OWNER_EMAIL, ppProps.get(OWNER_EMAIL));
+            setProps.put(OWNER_PHONE, ppProps.get(OWNER_PHONE));
+        }
+
+        if (setProps.size() > 0) {
+            setProps.put(ContentModel.PROP_MODIFIER, "DELTA");
+            nodeService.setProperties(documentRef, setProps);
+        }
+        
+        return new String[] {
+                documentId.toString(),
+                documentRef.toString(),
+                Boolean.toString(setProps.containsKey(ACCESS_RESTRICTION)),
+                accessRestriction, // Asutusesiseseks kasutamiseks (38000), Avalik (141000), 
+                Boolean.toString(StringUtils.equals(origOwnerName, ppOwnerName)),
+                ppOwnerName,
+                (String) setProps.get(OWNER_ID), // kõik = Liivi isikukood
+                (String) setProps.get(OWNER_NAME), // kõik täidetud
+                (String) setProps.get(OWNER_JOB_TITLE)/*, // 247 täidetud, võib erineda natuke nime sulgudes olevast ametinimetusest - kumba eelistada?
+                (String) setProps.get(OWNER_EMAIL), // tühi
+                (String) setProps.get(OWNER_PHONE), // tühi
+                (String) props.get(OWNER_ORG_STRUCT_UNIT) // 85000 täidetud*/
+        };
+    }
+
+    private void setOwnerProperties(Map<QName, Serializable> getProps, Map<QName, Serializable> setProps) {
+        String ppOwnerName = (String) getProps.get(OWNER_NAME);
+        String ownerId = null;
+        String ownerJobTitle = null;
+
+        String ownerName = ppOwnerName;
+        if (ownerName.endsWith(")")) {
+            int i = ownerName.lastIndexOf("(");
+            Assert.isTrue(i >= 0, ppOwnerName);
+            boolean cont = true;
+            if (i - 7 >= 2 && ownerName.substring(i - 7, i).equals("puhkab ")) {
+                ownerName = ownerName.substring(0, i - 7);
+                
+                if (ownerName.endsWith(")")) {
+                    i = ownerName.lastIndexOf("(");
+                    Assert.isTrue(i >= 0, ppOwnerName);
+                } else {
+                    cont = false;
+                }
+            }
+            
+            if (cont) {
+                ownerJobTitle = StringUtils.trim(StringUtils.strip(ownerName.substring(i + 1, ownerName.length() - 1)));
+                ownerName = StringUtils.trim(StringUtils.strip(ownerName.substring(0, i)));
+                if (ownerJobTitle.startsWith("puhkab") || ownerJobTitle.indexOf("asendab ") >= 0) {
+                    ownerJobTitle = "";
+                } else {
+                    while (ownerJobTitle.indexOf("  ") >= 0) {
+                        ownerJobTitle = StringUtils.replace(ownerJobTitle, "  ", " ");
+                    }
+                }
+            }
+        }
+
+        int i = ownerName.lastIndexOf(")");
+        if (i >= 0) {
+            Assert.isTrue(i >= 4 && i <= ownerName.length() - 3, ppOwnerName);
+            int j = ownerName.lastIndexOf("(");
+            Assert.isTrue(j < i - 1 && j >= 2, ppOwnerName);
+            String removeString = ownerName.substring(j + 1, i).toLowerCase();
+            if (removeString.indexOf("puhkab") >= 0 || removeString.indexOf("puhkusel") >= 0 || removeString.indexOf("asendab") >= 0 || removeString.equals("haiguslehel") || (removeString.indexOf("lapsehooldus") >= 0 && removeString.indexOf("puhkus") >= 0) || removeString.equals("ei aktiveeri seda kontot, teha uus isik") || removeString.startsWith("05.07-")) {
+                ownerName = StringUtils.trim(StringUtils.strip(ownerName.substring(0, j))) + " " + StringUtils.trim(StringUtils.strip(ownerName.substring(i + 1)));
+            }
+            // else
+            // Natalja Zinovjeva (peaspetsialist), Ene Padrik
+            // Terje Enula (peaspetsialist), Enel Pungas
+            // Peeter Küüts (nõunik), Mart Riisenberg
+        }
+        ownerName = StringUtils.trim(StringUtils.strip(ownerName));
+        while (ownerName.indexOf("  ") >= 0) {
+            ownerName = StringUtils.replace(ownerName, "  ", " ");
+        }
+        // Assert.isTrue(ownerName.indexOf("(") == -1 && ownerName.indexOf(")") == -1, ppOwnerName); // nende kolme ülemise näite puhul jääb ainult sisse sulud
+        
+        if (StringUtils.isNotBlank(ownerName)) {
+            ownerId = allUsersByOwnerNameCleaned.get(cleanUserFullName(ownerName)); // if not found then null
+            if (StringUtils.isBlank(ownerId)) {
+                Integer count = usersNotFound.get(ownerName);
+                if (count == null) {
+                    count = 0;
+                }
+                count++;
+                usersNotFound.put(ownerName, count);
+            } else {
+                ownerName = allUsersByOwnerId.get(ownerId);
+                Assert.isTrue(StringUtils.isNotBlank(ownerName), ownerId);
+                Integer count = usersFound.get(ownerName);
+                if (count == null) {
+                    count = 0;
+                }
+                count++;
+                usersFound.put(ownerName, count);
+            }
+        }
+        if (StringUtils.isNotBlank(ownerJobTitle)) {
+            getProps.put(OWNER_JOB_TITLE, ownerJobTitle); // kirjutab üle kui PP xml'is oli juba olemas
+        }
+
+        // SET OWNER
+        setProps.put(OWNER_ID, ownerId);
+        setProps.put(OWNER_NAME, ownerName);
+    }
+
+    private void setAccessRestriction(Integer documentId, File file, Map<QName, Serializable> setProps, String accessRestriction) {
+        if ("Avalik".equals(accessRestriction) || "AK".equals(accessRestriction) || "Majasisene".equals(accessRestriction)) {
+            // OK
+        } else if ("Asutusesiseseks kasutamiseks".equals(accessRestriction)) {
+            setProps.put(ACCESS_RESTRICTION, "AK");
+        } else if ("Juurdepääsupiirang eraelulistele isikuandmetele".equals(accessRestriction) || "JuurdepÃ¤Ã¤supiirang eraelulistele isikuandmetele".equals(accessRestriction)) {
+            setProps.put(ACCESS_RESTRICTION, "AK");
+            setProps.put(ACCESS_RESTRICTION_REASON, "AvTS § 35, lg 1 p 12");
+        } else {
+            // Need to search these messages from logs afterwards and correct the documents manually!
+            log.error("Invalid accessRestriction value '" + accessRestriction + "', documentId=" + documentId + ", file=" + file.getName());
+        }
+    }
+
+    private static String cleanUserFullName(String strippedOwnerName) {
+        if (strippedOwnerName == null) {
+            return "";
+        }
+        strippedOwnerName = StringUtils.deleteWhitespace(strippedOwnerName.toLowerCase());
+        for (char c : new char[] {'-', '/', '.', ',', ';', '"', '&', '@', '<', '>'}) {
+            strippedOwnerName = StringUtils.remove(strippedOwnerName, c);
+        }
+        return StringUtils.trim(strippedOwnerName);
+    }
+
     private abstract class BatchProgress<E> {
         Collection<E> origin;
         List<E> batchList;
@@ -636,6 +1020,7 @@ public class PostipoissDocumentsImporter {
     protected void loadCompletedDocuments() throws Exception {
         completedDocumentsMap = new TreeMap<Integer, NodeRef>();
 
+        completedDocumentsFile = new File(inputFolder, "completed_docs.csv");
         if (!completedDocumentsFile.exists()) {
             log.info("Skipping loading previously completed documentId-s, file does not exist: " + completedDocumentsFile);
             return;
@@ -745,7 +1130,11 @@ public class PostipoissDocumentsImporter {
         } else {
             log.info("Starting documents import. First documentId=" + documentsMap.keySet().iterator().next() + " stopAfterDocumentId=" + stopAfterDocumentId);
             DocumensBatchProgress batchProgress = new DocumensBatchProgress();
-            batchProgress.run();
+            try {
+                batchProgress.run();
+            } finally {
+                writeUsersFound();
+            }
             log.info("Documents IMPORT COMPLETE :)");
         }
 
@@ -1023,6 +1412,8 @@ public class PostipoissDocumentsImporter {
         propsMap.put(ContentModel.PROP_CREATOR, "DELTA");
         propsMap.put(ContentModel.PROP_MODIFIER, "DELTA");
 
+        setAccessRestriction(documentId, xml, propsMap, (String) propsMap.get(ACCESS_RESTRICTION));
+
         if (!propsMap.containsKey(DocumentCommonModel.Props.OWNER_NAME)) {
             String ownerName = PostipoissUtil.findAnyValue(root, "/document/tegevused/tegevus[tegevus_liik=1]/kellelt_tekst");
             if (StringUtils.isBlank(ownerName)) {
@@ -1033,6 +1424,8 @@ public class PostipoissDocumentsImporter {
             }
             propsMap.put(DocumentCommonModel.Props.OWNER_NAME, ownerName);
         }
+
+        setOwnerProperties(propsMap, propsMap);
 
         if (!propsMap.containsKey(DocumentCommonModel.Props.DOC_NAME)) {
             String ownerName = root.elementText("dok_liik");

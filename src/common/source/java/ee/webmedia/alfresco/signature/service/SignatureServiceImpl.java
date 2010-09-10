@@ -13,12 +13,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
+import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
@@ -50,6 +52,7 @@ public class SignatureServiceImpl implements SignatureService {
 
     private FileFolderService fileFolderService;
     private NodeService nodeService;
+    private MimetypeService mimetypeService;
 
     private String jDigiDocCfg;
 
@@ -59,6 +62,10 @@ public class SignatureServiceImpl implements SignatureService {
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+
+    public void setMimetypeService(MimetypeService mimetypeService) {
+        this.mimetypeService = mimetypeService;
     }
 
     public void setjDigiDocCfg(String jDigiDocCfg) {
@@ -250,11 +257,17 @@ public class SignatureServiceImpl implements SignatureService {
 
     private DataItem getDataItem(NodeRef nodeRef, SignedDoc ddoc, int id, boolean includeData) {
         DataFile dataFile = ddoc.getDataFile(id);
+        String fileName = dataFile.getFileName();
+        String mimeType = dataFile.getMimeType();
+        String guessedMimetype = mimetypeService.guessMimetype(fileName);
+        if (MimetypeMap.MIMETYPE_BINARY.equals(guessedMimetype) && org.apache.commons.lang.StringUtils.isNotBlank(mimeType)) {
+            guessedMimetype = mimeType;
+        }
         if (includeData) {
-            return new DataItem(nodeRef, id, dataFile.getFileName(), dataFile.getMimeType(), dataFile.getInitialCodepage(), dataFile.getSize(), dataFile
+            return new DataItem(nodeRef, id, fileName, guessedMimetype, dataFile.getInitialCodepage(), dataFile.getSize(), dataFile
                     .getBodyAsData());
         }
-        return new DataItem(nodeRef, id, dataFile.getFileName(), dataFile.getMimeType(), dataFile.getInitialCodepage(), dataFile.getSize());
+        return new DataItem(nodeRef, id, fileName, guessedMimetype, dataFile.getInitialCodepage(), dataFile.getSize());
     }
 
     private List<DataItem> getDataItems(NodeRef nodeRef, SignedDoc ddoc, boolean includeData) {

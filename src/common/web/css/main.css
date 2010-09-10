@@ -1278,8 +1278,9 @@ input[type="checkbox"] {
     margin-left: 4px;
 }
 
-#task-search-panel .modalpopup-content-inner table td input[type="text"] {
-    width: 260px !important;
+.modalpopup-content .task-search-with-filter table td input[type="text"] {
+    width: 218px !important;
+    margin-left: 4px;
 }
 
 .modalpopup-content-inner table select[multiple="multiple"], 

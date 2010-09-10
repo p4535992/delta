@@ -23,6 +23,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +79,8 @@ public class DhlXTeeServiceImplTest extends TestCase {
     private static final String DVK_ORGANIZATIONS_CACHEFILE = RECEIVE_OUTPUT_DIR + "/dvkOrganizationsCache.ser";
     private static final File testFilesToSendFolder = new File("common/source/test/java/ee/webmedia/xtee/client/testFilesToSend");
 
+    private static boolean markOnlyTestDocumentsRead = true;
+    
     private static DhlXTeeService.DvkOrganizationsUpdateStrategy cachePeriodUpdateStrategy //
     = new DhlXTeeService.DvkOrganizationsCacheingUpdateStrategy().setMaxUpdateInterval(24).setTimeUnit(Calendar.HOUR);
     private static List<String> recipients;
@@ -283,15 +286,23 @@ public class DhlXTeeServiceImplTest extends TestCase {
     }
 
     public void testMarkDocumentsReceived() {
-        if (receivedDocumentsFailed) {
-            if (receivedDocumentIds == null) {
-                receivedDocumentIds = new ArrayList<String>();
+        final Collection<String> docsToMarkRead;
+        if(markOnlyTestDocumentsRead) {
+            // don't mark those documents read that were not sent during this test - someone might acutaly 
+            // be waiting for them to arrive
+            docsToMarkRead = sentDocIds;
+        } else {
+            if (receivedDocumentsFailed) {
+                if (receivedDocumentIds == null) {
+                    receivedDocumentIds = new ArrayList<String>();
+                }
+                // if call to receivedDocuments failed, then marking those documents read, that were sent for testing
+                receivedDocumentIds.addAll(sentDocIds); 
             }
-            // if call to receivedDocuments failed, then marking those documents read, that were sent for testing
-            receivedDocumentIds.addAll(sentDocIds); 
+            docsToMarkRead = receivedDocumentIds;
         }
-        log.debug("Starting to mark document received - receivedDocumentIds=" + receivedDocumentIds);
-        dhl.markDocumentsReceived(receivedDocumentIds);
+        log.info("Starting to mark "+(markOnlyTestDocumentsRead ? "only test": "received" )+" document received - receivedDocumentIds=" + docsToMarkRead);
+        dhl.markDocumentsReceived(docsToMarkRead);
     }
 
     /**

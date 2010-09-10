@@ -263,7 +263,14 @@ public class SearchRenderer extends BaseRenderer {
         out.write(ComponentUtil.generateAjaxFormSubmit(context, picker, picker.getClientId(context), "1" /* ACTION_CLEAR */));
         out.write("\">");
         out.write(Application.getMessage(context, CLOSE_WINDOW_MSG));
-        out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner\">");
+        out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> searchAttributes = search.getAttributes();
+        if (searchAttributes.containsKey(Search.STYLE_CLASS_KEY)) {
+            out.write(" ");
+            out.write((String) searchAttributes.get(Search.STYLE_CLASS_KEY));
+        }
+        out.write("\">");
 
         Utils.encodeRecursive(context, picker);
 

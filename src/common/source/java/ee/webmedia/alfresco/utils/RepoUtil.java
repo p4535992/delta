@@ -2,13 +2,14 @@ package ee.webmedia.alfresco.utils;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
@@ -151,4 +152,27 @@ public class RepoUtil {
         }
     }
 
+    public static Map<QName, Serializable> getNotEmptyProperties(Map<QName, Serializable> props) {
+        Map<QName, Serializable> results = new HashMap<QName, Serializable>();
+        for (Entry<QName, Serializable> entry : props.entrySet()) {
+            Serializable value = entry.getValue();
+            if (value == null) {
+                continue;
+            }
+            if (value instanceof Collection) {
+                Collection<?> collection = (Collection<?>) value;
+                if (collection.size() > 0) {
+                    for (Object object : collection) {
+                        if (StringUtils.isNotBlank(object.toString())) {
+                            results.put(entry.getKey(), value);
+                            break;
+                        }
+                    }
+                }
+            } else if (StringUtils.isNotEmpty(value.toString())) {
+                results.put(entry.getKey(), value);
+            }
+        }
+        return results;
+    }
 }

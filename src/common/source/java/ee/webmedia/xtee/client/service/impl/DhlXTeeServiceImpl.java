@@ -815,8 +815,14 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
         private void writeXmlObject(XmlObject xmlObject, OutputStream outputStream) {
             XmlOptions options = new XmlOptions();
             options.setCharacterEncoding(DVK_MESSAGE_CHARSET);
-            options.setSavePrettyPrint();
-            options.setUseDefaultNamespace();
+            { // fix DigiDoc client bug (also present with PostiPoiss doc-management-system)
+              // they don't accept that SignedDoc have nameSpace alias set
+                options.setSavePrettyPrint();
+                HashMap<String, String> suggestedPrefixes = new HashMap<String, String>(2);
+                suggestedPrefixes.put("http://www.sk.ee/DigiDoc/v1.3.0#", "");
+                // suggestedPrefixes.put("http://www.sk.ee/DigiDoc/v1.4.0#", "");
+                options.setSaveSuggestedPrefixes(suggestedPrefixes);
+            }
             try {
                 xmlObject.save(outputStream, options);
             } catch (IOException e) {
@@ -916,6 +922,8 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
         try {
             writer = createOutputStreamWriter(gzippedAndEncodedOutputStream);
             gzipBase64OutputStream = createGzipBase64OutputStream(writer);
+
+//            gzipBase64OutputStream = new FileOutputStream("C:/tmp/sim/dvkReceivedDocs/dvkSendTest.xml");// FIXME:
             sendDocumentsHelper.writeXmlObject(xmlObject, gzipBase64OutputStream);
         } catch (IOException e1) {
             throw new RuntimeException("Failed to encode input", e1);
@@ -923,6 +931,8 @@ public class DhlXTeeServiceImpl extends XTeeDatabaseService implements DhlXTeeSe
             IOUtils.closeQuietly(gzipBase64OutputStream);
             IOUtils.closeQuietly(writer);
         }
+//        if (true)
+//            throw new RuntimeException("test");// FIXME:
         return gzippedAndEncodedOutputStream.toByteArray();
     }
 

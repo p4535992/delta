@@ -1246,6 +1246,9 @@ public class MetadataBlockBean implements Serializable {
      * @return true if current user holds the lock after execution of this function
      */
     private boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) {
+        if (document == null) {
+            return false;
+        }
         final DocLockService lockService = getDocLockService();
         final NodeRef docRef = document.getNodeRef();
         synchronized (document) { // to avoid extending lock after unlock(save/cancel)

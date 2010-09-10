@@ -122,6 +122,7 @@
       <property name="projectVersionLocation" value="classpath:ee/webmedia/alfresco/common/project-version.properties" />
       <property name="projectName" value="${project.name}" />
       <property name="test" value="${project.test}" />
+      <property name="logoutRedirectUrl" value="${cas.casServerUrl}logout" />
    </bean>
 
    <bean id="generalService" class="ee.webmedia.alfresco.common.service.GeneralServiceImpl">

@@ -8,7 +8,6 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.user.service.UserService;
 
 /**
@@ -21,9 +20,6 @@ public class ReopenDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
-        if(node.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
-            return false;
-        }
         ViewStateActionEvaluator viewStateEval = new ViewStateActionEvaluator();
         boolean isInViewState = viewStateEval.evaluate(node);
 

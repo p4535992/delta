@@ -1,9 +1,12 @@
 package ee.webmedia.alfresco.document.search.web;
 
+import java.util.Collections;
+
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.apache.lucene.search.BooleanQuery;
 
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
@@ -14,6 +17,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
+    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentQuickSearchResultsDialog.class);
 
     private String searchValue;
 
@@ -24,7 +28,13 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
 
     @Override
     public void restored() {
-        documents = getDocumentSearchService().searchDocumentsQuick(searchValue);
+        try {
+            documents = getDocumentSearchService().searchDocumentsQuick(searchValue);
+        } catch (BooleanQuery.TooManyClauses e) {
+            log.error("Quick search of '" + searchValue + "' failed: " + e.getMessage()); // stack trace is logged in the service
+            documents = Collections.emptyList();
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toomanyclauses");
+        }
 
         // Quick search must "reset the current dialog stack" and put the document list dialog as the base dialog into the stack.
         // Also in case of quick search the cancel button is not displayed (the whole button container is not rendered through

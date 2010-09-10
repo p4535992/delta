@@ -474,6 +474,12 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(context, e);
             return false;
+        } catch (Exception e) {
+            log.error("Sending out document failed\n  nodeRef=" + model.getNodeRef() + "\n  names=" + names + "\n  emails=" + emails + "\n  modes=" + modes
+                    + "\n  senderEmail=" + model.getSenderEmail() + "\n  subject=" + model.getSubject() + "\n  content="
+                    + (model.getContent() == null ? "null" : "String[" + model.getContent().length() + "]") + "\n  selectedFiles=" + model.getSelectedFiles()
+                    + "\n  zip=" + model.isZip(), e);
+            result = false;
         }
         if (!result) {
             MessageUtil.addErrorMessage(context, "document_send_failed");

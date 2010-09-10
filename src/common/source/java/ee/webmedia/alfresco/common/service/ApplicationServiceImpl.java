@@ -17,6 +17,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private String projectVersion;
     private String projectName;
     private boolean test;
+    private String logoutRedirectUrl;
 
     public void setModuleService(ModuleService moduleService) {
         this.moduleService = moduleService;
@@ -36,6 +37,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     public void setTest(boolean test) {
         this.test = test;
+    }
+
+    public void setLogoutRedirectUrl(String logoutRedirectUrl) {
+        this.logoutRedirectUrl = logoutRedirectUrl;
     }
 
     @Override
@@ -61,6 +66,11 @@ public class ApplicationServiceImpl implements ApplicationService {
     @Override
     public boolean isTest() {
         return test;
+    }
+
+    @Override
+    public String getLogoutRedirectUrl() {
+        return logoutRedirectUrl;
     }
 
     private static Properties loadProperties(Resource resource) {

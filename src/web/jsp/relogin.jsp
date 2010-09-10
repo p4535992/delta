@@ -31,6 +31,9 @@
 <%@ page import="org.alfresco.web.app.servlet.AuthenticationHelper" %>
 <%@ page import="javax.servlet.http.Cookie" %>
 <%@ page import="ee.webmedia.alfresco.orgstructure.amr.AMRAuthenticationFilter" %>
+<%@ page import="ee.webmedia.alfresco.common.service.ApplicationService" %>
+<%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
+<%@ page import="javax.faces.context.FacesContext"%>
 
 <%@ page buffer="16kb" contentType="text/html;charset=UTF-8" %>
 <%@ page isELIgnored="false" %>
@@ -46,6 +49,10 @@
          response.addCookie(authCookie);
       }
    }
+
+   ApplicationService applicationService = (ApplicationService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "ApplicationService");
+   response.sendRedirect(applicationService.getLogoutRedirectUrl());
+
 %>
 
 

@@ -1164,8 +1164,8 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             }
             return resultSet;
         } catch (BooleanQuery.TooManyClauses e) {
-            log.error("Search failed, query " + queryName + " expanded over limit\n    store=" + sp.getStores() + "\n    limit=" + sp.getLimit()
-                    + "\n    limitBy=" + sp.getLimitBy().toString() + "\n    query=" + sp.getQuery(), e);
+            log.error("Search failed, query expanded over limit\n    queryName=" + queryName + "\n    store=" + sp.getStores() + "\n    limit=" + sp.getLimit()
+                    + "\n    limitBy=" + sp.getLimitBy().toString() + "\n    exceptionMessage=" + e.getMessage());
             throw e;
         }
     }
