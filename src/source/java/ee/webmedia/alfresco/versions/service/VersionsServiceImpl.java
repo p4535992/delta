@@ -9,6 +9,7 @@ import java.util.Map;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
+import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
@@ -17,6 +18,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
 
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.versions.model.Version;
@@ -30,6 +32,7 @@ public class VersionsServiceImpl implements VersionsService {
     private NodeService nodeService;
     private UserService userService;
     private DocumentLogService documentLogService;
+    private DictionaryService dictionaryService;
 
     @Override
     public String getPersonFullNameFromAspect(NodeRef nodeRef, String userName) {
@@ -47,8 +50,7 @@ public class VersionsServiceImpl implements VersionsService {
 
     @Override
     public List<Version> getAllVersions(NodeRef nodeRef, String fileName) {
-        @SuppressWarnings("unchecked")
-        List<org.alfresco.service.cmr.version.Version> versionHistory = (List) versionService.getVersionHistory(nodeRef).getAllVersions();
+        List<org.alfresco.service.cmr.version.Version> versionHistory = (List<org.alfresco.service.cmr.version.Version>) versionService.getVersionHistory(nodeRef).getAllVersions();
         List<Version> list = new ArrayList<Version>(versionHistory.size());
         for (org.alfresco.service.cmr.version.Version v : versionHistory) {
             Version ver = transformVersion(v, fileName);
@@ -79,8 +81,11 @@ public class VersionsServiceImpl implements VersionsService {
                 // check the flag as true to prevent creation of new versions until the node is unlocked in UnlockMethod 
                 setVersionLockableAspect(nodeRef, true);
                 // log the event
-                documentLogService.addDocumentLog(nodeService.getPrimaryParent(nodeRef).getParentRef() //
-                        , I18NUtil.getMessage("document_log_status_fileChanged", filename));
+                NodeRef parentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
+                if (dictionaryService.isSubClass(nodeService.getType(parentRef), DocumentCommonModel.Types.DOCUMENT)) {
+                    documentLogService.addDocumentLog(parentRef //
+                            , I18NUtil.getMessage("document_log_status_fileChanged", filename));
+                }
             }
         }
     }
@@ -183,6 +188,10 @@ public class VersionsServiceImpl implements VersionsService {
 
     public void setDocumentLogService(DocumentLogService documentLogService) {
         this.documentLogService = documentLogService;
+    }
+
+    public void setDictionaryService(DictionaryService dictionaryService) {
+        this.dictionaryService = dictionaryService;
     }
 
     // END: getters / setters

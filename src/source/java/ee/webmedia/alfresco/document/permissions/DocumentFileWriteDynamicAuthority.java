@@ -16,6 +16,8 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.scanned.model.ScannedModel;
+import ee.webmedia.alfresco.imap.model.ImapModel;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -44,6 +46,20 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
             return false;
         }
         QName parentType = nodeService.getType(parent);
+        if (isDocumentManager()) {
+            if (ImapModel.Types.IMAP_FOLDER.equals(parentType)) {
+                if (ImapModel.Types.ATTACHMENTS.equals(nodeService.getPrimaryParent(parent).getQName())) {
+                    log.debug("File is under imap attachments folder and user " + userName + " is document manager, granting authority " + getAuthority());
+                    return true;
+                }
+            }
+            NodeRef grandParent = nodeService.getPrimaryParent(parent).getParentRef();
+            QName grantParentType = nodeService.getType(grandParent);
+            if (ScannedModel.Types.SCANNED.equals(grantParentType)) {
+                log.debug("File is under scanned folder and user " + userName + " is document manager, granting authority " + getAuthority());
+                return true;
+            }
+        }
         if (!dictionaryService.isSubClass(parentType, DocumentCommonModel.Types.DOCUMENT)) {
             log.trace("Node is not of type 'doccom:document', type=" + parentType + ", refusing authority " + getAuthority());
             return false;

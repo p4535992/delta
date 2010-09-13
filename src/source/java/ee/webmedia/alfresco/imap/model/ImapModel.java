@@ -20,6 +20,7 @@ public interface ImapModel {
 
     interface Types {
         QName IMAP_FOLDER = QName.createQName(URI, "imapFolder");
+        QName ATTACHMENTS = QName.createQName(URI, "attachments");
     }
 
     interface Aspects {

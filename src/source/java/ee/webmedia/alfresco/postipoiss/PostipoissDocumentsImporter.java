@@ -745,7 +745,8 @@ public class PostipoissDocumentsImporter {
         String ownerId = null;
         String ownerJobTitle = null;
 
-        String ownerName = ppOwnerName;
+        String ownerName = StringUtils.strip(ppOwnerName);
+        ownerName = StringUtils.replace(ownerName, " Upuhkab ", " (puhkab ");
         if (ownerName.endsWith(")")) {
             int i = ownerName.lastIndexOf("(");
             Assert.isTrue(i >= 0, ppOwnerName);
