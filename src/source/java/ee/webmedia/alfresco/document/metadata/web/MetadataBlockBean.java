@@ -1288,7 +1288,7 @@ public class MetadataBlockBean implements Serializable {
             final NodeRef seriesRef = (NodeRef) document.getProperties().get(TransientProps.SERIES_NODEREF);
             final NodeRef volumeRef = (NodeRef) document.getProperties().get(TransientProps.VOLUME_NODEREF);
             final String caseLabel = (String) document.getProperties().get(TransientProps.CASE_LABEL);
-            updateFnSerVol(funRef, seriesRef, volumeRef, caseLabel, false);
+            updateFnSerVol(funRef, seriesRef, volumeRef, caseLabel, true);
         }
         final Map<String, Object> docProps = document.getProperties();
         updateAccessRestrictionProperties((NodeRef) docProps.get(TransientProps.SERIES_NODEREF));

@@ -2,7 +2,7 @@ package ee.webmedia.alfresco.document.model;
 
 import org.alfresco.service.namespace.QName;
 
-import ee.webmedia.xtee.client.service.DhlXTeeService.SendStatus;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * @author Alar Kvell

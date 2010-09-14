@@ -22,9 +22,8 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendDocumentsImpl;
 import ee.webmedia.alfresco.util.ContentCreatorHelper;
-import ee.webmedia.xtee.client.service.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.service.impl.DhlXTeeServiceImplTest;
-
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
+import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplTest;
 /**
  * @author Ats Uiboupin
  *

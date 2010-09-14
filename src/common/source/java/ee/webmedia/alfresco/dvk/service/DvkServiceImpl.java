@@ -39,30 +39,30 @@ import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.XmlUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
-import ee.webmedia.xtee.client.service.DhlXTeeService;
-import ee.webmedia.xtee.client.service.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.service.DhlXTeeService.MetainfoHelper;
-import ee.webmedia.xtee.client.service.DhlXTeeService.ReceivedDocumentsWrapper;
-import ee.webmedia.xtee.client.service.DhlXTeeService.SendDocumentsDokumentCallback;
-import ee.webmedia.xtee.client.service.DhlXTeeService.SendDocumentsRequestCallback;
-import ee.webmedia.xtee.client.service.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
+import ee.webmedia.alfresco.utils.XmlUtil;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.MetainfoHelper;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendDocumentsDokumentCallback;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendDocumentsRequestCallback;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.AadressType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DokumentDocument;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.MetaxmlDocument.Metaxml;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.TransportDocument.Transport;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.AccessRightsType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.Addressee;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.Letter;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.LetterType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.PartyType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.rkelLetter.PersonType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.xtee.dhl.producers.producer.dhl.SendDocumentsV2RequestType;
+import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
+import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.SignedDocType;
 import ee.webmedia.xtee.client.service.configuration.provider.XTeeProviderPropertiesResolver;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.AadressType;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.DhlDokumentType;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.DokumentDocument;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.MetaxmlDocument.Metaxml;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.TransportDocument.Transport;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.rkelLetter.AccessRightsType;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.rkelLetter.Addressee;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.rkelLetter.Letter;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.rkelLetter.LetterType;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.rkelLetter.PartyType;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.rkelLetter.PersonType;
-import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.SendDocumentsV2RequestType;
-import ee.webmedia.xtee.types.ee.sk.digiDoc.v13.DataFileType;
-import ee.webmedia.xtee.types.ee.sk.digiDoc.v13.SignedDocType;
 
 /**
  * @author Ats Uiboupin
@@ -473,9 +473,6 @@ public abstract class DvkServiceImpl implements DvkService {
             dhlDokument.setMetaxml(metaxml);
 
             dhlDokument.setTransport(transport);
-            if (log.isTraceEnabled()) {
-                log.trace("\n\naltered dhlDokument:\n" + dhlDokument + "\n\n");
-            }
         }
 
         private Metaxml composeMetaxml(Letter letter) {

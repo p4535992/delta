@@ -6,7 +6,7 @@ import java.util.Map;
 import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
-import ee.webmedia.xtee.client.service.DhlXTeeService.ContentToSend;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 
 /**
  * @author Ats Uiboupin

@@ -155,7 +155,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                 if (isUnsavedWorkFlow) {
                     isUnsavedWorkFlow = false;
                 }
-                getDocumentDialog().reopenDocument(event);
                 MessageUtil.addInfoMessage("workflow_compound_start_success");
             } catch (Exception e) {
                 handleException(e, "workflow_compound_start_workflow_failed");

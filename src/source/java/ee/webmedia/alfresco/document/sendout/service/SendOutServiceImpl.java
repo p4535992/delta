@@ -38,8 +38,8 @@ import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.xtee.client.service.DhlXTeeService.ContentToSend;
-import ee.webmedia.xtee.client.service.DhlXTeeService.SendStatus;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * @author Erko Hansar

@@ -84,7 +84,7 @@ import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
 import ee.webmedia.alfresco.workflow.search.model.TaskSearchModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
-import ee.webmedia.xtee.client.service.DhlXTeeService.SendStatus;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * @author Alar Kvell
@@ -245,7 +245,6 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         List<String> queryParts = new ArrayList<String>(4);
         queryParts.add(generateTypeQuery(DocumentSubtypeModel.Types.INCOMING_LETTER));
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.REG_DATE_TIME));
-        queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.REG_NUMBER));
         queryParts.add(generateStringExactQuery(senderRegNumber, DocumentSpecificModel.Props.SENDER_REG_NUMBER));
 
         String query = generateDocumentSearchQuery(queryParts);
@@ -485,7 +484,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     static {
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateStringExactQuery(DocumentStatus.WORKING.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
-        queryParts.add(generateStringExactQuery(null, DocumentCommonModel.Props.REG_NUMBER));
+        queryParts.add(generateStringNullQuery(DocumentCommonModel.Props.REG_DATE_TIME));
         DOCUMENTS_FOR_REGISTERING_QUERY = generateDocumentSearchQuery(queryParts);
     }
 
@@ -495,14 +494,10 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         List<Document> results = searchGeneralImpl(DOCUMENTS_FOR_REGISTERING_QUERY, false, /* queryName */ "documentsForRegistering", new SearchCallback<Document>() {
             @Override
             public Document addResult(ResultSetRow row) {
-                Document result = null;
                 if (workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef())) {
-                    final Document doc = documentService.getDocumentByNodeRef(row.getNodeRef());
-                    if (!documentService.isRegistered(doc)) {
-                        result = doc;
-                    }
+                    return documentService.getDocumentByNodeRef(row.getNodeRef());
                 }
-                return result;
+                return null;
             }
         });
         if (log.isDebugEnabled()) {
@@ -519,7 +514,6 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             @Override
             public String addResult(ResultSetRow row) {
                 return workflowService.hasAllFinishedCompoundWorkflows(row.getNodeRef())
-                        && !documentService.isRegistered(generalService.fetchNode(row.getNodeRef()))
                         ? row.getNodeRef().toString()
                         : null;
             }
@@ -1164,8 +1158,8 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             }
             return resultSet;
         } catch (BooleanQuery.TooManyClauses e) {
-            log.error("Search failed, query expanded over limit\n    queryName=" + queryName + "\n    store=" + sp.getStores() + "\n    limit=" + sp.getLimit()
-                    + "\n    limitBy=" + sp.getLimitBy().toString() + "\n    exceptionMessage=" + e.getMessage());
+            log.error("Search failed with TooManyClauses exception, query expanded over limit\n    queryName=" + queryName + "\n    store=" + sp.getStores()
+                    + "\n    limit=" + sp.getLimit() + "\n    limitBy=" + sp.getLimitBy().toString() + "\n    exceptionMessage=" + e.getMessage());
             throw e;
         }
     }

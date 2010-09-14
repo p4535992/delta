@@ -710,13 +710,7 @@ public class PostipoissDocumentsImporter {
         String origOwnerName = (String) origProps.get(OWNER_NAME);
         String ppOwnerName = (String) ppProps.get(OWNER_NAME);
         if (StringUtils.equals(origOwnerName, ppOwnerName)) {
-
             setOwnerProperties(ppProps, setProps);
-
-            setProps.put(OWNER_JOB_TITLE, ppProps.get(OWNER_JOB_TITLE));
-            setProps.put(OWNER_ORG_STRUCT_UNIT, ppProps.get(OWNER_ORG_STRUCT_UNIT));
-            setProps.put(OWNER_EMAIL, ppProps.get(OWNER_EMAIL));
-            setProps.put(OWNER_PHONE, ppProps.get(OWNER_PHONE));
         }
 
         if (setProps.size() > 0) {
@@ -822,6 +816,10 @@ public class PostipoissDocumentsImporter {
         // SET OWNER
         setProps.put(OWNER_ID, ownerId);
         setProps.put(OWNER_NAME, ownerName);
+        setProps.put(OWNER_JOB_TITLE, getProps.get(OWNER_JOB_TITLE));
+        setProps.put(OWNER_ORG_STRUCT_UNIT, getProps.get(OWNER_ORG_STRUCT_UNIT));
+        setProps.put(OWNER_EMAIL, getProps.get(OWNER_EMAIL));
+        setProps.put(OWNER_PHONE, getProps.get(OWNER_PHONE));
     }
 
     private void setAccessRestriction(Integer documentId, File file, Map<QName, Serializable> setProps, String accessRestriction) {

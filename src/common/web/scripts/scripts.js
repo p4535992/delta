@@ -535,6 +535,10 @@ function ajaxError(request, textStatus, errorThrown) {
    }
 }
 
+function ajaxErrorHidden(request, textStatus, errorThrown) {
+   $jQ.log('Error during AJAX query: ' + textStatus);
+}
+
 function ajaxSubmit(componentId, componentClientId, componentContainerId, formClientId, viewName, submittableParams) {
    // When page is submitted, user sees an hourglass cursor
    $jQ(".submit-protection-layer").show().focus();
@@ -638,8 +642,8 @@ function updateMenuItemCount(menuItemId) {
          //queueUpdateMenuItemCount(menuItemId, menuItemUpdateTimeout);
       },
       error: function(request, textStatus, errorThrown) {
-         $jQ.ajaxDestroy();
-         ajaxError(request, textStatus, errorThrown);
+         // Don't destroy ajax queue, let other request proceed
+         ajaxErrorHidden(request, textStatus, errorThrown); // log messsage to FireBug
       },
       dataType: 'text'
    });

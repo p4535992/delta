@@ -8,8 +8,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.content.MimetypeMap;
@@ -30,11 +30,11 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedDocument;
 import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.xtee.client.service.DhlXTeeService.MetainfoHelper;
-import ee.webmedia.xtee.client.service.DhlXTeeService.SendStatus;
-import ee.webmedia.xtee.client.service.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
-import ee.webmedia.xtee.types.ee.riik.schemas.dhl.DhlDokumentType;
-import ee.webmedia.xtee.types.ee.riik.xtee.dhl.producers.producer.dhl.GetSendStatusResponseTypeUnencoded.Item;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.MetainfoHelper;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.xtee.dhl.producers.producer.dhl.GetSendStatusResponseTypeUnencoded.Item;
 
 /**
  * @author Ats Uiboupin
