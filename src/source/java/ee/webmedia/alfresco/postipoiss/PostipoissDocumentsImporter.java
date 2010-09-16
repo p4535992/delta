@@ -231,7 +231,7 @@ public class PostipoissDocumentsImporter {
             mappings = postipoissDocumentsMapper.loadMetadataMappings(new File(mappingsFileName));
             loadToimiks();
             loadPostponedAssocs();
-            loadUsers();
+//            loadUsers();
             createDocuments();
         } catch (Exception e) {
             log.info("IMPORT FAILED: DOCUMENTS IMPORT FAILED");
@@ -1129,11 +1129,11 @@ public class PostipoissDocumentsImporter {
         } else {
             log.info("Starting documents import. First documentId=" + documentsMap.keySet().iterator().next() + " stopAfterDocumentId=" + stopAfterDocumentId);
             DocumensBatchProgress batchProgress = new DocumensBatchProgress();
-            try {
+//            try {
                 batchProgress.run();
-            } finally {
-                writeUsersFound();
-            }
+//            } finally {
+//                writeUsersFound();
+//            }
             log.info("Documents IMPORT COMPLETE :)");
         }
 
@@ -1411,7 +1411,7 @@ public class PostipoissDocumentsImporter {
         propsMap.put(ContentModel.PROP_CREATOR, "DELTA");
         propsMap.put(ContentModel.PROP_MODIFIER, "DELTA");
 
-        setAccessRestriction(documentId, xml, propsMap, (String) propsMap.get(ACCESS_RESTRICTION));
+//        setAccessRestriction(documentId, xml, propsMap, (String) propsMap.get(ACCESS_RESTRICTION));
 
         if (!propsMap.containsKey(DocumentCommonModel.Props.OWNER_NAME)) {
             String ownerName = PostipoissUtil.findAnyValue(root, "/document/tegevused/tegevus[tegevus_liik=1]/kellelt_tekst");
@@ -1424,7 +1424,7 @@ public class PostipoissDocumentsImporter {
             propsMap.put(DocumentCommonModel.Props.OWNER_NAME, ownerName);
         }
 
-        setOwnerProperties(propsMap, propsMap);
+//        setOwnerProperties(propsMap, propsMap);
 
         if (!propsMap.containsKey(DocumentCommonModel.Props.DOC_NAME)) {
             String ownerName = root.elementText("dok_liik");

@@ -43,21 +43,21 @@
       </property>
    </bean>
    
-   <!-- Import the OpenOffice connection from the third party subsystem -->
-   <bean id="openOfficeConnection" class="org.alfresco.repo.management.subsystems.SubsystemProxyFactory">
+   <!-- Import the OpenOfficeService from the third party subsystem -->
+   <bean id="openOfficeService" class="org.alfresco.repo.management.subsystems.SubsystemProxyFactory">
       <property name="sourceApplicationContextFactory">
          <ref bean="thirdparty" />
       </property>
       <property name="sourceBeanName">
-         <value>openOfficeConnection</value>
+         <value>openOfficeService</value>
       </property>
       <property name="interfaces">
          <list>
-            <value>net.sf.jooreports.openoffice.connection.OpenOfficeConnection</value>
+            <value>ee.webmedia.alfresco.common.service.OpenOfficeService</value>
          </list>
       </property>
    </bean>
-   
+
    <bean id="documentTemplateService" class="ee.webmedia.alfresco.template.service.DocumentTemplateServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
@@ -65,7 +65,7 @@
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="documentLogService" ref="DocumentLogService" />
-      <property name="openOfficeConnection" ref="openOfficeConnection" />
+      <property name="openOfficeService" ref="openOfficeService" />
       <property name="serverUrl" value="${server.url}" /> 
    </bean>
 
