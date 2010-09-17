@@ -715,7 +715,7 @@ public class PostipoissDocumentsImporter {
 
         if (setProps.size() > 0) {
             setProps.put(ContentModel.PROP_MODIFIER, "DELTA");
-            nodeService.setProperties(documentRef, setProps);
+            nodeService.addProperties(documentRef, setProps);
         }
         
         return new String[] {
