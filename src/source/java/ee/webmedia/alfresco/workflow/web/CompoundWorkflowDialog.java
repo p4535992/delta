@@ -30,6 +30,7 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowActiveResponsibleTaskException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
+import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
@@ -79,7 +80,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        if (validate(context, false)) {
+        boolean checkFinished = WorkflowUtil.isStatus(workflow, Status.IN_PROGRESS);
+        if (validate(context, checkFinished)) {
             try {
                 removeEmptyTasks();
                 getWorkflowService().saveCompoundWorkflow(workflow);
@@ -410,7 +412,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(blockType) ||
                     WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(blockType) ||
                     WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(blockType)) {
-                hasForbiddenFlowsForFinished = true;
+                if (WorkflowUtil.isStatus(block, Status.NEW, Status.STOPPED)) {
+                    hasForbiddenFlowsForFinished = true;
+                }
             }
 
             for (Task task : block.getTasks()) {

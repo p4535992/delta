@@ -4,20 +4,16 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isActiveRespons
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isInactiveResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
 
-import java.io.Serializable;
-import java.util.Map;
-
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.workflow.model.Status;
-import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
@@ -34,47 +30,42 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
 
     @Override
     public void handle(WorkflowEvent event, WorkflowModifications workflowService, WorkflowEventQueue queue) {
-        // If assignmentTask && ACTIVE && RESPONSIBLE=TRUE (and it is under document, not under compoundWorkflowDefinitions), is
-        //   * created
-        //   * or ownerId is changed on such an existing task
-        if ((event.getType() == WorkflowEventType.CREATED || event.getType() == WorkflowEventType.UPDATED) && event.getObject() instanceof Task) {
-            Task task = (Task) event.getObject();
-            if (isActiveResponsible(task) && !(task.getParent().getParent() instanceof CompoundWorkflowDefinition)) {
+        // If assignmentTask && ACTIVE && RESPONSIBLE=TRUE (and it is under document, not under compoundWorkflowDefinitions)
+        if (!(event.getObject() instanceof Task)) {
+            return;
+        }
+        Task task = (Task) event.getObject();
+        if (!isActiveResponsible(task) || (task.getParent().getParent() instanceof CompoundWorkflowDefinition)) {
+            return;
+        }
 
-                // Delegation
+        // Delegation
 
-                // Finish all inactive responsible tasks
-                if (event.getType() == WorkflowEventType.CREATED) {
-                    for (Task otherTask : task.getParent().getTasks()) {
-                        if (isInactiveResponsible(otherTask) && isStatus(otherTask, Status.IN_PROGRESS, Status.STOPPED)) {
-                            if (log.isDebugEnabled()) {
-                                log.debug("Finishing inactive responsible task (ownerName='" + otherTask.getOwnerName()
-                                        + "'), because an active responsible task was created (ownerName='" + task.getOwnerName() + "')");
-                            }
-                            workflowService.setTaskFinished(queue, otherTask);
-                            otherTask.setComment(I18NUtil.getMessage("task_comment_delegated"));
-                        }
+        // If task is created
+        if (event.getType() == WorkflowEventType.CREATED) {
+
+            // Finish all inactive responsible tasks
+            for (Task otherTask : task.getParent().getTasks()) {
+                if (isInactiveResponsible(otherTask) && isStatus(otherTask, Status.IN_PROGRESS, Status.STOPPED)) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Finishing inactive responsible task (ownerName='" + otherTask.getOwnerName()
+                                + "'), because an active responsible task was created (ownerName='" + task.getOwnerName() + "')");
                     }
+                    workflowService.setTaskFinished(queue, otherTask);
+                    otherTask.setComment(I18NUtil.getMessage("task_comment_delegated"));
                 }
+            }
+        }
 
-                // Change document owner
-                if(task.getOwnerId() != null) {
-                    if (event.getType() == WorkflowEventType.CREATED) {
-                        if (log.isDebugEnabled()) {
-                            log.debug("Active responsible task created, setting document ownerId to " + task.getOwnerId());
-                        }
-                        setDocumentOwnerFromTask(task);
-                    } else {
-                        @SuppressWarnings("unchecked")
-                        Map<QName, Serializable> props = (Map<QName, Serializable>) event.getExtras()[0];
-                        if (props.containsKey(WorkflowCommonModel.Props.OWNER_ID)) {
-                            if (log.isDebugEnabled()) {
-                                log.debug("Active responsible task ownerId updated, setting document ownerId to" + task.getOwnerId());
-                            }
-                            setDocumentOwnerFromTask(task);
-                        }
-                    }
+        // If task is changed to IN_PROGRESS
+        if (event.getType() == WorkflowEventType.STATUS_CHANGED && WorkflowUtil.isStatus(event.getObject(), Status.IN_PROGRESS)) {
+
+            // Change document owner
+            if (task.getOwnerId() != null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Active responsible task started, setting document ownerId to " + task.getOwnerId());
                 }
+                setDocumentOwnerFromTask(task);
             }
         }
     }
