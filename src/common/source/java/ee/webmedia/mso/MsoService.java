@@ -29,7 +29,7 @@ public class MsoService
         URL url = null;
         try {
             URL baseUrl;
-            baseUrl = ee.webmedia.mso.MsoService.class.getResource(".");
+            baseUrl = ee.webmedia.mso.MsoService.class.getResource("");
             url = new URL(baseUrl, "MsoService.wsdl");
         } catch (MalformedURLException e) {
             logger.warning("Failed to create URL for the wsdl Location: 'MsoService.wsdl', retrying as a local file");

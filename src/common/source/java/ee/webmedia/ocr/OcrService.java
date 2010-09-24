@@ -29,7 +29,7 @@ public class OcrService
         URL url = null;
         try {
             URL baseUrl;
-            baseUrl = ee.webmedia.ocr.OcrService.class.getResource(".");
+            baseUrl = ee.webmedia.ocr.OcrService.class.getResource("");
             url = new URL(baseUrl, "OcrService.wsdl");
         } catch (MalformedURLException e) {
             logger.warning("Failed to create URL for the wsdl Location: 'OcrService.wsdl', retrying as a local file");
