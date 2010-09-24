@@ -58,6 +58,8 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.DefaultResourceLoader;
 
+import ee.webmedia.alfresco.mso.service.MsoService;
+
 /**
  * Makes use of the {@link http://sourceforge.net/projects/joott/JOOConverter} library to perform OpenOffice-drive
  * conversions.
@@ -72,6 +74,8 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
     private AbstractOpenOfficeDocumentConverter converter;
     private String documentFormatsConfiguration;
     private DocumentFormatRegistry formatRegistry;
+    
+    private MsoService msoService;
 
     /**
      * @param connection
@@ -105,6 +109,10 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
     public void setDocumentFormatsConfiguration(String path)
     {
         this.documentFormatsConfiguration = path;
+    }
+
+    public void setMsoService(MsoService msoService) {
+        this.msoService = msoService;
     }
 
     public boolean isAvailable()
@@ -148,6 +156,16 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
      */
     public boolean isTransformable(String sourceMimetype, String targetMimetype, TransformationOptions options)
     {
+       // if (MimetypeMap.MIMETYPE_TEXT_PLAIN.equalsIgnoreCase(targetMimetype)
+       //         && ("application/rtf".equalsIgnoreCase(sourceMimetype) || "application/msword".equalsIgnoreCase(sourceMimetype) || "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+       //                 .equalsIgnoreCase(sourceMimetype))) {
+       //     return true;
+       // }
+        if (MimetypeMap.MIMETYPE_PDF.equalsIgnoreCase(targetMimetype) && msoService != null && msoService.isMsoAvailable()
+                && msoService.isTransformableToPdf(sourceMimetype)) {
+            return true;
+        }
+
         if (!isAvailable())
         {
             // The connection management is must take care of this
@@ -204,6 +222,18 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
     {
         String sourceMimetype = getMimetype(reader);
         String targetMimetype = getMimetype(writer);
+        System.out.println("******************************************** " + sourceMimetype + " -> " + targetMimetype);
+
+        if (MimetypeMap.MIMETYPE_PDF.equalsIgnoreCase(targetMimetype) && msoService != null && msoService.isMsoAvailable()
+                && msoService.isTransformableToPdf(sourceMimetype)) {
+            // try {
+            msoService.transformToPdf(reader, writer);
+            return;
+            // } catch (SOAPFaultException e) {
+            // log.error("MsoService.transformToPdf failed, trying OpenOffice transform", e);
+            // }
+            // If we continue, then we get ContentIOException: A channel has already been opened
+        }
 
         MimetypeService mimetypeService = getMimetypeService();
         String sourceExtension = mimetypeService.getExtension(sourceMimetype);

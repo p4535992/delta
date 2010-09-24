@@ -31,6 +31,7 @@
    <import resource="classpath:ee/webmedia/alfresco/ocr/ocr-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/importer/importer-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/postipoiss/postipoiss-simdhs-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/mso/mso-context.xml" />
 
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
       <property name="configs">

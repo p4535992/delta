@@ -269,8 +269,6 @@ public class PageTag extends TagSupport
                out.write("Alfresco Web Client");
             }
             out.write("</title>\n");
-            out.write("<link rel=\"search\" type=\"application/opensearchdescription+xml\" href=\"" + reqPath + 
-                      "/wcservice/api/search/keyword/description.xml\" title=\"Alfresco Keyword Search\">\n");
             out.write("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\">\n");
          }
          

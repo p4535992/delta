@@ -109,6 +109,7 @@
       <property name="documentFormatsConfiguration">
          <value>classpath:alfresco/mimetype/openoffice-document-formats.xml</value>
       </property>
+      <property name="msoService" ref="msoService" />
    </bean>
 
    <bean id="openOfficeService" class="ee.webmedia.alfresco.common.service.OpenOfficeServiceImpl">

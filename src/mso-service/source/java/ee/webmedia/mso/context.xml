@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd">
+
+   <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+      <property name="ignoreUnresolvablePlaceholders" value="false" />
+      <property name="locations">
+         <list>
+            <value>file:mso-service.properties</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.springframework.remoting.jaxws.SimpleJaxWsServiceExporter">
+      <property name="baseAddress" value="${mso.url}" />
+   </bean>
+
+   <bean id="msoEndpoint" class="ee.webmedia.mso.MsoEndpoint">
+      <property name="msoService" ref="msoService" />
+   </bean>
+
+   <bean id="msoService" class="ee.webmedia.mso.MsoServiceImpl">
+      <property name="workFolder" value="${mso.workFolder}" />
+      <property name="timeout" value="${mso.timeout}" />
+   </bean>
+
+</beans>
