@@ -61,6 +61,7 @@
         <config headerType="console" outfile="${project.build.result.exe}" dontWrapJar="false" jarPath="${project.build.result.jar}">
           <jre minVersion="1.6.0_21" initialHeapSize="64" maxHeapSize="128">
           	<opt>-Dcom.sun.xml.internal.ws.fault.SOAPFaultBuilder.disableCaptureStackTrace=false</opt>
+           	<opt>-XX:+HeapDumpOnOutOfMemoryError</opt>
           </jre>
         </config>
       </launch4j>

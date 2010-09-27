@@ -222,18 +222,23 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
     {
         String sourceMimetype = getMimetype(reader);
         String targetMimetype = getMimetype(writer);
-        System.out.println("******************************************** " + sourceMimetype + " -> " + targetMimetype);
 
         if (MimetypeMap.MIMETYPE_PDF.equalsIgnoreCase(targetMimetype) && msoService != null && msoService.isMsoAvailable()
                 && msoService.isTransformableToPdf(sourceMimetype)) {
             // try {
-            msoService.transformToPdf(reader, writer);
+            log.info("Using MsoService for conversion: " + sourceMimetype + " -> " + targetMimetype);
+            try {
+                msoService.transformToPdf(reader, writer);
+            } catch (Exception e) {
+                throw new ContentIOException("Mso conversion failed: \n" + "   reader: " + reader + "\n" + "   writer: " + writer, e);
+            }
             return;
             // } catch (SOAPFaultException e) {
             // log.error("MsoService.transformToPdf failed, trying OpenOffice transform", e);
             // }
             // If we continue, then we get ContentIOException: A channel has already been opened
         }
+        log.info("Using OpenOffice for conversion: " + sourceMimetype + " -> " + targetMimetype);
 
         MimetypeService mimetypeService = getMimetypeService();
         String sourceExtension = mimetypeService.getExtension(sourceMimetype);

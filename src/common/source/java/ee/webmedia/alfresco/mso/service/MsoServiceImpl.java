@@ -25,21 +25,17 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
     private String endpointAddress;
 
     private Mso mso;
-    
+
     private Set<String> supportedSourceMimetypes;
 
     @Override
     public void afterPropertiesSet() throws Exception {
         if (StringUtils.isEmpty(endpointAddress)) {
-//            if (log.isDebugEnabled()) {
-                log.debug("Mso service endpoint address not set");
-//            }
+            log.info("Mso service endpoint address not set");
             return;
         }
 
-//        if (log.isDebugEnabled()) {
-            log.debug("Initializing Mso service port");
-//        }
+        log.info("Initializing Mso service port");
         Mso port = (new ee.webmedia.mso.MsoService()).getMsoPort();
         BindingProvider bp = (BindingProvider) port;
         bp.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointAddress);
@@ -50,9 +46,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
         http.getClient().setReceiveTimeout(120000); // 2 minutes timeout
 
         mso = port;
-        if (log.isDebugEnabled()) {
-            log.debug("Successfully initialized Mso service port and set endpoint address: " + endpointAddress);
-        }
+        log.info("Successfully initialized Mso service port and set endpoint address: " + endpointAddress);
 
         supportedSourceMimetypes = new HashSet<String>();
         supportedSourceMimetypes.add("application/msword"); // DOC
@@ -73,42 +67,38 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
 
     @Override
     public void transformToPdf(ContentReader reader, ContentWriter writer) throws Exception {
-        if (mso == null) {
-            throw new IllegalStateException("Mso service is not available");
-        }
-        if (!MimetypeMap.MIMETYPE_PDF.equalsIgnoreCase(writer.getMimetype())) {
-            throw new IllegalArgumentException("Only target mime type " + MimetypeMap.MIMETYPE_PDF + " is supported");
-        }
-        if (reader == null) {
-            return;
-        }
-        if (!isTransformableToPdf(reader.getMimetype())) {
-            throw new IllegalArgumentException("Source mime type is not supported: " + reader.getMimetype());
-        }
+        try {
+            if (mso == null) {
+                throw new IllegalStateException("Mso service is not available");
+            }
+            if (!MimetypeMap.MIMETYPE_PDF.equalsIgnoreCase(writer.getMimetype())) {
+                throw new IllegalArgumentException("Only target mime type " + MimetypeMap.MIMETYPE_PDF + " is supported");
+            }
+            if (reader == null) {
+                return;
+            }
+            if (!isTransformableToPdf(reader.getMimetype())) {
+                throw new IllegalArgumentException("Source mime type is not supported: " + reader.getMimetype());
+            }
 
-        long startTime = System.currentTimeMillis();
-
-        MsoInput msoInput = new MsoInput();
-        ContentReaderDataSource dataSource = new ContentReaderDataSource(reader, null);
-//        try {
+            MsoInput msoInput = new MsoInput();
+            ContentReaderDataSource dataSource = new ContentReaderDataSource(reader, null);
             msoInput.setContent(new DataHandler(dataSource));
-    //        if (log.isDebugEnabled()) {
-                log.debug("Sending request to perform Mso.convertToPdf, reader=" + reader);
-    //        }
+            log.info("Sending request to perform Mso.convertToPdf, reader=" + reader);
+            long startTime = System.currentTimeMillis();
             MsoOutput msoOutput = mso.convertToPdf(msoInput);
-    
+            long duration = System.currentTimeMillis() - startTime;
+
             String mimeType = msoOutput.getContent().getContentType();
             writer.setMimetype(mimeType);
             writer.setEncoding("UTF-8"); // reset encoding to default
             writer.putContent(msoOutput.getContent().getInputStream());
-    
-    //        if (log.isDebugEnabled()) {
-                long duration = System.currentTimeMillis() - startTime;
-                log.debug("Completed Mso.transformToPdf in " + duration + " ms, writer=" + writer);
-    //        }
-//        } finally {
-//            dataSource.closeInputStream();
-//        }
+
+            log.info("Completed Mso.convertToPdf in " + duration + " ms, writer=" + writer);
+        } catch (Exception e) {
+            log.error("Error in transformToPdf", e);
+            throw e;
+        }
     }
 
     public void setEndpointAddress(String endpointAddress) {

@@ -1,6 +1,5 @@
 package ee.webmedia.mso;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -24,22 +23,32 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.util.StringUtils;
 
 import com.csvreader.CsvWriter;
-import com.itextpdf.text.pdf.PdfReader;
 
 public class MsoServiceImpl implements MsoService, InitializingBean {
     private static Logger log = Logger.getLogger(MsoServiceImpl.class);
+
+    // * võetud ära output pdf valideerimine - pole vaja; ning kasutas üle 100 mb mälu kui oli 200+ leheküljeline pdf (kuigi ainult 9 MB)
+    // * disabled word dialogs from macro
+    //   + doesn't display dialog "this document contains links that may refer to other files. do you want to update them manually?"
+    //   + doesn't display dialog about missing resources when opening html files
+    //   ? supposedly doesn't display "install missing features" dialog
+
+    // fail avalik_arvamus_2008_2_.docx (3,26 MB) -> PDF (9,56 MB), võttis DELTA poolel 47 sek, Mso Service poolel 44 sek, winword.exe kasutas ära 145-149 MB mälu
 
     // XXX currently, don't convert TXT files with this service, because we haven't implemented passing encoding information to Word (it will guess or use system default)
     // XXX input mimetype (or file extension) doesn't matter - caller must call this service only with word files
     //   - EXE file renders as text
     //   - XLS file exits with error
     //   - PDF file (10 MB) processes for 1 minute and winword takes 100 MB RAM, had to kill it
+    // XXX NB when saving HTML as PDF, Word may put your name in the author field
+
+    // TODO paigaldusejuhendisse winword.exe vajab vähemalt 150 MB RAM
+    // TODO kaks eraldi timeout'i: 1) kui fail edukalt avatakse (nt. 10 või 15 sek) 2) kui pdf konvert lõpeb (nt. 90 või 120 sek)
 
     // TODO kui new FileInputStream(successFile) peale tuleb FileNotFoundException, siis proovida uuesti mõnda aega
-    // TODO mingi kavalusega detecida kui word avab dialoogi ja siis klikkida sellele
 
     // TODO uus koormustest
-    //      * et näha kas 128 MB-ga java protsess töötab järjest lõpuni
+    //      * et näha kas 128 MB-ga java protsess töötab järjest lõpuni - ... sisend+väljundfaili suurus äkki mõjutab mälukasutust?
     //      teha ainult edukad failid
     //      * et näha kas wordi mälukasutus kasvab või püsib, kui suureks jääb
     //      * et näha kas ajapikku läheb keskmine aeg suuremaks - kas word aeglasemaks
@@ -193,15 +202,6 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
         return filename;
     }
 
-    private void validatePdf(File file) {
-        try {
-            PdfReader pdfReader = new PdfReader(new BufferedInputStream(new FileInputStream(file)));
-            pdfReader.close();
-        } catch (Exception e) {
-            throw new RuntimeException("Error validating result PDF file " + file.getName() + ": " + e.getMessage(), e);
-        }
-    }
-
     private void startConvertAndWaitToComplete() throws Exception {
         File successFile = new File(workFolder, filename + ".success");
         File errorFile = new File(workFolder, filename + ".error");
@@ -315,7 +315,6 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
             throw new RuntimeException("Output file does not exist: " + outputFile);
         }
         outputFileSize = outputFile.length();
-        validatePdf(outputFile);
         MsoOutput output = new MsoOutput();
         output.setContent(new DataHandler(new FileDataSource(outputFile, MIMETYPE_PDF)));
         return output;
