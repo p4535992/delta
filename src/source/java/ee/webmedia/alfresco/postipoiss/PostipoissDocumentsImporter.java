@@ -710,7 +710,11 @@ public class PostipoissDocumentsImporter {
         String origOwnerName = (String) origProps.get(OWNER_NAME);
         String ppOwnerName = (String) ppProps.get(OWNER_NAME);
         if (StringUtils.equals(origOwnerName, ppOwnerName)) {
-            setOwnerProperties(ppProps, setProps);
+            try {
+                setOwnerProperties(ppProps, setProps);
+            } catch (IllegalArgumentException e) {
+                log.warn("Error parsing ppOwnerName, ignoring\n    documentId=" + documentId + "\n    documentRef=" + documentRef + "\n    ppOwnerName=" + ppOwnerName);
+            }
         }
 
         if (setProps.size() > 0) {
@@ -743,6 +747,9 @@ public class PostipoissDocumentsImporter {
         ownerName = StringUtils.replace(ownerName, " Upuhkab ", " (puhkab ");
         if (ownerName.endsWith(")")) {
             int i = ownerName.lastIndexOf("(");
+            if (i < 0) { // Padrik Ene puhkab 02.07.-15.08. asendab Priidu Ristkok)
+                i = ownerName.indexOf("puhkab") - 1;
+            }
             Assert.isTrue(i >= 0, ppOwnerName);
             boolean cont = true;
             if (i - 7 >= 2 && ownerName.substring(i - 7, i).equals("puhkab ")) {
