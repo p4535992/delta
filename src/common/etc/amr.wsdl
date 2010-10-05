@@ -1,0 +1,305 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<wsdl:definitions xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:sch="http://ametnik.smit/services" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+   xmlns:tns="http://ametnik.smit/services/definitions" targetNamespace="http://ametnik.smit/services/definitions">
+   <wsdl:types>
+      <!-- Ats: attribute value changed elementFormDefault="unqualified" to elementFormDefault="qualified" -->
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:s1="http://ametnik.smit/services" attributeFormDefault="unqualified"
+         elementFormDefault="qualified" targetNamespace="http://ametnik.smit/services" >
+         <xs:element name="Ametnik" type="s1:Ametnik" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+         <xs:complexType name="Ametnik" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:element name="eesnimi" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <xs:element name="perekonnanimi" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <xs:element name="isikukood" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <!-- Ats: added default value -->
+               <xs:element minOccurs="0" name="yksusId" default="-1" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <xs:element name="asutusId" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <xs:element name="ametikoht" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <xs:element name="kontakttelefon" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <xs:element name="email" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+            </xs:sequence>
+         </xs:complexType>
+         <xs:element name="Asutus" type="s1:Asutus" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+         <xs:complexType name="Asutus" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:element name="id" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <xs:element name="nimetus" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <xs:element minOccurs="0" name="registrikood" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+            </xs:sequence>
+         </xs:complexType>
+         <xs:element name="Yksus" type="s1:Yksus" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+         <xs:complexType name="Yksus" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:element name="id" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <xs:element name="nimetus" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <xs:element name="asutusId" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               <xs:element minOccurs="0" name="ylemYksusId" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+            </xs:sequence>
+         </xs:complexType>
+         <xs:element name="AmetnikByAsutusIdRequest" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element name="asutusId" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+                  <xs:element name="yksusetaAmetnikudOnly" type="xs:boolean" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="AmetnikByAsutusIdResponse" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element maxOccurs="unbounded" minOccurs="0" name="Ametnik" type="s1:Ametnik" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="AmetnikByIsikukoodRequest" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element name="isikukood" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="AmetnikByIsikukoodResponse" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element name="Ametnik" type="s1:Ametnik" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="AmetnikByYksusIdRequest" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element name="yksusId" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="AmetnikByYksusIdResponse" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element maxOccurs="unbounded" minOccurs="0" name="Ametnik" type="s1:Ametnik" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="AsutusByIdRequest" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element name="asutusId" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="AsutusByIdResponse" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element name="Asutus" type="s1:Asutus" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="AsutusListRequest" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+         <xs:element name="AsutusListResponse" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element maxOccurs="unbounded" minOccurs="0" name="Asutus" type="s1:Asutus" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="YksusByAsutusIdRequest" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element name="asutusId" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="YksusByAsutusIdResponse" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element maxOccurs="unbounded" minOccurs="0" name="Yksus" type="s1:Yksus" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="YksusByIdRequest" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element name="yksusId" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+         <xs:element name="YksusByIdResponse" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+            <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
+               <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
+                  <xs:element name="Yksus" type="s1:Yksus" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+               </xs:sequence>
+            </xs:complexType>
+         </xs:element>
+      </xs:schema>
+   </wsdl:types>
+   <wsdl:message name="AmetnikByAsutusIdResponse">
+      <wsdl:part element="sch:AmetnikByAsutusIdResponse" name="AmetnikByAsutusIdResponse">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="AmetnikByYksusIdRequest">
+      <wsdl:part element="sch:AmetnikByYksusIdRequest" name="AmetnikByYksusIdRequest">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="AmetnikByYksusIdResponse">
+      <wsdl:part element="sch:AmetnikByYksusIdResponse" name="AmetnikByYksusIdResponse">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="YksusByAsutusIdResponse">
+      <wsdl:part element="sch:YksusByAsutusIdResponse" name="YksusByAsutusIdResponse">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="AmetnikByIsikukoodResponse">
+      <wsdl:part element="sch:AmetnikByIsikukoodResponse" name="AmetnikByIsikukoodResponse">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="YksusByAsutusIdRequest">
+      <wsdl:part element="sch:YksusByAsutusIdRequest" name="YksusByAsutusIdRequest">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="YksusByIdRequest">
+      <wsdl:part element="sch:YksusByIdRequest" name="YksusByIdRequest">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="AmetnikByIsikukoodRequest">
+      <wsdl:part element="sch:AmetnikByIsikukoodRequest" name="AmetnikByIsikukoodRequest">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="AsutusByIdRequest">
+      <wsdl:part element="sch:AsutusByIdRequest" name="AsutusByIdRequest">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="AmetnikByAsutusIdRequest">
+      <wsdl:part element="sch:AmetnikByAsutusIdRequest" name="AmetnikByAsutusIdRequest">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="YksusByIdResponse">
+      <wsdl:part element="sch:YksusByIdResponse" name="YksusByIdResponse">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="AsutusByIdResponse">
+      <wsdl:part element="sch:AsutusByIdResponse" name="AsutusByIdResponse">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="AsutusListRequest">
+      <wsdl:part element="sch:AsutusListRequest" name="AsutusListRequest">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:message name="AsutusListResponse">
+      <wsdl:part element="sch:AsutusListResponse" name="AsutusListResponse">
+      </wsdl:part>
+   </wsdl:message>
+   <wsdl:portType name="amrPort">
+      <wsdl:operation name="YksusByAsutusId">
+         <wsdl:input message="tns:YksusByAsutusIdRequest" name="YksusByAsutusIdRequest">
+         </wsdl:input>
+         <wsdl:output message="tns:YksusByAsutusIdResponse" name="YksusByAsutusIdResponse">
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="AmetnikByAsutusId">
+         <wsdl:input message="tns:AmetnikByAsutusIdRequest" name="AmetnikByAsutusIdRequest">
+         </wsdl:input>
+         <wsdl:output message="tns:AmetnikByAsutusIdResponse" name="AmetnikByAsutusIdResponse">
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="AsutusList">
+         <wsdl:input message="tns:AsutusListRequest" name="AsutusListRequest">
+         </wsdl:input>
+         <wsdl:output message="tns:AsutusListResponse" name="AsutusListResponse">
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="AsutusById">
+         <wsdl:input message="tns:AsutusByIdRequest" name="AsutusByIdRequest">
+         </wsdl:input>
+         <wsdl:output message="tns:AsutusByIdResponse" name="AsutusByIdResponse">
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="AmetnikByYksusId">
+         <wsdl:input message="tns:AmetnikByYksusIdRequest" name="AmetnikByYksusIdRequest">
+         </wsdl:input>
+         <wsdl:output message="tns:AmetnikByYksusIdResponse" name="AmetnikByYksusIdResponse">
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="YksusById">
+         <wsdl:input message="tns:YksusByIdRequest" name="YksusByIdRequest">
+         </wsdl:input>
+         <wsdl:output message="tns:YksusByIdResponse" name="YksusByIdResponse">
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="AmetnikByIsikukood">
+         <wsdl:input message="tns:AmetnikByIsikukoodRequest" name="AmetnikByIsikukoodRequest">
+         </wsdl:input>
+         <wsdl:output message="tns:AmetnikByIsikukoodResponse" name="AmetnikByIsikukoodResponse">
+         </wsdl:output>
+      </wsdl:operation>
+   </wsdl:portType>
+   <wsdl:binding name="amrPortSoap11" type="tns:amrPort">
+      <soap:binding style="document" transport="http://schemas.xmlsoap.org/soap/http" />
+      <wsdl:operation name="YksusByAsutusId">
+         <soap:operation soapAction="" />
+         <wsdl:input name="YksusByAsutusIdRequest">
+            <soap:body use="literal" />
+         </wsdl:input>
+         <wsdl:output name="YksusByAsutusIdResponse">
+            <soap:body use="literal" />
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="AmetnikByAsutusId">
+         <soap:operation soapAction="" />
+         <wsdl:input name="AmetnikByAsutusIdRequest">
+            <soap:body use="literal" />
+         </wsdl:input>
+         <wsdl:output name="AmetnikByAsutusIdResponse">
+            <soap:body use="literal" />
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="AsutusList">
+         <soap:operation soapAction="" />
+         <wsdl:input name="AsutusListRequest">
+            <soap:body use="literal" />
+         </wsdl:input>
+         <wsdl:output name="AsutusListResponse">
+            <soap:body use="literal" />
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="AsutusById">
+         <soap:operation soapAction="" />
+         <wsdl:input name="AsutusByIdRequest">
+            <soap:body use="literal" />
+         </wsdl:input>
+         <wsdl:output name="AsutusByIdResponse">
+            <soap:body use="literal" />
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="AmetnikByYksusId">
+         <soap:operation soapAction="" />
+         <wsdl:input name="AmetnikByYksusIdRequest">
+            <soap:body use="literal" />
+         </wsdl:input>
+         <wsdl:output name="AmetnikByYksusIdResponse">
+            <soap:body use="literal" />
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="YksusById">
+         <soap:operation soapAction="" />
+         <wsdl:input name="YksusByIdRequest">
+            <soap:body use="literal" />
+         </wsdl:input>
+         <wsdl:output name="YksusByIdResponse">
+            <soap:body use="literal" />
+         </wsdl:output>
+      </wsdl:operation>
+      <wsdl:operation name="AmetnikByIsikukood">
+         <soap:operation soapAction="" />
+         <wsdl:input name="AmetnikByIsikukoodRequest">
+            <soap:body use="literal" />
+         </wsdl:input>
+         <wsdl:output name="AmetnikByIsikukoodResponse">
+            <soap:body use="literal" />
+         </wsdl:output>
+      </wsdl:operation>
+   </wsdl:binding>
+   <wsdl:service name="amrService">
+      <wsdl:port binding="tns:amrPortSoap11" name="amrPortSoap11">
+         <soap:address location="http://cas.dwl.smit:8080/amr/services/AmrRequest" />
+      </wsdl:port>
+   </wsdl:service>
+</wsdl:definitions>

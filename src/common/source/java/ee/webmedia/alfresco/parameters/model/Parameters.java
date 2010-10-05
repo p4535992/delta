@@ -78,7 +78,8 @@ public enum Parameters {
      * TK Parameters
      */
     EMPIS_CONTRACT_DOCUMENT("empisContractDocumentRecieveInterval"),
-    EMPIS_SCHEMA_NAME("empisSchemaName");
+    EMPIS_SCHEMA_NAME("empisSchemaName"),
+    DAILY_IMPORT_EXECUTION_TIME("dailyImportExecutionTime");
 
     private String xPath;
     private String parameterName;

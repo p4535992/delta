@@ -98,8 +98,14 @@ public class GeneralServiceImpl implements GeneralService {
         return getNodeRef(nodeRefXPath, store);
     }
 
+    @Override
     public NodeRef getNodeRef(String nodeRefXPath, StoreRef storeRef) {
-        NodeRef nodeRef = nodeService.getRootNode(storeRef);
+        return getNodeRef(nodeRefXPath, nodeService.getRootNode(storeRef));
+    }
+
+    @Override
+    public NodeRef getNodeRef(String nodeRefXPath, NodeRef root) {
+        NodeRef nodeRef = root;
         String[] xPathParts;
 
         if (nodeRefXPath.contains("{")) {

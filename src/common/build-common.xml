@@ -151,7 +151,7 @@
 
    <!-- ============= Exploded development targets ============= -->
 
-   <target name="init" depends="load-conf,setup-project-done,setup-exploded-done" />
+   <target name="init" depends="load-conf,setup-project-done,setup-exploded-done,generate-amr-done" />
 
    <target name="create-version-file">
       <property file="${source}" />
@@ -495,5 +495,35 @@
       <echo>Copying conf-name.properties to: ${cl.targetDir}/conf-name.properties</echo>
       <copy todir="${cl.targetDir}" file="${project.basedir}/conf-name.properties" />
    </target>
-   
+
+   <!-- ============= Code generation ============= -->
+
+   <property name="project.dir.amr" location="${project.basedir}/build/amr" />
+   <property name="project.file.amr.jar" location="${common.dir.lib.server}/amr.jar" />
+
+   <path id="classpath-amr">
+      <fileset dir="${common.dir.lib}" includes="**/*.jar" />
+   </path>
+
+   <target name="generate-amr-done">
+      <available file="${project.file.amr.jar}" property="generate.amr.done" />
+      <antcall target="generate-amr-conditionally" />
+   </target>
+
+   <target name="generate-amr-conditionally" unless="generate.amr.done">
+      <antcall target="generate-amr" />
+   </target>
+
+   <target name="generate-amr" unless="setup.project.done" depends="setup-exploded-done" description="Generate AMR code from WSDL">
+      <delete dir="${project.dir.amr}" failonerror="false" />
+      <taskdef name="xmlbean" classname="org.apache.xmlbeans.impl.tool.XMLBean" classpathref="classpath-amr" />
+      <xmlbean classpathref="classpath-amr" schema="${common.dir.etc}/amr.wsdl" javasource="1.6" srconly="true" srcgendir="${project.dir.amr}" classgendir="${project.dir.amr}" />
+      <javac destdir="${project.dir.amr}" classpathref="classpath-amr" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+         <src path="${project.dir.amr}" />
+      </javac>
+      <delete file="${project.file.amr.jar}" failonerror="false" />
+      <jar destfile="${project.file.amr.jar}" basedir="${project.dir.amr}" />
+      <copy todir="${project.dir.exploded.lib}" preservelastmodified="true" file="${project.file.amr.jar}" />
+   </target>
+
 </project>

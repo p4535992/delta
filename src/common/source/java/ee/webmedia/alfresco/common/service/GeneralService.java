@@ -50,7 +50,7 @@ public interface GeneralService {
     NodeRef getNodeRef(String nodeRefXPath);
 
     /**
-     * Search for NodeRef with an XPath expression from given store.
+     * Search for NodeRef with an XPath expression from given store root.
      * 
      * @param nodeRefXPath child association names separated with forward slashes, in the form of <code>/foo:bar/{pingNamespaceUri}pong</code>
      * @param storeRef Reference to store
@@ -58,6 +58,16 @@ public interface GeneralService {
      * @throws RuntimeException if more than 1 node found
      */
     NodeRef getNodeRef(String nodeRefXPath, StoreRef storeRef);
+
+    /**
+     * Search for NodeRef with an XPath expression from given root.
+     * 
+     * @param nodeRefXPath child association names separated with forward slashes, in the form of <code>/foo:bar/{pingNamespaceUri}pong</code>
+     * @param root reference to root node, under which is searched
+     * @return NodeRef, {@code null} if node not found
+     * @throws RuntimeException if more than 1 node found
+     */
+    NodeRef getNodeRef(String nodeRefXPath, NodeRef root);
 
     ChildAssociationRef getLastChildAssocRef(String nodeRefXPath);
 
