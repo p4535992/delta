@@ -207,23 +207,15 @@ public class UISimpleSearch extends UICommand
       // output each option - setting the current one to CHECKED
       String optionFieldName = getClientId(context) + NamingContainer.SEPARATOR_CHAR + OPTION_PARAM;
       String radioOption = "<li class='userInputForm'><input type='radio' name='" + optionFieldName + "'";
+      int searchMode = getSearchMode();
+      out.write(radioOption);
+      out.write(" value='4'");
+      if (searchMode == 4) out.write(" checked='checked'");
+      out.write("/>" + "Metaandmetest" + "</li>");
       out.write(radioOption);
       out.write(" value='0'");
-      int searchMode = getSearchMode();
       if (searchMode == 0) out.write(" checked='checked'");
-      out.write("/>" + bundle.getString(MSG_ALL_ITEMS) + "</li>");
-      out.write(radioOption);
-      out.write(" value='1'");
-      if (searchMode == 1) out.write(" checked='checked'");
-      out.write("/>" + bundle.getString(MSG_FILE_NAMES_CONTENTS) + "</li>");
-      out.write(radioOption);
-      out.write(" value='2'");
-      if (searchMode == 2) out.write(" checked='checked'");
-      out.write("/>" + bundle.getString(MSG_FILE_NAMES_ONLY) + "</li>");
-      out.write(radioOption);
-      out.write(" value='3'");
-      if (searchMode == 3) out.write(" checked='checked'");
-      out.write("/>" + bundle.getString(MSG_SPACE_NAMES_ONLY) + "</li>");
+      out.write("/>" + "Metaandmetest ja faili sisust" + "</li>");
       out.write("</ul>");
       
       // row with table containing advanced search link and Search Go button 
@@ -275,7 +267,7 @@ public class UISimpleSearch extends UICommand
     */
    public int getSearchMode()
    {
-      return this.search != null ? this.search.getMode() : SearchContext.SEARCH_ALL;
+      return this.search != null ? this.search.getMode() : 4;
    }
    
    

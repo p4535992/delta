@@ -95,9 +95,11 @@
                </item>
             </subitems>
          </dropdown>
+<!--
          <item title-id="menu_department_documents">
             <outcome>myalfresco</outcome>
          </item>
+-->
          <dropdown title-id="menu_my_documents" browse="true">
             <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}documentList</xpath>
             <submenu-id>my-documents</submenu-id>

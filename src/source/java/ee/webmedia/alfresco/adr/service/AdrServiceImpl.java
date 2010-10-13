@@ -14,6 +14,7 @@ import java.util.Set;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
@@ -25,6 +26,7 @@ import ee.webmedia.alfresco.adr.Fail;
 import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
@@ -34,6 +36,7 @@ import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * @author Dmitri Melnikov
@@ -47,6 +50,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     private FileService fileService;
     private DocumentTypeService documentTypeService;
     private DocumentService documentService;
+    private NamespaceService namespaceService;
 
     // ========================================================================
     // =========================== REAL-TIME QUERYING =========================
@@ -319,10 +323,13 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 log.debug("Found " + docs.size() + " documents that were modified during specified period");
             }
             for (Document doc : docs) {
-                if (StringUtils.isNotEmpty(doc.getRegNumber()) && doc.getRegDateTime() != null) {
-                    DokumentDetailidega dokument = buildDokumentDetailidega(doc, false, true);
-                    results.put(new AdrDocument(doc.getRegNumber(), doc.getRegDateTime()), dokument);
+                if (StringUtils.isEmpty(doc.getRegNumber()) || doc.getRegDateTime() == null) {
+                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + doc.getNodeRefAsString() + "\nproperties="
+                            + WmNode.toString(RepoUtil.toQNameProperties(doc.getProperties()), namespaceService));
+                    continue; // should not happen!
                 }
+                DokumentDetailidega dokument = buildDokumentDetailidega(doc, false, true);
+                results.put(new AdrDocument(doc.getRegNumber(), doc.getRegDateTime()), dokument);
             }
 
             // ============= Search for document types that were changed to publicAdr=true during specified period
@@ -338,12 +345,15 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                         + " document types that were changed to publicAdr=TRUE during specified period");
             }
             for (Document doc : docs) {
-                if (StringUtils.isNotEmpty(doc.getRegNumber()) && doc.getRegDateTime() != null) {
-                    AdrDocument adrDocument = new AdrDocument(doc.getRegNumber(), doc.getRegDateTime());
-                    if (!results.containsKey(adrDocument)) {
-                        DokumentDetailidega dokument = buildDokumentDetailidega(doc, false, true);
-                        results.put(new AdrDocument(dokument.getViit(), doc.getRegDateTime()), dokument);
-                    }
+                if (StringUtils.isEmpty(doc.getRegNumber()) || doc.getRegDateTime() == null) {
+                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + doc.getNodeRefAsString() + "\nproperties="
+                            + WmNode.toString(RepoUtil.toQNameProperties(doc.getProperties()), namespaceService));
+                    continue; // should not happen!
+                }
+                AdrDocument adrDocument = new AdrDocument(doc.getRegNumber(), doc.getRegDateTime());
+                if (!results.containsKey(adrDocument)) {
+                    DokumentDetailidega dokument = buildDokumentDetailidega(doc, false, true);
+                    results.put(new AdrDocument(dokument.getViit(), doc.getRegDateTime()), dokument);
                 }
             }
 
@@ -381,6 +391,11 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             List<Document> existingDocs = documentSearchService.searchAdrDocuments(deletedDateBegin, deletedDateEnd, documentTypeService.getPublicAdrDocumentTypeQNames());
             Set<AdrDocument> existingDocsSet = new HashSet<AdrDocument>(existingDocs.size());
             for (Document document : existingDocs) {
+                if (StringUtils.isEmpty(document.getRegNumber()) || document.getRegDateTime() == null) {
+                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + document.getNodeRefAsString() + "\nproperties="
+                            + WmNode.toString(RepoUtil.toQNameProperties(document.getProperties()), namespaceService));
+                    continue; // should not happen!
+                }
                 existingDocsSet.add(new AdrDocument(document.getRegNumber(), document.getRegDateTime()));
             }
 
@@ -391,6 +406,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 String regNumber = (String) props.get(AdrModel.Props.REG_NUMBER);
                 Date regDateTime = (Date) props.get(AdrModel.Props.REG_DATE_TIME);
                 if (StringUtils.isEmpty(regNumber) || regDateTime == null) {
+                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + deletedDoc + "\nproperties="
+                            + WmNode.toString(props, namespaceService));
                     continue; // should not happen!
                 }
                 deletedDocsSet.add(new AdrDocument(regNumber, regDateTime));
@@ -414,6 +431,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             }
             for (Document doc : docs) {
                 if (StringUtils.isEmpty(doc.getRegNumber()) || doc.getRegDateTime() == null) {
+                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + doc.getNodeRefAsString() + "\nproperties="
+                            + WmNode.toString(RepoUtil.toQNameProperties(doc.getProperties()), namespaceService));
                     continue; // should not happen!
                 }
                 deletedDocsSet.add(new AdrDocument(doc.getRegNumber(), doc.getRegDateTime()));
@@ -465,6 +484,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
+    }
+
+    public void setNamespaceService(NamespaceService namespaceService) {
+        this.namespaceService = namespaceService;
     }
 
     // END: getters / setters

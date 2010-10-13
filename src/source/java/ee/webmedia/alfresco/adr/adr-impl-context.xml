@@ -12,6 +12,7 @@
       <property name="documentService" ref="DocumentService" />
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
+      <property name="namespaceService" ref="NamespaceService" />
    </bean>
 
 </beans>

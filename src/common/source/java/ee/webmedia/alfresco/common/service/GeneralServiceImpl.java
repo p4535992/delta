@@ -462,6 +462,7 @@ public class GeneralServiceImpl implements GeneralService {
     @Override
     public void writeFile(ContentWriter writer, File file, String fileName, String mimetype) {
         // use container.mimeType; if our mimetype map has it, then use it; otherwise guess based on filename
+        mimetype = StringUtils.lowerCase(mimetype);
         if (MimetypeMap.MIMETYPE_BINARY.equals(mimetype) || !mimetypeService.getExtensionsByMimetype().containsKey(mimetype)) {
             String oldMimetype = mimetype;
             mimetype = mimetypeService.guessMimetype(fileName);

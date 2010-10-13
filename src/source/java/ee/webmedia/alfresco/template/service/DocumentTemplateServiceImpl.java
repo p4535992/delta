@@ -47,6 +47,8 @@ import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
@@ -84,25 +86,36 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         for (FileInfo file : files) {
             if (file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.GENERATED) != null) {
                 final Map<QName, Serializable> docProp = nodeService.getProperties(docRef);
-                ContentReader templateReader = fileFolderService.getReader(file.getNodeRef());
 
-                // Set document content's mimetype and encoding from template
-                ContentWriter documentWriter = fileFolderService.getWriter(file.getNodeRef());
-                documentWriter.setMimetype(templateReader.getMimetype());
-                documentWriter.setEncoding(templateReader.getEncoding());
+                int retry = 3;
+                do {
+                    ContentReader templateReader = fileFolderService.getReader(file.getNodeRef());
 
-                try {
-                    openOfficeService.replace(templateReader, documentWriter, new ReplaceCallback() {
-                        public String getReplace(String found) {
-                            return getReplaceString(found, docProp);
+                    // Set document content's mimetype and encoding from template
+                    ContentWriter documentWriter = fileFolderService.getWriter(file.getNodeRef());
+                    documentWriter.setMimetype(templateReader.getMimetype());
+                    documentWriter.setEncoding(templateReader.getEncoding());
+
+                    try {
+                        openOfficeService.replace(templateReader, documentWriter, new ReplaceCallback() {
+                            public String getReplace(String found) {
+                                return getReplaceString(found, docProp);
+                            }
+                        });
+                        retry = 0;
+                    } catch (OpenOfficeService.OpenOfficeReturnedNullInterfaceException e) {
+                        retry--;
+                        log.error("Replacing failed, OpenOffice error, retrying " + retry + " times more: " + e.getMessage() + "\n    fileName="
+                                + file.getName() + "\n    reader=" + templateReader + "\n    writer=" + documentWriter);
+                        if (retry <= 0) {
+                            throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_failed", e);
                         }
-                    });
-                } catch (Exception e) {
-                    log.error("Replacing failed!\n    fileName=" + file.getName() + "\n    reader=" + templateReader + "\n    writer=" + documentWriter, e);
-                    // Clean up and inform the dialog
-                    throw new RuntimeException(e);
-                }
-
+                    } catch (Exception e) {
+                        log.error("Replacing failed!\n    fileName=" + file.getName() + "\n    reader=" + templateReader + "\n    writer=" + documentWriter, e);
+                        // Clean up and inform the dialog
+                        throw new RuntimeException(e);
+                    }
+                } while (retry > 0);
             }
         }
     }
@@ -161,8 +174,6 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         String templateFileName = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_NAME);
         log.debug("Using template: " + templateFileName);
 
-        ContentReader templateReader = fileFolderService.getReader(nodeRef);
-
         ee.webmedia.alfresco.document.file.model.File populatedTemplate = new ee.webmedia.alfresco.document.file.model.File(fileFolderService.create(
                 documentNodeRef, name, ContentModel.TYPE_CONTENT));
         nodeService.setProperty(populatedTemplate.getNodeRef(), ee.webmedia.alfresco.document.file.model.File.GENERATED, true); // Set generated flag so we can
@@ -172,19 +183,32 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         documentLogService.addDocumentLog(documentNodeRef, I18NUtil.getMessage("document_log_status_fileAdded", displayName));
         log.debug("Created new node: " + populatedTemplate.getNodeRef() + "\nwith name: " + name + "; displayName: " + displayName);
         // Set document content's mimetype and encoding from template
-        ContentWriter documentWriter = fileFolderService.getWriter(populatedTemplate.getNodeRef());
-        documentWriter.setMimetype(MimetypeMap.MIMETYPE_WORD);
 
-        try {
-            openOfficeService.replace(templateReader, documentWriter, new ReplaceCallback() {
-                public String getReplace(String found) {
-                    return getReplaceString(found, docProp);
+        int retry = 3;
+        do {
+            ContentReader templateReader = fileFolderService.getReader(nodeRef);
+            ContentWriter documentWriter = fileFolderService.getWriter(populatedTemplate.getNodeRef());
+            documentWriter.setMimetype(MimetypeMap.MIMETYPE_WORD);
+
+            try {
+                openOfficeService.replace(templateReader, documentWriter, new ReplaceCallback() {
+                    public String getReplace(String found) {
+                        return getReplaceString(found, docProp);
+                    }
+                });
+                retry = 0;
+            } catch (OpenOfficeService.OpenOfficeReturnedNullInterfaceException e) {
+                retry--;
+                log.error("Replacing failed, OpenOffice error, retrying " + retry + " times more: " + e.getMessage() + "\n    fileName=" + templateFileName
+                        + "\n    reader=" + templateReader + "\n    writer=" + documentWriter);
+                if (retry <= 0) {
+                    throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_failed", e);
                 }
-            });
-        } catch (Exception e) {
-            log.error("Replacing failed!\n    fileName=" + templateFileName + "\n    reader=" + templateReader + "\n    writer=" + documentWriter, e);
-            throw new RuntimeException(e);
-        }
+            } catch (Exception e) {
+                log.error("Replacing failed!\n    fileName=" + templateFileName + "\n    reader=" + templateReader + "\n    writer=" + documentWriter, e);
+                throw new RuntimeException(e);
+            }
+        } while (retry > 0);
         return displayName;
     }
 

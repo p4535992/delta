@@ -128,6 +128,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         try {
             final String wordFileDisplayName = getDocumentTemplateService().populateTemplate(new NodeRef(ActionUtil.getParam(event, PARAM_DOCUMENT_NODE_REF)));
             MessageUtil.addInfoMessage("document_createWordFile_success", wordFileDisplayName);
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
         } catch (FileNotFoundException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), ERR_TEMPLATE_NOT_FOUND);
         } catch (InvalidNodeRefException e) {

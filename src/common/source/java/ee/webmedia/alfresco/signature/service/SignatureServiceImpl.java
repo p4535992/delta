@@ -398,7 +398,7 @@ public class SignatureServiceImpl implements SignatureService {
     }
 
     private void addDataFile(NodeRef nodeRef, SignedDoc document) throws DigiDocException {
-        String fileName = fileFolderService.getFileInfo(nodeRef).getName();
+        String fileName = getFileName(nodeRef);
         ContentReader reader = fileFolderService.getReader(nodeRef);
         String mimeType = reader.getMimetype();
         DataFile datafile = new DataFile(document.getNewDataFileId(), DataFile.CONTENT_EMBEDDED_BASE64, fileName, mimeType, document);
@@ -408,6 +408,10 @@ public class SignatureServiceImpl implements SignatureService {
         datafile.setBody(os.toByteArray(), reader.getEncoding().toUpperCase());
 
         document.addDataFile(datafile);
+    }
+
+    protected String getFileName(NodeRef nodeRef) {
+        return fileFolderService.getFileInfo(nodeRef).getName();
     }
 
 }

@@ -8,6 +8,7 @@ import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.util.TempFileProvider;
+import org.springframework.util.Assert;
 
 import com.sun.star.beans.PropertyValue;
 import com.sun.star.container.XIndexAccess;
@@ -37,50 +38,69 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
         // create temporary file to replace from
         File tempFromFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "."
                 + mimetypeService.getExtension(reader.getMimetype()));
-        File tempToFile;
-        log.debug("Copying file from contentstore to temporary file: " + tempFromFile + "\n  " + reader);
-        reader.getContent(tempFromFile);
-
-        synchronized (openOfficeConnection) {
-            String tempFromFileurl = toUrl(tempFromFile);
-            log.debug("Loading file into OpenOffice from URL: " + tempFromFileurl);
-            XComponent xComponent = loadComponent(tempFromFileurl);
+        File tempToFile = null;
+        try {
+            log.debug("Copying file from contentstore to temporary file: " + tempFromFile + "\n  " + reader);
+            reader.getContent(tempFromFile);
     
-            XTextDocument xTextDocument = (XTextDocument) UnoRuntime.queryInterface(XTextDocument.class, xComponent);
-            XSearchDescriptor xSearchDescriptor;
-            XSearchable xSearchable = null;
-            xSearchable = (XSearchable) UnoRuntime.queryInterface(XSearchable.class, xTextDocument);
-            // You need a descriptor to set properies for Replace
-            xSearchDescriptor = xSearchable.createSearchDescriptor();
-            xSearchDescriptor.setPropertyValue("SearchRegularExpression", Boolean.TRUE);
-            // Set the properties the replace method need
-            xSearchDescriptor.setSearchString(REGEXP_PATTERN);
-            XIndexAccess findAll = xSearchable.findAll(xSearchDescriptor);
-            log.debug("Processing file contents, found " + findAll.getCount() + " pattern matches");
-            for (int i = 0; i < findAll.getCount(); i++) {
-                Object byIndex = findAll.getByIndex(i);
-                XTextRange xTextRange = (XTextRange) UnoRuntime.queryInterface(XTextRange.class, byIndex);
-                xTextRange.setString(callback.getReplace(xTextRange.getString()));
-            }
-            XRefreshable refreshable = (XRefreshable) UnoRuntime.queryInterface(XRefreshable.class, xComponent);
-            if (refreshable != null) {
-                refreshable.refresh();
+            synchronized (openOfficeConnection) {
+                String tempFromFileurl = toUrl(tempFromFile);
+                log.debug("Loading file into OpenOffice from URL: " + tempFromFileurl);
+                XComponent xComponent = loadComponent(tempFromFileurl);
+        
+                XTextDocument xTextDocument = queryInterface(XTextDocument.class, xComponent);
+                XSearchDescriptor xSearchDescriptor;
+                XSearchable xSearchable = queryInterface(XSearchable.class, xTextDocument);
+                
+                // You need a descriptor to set properies for Replace
+                xSearchDescriptor = xSearchable.createSearchDescriptor();
+                xSearchDescriptor.setPropertyValue("SearchRegularExpression", Boolean.TRUE);
+                // Set the properties the replace method need
+                xSearchDescriptor.setSearchString(REGEXP_PATTERN);
+                XIndexAccess findAll = xSearchable.findAll(xSearchDescriptor);
+                log.debug("Processing file contents, found " + findAll.getCount() + " pattern matches");
+                for (int i = 0; i < findAll.getCount(); i++) {
+                    Object byIndex = findAll.getByIndex(i);
+                    XTextRange xTextRange = queryInterface(XTextRange.class, byIndex);
+                    xTextRange.setString(callback.getReplace(xTextRange.getString()));
+                }
+                XRefreshable refreshable = queryInterface(XRefreshable.class, xComponent);
+                if (refreshable != null) {
+                    refreshable.refresh();
+                }
+        
+                tempToFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "."
+                        + mimetypeService.getExtension(reader.getMimetype()));
+                String tempToFileUrl = toUrl(tempToFile);
+                log.debug("Saving file from OpenOffice to URL: " + tempToFileUrl);
+                PropertyValue[] storeProps = new PropertyValue[1];
+                storeProps[0] = new PropertyValue();
+                storeProps[0].Name = "FilterName";
+                storeProps[0].Value = "MS Word 97"; // "Microsoft Word 97/2000/XP"
+                XStorable storable = queryInterface(XStorable.class, xComponent);
+                storable.storeToURL(tempToFileUrl, storeProps); // Second replacing run requires new URL
             }
     
-            tempToFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "."
-                    + mimetypeService.getExtension(reader.getMimetype()));
-            String tempToFileUrl = toUrl(tempToFile);
-            log.debug("Saving file from OpenOffice to URL: " + tempToFileUrl);
-            PropertyValue[] storeProps = new PropertyValue[1];
-            storeProps[0] = new PropertyValue();
-            storeProps[0].Name = "FilterName";
-            storeProps[0].Value = "MS Word 97"; // "Microsoft Word 97/2000/XP"
-            XStorable storable = (XStorable) UnoRuntime.queryInterface(XStorable.class, xComponent);
-            storable.storeToURL(tempToFileUrl, storeProps); // Second replacing run requires new URL
+            writer.putContent(tempToFile);
+            log.debug("Copied file back to contentstore from temporary file: " + tempToFile + "\n  " + writer + "\nEntire replacement took " + (System.currentTimeMillis() - startTime) + " ms");
+        } finally {
+            if (tempFromFile != null && tempFromFile.exists()) {
+                tempFromFile.delete();
+            }
+            if (tempToFile != null && tempToFile.exists()) {
+                tempToFile.delete();
+            }
         }
+    }
 
-        writer.putContent(tempToFile);
-        log.debug("Copied file back to contentstore from temporary file: " + tempToFile + "\n  " + writer + "\nEntire replacement took " + (System.currentTimeMillis() - startTime) + " ms");
+    private static <T> T queryInterface(Class<T> clazz, Object argument) throws OpenOfficeReturnedNullInterfaceException {
+        Assert.notNull(clazz);
+        @SuppressWarnings("unchecked")
+        T clazzInstance = (T) UnoRuntime.queryInterface(clazz, argument);
+        if (clazzInstance == null) {
+            throw new OpenOfficeReturnedNullInterfaceException(clazz);
+        }
+        return clazzInstance;
     }
 
     private XComponent loadComponent(String loadUrl) throws IOException, IllegalArgumentException {
@@ -93,9 +113,9 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
         return desktop.loadComponentFromURL(loadUrl, "_blank", 0, loadProps);
     }
 
-    private String toUrl(File file) {
+    private String toUrl(File file) throws Exception {
         Object contentProvider = openOfficeConnection.getFileContentProvider();
-        XFileIdentifierConverter fic = (XFileIdentifierConverter) UnoRuntime.queryInterface(XFileIdentifierConverter.class, contentProvider);
+        XFileIdentifierConverter fic = queryInterface(XFileIdentifierConverter.class, contentProvider);
         return fic.getFileURLFromSystemPath("", file.getAbsolutePath());
     }
 

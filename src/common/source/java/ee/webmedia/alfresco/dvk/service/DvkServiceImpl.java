@@ -5,6 +5,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -198,11 +199,19 @@ public abstract class DvkServiceImpl implements DvkService {
                 log.debug("sender: " + saatja.getRegnr() + " : " + saatja.getAsutuseNimi());
             }
 
-            List<DataFileType> dataFileList = signedDoc.getDataFileList();
-            if (dataFileList.size() == 0) {
-                log.error("document contains " + dataFileList.size() + " datafiles. signedDoc:\n" + signedDoc);
-            } else if (log.isDebugEnabled()) {
-                log.debug("document contains " + dataFileList.size() + " datafiles");
+            List<DataFileType> dataFileList;
+            if (signedDoc == null) {
+                dataFileList = Collections.emptyList();
+                log.error("document contains 0 datafiles. signedDoc is null\n    dvk id: " + dhlId + ", sender: " + metaInfoHelper.getDhlSaatjaAsutuseNimi()
+                        + " " + metaInfoHelper.getDhlSaatjaAsutuseNr());
+            } else {
+                dataFileList = signedDoc.getDataFileList();
+                if (dataFileList.size() == 0) {
+                    log.error("document contains " + dataFileList.size() + " datafiles. signedDoc:\n" + signedDoc + "\ndvk id: " + dhlId + ", sender: "
+                            + metaInfoHelper.getDhlSaatjaAsutuseNimi() + " " + metaInfoHelper.getDhlSaatjaAsutuseNr());
+                } else if (log.isDebugEnabled()) {
+                    log.debug("document contains " + dataFileList.size() + " datafiles");
+                }
             }
 
             // gather properties that will be attached to space created for this document
@@ -217,7 +226,11 @@ public abstract class DvkServiceImpl implements DvkService {
             if (StringUtils.isNotBlank(rd.getLetterSenderTitle())) {
                 documentFolderName = rd.getLetterSenderTitle();
             } else {
-                documentFolderName = noTitleSpacePrefix + dataFileList.get(0).getFilename();
+                if (dataFileList.size() > 0) {
+                    documentFolderName = noTitleSpacePrefix + dataFileList.get(0).getFilename();
+                } else {
+                    documentFolderName = noTitleSpacePrefix + metaInfoHelper.getDhlSaatjaAsutuseNr() + " " + metaInfoHelper.getDhlSaatjaAsutuseNimi();
+                }
             }
 
             NodeRef documentFolder = createDocumentNode(rd, dvkIncomingFolder, documentFolderName);
@@ -270,9 +283,11 @@ public abstract class DvkServiceImpl implements DvkService {
         NodeRef file = createFileNode(rd, documentFolder, filename);
 
         final ContentWriter writer = fileFolderService.getWriter(file);
-        String mimeType = dataFile.getMimeType();
-        if (StringUtils.isEmpty(mimeType)) { // DataFile MimeType attribute may be empty
-            mimeType = mimetypeService.guessMimetype(filename);
+        String originalMimeType = StringUtils.lowerCase(dataFile.getMimeType());
+        String mimeType = mimetypeService.guessMimetype(filename);
+        if (log.isInfoEnabled() && !StringUtils.equals(mimeType, originalMimeType)) {
+            log.info("Original mimetype '" + originalMimeType + "', but we are guessing mimetype based on filename '" + filename + "' => '" + mimeType
+                    + "'\n    dvk id: " + rd.getDvkId() + ", sender: " + rd.getSenderRegNr() + " " + rd.getSenderOrgName());
         }
         writer.setMimetype(mimeType);
         try {

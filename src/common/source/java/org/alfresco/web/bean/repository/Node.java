@@ -353,7 +353,7 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
    /**
     * @return The list of aspects applied to this node
     */
-   public final Set<QName> getAspects()
+   public Set<QName> getAspects()
    {
       if (this.aspects == null)
       {

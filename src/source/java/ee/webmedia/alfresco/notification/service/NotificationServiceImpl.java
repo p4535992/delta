@@ -17,8 +17,6 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
-import org.alfresco.service.cmr.model.FileFolderService;
-import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -32,6 +30,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.email.service.EmailException;
@@ -71,7 +70,7 @@ public class NotificationServiceImpl implements NotificationService {
     private ParametersService parametersService;
     private UserService userService;
     private DocumentTemplateService templateService;
-    private FileFolderService fileFolderService;
+    private FileService fileService;
     private DocumentSearchService documentSearchService;
     private AuthorityService authorityService;
     private SubstituteService substituteService;
@@ -211,11 +210,11 @@ public class NotificationServiceImpl implements NotificationService {
         if (notification.isAttachFiles()) {
             long maxSize = parametersService.getLongParameter(Parameters.MAX_ATTACHED_FILE_SIZE) * 1024 * 1024; // Parameter is MB
             long zipSize = 0;
-            List<FileInfo> files = fileFolderService.listFiles(docRef);
+            
+            List<File> files = fileService.getAllActiveFiles(docRef);
             List<String> fileRefs = new ArrayList<String>(files.size());
 
-            for (FileInfo fi : files) {
-                File file = new File(fi);
+            for (File file : files) {
                 zipSize += file.getSize();
                 if (zipSize > maxSize) {
                     String msg = "Files archive size exceeds limit configured with parameter!";
@@ -836,8 +835,8 @@ public class NotificationServiceImpl implements NotificationService {
         this.templateService = templateService;
     }
 
-    public void setFileFolderService(FileFolderService fileFolderService) {
-        this.fileFolderService = fileFolderService;
+    public void setFileService(FileService fileService) {
+        this.fileService = fileService;
     }
 
     public void setDocumentSearchService(DocumentSearchService documentSearchService) {

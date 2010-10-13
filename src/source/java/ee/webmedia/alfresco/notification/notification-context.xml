@@ -41,7 +41,7 @@
       <property name="parametersService" ref="ParametersService" />
       <property name="userService" ref="UserService" />
       <property name="templateService" ref="DocumentTemplateService" />
-      <property name="fileFolderService" ref="FileFolderService" />
+      <property name="fileService" ref="FileService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
       <property name="authorityService" ref="AuthorityService" />
       <property name="substituteService" ref="SubstituteService" />

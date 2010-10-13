@@ -191,7 +191,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         String contentTypeString = part.getContentType();
         try {
             ContentType contentType = new ContentType(contentTypeString);
-            String mimetype = contentType.getBaseType();
+            String mimetype = StringUtils.lowerCase(contentType.getBaseType());
             if (MimetypeMap.MIMETYPE_BINARY.equals(mimetype) /* || !mimetypeService.getExtensionsByMimetype().containsKey(mimetype) */) {
                 // digidoc files come from outlook with binary content-type
                 String oldMimetype = mimetype;
