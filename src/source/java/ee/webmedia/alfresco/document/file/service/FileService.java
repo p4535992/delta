@@ -68,9 +68,9 @@ public interface FileService {
      * @param documentNodeRef Reference to document node
      * @return Reference to created node/file
      */
-    NodeRef addFileToDocument(String name, NodeRef fileNodeRef, NodeRef documentNodeRef);
+    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef);
 
-    NodeRef addFileToDocument(String name, java.io.File file, NodeRef documentNodeRef, String mimeType);
+    NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType);
 
     List<File> getScannedFolders();
 

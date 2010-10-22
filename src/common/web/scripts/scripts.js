@@ -764,7 +764,7 @@ $jQ(document).ready(function() {
 	   });
    }
    
-   var suggesters = $jQ("span.suggest-wrapper>input");
+   var suggesters = $jQ("span.suggest-wrapper>textarea");
    suggesters.live("change", function(e){
       var jqSuggester = $jQ(this);
       if(!jqSuggester.parent().hasClass('noValChangeTooltip')) {
@@ -887,7 +887,7 @@ function handleHtmlLoaded(context, selects) {
     * (We wrap autocomplete inputs to fix IE bug related to input with background image and text shadowing)
     */
    $jQ(".suggest-wrapper", context).click(function (e) {
-      $jQ(this).children("input").focus();
+      $jQ(this).children("textarea").focus();
    });
    
    $jQ(".toggle-tasks", context).click(function(){

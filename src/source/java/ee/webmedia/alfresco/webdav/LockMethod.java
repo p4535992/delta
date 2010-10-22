@@ -24,8 +24,14 @@
  */
 package ee.webmedia.alfresco.webdav;
 
+import java.io.Serializable;
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.model.ContentModel;
+import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.webdav.WebDAV;
 import org.alfresco.repo.webdav.WebDAVServerException;
 import org.alfresco.service.cmr.lock.LockService;
@@ -34,6 +40,7 @@ import org.alfresco.service.cmr.lock.LockType;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.dom4j.io.XMLWriter;
 
 /**
@@ -70,6 +77,8 @@ public class LockMethod extends org.alfresco.repo.webdav.LockMethod
             throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
         }
 
+        Map<QName, Serializable> originalProps = getNodeService().getProperties(lockNodeInfo.getNodeRef());
+
         // Check if this is a new lock or a refresh
         if (hasLockToken())
         {
@@ -82,8 +91,20 @@ public class LockMethod extends org.alfresco.repo.webdav.LockMethod
             createLock(lockNodeInfo.getNodeRef(), userName);
         }
 
+        // Set modifier and modified properties to original, so that locking doesn't appear to change the file
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(ContentModel.PROP_MODIFIER, originalProps.get(ContentModel.PROP_MODIFIER));
+        props.put(ContentModel.PROP_MODIFIED, originalProps.get(ContentModel.PROP_MODIFIED));
+        getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_AUDITABLE);
+        getNodeService().addProperties(lockNodeInfo.getNodeRef(), props);
+
         // We either created a new lock or refreshed an existing lock, send back the lock details
         generateResponse(lockNodeInfo.getNodeRef(), userName);
+    }
+
+    protected BehaviourFilter getBehaviourFilter() {
+        BehaviourFilter behaviourFilter = (BehaviourFilter) getServiceRegistry().getService(QName.createQName("", "policyBehaviourFilter"));
+        return behaviourFilter;
     }
 
     /**

@@ -28,7 +28,7 @@ public class AssignmentWorkflow extends Workflow {
     protected void preSave() {
         super.preSave();
         for (Task task : getTasks()) {
-            if (StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))) {
+            if (isActiveResponsible(task) && StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))) {
                 task.setProp(WorkflowSpecificModel.Props.RESOLUTION, getProp(WorkflowSpecificModel.Props.RESOLUTION));
             }
         }

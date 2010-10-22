@@ -282,7 +282,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     @Override
     public int searchUserWorkingDocumentsCount() {
         long startTime = System.currentTimeMillis();
-        String query = getWorkingDocumentsOwnerQuery(AuthenticationUtil.getRunAsUser());
+        String query = getWorkingDocumentsOwnerQuery(getCurrentUserOrSubstitution());
         int count = 0;
         ResultSet resultSet = doSearch(query, false, /* queryName */ "userWorkingDocumentsCount");
         try {
@@ -380,9 +380,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     public List<Task> searchCurrentUsersTasksInProgress(QName taskType) {
         long startTime = System.currentTimeMillis();
         SubstitutionInfo subInfo = SubstitutionInfoHolder.getSubstitutionInfo();
-        String ownerId = subInfo.isSubstituting()
-                ? subInfo.getSubstitution().getReplacedPersonUserName()
-                : AuthenticationUtil.getRunAsUser();
+        String ownerId = getCurrentUserOrSubstitution();
         List<String> queryParts = getTaskQuery(taskType, ownerId, Status.IN_PROGRESS);
         addSubstitutionRestriction(queryParts);
         String query = generateTaskSearchQuery(queryParts);
@@ -435,9 +433,10 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     public int getCurrentUsersTaskCount(QName taskType) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>();
+        String ownerId = getCurrentUserOrSubstitution();        
         queryParts.add(generateTypeQuery(taskType));
         queryParts.add(generateStringExactQuery(Status.IN_PROGRESS.getName(), WorkflowCommonModel.Props.STATUS));
-        queryParts.add(generateStringExactQuery(AuthenticationUtil.getRunAsUser(), WorkflowCommonModel.Props.OWNER_ID));
+        queryParts.add(generateStringExactQuery(ownerId, WorkflowCommonModel.Props.OWNER_ID));
         addSubstitutionRestriction(queryParts);
         String query = generateTaskSearchQuery(queryParts);
         int count = 0;
@@ -455,6 +454,14 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             log.debug("Current user's and IN_PROGRESS tasks count search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
         return count;
+    }
+    
+    private String getCurrentUserOrSubstitution(){
+        SubstitutionInfo subInfo = SubstitutionInfoHolder.getSubstitutionInfo();
+        String ownerId = subInfo.isSubstituting()
+                ? subInfo.getSubstitution().getReplacedPersonUserName()
+                : AuthenticationUtil.getRunAsUser();         
+        return ownerId;
     }
 
     @Override

@@ -967,21 +967,18 @@ input.spacing-top {
 	background:#FFFFFF url(../images/icons/ui-menu.png) no-repeat scroll right 2px;
 	padding-right:18px;
 	cursor:pointer;
-	border: 1px solid #888888;
-	height: 19px;
 	display: block;
-	width: 384px;
+	width: 406px;
 }
 
 .multiE .suggest-wrapper {
 	width: auto;
 }
 
-.suggest-wrapper input.suggest {
-	background: transparent;	
-	border: none;
+.suggest-wrapper textarea.suggest {
+	background: transparent;
+	overflow: hidden;
 }
-
 
 input.readonly {
 	background-color: #ddd;
@@ -1110,6 +1107,10 @@ table.recipient th {
 
 #container-content .workflow-panel textarea {
 	width: 360px;
+}
+
+.workflow-panel .panel-wrapper h3 a {
+	padding-right: 115px;
 }
 
 #container-content td select {

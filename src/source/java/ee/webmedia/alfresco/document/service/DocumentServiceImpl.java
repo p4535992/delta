@@ -80,6 +80,7 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.EqualsHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
@@ -1770,9 +1771,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 } else {
                     List<NodeRef> files = fileService.getAllActiveFilesNodeRefs(document);
                     long step3 = System.currentTimeMillis();
-                    NodeRef ddoc = signatureService.createContainer(document, files, filename, task.getSignatureDigest(), signatureHex);
+                    String uniqueFilename = generalService.getUniqueFileName(document, filename);
+                    NodeRef ddoc = signatureService.createContainer(document, files, uniqueFilename, task.getSignatureDigest(), signatureHex);
                     long step4 = System.currentTimeMillis();
-                    documentLogService.addDocumentLog(document, I18NUtil.getMessage("document_log_status_fileAdded", filename));
+                    documentLogService.addDocumentLog(document, I18NUtil.getMessage("document_log_status_fileAdded", uniqueFilename));
                     long step5 = System.currentTimeMillis();
                     fileService.setAllFilesInactiveExcept(document, ddoc);
                     long step6 = System.currentTimeMillis();

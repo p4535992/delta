@@ -8,15 +8,29 @@ import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
+import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.myfaces.renderkit.html.HtmlTextRenderer;
+import org.apache.commons.lang.StringUtils;
+import org.apache.myfaces.renderkit.html.HtmlTextareaRenderer;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 
-public class SuggesterRenderer extends HtmlTextRenderer {
+public class SuggesterRenderer extends HtmlTextareaRenderer {
     public static final String SUGGESTER_RENDERER_TYPE = SuggesterRenderer.class.getCanonicalName();
 
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
+        if (component.getParent() instanceof PropertySheetItem) { // we are directly inside a property sheet item cell, not in multivalueeditor
+            @SuppressWarnings("unchecked")
+            Map<String, Object> attributes = component.getAttributes();
+            String componentStyleClass = (String) attributes.get("styleClass");
+            if (StringUtils.isBlank(componentStyleClass)) {
+                componentStyleClass = "";
+            } else {
+                componentStyleClass += " ";
+            }
+            componentStyleClass += "expand19-200";
+            attributes.put("styleClass", componentStyleClass);
+        }
         super.encodeBegin(context, component);
         ResponseWriter out = context.getResponseWriter();
         out.startElement(HTML.SPAN_ELEM, component);// Add wrapper to fix IE bug related to input with background image and text shadowing

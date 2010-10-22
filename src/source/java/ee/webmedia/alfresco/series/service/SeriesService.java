@@ -19,12 +19,11 @@ public interface SeriesService {
     String BEAN_NAME = "SeriesService";
 
     void saveOrUpdate(Series series);
-    void saveOrUpdate(Series series, boolean propsFromNode);
     
     /**
      * For PP import only. Assumes the order was checked beforehand.
      */
-    void saveOrUpdateWithoutReorder(Series series, boolean propsFromNode);
+    void saveOrUpdateWithoutReorder(Series series);
 
     List<Series> getAllSeriesByFunction(NodeRef functionNodeRef);
 

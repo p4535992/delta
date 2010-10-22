@@ -3,13 +3,9 @@ package ee.webmedia.alfresco.document.file.web;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
-import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.faces.application.Application;
 import javax.faces.application.FacesMessage;
@@ -26,13 +22,10 @@ import javax.faces.model.SelectItem;
 import javax.faces.validator.Validator;
 import javax.faces.validator.ValidatorException;
 
-import org.alfresco.model.ContentModel;
 import org.alfresco.repo.node.integrity.IntegrityException;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.FileUploadBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
@@ -58,7 +51,6 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.versions.model.VersionsModel;
 
 /**
  * @author Dmitri Melnikov
@@ -140,19 +132,19 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
         try {
-            List<NodeRef> createdFiles = new ArrayList<NodeRef>();
             try {
                 NodeRef documentNodeRef = new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId());
-                NodeRef addedFileNodeRef;
                 if (isFileSelected) {
                     for (int i = 0; i < selectedFileNodeRef.size(); i++) {
                         String displayName = selectedFileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(selectedFileName.get(i));
                         checkPlusInFileName(displayName);
                         displayName = getFileService().getUniqueFileDisplayName(documentNodeRef, displayName);
                         String name = getGeneralService().limitFileNameLength(displayName, 20, null);
-                        addedFileNodeRef = getFileService().addFileToDocument(name, selectedFileNodeRef.get(i), documentNodeRef);
-                        getNodeService().setProperty(addedFileNodeRef, File.DISPLAY_NAME, displayName);
-                        createdFiles.add(addedFileNodeRef);
+                        getFileService().addFileToDocument(
+                                name,
+                                displayName,
+                                documentNodeRef,
+                                selectedFileNodeRef.get(i));
                     }
                 }
                 if (getFileUploadBean() != null) {
@@ -171,25 +163,18 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                         String name = getGeneralService().limitFileNameLength(displayName, 20, null);
                         name = getGeneralService().getUniqueFileName(documentNodeRef, name);
 
-                        addedFileNodeRef = getFileService().addFileToDocument(
+                        getFileService().addFileToDocument(
                                 name,
-                                files.get(i),
+                                displayName,
                                 documentNodeRef,
+                                files.get(i),
                                 getFileUploadBean().getContentTypes().get(i));
-                        getNodeService().setProperty(addedFileNodeRef, File.DISPLAY_NAME, displayName);
-                        createdFiles.add(addedFileNodeRef);
                     }
                 }
+                getDocumentService().updateSearchableFiles(documentNodeRef);
             } catch (NodeLockedException e) {
                 MessageUtil.addErrorMessage(context, "document_addFile_error_docLocked");
                 return outcome;
-            }
-            // XXX Should probably be refactored to a single service method to add all the aspects there.
-            for (NodeRef fileNodeRef : createdFiles) {
-                addVersionModifiedAspect(fileNodeRef);
-                NodeRef document = getNodeService().getPrimaryParent(fileNodeRef).getParentRef();
-                getDocumentService().updateSearchableFiles(document);
-                getDocumentLogService().addDocumentLog(document, MessageUtil.getMessage(context, "document_log_status_fileAdded", getFileName()));
             }
             return outcome;
         } catch (FileExistsException e) {
@@ -239,27 +224,6 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     public void setFileNameWithoutExtension(String name, int index) {
         getFileUploadBean().getFileNameWithoutExtension().set(index, name);
-    }
-
-    private void addVersionModifiedAspect(NodeRef nodeRef) {
-        if (getNodeService().hasAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED) == false) {
-            Map<QName, Serializable> properties = getNodeService().getProperties(nodeRef);
-
-            String user = (String) properties.get(ContentModel.PROP_CREATOR);
-
-            Date modified = DefaultTypeConverter.INSTANCE.convert(Date.class, properties.get(ContentModel.PROP_CREATED));
-            Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(3);
-            aspectProperties.put(VersionsModel.Props.VersionModified.MODIFIED, modified);
-
-            Map<QName, Serializable> personProps = getUserService().getUserProperties(user);
-            String first = (String) personProps.get(ContentModel.PROP_FIRSTNAME);
-            String last = (String) personProps.get(ContentModel.PROP_LASTNAME);
-
-            aspectProperties.put(VersionsModel.Props.VersionModified.FIRSTNAME, first);
-            aspectProperties.put(VersionsModel.Props.VersionModified.LASTNAME, last);
-
-            getNodeService().addAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED, aspectProperties);
-        }
     }
 
     public String getFileName() {

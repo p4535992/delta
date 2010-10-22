@@ -740,7 +740,9 @@ public class WorkflowBlockBean implements Serializable {
 
             HtmlPanelGroup taskGroup = (HtmlPanelGroup) app.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
             if (summaryItem.isAssignmentWorkflow()) {
-                generateTaskTables(app, summaryItem, taskGroup, true, true);
+                if(summaryItem.getAssignmentResponsibleTasks().size() > 0){
+                    generateTaskTables(app, summaryItem, taskGroup, true, true);
+                }
                 if (summaryItem.getAssignmentTasks().size() > 0) {
                     generateTaskTables(app, summaryItem, taskGroup, true, false);
                 }

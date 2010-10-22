@@ -37,13 +37,13 @@ public class SuggesterGenerator extends TextAreaGenerator {
 
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
-        attributes.put("styleClass", "suggest");
         String styleClass = (String) attributes.get("styleClass");
         if (StringUtils.isBlank(styleClass)) {
             styleClass = "suggest";
         } else {
             styleClass += " suggest";
         }
+        attributes.put("styleClass", styleClass);
 
         Pair<List<String>, String> suggesterValues = getSuggesterValues(context, component);
         if (suggesterValues != null) {

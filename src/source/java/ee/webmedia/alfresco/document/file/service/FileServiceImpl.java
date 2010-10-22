@@ -2,15 +2,18 @@ package ee.webmedia.alfresco.document.file.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.repo.security.authentication.InMemoryTicketComponentImpl;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
+import org.alfresco.repo.security.authentication.InMemoryTicketComponentImpl;
 import org.alfresco.repo.webdav.WebDAVServlet;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.model.FileFolderService;
@@ -25,7 +28,9 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.security.AuthenticationService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
@@ -40,6 +45,8 @@ import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.versions.model.VersionsModel;
 
 /**
  * @author Dmitri Melnikov
@@ -224,7 +231,13 @@ public class FileServiceImpl implements FileService {
         for (FileInfo fileInfo : fileInfos) {
             try {
                 fileFolderService.move(fileInfo.getNodeRef(), toRef, null);
-                documentLogService.addDocumentLog(toRef, I18NUtil.getMessage("document_log_status_fileAdded", fileInfo.getName()));
+
+                String fileName = fileInfo.getName();
+                String displayName = (String) fileInfo.getProperties().get(File.DISPLAY_NAME);
+                if (StringUtils.isNotBlank(displayName)) {
+                    fileName = displayName;
+                }
+                documentLogService.addDocumentLog(toRef, I18NUtil.getMessage("document_log_status_fileAdded", fileName));
             } catch (DuplicateChildNodeNameException e) {
                 log.warn("Move failed. File '" + fileInfo.getName() + "' already exists");
                 throw e;
@@ -239,9 +252,9 @@ public class FileServiceImpl implements FileService {
     }
 
     @Override
-    public NodeRef addFileToDocument(final String name, final NodeRef fileNodeRef, final NodeRef documentNodeRef) {
+    public NodeRef addFileToDocument(final String name, final String displayName, final NodeRef documentNodeRef, final NodeRef fileNodeRef) {
         // Moving is executed with System user rights, because this is not appropriate to implement in permissions model
-        return AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
+        NodeRef movedFileNodeRef = AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
             @Override
             public NodeRef doWork() throws Exception {
                 // change file name
@@ -251,10 +264,12 @@ public class FileServiceImpl implements FileService {
                         ContentModel.ASSOC_CONTAINS, ContentModel.ASSOC_CONTAINS).getChildRef();
             }
         }, AuthenticationUtil.getSystemUserName());
+        addFileToDocument(displayName, documentNodeRef, movedFileNodeRef);
+        return movedFileNodeRef;
     }
 
     @Override
-    public NodeRef addFileToDocument(String name, java.io.File file, NodeRef documentNodeRef, String mimeType) {
+    public NodeRef addFileToDocument(String name, String displayName, NodeRef documentNodeRef, java.io.File file, String mimeType) {
         FileInfo fileInfo = fileFolderService.create(
               documentNodeRef,
               name,
@@ -262,8 +277,37 @@ public class FileServiceImpl implements FileService {
         NodeRef fileNodeRef = fileInfo.getNodeRef();
         ContentWriter writer = fileFolderService.getWriter(fileNodeRef);
         generalService.writeFile(writer, file, name, mimeType);
-        
+
+        addFileToDocument(displayName, documentNodeRef, fileNodeRef);
+
         return fileNodeRef;
+    }
+
+    private void addFileToDocument(String displayName, NodeRef documentNodeRef, NodeRef fileNodeRef) {
+        nodeService.setProperty(fileNodeRef, File.DISPLAY_NAME, displayName);
+        addVersionModifiedAspect(fileNodeRef);
+        documentLogService.addDocumentLog(documentNodeRef, MessageUtil.getMessage("document_log_status_fileAdded", displayName));
+    }
+
+    private void addVersionModifiedAspect(NodeRef nodeRef) {
+        if (nodeService.hasAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED) == false) {
+            Map<QName, Serializable> properties = nodeService.getProperties(nodeRef);
+
+            String user = (String) properties.get(ContentModel.PROP_CREATOR);
+
+            Date modified = DefaultTypeConverter.INSTANCE.convert(Date.class, properties.get(ContentModel.PROP_CREATED));
+            Map<QName, Serializable> aspectProperties = new HashMap<QName, Serializable>(3);
+            aspectProperties.put(VersionsModel.Props.VersionModified.MODIFIED, modified);
+
+            Map<QName, Serializable> personProps = userService.getUserProperties(user);
+            String first = (String) personProps.get(ContentModel.PROP_FIRSTNAME);
+            String last = (String) personProps.get(ContentModel.PROP_LASTNAME);
+
+            aspectProperties.put(VersionsModel.Props.VersionModified.FIRSTNAME, first);
+            aspectProperties.put(VersionsModel.Props.VersionModified.LASTNAME, last);
+
+            nodeService.addAspect(nodeRef, VersionsModel.Aspects.VERSION_MODIFIED, aspectProperties);
+        }
     }
 
     @Override

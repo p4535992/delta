@@ -9,8 +9,10 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.content.DeleteContentDialog;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
@@ -37,8 +39,12 @@ public class DeleteFileDialog extends DeleteContentDialog {
         super.finishImpl(context, outcome);
         try {
 
-            final String fileName = file != null ? file.getName() : "";
+            String fileName = file != null ? file.getName() : "";
             if (document != null && getDictionaryService().isSubClass(getNodeService().getType(document), DocumentCommonModel.Types.DOCUMENT)) {
+                String displayName = (String) file.getProperties().get(File.DISPLAY_NAME);
+                if (StringUtils.isNotBlank(displayName)) {
+                    fileName = displayName;
+                }
                 getDocumentLogService().addDocumentLog(document, MessageUtil.getMessage(context, "document_log_status_fileDeleted", fileName));
                 getDocumentService().updateSearchableFiles(document);
             }

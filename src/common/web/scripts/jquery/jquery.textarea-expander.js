@@ -57,6 +57,7 @@
 				e.valLength = vlen;
 				e.boxWidth = ewidth;
 			}
+			jQuery(e).trigger('textareaResized');
 
 			return true;
 		};
@@ -79,7 +80,7 @@
 			if (!this.Initialized) {
 				this.Initialized = true;
 				jQuery(this).css("padding-top", 0).css("padding-bottom", 0);
-				jQuery(this).bind("keyup", ResizeTextarea).bind("focus", ResizeTextarea);
+				jQuery(this).bind("keyup", ResizeTextarea).bind("focus", ResizeTextarea).bind("blur", ResizeTextarea);
 			}
 		});
 

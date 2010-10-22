@@ -207,7 +207,7 @@ public abstract class DvkServiceImpl implements DvkService {
             } else {
                 dataFileList = signedDoc.getDataFileList();
                 if (dataFileList.size() == 0) {
-                    log.error("document contains " + dataFileList.size() + " datafiles. signedDoc:\n" + signedDoc + "\ndvk id: " + dhlId + ", sender: "
+                    log.error("document contains " + dataFileList.size() + " datafiles. signedDoc:\n" + getSignedDocOutput(signedDoc) + "\ndvk id: " + dhlId + ", sender: "
                             + metaInfoHelper.getDhlSaatjaAsutuseNimi() + " " + metaInfoHelper.getDhlSaatjaAsutuseNr());
                 } else if (log.isDebugEnabled()) {
                     log.debug("document contains " + dataFileList.size() + " datafiles");
@@ -247,6 +247,13 @@ public abstract class DvkServiceImpl implements DvkService {
             handleStorageFailure(receivedDocument, dhlId, dvkIncomingFolder, metaInfoHelper, previouslyFailedDvkIds, e);
             return null;
         }
+    }
+
+    /**
+     *  Overridden in TK
+     */
+    protected String getSignedDocOutput(SignedDocType signedDoc) {
+        return signedDoc.toString();
     }
 
     /**

@@ -57,7 +57,7 @@
    <config evaluator="aspect-name" condition="docspec:whom">
       <property-sheet>
          <show-property name="whomNameAndJobTitle" show-in-edit-mode="false" display-label-id="document_whomNameAndJobTitle" />
-         <show-property name="docspec:whomName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setWhom}" editable="true" dialogTitleId="users_search_title" readOnlyIf="doccom:docStatus!=töös" />
+         <show-property name="docspec:whomName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setWhom}" editable="true" dialogTitleId="users_search_title" readOnlyIf="doccom:docStatus!=töös" ajaxParentLevel="1" />
          <show-property name="docspec:whomJobTitle" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" />
       </property-sheet>
    </config>
@@ -439,7 +439,7 @@
    <config evaluator="aspect-name" condition="docspec:managementsOrderDetails">
       <property-sheet>
          <show-property name="responsible" show-in-edit-mode="false" display-label-id="document_responsibleName" component-generator="UnescapedOutputTextGenerator" />
-         <show-property name="docspec:responsibleName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setResponsible}" dialogTitleId="users_search_title" />
+         <show-property name="docspec:responsibleName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setResponsible}" dialogTitleId="users_search_title" ajaxParentLevel="1" />
          <show-property name="docspec:responsibleStructUnit" show-in-view-mode="false" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:responsibleOrganization" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setOrganization}" dialogTitleId="contacts_search_title" />
          <show-property name="docspec:coResponsibles" readOnlyIf="doccom:docStatus!=töös" styleClass="expand19-200" component-generator="TextAreaGenerator" />
@@ -624,7 +624,7 @@
    <config evaluator="aspect-name" condition="docspec:deliverer">
       <property-sheet>
          <show-property name="deliverer" show-in-edit-mode="false" display-label-id="document_deliverer" />
-         <show-property name="docspec:delivererName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setDeliverer}" dialogTitleId="users_search_title" />
+         <show-property name="docspec:delivererName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setDeliverer}" dialogTitleId="users_search_title" ajaxParentLevel="1" />
          <show-property name="docspec:delivererJobTitle" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" />
          <show-property name="docspec:delivererStructUnit" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" />
       </property-sheet>
@@ -633,7 +633,7 @@
    <config evaluator="aspect-name" condition="docspec:receiver">
       <property-sheet>
          <show-property name="receiver" show-in-edit-mode="false" display-label-id="document_receiver" />
-         <show-property name="docspec:receiverName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setReceiver}" dialogTitleId="users_search_title" />
+         <show-property name="docspec:receiverName" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setReceiver}" dialogTitleId="users_search_title" ajaxParentLevel="1" />
          <show-property name="docspec:receiverJobTitle" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" />
          <show-property name="docspec:receiverStructUnit" show-in-view-mode="false" readOnlyIf="doccom:docStatus!=töös" labelStyleClass="secondary" />
       </property-sheet>

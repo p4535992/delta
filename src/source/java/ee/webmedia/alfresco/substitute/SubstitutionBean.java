@@ -68,6 +68,7 @@ public class SubstitutionBean implements Serializable {
     }
 
     private void reloadMenu() {
+        getMenuService().reload();
         getMenuService().menuUpdated();
     }
 

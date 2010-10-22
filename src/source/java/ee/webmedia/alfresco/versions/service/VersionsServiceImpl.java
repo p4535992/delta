@@ -16,7 +16,9 @@ import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.version.VersionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
+import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -83,6 +85,10 @@ public class VersionsServiceImpl implements VersionsService {
                 // log the event
                 NodeRef parentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
                 if (dictionaryService.isSubClass(nodeService.getType(parentRef), DocumentCommonModel.Types.DOCUMENT)) {
+                    String displayName = (String) nodeService.getProperty(nodeRef, File.DISPLAY_NAME);
+                    if (StringUtils.isNotBlank(displayName)) {
+                        filename = displayName;
+                    }
                     documentLogService.addDocumentLog(parentRef //
                             , I18NUtil.getMessage("document_log_status_fileChanged", filename));
                 }

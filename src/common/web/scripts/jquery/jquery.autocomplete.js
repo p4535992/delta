@@ -117,6 +117,10 @@ jQuery.autocomplete = function(input, options) {
       // track whether the field has focus
       hasFocus = false;
       hideResults();
+   }).bind('textareaResized', function() {
+      if ($results.css('display') != 'none') {
+         showResults();
+      }
    });
 
    hideResultsNow();
@@ -190,6 +194,7 @@ jQuery.autocomplete = function(input, options) {
       $results.html("");
       var oldVal = $input.val();
       $input.val(v);
+      $input.blur();
       $input.trigger('autoComplete', {oldVal: oldVal,newVal: v});
       hideResultsNow();
 		if (options.onItemSelect) setTimeout(function() { options.onItemSelect(li); }, 1);
@@ -231,14 +236,14 @@ jQuery.autocomplete = function(input, options) {
       // get the position of the input field right now (in case the DOM is shifted)
       var pos = findPos(input);
       // either use the specified width, or autocalculate based on form element
-      var iWidth = (options.width > 0) ? options.width : $input.width();
-      
+      var iWidth = (options.width > 0) ? options.width : $input.width() + 4;
+/*
       var padding = jQuery.browser.mozilla ? 20 : 4; // hardcoded, also fix for firefox
       // determine with using textMetrics
       $results.find("li").each(function(index, element) {
          iWidth = Math.max($jQ.textMetrics(element).width + padding, iWidth);
       });
-
+*/
       // reposition
       $results.css({
          width: parseInt(iWidth) + "px",
@@ -493,6 +498,13 @@ jQuery.autocomplete = function(input, options) {
       while (obj = obj.offsetParent) {
 			curleft += obj.offsetLeft;
 			curtop += obj.offsetTop;
+			if (obj.id == 'subPropSheetWrapper') { // IE7 hack :(
+			   curleft += 1;
+			   curtop += 2;
+			}
+      }
+      if (isIE7()) { // IE7 hack :(
+         curtop += 1;
       }
       return {x:curleft,y:curtop};
    }

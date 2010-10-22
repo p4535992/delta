@@ -125,7 +125,14 @@ public class CreateDiscussionDialog extends CreateTopicDialog
             }
             
             // Add the discussable aspect
-            getNodeService().addAspect(discussingNodeRef, ForumModel.ASPECT_DISCUSSABLE, null);
+            AuthenticationUtil.runAs(new RunAsWork<Void>() {
+                @Override
+                public Void doWork() throws Exception {
+                    getNodeService().addAspect(discussingNodeRef, ForumModel.ASPECT_DISCUSSABLE, null);
+                    return null;
+                }
+            }, AuthenticationUtil.getSystemUserName());            
+            
             // The discussion aspect create the necessary child
             List<ChildAssociationRef> destChildren = getNodeService().getChildAssocs(
                   discussingNodeRef,
@@ -156,8 +163,9 @@ public class CreateDiscussionDialog extends CreateTopicDialog
             
             final NodeRef finalNodeRef = forumNodeRef;
             
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()){
                logger.debug("created forum for content: " + discussingNodeRef.toString());
+            }
             
             // Set this, so user can perform further actions
             ForumsBean forumsBean = (ForumsBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "ForumsBean");
@@ -289,7 +297,14 @@ public class CreateDiscussionDialog extends CreateTopicDialog
             // remove the discussable aspect from the node we were going to discuss!
             // AWC-1519: removing the aspect that defines the child association now does the 
             //           cascade delete so we no longer have to delete the child explicitly
-            getNodeService().removeAspect(discussingNodeRef, ForumModel.ASPECT_DISCUSSABLE);
+            AuthenticationUtil.runAs(new RunAsWork<Void>() {
+                @Override
+                public Void doWork() throws Exception {
+                    getNodeService().removeAspect(discussingNodeRef, ForumModel.ASPECT_DISCUSSABLE);
+                    return null;
+                }
+            }, AuthenticationUtil.getSystemUserName());                 
+            
             // Done
             return null;
          }

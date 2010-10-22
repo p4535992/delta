@@ -332,6 +332,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         metadataBlockBean.init(node.getNodeRef(), isDraft);
         if (isFromDVK() || isFromImap()) {
             metadataBlockBean.setOwnerCurrentUser();
+            showDocsAndCasesAssocs = false;
         }
         fileBlockBean.init(node);
         sendOutBlockBean.init(node);

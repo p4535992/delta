@@ -14,7 +14,7 @@
    <bean id="dvkCorruptDocumentPermissionsBootstrap" class="ee.webmedia.alfresco.dvk.bootstrap.DvkCorruptDocumentPermissionsBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="name" value="dvkCorruptDocumentPermissionsBootstrap" />
-      <property name="sinceVersion" value="@currentVersion@" />
+      <property name="sinceVersion" value="1.9.1.16" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>

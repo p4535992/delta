@@ -105,21 +105,16 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     public Series getSeriesByNodeRef(NodeRef nodeRef) {
         return getSeriesByNoderef(nodeRef, null);
     }
-
     
     public void saveOrUpdate(Series series) {
-        private_saveOrUpdate(series, true, false);
+        saveOrUpdate(series, true);
     }
     
-    public void saveOrUpdate(Series series, boolean propsFromNode) {
-        private_saveOrUpdate(series, true, propsFromNode);
-    }
-    
-    public void saveOrUpdateWithoutReorder(Series series, boolean propsFromNode){
-        private_saveOrUpdate(series, false, propsFromNode);
+    public void saveOrUpdateWithoutReorder(Series series){
+        saveOrUpdate(series, false);
     }
 
-    private void private_saveOrUpdate(Series series, boolean performReorder, boolean propsFromNode) {
+    private void saveOrUpdate(Series series, boolean performReorder) {
         Map<String, Object> stringQNameProperties = series.getNode().getProperties();
         final NodeRef seriesRef = series.getNode().getNodeRef();
         if (series.getNode() instanceof TransientNode) { // save
@@ -130,11 +125,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             logService.addSeriesLog(seriesNodeRef, I18NUtil.getMessage("series_log_status_created"));
         } else { // update
             final String previousAccessrestriction = (String) nodeService.getProperty(seriesRef, DocumentCommonModel.Props.ACCESS_RESTRICTION);
-            if (propsFromNode) {
-                generalService.setPropertiesIgnoringSystem(seriesRef, stringQNameProperties);
-            } else {
-                generalService.setPropertiesIgnoringSystem(seriesRef, RepoUtil.toStringProperties(seriesBeanPropertyMapper.toProperties(series)));
-            }
+            generalService.setPropertiesIgnoringSystem(seriesRef, stringQNameProperties);
             logService.addSeriesLog(seriesRef, I18NUtil.getMessage("series_log_status_changed"));
             final String newAccessrestriction = (String) stringQNameProperties.get(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
             if (!StringUtils.equals(previousAccessrestriction, newAccessrestriction)) {
@@ -151,31 +142,34 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         final List<Series> allSeriesByFunction = getAllSeriesByFunction(series.getFunctionNodeRef());
         Collections.sort(allSeriesByFunction, new Comparator<Series>() {
 
-            
-            public int compare(Series o1, Series o2) {
-                if (o1.getOrder() == o2.getOrder()) {
+            public int compare(Series s1, Series s2) {
+                final int order1 = getSeriesOrder(s1);
+                final int order2 = getSeriesOrder(s2);
+                if (order1 == order2) {
                     return 0;
                 }
-                return o1.getOrder() < o2.getOrder() ? -1 : 1;
+                return order1 < order2 ? -1 : 1;
             }
 
         });
-        boolean founSameOrder = false;
+
         for (Series otherSeries : allSeriesByFunction) {
             if (series.getNode().getNodeRef().equals(otherSeries.getNode().getNodeRef())) {
                 continue;
             }
-            final int order2 = otherSeries.getOrder();
+            final int order2 = (Integer) otherSeries.getNode().getProperties().get(SeriesModel.Props.ORDER.toString());
             if (order2 == order) {
-                founSameOrder = true;
-            }
-            if (founSameOrder) {
-                // since collection is ordered, no need to check if(order2 >= order)
-                otherSeries.setOrder(order2 + 1);
-                saveOrUpdate(otherSeries, false);
+                otherSeries.getNode().getProperties().put(SeriesModel.Props.ORDER.toString(), order2 + 1);
+                //reorderSeries is recursively called on all following series in the list by saveOrUpdate
+                saveOrUpdate(otherSeries);
+                break;
             }
         }
     }
+    
+    private Integer getSeriesOrder(Series series){
+        return (Integer) series.getNode().getProperties().get(SeriesModel.Props.ORDER.toString());
+    }    
     
     public Series createSeries(NodeRef functionNodeRef) {
         Map<QName, Serializable> props = new HashMap<QName, Serializable>(1);

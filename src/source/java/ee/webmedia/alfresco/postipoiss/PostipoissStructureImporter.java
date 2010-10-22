@@ -820,7 +820,7 @@ public class PostipoissStructureImporter {
         }
 
         // We check order ourselves above
-        seriesService.saveOrUpdateWithoutReorder(series, true);
+        seriesService.saveOrUpdateWithoutReorder(series);
         return series.getNode().getNodeRef();
     }
 
