@@ -9,8 +9,8 @@ import java.util.Map.Entry;
 
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
-
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.apache.commons.lang.StringUtils;
@@ -18,10 +18,12 @@ import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.SessionContext;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 
 public class MenuItemCountBean implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -33,6 +35,7 @@ public class MenuItemCountBean implements Serializable {
 
     private transient MenuService menuService;
     private MenuBean menuBean;
+    private SessionContext sessionContext;
 
     private Map<String, MenuItemCountVO> map = new HashMap<String, MenuItemCountBean.MenuItemCountVO>();
 
@@ -79,7 +82,7 @@ public class MenuItemCountBean implements Serializable {
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void updateCount() throws IOException {
         FacesContext context = FacesContext.getCurrentInstance();
-
+        
         @SuppressWarnings("unchecked")
         Map<String, String> params = context.getExternalContext().getRequestParameterMap();
         String menuItemId = params.get(MENU_ITEM_ID_PARAM);
@@ -93,7 +96,14 @@ public class MenuItemCountBean implements Serializable {
             countVO = new MenuItemCountVO();
             map.put(menuItemId, countVO);
         }
-
+        
+        //asynchronous call from different thread needs to set substitute info explicitly
+        SubstitutionInfo substInfo = getSessionContext().getSubstitutionInfo();
+        
+        if(substInfo.isSubstituting()){
+            AuthenticationUtil.setRunAsUser(substInfo.getSubstitution().getReplacedPersonUserName());       
+        }
+        
         MenuItemCountHandler countHandler = getMenuService().getCountHandler(menuItemId);
         Assert.notNull(countHandler, "MenuItemCountHandler does not exist for menuItemId=" + menuItemId);
 
@@ -105,22 +115,7 @@ public class MenuItemCountBean implements Serializable {
         ResponseWriter out = context.getResponseWriter();
         out.write(Integer.toString(countVO.count));
     }
-
-    public MenuService getMenuService() {
-        if (menuService == null) {
-            menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(MenuService.BEAN_NAME);
-        }
-        return menuService;
-    }
-
-    public MenuBean getMenuBean() {
-        if (menuBean == null) {
-            menuBean = (MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME);
-        }
-        return menuBean;
-    }
-
+    
     /**
      * Find MenuItem by id. Returns only the first match. If no match is found, returns {@code null}.
      */
@@ -140,4 +135,30 @@ public class MenuItemCountBean implements Serializable {
         return null;
     }
 
+    // START: getters / setters
+    
+    public MenuService getMenuService() {
+        if (menuService == null) {
+            menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(MenuService.BEAN_NAME);
+        }
+        return menuService;
+    }
+
+    public MenuBean getMenuBean() {
+        if (menuBean == null) {
+            menuBean = (MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME);
+        }
+        return menuBean;
+    }
+    
+    protected SessionContext getSessionContext() {
+        if (sessionContext == null) {
+            sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);
+        }
+        return sessionContext;
+    }    
+    
+    // END: getters / setters    
 }

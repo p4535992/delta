@@ -45,6 +45,7 @@ import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
+import ee.webmedia.alfresco.utils.Timer;
 
 public class SignatureServiceImpl implements SignatureService {
 
@@ -53,8 +54,10 @@ public class SignatureServiceImpl implements SignatureService {
     private FileFolderService fileFolderService;
     private NodeService nodeService;
     private MimetypeService mimetypeService;
+    private boolean test = false;
 
     private String jDigiDocCfg;
+    private String jDigiDocCfgTest;
 
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
@@ -72,8 +75,12 @@ public class SignatureServiceImpl implements SignatureService {
         this.jDigiDocCfg = jDigiDocCfg;
     }
 
+    public void setjDigiDocCfgTest(String jDigiDocCfg) {
+        this.jDigiDocCfgTest = jDigiDocCfg;
+    }
+
     public void init() {
-        if (!ConfigManager.init("jar://" + jDigiDocCfg)) {
+        if (!ConfigManager.init("jar://" + (isTest()?jDigiDocCfgTest:jDigiDocCfg))) {
             log.error("JDigiDoc initialization failed");
         }
     }
@@ -220,7 +227,9 @@ public class SignatureServiceImpl implements SignatureService {
         }
 
         sig.setSignatureValue(signatureBytes);
+        Timer timer = new Timer("signatureConfirmation");
         sig.getConfirmation();
+        log.debug(timer);
     }
 
     private SignatureDigest getSignatureDigest(SignedDoc sd, String certHex) throws DigiDocException {
@@ -412,6 +421,14 @@ public class SignatureServiceImpl implements SignatureService {
 
     protected String getFileName(NodeRef nodeRef) {
         return fileFolderService.getFileInfo(nodeRef).getName();
+    }
+
+    public void setTest(boolean test) {
+        this.test = test;
+    }
+
+    public boolean isTest() {
+        return test;
     }
 
 }

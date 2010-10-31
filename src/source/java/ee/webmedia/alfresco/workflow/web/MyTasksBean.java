@@ -11,6 +11,7 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.SessionContext;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
@@ -50,6 +51,7 @@ public class MyTasksBean extends BaseDialogBean {
     private transient ParametersService parametersService;
     private transient DocumentService documentService;
     private transient DocumentSearchService documentSearchService;
+    private SessionContext sessionContext;
 
     // START: dialog overrides
 
@@ -75,11 +77,16 @@ public class MyTasksBean extends BaseDialogBean {
     // START: dialog setup
     
     public String getSetupMyTasks() {
-        if ((System.currentTimeMillis() - lastLoadMillis) > 30000) { // 30 seconds
+        //see Erko's comment in /web/jsp/dashboards/container.jsp before <h:outputText value="#{MyTasksBean.setupMyTasks}" /> (line 72)
+        boolean forceReload = getSessionContext().getForceSubstituteTaskReload() == null ? false : ((Boolean)getSessionContext().getForceSubstituteTaskReload()).booleanValue();
+        if (forceReload || (System.currentTimeMillis() - lastLoadMillis) > 30000) { // 30 seconds
             reset();
             dialogTitle = getParametersService().getStringParameter(Parameters.WELCOME_TEXT);
             loadTasks();
             lastLoadMillis = System.currentTimeMillis();
+        }
+        if(forceReload){
+            getSessionContext().setForceSubstituteTaskReload(Boolean.FALSE);
         }
         return null;
     }
@@ -244,6 +251,14 @@ public class MyTasksBean extends BaseDialogBean {
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
     }
+    
+    protected SessionContext getSessionContext() {
+        if (sessionContext == null) {
+            sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);
+        }
+        return sessionContext;
+    }    
         
     // END: getters/setters
     

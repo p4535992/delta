@@ -43,6 +43,7 @@ import net.sf.acegisecurity.afterinvocation.AfterInvocationProvider;
 
 import org.alfresco.cmis.CMISResultSet;
 import org.alfresco.repo.search.SimpleResultSetMetaData;
+import org.alfresco.repo.search.impl.SearchStatistics;
 import org.alfresco.repo.search.impl.lucene.PagingLuceneResultSet;
 import org.alfresco.repo.search.impl.querymodel.QueryEngineResults;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -452,8 +453,13 @@ public class ACLEntryAfterInvocationProvider implements AfterInvocationProvider,
     private ResultSet decide(Authentication authentication, Object object, ConfigAttributeDefinition config, ResultSet returnedObject) throws AccessDeniedException
 
     {
+        boolean statisticsEnabled = SearchStatistics.isEnabled();
+        long startTime = statisticsEnabled ? System.currentTimeMillis() : 0;
         if (returnedObject == null)
         {
+            if (statisticsEnabled) {
+                SearchStatistics.getData().aclTime = System.currentTimeMillis() - startTime;
+            }
             return null;
         }
 
@@ -492,6 +498,9 @@ public class ACLEntryAfterInvocationProvider implements AfterInvocationProvider,
         {
             if (maxSize == null)
             {
+                if (statisticsEnabled) {
+                    SearchStatistics.getData().aclTime = System.currentTimeMillis() - startTime;
+                }
                 return returnedObject;
             }
             else if (returnedObject.length() > maxSize.intValue())
@@ -511,6 +520,9 @@ public class ACLEntryAfterInvocationProvider implements AfterInvocationProvider,
                 }
                 filteringResultSet.setResultSetMetaData(new SimpleResultSetMetaData(LimitBy.UNLIMITED, PermissionEvaluationMode.EAGER, returnedObject.getResultSetMetaData()
                         .getSearchParameters()));
+            }
+            if (statisticsEnabled) {
+                SearchStatistics.getData().aclTime = System.currentTimeMillis() - startTime;
             }
             return filteringResultSet;
         }
@@ -561,6 +573,9 @@ public class ACLEntryAfterInvocationProvider implements AfterInvocationProvider,
                         .getSearchParameters()));
                 break;
             }
+        }
+        if (statisticsEnabled) {
+            SearchStatistics.getData().aclTime = System.currentTimeMillis() - startTime;
         }
         return filteringResultSet;
     }

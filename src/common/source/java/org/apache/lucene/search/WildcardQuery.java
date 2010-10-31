@@ -34,6 +34,7 @@ import java.io.IOException;
  */
 public class WildcardQuery extends MultiTermQuery {
   private boolean termContainsWildcard;
+  public static boolean useConstantScorePrefixQuery = true; // can be disabled/enabled for testing purposes
     
   public WildcardQuery(Term term) {
     super(term);
@@ -54,7 +55,7 @@ public class WildcardQuery extends MultiTermQuery {
   public Query rewrite(IndexReader reader) throws IOException {
       if (this.termContainsWildcard) {
         String text = getTerm().text();
-        if (text.indexOf('*') == text.length() - 1 && text.indexOf('?') == -1) {
+        if (useConstantScorePrefixQuery && text.indexOf('*') == text.length() - 1 && text.indexOf('?') == -1) {
           return new ConstantScorePrefixQuery(getTerm().createTerm(text.substring(0, text.length() - 1)));
         } else {
           return super.rewrite(reader);

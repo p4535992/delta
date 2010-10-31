@@ -129,7 +129,7 @@ public class SearchUtil {
      * For example *11-21/344* will find the correct results, *11-21* will also find the correct results 
      * but *11-21/* will be replaced with *11-21 (missing the end wildcard) and will not find the correct results.   
      */
-    private static String stripCustom(String s) {
+    public static String stripCustom(String s) {
         int firstChar = 0;
         int lastChar = s.length();
         for (int i = 0; i < s.length(); i++) {

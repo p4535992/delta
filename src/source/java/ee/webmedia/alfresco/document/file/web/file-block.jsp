@@ -256,7 +256,7 @@
 
       <%-- Remove and Version column --%>
       <a:column id="col27" rendered="#{r.notActiveAndNotDigiDoc}">
-         <r:permissionEvaluator value="#{r.node}" allow="Write">
+         <r:permissionEvaluator value="#{r.node}" allow="WriteProperties">
             <a:actionLink id="col27-act3" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
                image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_active}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />

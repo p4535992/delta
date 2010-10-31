@@ -1,8 +1,7 @@
-package ee.webmedia.alfresco.substitute;
+package ee.webmedia.alfresco.substitute.model;
 
 import java.io.Serializable;
 
-import ee.webmedia.alfresco.substitute.model.Substitute;
 
 /**
  * @author Romet Aidla

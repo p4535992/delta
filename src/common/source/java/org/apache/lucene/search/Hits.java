@@ -22,6 +22,7 @@ import java.util.ConcurrentModificationException;
 import java.util.Vector;
 import java.util.Iterator;
 
+import org.alfresco.repo.search.impl.SearchStatistics;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.CorruptIndexException;
 
@@ -75,11 +76,11 @@ public final class Hits {
   private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(Hits.class);
 
   Hits(Searcher s, Query q, Filter f) throws IOException {
-    String originalQuery = q.toString();
-//    System.out.println("LUCENE originalQuery  - " + originalQuery);
+    boolean statisticsEnabled = SearchStatistics.isEnabled();
+    long startTime = statisticsEnabled ? System.currentTimeMillis() : 0;
+    String originalQuery = q.toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
     weight = q.weight(s);
-    String rewrittenQuery = weight.getQuery().toString();
-//    System.out.println("LUCENE rewrittenQuery - " + rewrittenQuery);
+    String rewrittenQuery = weight.getQuery().toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
     if (originalQuery.length() > 100000) { // 65k appears to be largest normal query (input 3 words, each 10 chars)
         log.warn("Very large query: original query length = " + originalQuery.length() + " chars, rewritten query length = " + rewrittenQuery.length() + " chars");
     }
@@ -88,14 +89,18 @@ public final class Hits {
     nDeletions = countDeletions(s);
     getMoreDocs(50); // retrieve 100 initially
     lengthAtStart = length;
+    if (statisticsEnabled) {
+        SearchStatistics.getData().luceneHitsTime = System.currentTimeMillis() - startTime;
+        SearchStatistics.getData().resultsBeforeAcl = length;
+    }
   }
 
   Hits(Searcher s, Query q, Filter f, Sort o) throws IOException {
-    String originalQuery = q.toString();
-//    System.out.println("LUCENE originalQuery  - " + originalQuery);
+    boolean statisticsEnabled = SearchStatistics.isEnabled();
+    long startTime = statisticsEnabled ? System.currentTimeMillis() : 0;
+    String originalQuery = q.toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
     weight = q.weight(s);
-    String rewrittenQuery = weight.getQuery().toString();
-//    System.out.println("LUCENE rewrittenQuery - " + rewrittenQuery);
+    String rewrittenQuery = weight.getQuery().toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
     if (originalQuery.length() > 100000) { // 65k appears to be largest normal query (input 3 words, each 10 chars)
         log.warn("Very large query: original query length = " + originalQuery.length() + " chars, rewritten query length = " + rewrittenQuery.length() + " chars");
     }
@@ -105,6 +110,10 @@ public final class Hits {
     nDeletions = countDeletions(s);
     getMoreDocs(50); // retrieve 100 initially
     lengthAtStart = length;
+    if (statisticsEnabled) {
+        SearchStatistics.getData().luceneHitsTime = System.currentTimeMillis() - startTime;
+        SearchStatistics.getData().resultsBeforeAcl = length;
+    }
   }
 
   // count # deletions, return -1 if unknown.

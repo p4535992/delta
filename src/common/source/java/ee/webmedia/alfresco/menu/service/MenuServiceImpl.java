@@ -114,7 +114,6 @@ public class MenuServiceImpl implements MenuService {
             xstream.processAnnotations(MenuItem.class);
             xstream.processAnnotations(DropdownMenuItem.class);
             xstream.processAnnotations(BrowseMenuItem.class);
-
             Menu loadedMenu = (Menu) xstream.fromXML(resource.getInputStream());
             process(loadedMenu, true);
             menu = loadedMenu; // this is performed here at the end, atomically

@@ -624,6 +624,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
     }
+    
+    public String getServerUrl(){
+        return serverUrl;
+    }
 
     @Override
     public void setServletContext(ServletContext servletContext) {

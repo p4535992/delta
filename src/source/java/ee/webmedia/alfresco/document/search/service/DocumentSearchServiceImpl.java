@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.faces.context.FacesContext;
+
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
@@ -53,12 +55,14 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.lucene.search.BooleanQuery;
+import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.SessionContext;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -72,8 +76,7 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
-import ee.webmedia.alfresco.substitute.SubstitutionInfo;
-import ee.webmedia.alfresco.substitute.SubstitutionInfoHolder;
+import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -282,7 +285,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     @Override
     public int searchUserWorkingDocumentsCount() {
         long startTime = System.currentTimeMillis();
-        String query = getWorkingDocumentsOwnerQuery(getCurrentUserOrSubstitution());
+        String query = getWorkingDocumentsOwnerQuery(AuthenticationUtil.getRunAsUser());
         int count = 0;
         ResultSet resultSet = doSearch(query, false, /* queryName */ "userWorkingDocumentsCount");
         try {
@@ -379,12 +382,9 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     @Override
     public List<Task> searchCurrentUsersTasksInProgress(QName taskType) {
         long startTime = System.currentTimeMillis();
-        SubstitutionInfo subInfo = SubstitutionInfoHolder.getSubstitutionInfo();
-        String ownerId = getCurrentUserOrSubstitution();
-        List<String> queryParts = getTaskQuery(taskType, ownerId, Status.IN_PROGRESS);
+        List<String> queryParts = getTaskQuery(taskType, AuthenticationUtil.getRunAsUser(), Status.IN_PROGRESS);
         addSubstitutionRestriction(queryParts);
         String query = generateTaskSearchQuery(queryParts);
-
         List<Task> results = searchTasksImpl(query, false, /* queryName */ "CurrentUsersTasksInProgress");
         if (log.isDebugEnabled()) {
             log.debug("Current user's and IN_PROGRESS tasks search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
@@ -433,7 +433,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     public int getCurrentUsersTaskCount(QName taskType) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>();
-        String ownerId = getCurrentUserOrSubstitution();        
+        String ownerId = AuthenticationUtil.getRunAsUser();        
         queryParts.add(generateTypeQuery(taskType));
         queryParts.add(generateStringExactQuery(Status.IN_PROGRESS.getName(), WorkflowCommonModel.Props.STATUS));
         queryParts.add(generateStringExactQuery(ownerId, WorkflowCommonModel.Props.OWNER_ID));
@@ -455,14 +455,6 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         }
         return count;
     }
-    
-    private String getCurrentUserOrSubstitution(){
-        SubstitutionInfo subInfo = SubstitutionInfoHolder.getSubstitutionInfo();
-        String ownerId = subInfo.isSubstituting()
-                ? subInfo.getSubstitution().getReplacedPersonUserName()
-                : AuthenticationUtil.getRunAsUser();         
-        return ownerId;
-    }
 
     @Override
     public List<TaskInfo> searchTasks(Node filter) {
@@ -476,7 +468,9 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     }
 
     private void addSubstitutionRestriction(List<String> queryParts) {
-        SubstitutionInfo subInfo = SubstitutionInfoHolder.getSubstitutionInfo();
+        SessionContext sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
+                FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);        
+        SubstitutionInfo subInfo = sessionContext.getSubstitutionInfo();
         if (subInfo.isSubstituting()) {
             Date start = DateUtils.truncate(subInfo.getSubstitution().getSubstitutionStartDate(), Calendar.DATE);
             Long daysForSubstitutionTasksCalc = parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC);

@@ -81,9 +81,13 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         log.info("Completed document properties updater");
     }
 
-    protected abstract String getCompletedNodesCsvFileName();
+    protected String getNodesCsvFileName() {
+        return getClass().getSimpleName() + ".csv";
+    }
 
-    protected abstract String getNodesCsvFileName();
+    protected String getCompletedNodesCsvFileName() {
+        return getClass().getSimpleName() + "Completed.csv";
+    }
 
     protected Set<NodeRef> loadNodesFromFile(File file) throws Exception {
         if (!file.exists()) {

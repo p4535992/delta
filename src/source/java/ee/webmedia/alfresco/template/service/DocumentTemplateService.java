@@ -16,7 +16,7 @@ import ee.webmedia.alfresco.volume.model.Volume;
  */
 public interface DocumentTemplateService {
 
-    String BEAN_NAME = "DocumentTemplateService";
+    public static final String BEAN_NAME = "DocumentTemplateService";
 
     /**
      * Returns list with all the templates
@@ -93,5 +93,7 @@ public interface DocumentTemplateService {
      * @return template template NodeRef or {@code null} if template not found
      */
     NodeRef getSystemTemplateByName(String templateName);
+    
+    String getServerUrl();
 
 }

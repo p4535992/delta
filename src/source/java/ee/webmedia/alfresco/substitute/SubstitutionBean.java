@@ -11,18 +11,21 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
-
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.BaseServlet;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.SessionContext;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
+import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -38,7 +41,7 @@ public class SubstitutionBean implements Serializable {
     private transient SubstituteService substituteService;
     private transient UserService userService;
     private transient MenuService menuService;
-
+    private transient DocumentTemplateService documentTemplateService;
     private SubstitutionInfo substitutionInfo = new SubstitutionInfo();
 
     public SubstitutionInfo getSubstitutionInfo() {
@@ -47,7 +50,7 @@ public class SubstitutionBean implements Serializable {
 
     public String getSelectedSubstitution() {
         return substitutionInfo.getSelectedSubstitution();
-    }
+    }    
 
     public void setSelectedSubstitution(String selectedSubstitution) {
         if (StringUtils.isBlank(selectedSubstitution)) {
@@ -57,37 +60,35 @@ public class SubstitutionBean implements Serializable {
             NodeRef userNodeRef = new NodeRef(selectedSubstitution);
             substitutionInfo = new SubstitutionInfo(getSubstituteService().getSubstitute(userNodeRef));
         }
-        SubstitutionInfoHolder.setSubstitutionInfo(substitutionInfo);
+        SessionContext sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
+                FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);        
+        sessionContext.setSubstitutionInfo(substitutionInfo);    
+        sessionContext.setForceSubstituteTaskReload(Boolean.TRUE);
     }
 
     public void substitutionSelected(ValueChangeEvent event) {
         String substitutionNodeRef = (String) event.getNewValue();
         setSelectedSubstitution(substitutionNodeRef);
-        redirectToHome();
-        reloadMenu();
+        redirectToHome(getDocumentTemplateService().getServerUrl());
     }
 
-    private void reloadMenu() {
-        getMenuService().reload();
-        getMenuService().menuUpdated();
-    }
 
-    private static void redirectToHome() {
+    private static void redirectToHome(String serverUrl) {
         FacesContext fc = FacesContext.getCurrentInstance();
         
         MenuBean.clearViewStack(String.valueOf(MenuBean.MY_TASKS_AND_DOCUMENTS_ID), null);
-        MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(fc, MenuBean.BEAN_NAME);
-        menuBean.reset();
-
         fc.getApplication().getNavigationHandler().handleNavigation(fc, null, "myalfresco");
-
+        fc.responseComplete();
         try {
             //todo: find better solution
-            fc.getExternalContext().redirect(((HttpServletRequest)fc.getExternalContext().getRequest()).getContextPath() +
-                    BaseServlet.FACES_SERVLET + fc.getViewRoot().getViewId());
+            String redir =  serverUrl +  
+            ((HttpServletRequest)fc.getExternalContext().getRequest()).getContextPath() +
+            BaseServlet.FACES_SERVLET + fc.getViewRoot().getViewId();
+            fc.getExternalContext().redirect(redir);
+            fc.responseComplete();
         } catch (IOException ioe) {
             throw new RuntimeException("Redirecting failed", ioe);
-        }
+        }        
     }
 
     public List<SelectItem> getActiveSubstitutions() {
@@ -121,6 +122,13 @@ public class SubstitutionBean implements Serializable {
         }
         return substituteService;
     }
+    
+    protected DocumentTemplateService getDocumentTemplateService() {
+        if (documentTemplateService == null) {
+            this.documentTemplateService = (DocumentTemplateService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DocumentTemplateService.BEAN_NAME);
+        }
+        return documentTemplateService;
+    }    
 
     protected UserService getUserService() {
         if (userService == null) {

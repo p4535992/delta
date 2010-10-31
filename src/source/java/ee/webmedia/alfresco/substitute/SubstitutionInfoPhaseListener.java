@@ -4,7 +4,11 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.SessionContext;
+import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
+import javax.faces.context.FacesContext;
 import javax.faces.event.PhaseEvent;
 import javax.faces.event.PhaseId;
 import javax.faces.event.PhaseListener;
@@ -27,15 +31,21 @@ public class SubstitutionInfoPhaseListener implements PhaseListener {
 
    public void beforePhase(PhaseEvent event)
    {
-       SubstitutionBean subBean = (SubstitutionBean) FacesHelper.getManagedBean(event.getFacesContext(), SubstitutionBean.BEAN_NAME);
-       SubstitutionInfo subInfo = subBean.getSubstitutionInfo();
-       SubstitutionInfoHolder.setSubstitutionInfo(subInfo);
+       setRunAsSubstitution();
+   }
+   
+   public static void setRunAsSubstitution() {
+       SessionContext sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
+               FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);        
+       SubstitutionInfo subInfo = sessionContext.getSubstitutionInfo();
        if (subInfo.isSubstituting()) {
            String substitutionUserName = subInfo.getSubstitution().getReplacedPersonUserName();
-           if (log.isDebugEnabled()) log.debug("Set RunAsUser to " + substitutionUserName);
            AuthenticationUtil.setRunAsUser(substitutionUserName);
        }
-   }
+       else{
+           AuthenticationUtil.setRunAsUser(AuthenticationUtil.getFullyAuthenticatedUser());
+       }
+   }    
 
    public PhaseId getPhaseId()
    {
