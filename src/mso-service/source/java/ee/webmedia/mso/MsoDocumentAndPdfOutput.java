@@ -8,19 +8,19 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "msoInput", propOrder = { "content" })
-public class MsoInput {
+@XmlType(name = "msoDocumentAndPdfOutput", propOrder = { "pdfFile" })
+public class MsoDocumentAndPdfOutput extends MsoDocumentOutput {
 
     @XmlElement(required = true, type = String.class)
     @XmlAttachmentRef
-    protected DataHandler content;
+    protected DataHandler pdfFile;
 
-    public DataHandler getContent() {
-        return content;
+    public DataHandler getPdfFile() {
+        return pdfFile;
     }
 
-    public void setContent(DataHandler content) {
-        this.content = content;
+    public void setPdfFile(DataHandler pdfFile) {
+        this.pdfFile = pdfFile;
     }
 
 }

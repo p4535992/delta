@@ -10,18 +10,18 @@ import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for msoInput complex type.
+ * <p>Java class for msoDocumentAndPdfOutput complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="msoInput">
+ * &lt;complexType name="msoDocumentAndPdfOutput">
  *   &lt;complexContent>
- *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
+ *     &lt;extension base="{http://webmedia.ee/mso}msoDocumentOutput">
  *       &lt;sequence>
- *         &lt;element name="content" type="{http://ws-i.org/profiles/basic/1.1/xsd}swaRef"/>
+ *         &lt;element name="pdfFile" type="{http://ws-i.org/profiles/basic/1.1/xsd}swaRef"/>
  *       &lt;/sequence>
- *     &lt;/restriction>
+ *     &lt;/extension>
  *   &lt;/complexContent>
  * &lt;/complexType>
  * </pre>
@@ -29,37 +29,39 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "msoInput", propOrder = {
-    "content"
+@XmlType(name = "msoDocumentAndPdfOutput", propOrder = {
+    "pdfFile"
 })
-public class MsoInput {
+public class MsoDocumentAndPdfOutput
+    extends MsoDocumentOutput
+{
 
     @XmlElement(required = true, type = String.class)
     @XmlAttachmentRef
-    protected DataHandler content;
+    protected DataHandler pdfFile;
 
     /**
-     * Gets the value of the content property.
+     * Gets the value of the pdfFile property.
      * 
      * @return
      *     possible object is
      *     {@link String }
      *     
      */
-    public DataHandler getContent() {
-        return content;
+    public DataHandler getPdfFile() {
+        return pdfFile;
     }
 
     /**
-     * Sets the value of the content property.
+     * Sets the value of the pdfFile property.
      * 
      * @param value
      *     allowed object is
      *     {@link String }
      *     
      */
-    public void setContent(DataHandler value) {
-        this.content = value;
+    public void setPdfFile(DataHandler value) {
+        this.pdfFile = value;
     }
 
 }

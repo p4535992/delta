@@ -24,6 +24,10 @@ import javax.xml.namespace.QName;
 @XmlRegistry
 public class ObjectFactory {
 
+    private final static QName _ReplaceFormulas_QNAME = new QName("http://webmedia.ee/mso", "replaceFormulas");
+    private final static QName _ReplaceFormulasAndConvertToPdf_QNAME = new QName("http://webmedia.ee/mso", "replaceFormulasAndConvertToPdf");
+    private final static QName _ReplaceFormulasAndConvertToPdfResponse_QNAME = new QName("http://webmedia.ee/mso", "replaceFormulasAndConvertToPdfResponse");
+    private final static QName _ReplaceFormulasResponse_QNAME = new QName("http://webmedia.ee/mso", "replaceFormulasResponse");
     private final static QName _ConvertToPdfResponse_QNAME = new QName("http://webmedia.ee/mso", "convertToPdfResponse");
     private final static QName _ConvertToPdf_QNAME = new QName("http://webmedia.ee/mso", "convertToPdf");
 
@@ -35,11 +39,11 @@ public class ObjectFactory {
     }
 
     /**
-     * Create an instance of {@link MsoInput }
+     * Create an instance of {@link MsoPdfOutput }
      * 
      */
-    public MsoInput createMsoInput() {
-        return new MsoInput();
+    public MsoPdfOutput createMsoPdfOutput() {
+        return new MsoPdfOutput();
     }
 
     /**
@@ -51,6 +55,14 @@ public class ObjectFactory {
     }
 
     /**
+     * Create an instance of {@link ReplaceFormulasResponse }
+     * 
+     */
+    public ReplaceFormulasResponse createReplaceFormulasResponse() {
+        return new ReplaceFormulasResponse();
+    }
+
+    /**
      * Create an instance of {@link ConvertToPdfResponse }
      * 
      */
@@ -59,11 +71,103 @@ public class ObjectFactory {
     }
 
     /**
-     * Create an instance of {@link MsoOutput }
+     * Create an instance of {@link MsoDocumentInput }
      * 
      */
-    public MsoOutput createMsoOutput() {
-        return new MsoOutput();
+    public MsoDocumentInput createMsoDocumentInput() {
+        return new MsoDocumentInput();
+    }
+
+    /**
+     * Create an instance of {@link ReplaceFormulasAndConvertToPdf }
+     * 
+     */
+    public ReplaceFormulasAndConvertToPdf createReplaceFormulasAndConvertToPdf() {
+        return new ReplaceFormulasAndConvertToPdf();
+    }
+
+    /**
+     * Create an instance of {@link ReplaceFormulas }
+     * 
+     */
+    public ReplaceFormulas createReplaceFormulas() {
+        return new ReplaceFormulas();
+    }
+
+    /**
+     * Create an instance of {@link ReplaceFormulasAndConvertToPdfResponse }
+     * 
+     */
+    public ReplaceFormulasAndConvertToPdfResponse createReplaceFormulasAndConvertToPdfResponse() {
+        return new ReplaceFormulasAndConvertToPdfResponse();
+    }
+
+    /**
+     * Create an instance of {@link Formula }
+     * 
+     */
+    public Formula createFormula() {
+        return new Formula();
+    }
+
+    /**
+     * Create an instance of {@link MsoDocumentOutput }
+     * 
+     */
+    public MsoDocumentOutput createMsoDocumentOutput() {
+        return new MsoDocumentOutput();
+    }
+
+    /**
+     * Create an instance of {@link MsoDocumentAndFormulasInput }
+     * 
+     */
+    public MsoDocumentAndFormulasInput createMsoDocumentAndFormulasInput() {
+        return new MsoDocumentAndFormulasInput();
+    }
+
+    /**
+     * Create an instance of {@link MsoDocumentAndPdfOutput }
+     * 
+     */
+    public MsoDocumentAndPdfOutput createMsoDocumentAndPdfOutput() {
+        return new MsoDocumentAndPdfOutput();
+    }
+
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link ReplaceFormulas }{@code >}}
+     * 
+     */
+    @XmlElementDecl(namespace = "http://webmedia.ee/mso", name = "replaceFormulas")
+    public JAXBElement<ReplaceFormulas> createReplaceFormulas(ReplaceFormulas value) {
+        return new JAXBElement<ReplaceFormulas>(_ReplaceFormulas_QNAME, ReplaceFormulas.class, null, value);
+    }
+
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link ReplaceFormulasAndConvertToPdf }{@code >}}
+     * 
+     */
+    @XmlElementDecl(namespace = "http://webmedia.ee/mso", name = "replaceFormulasAndConvertToPdf")
+    public JAXBElement<ReplaceFormulasAndConvertToPdf> createReplaceFormulasAndConvertToPdf(ReplaceFormulasAndConvertToPdf value) {
+        return new JAXBElement<ReplaceFormulasAndConvertToPdf>(_ReplaceFormulasAndConvertToPdf_QNAME, ReplaceFormulasAndConvertToPdf.class, null, value);
+    }
+
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link ReplaceFormulasAndConvertToPdfResponse }{@code >}}
+     * 
+     */
+    @XmlElementDecl(namespace = "http://webmedia.ee/mso", name = "replaceFormulasAndConvertToPdfResponse")
+    public JAXBElement<ReplaceFormulasAndConvertToPdfResponse> createReplaceFormulasAndConvertToPdfResponse(ReplaceFormulasAndConvertToPdfResponse value) {
+        return new JAXBElement<ReplaceFormulasAndConvertToPdfResponse>(_ReplaceFormulasAndConvertToPdfResponse_QNAME, ReplaceFormulasAndConvertToPdfResponse.class, null, value);
+    }
+
+    /**
+     * Create an instance of {@link JAXBElement }{@code <}{@link ReplaceFormulasResponse }{@code >}}
+     * 
+     */
+    @XmlElementDecl(namespace = "http://webmedia.ee/mso", name = "replaceFormulasResponse")
+    public JAXBElement<ReplaceFormulasResponse> createReplaceFormulasResponse(ReplaceFormulasResponse value) {
+        return new JAXBElement<ReplaceFormulasResponse>(_ReplaceFormulasResponse_QNAME, ReplaceFormulasResponse.class, null, value);
     }
 
     /**

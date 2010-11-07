@@ -74,7 +74,6 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
     private AbstractOpenOfficeDocumentConverter converter;
     private String documentFormatsConfiguration;
     private DocumentFormatRegistry formatRegistry;
-    
     private MsoService msoService;
 
     /**
@@ -156,14 +155,11 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
      */
     public boolean isTransformable(String sourceMimetype, String targetMimetype, TransformationOptions options)
     {
-       // if (MimetypeMap.MIMETYPE_TEXT_PLAIN.equalsIgnoreCase(targetMimetype)
-       //         && ("application/rtf".equalsIgnoreCase(sourceMimetype) || "application/msword".equalsIgnoreCase(sourceMimetype) || "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-       //                 .equalsIgnoreCase(sourceMimetype))) {
-       //     return true;
-       // }
-        if (MimetypeMap.MIMETYPE_PDF.equalsIgnoreCase(targetMimetype) && msoService != null && msoService.isMsoAvailable()
-                && msoService.isTransformableToPdf(sourceMimetype)) {
-            return true;
+        if (MimetypeMap.MIMETYPE_PDF.equalsIgnoreCase(targetMimetype)) {
+            // Refuse to produce PDF files with OpenOffice; use MS Office instead
+            if (msoService.isAvailable()) {
+                return false;
+            }
         }
 
         if (!isAvailable())
@@ -223,21 +219,6 @@ public class OpenOfficeContentTransformerWorker extends ContentTransformerHelper
         String sourceMimetype = getMimetype(reader);
         String targetMimetype = getMimetype(writer);
 
-        if (MimetypeMap.MIMETYPE_PDF.equalsIgnoreCase(targetMimetype) && msoService != null && msoService.isMsoAvailable()
-                && msoService.isTransformableToPdf(sourceMimetype)) {
-            // try {
-            log.info("Using MsoService for conversion: " + sourceMimetype + " -> " + targetMimetype);
-            try {
-                msoService.transformToPdf(reader, writer);
-            } catch (Exception e) {
-                throw new ContentIOException("Mso conversion failed: \n" + "   reader: " + reader + "\n" + "   writer: " + writer, e);
-            }
-            return;
-            // } catch (SOAPFaultException e) {
-            // log.error("MsoService.transformToPdf failed, trying OpenOffice transform", e);
-            // }
-            // If we continue, then we get ContentIOException: A channel has already been opened
-        }
         log.info("Using OpenOffice for conversion: " + sourceMimetype + " -> " + targetMimetype);
 
         MimetypeService mimetypeService = getMimetypeService();

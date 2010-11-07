@@ -155,7 +155,7 @@ public class NotificationServiceImpl implements NotificationService {
         NodeRef docRef = workflow.getParent().getParent();
 
         LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<String, NodeRef>();
-        templateDataNodeRefs.put("default", docRef);
+        templateDataNodeRefs.put(null, docRef);
         templateDataNodeRefs.put("workflow", workflow.getNode().getNodeRef());
         templateDataNodeRefs.put("compoundWorkflow", workflow.getParent().getNode().getNodeRef());
 
@@ -743,7 +743,7 @@ public class NotificationServiceImpl implements NotificationService {
         Workflow workflow = task.getParent();
         NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflow.getNode().getNodeRef())).getParentRef();
         NodeRef docRef = (nodeService.getPrimaryParent(compoundWorkflowRef)).getParentRef();
-        templateDataNodeRefs.put("default", docRef);
+        templateDataNodeRefs.put(null, docRef);
         templateDataNodeRefs.put("task", task.getNode().getNodeRef());
         templateDataNodeRefs.put("workflow", workflow.getNode().getNodeRef());
         templateDataNodeRefs.put("compoundWorkflow", compoundWorkflowRef);

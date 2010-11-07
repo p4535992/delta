@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.mso.service;
 
+import java.util.Map;
+
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
 
@@ -10,10 +12,19 @@ import org.alfresco.service.cmr.repository.ContentWriter;
  */
 public interface MsoService {
 
-    boolean isMsoAvailable();
+    /**
+     * @return if this service is enabled in configuration
+     */
+    boolean isAvailable();
 
     boolean isTransformableToPdf(String sourceMimetype);
 
-    void transformToPdf(ContentReader reader, ContentWriter writer) throws Exception;
+    boolean isFormulasReplaceable(String sourceMimetype);
+
+    void transformToPdf(ContentReader documentReader, ContentWriter pdfWriter) throws Exception;
+
+    void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception;
+
+    void replaceFormulasAndTransformToPdf(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, ContentWriter pdfWriter) throws Exception;
 
 }

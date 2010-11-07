@@ -5,6 +5,10 @@
    <!--   dropdown      paneeli id     viitab div'i id'le -->
 <menu>
 
+<!--
+    NB! If you change menu item order, also update constants in MenuBean.java !
+-->
+
    <!-- MINU TÖÖÜLESANDED JA DOKUMENDID -->
    <item title-id="menu_my_tasks_and_documents">
       <outcome>myalfresco</outcome>
@@ -95,11 +99,6 @@
                </item>
             </subitems>
          </dropdown>
-<!--
-         <item title-id="menu_department_documents">
-            <outcome>myalfresco</outcome>
-         </item>
--->
          <dropdown title-id="menu_my_documents" browse="true">
             <xpath>/{http://alfresco.webmedia.ee/model/functions/1.0}documentList</xpath>
             <submenu-id>my-documents</submenu-id>

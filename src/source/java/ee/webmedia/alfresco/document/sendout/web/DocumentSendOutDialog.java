@@ -307,7 +307,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     public void updateTemplate(@SuppressWarnings("unused") ActionEvent event) {
         if (StringUtils.isNotBlank(model.getTemplate())) {
             LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
-            nodeRefs.put("default", model.getNodeRef());
+            nodeRefs.put(null, model.getNodeRef());
             String templateTxt = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, new NodeRef(model.getTemplate()));
             model.setContent(templateTxt);
         }

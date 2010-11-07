@@ -4,6 +4,25 @@
 
    <bean id="msoService" class="ee.webmedia.alfresco.mso.service.MsoServiceImpl">
       <property name="endpointAddress" value="${mso.url}" />
+      <property name="httpClientReceiveTimeout" value="180" /><!-- 3 minutes -->
+      <property name="supportedSourceMimetypes">
+         <set>
+            <value>text/plain</value><!-- TXT -->
+            <value>text/html</value><!-- HTML -->
+            <value>application/vnd.openxmlformats-officedocument.wordprocessingml.document</value><!-- DOCX -->
+            <value>application/msword</value><!-- DOC -->
+            <value>application/rtf</value><!-- RTF -->
+            <value>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</value><!-- XLSX -->
+            <value>application/vnd.excel</value><!-- XLS -->
+            <!-- currently DOT/DOTM/DOTX/DOCM are assigned mime-type application/octet-stream, so we don't support them -->
+            <!-- currently XLT/XLTM/XLTX/XLSM/XLSB are assigned mime-type application/octet-stream, so we don't support them -->
+            <!-- CSV files are also assigned text/plain mime-type - this means that both MSO and OO use Word/Writer to convert them to PDF -->
+         </set>
+      </property>
+   </bean>
+
+   <bean id="transformer.MsoContent" class="ee.webmedia.alfresco.mso.service.MsoContentTransformer" parent="baseContentTransformer">
+      <property name="msoService" ref="msoService" />
    </bean>
 
 </beans>

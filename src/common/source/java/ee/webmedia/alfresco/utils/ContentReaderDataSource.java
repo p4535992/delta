@@ -12,10 +12,18 @@ public class ContentReaderDataSource implements DataSource {
 
     private ContentReader contentReader;
     private String fileName;
+    private String contentType;
 
     public ContentReaderDataSource(ContentReader contentReader, String fileName) {
         this.contentReader = contentReader;
         this.fileName = fileName;
+        contentType = MimeUtil.getContentType(contentReader);
+    }
+
+    public ContentReaderDataSource(ContentReader contentReader, String fileName, String mimeType, String encoding) {
+        this.contentReader = contentReader;
+        this.fileName = fileName;
+        contentType = MimeUtil.getContentType(mimeType, encoding);
     }
 
     @Override
@@ -30,7 +38,7 @@ public class ContentReaderDataSource implements DataSource {
 
     @Override
     public String getContentType() {
-        return contentReader.getMimetype();
+        return contentType;
     }
 
     @Override

@@ -11,10 +11,24 @@ import javax.xml.ws.ResponseWrapper;
 public interface Mso {
 
     @WebMethod
-    @WebResult(name = "msoOutput", targetNamespace = "http://webmedia.ee/mso")
+    @WebResult(name = "msoPdfOutput", targetNamespace = "http://webmedia.ee/mso")
     @RequestWrapper(localName = "convertToPdf", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ConvertToPdf")
     @ResponseWrapper(localName = "convertToPdfResponse", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ConvertToPdfResponse")
-    MsoOutput convertToPdf(
-            @WebParam(name = "msoInput", targetNamespace = "http://webmedia.ee/mso") MsoInput msoInput);
+    MsoPdfOutput convertToPdf(
+            @WebParam(name = "msoDocumentInput", targetNamespace = "http://webmedia.ee/mso") MsoDocumentInput msoDocumentInput);
+
+    @WebMethod
+    @WebResult(name = "msoDocumentOutput", targetNamespace = "http://webmedia.ee/mso")
+    @RequestWrapper(localName = "replaceFormulas", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ReplaceFormulas")
+    @ResponseWrapper(localName = "replaceFormulasResponse", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ReplaceFormulasResponse")
+    MsoDocumentOutput replaceFormulas(
+            @WebParam(name = "msoDocumentAndFormulasInput", targetNamespace = "http://webmedia.ee/mso") MsoDocumentAndFormulasInput msoDocumentAndFormulasInput);
+
+    @WebMethod
+    @WebResult(name = "msoDocumentAndPdfOutput", targetNamespace = "http://webmedia.ee/mso")
+    @RequestWrapper(localName = "replaceFormulasAndConvertToPdf", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ReplaceFormulasAndConvertToPdf")
+    @ResponseWrapper(localName = "replaceFormulasAndConvertToPdfResponse", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ReplaceFormulasAndConvertToPdfResponse")
+    MsoDocumentAndPdfOutput replaceFormulasAndConvertToPdf(
+            @WebParam(name = "msoDocumentAndFormulasInput", targetNamespace = "http://webmedia.ee/mso") MsoDocumentAndFormulasInput msoDocumentAndFormulasInput);
 
 }

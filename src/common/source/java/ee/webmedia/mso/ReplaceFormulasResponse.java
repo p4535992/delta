@@ -1,25 +1,23 @@
 
 package ee.webmedia.mso;
 
-import javax.activation.DataHandler;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttachmentRef;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 
 /**
- * <p>Java class for msoOutput complex type.
+ * <p>Java class for replaceFormulasResponse complex type.
  * 
  * <p>The following schema fragment specifies the expected content contained within this class.
  * 
  * <pre>
- * &lt;complexType name="msoOutput">
+ * &lt;complexType name="replaceFormulasResponse">
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element name="content" type="{http://ws-i.org/profiles/basic/1.1/xsd}swaRef"/>
+ *         &lt;element name="msoDocumentOutput" type="{http://webmedia.ee/mso}msoDocumentOutput"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -29,37 +27,36 @@ import javax.xml.bind.annotation.XmlType;
  * 
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "msoOutput", propOrder = {
-    "content"
+@XmlType(name = "replaceFormulasResponse", propOrder = {
+    "msoDocumentOutput"
 })
-public class MsoOutput {
+public class ReplaceFormulasResponse {
 
-    @XmlElement(required = true, type = String.class)
-    @XmlAttachmentRef
-    protected DataHandler content;
+    @XmlElement(required = true)
+    protected MsoDocumentOutput msoDocumentOutput;
 
     /**
-     * Gets the value of the content property.
+     * Gets the value of the msoDocumentOutput property.
      * 
      * @return
      *     possible object is
-     *     {@link String }
+     *     {@link MsoDocumentOutput }
      *     
      */
-    public DataHandler getContent() {
-        return content;
+    public MsoDocumentOutput getMsoDocumentOutput() {
+        return msoDocumentOutput;
     }
 
     /**
-     * Sets the value of the content property.
+     * Sets the value of the msoDocumentOutput property.
      * 
      * @param value
      *     allowed object is
-     *     {@link String }
+     *     {@link MsoDocumentOutput }
      *     
      */
-    public void setContent(DataHandler value) {
-        this.content = value;
+    public void setMsoDocumentOutput(MsoDocumentOutput value) {
+        this.msoDocumentOutput = value;
     }
 
 }

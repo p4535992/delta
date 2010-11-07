@@ -61,11 +61,12 @@ public class MenuBean implements Serializable {
     public static final String UPDATE_TREE_ACTTIONLISTENER = "#{MenuBean.updateTree}";
     public static final String COUNT = "count";
 
-    // XXX: this order defined in menu-structure.xml
+    // NB! this order defined in menu-structure.xml
+    // If you change menu item order in menu-structure.xml, also update constants below!
     public static final int MY_TASKS_AND_DOCUMENTS_ID = 0;
     public static final int DOCUMENT_REGISTER_ID = 1;
     public static final int CREATE_NEW_DOCUMENT = 5;
-    public static final int MY_DOCUMENTS_ID = 3;
+    public static final int MY_DOCUMENTS_ID = 2;
 
     private transient HtmlPanelGroup shortcutsPanelGroup;
     private transient HtmlPanelGroup breadcrumb;

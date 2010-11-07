@@ -31,7 +31,9 @@ window.onbeforeunload = function () {
    // This fucntion does nothing.  It won't spawn a confirmation dialog
    // But it will ensure that the page is not cached by the browser.
 
-   $jQ.log('window.onbeforeunload');
+   if(typeof $jQ.log !== "undefined"){
+      $jQ.log('window.onbeforeunload');
+   }
 
    if (nextSubmitStaysOnSamePageFlag) {
       nextSubmitStaysOnSamePageFlag = false;
@@ -926,6 +928,38 @@ function handleHtmlLoaded(context, selects) {
       {
          appendSelection($jQ(this), textAreaId)
       });
+   });
+   
+   /**
+    * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE) 
+    * @author Riina Tens
+    */
+   $jQ("[class^=selectWithOnchangeEvent]", context).each(function (intIndex)
+   {
+      var selectId = $(this).id;
+      var selectElement = $jQ("#" + escapeId4JQ(selectId));
+      var classString = selectElement.attr('class');
+      var onChangeJavascript = classString.substring(classString.lastIndexOf('====') + 4);
+      if(onChangeJavascript != ""){
+         //XXX: maybe remove script part from class atribute after reading it into function?
+         //selectElement.setAttribute('class', classString.substring(0, lastIndexOf('====')));
+         
+         var selectBaseId = $(this).id.substring(selectId.lastIndexOf(':') + 1);
+         if(selectBaseId == 'select_user' || selectBaseId == 'selPageSize'){
+            $jQ(this).bind("change", function()
+            {
+               //assume onChangeJavascript contains valid function body 
+               //eval("(function() {" + onChangeJavascript + "}) ();");
+               eval("(function(currElId) {" + onChangeJavascript + "}) ('" + $(this).id + "');");
+            });
+         }
+         else{
+            $jQ(this).bind("change", function()
+            {
+               eval("(function() {" + onChangeJavascript + "}) ();");
+            });
+         }
+      }
    });
    
    $jQ(".admin-user-search-input", context).keyup(function(event) {

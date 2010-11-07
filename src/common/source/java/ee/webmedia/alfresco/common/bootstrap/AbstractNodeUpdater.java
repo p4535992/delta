@@ -246,7 +246,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
             double completedPercent = completedSize * 100 / ((double) totalSize);
             double lastDocsPerSec = i * 1000 / ((double) (endTime - startTime));
             double totalDocsPerSec = thisRunCompletedSize * 1000 / ((double) (endTime - thisRunStartTime));
-            int etaMinutes = (int) ((totalSize - completedSize) * (endTime - thisRunStartTime) / (thisRunCompletedSize * 60000));
+            int etaMinutes = (int) (((long)(totalSize - completedSize)) * (endTime - thisRunStartTime) / (long)(thisRunCompletedSize * 60000));
             i = 0;
             log.info(String.format("%s: %6.2f%% completed - %7d of %7d, %5.1f docs per second (last), %5.1f (total), ETA %d min", processName,
                     completedPercent, completedSize, totalSize, lastDocsPerSec, totalDocsPerSec, etaMinutes));

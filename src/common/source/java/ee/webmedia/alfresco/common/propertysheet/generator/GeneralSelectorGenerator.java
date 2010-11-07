@@ -40,6 +40,9 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
     public static final String ATTR_SELECTION_ITEMS = "selectionItems";
+    //The following variables' values are also hardcoded in scripts.js, so change the values simultaneously here and in javascript 
+    public static final String ONCHANGE_SCRIPT_START_MARKER = "====";
+    public static final String ONCHANGE_MARKER_CLASS = "selectWithOnchangeEvent";    
 
     public UIComponent generate(FacesContext context, String id) {
         // do nothing
@@ -116,6 +119,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         setupSelectComponent(context, propertySheet, item, propertyDef, component, propertyDef == null ? false : propertyDef.isMultiValued());
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void setupMandatoryPropertyIfNecessary(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem property,
             PropertyDefinition propertyDef, UIComponent component) {
@@ -126,7 +130,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         String valueChangeListener = getCustomAttributes().get("valueChangeListener");
         if (StringUtils.isNotBlank(valueChangeListener)) {
             ((UIInput) component).setValueChangeListener(context.getApplication().createMethodBinding(valueChangeListener,
-                    new Class[] { ValueChangeEvent.class }));
+                new Class[] { ValueChangeEvent.class }));
             final String onchange;
             if(Boolean.valueOf(getCustomAttributes().get(AjaxUpdateable.AJAX_DISABLED_ATTR))) {
                 onchange = Utils.generateFormSubmit(context, component);
@@ -134,8 +138,9 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
                 onchange = ComponentUtil.generateAjaxFormSubmit(context, component);
             }
             if (component instanceof HtmlSelectOneMenu) {
-                ((HtmlSelectOneMenu) component).setOnchange(onchange);
+                ((HtmlSelectOneMenu) component).setStyleClass(ONCHANGE_MARKER_CLASS + ONCHANGE_SCRIPT_START_MARKER + onchange);
             } else if (component instanceof HtmlSelectManyListbox) {
+                //TODO: check if this class behaves correctly in IE8 with onChange and jQuery change event both active
                 ((HtmlSelectManyListbox) component).setOnchange(onchange);
             }
         }

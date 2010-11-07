@@ -87,7 +87,6 @@ public class WorkflowBlockBean implements Serializable {
     private static final String ATTRIB_OUTCOME_INDEX = "outcomeIndex";
     private static final String ATTRIB_INDEX = "index";
     private static final String PARAM_NODEREF = "nodeRef";
-
     private FileBlockBean fileBlockBean;
     private MetadataBlockBean metadataBlockBean;
 
@@ -389,7 +388,7 @@ public class WorkflowBlockBean implements Serializable {
     /**
      * Callback to generate the drop down of outcomes for reviewTask.
      */
-    public List<SelectItem> getReviewTaskOutcomes(@SuppressWarnings("unused") FacesContext context, @SuppressWarnings("unused") UIInput selectComponent) {
+    public List<SelectItem> getReviewTaskOutcomes(FacesContext context, UIInput selectComponent) {
         int outcomes = getWorkflowService().getWorkflowTypes().get(WorkflowSpecificModel.Types.REVIEW_WORKFLOW).getTaskOutcomes();
         List<SelectItem> selectItems = new ArrayList<SelectItem>(outcomes);
 
@@ -399,20 +398,24 @@ public class WorkflowBlockBean implements Serializable {
         }
         return selectItems;
     }
+    
+    private void constructTaskPanelGroup() {
+        constructTaskPanelGroup(getDataTableGroup());
+    }
 
     /**
      * Manually generate a panel group with everything.
      */
     @SuppressWarnings("unchecked")
-    private void constructTaskPanelGroup() {
-        getDataTableGroup().getChildren().clear();
+    private void constructTaskPanelGroup(HtmlPanelGroup panelGroup) {
+        panelGroup.getChildren().clear();
         Application app = FacesContext.getCurrentInstance().getApplication();
 
         // add 2 hidden links and a modal applet so signing
-        dataTableGroup.getChildren().add(new SignatureAppletModalComponent());
-        dataTableGroup.getChildren().add(generateLinkWithParam(app, "processCert", "#{" + BEAN_NAME + ".processCert}", "cert"));
-        dataTableGroup.getChildren().add(generateLinkWithParam(app, "signDocument", "#{" + BEAN_NAME + ".signDocument}", "signature"));
-        dataTableGroup.getChildren().add(generateLinkWithParam(app, "cancelSign", "#{" + BEAN_NAME + ".cancelSign}", null));
+        panelGroup.getChildren().add(new SignatureAppletModalComponent());
+        panelGroup.getChildren().add(generateLinkWithParam(app, "processCert", "#{" + BEAN_NAME + ".processCert}", "cert"));
+        panelGroup.getChildren().add(generateLinkWithParam(app, "signDocument", "#{" + BEAN_NAME + ".signDocument}", "signature"));
+        panelGroup.getChildren().add(generateLinkWithParam(app, "cancelSign", "#{" + BEAN_NAME + ".cancelSign}", null));
 
         for (int index = 0; index < getMyTasks().size(); index++) {
             Task myTask = getMyTasks().get(index);
@@ -495,10 +498,10 @@ public class WorkflowBlockBean implements Serializable {
             }
 
             panel.getChildren().add(panelGrid);
-            dataTableGroup.getChildren().add(panel);
+            panelGroup.getChildren().add(panel);
         }
     }
-
+    
     public void showCompoundWorkflowDialog() {
         FacesContext fc = FacesContext.getCurrentInstance();
         NavigationHandler navigationHandler = fc.getApplication().getNavigationHandler();
@@ -596,7 +599,10 @@ public class WorkflowBlockBean implements Serializable {
         return dataTableGroup;
     }
 
+    //always force refresh; jsf is not refreshed correctly 
+    //(getDataTableGroup is not called because of binding attribute used in workflow-block.jsp)
     public void setDataTableGroup(HtmlPanelGroup dataTableGroup) {
+        constructTaskPanelGroup(dataTableGroup);
         this.dataTableGroup = dataTableGroup;
     }
 
@@ -642,11 +648,14 @@ public class WorkflowBlockBean implements Serializable {
 
     // END: getters / setters
 
+    private void renderWorkflowPanel(){
+        renderWorkflowPanel(getWfPanelGroup());
+    }
+    
     @SuppressWarnings("unchecked")
-    private void renderWorkflowPanel() {
+    private void renderWorkflowPanel(HtmlPanelGroup wfPanel) {
         Application app = FacesContext.getCurrentInstance().getApplication();
-        getWfPanelGroup().getChildren().clear();
-
+        wfPanel.getChildren().clear();
         UIPanel workflowPanel = (UIPanel) app.createComponent("org.alfresco.faces.Panel");
         workflowPanel.setId("workflow-summary-panel");
         workflowPanel.setProgressive(true);
@@ -654,8 +663,7 @@ public class WorkflowBlockBean implements Serializable {
         workflowPanel.setExpanded(false);
         workflowPanel.setLabel(MessageUtil.getMessage("workflow_workflows"));
         generateCompoundWorkflowTables(app, workflowPanel);
-        wfPanelGroup.getChildren().add(workflowPanel);
-
+        wfPanel.getChildren().add(workflowPanel);
     }
 
     @SuppressWarnings("unchecked")
@@ -847,8 +855,9 @@ public class WorkflowBlockBean implements Serializable {
         }
         return wfPanelGroup;
     }
-
+    
     public void setWfPanelGroup(HtmlPanelGroup wfPanelGroup) {
+        renderWorkflowPanel(wfPanelGroup);
         this.wfPanelGroup = wfPanelGroup;
     }
 

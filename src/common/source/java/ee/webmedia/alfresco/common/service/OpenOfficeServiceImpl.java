@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.common.service;
 
 import java.io.File;
+import java.util.Map;
 
 import net.sf.jooreports.openoffice.connection.OpenOfficeConnection;
 
@@ -8,6 +9,7 @@ import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.util.TempFileProvider;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import com.sun.star.beans.PropertyValue;
@@ -32,7 +34,7 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
     private OpenOfficeConnection openOfficeConnection;
 
     @Override
-    public void replace(ContentReader reader, ContentWriter writer, ReplaceCallback callback) throws Exception {
+    public void replace(ContentReader reader, ContentWriter writer, Map<String, String> formulas) throws Exception {
         long startTime = System.currentTimeMillis();
 
         // create temporary file to replace from
@@ -62,7 +64,21 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
                 for (int i = 0; i < findAll.getCount(); i++) {
                     Object byIndex = findAll.getByIndex(i);
                     XTextRange xTextRange = queryInterface(XTextRange.class, byIndex);
-                    xTextRange.setString(callback.getReplace(xTextRange.getString()));
+                    if (xTextRange.getString().length() < 3) {
+                        continue;
+                    }
+                    String formulaKey = xTextRange.getString().substring(1, xTextRange.getString().length() - 1);
+                    String formulaValue = formulas.get(formulaKey);
+                    if (formulaValue == null) {
+                        /*
+                         * Spetsifikatsioon "Dokumendi ekraanivorm - Tegevused.docx" punkt 7.1.5.2
+                         * Kui vastav metaandme väli on täitmata, siis asendamist ei toimu.
+                         */
+                        continue;
+                    }
+                    // New paragraph because justified text screws up the layout when \n is used.
+                    formulaValue = StringUtils.replace(formulaValue, "\n", "\r");
+                    xTextRange.setString(formulaValue);
                 }
                 XRefreshable refreshable = queryInterface(XRefreshable.class, xComponent);
                 if (refreshable != null) {

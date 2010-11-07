@@ -15,6 +15,7 @@ import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.ws.client.WebServiceIOException;
 import org.springframework.ws.client.WebServiceTransportException;
 import org.springframework.ws.soap.client.SoapFaultClientException;
 
@@ -66,9 +67,13 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
         } catch (WebServiceTransportException e) {
             if(StringUtils.equals(e.getMessage(), "Not Found [404]")) {
                 log.warn("AMRService is not responding", e);
+            } else if(StringUtils.equals(e.getMessage(), "Service Unavailable [503]")) {
+                log.warn("AMRService is not available", e);
             } else {
                 throw e;
             }
+        } catch (WebServiceIOException e) {
+            log.warn("AMRService is not available", e);
         } catch (SoapFaultClientException e) {
             log.error("Didn't manage to get user with id '" + userName + "' from AMRService.", e);
             throw new AMRAuthenticationException("Didn't manage to get user with id '" + userName + "' from AMRService.", e);

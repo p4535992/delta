@@ -71,7 +71,7 @@ public abstract class AbstractSearchServiceImpl {
     protected GeneralService generalService;
     protected ParametersService parametersService;
     protected LuceneConfig config;
-
+    
     protected LuceneAnalyser luceneAnalyser;
 
     protected Pair<String, String> generateQuickSearchQuery(String searchString, List<String> typeParts, Set<QName> documentProps) {
@@ -214,9 +214,9 @@ public abstract class AbstractSearchServiceImpl {
         }
     }
 
-    protected List<WmNode> searchNodes(String query, boolean limited) {
+    protected Pair<List<WmNode>, Boolean> searchNodes(String query, boolean limited) {
         if (StringUtils.isEmpty(query)) {
-            return new ArrayList<WmNode>();
+            return new Pair<List<WmNode>,Boolean>(new ArrayList<WmNode>(),Boolean.FALSE);
         }
         boolean statisticsEnabled = SearchStatistics.isEnabled();
         long time0 = statisticsEnabled ? System.currentTimeMillis() : 0;
@@ -254,7 +254,7 @@ public abstract class AbstractSearchServiceImpl {
                 results.add(node);
             }
             time3 = statisticsEnabled ? System.currentTimeMillis() : 0;
-            return results;
+            return new Pair<List<WmNode>, Boolean>(results,resultSet.hasMore());
         } finally {
             try {
                 resultSet.close();
@@ -306,10 +306,11 @@ public abstract class AbstractSearchServiceImpl {
             sp.setLimitBy(LimitBy.UNLIMITED);
         }
 
-        return searchService.query(sp);
+        ResultSet result = searchService.query(sp);
+        return result;
     }
 
-    protected int getSearchLimit() {
+    public int getSearchLimit() {
         return parametersService.getParameter(Parameters.SEARCH_RESULTS_LIMIT, Integer.class);
     }
 

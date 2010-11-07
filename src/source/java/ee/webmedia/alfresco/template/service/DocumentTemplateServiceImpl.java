@@ -2,11 +2,12 @@ package ee.webmedia.alfresco.template.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +17,7 @@ import javax.servlet.ServletContext;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -27,14 +29,13 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.DateFormatUtils;
-import org.apache.tools.ant.util.DateUtils;
+import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 import org.springframework.web.context.ServletContextAware;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
-import ee.webmedia.alfresco.common.service.OpenOfficeService.ReplaceCallback;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
@@ -42,6 +43,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.type.model.DocumentTypeModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
+import ee.webmedia.alfresco.mso.service.MsoService;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
@@ -52,6 +54,7 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
@@ -61,7 +64,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentTemplateServiceImpl.class);
 
-    private static final String DATE_FORMAT = "dd.MM.yyyy";
+    private static final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
     private static final String SEPARATOR = ".";
 
     private GeneralService generalService;
@@ -71,6 +74,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private FileFolderService fileFolderService;
     private DocumentLogService documentLogService;
     private OpenOfficeService openOfficeService;
+    private DictionaryService dictionaryService;
+    private MsoService msoService;
     private String serverUrl;
     private ServletContext servletContext;
 
@@ -82,40 +87,13 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     @Override
     public void updateGeneratedFilesOnRegistration(NodeRef docRef) {
         List<FileInfo> files = fileFolderService.listFiles(docRef);
-        log.debug("Found " + files.size() + "files under document " + docRef);
+        log.debug("Found " + files.size() + " files under document " + docRef);
         for (FileInfo file : files) {
+            // This check ensures, that only proper DOC files are passed to Word
+            // Unfortunately DOT files have mimetype application/octet-stream, and therefore MsoService must accept this mimetype also
+            // So without this check, every binary file would be passed to word, which would be unnecessary and very time consuming
             if (file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.GENERATED) != null) {
-                final Map<QName, Serializable> docProp = nodeService.getProperties(docRef);
-
-                int retry = 3;
-                do {
-                    ContentReader templateReader = fileFolderService.getReader(file.getNodeRef());
-
-                    // Set document content's mimetype and encoding from template
-                    ContentWriter documentWriter = fileFolderService.getWriter(file.getNodeRef());
-                    documentWriter.setMimetype(templateReader.getMimetype());
-                    documentWriter.setEncoding(templateReader.getEncoding());
-
-                    try {
-                        openOfficeService.replace(templateReader, documentWriter, new ReplaceCallback() {
-                            public String getReplace(String found) {
-                                return getReplaceString(found, docProp);
-                            }
-                        });
-                        retry = 0;
-                    } catch (OpenOfficeService.OpenOfficeReturnedNullInterfaceException e) {
-                        retry--;
-                        log.error("Replacing failed, OpenOffice error, retrying " + retry + " times more: " + e.getMessage() + "\n    fileName="
-                                + file.getName() + "\n    reader=" + templateReader + "\n    writer=" + documentWriter);
-                        if (retry <= 0) {
-                            throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_failed", e);
-                        }
-                    } catch (Exception e) {
-                        log.error("Replacing failed!\n    fileName=" + file.getName() + "\n    reader=" + templateReader + "\n    writer=" + documentWriter, e);
-                        // Clean up and inform the dialog
-                        throw new RuntimeException(e);
-                    }
-                } while (retry > 0);
+                replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName());
             }
         }
     }
@@ -184,32 +162,55 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         log.debug("Created new node: " + populatedTemplate.getNodeRef() + "\nwith name: " + name + "; displayName: " + displayName);
         // Set document content's mimetype and encoding from template
 
+        replaceFormulas(documentNodeRef, nodeRef, populatedTemplate.getNodeRef(), templateFileName);
+        return displayName;
+    }
+
+    private void replaceFormulas(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName) {
+        Map<String, String> formulas = getFormulas(document);
+        if (log.isDebugEnabled()) {
+            log.debug("Produced formulas " + WmNode.toString(formulas.entrySet()));
+        }
+        if (msoService.isAvailable()) {
+            ContentReader documentReader = fileFolderService.getReader(sourceFile);
+            ContentWriter documentWriter = fileFolderService.getWriter(destinationFile);
+            try {
+                msoService.replaceFormulas(formulas, documentReader, documentWriter);
+            } catch (Exception e) {
+                throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_failed", e);
+            }
+        } else {
+            replaceFormulasWithOpenOffice(document, sourceFile, destinationFile, sourceFileName);
+        }
+    }
+
+    private void replaceFormulasWithOpenOffice(NodeRef document, NodeRef sourceFile, NodeRef destinationFile, String sourceFileName) {
+        Map<String, String> formulas = getFormulas(document);
+        if (log.isDebugEnabled()) {
+            log.debug("Produced formulas " + WmNode.toString(formulas.entrySet()));
+        }
+
         int retry = 3;
         do {
-            ContentReader templateReader = fileFolderService.getReader(nodeRef);
-            ContentWriter documentWriter = fileFolderService.getWriter(populatedTemplate.getNodeRef());
-            documentWriter.setMimetype(MimetypeMap.MIMETYPE_WORD);
+            ContentReader reader = fileFolderService.getReader(sourceFile);
+            ContentWriter writer = fileFolderService.getWriter(destinationFile);
+            writer.setMimetype(MimetypeMap.MIMETYPE_WORD);
 
             try {
-                openOfficeService.replace(templateReader, documentWriter, new ReplaceCallback() {
-                    public String getReplace(String found) {
-                        return getReplaceString(found, docProp);
-                    }
-                });
+                openOfficeService.replace(reader, writer, formulas);
                 retry = 0;
             } catch (OpenOfficeService.OpenOfficeReturnedNullInterfaceException e) {
                 retry--;
-                log.error("Replacing failed, OpenOffice error, retrying " + retry + " times more: " + e.getMessage() + "\n    fileName=" + templateFileName
-                        + "\n    reader=" + templateReader + "\n    writer=" + documentWriter);
+                log.error("Replacing failed, OpenOffice error, retrying " + retry + " times more: " + e.getMessage() + "\n    fileName=" + sourceFileName
+                        + "\n    reader=" + reader + "\n    writer=" + writer);
                 if (retry <= 0) {
                     throw new UnableToPerformException(MessageSeverity.ERROR, "template_replace_formulas_failed", e);
                 }
             } catch (Exception e) {
-                log.error("Replacing failed!\n    fileName=" + templateFileName + "\n    reader=" + templateReader + "\n    writer=" + documentWriter, e);
+                log.error("Replacing failed!\n    fileName=" + sourceFileName + "\n    reader=" + reader + "\n    writer=" + writer, e);
                 throw new RuntimeException(e);
             }
         } while (retry > 0);
-        return displayName;
     }
 
     public String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template) {
@@ -223,7 +224,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 .append(" (")
                 .append(I18NUtil.getMessage("notification_dispostition_date"))
                 .append(": ")
-                .append(DateUtils.format(vol.getDispositionDate(), DATE_FORMAT))
+                .append(dateFormat.format(vol.getDispositionDate()))
                 .append(")")
                 .append("<br>\n");
             }
@@ -253,7 +254,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                     .append(" (")
                     .append(I18NUtil.getMessage("notification_access_restriction_end"))
                     .append(": ") 
-                    .append(DateUtils.format(doc.getAccessRestrictionEndDate(), DATE_FORMAT))
+                    .append(dateFormat.format(doc.getAccessRestrictionEndDate()))
                     .append(")")
                     .append("<br>\n");
                 }
@@ -269,7 +270,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             for (Document doc : documents) {
                 if (doc.getAccessRestrictionEndDate() == null) {
                     sb.append(doc.getRegNumber())
-                    .append(" (AK piirangu lõpp: ")
+                    .append(" (")
+                    .append(I18NUtil.getMessage("notification_access_restriction_end"))
+                    .append(": ")
                     .append(doc.getAccessRestrictionEndDesc())
                     .append(")")
                     .append("<br>\n");
@@ -284,174 +287,165 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         return templateText;
     }
 
-    public String getProcessedEmailTemplate(LinkedHashMap<String, NodeRef> dataNodeRefs, NodeRef template) {
-
-        LinkedHashMap<String, Map<QName, Serializable>> properties = new LinkedHashMap<String, Map<QName, Serializable>>();
-        for (String group : dataNodeRefs.keySet()) {
-            properties.put(group, nodeService.getProperties(dataNodeRefs.get(group)));
-        }
-
-        StringBuffer result = new StringBuffer();
+    @Override
+    public String getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template) {
         ContentReader templateReader = fileFolderService.getReader(template);
         String templateTxt = templateReader.getContentString();
-
-        if (properties.size() == 0) {
+        if (dataNodeRefs.size() == 0) {
             return templateTxt;
         }
 
+        Map<String, String> allFormulas = new LinkedHashMap<String, String>();
+        for (Entry<String, NodeRef> entry : dataNodeRefs.entrySet()) {
+            Map<String, String> formulas = getFormulas(entry.getValue());
+            String keyPrefix = entry.getKey();
+            if (StringUtils.isEmpty(keyPrefix)) {
+                // Put these formulas without key prefix
+                allFormulas.putAll(formulas);
+            } else {
+                // Put formulas with key prefix
+                for (Entry<String, String> entry2 : formulas.entrySet()) {
+                    allFormulas.put(keyPrefix + SEPARATOR + entry2.getKey(), entry2.getValue());
+                }
+            }
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Produced formulas " + WmNode.toString(allFormulas.entrySet()));
+        }
+
+        StringBuffer result = new StringBuffer();
         Pattern pattern = Pattern.compile(OpenOfficeService.REGEXP_PATTERN);
         Matcher matcher = pattern.matcher(templateTxt);
-        String firstKey = Arrays.asList(properties.keySet().toArray()).get(0).toString();
-
         while (matcher.find()) {
-            String formula = matcher.group();
-            String replacement = formula;
-
-            for (String group : properties.keySet()) {
-                if (formula.startsWith("{" + group + SEPARATOR)) {
-                    replacement = getReplaceString(formula, properties.get(group));
-                    break; // don't override specific match
-                } else if (formula.indexOf(SEPARATOR) == -1) {
-                    replacement = getReplaceString(formula, properties.get(firstKey));
-                }
-
+            String formulaKey = matcher.group().substring(1, matcher.group().length() - 1);
+            String formulaValue = allFormulas.get(formulaKey);
+            if (formulaValue == null) {
+                /*
+                 * Spetsifikatsioon "Dokumendi ekraanivorm - Tegevused.docx" punkt 7.1.5.2
+                 * Kui vastav metaandme väli on täitmata, siis asendamist ei toimu.
+                 */
+                formulaValue = matcher.group();
             }
-
-            String formulaResult = escapeXml(replacement);
+            String formulaResult = escapeXml(formulaValue);
             matcher.appendReplacement(result, formulaResult);
         }
         matcher.appendTail(result);
         return result.toString();
     }
 
-    private String getReplaceString(String foundPattern, Map<QName, Serializable> properties) {
-        String pattern = foundPattern.substring(1, foundPattern.length() - 1);
+    private Map<String, String> getFormulas(NodeRef document) {
+        Map<String, String> formulas = new LinkedHashMap<String, String>();
 
-        if (pattern.contains(SEPARATOR)) {
-            pattern = pattern.substring(pattern.indexOf(SEPARATOR) + 1);
-        }
-
-        for (QName key : properties.keySet()) {
-            Serializable prop = properties.get(key);
-            if (key.getLocalName().equals(pattern) && prop != null) {
-                if (log.isTraceEnabled()) {
-                    log.trace("Found property from document node: " + key);
+        // All properties
+        Map<QName, Serializable> props = nodeService.getProperties(document);
+        for (Entry<QName, Serializable> entry : props.entrySet()) {
+            String propName = entry.getKey().getLocalName();
+            Serializable propValue = entry.getValue();
+            if (propValue == null) {
+                continue;
+            }
+            if (propValue instanceof List<?>) {
+                List<?> list = (List<?>) propValue;
+                String separator = ", ";
+                if (propName.equals(DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName())
+                        || propName.equals(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName())
+                        || propName.equals(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.getLocalName())) {
+                    separator = "\n";
                 }
 
-                if (prop instanceof ArrayList<?>) {
-                    List<?> list = (ArrayList<?>) prop;
-                    String separator = ", ";
-                    if (key.getLocalName().equals("recipientName") 
-                     || key.getLocalName().equals("additionalRecipientName") 
-                     || key.getLocalName().equals("additionalRecipientEmail"))
-                        separator = "\r";
-
-                    if (list.size() > 0 && list.get(0) != null) {
-                        List<Object> items = new ArrayList<Object>(list.size());
-                        for (int i = 0; i < list.size(); i++) {
-                            items.add(getTypeSpecificReplacement(list.get(i), foundPattern));
-                        }
-                        return StringUtils.join(items.iterator(), separator);
+                List<String> items = new ArrayList<String>(list.size());
+                for (Object object : list) {
+                    String itemValue = getTypeSpecificReplacement(object);
+                    if (StringUtils.isNotBlank(itemValue)) {
+                        items.add(itemValue);
                     }
                 }
-                String result = getTypeSpecificReplacement(prop, foundPattern);
-                if (!result.equals(foundPattern)) {
-                    return result;
-                }
+                formulas.put(propName, StringUtils.join(items.iterator(), separator));
+            } else {
+                formulas.put(propName, getTypeSpecificReplacement(propValue));
             }
         }
-        return checkSpecificPattern(foundPattern, properties);
+
+        // Specific formulas
+        QName documentType = nodeService.getType(document);
+        if (dictionaryService.isSubClass(documentType, DocumentCommonModel.Types.DOCUMENT)) {
+            formulas.put("functionTitle", getAncestorProperty(document, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.TITLE));
+            formulas.put("functionMark", getAncestorProperty(document, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.MARK));
+            formulas.put("seriesTitle", getAncestorProperty(document, SeriesModel.Types.SERIES, SeriesModel.Props.TITLE));
+            formulas.put("seriesIdentifier", getAncestorProperty(document, SeriesModel.Types.SERIES, SeriesModel.Props.SERIES_IDENTIFIER));
+            formulas.put("volumeTitle", getAncestorProperty(document, VolumeModel.Types.VOLUME, VolumeModel.Props.TITLE));
+            formulas.put("volumeMark", getAncestorProperty(document, VolumeModel.Types.VOLUME, VolumeModel.Props.MARK));
+            String docUrl = serverUrl + servletContext.getContextPath() + "/n/document/" + document.getId();
+            formulas.put("docUrl", docUrl);
+        }
+
+        {
+            @SuppressWarnings("unchecked")
+            List<String> names = (List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_NAME);
+            @SuppressWarnings("unchecked")
+            List<String> emails = (List<String>) props.get(DocumentCommonModel.Props.RECIPIENT_EMAIL);
+            formulas.put("recipientNameEmail", generateNameAndEmail(names, emails));
+        }
+
+        {
+            @SuppressWarnings("unchecked")
+            List<String> names = (List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+            @SuppressWarnings("unchecked")
+            List<String> emails = (List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL);
+            formulas.put("additionalRecipientNameEmail", generateNameAndEmail(names, emails));
+        }
+
+        if (nodeService.hasAspect(document, DocumentSpecificModel.Aspects.VACATION_ORDER)) {
+            formulas.put("vacationOrderSubstitutionData", getVacationOrderSubstitutionData(props));
+        }
+
+        if (dictionaryService.isSubClass(documentType, WorkflowCommonModel.Types.TASK)) {
+            if (nodeService.hasAspect(document, WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
+                Serializable activeProp = props.get(WorkflowSpecificModel.Props.ACTIVE);
+                if (activeProp != null) {
+                    Boolean isActive = (Boolean) activeProp;
+                    if (isActive) {
+                        formulas.put("activeResponsible", isActive.toString());
+                    } else {
+                        formulas.put("unactiveResponsible", isActive.toString());
+                    }
+                }
+            } else {
+                formulas.put("coResponsible", Boolean.TRUE.toString());
+            }
+        }
+
+        /*
+         * Spetsifikatsioon "Dokumendi ekraanivorm - Tegevused.docx" punkt 7.1.5.2
+         * Kui vastav metaandme väli on täitmata, siis asendamist ei toimu.
+         */
+        
+        // Remove formulas with empty values
+        for (Iterator<Entry<String, String>> i = formulas.entrySet().iterator(); i.hasNext(); ) {
+            Entry<String, String> entry = i.next();
+            if (StringUtils.isBlank(entry.getValue())) {
+                i.remove();
+            }
+        }
+        return formulas;
     }
 
-    private String getTypeSpecificReplacement(Object object, String foundPattern) {
-
-        if (object instanceof String && StringUtils.isNotBlank((String) object))
+    private String getTypeSpecificReplacement(Object object) {
+        if (object == null) {
+            return null;
+        }
+        if (object instanceof String) {
             return (String) object;
-
-        if (object instanceof Date)
-            return DateFormatUtils.format((Date) object, DATE_FORMAT);
-
-        if (object instanceof Double)
-            return ((Double) object).toString();
-
-        if (object instanceof Boolean)
-            return ((Boolean) object).toString();
-
-        if (object instanceof Integer)
+        }
+        if (object instanceof Date) {
+            return dateFormat.format((Date) object);
+        }
+        if (object instanceof Integer || object instanceof Long || object instanceof Float || object instanceof Double || object instanceof Boolean) {
             return object.toString();
-
-        return foundPattern;
+        }
+        return null;
     }
 
-    private String checkSpecificPattern(String foundPattern, Map<QName, Serializable> properties) {
-        String pattern = foundPattern.substring(1, foundPattern.length() - 1);
-
-        NodeRef document = new NodeRef(generalService.getStore(), properties.get(ContentModel.PROP_NODE_UUID).toString());
-
-        if (pattern.equals("functionTitle"))
-            return getAncestorProperty(foundPattern, document, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.TITLE);
-        if (pattern.equals("functionMark"))
-            return getAncestorProperty(foundPattern, document, FunctionsModel.Types.FUNCTION, FunctionsModel.Props.MARK);
-        if (pattern.equals("seriesTitle"))
-            return getAncestorProperty(foundPattern, document, SeriesModel.Types.SERIES, SeriesModel.Props.TITLE);
-        if (pattern.equals("seriesIdentifier"))
-            return getAncestorProperty(foundPattern, document, SeriesModel.Types.SERIES, SeriesModel.Props.SERIES_IDENTIFIER);
-        if (pattern.equals("volumeTitle"))
-            return getAncestorProperty(foundPattern, document, VolumeModel.Types.VOLUME, VolumeModel.Props.TITLE);
-        if (pattern.equals("volumeMark"))
-            return getAncestorProperty(foundPattern, document, VolumeModel.Types.VOLUME, VolumeModel.Props.MARK);
-
-        if (pattern.equals("recipientNameEmail")) {
-            @SuppressWarnings("unchecked")
-            List<String> names = (List<String>) properties.get(DocumentCommonModel.Props.RECIPIENT_NAME);
-            @SuppressWarnings("unchecked")
-            List<String> emails = (List<String>) properties.get(DocumentCommonModel.Props.RECIPIENT_EMAIL);
-            return generateNameAndEmail(names, emails); // No need to check against null, common property
-        }
-
-        if (pattern.equals("additionalRecipientNameEmail")) {
-            @SuppressWarnings("unchecked")
-            List<String> names = (List<String>) properties.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
-            @SuppressWarnings("unchecked")
-            List<String> emails = (List<String>) properties.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL);
-            return generateNameAndEmail(names, emails);
-        }
-
-        if (pattern.equals("vacationOrderSubstitutionData")
-                && (nodeService.hasAspect(document, DocumentSpecificModel.Aspects.VACATION_ORDER) || nodeService.hasAspect(document,
-                DocumentSpecificModel.Aspects.VACATION_ORDER))) {
-            return getVacationOrderSubstitutionData(properties);
-        }
-
-        if ((pattern.equals("task.activeResponsible") || pattern.equals("task.unactiveResponsible"))
-                && nodeService.hasAspect(document, WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
-            Serializable activeProp = properties.get(WorkflowSpecificModel.Props.ACTIVE);
-            if(activeProp != null) {
-                Boolean isActive = (Boolean) activeProp; 
-                if(pattern.equals("task.activeResponsible") && isActive) {
-                    return isActive.toString();
-                }
-                if(pattern.equals("task.unactiveResponsible") && !isActive) {
-                    return isActive.toString();
-                }
-            }
-        }
-
-        if (pattern.equals("task.coResponsible") && !nodeService.hasAspect(document, WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
-            return Boolean.TRUE.toString();
-        }
-
-        if (pattern.equals("docUrl")) {
-            return serverUrl + servletContext.getContextPath() + "/n/document/" + properties.get(ContentModel.PROP_NODE_UUID);
-        }
-
-        return foundPattern;
-    }
-
-    /**
-     * @param properties
-     * @return
-     */
     private String getVacationOrderSubstitutionData(Map<QName, Serializable> properties) {
         @SuppressWarnings("unchecked")
         List<String> names = (List<String>) properties.get(DocumentSpecificModel.Props.SUBSTITUTE_NAME);
@@ -466,14 +460,14 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             StringBuilder sb = new StringBuilder();
             sb.append(names.get(i))
                     .append(" ")
-                    .append(DateFormatUtils.format(startDate.get(i), DATE_FORMAT))
+                    .append(dateFormat.format(startDate.get(i)))
                     .append(" ")
                     .append(until)
                     .append(" ")
-                    .append(DateFormatUtils.format(endDate.get(i), DATE_FORMAT));
+                    .append(dateFormat.format(endDate.get(i)));
             substitutes.add(sb.toString());
         }
-        return StringUtils.join(substitutes.iterator(), "\r");
+        return StringUtils.join(substitutes.iterator(), "\n");
     }
 
     private String generateNameAndEmail(List<String> names, List<String> emails) {
@@ -501,7 +495,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                 rows.add(row);
             }
         }
-        return StringUtils.join(rows.iterator(), "\r"); // New paragraph because justified text screws up the layout when \n is used.
+        return StringUtils.join(rows.iterator(), "\n"); // XXX \r was used for OO
 
     }
 
@@ -510,9 +504,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
      * @param document
      * @return
      */
-    private String getAncestorProperty(String foundPattern, NodeRef document, QName ancestorType, QName property) {
+    private String getAncestorProperty(NodeRef document, QName ancestorType, QName property) {
         Node parent = generalService.getAncestorWithType(document, ancestorType);
-        return (parent != null) ? nodeService.getProperty(parent.getNodeRef(), property).toString() : foundPattern;
+        return (parent != null) ? nodeService.getProperty(parent.getNodeRef(), property).toString() : null;
     }
 
     public DocumentTemplate getTemplateByName(String name) throws FileNotFoundException {
@@ -619,6 +613,14 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     public void setOpenOfficeService(OpenOfficeService openOfficeService) {
         this.openOfficeService = openOfficeService;
+    }
+
+    public void setDictionaryService(DictionaryService dictionaryService) {
+        this.dictionaryService = dictionaryService;
+    }
+
+    public void setMsoService(MsoService msoService) {
+        this.msoService = msoService;
     }
 
     public void setServerUrl(String serverUrl) {

@@ -8,4 +8,6 @@
 <%@ page isELIgnored="false"%>
 
 <%-- just a placeholder for dynamically generated panels with action buttons--%>
-<h:panelGroup binding="#{DocumentDialog.workflow.dataTableGroup}" />
+<!-- FIXME: Very bad idea to use binding attribute with session-scoped beans -->
+<!-- Needs hack in WorkflowBlockBean#setDataTableGroup to refresh values -->
+<h:panelGroup id="workflow-data-table-group" binding="#{WorkflowBlockBean.dataTableGroup}"/>

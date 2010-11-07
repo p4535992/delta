@@ -158,7 +158,7 @@ public class WmNode extends TransientNode {
             for (Object o : collection) {
                 s.append("\n    ");
                 if (o != null) {
-                    s.append(StringUtils.replace(o.toString(), "\n", "\n    "));
+                    s.append(StringUtils.replace(o.toString(), "\n", "\n        "));
                 }
             }
         }

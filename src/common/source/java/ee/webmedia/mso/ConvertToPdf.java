@@ -17,7 +17,7 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element name="msoInput" type="{http://webmedia.ee/mso}msoInput"/>
+ *         &lt;element name="msoDocumentInput" type="{http://webmedia.ee/mso}msoDocumentInput"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -28,35 +28,35 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "convertToPdf", propOrder = {
-    "msoInput"
+    "msoDocumentInput"
 })
 public class ConvertToPdf {
 
     @XmlElement(required = true)
-    protected MsoInput msoInput;
+    protected MsoDocumentInput msoDocumentInput;
 
     /**
-     * Gets the value of the msoInput property.
+     * Gets the value of the msoDocumentInput property.
      * 
      * @return
      *     possible object is
-     *     {@link MsoInput }
+     *     {@link MsoDocumentInput }
      *     
      */
-    public MsoInput getMsoInput() {
-        return msoInput;
+    public MsoDocumentInput getMsoDocumentInput() {
+        return msoDocumentInput;
     }
 
     /**
-     * Sets the value of the msoInput property.
+     * Sets the value of the msoDocumentInput property.
      * 
      * @param value
      *     allowed object is
-     *     {@link MsoInput }
+     *     {@link MsoDocumentInput }
      *     
      */
-    public void setMsoInput(MsoInput value) {
-        this.msoInput = value;
+    public void setMsoDocumentInput(MsoDocumentInput value) {
+        this.msoDocumentInput = value;
     }
 
 }

@@ -5,7 +5,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 
 import javax.activation.DataHandler;
-import javax.activation.FileDataSource;
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebResult;
@@ -26,16 +25,51 @@ public class MsoEndpoint implements Mso {
 
     @Override
     @WebMethod
-    @WebResult(name = "msoOutput", targetNamespace = "")
+    @WebResult(name = "msoPdfOutput", targetNamespace = "")
     @RequestWrapper(localName = "convertToPdf", targetNamespace = "", className = "ee.webmedia.mso.ConvertToPdf")
     @ResponseWrapper(localName = "convertToPdfResponse", targetNamespace = "", className = "ee.webmedia.mso.ConvertToPdfResponse")
-    public MsoOutput convertToPdf(
-            @WebParam(name = "msoInput", targetNamespace = "") MsoInput msoInput) {
+    public MsoPdfOutput convertToPdf(
+            @WebParam(name = "msoDocumentInput", targetNamespace = "") MsoDocumentInput msoDocumentInput) {
 
         try {
-            return msoService.convertToPdf(msoInput);
+            return msoService.convertToPdf(msoDocumentInput);
         } catch (Exception e) {
-            log.debug("Error while processing request", e);
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    @WebMethod
+    @WebResult(name = "msoDocumentOutput", targetNamespace = "")
+    @RequestWrapper(localName = "replaceFormulas", targetNamespace = "", className = "ee.webmedia.mso.ReplaceFormulas")
+    @ResponseWrapper(localName = "replaceFormulasResponse", targetNamespace = "", className = "ee.webmedia.mso.ReplaceFormulasResponse")
+    public MsoDocumentOutput replaceFormulas(
+            @WebParam(name = "msoDocumentAndFormulasInput", targetNamespace = "") MsoDocumentAndFormulasInput msoDocumentAndFormulasInput) {
+
+        try {
+            return msoService.replaceFormulas(msoDocumentAndFormulasInput);
+        } catch (Exception e) {
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    @WebMethod
+    @WebResult(name = "msoDocumentAndPdfOutput", targetNamespace = "")
+    @RequestWrapper(localName = "replaceFormulasAndConvertToPdf", targetNamespace = "", className = "ee.webmedia.mso.ReplaceFormulasAndConvertToPdf")
+    @ResponseWrapper(localName = "replaceFormulasAndConvertToPdfResponse", targetNamespace = "", className = "ee.webmedia.mso.ReplaceFormulasAndConvertToPdfResponse")
+    public MsoDocumentAndPdfOutput replaceFormulasAndConvertToPdf(
+            @WebParam(name = "msoDocumentAndFormulasInput", targetNamespace = "") MsoDocumentAndFormulasInput msoDocumentAndFormulasInput) {
+
+        try {
+            return msoService.replaceFormulasAndConvertToPdf(msoDocumentAndFormulasInput);
+        } catch (Exception e) {
             if (e instanceof RuntimeException) {
                 throw (RuntimeException) e;
             }
@@ -69,18 +103,18 @@ public class MsoEndpoint implements Mso {
                     }
 
                     File outputFile = new File(folder, file.getName() + ".pdf");
-                    MsoInput msoInput = new MsoInput();
-                    msoInput.setContent(new DataHandler(new FileDataSource(file)));
-                    MsoOutput msoOutput;
+                    MsoDocumentInput msoDocumentInput = new MsoDocumentInput();
+                    msoDocumentInput.setDocumentFile(new DataHandler(new FileDataSource(file, "TODO")));
+                    MsoPdfOutput msoPdfOutput;
                     try {
-                        msoOutput = bean.convertToPdf(msoInput);
+                        msoPdfOutput = bean.convertToPdf(msoDocumentInput);
                     } catch (Exception e) {
                         log.error(e.getMessage(), e);
                         continue; // continue with next file
                     }
                     if (!outputFile.exists()) {
                         BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(outputFile));
-                        FileCopyUtils.copy(msoOutput.getContent().getInputStream(), out);
+                        FileCopyUtils.copy(msoPdfOutput.getPdfFile().getInputStream(), out);
                     }
                 }
                 pass++;

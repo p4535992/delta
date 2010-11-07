@@ -17,7 +17,7 @@ import javax.xml.bind.annotation.XmlType;
  *   &lt;complexContent>
  *     &lt;restriction base="{http://www.w3.org/2001/XMLSchema}anyType">
  *       &lt;sequence>
- *         &lt;element name="msoOutput" type="{http://webmedia.ee/mso}msoOutput"/>
+ *         &lt;element name="msoPdfOutput" type="{http://webmedia.ee/mso}msoPdfOutput"/>
  *       &lt;/sequence>
  *     &lt;/restriction>
  *   &lt;/complexContent>
@@ -28,35 +28,35 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "convertToPdfResponse", propOrder = {
-    "msoOutput"
+    "msoPdfOutput"
 })
 public class ConvertToPdfResponse {
 
     @XmlElement(required = true)
-    protected MsoOutput msoOutput;
+    protected MsoPdfOutput msoPdfOutput;
 
     /**
-     * Gets the value of the msoOutput property.
+     * Gets the value of the msoPdfOutput property.
      * 
      * @return
      *     possible object is
-     *     {@link MsoOutput }
+     *     {@link MsoPdfOutput }
      *     
      */
-    public MsoOutput getMsoOutput() {
-        return msoOutput;
+    public MsoPdfOutput getMsoPdfOutput() {
+        return msoPdfOutput;
     }
 
     /**
-     * Sets the value of the msoOutput property.
+     * Sets the value of the msoPdfOutput property.
      * 
      * @param value
      *     allowed object is
-     *     {@link MsoOutput }
+     *     {@link MsoPdfOutput }
      *     
      */
-    public void setMsoOutput(MsoOutput value) {
-        this.msoOutput = value;
+    public void setMsoPdfOutput(MsoPdfOutput value) {
+        this.msoPdfOutput = value;
     }
 
 }

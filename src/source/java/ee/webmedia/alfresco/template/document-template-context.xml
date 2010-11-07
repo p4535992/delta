@@ -66,6 +66,8 @@
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="openOfficeService" ref="openOfficeService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="msoService" ref="msoService" />
       <property name="serverUrl" value="${server.url}" /> 
    </bean>
 

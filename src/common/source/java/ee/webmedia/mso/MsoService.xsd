@@ -5,27 +5,92 @@
 
 <xs:element name="convertToPdfResponse" nillable="true" type="tns:convertToPdfResponse"></xs:element>
 
-<xs:complexType name="convertToPdf">
+<xs:element name="replaceFormulas" nillable="true" type="tns:replaceFormulas"></xs:element>
+
+<xs:element name="replaceFormulasAndConvertToPdf" nillable="true" type="tns:replaceFormulasAndConvertToPdf"></xs:element>
+
+<xs:element name="replaceFormulasAndConvertToPdfResponse" nillable="true" type="tns:replaceFormulasAndConvertToPdfResponse"></xs:element>
+
+<xs:element name="replaceFormulasResponse" nillable="true" type="tns:replaceFormulasResponse"></xs:element>
+
+<xs:complexType name="replaceFormulasAndConvertToPdf">
 <xs:sequence>
-<xs:element name="msoInput" type="tns:msoInput"></xs:element>
+<xs:element name="msoDocumentAndFormulasInput" type="tns:msoDocumentAndFormulasInput"></xs:element>
 </xs:sequence>
 </xs:complexType>
 
-<xs:complexType name="msoInput">
+<xs:complexType name="msoDocumentAndFormulasInput">
+<xs:complexContent>
+<xs:extension base="tns:msoDocumentInput">
 <xs:sequence>
-<xs:element name="content" type="swaRef:swaRef"></xs:element>
+<xs:element name="formula" type="tns:formula" maxOccurs="unbounded"></xs:element>
+</xs:sequence>
+</xs:extension>
+</xs:complexContent>
+</xs:complexType>
+
+<xs:complexType name="msoDocumentInput">
+<xs:sequence>
+<xs:element name="documentFile" type="swaRef:swaRef"></xs:element>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="formula">
+<xs:sequence>
+<xs:element name="key" type="xs:string"></xs:element>
+<xs:element name="value" type="xs:string"></xs:element>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="replaceFormulasAndConvertToPdfResponse">
+<xs:sequence>
+<xs:element name="msoDocumentAndPdfOutput" type="tns:msoDocumentAndPdfOutput"></xs:element>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="msoDocumentAndPdfOutput">
+<xs:complexContent>
+<xs:extension base="tns:msoDocumentOutput">
+<xs:sequence>
+<xs:element name="pdfFile" type="swaRef:swaRef"></xs:element>
+</xs:sequence>
+</xs:extension>
+</xs:complexContent>
+</xs:complexType>
+
+<xs:complexType name="msoDocumentOutput">
+<xs:sequence>
+<xs:element name="documentFile" type="swaRef:swaRef"></xs:element>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="replaceFormulas">
+<xs:sequence>
+<xs:element name="msoDocumentAndFormulasInput" type="tns:msoDocumentAndFormulasInput"></xs:element>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="replaceFormulasResponse">
+<xs:sequence>
+<xs:element name="msoDocumentOutput" type="tns:msoDocumentOutput"></xs:element>
+</xs:sequence>
+</xs:complexType>
+
+<xs:complexType name="convertToPdf">
+<xs:sequence>
+<xs:element name="msoDocumentInput" type="tns:msoDocumentInput"></xs:element>
 </xs:sequence>
 </xs:complexType>
 
 <xs:complexType name="convertToPdfResponse">
 <xs:sequence>
-<xs:element name="msoOutput" type="tns:msoOutput"></xs:element>
+<xs:element name="msoPdfOutput" type="tns:msoPdfOutput"></xs:element>
 </xs:sequence>
 </xs:complexType>
 
-<xs:complexType name="msoOutput">
+<xs:complexType name="msoPdfOutput">
 <xs:sequence>
-<xs:element name="content" type="swaRef:swaRef"></xs:element>
+<xs:element name="pdfFile" type="swaRef:swaRef"></xs:element>
 </xs:sequence>
 </xs:complexType>
 </xs:schema>

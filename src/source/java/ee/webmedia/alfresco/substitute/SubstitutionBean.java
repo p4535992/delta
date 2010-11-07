@@ -19,6 +19,7 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.web.SessionContext;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
@@ -143,4 +144,11 @@ public class SubstitutionBean implements Serializable {
         }
         return menuService;
     }
+    
+    public String getOnChangeStyleClass(){
+        return GeneralSelectorGenerator.ONCHANGE_MARKER_CLASS 
+                + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER 
+                + "var el = document.getElementById(currElId); el.form.submit();";
+    }
+
 }

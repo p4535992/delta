@@ -1,9 +1,12 @@
 package ee.webmedia.mso;
 
-import java.io.IOException;
 
 public interface MsoService {
 
-    MsoOutput convertToPdf(MsoInput msoInput) throws Exception;
+    MsoPdfOutput convertToPdf(MsoDocumentInput msoDocumentInput) throws Exception;
+
+    MsoDocumentOutput replaceFormulas(MsoDocumentAndFormulasInput input) throws Exception;
+
+    MsoDocumentAndPdfOutput replaceFormulasAndConvertToPdf(MsoDocumentAndFormulasInput input) throws Exception;
 
 }

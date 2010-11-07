@@ -81,7 +81,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
             return;
         }
         LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
-        nodeRefs.put("default", documentNodeRef);
+        nodeRefs.put(null, documentNodeRef);
         String content = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, templateNodeRef);
         
         for(Authority a : auth) {

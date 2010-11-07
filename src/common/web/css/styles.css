@@ -2014,6 +2014,10 @@ TH A.header-wrap {
 	margin-bottom: 6px;
 }
 
+.selectWithOnchangeEvent {
+	
+}
+
 .no-wrap {
 	white-space: nowrap;
 }

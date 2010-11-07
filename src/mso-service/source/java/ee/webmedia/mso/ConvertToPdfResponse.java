@@ -6,18 +6,18 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "convertToPdfResponse", propOrder = { "msoOutput" })
+@XmlType(name = "convertToPdfResponse", propOrder = { "msoPdfOutput" })
 public class ConvertToPdfResponse {
 
     @XmlElement(required = true)
-    protected MsoOutput msoOutput;
+    protected MsoPdfOutput msoPdfOutput;
 
-    public MsoOutput getMsoOutput() {
-        return msoOutput;
+    public MsoPdfOutput getMsoOutput() {
+        return msoPdfOutput;
     }
 
-    public void setMsoOutput(MsoOutput msoOutput) {
-        this.msoOutput = msoOutput;
+    public void setMsoOutput(MsoPdfOutput msoPdfOutput) {
+        this.msoPdfOutput = msoPdfOutput;
     }
 
 }

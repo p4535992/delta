@@ -267,6 +267,8 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             log.debug("Found body part from message, but don't know how to handle it, skipping body PDF creation, contentType=" + p.getContentType());
             return;
         }
+        // We assume that content-type header also contains charset; so far there haven't been different cases
+        // If content-type header doesn't contain charset, we use UTF-8 as default
         String encoding = getEncoding(p);
         log.debug("Found body part from message, parsed mimeType=" + mimeType + " and encoding=" + encoding + " from contentType=" + p.getContentType());
 

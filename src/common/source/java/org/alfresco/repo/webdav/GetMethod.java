@@ -211,8 +211,9 @@ public class GetMethod extends WebDAVMethod
                     nodeInfo.getNodeRef(), reader);
             // there is content associated with the node
             m_response.setHeader(WebDAV.HEADER_CONTENT_LENGTH, Long.toString(reader.getSize()));
-            m_response.setHeader(WebDAV.HEADER_CONTENT_TYPE, reader.getMimetype());
-            
+            m_response.setContentType(reader.getMimetype());
+            m_response.setCharacterEncoding(reader.getEncoding());
+
             if (m_returnContent)
             {
                 // copy the content to the response output stream

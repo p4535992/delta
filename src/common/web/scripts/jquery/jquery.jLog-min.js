@@ -13,4 +13,4 @@
  *       $.log("%s is %d years old.", "Bob", 42);
  *       $('div.someClass').log().hide();
  */
-(function(a){a.log=function(){if(window.console&&window.console.log){console.log.apply(window.console,arguments)}};a.fn.log=function(){a.log(this);return this}})(jQuery);
+(function(a){a.log=function(){if(window.console&&window.console.log&&typeof console.log.apply !== "undefined"){console.log.apply(window.console,arguments)}};a.fn.log=function(){a.log(this);return this}})(jQuery);

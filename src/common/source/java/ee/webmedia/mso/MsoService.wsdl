@@ -10,15 +10,53 @@
 <message name="convertToPdfResponse">
 <part name="parameters" element="tns:convertToPdfResponse"></part>
 </message>
+<message name="replaceFormulas">
+<part name="parameters" element="tns:replaceFormulas"></part>
+</message>
+<message name="replaceFormulasResponse">
+<part name="parameters" element="tns:replaceFormulasResponse"></part>
+</message>
+<message name="replaceFormulasAndConvertToPdf">
+<part name="parameters" element="tns:replaceFormulasAndConvertToPdf"></part>
+</message>
+<message name="replaceFormulasAndConvertToPdfResponse">
+<part name="parameters" element="tns:replaceFormulasAndConvertToPdfResponse"></part>
+</message>
 <portType name="Mso">
 <operation name="convertToPdf">
 <input message="tns:convertToPdf"></input>
 <output message="tns:convertToPdfResponse"></output>
 </operation>
+<operation name="replaceFormulas">
+<input message="tns:replaceFormulas"></input>
+<output message="tns:replaceFormulasResponse"></output>
+</operation>
+<operation name="replaceFormulasAndConvertToPdf">
+<input message="tns:replaceFormulasAndConvertToPdf"></input>
+<output message="tns:replaceFormulasAndConvertToPdfResponse"></output>
+</operation>
 </portType>
 <binding name="MsoPortBinding" type="tns:Mso">
 <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"></soap:binding>
 <operation name="convertToPdf">
+<soap:operation soapAction=""></soap:operation>
+<input>
+<soap:body use="literal"></soap:body>
+</input>
+<output>
+<soap:body use="literal"></soap:body>
+</output>
+</operation>
+<operation name="replaceFormulas">
+<soap:operation soapAction=""></soap:operation>
+<input>
+<soap:body use="literal"></soap:body>
+</input>
+<output>
+<soap:body use="literal"></soap:body>
+</output>
+</operation>
+<operation name="replaceFormulasAndConvertToPdf">
 <soap:operation soapAction=""></soap:operation>
 <input>
 <soap:body use="literal"></soap:body>

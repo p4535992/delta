@@ -1,32 +1,45 @@
 package ee.webmedia.alfresco.mso.service;
 
-import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.activation.DataHandler;
+import javax.activation.DataSource;
 import javax.xml.ws.BindingProvider;
 
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentWriter;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.utils.ContentReaderDataSource;
+import ee.webmedia.alfresco.utils.MimeUtil;
+import ee.webmedia.mso.Formula;
 import ee.webmedia.mso.Mso;
-import ee.webmedia.mso.MsoInput;
-import ee.webmedia.mso.MsoOutput;
+import ee.webmedia.mso.MsoDocumentAndFormulasInput;
+import ee.webmedia.mso.MsoDocumentAndPdfOutput;
+import ee.webmedia.mso.MsoDocumentInput;
+import ee.webmedia.mso.MsoDocumentOutput;
+import ee.webmedia.mso.MsoPdfOutput;
 
+/*
+ * This service doesn't deal with charset information, input and output files are passed to and from MSO Service unmodified.
+ * MSO Service itself performs necessary charset conversion for TXT/HTML files and adds <HTML> tags to HTML file contents when needed.
+ */
 public class MsoServiceImpl implements MsoService, InitializingBean {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MsoServiceImpl.class);
 
     private String endpointAddress;
+    private int httpClientReceiveTimeout;
+    private Set<String> supportedSourceMimetypes;
 
     private Mso mso;
-
-    private Set<String> supportedSourceMimetypes;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -43,20 +56,14 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
         // Set HTTP request read timeout at CXF layer
         // http://lhein.blogspot.com/2008/09/apache-cxf-and-time-outs.html
         HTTPConduit http = (HTTPConduit) ClientProxy.getClient(port).getConduit();
-        http.getClient().setReceiveTimeout(120000); // 2 minutes timeout
+        http.getClient().setReceiveTimeout(httpClientReceiveTimeout * 1000);
 
         mso = port;
         log.info("Successfully initialized Mso service port and set endpoint address: " + endpointAddress);
-
-        supportedSourceMimetypes = new HashSet<String>();
-        supportedSourceMimetypes.add("application/msword"); // DOC
-        supportedSourceMimetypes.add("application/rtf"); // RTF
-        supportedSourceMimetypes.add("application/vnd.openxmlformats-officedocument.wordprocessingml.document"); // DOCX
-        // currently DOT/DOTM/DOTX/DOCM are assigned mime-type application/octet-stream, so we don't support them
     }
 
     @Override
-    public boolean isMsoAvailable() {
+    public boolean isAvailable() {
         return mso != null;
     }
 
@@ -66,43 +73,150 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
     }
 
     @Override
-    public void transformToPdf(ContentReader reader, ContentWriter writer) throws Exception {
+    public boolean isFormulasReplaceable(String sourceMimetype) {
+        // XXX DOT files have mimetype application/octet-stream
+        // Ideally both DOC and DOT should have mimetype application/msword 
+        // Fortunately, DocumentTemplateService passes only DOC or DOT files to us, not every binary file
+        // So without the check in DocumentTemplateService, every binary file would be passed to word, which would be unnecessary and very time consuming
+        return MimetypeMap.MIMETYPE_WORD.equalsIgnoreCase(sourceMimetype) || MimetypeMap.MIMETYPE_BINARY.equalsIgnoreCase(sourceMimetype);
+    }
+
+    @Override
+    public void transformToPdf(ContentReader documentReader, ContentWriter pdfWriter) throws Exception {
         try {
-            if (mso == null) {
-                throw new IllegalStateException("Mso service is not available");
-            }
-            if (!MimetypeMap.MIMETYPE_PDF.equalsIgnoreCase(writer.getMimetype())) {
+            requireAvailable();
+            if (!MimetypeMap.MIMETYPE_PDF.equalsIgnoreCase(pdfWriter.getMimetype())) {
                 throw new IllegalArgumentException("Only target mime type " + MimetypeMap.MIMETYPE_PDF + " is supported");
             }
-            if (reader == null) {
+            if (documentReader == null) {
                 return;
             }
-            if (!isTransformableToPdf(reader.getMimetype())) {
-                throw new IllegalArgumentException("Source mime type is not supported: " + reader.getMimetype());
+            String mimetype = documentReader.getMimetype().toLowerCase();
+            if (!isTransformableToPdf(mimetype)) {
+                throw new IllegalArgumentException("Source mime type is not supported for transformToPdf: " + mimetype);
             }
 
-            MsoInput msoInput = new MsoInput();
-            ContentReaderDataSource dataSource = new ContentReaderDataSource(reader, null);
-            msoInput.setContent(new DataHandler(dataSource));
-            log.info("Sending request to perform Mso.convertToPdf, reader=" + reader);
+            MsoDocumentInput input = new MsoDocumentInput();
+            DataSource dataSource = new ContentReaderDataSource(documentReader, null);
+            input.setDocumentFile(new DataHandler(dataSource));
+            log.info("Sending request to perform Mso.convertToPdf, documentReader=" + documentReader);
             long startTime = System.currentTimeMillis();
-            MsoOutput msoOutput = mso.convertToPdf(msoInput);
+            MsoPdfOutput output = mso.convertToPdf(input);
             long duration = System.currentTimeMillis() - startTime;
 
-            String mimeType = msoOutput.getContent().getContentType();
-            writer.setMimetype(mimeType);
-            writer.setEncoding("UTF-8"); // reset encoding to default
-            writer.putContent(msoOutput.getContent().getInputStream());
+            Pair<String, String> pair = MimeUtil.getMimeTypeAndEncoding(output.getPdfFile().getContentType());
+            pdfWriter.setMimetype(pair.getFirst());
+            pdfWriter.setEncoding(pair.getSecond());
+            pdfWriter.putContent(output.getPdfFile().getInputStream());
 
-            log.info("Completed Mso.convertToPdf in " + duration + " ms, writer=" + writer);
+            log.info("Completed Mso.convertToPdf in " + duration + " ms, pdfWriter=" + pdfWriter);
         } catch (Exception e) {
             log.error("Error in transformToPdf", e);
             throw e;
         }
     }
 
+    private void requireAvailable() {
+        if (mso == null) {
+            throw new IllegalStateException("Mso service is not available");
+        }
+    }
+
+    @Override
+    public void replaceFormulas(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter) throws Exception {
+        try {
+            MsoDocumentAndFormulasInput input = replaceFormulasPrepare(formulas, documentReader);
+            if (input == null) {
+                return;
+            }
+
+            log.info("Sending request to perform Mso.replaceFormulas, formulas=[" + formulas.size() + "] documentReader=" + documentReader);
+            long startTime = System.currentTimeMillis();
+            MsoDocumentOutput output = mso.replaceFormulas(input);
+            long duration = System.currentTimeMillis() - startTime;
+
+            Pair<String, String> pair = MimeUtil.getMimeTypeAndEncoding(output.getDocumentFile().getContentType());
+            documentWriter.setMimetype(pair.getFirst());
+            documentWriter.setEncoding(pair.getSecond());
+            documentWriter.putContent(output.getDocumentFile().getInputStream());
+
+            log.info("Completed Mso.replaceFormulas in " + duration + " ms, documentWriter=" + documentWriter);
+
+        } catch (Exception e) {
+            log.error("Error in replaceFormulas", e);
+            throw e;
+        }
+    }
+
+    @Override
+    public void replaceFormulasAndTransformToPdf(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, ContentWriter pdfWriter) throws Exception {
+        try {
+            MsoDocumentAndFormulasInput input = replaceFormulasPrepare(formulas, documentReader);
+            if (input == null) {
+                return;
+            }
+
+            log.info("Sending request to perform Mso.replaceFormulasAndTransformToPdf, formulas=[" + formulas.size() + "] documentReader=" + documentReader);
+            long startTime = System.currentTimeMillis();
+            MsoDocumentAndPdfOutput output = mso.replaceFormulasAndConvertToPdf(input);
+            long duration = System.currentTimeMillis() - startTime;
+
+            Pair<String, String> pair = MimeUtil.getMimeTypeAndEncoding(output.getDocumentFile().getContentType());
+            documentWriter.setMimetype(pair.getFirst());
+            documentWriter.setEncoding(pair.getSecond());
+            documentWriter.putContent(output.getDocumentFile().getInputStream());
+
+            pair = MimeUtil.getMimeTypeAndEncoding(output.getPdfFile().getContentType());
+            pdfWriter.setMimetype(pair.getFirst());
+            pdfWriter.setEncoding(pair.getSecond());
+            pdfWriter.putContent(output.getPdfFile().getInputStream());
+
+            log.info("Completed Mso.replaceFormulasAndTransformToPdf in " + duration + " ms, documentWriter=" + documentWriter + ", pdfWriter=" + pdfWriter);
+
+        } catch (Exception e) {
+            log.error("Error in replaceFormulasAndTransformToPdf", e);
+            throw e;
+        }
+    }
+
+    private MsoDocumentAndFormulasInput replaceFormulasPrepare(Map<String, String> formulas, ContentReader documentReader) {
+        requireAvailable();
+        if (documentReader == null) {
+            return null;
+        }
+
+        String mimetype = documentReader.getMimetype().toLowerCase();
+        if (MimetypeMap.MIMETYPE_BINARY.equals(mimetype)) { // XXX DOT files have mimetype application/octet-stream
+            mimetype = MimetypeMap.MIMETYPE_WORD;
+        }
+        if (!isFormulasReplaceable(mimetype)) {
+            throw new IllegalArgumentException("Source mime type is not supported for replaceFormulas: " + mimetype);
+        }
+
+        MsoDocumentAndFormulasInput input = new MsoDocumentAndFormulasInput();
+        DataSource dataSource = new ContentReaderDataSource(documentReader, null, mimetype, documentReader.getEncoding());
+        input.setDocumentFile(new DataHandler(dataSource));
+        List<Formula> formulaList = input.getFormula();
+        Set<Entry<String, String>> entrySet = formulas.entrySet();
+        for (Entry<String, String> entry : entrySet) {
+            Formula formula = new Formula();
+            formula.setKey(entry.getKey());
+            formula.setValue(entry.getValue());
+            formulaList.add(formula);
+        }
+        return input;
+    }
+
     public void setEndpointAddress(String endpointAddress) {
         this.endpointAddress = endpointAddress;
+    }
+
+    public void setHttpClientReceiveTimeout(int httpClientReceiveTimeout) {
+        this.httpClientReceiveTimeout = httpClientReceiveTimeout;
+    }
+
+    public void setSupportedSourceMimetypes(Set<String> supportedSourceMimetypes) {
+        this.supportedSourceMimetypes = supportedSourceMimetypes;
     }
 
 }

@@ -54,7 +54,7 @@ public class NotificationEmailSender implements SubstituteListDialog.Notificatio
         }
 
         LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
-        nodeRefs.put("default", substitute.getNodeRef());
+        nodeRefs.put(null, substitute.getNodeRef());
         String emailBody = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, templateNodeRef);
 
         NodeRef personRef = getPersonService().getPerson(substituteId);

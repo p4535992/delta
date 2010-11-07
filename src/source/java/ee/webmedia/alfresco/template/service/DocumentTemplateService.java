@@ -1,7 +1,7 @@
 package ee.webmedia.alfresco.template.service;
 
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -16,7 +16,7 @@ import ee.webmedia.alfresco.volume.model.Volume;
  */
 public interface DocumentTemplateService {
 
-    public static final String BEAN_NAME = "DocumentTemplateService";
+    String BEAN_NAME = "DocumentTemplateService";
 
     /**
      * Returns list with all the templates
@@ -63,13 +63,13 @@ public interface DocumentTemplateService {
 
     /**
      * Fetches template content, processes the formulas and returns the processed content.
-     * When key doesn't match with any of the prefixes default property is fetched from the key-value pair!
      * 
-     * @param dataNodeRefs Map where key is prefix in the formulas and value is NodeRef that has properties for that formula group
+     * @param dataNodeRefs Map where key is prefix in the formulas and value is NodeRef that has properties for that formula group. Prefix may also be null or
+     *            empty, in that case this formula group is used without prefix.
      * @param templatetemplate file NodeRef
-     * @return
+     * @return processed content, where formulas are replaced with their values (if formula has a non-empty value)
      */
-    String getProcessedEmailTemplate(LinkedHashMap<String, NodeRef> dataNodeRefs, NodeRef template);
+    String getProcessedEmailTemplate(Map<String, NodeRef> dataNodeRefs, NodeRef template);
 
     /**
      * Check if supplied document has a template that can be used

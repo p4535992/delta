@@ -25,16 +25,44 @@ public interface Mso {
 
     /**
      * 
-     * @param msoInput
+     * @param msoDocumentInput
      * @return
-     *     returns ee.webmedia.mso.MsoOutput
+     *     returns ee.webmedia.mso.MsoPdfOutput
      */
     @WebMethod
-    @WebResult(name = "msoOutput", targetNamespace = "")
+    @WebResult(name = "msoPdfOutput", targetNamespace = "")
     @RequestWrapper(localName = "convertToPdf", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ConvertToPdf")
     @ResponseWrapper(localName = "convertToPdfResponse", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ConvertToPdfResponse")
-    public MsoOutput convertToPdf(
-        @WebParam(name = "msoInput", targetNamespace = "")
-        MsoInput msoInput);
+    public MsoPdfOutput convertToPdf(
+        @WebParam(name = "msoDocumentInput", targetNamespace = "")
+        MsoDocumentInput msoDocumentInput);
+
+    /**
+     * 
+     * @param msoDocumentAndFormulasInput
+     * @return
+     *     returns ee.webmedia.mso.MsoDocumentOutput
+     */
+    @WebMethod
+    @WebResult(name = "msoDocumentOutput", targetNamespace = "")
+    @RequestWrapper(localName = "replaceFormulas", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ReplaceFormulas")
+    @ResponseWrapper(localName = "replaceFormulasResponse", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ReplaceFormulasResponse")
+    public MsoDocumentOutput replaceFormulas(
+        @WebParam(name = "msoDocumentAndFormulasInput", targetNamespace = "")
+        MsoDocumentAndFormulasInput msoDocumentAndFormulasInput);
+
+    /**
+     * 
+     * @param msoDocumentAndFormulasInput
+     * @return
+     *     returns ee.webmedia.mso.MsoDocumentAndPdfOutput
+     */
+    @WebMethod
+    @WebResult(name = "msoDocumentAndPdfOutput", targetNamespace = "")
+    @RequestWrapper(localName = "replaceFormulasAndConvertToPdf", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ReplaceFormulasAndConvertToPdf")
+    @ResponseWrapper(localName = "replaceFormulasAndConvertToPdfResponse", targetNamespace = "http://webmedia.ee/mso", className = "ee.webmedia.mso.ReplaceFormulasAndConvertToPdfResponse")
+    public MsoDocumentAndPdfOutput replaceFormulasAndConvertToPdf(
+        @WebParam(name = "msoDocumentAndFormulasInput", targetNamespace = "")
+        MsoDocumentAndFormulasInput msoDocumentAndFormulasInput);
 
 }
