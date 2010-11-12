@@ -9,7 +9,7 @@
 
 <h:panelGroup id="assocs-panel-facets">
    <f:facet name="title">
-      <r:permissionEvaluator value="#{DocumentDialog.node}" allow="DocumentWrite">
+      <r:permissionEvaluator id="assocs-permission-evaluator" value="#{DocumentDialog.node}" allow="DocumentWrite">
          <a:actionLink image="/images/icons/import.gif" id="col2-text" showLink="false" tooltip="#{msg.document_assocAdd}" value="" 
             actionListener="#{DocumentDialog.searchDocsAndCases}" action="#docsearch-panel" rendered="#{MetadataBlockBean.mode eq 'view'}" >
          </a:actionLink>

@@ -99,6 +99,8 @@ public class WorkflowBlockBean implements Serializable {
     private transient HtmlPanelGroup dataTableGroup;
 
     private NodeRef document;
+    private NodeRef workflowPanelControlDocument;
+    private NodeRef taskPanelControlDocument;
     private List<CompoundWorkflow> compoundWorkflows;
     private List<WorkflowSummaryItem> workflowSummaryItems;
     private transient HtmlPanelGroup wfPanelGroup;
@@ -400,7 +402,7 @@ public class WorkflowBlockBean implements Serializable {
     }
     
     private void constructTaskPanelGroup() {
-        constructTaskPanelGroup(getDataTableGroup());
+        constructTaskPanelGroup(getDataTableGroupInner());
     }
 
     /**
@@ -540,7 +542,7 @@ public class WorkflowBlockBean implements Serializable {
     }
 
     private SignatureAppletModalComponent getModalApplet() {
-        return (SignatureAppletModalComponent) getDataTableGroup().getChildren().get(0);
+        return (SignatureAppletModalComponent) getDataTableGroupInner().getChildren().get(0);
     }
 
     public List<WorkflowSummaryItem> getWorkflowSummaryItems() {
@@ -591,18 +593,28 @@ public class WorkflowBlockBean implements Serializable {
         this.metadataBlockBean = metadataBlockBean;
     }
 
+    //NB! Don't call this method from java code; this is meant ONLY for workflow-block.jsp binding    
     public HtmlPanelGroup getDataTableGroup() {
+        if (dataTableGroup == null) {
+            dataTableGroup = new HtmlPanelGroup();
+        }
+        taskPanelControlDocument = this.document;        
+        return dataTableGroup;
+    }
+    
+    public HtmlPanelGroup getDataTableGroupInner() {
         // This will be called once in the first RESTORE VIEW phase.
         if (dataTableGroup == null) {
             dataTableGroup = new HtmlPanelGroup();
         }
         return dataTableGroup;
-    }
+    }    
 
-    //always force refresh; jsf is not refreshed correctly 
-    //(getDataTableGroup is not called because of binding attribute used in workflow-block.jsp)
     public void setDataTableGroup(HtmlPanelGroup dataTableGroup) {
-        constructTaskPanelGroup(dataTableGroup);
+        if(taskPanelControlDocument != null && !taskPanelControlDocument.equals(this.document)){        
+            constructTaskPanelGroup(dataTableGroup);
+            taskPanelControlDocument = this.document;
+        }
         this.dataTableGroup = dataTableGroup;
     }
 
@@ -649,7 +661,7 @@ public class WorkflowBlockBean implements Serializable {
     // END: getters / setters
 
     private void renderWorkflowPanel(){
-        renderWorkflowPanel(getWfPanelGroup());
+        renderWorkflowPanel(getWfPanelGroupInner());
     }
     
     @SuppressWarnings("unchecked")
@@ -849,15 +861,29 @@ public class WorkflowBlockBean implements Serializable {
         return output;
     }
 
+    //NB! Don't call this method from java code; this is meant ONLY for workflow-summary-block.jsp binding
     public HtmlPanelGroup getWfPanelGroup() {
         if (wfPanelGroup == null) {
             wfPanelGroup = new HtmlPanelGroup();
         }
+        workflowPanelControlDocument = this.document;
         return wfPanelGroup;
     }
     
+    public HtmlPanelGroup getWfPanelGroupInner() {
+        if (wfPanelGroup == null) {
+            wfPanelGroup = new HtmlPanelGroup();
+        }
+        return wfPanelGroup;
+    }    
+    
+    //always force refresh; jsf is not refreshed correctly 
+    //(getWfPanelGroup is not called because of binding attribute used in workflow-summary-block.jsp)    
     public void setWfPanelGroup(HtmlPanelGroup wfPanelGroup) {
-        renderWorkflowPanel(wfPanelGroup);
+        if(workflowPanelControlDocument != null && !workflowPanelControlDocument.equals(this.document)){
+            renderWorkflowPanel(wfPanelGroup);
+            workflowPanelControlDocument = this.document;
+        }
         this.wfPanelGroup = wfPanelGroup;
     }
 
