@@ -10,8 +10,10 @@ import java.util.List;
 import javax.faces.application.Application;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlInputText;
+import javax.faces.component.html.HtmlInputTextarea;
 import javax.faces.component.html.HtmlOutputText;
 import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlPanelGroup;
@@ -341,13 +343,14 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         return delete;
     }
 
-    private HtmlInputText createInput(Application app, int rowCount, String nameValueBinding) {
-        HtmlInputText nameInput = (HtmlInputText) app.createComponent(HtmlInputText.COMPONENT_TYPE);
+    private UIComponent createInput(Application app, int rowCount, String nameValueBinding) {
+        UIInput nameInput = (UIInput) app.createComponent(HtmlInputTextarea.COMPONENT_TYPE);
         nameInput.setValueBinding("value", app.createValueBinding(nameValueBinding));
         nameInput.setId("uploaded-file-input-" + rowCount);
         nameInput.setRequired(true);
         nameInput.setValidator(app.createMethodBinding("#{AddFileDialog.validateFileName}", new Class[] { FacesContext.class, UIComponent.class,
                 Object.class }));
+        putAttribute(nameInput, "styleClass", "expand19-200");
         return nameInput;
     }
 

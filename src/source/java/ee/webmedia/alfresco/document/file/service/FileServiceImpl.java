@@ -180,7 +180,8 @@ public class FileServiceImpl implements FileService {
 
     private FileInfo generatePdf(NodeRef parent, NodeRef file) {
         ContentReader reader = fileFolderService.getReader(file);
-        if (MimetypeMap.MIMETYPE_PDF.equals(reader.getMimetype())) {
+        // Normally reader is not null; only some faulty code may write a file with no contentData
+        if (reader == null || MimetypeMap.MIMETYPE_PDF.equals(reader.getMimetype())) {
             return null;
         }
         String filename = (String) nodeService.getProperty(file, ContentModel.PROP_NAME);

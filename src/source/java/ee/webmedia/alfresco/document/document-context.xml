@@ -234,5 +234,18 @@ DaoAuthenticationProvider.authenticate()
    <bean id="inMemoryChildNodeHelper" class="ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper">
       <property name="generalService" ref="generalService" />
    </bean>
+   
+   <!-- Used to remove sequences of document copying bug (CL task 131723) -->
+   <bean id="searchableSendModeUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableSendModeUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="searchableSendModeUpdater" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="generalService" ref="generalService" />
+      <property name="sendOutService" ref="sendOutService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="searchService" ref="searchService" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="searchableSendModeUpdateBeginDate" value="${searchableSendModeUpdate.begin.date}" />
+   </bean>    
 
 </beans>

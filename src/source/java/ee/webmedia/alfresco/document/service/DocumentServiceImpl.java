@@ -457,6 +457,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             }
         }
         docProps.putAll(getSearchableOtherProps(docNode));
+        docProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE.toString(), sendOutService.buildSearchableSendMode(docNodeRef));
 
         boolean propsChanged = saveChildNodes(docNode);
         // add any associations added in the UI

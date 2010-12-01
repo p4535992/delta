@@ -450,21 +450,26 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         @SuppressWarnings("unchecked")
         List<String> names = (List<String>) properties.get(DocumentSpecificModel.Props.SUBSTITUTE_NAME);
         @SuppressWarnings("unchecked")
-        List<Date> startDate = (List<Date>) properties.get(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE);
+        List<Date> startDates = (List<Date>) properties.get(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE);
         @SuppressWarnings("unchecked")
-        List<Date> endDate = (List<Date>) properties.get(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE);
+        List<Date> endDates = (List<Date>) properties.get(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE);
         String until = MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_until"); // FIXME - peaksin kasutama I18NUtilit
 
+        if (names == null) {
+            return null;
+        }
         List<String> substitutes = new ArrayList<String>(names.size());
         for (int i = 0; i < names.size(); i++) {
+            Date startDate = i < startDates.size() ? startDates.get(i) : null;
+            Date endDate = i < endDates.size() ? endDates.get(i) : null;
             StringBuilder sb = new StringBuilder();
             sb.append(names.get(i))
                     .append(" ")
-                    .append(dateFormat.format(startDate.get(i)))
+                    .append(startDate == null ? "" : dateFormat.format(startDate))
                     .append(" ")
                     .append(until)
                     .append(" ")
-                    .append(dateFormat.format(endDate.get(i)));
+                    .append(endDate == null ? "" : dateFormat.format(endDate));
             substitutes.add(sb.toString());
         }
         return StringUtils.join(substitutes.iterator(), "\n");
@@ -487,7 +492,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             if (emails != null && i < emails.size()) {
                 email = emails.get(i);
             }
-            String row = name;
+            String row = name == null ? "" : name;
             if (StringUtils.isNotBlank(email)) {
                 row += " (" + email + ")";
             }

@@ -63,6 +63,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         nodes = loadNodesFromFile(nodesFile);
         if (nodes == null) {
             nodes = loadNodesFromRepo();
+            if (nodes == null) {
+                log.info("Cancelling node update");
+                return;
+            }
             writeNodesToFile(nodesFile, nodes);
         }
         completedNodesFile = new File(inputFolder, getCompletedNodesCsvFileName());
@@ -131,6 +135,9 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     protected Set<NodeRef> loadNodesFromRepo() throws Exception {
         log.info("Loading nodes from repository");
         ResultSet resultSet = getNodeLoadingResultSet();
+        if (resultSet == null) {
+            return null;
+        }
         try {
             log.info("Found " + resultSet.length() + " nodes from repository, loading...");
             return new HashSet<NodeRef>(resultSet.getNodeRefs());
@@ -143,7 +150,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     /**
      * @return the result set of the nodes that need updating
      */
-    protected abstract ResultSet getNodeLoadingResultSet();
+    protected abstract ResultSet getNodeLoadingResultSet() throws Exception;
 
     private class UpdateNodesBatchProgress extends BatchProgress<NodeRef> {
 

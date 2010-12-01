@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.sendout.service;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,6 +28,21 @@ public interface SendOutService {
      * @return list of sendInfo nodes associated with given document
      */
     List<SendInfo> getSendInfos(NodeRef document);
+    
+    /**
+     * Update searchableSendMode property according to document's sendInfo.sendMode values 
+     * 
+     * @param document document NodeRef
+     */
+    public void updateSearchableSendMode(NodeRef document);
+    
+    /**
+     * Build searchableSendMode list from document's sendInfo.sendMode values 
+     * 
+     * @param document document NodeRef
+     * @return List of document's sendInfo.sendMode values
+     */    
+    public ArrayList<String> buildSearchableSendMode(NodeRef document);
 
     /**
      * Sends out document.

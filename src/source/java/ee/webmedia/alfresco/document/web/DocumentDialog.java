@@ -140,6 +140,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } catch (NodeLockedException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_createWordFile_error_docLocked");
         } catch (RuntimeException e) {
+            log.error("Populate template failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), ERR_TEMPLATE_PROCESSING_FAILED);
         }
         fileBlockBean.restore();

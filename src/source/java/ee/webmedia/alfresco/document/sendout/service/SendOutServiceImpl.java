@@ -237,17 +237,22 @@ public class SendOutServiceImpl implements SendOutService {
         return sendInfoRef;
     }
 
-    // /// PRIVATE METHODS
+    public void updateSearchableSendMode(NodeRef document) {
+        ArrayList<String> sendModes = buildSearchableSendMode(document);
+        nodeService.setProperty(document, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendModes);
+    }
 
-    private void updateSearchableSendMode(NodeRef document) {
+    public ArrayList<String> buildSearchableSendMode(NodeRef document) {
         List<SendInfo> sendInfos = getSendInfos(document);
         ArrayList<String> sendModes = new ArrayList<String>(sendInfos.size());
         for (SendInfo sendInfo : sendInfos) {
             sendModes.add((String) sendInfo.getSendMode());
         }
-        nodeService.setProperty(document, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendModes);
+        return sendModes;
     }
 
+    // /// PRIVATE METHODS    
+    
     private List<ContentToSend> prepareContents(NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName) {
         List<ContentToSend> result = new ArrayList<ContentToSend>();
         if (fileNodeRefs == null || fileNodeRefs.size() == 0) {

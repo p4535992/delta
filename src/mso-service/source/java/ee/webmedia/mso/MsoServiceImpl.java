@@ -327,7 +327,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
 
     private String prepareFormulas(List<Formula> formulaList) {
         // Prepare formulas for Word macro
-        String special = "^p"; // Paragraph mark
+        String special = new String(new char[] {'\u001f'}); // ASCII 31
         String lineBreak = System.getProperty("line.separator");
         StringBuilder s = new StringBuilder();
         s.append(formulaList.size());
