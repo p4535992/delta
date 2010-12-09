@@ -95,7 +95,7 @@ public class SerializingFilter implements DependencyInjectedFilter, Initializing
 
         @Override
         public HttpSession getSession() {
-            HttpSession originalSession = super.getSession();
+            HttpSession originalSession = super.getSession(false);
             if (originalSession == null) {
                 session = null;
             } else if (session == null || !session.getId().equals(originalSession.getId())) {
@@ -106,7 +106,7 @@ public class SerializingFilter implements DependencyInjectedFilter, Initializing
 
         @Override
         public HttpSession getSession(boolean create) {
-            HttpSession originalSession = super.getSession();
+            HttpSession originalSession = super.getSession(false);
             if (originalSession == null) {
                 if (create) {
                     originalSession = super.getSession(create);

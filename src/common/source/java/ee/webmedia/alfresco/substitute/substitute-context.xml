@@ -68,4 +68,9 @@
             </list>
         </property>
     </bean>
+    
+    <bean id="SubstitutionBean" class="ee.webmedia.alfresco.substitute.web.SubstitutionBean" scope="session" >
+      <property name="applicationService" ref="ApplicationService" />
+    </bean>
+   
 </beans>

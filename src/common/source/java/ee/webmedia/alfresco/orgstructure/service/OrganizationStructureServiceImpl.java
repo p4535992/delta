@@ -146,7 +146,13 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
             Map<String, Object> props = user.getProperties();
 
             String unitId = (String) props.get(ContentModel.PROP_ORGID);
-            String orgStruct = getOrganizationStructure(unitId);
+            String orgStruct;
+            if (StringUtils.isEmpty(unitId)) {
+                unitId = "";
+                orgStruct = "";
+            } else {
+                orgStruct = getOrganizationStructure(unitId);
+            }
 
             props.put(UNIT_PROP, unitId + (StringUtils.equals(unitId, orgStruct) ? "" : " " + orgStruct));
             props.put(UNIT_NAME_PROP, orgStruct);

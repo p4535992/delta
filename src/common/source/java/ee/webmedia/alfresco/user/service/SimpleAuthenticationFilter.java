@@ -1,4 +1,4 @@
-package ee.webmedia.alfresco.orgstructure.amr;
+package ee.webmedia.alfresco.user.service;
 
 import java.io.IOException;
 
@@ -17,12 +17,13 @@ import org.alfresco.web.app.servlet.AuthenticationHelper;
 import org.alfresco.web.app.servlet.AuthenticationStatus;
 import org.alfresco.web.app.servlet.BaseServlet;
 
+
 /**
  * AuthenticationFilter that uses AMRService for authentication.
  * 
  * @author Ats Uiboupin
  */
-public class AMRAuthenticationFilter extends AuthenticationFilter {
+public class SimpleAuthenticationFilter extends AuthenticationFilter {
     public static final String AUTHENTICATION_EXCEPTION = "AUTHENTICATION_EXCEPTION";
 
     @Override
@@ -43,7 +44,7 @@ public class AMRAuthenticationFilter extends AuthenticationFilter {
                 AuthenticationStatus status;
                 try {
                     status = AuthenticationHelper.authenticate(context, httpReq, httpRes, false);
-                } catch (AMRAuthenticationException e) {
+                } catch (UserNotFoundException e) {
                     if (log.isWarnEnabled()) {
                         log.warn("Authentication failed: ", e);
                     }

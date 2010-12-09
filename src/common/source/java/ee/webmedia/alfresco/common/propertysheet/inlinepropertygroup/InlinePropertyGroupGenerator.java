@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup;
 
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.OPTIONS_SEPARATOR;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALDIATION_DISABLED;
+import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALIDATION_MARKER_DISABLED;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 
 import java.util.ArrayList;
@@ -50,6 +51,7 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
     @Override
     public UIComponent generate(FacesContext context, String id) {
         getCustomAttributes().put(VALDIATION_DISABLED, Boolean.TRUE.toString());
+        getCustomAttributes().put(VALIDATION_MARKER_DISABLED, Boolean.FALSE.toString());
         propIndex = 0;
         UIComponent container = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_GRID);
         container.getAttributes().put("styleClass", "inline-property-group");

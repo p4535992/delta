@@ -6,6 +6,8 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.model.Status;
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
 
 /**
  * @author Erko Hansar
@@ -28,7 +30,8 @@ public class AssignmentWorkflow extends Workflow {
     protected void preSave() {
         super.preSave();
         for (Task task : getTasks()) {
-            if (isActiveResponsible(task) && StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))) {
+            if (isStatus(task, Status.NEW, Status.IN_PROGRESS) 
+                 && StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))) {
                 task.setProp(WorkflowSpecificModel.Props.RESOLUTION, getProp(WorkflowSpecificModel.Props.RESOLUTION));
             }
         }

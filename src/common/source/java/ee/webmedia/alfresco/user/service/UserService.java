@@ -16,6 +16,7 @@ public interface UserService {
     String BEAN_NAME = "UserService";
 
     String DOCUMENT_MANAGERS_GROUP = "DOCUMENT_MANAGERS";
+    String ADMINISTRATORS_GROUP = "ALFRESCO_ADMINISTRATORS";
 
     String DOCUMENT_MANAGERS_DISPLAY_NAME = "document_managers_display_name";
     String ALFRESCO_ADMINISTRATORS_DISPLAY_NAME = "alfresco_administrators_display_name";

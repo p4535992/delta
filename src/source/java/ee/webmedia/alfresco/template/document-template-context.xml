@@ -60,6 +60,7 @@
 
    <bean id="documentTemplateService" class="ee.webmedia.alfresco.template.service.DocumentTemplateServiceImpl">
       <property name="generalService" ref="GeneralService" />
+      <property name="applicationService" ref="ApplicationService" />
       <property name="nodeService" ref="NodeService" />
       <property name="fileService" ref="FileService" />
       <property name="mimetypeService" ref="MimetypeService" />
@@ -68,7 +69,6 @@
       <property name="openOfficeService" ref="openOfficeService" />
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="msoService" ref="msoService" />
-      <property name="serverUrl" value="${server.url}" /> 
    </bean>
 
    <bean id="DocumentTemplateService" class="org.springframework.aop.framework.ProxyFactoryBean">

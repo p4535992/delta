@@ -18,12 +18,10 @@ import org.apache.log4j.Logger;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.web.SessionContext;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
-import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 
 public class MenuItemCountBean implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -35,7 +33,6 @@ public class MenuItemCountBean implements Serializable {
 
     private transient MenuService menuService;
     private MenuBean menuBean;
-    private SessionContext sessionContext;
 
     private Map<String, MenuItemCountVO> map = new HashMap<String, MenuItemCountBean.MenuItemCountVO>();
 
@@ -96,14 +93,6 @@ public class MenuItemCountBean implements Serializable {
             countVO = new MenuItemCountVO();
             map.put(menuItemId, countVO);
         }
-        
-        //asynchronous call from different thread needs to set substitute info explicitly
-        SubstitutionInfo substInfo = getSessionContext().getSubstitutionInfo();
-        
-        if(substInfo.isSubstituting()){
-            AuthenticationUtil.setRunAsUser(substInfo.getSubstitution().getReplacedPersonUserName());       
-        }
-        
         MenuItemCountHandler countHandler = getMenuService().getCountHandler(menuItemId);
         Assert.notNull(countHandler, "MenuItemCountHandler does not exist for menuItemId=" + menuItemId);
 
@@ -151,14 +140,6 @@ public class MenuItemCountBean implements Serializable {
         }
         return menuBean;
     }
-    
-    protected SessionContext getSessionContext() {
-        if (sessionContext == null) {
-            sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);
-        }
-        return sessionContext;
-    }    
     
     // END: getters / setters    
 }

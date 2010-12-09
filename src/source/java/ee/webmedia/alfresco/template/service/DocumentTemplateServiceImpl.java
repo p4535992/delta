@@ -33,6 +33,7 @@ import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 import org.springframework.web.context.ServletContextAware;
 
+import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -76,7 +77,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private OpenOfficeService openOfficeService;
     private DictionaryService dictionaryService;
     private MsoService msoService;
-    private String serverUrl;
+    private ApplicationService applicationService;
     private ServletContext servletContext;
 
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
@@ -375,7 +376,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             formulas.put("seriesIdentifier", getAncestorProperty(document, SeriesModel.Types.SERIES, SeriesModel.Props.SERIES_IDENTIFIER));
             formulas.put("volumeTitle", getAncestorProperty(document, VolumeModel.Types.VOLUME, VolumeModel.Props.TITLE));
             formulas.put("volumeMark", getAncestorProperty(document, VolumeModel.Types.VOLUME, VolumeModel.Props.MARK));
-            String docUrl = serverUrl + servletContext.getContextPath() + "/n/document/" + document.getId();
+            String docUrl = applicationService.getServerUrl() + servletContext.getContextPath() + "/n/document/" + document.getId();
             formulas.put("docUrl", docUrl);
         }
 
@@ -628,17 +629,17 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         this.msoService = msoService;
     }
 
-    public void setServerUrl(String serverUrl) {
-        this.serverUrl = serverUrl;
-    }
-    
-    public String getServerUrl(){
-        return serverUrl;
-    }
-
     @Override
     public void setServletContext(ServletContext servletContext) {
         this.servletContext = servletContext;
+    }
+
+    public void setApplicationService(ApplicationService applicationService) {
+        this.applicationService = applicationService;
+    }
+
+    public ApplicationService getApplicationService() {
+        return applicationService;
     }
     
     // END: getters / setters

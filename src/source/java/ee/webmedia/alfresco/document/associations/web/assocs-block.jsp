@@ -55,7 +55,7 @@
          <f:facet name="header">
             <h:outputText id="col4-header" value="#{msg.document_assocsBlockBean_actions}" styleClass="header" />
          </f:facet>
-         <r:permissionEvaluator value="#{DocumentDialog.node}" allow="DocumentWrite">
+         <r:permissionEvaluator id="assocs-list-permission-evaluator" value="#{DocumentDialog.node}" allow="DocumentWrite">
             <a:actionLink id="col4-act" rendered="#{r.assocType.valueName == 'tavaline'}" value="#{r.title}" actionListener="#{DeleteAssocDialog.setupAssoc}" action="dialog:deleteAssoc" showLink="false"
                   image="/images/icons/delete.gif" tooltip="#{msg.document_assocsBlockBean_delete}">
                   <f:param name="nodeRef" value="#{r.nodeRef}"/>

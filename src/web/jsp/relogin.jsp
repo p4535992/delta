@@ -30,7 +30,7 @@
 
 <%@ page import="org.alfresco.web.app.servlet.AuthenticationHelper" %>
 <%@ page import="javax.servlet.http.Cookie" %>
-<%@ page import="ee.webmedia.alfresco.orgstructure.amr.AMRAuthenticationFilter" %>
+<%@ page import="ee.webmedia.alfresco.user.service.SimpleAuthenticationFilter" %>
 <%@ page import="ee.webmedia.alfresco.common.service.ApplicationService" %>
 <%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
 <%@ page import="javax.faces.context.FacesContext"%>
@@ -50,8 +50,10 @@
       }
    }
 
-   ApplicationService applicationService = (ApplicationService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "ApplicationService");
-   response.sendRedirect(applicationService.getLogoutRedirectUrl());
+   if (session.getAttribute(SimpleAuthenticationFilter.AUTHENTICATION_EXCEPTION) == null) {
+      ApplicationService applicationService = (ApplicationService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "ApplicationService");
+      response.sendRedirect(applicationService.getLogoutRedirectUrl());
+   }
 
 %>
 
@@ -68,17 +70,18 @@
             <h:graphicImage url="/images/logo/logo.png" alt="#{ApplicationService.projectTitle}" title="#{ApplicationService.projectTitle}" />
              
             <%
-               if (session.getAttribute(AMRAuthenticationFilter.AUTHENTICATION_EXCEPTION) != null) {
+               if (session.getAttribute(SimpleAuthenticationFilter.AUTHENTICATION_EXCEPTION) != null) {
             %>
 	              <h:outputText value="#{msg.error_login_user}" styleClass="login-instructions center" />
+                  <a:actionLink href="#{ApplicationService.logoutRedirectUrl}" value="#{msg.logout}" />
             <%
                } else {
             %>
 	              <h:outputText value="#{msg.loggedout_details}" styleClass="login-instructions center" />
+                  <a:actionLink href="/faces/jsp/dashboards/container.jsp" value="#{msg.relogin}" />
             <%
                }
             %>
-            <a:actionLink href="/faces/jsp/dashboards/container.jsp" value="#{msg.relogin}" />
 
             <%-- messages tag to show messages not handled by other specific message tags --%>
             <h:messages style="padding-top:8px; color:red; font-size:10px" />

@@ -21,6 +21,7 @@ import org.springframework.ws.soap.client.SoapFaultClientException;
 
 import smit.ametnik.services.Ametnik;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
+import ee.webmedia.alfresco.user.service.UserNotFoundException;
 
 /**
  * Authenticator that uses AMRService for authentication. SYSTEM_USER_NAME will go through without amrService call, <br>
@@ -54,7 +55,7 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             Ametnik user = amrService.getAmetnikByIsikukood(userName);
             if (user == null) {
                 log.debug("Didn't manage to get user with id '" + userName + "' from AMRService.");
-                throw new AMRAuthenticationException("Didn't manage to get user with id '" + userName + "' from AMRService.");
+                throw new UserNotFoundException("Didn't manage to get user with id '" + userName + "' from AMRService.");
             }
             if (!StringUtils.equals(userName, user.getIsikukood())) {
                 throw new AuthenticationException("Social security id is supposed to be equal to userName");
@@ -76,7 +77,7 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             log.warn("AMRService is not available", e);
         } catch (SoapFaultClientException e) {
             log.error("Didn't manage to get user with id '" + userName + "' from AMRService.", e);
-            throw new AMRAuthenticationException("Didn't manage to get user with id '" + userName + "' from AMRService.", e);
+            throw new UserNotFoundException("Didn't manage to get user with id '" + userName + "' from AMRService: " + e.getMessage(), e);
         }
     }
 

@@ -33,5 +33,7 @@ public interface ApplicationService {
     boolean isTest();
 
     String getLogoutRedirectUrl();
+    
+    String getServerUrl();
 
 }

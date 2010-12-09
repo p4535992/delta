@@ -28,6 +28,8 @@ import static ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty.R
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.ATTR_FORCED_MANDATORY;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALDIATION_DISABLED;
+import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALIDATION_MARKER_DISABLED;
+
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 
@@ -109,6 +111,8 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         String STYLE_CLASS = "styleClass";
         String ATTR_FORCED_MANDATORY = "forcedMandatory";
         String VALDIATION_DISABLED = "validationDisabled";
+        //enable to show mandatory marker independently of VALDIATION_DISABLED value
+        String VALIDATION_MARKER_DISABLED = "validationMarkerDisabled";
     }
     
     public interface CustomConstants {
@@ -386,6 +390,14 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
 
     protected boolean isValidationDisabled() {
         return Boolean.valueOf(getCustomAttributes().get(VALDIATION_DISABLED));
+    }
+    
+    protected boolean isMandatoryMarkerDisabled() {
+        String valMarkerDisabledStr = getCustomAttributes().get(VALIDATION_MARKER_DISABLED);
+        if(org.apache.commons.lang.StringUtils.isNotBlank(valMarkerDisabledStr)){
+            return Boolean.valueOf(valMarkerDisabledStr);
+        }
+        return isValidationDisabled();
     }
 
     protected String getIdPrefix() {
@@ -771,7 +783,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
    @SuppressWarnings("unchecked")
    protected void setupMandatoryMarker(FacesContext context, PropertySheetItem item)
    {
-       if(isValidationDisabled() || isChildFromGeneratorsWrapper()) {
+       if(isMandatoryMarkerDisabled() || isChildFromGeneratorsWrapper()) {
            return;// don't add marker to child components of multiValueEditor and InlinePropertyGroupGenerator
        }
       // create the required field graphic

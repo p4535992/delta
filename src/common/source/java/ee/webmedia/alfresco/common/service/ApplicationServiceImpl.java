@@ -18,6 +18,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private String projectName;
     private boolean test;
     private String logoutRedirectUrl;
+    private String serverUrl;
 
     public void setModuleService(ModuleService moduleService) {
         this.moduleService = moduleService;
@@ -72,6 +73,14 @@ public class ApplicationServiceImpl implements ApplicationService {
     public String getLogoutRedirectUrl() {
         return logoutRedirectUrl;
     }
+    
+    public void setServerUrl(String serverUrl) {
+        this.serverUrl = serverUrl;
+    }
+    
+    public String getServerUrl(){
+        return serverUrl;
+    }    
 
     private static Properties loadProperties(Resource resource) {
         try {

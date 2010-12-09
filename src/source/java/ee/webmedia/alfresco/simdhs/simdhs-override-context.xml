@@ -3,7 +3,7 @@
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
    <!-- @Override classpath:alfresco/web-client-application-context.xml -->
-   <bean id="defaultAuthenticationFilter" class="ee.webmedia.alfresco.orgstructure.amr.AMRAuthenticationFilter">
+   <bean id="defaultAuthenticationFilter" class="ee.webmedia.alfresco.user.service.SimpleAuthenticationFilter">
       <property name="configService">
          <ref bean="webClientConfigService" />
       </property>
@@ -17,7 +17,7 @@
       </property>
       <property name="id">
          <list><!-- use AMR subsystem -->
-            <value>amr</value>
+            <value>${synchronization.subsystem}</value>
          </list>
       </property>
    </bean>
@@ -45,17 +45,6 @@
             </list>
         </property>
     </bean>
-   
-   <!-- @Override classpath:alfresco/subsystems/Authentication/common-ldap-context.xml -->
-   <bean id="userRegistry" class="ee.webmedia.alfresco.orgstructure.amr.AMRUserRegistry">
-      <property name="active" value="true" />
-      <property name="personService" ref="PersonService" />
-      <property name="nodeService" ref="NodeService" />
-      <property name="amrService" ref="AmrService" />
-      <property name="parametersService" ref="ParametersService" />
-      <property name="applicationService" ref="ApplicationService" />
-      <property name="testEmail" value="${mail.from.default}" />
-   </bean>
 
    <!--  @Override authentication-services-context.xml -->
    <bean name="userHomesHomeFolderProvider" class="org.alfresco.repo.security.person.UIDBasedHomeFolderProvider" parent="baseHomeFolderProvider">

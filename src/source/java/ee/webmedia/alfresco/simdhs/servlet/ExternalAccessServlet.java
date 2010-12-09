@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.simdhs.servlet;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
 
@@ -19,6 +21,7 @@ import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.servlet.AuthenticationStatus;
 import org.alfresco.web.app.servlet.BaseServlet;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
@@ -47,14 +50,19 @@ public class ExternalAccessServlet extends BaseServlet {
         dialogMappings.put(OUTCOME_DOCUMENT, AlfrescoNavigationHandler.DIALOG_PREFIX + "document");
     }
 
-    private static final String STORE_PARAMETER_LABEL = "store";
-    private String storeName;
+    private static final String STORE_PARAMETER_LABEL = "documentStores";
+    private List<String> storeNames;
 
     @Override
     public void init() throws ServletException {
         super.init();
-        storeName = getServletContext().getInitParameter(STORE_PARAMETER_LABEL);
-        Assert.hasText(storeName, "Store name must be provided");
+        String storeName = getServletContext().getInitParameter(STORE_PARAMETER_LABEL);
+        Assert.hasText(storeName, "At least one store name must be provided");        
+        StringTokenizer tokenizer = new StringTokenizer(storeName, ",");
+        storeNames = new ArrayList<String>();
+        while(tokenizer.hasMoreTokens()){
+            storeNames.add(StringUtils.trimToEmpty(tokenizer.nextToken()));
+        }
     }
 
     @Override
@@ -94,11 +102,21 @@ public class ExternalAccessServlet extends BaseServlet {
 
             if (logger.isDebugEnabled()) logger.debug("currentNodeId: " + currentNodeId);
 
-            StoreRef storeRef = new StoreRef(storeName);
-            NodeRef nodeRef = new NodeRef(storeRef, currentNodeId);
+            boolean nodeExists = false;
+            String nodeRefsStr = null;
+            NodeRef nodeRef = null;
+            for(String storeName : storeNames){
+                StoreRef storeRef = new StoreRef(storeName);
+                nodeRef = new NodeRef(storeRef, currentNodeId);
+                nodeRefsStr += (nodeRefsStr == null) ? nodeRef : (";" + nodeRef);
+                if(serviceRegistry.getNodeService().exists(nodeRef)){
+                    nodeExists = true;
+                    break;
+                }
+            }
 
-            if (!serviceRegistry.getNodeService().exists(nodeRef)) {
-                throw new InvalidNodeRefException("Invalid URI provided", nodeRef);
+            if (!nodeExists) {
+                throw new InvalidNodeRefException("Invalid URI provided (" + nodeRefsStr + ")", nodeRef);
             }
 
             // select correct menu

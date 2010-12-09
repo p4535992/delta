@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.substitute.model;
 
 import java.io.Serializable;
 
-
 /**
  * @author Romet Aidla
  */

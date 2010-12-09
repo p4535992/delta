@@ -155,7 +155,7 @@
    <config evaluator="aspect-name" condition="docspec:errandDoc">
       <property-sheet>
          <show-property name="docspec:eventOrganizer" readOnlyIf="doccom:docStatus!=töös" />
-         <show-property name="docspec:eventBeginDate" display-label-id="document_eventDates_title" textId="document_eventDates_templateText" readOnlyIf="doccom:docStatus!=töös"
+         <show-property name="docspec:eventBeginDate" display-label-id="document_eventDates_title" textId="document_eventDates_templateText" readOnlyIf="doccom:docStatus!=töös" forcedMandatory="true"
             component-generator="InlinePropertyGroupGenerator" props="
              docspec:eventBeginDate||styleClass=date inline
             ,docspec:eventEndDate||styleClass=date inline" 

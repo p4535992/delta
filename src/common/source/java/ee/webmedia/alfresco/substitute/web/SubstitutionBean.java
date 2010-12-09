@@ -1,4 +1,4 @@
-package ee.webmedia.alfresco.substitute;
+package ee.webmedia.alfresco.substitute.web;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -17,16 +17,14 @@ import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.BaseServlet;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
-import ee.webmedia.alfresco.common.web.SessionContext;
+import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.substitute.service.SubstituteService;
-import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -40,14 +38,11 @@ public class SubstitutionBean implements Serializable {
 
     public static final String BEAN_NAME = "SubstitutionBean";
     private transient SubstituteService substituteService;
+    private transient ApplicationService applicationService;
     private transient UserService userService;
     private transient MenuService menuService;
-    private transient DocumentTemplateService documentTemplateService;
     private SubstitutionInfo substitutionInfo = new SubstitutionInfo();
-
-    public SubstitutionInfo getSubstitutionInfo() {
-        return substitutionInfo;
-    }
+    private boolean forceSubstituteTaskReload = false;
 
     public String getSelectedSubstitution() {
         return substitutionInfo.getSelectedSubstitution();
@@ -61,16 +56,14 @@ public class SubstitutionBean implements Serializable {
             NodeRef userNodeRef = new NodeRef(selectedSubstitution);
             substitutionInfo = new SubstitutionInfo(getSubstituteService().getSubstitute(userNodeRef));
         }
-        SessionContext sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
-                FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);        
-        sessionContext.setSubstitutionInfo(substitutionInfo);    
-        sessionContext.setForceSubstituteTaskReload(Boolean.TRUE);
+        setSubstitutionInfo(substitutionInfo);    
+        setForceSubstituteTaskReload(true);
     }
 
     public void substitutionSelected(ValueChangeEvent event) {
         String substitutionNodeRef = (String) event.getNewValue();
         setSelectedSubstitution(substitutionNodeRef);
-        redirectToHome(getDocumentTemplateService().getServerUrl());
+        redirectToHome(getApplicationService().getServerUrl());
     }
 
 
@@ -78,6 +71,9 @@ public class SubstitutionBean implements Serializable {
         FacesContext fc = FacesContext.getCurrentInstance();
         
         MenuBean.clearViewStack(String.valueOf(MenuBean.MY_TASKS_AND_DOCUMENTS_ID), null);
+        MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(fc, MenuBean.BEAN_NAME);   
+        menuBean.reset(); 
+        
         fc.getApplication().getNavigationHandler().handleNavigation(fc, null, "myalfresco");
         fc.responseComplete();
         try {
@@ -123,13 +119,6 @@ public class SubstitutionBean implements Serializable {
         }
         return substituteService;
     }
-    
-    protected DocumentTemplateService getDocumentTemplateService() {
-        if (documentTemplateService == null) {
-            this.documentTemplateService = (DocumentTemplateService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DocumentTemplateService.BEAN_NAME);
-        }
-        return documentTemplateService;
-    }    
 
     protected UserService getUserService() {
         if (userService == null) {
@@ -150,5 +139,29 @@ public class SubstitutionBean implements Serializable {
                 + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER 
                 + "var el = document.getElementById(currElId); el.form.submit();";
     }
+    
+    public void setForceSubstituteTaskReload(boolean force) {
+        forceSubstituteTaskReload = force;
+    }
+    
+    public boolean getForceSubstituteTaskReload(){
+        return forceSubstituteTaskReload;
+    }
+
+    private void setSubstitutionInfo(SubstitutionInfo substitutionInfo) {
+        this.substitutionInfo = substitutionInfo;
+    }
+    
+    public SubstitutionInfo getSubstitutionInfo() {
+        return substitutionInfo;
+    }
+
+    public void setApplicationService(ApplicationService applicationService) {
+        this.applicationService = applicationService;
+    }
+
+    public ApplicationService getApplicationService() {
+        return applicationService;
+    }     
 
 }

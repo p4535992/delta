@@ -11,11 +11,11 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.web.SessionContext;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.substitute.web.SubstitutionBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.TaskAndDocument;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -51,7 +51,7 @@ public class MyTasksBean extends BaseDialogBean {
     private transient ParametersService parametersService;
     private transient DocumentService documentService;
     private transient DocumentSearchService documentSearchService;
-    private SessionContext sessionContext;
+    private SubstitutionBean substitutionBean;
 
     // START: dialog overrides
 
@@ -78,7 +78,7 @@ public class MyTasksBean extends BaseDialogBean {
     
     public String getSetupMyTasks() {
         //see Erko's comment in /web/jsp/dashboards/container.jsp before <h:outputText value="#{MyTasksBean.setupMyTasks}" /> (line 72)
-        boolean forceReload = getSessionContext().getForceSubstituteTaskReload() == null ? false : ((Boolean)getSessionContext().getForceSubstituteTaskReload()).booleanValue();
+        boolean forceReload = getSubstitutionBean().getForceSubstituteTaskReload();
         if (forceReload || (System.currentTimeMillis() - lastLoadMillis) > 30000) { // 30 seconds
             reset();
             dialogTitle = getParametersService().getStringParameter(Parameters.WELCOME_TEXT);
@@ -86,7 +86,7 @@ public class MyTasksBean extends BaseDialogBean {
             lastLoadMillis = System.currentTimeMillis();
         }
         if(forceReload){
-            getSessionContext().setForceSubstituteTaskReload(Boolean.FALSE);
+            getSubstitutionBean().setForceSubstituteTaskReload(false);
         }
         return null;
     }
@@ -252,13 +252,13 @@ public class MyTasksBean extends BaseDialogBean {
         this.documentService = documentService;
     }
     
-    protected SessionContext getSessionContext() {
-        if (sessionContext == null) {
-            sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);
+    protected SubstitutionBean getSubstitutionBean() {
+        if (substitutionBean == null) {
+            substitutionBean = (SubstitutionBean) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(SubstitutionBean.BEAN_NAME);
         }
-        return sessionContext;
-    }    
+        return substitutionBean;
+    }     
         
     // END: getters/setters
     

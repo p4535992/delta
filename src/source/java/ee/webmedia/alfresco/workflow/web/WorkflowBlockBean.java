@@ -861,7 +861,10 @@ public class WorkflowBlockBean implements Serializable {
         return output;
     }
 
-    //NB! Don't call this method from java code; this is meant ONLY for workflow-summary-block.jsp binding
+    /**
+     * NB! Don't call this method from java code; this is meant ONLY for workflow-summary-block.jsp binding.
+     * For code use getWfPanelGroupInner() instead
+     */
     public HtmlPanelGroup getWfPanelGroup() {
         if (wfPanelGroup == null) {
             wfPanelGroup = new HtmlPanelGroup();

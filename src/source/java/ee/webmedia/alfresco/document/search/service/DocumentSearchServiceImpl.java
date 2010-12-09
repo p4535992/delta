@@ -62,7 +62,6 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.SessionContext;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -77,6 +76,7 @@ import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
+import ee.webmedia.alfresco.substitute.web.SubstitutionBean;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -468,9 +468,9 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     }
 
     private void addSubstitutionRestriction(List<String> queryParts) {
-        SessionContext sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
-                FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);        
-        SubstitutionInfo subInfo = sessionContext.getSubstitutionInfo();
+        SubstitutionBean substitutionBean = (SubstitutionBean) FacesContextUtils.getRequiredWebApplicationContext( //
+                FacesContext.getCurrentInstance()).getBean(SubstitutionBean.BEAN_NAME);        
+        SubstitutionInfo subInfo = substitutionBean.getSubstitutionInfo();
         if (subInfo.isSubstituting()) {
             Date start = DateUtils.truncate(subInfo.getSubstitution().getSubstitutionStartDate(), Calendar.DATE);
             Long daysForSubstitutionTasksCalc = parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC);

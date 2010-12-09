@@ -7,9 +7,12 @@ import org.alfresco.service.namespace.QName;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.SessionContext;
+import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemFilter;
+import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
+import ee.webmedia.alfresco.substitute.web.SubstitutionBean;
 
 public class CreateDocumentMenuItemFilter implements MenuItemFilter {
 
@@ -25,9 +28,10 @@ public class CreateDocumentMenuItemFilter implements MenuItemFilter {
 
     @Override
     public boolean passesFilter(MenuItem menuItem, NodeRef childNodeRef) {
-        SessionContext sessionContext = (SessionContext) FacesContextUtils.getRequiredWebApplicationContext( //
-                FacesContext.getCurrentInstance()).getBean(SessionContext.BEAN_NAME);        
-        if ("documentTypes".equalsIgnoreCase(menuItem.getId()) && sessionContext.getSubstitutionInfo().isSubstituting())
+        SubstitutionBean substitutionBean = (SubstitutionBean) FacesContextUtils.getRequiredWebApplicationContext( //
+                FacesContext.getCurrentInstance()).getBean(SubstitutionBean.BEAN_NAME);  
+
+        if ("documentTypes".equalsIgnoreCase(menuItem.getId()) && substitutionBean.getSubstitutionInfo().isSubstituting())
             return false;
 
         return true;

@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -71,6 +72,33 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             dialog = "documentSearchExtendedResultsDialog";
             documents = getDocumentService().processExtendedSearchResults(documents, searchFilter);
         }
+        Collections.sort(documents, new Comparator<Document>() {
+
+            @Override
+            public int compare(Document doc1, Document doc2) {
+                if(doc1.getRegDateTime() != null && doc2.getRegDateTime() == null){
+                    return 1;
+                }
+                else if(doc1.getRegDateTime() == null && doc2.getRegDateTime() != null){
+                    return -1;
+                }
+                else if(doc1.getRegDateTime() != null && doc2.getRegDateTime() != null){
+                    return doc2.getRegDateTime().compareTo(doc1.getRegDateTime());
+                }
+                if(doc1.getCreated() != null && doc2.getCreated() != null){
+                    return doc2.getCreated().compareTo(doc1.getCreated());
+                }
+                //these cases should't actually happen
+                else if(doc1.getCreated() != null && doc2.getCreated() == null){
+                    return -1;
+                }
+                else if(doc1.getCreated() == null && doc2.getCreated() != null){
+                    return 1;
+                }
+                return 0;
+            }
+            
+        });        
         dialogOutcome = dialog;
         super.restored();
     }

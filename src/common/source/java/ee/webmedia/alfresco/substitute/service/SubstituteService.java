@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.substitute.service;
 
 import ee.webmedia.alfresco.substitute.model.Substitute;
+
 import org.alfresco.service.cmr.repository.NodeRef;
 
 import java.util.List;

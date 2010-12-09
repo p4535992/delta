@@ -223,11 +223,11 @@ public class RequestControlFilter implements Filter{
      */
     private void releaseQueuedRequest( HttpServletRequest request, Object syncObject ){
         synchronized( syncObject ){
-            HttpSession session = request.getSession();
+            HttpSession session = request.getSession(false);
             // if this request is still the current one (i.e., it didn't run for too
             // long and result in another request being processed), then clear it
             // and thus release the lock
-            if( session.getAttribute( REQUEST_IN_PROCESS ) == null ){
+            if( session == null || session.getAttribute( REQUEST_IN_PROCESS ) == null ){
                 syncObject.notify();
             }
             else if( ((Integer)session.getAttribute( REQUEST_IN_PROCESS )).intValue() == request.hashCode() ){

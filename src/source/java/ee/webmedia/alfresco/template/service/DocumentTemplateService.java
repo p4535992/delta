@@ -94,6 +94,4 @@ public interface DocumentTemplateService {
      */
     NodeRef getSystemTemplateByName(String templateName);
     
-    String getServerUrl();
-
 }
