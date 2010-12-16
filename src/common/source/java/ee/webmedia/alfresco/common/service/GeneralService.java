@@ -239,4 +239,5 @@ public interface GeneralService {
 
     void deleteNodeRefs(Collection<NodeRef> nodeRefs);
 
+    NodeRef getParentNodeRefWithType(NodeRef childRef, QName parentType);    
 }

@@ -247,5 +247,21 @@ DaoAuthenticationProvider.authenticate()
       <property name="behaviourFilter" ref="policyBehaviourFilter" />
       <property name="searchableSendModeUpdateBeginDate" value="${searchableSendModeUpdate.begin.date}" />
    </bean>    
+      
+   <!-- Used to add searchable properties to imported document (CL task 143388) -->
+   <!-- Normally should be run only once, execution depends on searchablePropertiesUpdater.enabled value -->
+   <bean id="searchablePropertiesUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchablePropertiesUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="searchablePropertiesUpdater" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="generalService" ref="generalService" />
+      <property name="sendOutService" ref="sendOutService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="searchService" ref="searchService" />
+      <property name="documentService" ref="documentService" />
+      <property name="dictionaryService" ref="dictionaryService" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="enabled" value="${searchablePropertiesUpdater.enabled}" />
+   </bean>    
 
 </beans>

@@ -22,6 +22,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.model.DocumentCreateOrRegistrateDateComparator;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
@@ -72,33 +73,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             dialog = "documentSearchExtendedResultsDialog";
             documents = getDocumentService().processExtendedSearchResults(documents, searchFilter);
         }
-        Collections.sort(documents, new Comparator<Document>() {
-
-            @Override
-            public int compare(Document doc1, Document doc2) {
-                if(doc1.getRegDateTime() != null && doc2.getRegDateTime() == null){
-                    return 1;
-                }
-                else if(doc1.getRegDateTime() == null && doc2.getRegDateTime() != null){
-                    return -1;
-                }
-                else if(doc1.getRegDateTime() != null && doc2.getRegDateTime() != null){
-                    return doc2.getRegDateTime().compareTo(doc1.getRegDateTime());
-                }
-                if(doc1.getCreated() != null && doc2.getCreated() != null){
-                    return doc2.getCreated().compareTo(doc1.getCreated());
-                }
-                //these cases should't actually happen
-                else if(doc1.getCreated() != null && doc2.getCreated() == null){
-                    return -1;
-                }
-                else if(doc1.getCreated() == null && doc2.getCreated() != null){
-                    return 1;
-                }
-                return 0;
-            }
-            
-        });        
+        Collections.sort(documents, DocumentCreateOrRegistrateDateComparator.getComparator());        
         dialogOutcome = dialog;
         super.restored();
     }

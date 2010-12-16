@@ -1,10 +1,12 @@
 package ee.webmedia.alfresco.document.service;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
@@ -394,4 +396,11 @@ public interface DocumentService {
      * @return number of documents under given volume or case
      */
     int getDocumentsCountByVolumeOrCase(NodeRef parentRef);
+    
+    List<String> getSearchableFileNames(NodeRef document);
+    
+    ContentData getSearchableFileContents(NodeRef document);
+
+    StringBuilder getChildNodesPropsForIndexing(NodeRef parentRef, StringBuilder sb);
+    
 }

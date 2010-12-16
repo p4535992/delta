@@ -36,8 +36,8 @@
 <a:panel id="header">
    <a:panel id="logo">
 
-      <a:actionLink id="client-logo" value="#{ApplicationService.projectTitle}" href="/" tooltip="#{ApplicationService.projectTitle}" image="/images/logo/logo.png" showLink="false" />
-      <a:actionLink id="project-name" value="#{ApplicationService.projectTitle}" href="/" tooltip="#{ApplicationService.projectTitle}" />
+      <a:actionLink id="client-logo" value="#{ApplicationService.headerText}" href="/" tooltip="#{ApplicationService.headerText}" image="/images/logo/logo.png" showLink="false" />
+      <a:actionLink id="project-name" value="#{ApplicationService.headerText}" href="/" tooltip="#{ApplicationService.headerText}" />
       
       <a:panel id="search">
          <f:verbatim>

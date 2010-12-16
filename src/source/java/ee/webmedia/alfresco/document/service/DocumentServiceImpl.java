@@ -80,7 +80,6 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.EqualsHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.Utils;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
@@ -536,7 +535,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                         throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_hasReplyOrFollowUp");
                     }
                     final String existingRegNr = (String) docProps.get(REG_NUMBER.toString());
-                    if (StringUtils.isNotBlank(existingRegNr)) {
+                    if (StringUtils.isNotBlank(existingRegNr)
+                        && !(existingParentNode.getType().equals(CaseModel.Types.CASE) && nodeService.getType(targetParentRef).equals(CaseModel.Types.CASE))) {
                         EventsLoggingHelper.disableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
                         registerDocument(docNode, true);
                         EventsLoggingHelper.enableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
@@ -631,7 +631,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             }
             for (int i = 0; i < applicants.size(); i++) {
                 Node applicantNode = applicants.get(i);
-                propsChanged |= saveRemovedChildAssocsAndReturnCount(docNode) > 0;
+                propsChanged |= saveRemovedChildAssocsAndReturnCount(applicantNode) > 0;
                 Node newApplicantNode = saveChildNode(docNode, applicantNode, applicantAssoc, applicants, i);
                 final List<Node> errandNodes = errandAssocType == null ? null : applicantNode.getAllChildAssociations(errandAssocType);
                 if (newApplicantNode == null) {
@@ -646,7 +646,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 }
                 for (int j = 0; j < errandNodes.size(); j++) {
                     Node errandNode = errandNodes.get(j);
-                    propsChanged |= saveRemovedChildAssocsAndReturnCount(docNode) > 0;
+                    propsChanged |= saveRemovedChildAssocsAndReturnCount(errandNode) > 0;
                     try {
                         Node newErrandNode = saveChildNode(applicantNode, errandNode, errandAssocType, errandNodes, j);
                         if (newErrandNode == null) {
@@ -691,7 +691,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         return null;
     }
 
-    private StringBuilder getChildNodesPropsForIndexing(NodeRef parentRef, StringBuilder sb) {
+    public StringBuilder getChildNodesPropsForIndexing(NodeRef parentRef, StringBuilder sb) {
         final List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef);
         for (ChildAssociationRef childAssocRef : childAssocs) {
             if (DocumentSpecificModel.URI.equals(childAssocRef.getQName().getNamespaceURI())) {
@@ -754,7 +754,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         }
     }
 
-    private List<String> getSearchableFileNames(NodeRef document) {
+    public List<String> getSearchableFileNames(NodeRef document) {
         List<FileInfo> files = fileFolderService.listFiles(document);
         List<String> fileNames = new ArrayList<String>(files.size());
         for (FileInfo file : files) {
@@ -763,7 +763,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         return fileNames;
     }
 
-    private ContentData getSearchableFileContents(NodeRef document) {
+    public ContentData getSearchableFileContents(NodeRef document) {
         List<FileInfo> files = fileFolderService.listFiles(document);
         if (files.size() == 0) {
             return null;

@@ -495,7 +495,7 @@ public class GeneralServiceImpl implements GeneralService {
         writer.putContent(file);
     }
 
-    private NodeRef getParentNodeRefWithType(NodeRef childRef, QName parentType) {
+    public NodeRef getParentNodeRefWithType(NodeRef childRef, QName parentType) {
         final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
         final QName realParentType = nodeService.getType(parentRef);
         if (parentType.equals(realParentType)) {

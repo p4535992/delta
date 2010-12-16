@@ -81,7 +81,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         boolean checkFinished = WorkflowUtil.isStatus(workflow, Status.IN_PROGRESS);
-        if (validate(context, checkFinished)) {
+        if (validate(context, checkFinished, false)) {
             try {
                 removeEmptyTasks();
                 getWorkflowService().saveCompoundWorkflow(workflow);
@@ -147,7 +147,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
      */
     public void startWorkflow(ActionEvent event) {
         log.debug("startWorkflow");
-        if (validate(FacesContext.getCurrentInstance(), true)) {
+        if (validate(FacesContext.getCurrentInstance(), true, false)) {
             try {
                 removeEmptyTasks();
                 if (isUnsavedWorkFlow) {
@@ -172,7 +172,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         log.debug("stopWorkflow");
         try {
             removeEmptyTasks();
-            if (validate(FacesContext.getCurrentInstance(), false)) {
+            if (validate(FacesContext.getCurrentInstance(), false, true)) {
                 workflow = getWorkflowService().saveAndStopCompoundWorkflow(workflow);
                 MessageUtil.addInfoMessage("workflow_compound_stop_success");
             }
@@ -189,7 +189,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         log.debug("continueWorkflow");
         try {
             removeEmptyTasks();
-            if (validate(FacesContext.getCurrentInstance(), true)) {
+            if (validate(FacesContext.getCurrentInstance(), true, false)) {
                 workflow = getWorkflowService().saveAndContinueCompoundWorkflow(workflow);
                 MessageUtil.addInfoMessage("workflow_compound_continue_success");
             }
@@ -219,7 +219,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
      */
     public void copyWorkflow(@SuppressWarnings("unused") ActionEvent event) {
         log.debug("copyWorkflow");
-        if (validate(FacesContext.getCurrentInstance(), false)) {
+        if (validate(FacesContext.getCurrentInstance(), false, false)) {
             try {
                 removeEmptyTasks();
                 workflow = getWorkflowService().saveAndCopyCompoundWorkflow(workflow);
@@ -394,7 +394,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         }
     }
 
-    private boolean validate(FacesContext context, boolean checkFinished) {
+    private boolean validate(FacesContext context, boolean checkFinished, boolean allowInactiveResponsibleTask) {
         boolean valid = true;
         boolean activeResponsibleAssignedInSomeWorkFlow = false;
         boolean missingOwnerAssignment = false;
@@ -419,7 +419,13 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
 
             for (Task task : block.getTasks()) {
                 final boolean activeResponsible = WorkflowUtil.isActiveResponsible(task);
-                if (activeResponsibleAssigneeNeeded && StringUtils.isNotBlank(task.getOwnerName()) && activeResponsible) {
+                boolean inactiveResponsible = false;
+                if(allowInactiveResponsibleTask){
+                    inactiveResponsible = WorkflowUtil.isInactiveResponsible(task);
+                }
+                if (activeResponsibleAssigneeNeeded 
+                        && StringUtils.isNotBlank(task.getOwnerName()) 
+                        && (activeResponsible || inactiveResponsible)) {
                     activeResponsibleAssignedInSomeWorkFlow = true;
                     activeResponsibleAssigneeAssigned = true;
                     missingOwnerAssignment = false;

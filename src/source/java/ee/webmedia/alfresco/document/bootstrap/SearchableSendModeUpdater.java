@@ -51,7 +51,7 @@ public class SearchableSendModeUpdater extends AbstractNodeUpdater {
     }
 
     @Override
-    protected ResultSet getNodeLoadingResultSet() throws Exception {
+    protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
         SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date liveDate = dateFormat.parse(searchableSendModeUpdateBeginDate);
 
@@ -59,7 +59,9 @@ public class SearchableSendModeUpdater extends AbstractNodeUpdater {
         queryParts.add(SearchUtil.generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
         queryParts.add(SearchUtil.generateDatePropertyRangeQuery(liveDate, null, ContentModel.PROP_CREATED));
         String query = SearchUtil.joinQueryPartsAnd(queryParts);
-        return searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query);
+        List<ResultSet> result = new ArrayList<ResultSet>(1);
+        result.add(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));
+        return result;
     }
 
     @Override

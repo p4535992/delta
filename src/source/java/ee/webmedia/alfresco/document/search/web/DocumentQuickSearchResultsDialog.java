@@ -8,6 +8,7 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.lucene.search.BooleanQuery;
 
+import ee.webmedia.alfresco.document.model.DocumentCreateOrRegistrateDateComparator;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -30,6 +31,7 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
     public void restored() {
         try {
             documents = getDocumentSearchService().searchDocumentsQuick(searchValue);
+            Collections.sort(documents, DocumentCreateOrRegistrateDateComparator.getComparator());
         } catch (BooleanQuery.TooManyClauses e) {
             log.error("Quick search of '" + searchValue + "' failed: " + e.getMessage()); // stack trace is logged in the service
             documents = Collections.emptyList();

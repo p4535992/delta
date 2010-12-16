@@ -77,7 +77,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private OpenOfficeService openOfficeService;
     private DictionaryService dictionaryService;
     private MsoService msoService;
-    private ApplicationService applicationService;
+    private ApplicationService applicationService;    
     private ServletContext servletContext;
 
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
@@ -636,10 +636,6 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;
-    }
-
-    public ApplicationService getApplicationService() {
-        return applicationService;
     }
     
     // END: getters / setters

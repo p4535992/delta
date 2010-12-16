@@ -1,6 +1,7 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8" %>
+<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
 <div id="footer">
-   <p>Kontaktinfo: E - N 8:00 - 16:45, R 8:00 - 15:30, aadress: Pikk 61, 15065 Tallinn, telefon: 612 5008, epost: <a href="mailto:info@siseministeerium.ee">info@siseministeerium.ee</a></p>
+   <p><h:outputText value="#{ApplicationService.footerText}" escape="false" /></p>
       <!-- 
       <h:outputText value="#{ApplicationService.projectName} versioon #{ApplicationService.projectVersion}" />
       |

@@ -6,6 +6,8 @@ package ee.webmedia.alfresco.common.service;
  * @author Alar Kvell (alar.kvell@webmedia.ee)
  */
 public interface ApplicationService {
+    
+    String BEAN_NAME = "ApplicationService";
 
     /**
      * Version number of common project, in the format of '1.2.3.4' or '1.2.3.4-change98765'
@@ -35,5 +37,15 @@ public interface ApplicationService {
     String getLogoutRedirectUrl();
     
     String getServerUrl();
+
+    /**
+     * Text to display at the top part of web page. Plain text, should be escaped.
+     */
+    String getHeaderText();
+
+    /**
+     * Text to display at the bottom part of web page. Text can contain HTML, should not be escaped.
+     */
+    String getFooterText();
 
 }

@@ -2,16 +2,23 @@ package ee.webmedia.alfresco.common.service;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Properties;
 
 import org.alfresco.service.cmr.module.ModuleService;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.Resource;
 
-public class ApplicationServiceImpl implements ApplicationService {
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.parameters.service.ParametersService.ParameterChangedCallback;
+
+public class ApplicationServiceImpl implements ApplicationService, InitializingBean {
 
     public static final String versionPropertyKey = "currentVersion";
 
     private ModuleService moduleService;
+    private ParametersService parametersService;
 
     private String commonVersion;
     private String projectVersion;
@@ -20,8 +27,17 @@ public class ApplicationServiceImpl implements ApplicationService {
     private String logoutRedirectUrl;
     private String serverUrl;
 
+    // Cache parameter values here, because these are accessed very frequently
+    // (Although they always hit Hibernate cache, 8 calls to ParametersService add a total of 50 ms to each page render) 
+    private String headerText;
+    private String footerText;
+
     public void setModuleService(ModuleService moduleService) {
         this.moduleService = moduleService;
+    }
+
+    public void setParametersService(ParametersService parametersService) {
+        this.parametersService = parametersService;
     }
 
     public void setCommonVersionLocation(Resource resource) {
@@ -42,6 +58,22 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     public void setLogoutRedirectUrl(String logoutRedirectUrl) {
         this.logoutRedirectUrl = logoutRedirectUrl;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        parametersService.addParameterChangeListener(Parameters.HEADER_TEXT.getParameterName(), new ParameterChangedCallback() {
+            @Override
+            public void doWithParameter(Serializable value) {
+                headerText = (String) value;
+            }
+        });
+        parametersService.addParameterChangeListener(Parameters.FOOTER_TEXT.getParameterName(), new ParameterChangedCallback() {
+            @Override
+            public void doWithParameter(Serializable value) {
+                footerText = (String) value;
+            }
+        });
     }
 
     @Override
@@ -81,6 +113,22 @@ public class ApplicationServiceImpl implements ApplicationService {
     public String getServerUrl(){
         return serverUrl;
     }    
+
+    @Override
+    public String getHeaderText() {
+        if (headerText == null) {
+            headerText = parametersService.getStringParameter(Parameters.HEADER_TEXT);
+        }
+        return headerText;
+    }
+
+    @Override
+    public String getFooterText() {
+        if (footerText == null) {
+            footerText = parametersService.getStringParameter(Parameters.FOOTER_TEXT);
+        }
+        return footerText;
+    }
 
     private static Properties loadProperties(Resource resource) {
         try {

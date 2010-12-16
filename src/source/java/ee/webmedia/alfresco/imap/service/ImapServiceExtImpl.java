@@ -37,7 +37,6 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.GUID;
 import org.apache.commons.collections.CollectionUtils;
@@ -86,7 +85,6 @@ public class ImapServiceExtImpl implements ImapServiceExt {
     private GeneralService generalService;
     private FileService fileService;
     private MimetypeService mimetypeService;
-    private NamespaceService namespaceService;
 
     // todo: make this configurable with spring
     private Set<String> allowedFolders = null;
@@ -435,10 +433,6 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
     public void setMimetypeService(MimetypeService mimetypeService) {
         this.mimetypeService = mimetypeService;
-    }
-
-    public void setNamespaceService(NamespaceService namespaceService) {
-        this.namespaceService = namespaceService;
     }
 
 }

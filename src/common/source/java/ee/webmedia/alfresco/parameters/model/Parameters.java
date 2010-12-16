@@ -74,6 +74,8 @@ public enum Parameters {
     DOC_PROP_VACATION_ORDER_LEGAL_BASIS_NAME("docPropVacationOrderLegalBasisName"),
     DOC_PROP_CHANCELLORS_ORDER_SIGNER_NAME("docPropChancellorsOrderSignerName"),
     SEARCH_RESULTS_LIMIT("searchResultsLimit"),
+    HEADER_TEXT("headerText"),
+    FOOTER_TEXT("footerText"),
     /** 
      * TK Parameters
      */
@@ -106,6 +108,10 @@ public enum Parameters {
     @Override
     public String toString() {
         return xPath;
+    }
+
+    public String getParameterName() {
+        return parameterName;
     }
 
 }

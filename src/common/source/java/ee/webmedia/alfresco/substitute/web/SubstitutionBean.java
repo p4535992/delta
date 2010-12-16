@@ -156,11 +156,10 @@ public class SubstitutionBean implements Serializable {
         return substitutionInfo;
     }
 
-    public void setApplicationService(ApplicationService applicationService) {
-        this.applicationService = applicationService;
-    }
-
     public ApplicationService getApplicationService() {
+        if (applicationService == null) {
+            this.applicationService = (ApplicationService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ApplicationService.BEAN_NAME);
+        }
         return applicationService;
     }     
 

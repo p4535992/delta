@@ -105,6 +105,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     private VolumeService volumeService;
     private WorkflowService workflowService;
     private ParametersService parametersService;
+    private List<StoreRef> allStores = null;
 
     @Override
     public List<Document> searchAdrDocuments(Date regDateBegin, Date regDateEnd, QName docType, String searchString, Set<QName> documentTypes) {
@@ -287,12 +288,16 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         long startTime = System.currentTimeMillis();
         String query = getWorkingDocumentsOwnerQuery(AuthenticationUtil.getRunAsUser());
         int count = 0;
-        ResultSet resultSet = doSearch(query, false, /* queryName */ "userWorkingDocumentsCount");
+        List<ResultSet> resultSets = doSearches(query, false, /* queryName */ "userWorkingDocumentsCount", getAllStores());
         try {
-            count = resultSet.length();
+            for(ResultSet resultSet : resultSets){
+                count += resultSet.length();
+            }
         } finally {
             try {
-                resultSet.close();
+                for(ResultSet resultSet : resultSets){                
+                    resultSet.close();
+                }
             } catch (Exception e) {
                 // Do nothing
             }
@@ -348,7 +353,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     public int searchRecipientFinishedDocumentsCount() {
         long startTime = System.currentTimeMillis();
         String query = generateRecipientFinichedQuery();
-        List<NodeRef> results = searchNodes(query, false, /* queryName */ "recipientFinishedDocumentsCount");
+        List<NodeRef> results = searchNodesFromAllStores(query, false, /* queryName */ "recipientFinishedDocumentsCount");
 
         if (log.isDebugEnabled()) {
             log.debug("FINISHED documents count search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
@@ -440,12 +445,16 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         addSubstitutionRestriction(queryParts);
         String query = generateTaskSearchQuery(queryParts);
         int count = 0;
-        ResultSet resultSet = doSearch(query, false, /* queryName */ "currentUsersTaskCount");
+        List<ResultSet> resultSets = doSearches(query, false, /* queryName */ "currentUsersTaskCount", getAllStores());
         try {
-            count = resultSet.length();
+            for(ResultSet resultSet : resultSets){
+                count += resultSet.length();
+            }
         } finally {
             try {
-                resultSet.close();
+                for(ResultSet resultSet : resultSets){                
+                    resultSet.close();
+                }
             } catch (Exception e) {
                 // Do nothing
             }
@@ -596,7 +605,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     public List<NodeRef> searchWorkingDocumentsByOwnerId(String ownerId) {
         long startTime = System.currentTimeMillis();
         String query = getWorkingDocumentsOwnerQuery(ownerId);
-        List<NodeRef> results = searchNodes(query, false, /* queryName */ "workingDocumentsByOwnerId");
+        List<NodeRef> results = searchNodesFromAllStores(query, false, /* queryName */ "workingDocumentsByOwnerId");
         if (log.isDebugEnabled()) {
             log.debug("User's " + ownerId + " working documents search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
@@ -607,7 +616,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     public List<NodeRef> searchNewTasksByOwnerId(String ownerId) {
         long startTime = System.currentTimeMillis();
         String query = generateTaskSearchQuery(getTaskQuery(null, ownerId, Status.NEW));
-        List<NodeRef> results = searchNodes(query, false, /* queryName */ "newTasksByOwnerId");
+        List<NodeRef> results = searchNodesFromAllStores(query, false, /* queryName */ "newTasksByOwnerId");
         if (log.isDebugEnabled()) {
             log.debug("User's " + ownerId + " new tasks search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
@@ -669,7 +678,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
                 }
                 return null;
             }
-        });
+        }, getAllStores());
     }
 
     private int searchDocumentsBySendInfoImplCount(String query, boolean limited, String queryName) {
@@ -683,7 +692,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
                 }
                 return null;
             }
-        });
+        }, getAllStores());
         return nodeIds.size();
     }
 
@@ -964,7 +973,7 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             public Task addResult(ResultSetRow row) {
                 return workflowService.getTask(row.getNodeRef(), true);
             }
-        });
+        }, getAllStores());
     }
 
     private List<TaskInfo> searchTaskInfosImpl(String query, boolean limited, String queryName) {
@@ -1058,6 +1067,25 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
             }
         }
     }
+    
+    private List<NodeRef> searchNodesFromAllStores(String query, boolean limited, String queryName) {
+        List<ResultSet> resultSets = doSearches(query, limited, queryName, getAllStores());
+        try {
+            List<NodeRef> nodeRefs = new ArrayList<NodeRef>();
+            for(ResultSet resultSet : resultSets){
+                nodeRefs.addAll(resultSet.getNodeRefs());
+            }
+            return nodeRefs;
+        } finally {
+            try {
+                for(ResultSet resultSet : resultSets){                
+                    resultSet.close();
+                }
+            } catch (Exception e) {
+                // Do nothing
+            }
+        }
+    }    
 
     private <E extends Comparable<? super E>> List<E> searchGeneralImpl(String query, boolean limited, String queryName, SearchCallback<E> callback) {
         return searchGeneralImpl(query, limited, queryName, callback, null);
@@ -1117,6 +1145,15 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         }
     }
 
+    
+    private List<StoreRef> getAllStores(){
+        if(allStores == null){
+            allStores = new ArrayList<StoreRef>(2);
+            allStores.add(generalService.getStore());
+            allStores.add(generalService.getArchivalsStoreRef());
+        }
+        return allStores;
+    }
     /**
      * Sets up search parameters and queries
      * 

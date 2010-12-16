@@ -1140,6 +1140,8 @@ public class MetadataBlockBean implements Serializable {
         }
         props.put(TransientProps.CASE_LABEL_EDITABLE, caseLabel);
 
+        validateErrandAbroadDailyCatering(messages);
+        
         if (messages.size() > 0) {
             for (String message : messages) {
                 if (log.isDebugEnabled()) {
@@ -1151,6 +1153,26 @@ public class MetadataBlockBean implements Serializable {
         }
         return true;
     }
+    
+    private void validateErrandAbroadDailyCatering(List<String> messages) { 
+        if(DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType())){ 
+            QName applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD; 
+            QName errandAssocType = DocumentSpecificModel.Assocs.ERRAND_ABROAD; 
+            final List<Node> applicantNodes = document.getAllChildAssociations(applicantAssoc); 
+            for (Node applicant : applicantNodes){ 
+                final List<Node> errandNodes = errandAssocType == null ? null : applicant.getAllChildAssociations(errandAssocType); 
+                for (Node errand : errandNodes){ 
+                    @SuppressWarnings("unchecked") 
+                    List<String> cateringCounts = (List<String>) errand.getProperties().get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_CATERING_COUNT); 
+                    if(cateringCounts == null || cateringCounts.size() == 0){ 
+                        messages.add("document_errandOrderAbroad_applicant_errand_validation_mandatory_cateringExists"); 
+                        return; 
+                    } 
+                } 
+            } 
+        } 
+    } 
+
 
     public void cancel() {
         if (!inEditMode) {

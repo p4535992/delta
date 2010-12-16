@@ -61,7 +61,6 @@
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="fileService" ref="FileService" />
       <property name="mimetypeService" ref="MimetypeService" />
-      <property name="namespaceService" ref="NamespaceService" />
    </bean>
 
    <bean id="ImapServiceExt" class="org.springframework.aop.framework.ProxyFactoryBean">

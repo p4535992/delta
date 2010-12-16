@@ -67,7 +67,7 @@
    
    <h:form acceptcharset="UTF-8" id="loggedOutForm" >
    <div id="login-container">
-            <h:graphicImage url="/images/logo/logo.png" alt="#{ApplicationService.projectTitle}" title="#{ApplicationService.projectTitle}" />
+            <h:graphicImage url="/images/logo/logo.png" alt="#{ApplicationService.headerText}" title="#{ApplicationService.headerText}" />
              
             <%
                if (session.getAttribute(SimpleAuthenticationFilter.AUTHENTICATION_EXCEPTION) != null) {

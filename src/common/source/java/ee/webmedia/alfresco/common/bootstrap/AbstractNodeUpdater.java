@@ -134,15 +134,26 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
 
     protected Set<NodeRef> loadNodesFromRepo() throws Exception {
         log.info("Loading nodes from repository");
-        ResultSet resultSet = getNodeLoadingResultSet();
-        if (resultSet == null) {
+        List<ResultSet> resultSets = getNodeLoadingResultSet();
+        if (resultSets == null || resultSets.size() == 0) {
             return null;
         }
         try {
-            log.info("Found " + resultSet.length() + " nodes from repository, loading...");
-            return new HashSet<NodeRef>(resultSet.getNodeRefs());
+            HashSet<NodeRef> nodeSet = new HashSet<NodeRef>();
+            for(ResultSet resultSet : resultSets){
+                log.info("Found " + resultSet.length() + " nodes from repository store " 
+                        + resultSet.getResultSetMetaData().getSearchParameters().getStores().get(0).getIdentifier() 
+                        + ", loading...");                
+                nodeSet.addAll(resultSet.getNodeRefs());
+            }
+            if(nodeSet.size() == 0){
+                return null;
+            }
+            return nodeSet;
         } finally {
-            resultSet.close();
+            for(ResultSet resultSet : resultSets){
+                resultSet.close();
+            }
             log.info("Loaded nodes from repository");
         }
     }
@@ -150,7 +161,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     /**
      * @return the result set of the nodes that need updating
      */
-    protected abstract ResultSet getNodeLoadingResultSet() throws Exception;
+    protected abstract List<ResultSet> getNodeLoadingResultSet() throws Exception;
 
     private class UpdateNodesBatchProgress extends BatchProgress<NodeRef> {
 

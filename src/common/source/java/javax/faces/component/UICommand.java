@@ -18,11 +18,16 @@
 */
 package javax.faces.component;
 
+import java.util.Arrays;
+import java.util.List;
+
 import javax.faces.context.FacesContext;
 import javax.faces.el.EvaluationException;
 import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.*;
+
+import org.alfresco.web.ui.common.Utils;
 
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
@@ -39,6 +44,8 @@ public class UICommand
 {
     private MethodBinding _action = null;
     private MethodBinding _actionListener = null;
+    private static List<String> disableValidationActions = Arrays.asList("#{AddFileDialog.start}", "#{DocumentQuickSearchResultsDialog.setup}"
+            , "#{DocumentDialog.searchDocsAndCases}", "#{DocumentDialog.search.setup}");
 
     public void setAction(MethodBinding action)
     {
@@ -132,8 +139,19 @@ public class UICommand
             {
                 event.setPhaseId(PhaseId.INVOKE_APPLICATION);
             }
+            if(getActionListener() != null){
+                disableRequestValidationIfNeeded(getActionListener().getExpressionString());
+            }
         }
         super.queueEvent(event);
+    }
+
+
+    private void disableRequestValidationIfNeeded(String actionExpr) {
+        if(disableValidationActions.contains(actionExpr)){
+            Utils.setRequestValidationDisabled(FacesContext.getCurrentInstance());
+        }
+        
     }
 
 
