@@ -5,6 +5,8 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Properties;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.module.ModuleService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.core.io.Resource;
@@ -117,7 +119,14 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
     @Override
     public String getHeaderText() {
         if (headerText == null) {
-            headerText = parametersService.getStringParameter(Parameters.HEADER_TEXT);
+            // When application is started and first login fails, then relogin.jsp page wants to get headerText, but no user is logged in
+            AuthenticationUtil.runAs(new RunAsWork<Object>() {
+                @Override
+                public Object doWork() throws Exception {
+                    headerText = parametersService.getStringParameter(Parameters.HEADER_TEXT);
+                    return null;
+                }
+            }, AuthenticationUtil.getSystemUserName());
         }
         return headerText;
     }
@@ -125,7 +134,13 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
     @Override
     public String getFooterText() {
         if (footerText == null) {
-            footerText = parametersService.getStringParameter(Parameters.FOOTER_TEXT);
+            AuthenticationUtil.runAs(new RunAsWork<Object>() {
+                @Override
+                public Object doWork() throws Exception {
+                    footerText = parametersService.getStringParameter(Parameters.FOOTER_TEXT);
+                    return null;
+                }
+            }, AuthenticationUtil.getSystemUserName());
         }
         return footerText;
     }

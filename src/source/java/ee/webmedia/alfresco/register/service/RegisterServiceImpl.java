@@ -145,7 +145,8 @@ public class RegisterServiceImpl implements RegisterService {
     public void resetCounter(Node register) {
         final Map<String, Object> props = register.getProperties();
         int registerId = (Integer) props.get(RegisterModel.Prop.ID);
-        jdbcTemplate.queryForInt("SELECT setval(?, ?)", getSequenceName(registerId),  DEFAULT_COUNTER_INITIAL_VALUE);
+        //"false" argument of setval ensures that next call to nextval() will return 1, not 2
+        jdbcTemplate.queryForInt("SELECT setval(?, ?, false)", getSequenceName(registerId),  DEFAULT_COUNTER_INITIAL_VALUE);
         props.put(RegisterModel.Prop.COUNTER.toString(), DEFAULT_COUNTER_INITIAL_VALUE);
     }
 

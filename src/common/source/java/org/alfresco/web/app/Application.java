@@ -810,10 +810,15 @@ public class Application
       // this makes it easy to add a locale per user support later
       Map session = context.getExternalContext().getSessionMap();
       ResourceBundle bundle = (ResourceBundle)session.get(MESSAGE_BUNDLE);
-      if (bundle == null)
+      Locale locale = (Locale)session.get(LOCALE);
+      Locale bundleLocale = null;
+      if(bundle != null){
+          bundleLocale = (Locale)bundle.getLocale();
+      }
+      if (bundle == null || (locale != null && !locale.equals(bundleLocale)))
       {
          // get Locale from language selected by each user on login
-         Locale locale = (Locale)session.get(LOCALE);
+         
          if (locale == null)
          {
             locale = Locale.getDefault();

@@ -105,6 +105,7 @@ public class MetadataBlockBean implements Serializable {
 
     private Node document;
     private boolean inEditMode;
+    private boolean isDraft;
     private DateFormat dateFormat;
     private String documentTypeName;
 
@@ -987,6 +988,7 @@ public class MetadataBlockBean implements Serializable {
     public void init(NodeRef nodeRef, boolean created) {
         this.nodeRef = nodeRef;
         this.inEditMode = created;
+        this.isDraft = created;
         propertySheet = null;
         reloadDoc();
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
@@ -1100,14 +1102,14 @@ public class MetadataBlockBean implements Serializable {
         }
 
         final List<String> messages = new ArrayList<String>(4);
-        if (DocListUnitStatus.CLOSED.equals(getFunctionsService().getFunctionByNodeRef(functionRef).getStatus())) {
+        if (isDraft && DocListUnitStatus.CLOSED.equals(getFunctionsService().getFunctionByNodeRef(functionRef).getStatus())) {
             messages.add("document_validationMsg_closed_function");
         }
-        if (DocListUnitStatus.CLOSED.equals(getSeriesService().getSeriesByNodeRef(seriesRef).getStatus())) {
+        if (isDraft && DocListUnitStatus.CLOSED.equals(getSeriesService().getSeriesByNodeRef(seriesRef).getStatus())) {
             messages.add("document_validationMsg_closed_series");
         }
         Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
-        if (DocListUnitStatus.CLOSED.equals(volume.getStatus())) {
+        if (isDraft && DocListUnitStatus.CLOSED.equals(volume.getStatus())) {
             messages.add("document_validationMsg_closed_volume");
         }
 
@@ -1335,12 +1337,14 @@ public class MetadataBlockBean implements Serializable {
 
         private Node document;
         private boolean inEditMode;
+        private boolean isDraft;
         private DateFormat dateFormat;
         private String documentTypeName;
 
         private Snapshot(MetadataBlockBean bean) {
             this.document = bean.document;
             this.inEditMode = bean.inEditMode;
+            this.isDraft = bean.isDraft;
             this.dateFormat = bean.dateFormat;
             this.documentTypeName = bean.documentTypeName;
         }
@@ -1348,6 +1352,7 @@ public class MetadataBlockBean implements Serializable {
         private void restoreState(MetadataBlockBean bean) {
             bean.document = this.document;
             bean.inEditMode = this.inEditMode;
+            bean.isDraft = this.isDraft;
             bean.dateFormat = this.dateFormat;
             bean.documentTypeName = this.documentTypeName;
         }

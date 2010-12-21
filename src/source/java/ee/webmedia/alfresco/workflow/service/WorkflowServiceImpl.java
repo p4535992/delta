@@ -953,7 +953,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         for (Workflow workflow : workflows) {
             List<Task> tasks = workflow.getTasks();
             for (Task task : tasks) {
-                if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(task.getNode().getType()) && isOwner(task)) {
+                if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(task.getNode().getType()) 
+                        && isOwner(task) && isStatus(task, Status.IN_PROGRESS)) {
                     return true;
                 }
             }
@@ -1244,19 +1245,21 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             if (isStatus(workflow, Status.NEW)) {
                 workflow.setStoppedDateTime(stoppedDateTime);
             }
-            boolean isParentWorkflow = parentWorkFlow.getNode().getNodeRef().equals(workflow.getNode().getNodeRef()) ? true : false;
+            boolean isParentWorkflow = parentWorkFlow.getNode().getNodeRef().equals(workflow.getNode().getNodeRef());
             boolean forceStopParentWorkflow = false;
             for (Task aTask : workflow.getTasks()) {
                 boolean isReviewWorkflow = aTask.getParent().getNode().getType().equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW);
                 boolean isParallelTasks = aTask.getParent().isParallelTasks();
-                boolean inProgress = isStatus(aTask, Status.IN_PROGRESS);
-                if (isStatus(aTask, Status.NEW) || (inProgress && isReviewWorkflow)) {
+                boolean isInProgress = isStatus(aTask, Status.IN_PROGRESS);
+                boolean isNew = isStatus(aTask, Status.NEW);
+                if (isNew || (isInProgress && isReviewWorkflow)) {
                     aTask.setStoppedDateTime(stoppedDateTime);
                     // We must change parallel task's statuses from in progress to stopped
-                    if(isParallelTasks && inProgress) {
+                    if(isParallelTasks && isInProgress) {
                         setStatus(queue, aTask, Status.STOPPED);
                     }
-                    if (isParentWorkflow) {
+                    //only stop parent if we have more than one task in the workflow
+                    if (isParentWorkflow && !aTask.getNode().getNodeRef().equals(task.getNode().getNodeRef())) {
                         forceStopParentWorkflow = true;
                     }
                 }

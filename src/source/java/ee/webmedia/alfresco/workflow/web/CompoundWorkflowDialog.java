@@ -362,7 +362,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                     }
                 }
                 if (!responsible && !task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
-                    if (StringUtils.equals(task.getOwnerId(), user)) {
+                    if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(task.getNode().getType())
+                        && StringUtils.equals(task.getOwnerId(), user)) {
                         return true;
                     }
                 }
