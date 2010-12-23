@@ -48,4 +48,46 @@
       </property>
    </bean>
 
+   <bean id="volumeParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="volumeParametersBootstrap" />
+      <property name="sinceVersion" value="1.9.1.33" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/volume/bootstrap/volume-parameters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.common.bootstrap.ModuleComponentDependsOnSetter">
+      <property name="source" ref="parameterRescheduledJobsBootstrap" />
+      <property name="dependsOn" ref="volumeParametersBootstrap" />
+   </bean>
+
+   <bean id="volumeAutomaticClosingTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent"
+      depends-on="volumeParametersBootstrap">
+      <property name="parameterName" value="volumeAutomaticClosingTime" />
+      <property name="parameterFormat" value="H:mm" />
+      <property name="jobDetail">
+         <bean class="org.springframework.scheduling.quartz.JobDetailBean">
+            <property name="jobClass" value="ee.webmedia.alfresco.volume.job.VolumeAutomaticClosingJob" />
+            <property name="jobDataAsMap">
+               <map>
+                  <entry key="functionsService" value-ref="FunctionsService" />
+               </map>
+            </property>
+         </bean>
+      </property>
+   </bean>
+
 </beans>

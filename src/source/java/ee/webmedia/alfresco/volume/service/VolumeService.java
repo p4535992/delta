@@ -38,6 +38,8 @@ public interface VolumeService {
 
     List<Volume> getAllValidVolumesBySeries(NodeRef seriesNodeRef, DocListUnitStatus status);
 
+    List<Volume> getAllOpenExpiredVolumesBySeries(NodeRef seriesNodeRef);
+
     Volume getVolumeByNodeRef(String volumeNodeRef);
 
     Volume getVolumeByNodeRef(NodeRef volumeRef);

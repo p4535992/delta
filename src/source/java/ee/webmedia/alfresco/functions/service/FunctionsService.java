@@ -79,6 +79,8 @@ public interface FunctionsService {
 
     long createNewYearBasedVolumes();
 
+    long closeAllOpenExpiredVolumes();
+
     /**
      * Update fields that contain documents count
      * 

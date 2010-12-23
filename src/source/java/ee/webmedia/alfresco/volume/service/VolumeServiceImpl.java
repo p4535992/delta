@@ -104,6 +104,39 @@ public class VolumeServiceImpl implements VolumeService {
     }
 
     @Override
+    public List<Volume> getAllOpenExpiredVolumesBySeries(NodeRef seriesNodeRef) {
+        List<Volume> volumes = getAllVolumesBySeries(seriesNodeRef);
+        final Calendar cal = Calendar.getInstance();
+        for (Iterator<Volume> i = volumes.iterator(); i.hasNext();) {
+            Volume volume = i.next();
+
+            if (!DocListUnitStatus.OPEN.equals(volume.getStatus())) {
+                i.remove();
+                continue;
+            }
+
+            if (volume.getValidTo() == null) {
+                log.debug("Skipping volume '" + volume.getTitle() + "', validTo is null");
+                i.remove();
+                continue;
+            }
+
+            Calendar validTo = Calendar.getInstance();
+            validTo.setTime(volume.getValidTo());
+            validTo.set(Calendar.HOUR_OF_DAY, 23);
+            validTo.set(Calendar.MINUTE, 59);
+            validTo.set(Calendar.SECOND, 59);
+            if (!cal.after(validTo)) {
+                log.debug("Skipping volume '" + volume.getTitle() + "', current date " + cal.getTime() + " is not later than volume valid to date "
+                            + validTo.getTime());
+                i.remove();
+                continue;
+            }
+        }
+        return volumes;
+    }
+
+    @Override
     public Volume getVolumeByNodeRef(String volumeNodeRef) {
         return getVolumeByNodeRef(new NodeRef(volumeNodeRef));
     }

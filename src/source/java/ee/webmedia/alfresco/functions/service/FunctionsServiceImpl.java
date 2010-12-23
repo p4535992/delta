@@ -29,7 +29,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
-import ee.webmedia.alfresco.importer.excel.service.DocumentImportServiceImpl;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
@@ -229,6 +228,24 @@ public class FunctionsServiceImpl implements FunctionsService {
             }
         }
         log.info("created copy of " + counter + " year-based volumes that were opened.");
+        return counter;
+    }
+
+    @Override
+    public long closeAllOpenExpiredVolumes() {
+        log.info("Closing all expired volumes that are opened");
+        long counter = 0;
+        for (Function function : getAllFunctions()) {
+            for (Series series : seriesService.getAllSeriesByFunction(function.getNodeRef())) {
+                for (Volume volume : volumeService.getAllOpenExpiredVolumesBySeries(series.getNode().getNodeRef())) {
+                    volumeService.closeVolume(volume);
+                    counter++;
+                    log.info("Closed volume: [" + function.getMark() + "]" + function.getTitle()
+                            + "/[" + series.getSeriesIdentifier() + "]" + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle() + ", validTo=" + volume.getValidTo());
+                }
+            }
+        }
+        log.info("Closed " + counter + " expired volumes that were opened");
         return counter;
     }
 

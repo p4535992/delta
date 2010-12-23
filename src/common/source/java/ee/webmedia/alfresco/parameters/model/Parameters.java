@@ -76,6 +76,7 @@ public enum Parameters {
     SEARCH_RESULTS_LIMIT("searchResultsLimit"),
     HEADER_TEXT("headerText"),
     FOOTER_TEXT("footerText"),
+    VOLUME_AUTOMATIC_CLOSING_TIME("volumeAutomaticClosingTime"),
     /** 
      * TK Parameters
      */
