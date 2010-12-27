@@ -27,13 +27,17 @@ public class VolumeAutomaticClosingJob implements StatefulJob {
         final FunctionsService worker = (FunctionsService) workerObj;
 
         // Run job as with systemUser privileges
-        final Long closedCount = AuthenticationUtil.runAs(new AuthenticationUtil.RunAsWork<Long>() {
-            @Override
-            public Long doWork() throws Exception {
-                return worker.closeAllOpenExpiredVolumes();
-            }
-        }, AuthenticationUtil.getSystemUserName());
-
-        if (log.isDebugEnabled())  log.debug("VolumeAutomaticClosingJob done, closedCount=" + closedCount);
+        try {
+            final Long closedCount = AuthenticationUtil.runAs(new AuthenticationUtil.RunAsWork<Long>() {
+                @Override
+                public Long doWork() throws Exception {
+                    return worker.closeAllOpenExpiredVolumes();
+                }
+            }, AuthenticationUtil.getSystemUserName());
+            if (log.isDebugEnabled())  log.debug("VolumeAutomaticClosingJob done, closedCount=" + closedCount);
+        } catch (RuntimeException e) {
+            log.error("VolumeAutomaticClosingJob failed: " + e.getMessage(), e);
+            throw e;
+        }
     }
 }

@@ -269,7 +269,12 @@ public class VolumeServiceImpl implements VolumeService {
         if (!(volumeNode instanceof TransientNode)) { // force closing all cases of given volume even if there are some cases that are still opened
             caseService.closeAllCasesByVolume(volumeNode.getNodeRef());
         }
-        saveOrUpdate(volume);
+        try {
+            saveOrUpdate(volume);
+        } catch (RuntimeException e) {
+            log.error("CloseVolume failed\n    volume=" + volume + "\n    node=" + volumeNode + "\n    exception: " + e.getMessage(), e);
+            throw e;
+        }
     }
 
     @Override
