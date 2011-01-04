@@ -168,13 +168,19 @@ public class NotificationServiceImpl implements NotificationService {
 
     @Override
     public void notifyTaskEvent(Task task) {
-        Notification notification = processNotification(task, new Notification());
-        if (notification == null) { // no need for sending out emails
-            return;
+        Notification substitutionNotification = null;
+        if (Status.IN_PROGRESS.equals(task.getStatus())) {
+            substitutionNotification = processSubstituteNewTask(task, new Notification());
         }
+        Notification notification = processNotification(task, new Notification());
         NodeRef docRef = task.getParent().getParent().getParent();
         try {
-            sendNotification(notification, docRef, setupTemplateData(task));
+            if(substitutionNotification != null){
+                sendNotification(substitutionNotification, docRef, setupTemplateData(task));
+            }
+            if (notification != null){
+                sendNotification(notification, docRef, setupTemplateData(task));
+            }
         } catch (EmailException e) {
             log.error("Workflow task event notification e-mail sending failed, ignoring and continuing", e);
         }
@@ -183,11 +189,14 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public boolean processOutgoingInformationTask(Task task) {
         Notification notification = new Notification();
+        Notification substituteNotification = new Notification();
         notification.setFailOnError(true);
+        substituteNotification.setFailOnError(true);
         notification = processNewTask(task, notification);
-
+        substituteNotification = processSubstituteNewTask(task, substituteNotification);
         NodeRef docRef = task.getParent().getParent().getParent();
         try {
+            sendNotification(substituteNotification, docRef, setupTemplateData(task));
             sendNotification(notification, docRef, setupTemplateData(task));
         } catch (Exception e) {
             log.error("Workflow task event notification e-mail sending failed, ignoring and continuing", e);
@@ -266,7 +275,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         return notification;
     }
-
+    
     private Notification processNotification(Task task, Notification notification) {
 
         if (Status.IN_PROGRESS.equals(task.getStatus())) {
@@ -318,27 +327,6 @@ public class NotificationServiceImpl implements NotificationService {
 
     private Notification processNewTask(Task task, Notification notification) {
         if (StringUtils.isNotEmpty(task.getOwnerId())) {
-            // Check for substitutes
-            List<Substitute> substitutes = substituteService.getSubstitutes(userService.getUser(task.getOwnerId()).getNodeRef());
-            if (substitutes.size() > 0) {
-                if (!(task.getDueDate() == null && WorkflowSpecificModel.Types.INFORMATION_TASK.equals(task.getNode().getType()))) {
-                    int daysForSubstitutionTasksCalc = (int) (parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC) * 1);
-                    Calendar calendar = Calendar.getInstance();
-                    for (Substitute sub : substitutes) {
-                        calendar.setTime(sub.getSubstitutionEndDate());
-                        calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
-                        if (task.getDueDate() == null) {
-                            log.error("Duedate is null for task: " + task);
-                        }
-                        if (sub.getSubstitutionStartDate().before(task.getDueDate()) && calendar.getTime().after(task.getDueDate())) {
-                            notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
-                        }
-                    }
-                    notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 2);
-                }
-                return notification;
-            }
-
             // Send to system user
             if (!isSubscribed(task.getOwnerId(), NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION)) {
                 return null;
@@ -355,6 +343,35 @@ public class NotificationServiceImpl implements NotificationService {
         notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
         return notification;
 
+    }
+
+    public Notification processSubstituteNewTask(Task task, Notification notification) {
+        if (StringUtils.isNotEmpty(task.getOwnerId())) {
+            List<Substitute> substitutes = substituteService.getSubstitutes(userService.getUser(task.getOwnerId()).getNodeRef());
+            if (substitutes.size() > 0) {
+                if (!(task.getDueDate() == null && WorkflowSpecificModel.Types.INFORMATION_TASK.equals(task.getNode().getType()))) {
+                    int daysForSubstitutionTasksCalc = (int) (parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC) * 1);
+                    Calendar calendar = Calendar.getInstance();
+                    for (Substitute sub : substitutes) {
+                        calendar.setTime(sub.getSubstitutionEndDate());
+                        calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
+                        if (task.getDueDate() == null) {
+                            log.error("Duedate is null for task: " + task);
+                        }
+                        if (sub.getSubstitutionStartDate().before(task.getDueDate()) && calendar.getTime().after(task.getDueDate())) {
+                            notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
+                        }
+                    }
+                    if(notification.getToNames() != null && notification.getToNames().size() > 0){
+                        notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 2);
+                    }
+                    else{
+                        return null;
+                    }
+                }
+            }
+        }
+        return notification;
     }
 
     /**

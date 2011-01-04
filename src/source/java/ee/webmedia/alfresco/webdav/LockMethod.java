@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.webdav.WebDAV;
+import org.alfresco.repo.webdav.WebDAVMethod;
 import org.alfresco.repo.webdav.WebDAVServerException;
 import org.alfresco.service.cmr.lock.LockService;
 import org.alfresco.service.cmr.lock.LockStatus;
@@ -48,8 +49,116 @@ import org.dom4j.io.XMLWriter;
  * 
  * @author gavinc
  */
-public class LockMethod extends org.alfresco.repo.webdav.LockMethod
+public class LockMethod extends WebDAVMethod
 {
+    private String m_strLockToken = null;
+    //timeout duration in seconds
+    private static final int m_timeoutDuration = 180;
+    private int m_requestTimeoutDuration;
+
+    /**
+     * Default constructor
+     */
+    public LockMethod(){
+    }
+
+    /**
+     * Check if the lock token is valid
+     * 
+     * @return boolean
+     */
+    protected final boolean hasLockToken(){
+        return m_strLockToken != null ? true : false;
+    }
+
+    /**
+     * Return the lock token of an existing lock
+     * 
+     * @return String
+     */
+    protected final String getLockToken()
+    {
+        return m_strLockToken;
+    }
+
+    /**
+     * Return the lock timeout, in minutes
+     * 
+     * @return int
+     */
+    protected final int getLockTimeout()
+    {
+        return m_timeoutDuration;
+    }
+
+    /**
+     * Parse the request headers
+     * 
+     * @exception WebDAVServerException
+     */
+    protected void parseRequestHeaders() throws WebDAVServerException
+    {
+        // Get the lock token, if any
+
+        m_strLockToken = parseIfHeader();
+
+        // Get the lock timeout value
+
+        String strTimeout = m_request.getHeader(WebDAV.HEADER_TIMEOUT);
+
+        // If the timeout header starts with anything other than Second
+        // leave the timeout as the default
+
+        if (strTimeout != null && strTimeout.startsWith(WebDAV.SECOND))
+        {
+            try
+            {
+                // Some clients send header as Second-180 Seconds so we need to
+                // look for the space
+
+                int idx = strTimeout.indexOf(" ");
+
+                if (idx != -1)
+                {
+                    // Get the bit after Second- and before the space
+
+                    strTimeout = strTimeout.substring(WebDAV.SECOND.length(), idx);
+                }
+                else
+                {
+                    // The string must be in the correct format
+
+                    strTimeout = strTimeout.substring(WebDAV.SECOND.length());
+                }
+                m_requestTimeoutDuration = Integer.parseInt(strTimeout);
+            }
+            catch (Exception e)
+            {
+                // Warn about the parse failure and leave the timeout as the
+                // default
+
+                logger.warn("Failed to parse Timeout header: " + strTimeout);
+            }
+        }
+
+        // DEBUG
+
+        if (logger.isDebugEnabled())
+            logger.debug("Lock lockToken=" + getLockToken() + ", request timeout=" + m_requestTimeoutDuration
+                    + ", user-agent=" + m_request.getHeader(WebDAV.HEADER_USER_AGENT));
+    }
+
+    /**
+     * Parse the request body
+     * 
+     * @exception WebDAVServerException
+     */
+    protected void parseRequestBody() throws WebDAVServerException
+    {
+        // NOTE: There is a body for lock requests which contain the
+        // type of lock to apply and the lock owner but we will
+        // ignore these settings so don't bother reading the body
+    }    
 
     @Override
     protected void executeImpl() throws WebDAVServerException, Exception

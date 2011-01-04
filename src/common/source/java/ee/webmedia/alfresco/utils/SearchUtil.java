@@ -203,13 +203,17 @@ public class SearchUtil {
     }
 
     public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean escape) {
+        return generatePropertyWildcardQuery(documentPropName, value, escape, true, true);
+    }
+
+    public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean escape, boolean leftWildcard, boolean rightWildcard) {
         if (StringUtils.isBlank(value)) {
             return null;
         }
         if (escape) {
             value = QueryParser.escape(stripCustom(value));
         }
-        return "@" + Repository.escapeQName(documentPropName) + ":\"*" + value + "*\"";
+        return "@" + Repository.escapeQName(documentPropName) + ":\"" + (leftWildcard ? "*" : "") + value + (rightWildcard ? "*" : "") + "\"";
     }
 
     public static String generatePropertyDateQuery(QName documentPropName, Date date) {

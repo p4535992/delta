@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.type.service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -32,21 +33,28 @@ public class DocumentTypeMenuItemProcessor implements MenuItemProcessor, Initial
     @Override
     public void doWithMenuItem(MenuItem menuItem) {
         List<DocumentType> allDocumentTypes = documentTypeService.getAllDocumentTypes();
-        traverse(menuItem.getSubItems(), allDocumentTypes);
+        traverse(menuItem, allDocumentTypes);
     }
 
-    private void traverse(List<MenuItem> items, List<DocumentType> allDocumentTypes) {
+    private void traverse(MenuItem menuItem, List<DocumentType> allDocumentTypes) {
+        List<MenuItem> items = menuItem.getSubItems();
         if (items == null) {
             return;
         }
+        List<MenuItem> emptyItems = new ArrayList<MenuItem>();
         for (Iterator<MenuItem> i = items.iterator(); i.hasNext();) {
             MenuItem item = i.next();
             if (StringUtils.isNotEmpty(item.getOutcome()) && !process(item, allDocumentTypes)) {
                 i.remove();
             } else {
-                traverse(item.getSubItems(), allDocumentTypes);
+                traverse(item, allDocumentTypes);
+                //if submenu is emty, remove menu item
+                if(StringUtils.isEmpty(item.getOutcome()) && (item.getSubItems() == null || item.getSubItems().size() == 0)){
+                    emptyItems.add(item);
+                }
             }
         }
+        items.removeAll(emptyItems);
     }
 
     private boolean process(MenuItem item, List<DocumentType> allDocumentTypes) {

@@ -17,18 +17,20 @@ import java.util.Set;
 import org.alfresco.repo.module.AbstractModuleComponent;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
-import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.lang.time.FastDateFormat;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
 public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
-    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AbstractNodeUpdater.class);
+    protected final Log log = LogFactory.getLog(getClass());
 
     protected static final int BATCH_SIZE = 50;
     protected static final char CSV_SEPARATOR = ';';

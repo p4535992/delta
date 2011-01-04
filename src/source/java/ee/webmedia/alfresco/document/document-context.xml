@@ -264,4 +264,16 @@ DaoAuthenticationProvider.authenticate()
       <property name="enabled" value="${searchablePropertiesUpdater.enabled}" />
    </bean>    
 
+   <!-- Used to fix mimetype on digidoc files (CL task 122959) -->
+   <bean id="ddocMimeTypeUpdater" class="ee.webmedia.alfresco.document.bootstrap.DdocMimeTypeUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="ddocMimeTypeUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="searchService" ref="searchService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="generalService" ref="generalService" />
+      <property name="mimetypeService" ref="mimetypeService" />
+   </bean>    
+
 </beans>

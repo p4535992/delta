@@ -41,7 +41,6 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.GUID;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -189,43 +188,21 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         String contentTypeString = part.getContentType();
         try {
             ContentType contentType = new ContentType(contentTypeString);
-            String mimetype = StringUtils.lowerCase(contentType.getBaseType());
-            if (MimetypeMap.MIMETYPE_BINARY.equals(mimetype) /* || !mimetypeService.getExtensionsByMimetype().containsKey(mimetype) */) {
-                // digidoc files come from outlook with binary content-type
-                String oldMimetype = mimetype;
-                mimetype = mimetypeService.guessMimetype(part.getFileName());
-                if (log.isDebugEnabled() && !StringUtils.equals(oldMimetype, mimetype)) {
-                    log.debug("Original mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '" + part.getFileName() + "' => '"
-                            + mimetype + "'");
-                }
-            } else {
-                mimeType = contentType.getBaseType();
-            }
+            mimeType = StringUtils.lowerCase(contentType.getBaseType());
         } catch (ParseException e) {
             log.warn("Error parsing contentType '" + contentTypeString + "'", e);
         }
-        if (StringUtils.isBlank(mimeType)) {
-            log.debug("MimeType is blank");
-            if (overrideFilename != null) {
-                mimeType = MimetypeMap.MIMETYPE_BINARY;
-            } else {
-                String filename = part.getFileName();
-                if (filename != null) {
-                    String extension = FilenameUtils.getExtension(filename);
-                    if (StringUtils.isNotBlank(extension)) {
-                        mimeType = mimetypeService.getMimetypesByExtension().get(extension.toLowerCase());
-                        if (mimeType == null) {
-                            mimeType = MimetypeMap.MIMETYPE_BINARY;
-                        } else {
-                            log.debug("Guessed mimeType '" + mimeType + "' based on filename '" + filename + "'");
-                        }
-                    } else {
-                        mimeType = MimetypeMap.MIMETYPE_BINARY;
-                    }
-                } else {
-                    mimeType = MimetypeMap.MIMETYPE_BINARY;
-                }
+        if (overrideFilename == null) {
+            // Always ignore user-provided mime-type
+            String oldMimetype = mimeType;
+            mimeType = mimetypeService.guessMimetype(part.getFileName());
+            if (log.isDebugEnabled() && !StringUtils.equals(oldMimetype, mimeType)) {
+                log.debug("Original mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '" + part.getFileName() + "' => '"
+                            + mimeType + "'");
             }
+        } else if (StringUtils.isBlank(mimeType)) {
+            // If mime-type parsing from contentType failed and overrideFilename is used, then use binary mime type
+            mimeType = MimetypeMap.MIMETYPE_BINARY;
         }
 
         String filename;

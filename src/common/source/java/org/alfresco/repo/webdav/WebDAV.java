@@ -113,6 +113,7 @@ public class WebDAV
     public static final String HEADER_OVERWRITE = "Overwrite";
     public static final String HEADER_RANGE = "Range";
     public static final String HEADER_TIMEOUT = "Timeout";
+    public static final String HEADER_USER_AGENT = "User-agent";
 
     // If-Modified/If-Unmodified date format
     

@@ -203,7 +203,11 @@ public class VolumeServiceImpl implements VolumeService {
             final Date baseValidFrom = baseVolume.getValidFrom();
             final Date baseValidTo = baseVolume.getValidTo();
             final Date baseDispositionDate = baseVolume.getDispositionDate();
-            volume.setValidFrom(DateUtils.addYears(baseValidFrom, 1));
+            Date newValidFrom = DateUtils.addYears(baseValidFrom, 1);
+            newValidFrom = DateUtils.setMonths(newValidFrom, 0);
+            newValidFrom = DateUtils.setDays(newValidFrom, 1);
+            volume.setValidFrom(newValidFrom);
+            
             if (baseValidTo != null) {
                 volume.setValidTo(DateUtils.addYears(baseValidTo, 1));
             }

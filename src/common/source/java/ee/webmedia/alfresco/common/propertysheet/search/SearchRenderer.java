@@ -157,9 +157,13 @@ public class SearchRenderer extends BaseRenderer {
             out.write("<tr><td>");
             setInputStyleClass(child, search);
             Utils.encodeRecursive(context, child);
-            out.write("</td><td>");
-            renderRemoveLink(context, out, search, i);
-            out.write("</td></tr>");
+            out.write("</td>");
+            if (isRemoveLinkRendered(search)) {
+                out.write("<td>");
+                renderRemoveLink(context, out, search, i);
+                out.write("</td>");
+            }
+            out.write("</tr>");
 
         }
         out.write("</tbody></table>");

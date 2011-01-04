@@ -260,16 +260,18 @@ public class MenuRenderer extends BaseRenderer {
     private UIComponent removeTooltipRecursive(UIComponent menuItem) {
         UIActionLink al;
 
-        if (menuItem instanceof MenuItemWrapper && menuItem.getChildCount() > 0) {
-            @SuppressWarnings("unchecked")
-            final List<UIComponent> childList = menuItem.getChildren();
-            if (childList.get(0) instanceof UIActionLink) {
-                al = (UIActionLink) childList.get(0);
-                al.setTooltip("");
-            }
-            int children = menuItem.getChildCount();
-            for (int i = 0; i < children; i++) {
-                removeTooltipRecursive(childList.get(i));
+        if (menuItem instanceof MenuItemWrapper) {
+            if(menuItem.getChildCount() > 0){
+                @SuppressWarnings("unchecked")
+                final List<UIComponent> childList = menuItem.getChildren();
+                if (childList.get(0) instanceof UIActionLink) {
+                    al = (UIActionLink) childList.get(0);
+                    al.setTooltip("");
+                }
+                int children = menuItem.getChildCount();
+                for (int i = 0; i < children; i++) {
+                    removeTooltipRecursive(childList.get(i));
+                }
             }
         } else if (menuItem instanceof UIActionLink) {
             al = (UIActionLink) menuItem;
