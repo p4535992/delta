@@ -1,7 +1,11 @@
 package ee.webmedia.alfresco.document.bootstrap;
 
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,23 +19,34 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
- * Fixes mimeType on DigiDoc files (CL task 122959)
+ * Fixes mimeType on files (CL task 122959)
  * 
  * @author Alar Kvell
  */
-public class DdocMimeTypeUpdater extends AbstractNodeUpdater {
+public class FileMimeTypeUpdater extends AbstractNodeUpdater {
 
     private BehaviourFilter behaviourFilter;
     private SearchService searchService;
     private NodeService nodeService;
     private GeneralService generalService;
     private MimetypeService mimetypeService;
+    private Date beginDate;
+
+    @Override
+    protected void executeInternal() throws Throwable {
+        if (beginDate == null) {
+            log.debug("Skipping fileMimeType update, begin date is blank");
+            return;
+        }
+        super.executeInternal();
+    }
 
     @Override
     protected void doAfterTransactionBegin() {
@@ -40,10 +55,9 @@ public class DdocMimeTypeUpdater extends AbstractNodeUpdater {
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
-        // TYPE:"cm:content" AND @cm\:name:"*.ddoc"
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(SearchUtil.generateTypeQuery(ContentModel.TYPE_CONTENT));
-        queryParts.add(SearchUtil.generatePropertyWildcardQuery(ContentModel.PROP_NAME, ".ddoc", true, true, false));
+        queryParts.add(SearchUtil.generateDatePropertyRangeQuery(beginDate, null, ContentModel.PROP_CREATED));
         String query = SearchUtil.joinQueryPartsAnd(queryParts);
         List<ResultSet> result = new ArrayList<ResultSet>(2);
         result.add(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));
@@ -54,18 +68,22 @@ public class DdocMimeTypeUpdater extends AbstractNodeUpdater {
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
         if (!nodeService.exists(nodeRef)) {
-            return null;
+            return new String[] { nodeRef.toString(), "0" };
         }
         Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);
         String name = (String) origProps.get(ContentModel.PROP_NAME);
-        if (name == null || !name.toLowerCase().endsWith(".ddoc")) {
-            return null;
+        if (StringUtils.isEmpty(name)) {
+            return new String[] { nodeRef.toString(), "1" };
         }
         String correctMimeType = mimetypeService.guessMimetype(name);
 
         ContentData oldContent = (ContentData) origProps.get(ContentModel.PROP_CONTENT);
-        if (oldContent == null || correctMimeType.equals(oldContent.getMimetype())) {
-            return null;
+        if (oldContent == null) {
+            return new String[] { nodeRef.toString(), "2", name };
+        }
+        if (correctMimeType.equals(oldContent.getMimetype())) {
+            return new String[] { nodeRef.toString(), "3", name, oldContent.getMimetype(), oldContent.getMimetype(), oldContent.getEncoding(),
+                    Long.toString(oldContent.getSize()), oldContent.getContentUrl() };
         }
         ContentData newContent = ContentData.setMimetype(oldContent, correctMimeType);
 
@@ -75,7 +93,7 @@ public class DdocMimeTypeUpdater extends AbstractNodeUpdater {
         setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
         nodeService.addProperties(nodeRef, setProps);
 
-        return new String[] { nodeRef.toString(), name, oldContent.getMimetype(), newContent.getMimetype(), newContent.getEncoding(),
+        return new String[] { nodeRef.toString(), "4", name, oldContent.getMimetype(), newContent.getMimetype(), newContent.getEncoding(),
                 Long.toString(newContent.getSize()), newContent.getContentUrl() };
     }
 
@@ -97,6 +115,18 @@ public class DdocMimeTypeUpdater extends AbstractNodeUpdater {
 
     public void setMimetypeService(MimetypeService mimetypeService) {
         this.mimetypeService = mimetypeService;
+    }
+
+    public void setBeginDate(String beginDate) {
+        if (StringUtils.isNotBlank(beginDate)) {
+            DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+            dateFormat.setLenient(false);
+            try {
+                this.beginDate = dateFormat.parse(beginDate);
+            } catch (ParseException e) {
+                throw new RuntimeException("Parsing configuration property fileMimeTypeUpdater.begin.date value failed: " + e.getMessage(), e);
+            }
+        }
     }
 
 }

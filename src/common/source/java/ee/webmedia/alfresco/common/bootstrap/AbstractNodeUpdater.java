@@ -17,11 +17,10 @@ import java.util.Set;
 import org.alfresco.repo.module.AbstractModuleComponent;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
-import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -37,8 +36,6 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     protected static Charset CSV_CHARSET = Charset.forName("UTF-8");
     protected static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
-    private TransactionService transactionService;
-
     private File inputFolder;
     private Set<NodeRef> nodes = new HashSet<NodeRef>();
     private Set<NodeRef> completedNodes = new HashSet<NodeRef>();
@@ -47,15 +44,6 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
 
     public void setInputFolderPath(String inputFolderPath) {
         this.inputFolder = new File(inputFolderPath);
-    }
-
-    public void setTransactionService(TransactionService transactionService) {
-        this.transactionService = transactionService;
-    }
-    
-    public TransactionService getTransactionService() {
-        if(transactionService == null) transactionService = serviceRegistry.getTransactionService();
-        return transactionService;
     }
 
     @Override
@@ -79,12 +67,12 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         } else {
             completedNodes = new HashSet<NodeRef>();
         }
-        log.info("Updating properties of " + nodes.size() + " nodes");
+        log.info("Starting to update " + nodes.size() + " nodes");
         if (nodes.size() > 0) {
             UpdateNodesBatchProgress batchProgress = new UpdateNodesBatchProgress();
             batchProgress.run();
         }
-        log.info("Completed document properties updater");
+        log.info("Completed nodes updater");
     }
 
     protected String getNodesCsvFileName() {
@@ -135,28 +123,28 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     }
 
     protected Set<NodeRef> loadNodesFromRepo() throws Exception {
-        log.info("Loading nodes from repository");
+        log.info("Searching nodes from repository");
         List<ResultSet> resultSets = getNodeLoadingResultSet();
         if (resultSets == null || resultSets.size() == 0) {
             return null;
         }
+        Set<NodeRef> nodeSet = new HashSet<NodeRef>();
         try {
-            HashSet<NodeRef> nodeSet = new HashSet<NodeRef>();
-            for(ResultSet resultSet : resultSets){
-                log.info("Found " + resultSet.length() + " nodes from repository store " 
-                        + resultSet.getResultSetMetaData().getSearchParameters().getStores().get(0).getIdentifier() 
-                        + ", loading...");                
+            for (ResultSet resultSet : resultSets) {
+                log.info("Found " + resultSet.length() + " nodes from repository store "
+                        + resultSet.getResultSetMetaData().getSearchParameters().getStores().get(0).getIdentifier()
+                        + ", loading...");
                 nodeSet.addAll(resultSet.getNodeRefs());
             }
-            if(nodeSet.size() == 0){
+            if (nodeSet.size() == 0) {
                 return null;
             }
             return nodeSet;
         } finally {
-            for(ResultSet resultSet : resultSets){
+            for (ResultSet resultSet : resultSets) {
                 resultSet.close();
             }
-            log.info("Loaded nodes from repository");
+            log.info("Loaded total " + nodeSet.size() + " nodes from repository");
         }
     }
 
@@ -183,7 +171,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         final List<String[]> batchInfo = new ArrayList<String[]>(BATCH_SIZE);
         for (NodeRef nodeRef : batchList) {
             String[] info = updateNode(nodeRef);
-            if(info != null){
+            if (info != null) {
                 batchInfo.add(info);
             }
         }
@@ -205,12 +193,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     }
 
     /**
-     * 
      * @param nodeRef nodeRef to be updated
      * @return array of strings to be written into the completed nodes file
      * @throws Exception
-     * 
-     * NB! first check if the node exists
+     *             NB! first check if the node exists
      */
     protected abstract String[] updateNode(NodeRef nodeRef) throws Exception;
 
@@ -266,7 +252,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
             double completedPercent = completedSize * 100 / ((double) totalSize);
             double lastDocsPerSec = i * 1000 / ((double) (endTime - startTime));
             double totalDocsPerSec = thisRunCompletedSize * 1000 / ((double) (endTime - thisRunStartTime));
-            int etaMinutes = (int) (((long)(totalSize - completedSize)) * (endTime - thisRunStartTime) / (long)(thisRunCompletedSize * 60000));
+            int etaMinutes = (int) (((long) (totalSize - completedSize)) * (endTime - thisRunStartTime) / (long) (thisRunCompletedSize * 60000));
             i = 0;
             log.info(String.format("%s: %6.2f%% completed - %7d of %7d, %5.1f docs per second (last), %5.1f (total), ETA %d min", processName,
                     completedPercent, completedSize, totalSize, lastDocsPerSec, totalDocsPerSec, etaMinutes));
@@ -338,7 +324,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     private RetryingTransactionHelper getTransactionHelper() {
         RetryingTransactionHelper helper = new RetryingTransactionHelper();
         helper.setMaxRetries(1);
-        helper.setTransactionService(getTransactionService());
+        helper.setTransactionService(serviceRegistry.getTransactionService());
         return helper;
     }
 
