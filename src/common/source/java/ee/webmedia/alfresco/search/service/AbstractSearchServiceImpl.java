@@ -1,17 +1,8 @@
 package ee.webmedia.alfresco.search.service;
 
-/*
 import static ee.webmedia.alfresco.utils.SearchUtil.formatLuceneDate;
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.isBlank;
-import static ee.webmedia.alfresco.utils.SearchUtil.isDateProperty;
-import static ee.webmedia.alfresco.utils.SearchUtil.isStringProperty;
-import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
-import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.io.StringReader;
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -20,33 +11,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.search.MLAnalysisMode;
-import org.alfresco.repo.search.impl.SearchStatistics;
-import org.alfresco.repo.search.impl.SearchStatistics.Data;
 import org.alfresco.repo.search.impl.lucene.AnalysisMode;
 import org.alfresco.repo.search.impl.lucene.LuceneAnalyser;
 import org.alfresco.repo.search.impl.lucene.LuceneConfig;
 import org.alfresco.repo.search.impl.lucene.analysis.MLTokenDuplicator;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
-import org.alfresco.service.cmr.dictionary.PropertyDefinition;
-import org.alfresco.service.cmr.repository.InvalidNodeRefException;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.cmr.search.LimitBy;
-import org.alfresco.service.cmr.search.ResultSet;
-import org.alfresco.service.cmr.search.ResultSetRow;
-import org.alfresco.service.cmr.search.SearchParameters;
-import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
@@ -54,58 +30,84 @@ import org.apache.lucene.analysis.Token;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.queryParser.QueryParser;
 
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.SearchUtil;
-*/
 
 public abstract class AbstractSearchServiceImpl {
-/*
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AbstractSearchServiceImpl.class);
 
-    protected SearchService searchService;
-    protected NodeService nodeService;
     protected DictionaryService dictionaryService;
-    protected GeneralService generalService;
-    protected ParametersService parametersService;
     protected LuceneConfig config;
     
     protected LuceneAnalyser luceneAnalyser;
 
-    protected Pair<String, String> generateQuickSearchQuery(String searchString, List<String> typeParts, Set<QName> documentProps) {
-        Pair<List<String>, String> pair = parseQuickSearchWords(searchString);
-        List<String> searchWords = pair.getFirst();
-        log.info("Quick search - words: " + searchWords.toString() + ", from string '" + searchString + "'");
-        if (searchWords.isEmpty()) {
-            return null;
-        }
-        String query = generateDocumentSearchQuery(generateQuickSearchDocumentQuery(searchWords, documentProps), typeParts);
-        return new Pair<String, String>(pair.getSecond(), query);
+    public String generateStringWordsWildcardQuery(String value, QName ... documentPropNames) {
+        return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value), documentPropNames);
     }
 
-    private Pair<List<String>, String> parseQuickSearchWords(String searchString) {
+    public String generateMultiStringWordsWildcardQuery(List<String> values, QName ... documentPropNames) {
+        if (values == null || values.isEmpty()) {
+            return null;
+        }
+        
+        List<String> queryParts = new ArrayList<String>(values.size());
+        for (String value : values) {
+            queryParts.add(generateStringWordsWildcardQuery(value, documentPropNames));
+        }
+        return SearchUtil.joinQueryPartsOr(queryParts);
+    }
+
+    /**
+     * Escape symbols and use only 10 first unique words which contain at least 3 characters
+     */
+    public List<String> parseQuickSearchWords(String searchString) {
+        return parseQuickSearchWords(searchString, false).getFirst();
+    }
+
+    protected Pair<List<String>, List<Date>> parseQuickSearchWordsAndDates(String searchString) {
+        return parseQuickSearchWords(searchString, true);
+    }
+
+    private Pair<List<String>, List<Date>> parseQuickSearchWords(String searchString, boolean parseDates) {
+        DateFormat userDateFormat = new SimpleDateFormat("dd.MM.yyyy");
+        userDateFormat.setLenient(false);
+
         List<String> searchWords = new ArrayList<String>();
-        String searchWordsHumanReadable = "";
+        List<Date> searchDates = new ArrayList<Date>();
         if (StringUtils.isBlank(searchString)) {
-            return new Pair<List<String>, String>(searchWords, searchWordsHumanReadable);
+            return new Pair<List<String>, List<Date>>(searchWords, searchDates);
         }
         for (String searchWord : searchString.split("\\s")) {
+            if (parseDates) {
+                Date date = null;
+                try {
+                    date = userDateFormat.parse(searchWord);
+                    // if not date, then ParseException is thrown and processing continues below as regular word
+    
+                    if (searchWords.size() + searchDates.size() >= 10) {
+                        continue;
+                    }
+                    if (log.isDebugEnabled()) {
+                        log.debug("getDocumentsQuickSearch - found date match: " + searchWord + " -> " + formatLuceneDate(date));
+                    }
+    
+                    boolean exists = false;
+                    for (Date tmpDate : searchDates) {
+                        exists |= tmpDate.equals(date);
+                    }
+                    if (!exists) {
+                        searchDates.add(date);
+                    }
+                    continue;
+                } catch (ParseException e) {
+                    // do nothing
+                }
+            }
+
             String searchWordStripped = SearchUtil.stripCustom(SearchUtil.replaceCustom(searchWord, ""));
             for (Token token : getTokens(searchWordStripped)) {
                 String termText = token.term();
-                if (termText.length() >= 3 && searchWords.size() < 3) {
-                    String termTextHumanReadable = termText;
+                if (termText.length() >= 3 && searchWords.size() + searchDates.size() < 10) {
                     termText = QueryParser.escape(termText);
-                    if (searchWord.startsWith("*")) {
-                        termText = "*" + termText;
-                        termTextHumanReadable = "*" + termTextHumanReadable;
-                    }
-                    if (searchWord.endsWith("*")) {
-                        termText = termText + "*";
-                        termTextHumanReadable = termTextHumanReadable + "*";
-                    }
 
                     boolean exists = false;
                     for (String tmpWord : searchWords) {
@@ -113,225 +115,15 @@ public abstract class AbstractSearchServiceImpl {
                     }
                     if (!exists) {
                         searchWords.add(termText);
-                        if (searchWordsHumanReadable.length() == 0) {
-                            searchWordsHumanReadable = termTextHumanReadable;
-                        } else {
-                            searchWordsHumanReadable += " " + termTextHumanReadable;
-                        }
                     }
                 }
             }
         }
-        return new Pair<List<String>, String>(searchWords, searchWordsHumanReadable);
-    }
-
-    protected String generateDocumentSearchQuery(List<String> queryParts, List<String> typeParts) {
-        if (isBlank(queryParts)) {
-            return null;
-        }
-
-        typeParts.addAll(queryParts);
-        return joinQueryPartsAnd(typeParts);
-    }
-
-    protected List<String> generateQuickSearchDocumentQuery(List<String> searchWords, Set<QName> documentProps) {
-        // Fetch a list of all the properties from document type and it's subtypes.
-        List<QName> searchProperties = new ArrayList<QName>(50);
-        List<QName> searchPropertiesDate = new ArrayList<QName>();
-        addDocumentProperties(documentProps, searchProperties, searchPropertiesDate);
-        return generateQuery(searchWords, searchProperties, searchPropertiesDate);
-    }
-
-    protected List<String> generateQuery(List<String> searchWords, List<QName> searchProperties, List<QName> searchPropertiesDate) {
-*/
-        /*
-         * Construct a query with following structure:
-         * ASPECT:searchable AND (
-         * (TYPE:document AND (@prop1:"*word1*" OR @prop2:"*word1*") AND (@prop1:"*word2*" OR @prop2:"*word2*")) OR
-         * (ASPECT:file AND (@name:"*word1*" OR @content:"*word1*") AND (@name:"*word2*" OR @content:"*word2*"))
-         * )
-         * Note: Property values must be wrapped with " symbols. Alfresco LuceneQueryParser somehow produces different
-         * results (something to do with multi-language fields, et locale and ALL locales). It doesn't replace non latin-1
-         * characters with latin-1 characters if the values are without wrapping " symbols and this breaks searches with estonian
-         * special characters because Alfresco indexed them with ISOLatin1AccentFilter.
-         */
-/*
-        // TODO: format should probably be read from bundle
-        DateFormat userDateFormat = new SimpleDateFormat("dd.MM.yyyy");
-        userDateFormat.setLenient(false);
-
-        List<String> wordQueries = new ArrayList<String>(10);
-        for (String searchWord : searchWords) {
-            if (StringUtils.isNotBlank(searchWord)) {
-                List<String> propQueries = new ArrayList<String>(searchProperties.size() + searchPropertiesDate.size());
-
-                for (QName property : searchProperties) {
-                    propQueries.add(generatePropertyExactQuery(property, searchWord, false));
-                }
-                Date date = null;
-                try {
-                    date = userDateFormat.parse(searchWord);
-                } catch (ParseException e) {
-                    // do nothing
-                }
-                // if it's a date match, then also add date properties
-                if (date != null) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("getDocumentsQuickSearch - found date match: " + searchWord + " -> " + formatLuceneDate(date));
-                    }
-                    for (QName property : searchPropertiesDate) {
-                        propQueries.add(generatePropertyDateQuery(property, date));
-                    }
-                }
-                wordQueries.add(joinQueryPartsOr(propQueries, false));
-            }
-        }
-        return wordQueries;
-    }
-
-    protected void addDocumentProperties(Set<QName> props, List<QName> searchProperties, List<QName> searchPropertiesDate) {
-        for (QName property : props) {
-            PropertyDefinition propDef = dictionaryService.getProperty(property);
-            QName type = propDef.getDataType().getName();
-            if (isStringProperty(type)) {
-                searchProperties.add(property);
-            } else if (isDateProperty(type)) {
-                searchPropertiesDate.add(property);
-            }
-        }
-    }
-
-    protected List<NodeRef> searchNodeRefs(String query, boolean limited) {
-        ResultSet resultSet = doSearch(query, limited);
-        try {
-            return resultSet.getNodeRefs();
-        } finally {
-            try {
-                resultSet.close();
-            } catch (Exception e) {
-                // Do nothing
-            }
-        }
-    }
-
-    protected Pair<List<WmNode>, Boolean> searchNodes(String query, boolean limited) {
-        if (StringUtils.isEmpty(query)) {
-            return new Pair<List<WmNode>,Boolean>(new ArrayList<WmNode>(),Boolean.FALSE);
-        }
-        boolean statisticsEnabled = SearchStatistics.isEnabled();
-        long time0 = statisticsEnabled ? System.currentTimeMillis() : 0;
-        long time1 = 0, time2 = 0, time3 = 0;
-        List<WmNode> results = null;
-        ResultSet resultSet = doSearch(query, limited);
-
-        try {
-            time1 = statisticsEnabled ? System.currentTimeMillis() : 0;
-            Map<NodeRef, QName> types = new HashMap<NodeRef, QName>(resultSet.length());
-            for (ResultSetRow row : resultSet) {
-                NodeRef nodeRef = row.getNodeRef();
-                try {
-                    types.put(nodeRef, nodeService.getType(nodeRef));
-                } catch (InvalidNodeRefException e) {
-                    continue;
-                }
-            }
-        
-            time2 = statisticsEnabled ? System.currentTimeMillis() : 0;
-            results = new ArrayList<WmNode>(resultSet.length());
-            for (ResultSetRow row : resultSet) {
-                NodeRef nodeRef = row.getNodeRef();
-                QName type = types.get(nodeRef);
-                if (type == null) {
-                    continue;
-                }
-
-                Map<String, Serializable> props = row.getValues();
-                // Getting node properties from lucene resultset is faster than from DB
-                // Erko said; Aleksei also tested on 26.10.2010 6:28 - DB is 1.2-1.6 times slower
-
-                WmNode node = new WmNode(nodeRef, type, props, null);
-                node.setAspectsLazy();
-                results.add(node);
-            }
-            time3 = statisticsEnabled ? System.currentTimeMillis() : 0;
-            return new Pair<List<WmNode>, Boolean>(results,resultSet.hasMore());
-        } finally {
-            try {
-                resultSet.close();
-            } catch (Exception e) {
-                // Do nothing
-            }
-            if (statisticsEnabled) {
-                long time4 = System.currentTimeMillis();
-                Data data = SearchStatistics.getData();
-                data.resultsAfterAcl = results != null ? results.size() : -1;
-                data.alfrescoSearchLayerOtherTime = time1 - time0 - data.luceneHitsTime - data.aclTime;
-                data.nodeTypesTime = time2 - time1;
-                data.nodePropsTime = time3 - time2;
-                data.closeResultSetTime = time4 - time3;
-                log.debug("Search results " + data.resultsBeforeAcl + " -> " + data.resultsAfterAcl + ", total time " + (time4 - time0)
-                        + " ms\n  lucene query " + data.luceneHitsTime
-                        + " ms\n  alfresco search layer other " + data.alfrescoSearchLayerOtherTime
-                        + " ms\n  permissions filter " + data.aclTime
-                        + " ms\n  get node types " + data.nodeTypesTime
-                        + " ms\n  get node props " + data.nodePropsTime
-                        + " ms\n  close resultset " + data.closeResultSetTime + " ms");
-            }
-        }
-    }
-
-*/
-    /**
-     * Sets up search parameters and queries
-     * 
-     * @param query
-     * @param limited if true, only 100 first results are returned
-     * @return query resultset
-     */
-/*
-    protected ResultSet doSearch(String query, boolean limited) {
-        return doSearch(query, limited, null);
-    }
-
-    protected ResultSet doSearch(String query, boolean limited, StoreRef storeRef) {
-        // build up the search parameters
-        SearchParameters sp = new SearchParameters();
-        sp.setLanguage(SearchService.LANGUAGE_LUCENE);
-        sp.setQuery(query);
-        sp.addStore(storeRef == null ? generalService.getStore() : storeRef);
-        if (limited) {
-            sp.setLimit(getSearchLimit());
-            sp.setLimitBy(LimitBy.FINAL_SIZE);
-        } else {
-            sp.setLimitBy(LimitBy.UNLIMITED);
-        }
-
-        ResultSet result = searchService.query(sp);
-        return result;
-    }
-
-    public int getSearchLimit() {
-        return parametersService.getParameter(Parameters.SEARCH_RESULTS_LIMIT, Integer.class);
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
+        return new Pair<List<String>, List<Date>>(searchWords, searchDates);
     }
 
     public void setDictionaryService(DictionaryService dictionaryService) {
         this.dictionaryService = dictionaryService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
-    public void setParametersService(ParametersService parametersService) {
-        this.parametersService = parametersService;
     }
 
     public void setLuceneConfig(LuceneConfig config) {
@@ -343,7 +135,7 @@ public abstract class AbstractSearchServiceImpl {
         return luceneAnalyser;
     }
 
-    protected List<Token> getTokens(String queryText) {
+    private List<Token> getTokens(String queryText) {
         String testText = queryText;
         String localeString = "";
         // String localeString = "et"; // Alfresco code calls getTokens twice, once with "", once with "et"
@@ -758,5 +550,4 @@ public abstract class AbstractSearchServiceImpl {
         return fixed;
     }
 
-*/
 }

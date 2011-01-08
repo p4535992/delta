@@ -7,6 +7,7 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Hits;
 
 import ee.webmedia.alfresco.document.model.DocumentCreateOrRegistrateDateComparator;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
@@ -36,6 +37,10 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
             log.error("Quick search of '" + searchValue + "' failed: " + e.getMessage()); // stack trace is logged in the service
             documents = Collections.emptyList();
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toomanyclauses");
+        } catch (Hits.TooLongQueryException e) {
+            log.error("Quick search of '" + searchValue + "' failed: " + e.getMessage()); // stack trace is logged in the service
+            documents = Collections.emptyList();
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toolongquery");
         }
 
         // Quick search must "reset the current dialog stack" and put the document list dialog as the base dialog into the stack.

@@ -24,6 +24,11 @@ public interface DocumentSearchService {
     String BEAN_NAME = "DocumentSearchService";
 
     /**
+     * Escape symbols and use only 10 first unique words which contain at least 3 characters.
+     */
+    List<String> parseQuickSearchWords(String searchString);
+
+    /**
      * Searches for documents where:
      * + search string matches against any Document property value (supported types: text, int, long, float, double, date, datetime)
      * + or file name

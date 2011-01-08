@@ -108,12 +108,27 @@ public class SearchUtil {
      * 
      * @see QueryParser#escape(String) for default set
      */
-    private static String replaceCustom(String s, String replacement) {
+    public static String replaceCustom(String s, String replacement) {
+        // \ ! ( ) : ^ [ ] " { } ~ * ? | , ´ ` ; + _ < > ½ § = % $ ¤ # £ ¹ ˇ ¬ … ' && ..
+        // Not done . - / @ &
         StringBuffer sb = new StringBuffer();
+        boolean skip = false;
         for (int i = 0; i < s.length(); i++) {
             char c = s.charAt(i);
-            if (c == '\\' || c == '!' || c == '(' || c == ')' || c == ':' || c == '^' || c == '[' || c == ']' || c == '"' || c == '{'
-                    || c == '}' || c == '~' || c == '*' || c == '?' || c == '|') {
+            if (c == '&' || c == '.') {
+                if (s.length() > i + 1 && s.charAt(i + 1) == c) {
+                    skip = true;
+                    continue;
+                }
+                if (skip) {
+                    skip = false;
+                    continue;
+                }
+            }
+            if (c == '\\' || c == '!' || c == '(' || c == ')' || c == ':' || c == '^' || c == '[' || c == ']' || c == '"' || c == '{' || c == '}' || c == '~'
+                    || c == '*' || c == '?' || c == '|' || c == ',' || c == '´' || c == '`' || c == ';' || c == '+' || c == '_' || c == '<'
+                    || c == '>' || c == '½' || c == '§' || c == '=' || c == '%' || c == '$' || c == '¤' || c == '#' || c == '£' || c == '¹' || c == 'ˇ'
+                    || c == '¬' || c == '…' || c == '\'') {
                 sb.append(replacement);
             } else {
                 sb.append(c);
@@ -150,33 +165,9 @@ public class SearchUtil {
         return "";
     }
 
-    public static List<String> parseQuickSearchWords(String searchString) {
-        // Escape symbols and use only 10 first unique words which contain at least 3 characters
-        List<String> searchWords = new ArrayList<String>(10);
-        if (StringUtils.isNotBlank(searchString)) {
-            searchString = replaceCustom(searchString, " ");
-            for (String searchWord : searchString.split("\\s")) {
-                if (searchWord.length() >= 3 && searchWords.size() < 10) {
-                    searchWord = stripCustom(searchWord);
-                    if (searchWord.length() >= 3) {
-                        searchWord = QueryParser.escape(searchWord);
-                        boolean exists = false;
-                        for (String tmpWord : searchWords) {
-                            exists |= tmpWord.equalsIgnoreCase(searchWord);
-                        }
-                        if (!exists) {
-                            searchWords.add(searchWord);
-                        }
-                    }
-                }
-            }
-        }
-        return searchWords;
-    }
-
     // Low-level generation
 
-    private static String generatePropertyExactQuery(QName documentPropName, String value, boolean escape) {
+    public static String generatePropertyExactQuery(QName documentPropName, String value, boolean escape) {
         if (StringUtils.isBlank(value)) {
             return null;
         }
@@ -252,10 +243,6 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
-    public static String generateStringWordsWildcardQuery(String value, QName ... documentPropNames) {
-        return generateStringWordsWildcardQuery(parseQuickSearchWords(value), documentPropNames);
-    }
-
     public static String generateStringWordsWildcardQuery(List<String> words, QName ... documentPropNames) {
         if (words.isEmpty()) {
             return null;
@@ -271,18 +258,6 @@ public class SearchUtil {
         return joinQueryPartsAnd(wordQueryParts);
     }
 
-    public static String generateMultiStringWordsWildcardQuery(List<String> values, QName ... documentPropNames) {
-        if (values == null || values.isEmpty()) {
-            return null;
-        }
-        
-        List<String> queryParts = new ArrayList<String>(values.size());
-        for (String value : values) {
-            queryParts.add(generateStringWordsWildcardQuery(value, documentPropNames));
-        }
-        return joinQueryPartsOr(queryParts);
-    }
-    
     public static String generateNodeRefQuery(NodeRef value, QName ... documentPropNames) {
         if (value == null) {
             return null;

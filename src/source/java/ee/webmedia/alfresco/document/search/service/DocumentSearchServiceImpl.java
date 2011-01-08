@@ -1,10 +1,8 @@
 package ee.webmedia.alfresco.document.search.service;
 
-import static ee.webmedia.alfresco.utils.SearchUtil.formatLuceneDate;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringWordsWildcardQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNodeRefQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
@@ -13,16 +11,12 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyWildcardQuer
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringNotEmptyQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringNullQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateStringWordsWildcardQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.isBlank;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
-import static ee.webmedia.alfresco.utils.SearchUtil.parseQuickSearchWords;
 
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -40,7 +34,6 @@ import javax.faces.context.FacesContext;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
-import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -50,7 +43,9 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
+import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -62,6 +57,7 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -72,11 +68,13 @@ import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.search.service.AbstractSearchServiceImpl;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.substitute.web.SubstitutionBean;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -93,18 +91,18 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
  * @author Alar Kvell
  * @author Erko Hansar
  */
-public class DocumentSearchServiceImpl implements DocumentSearchService {
+public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl implements DocumentSearchService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchServiceImpl.class);
 
     private DocumentService documentService;
     private GeneralService generalService;
     private NodeService nodeService;
     private SearchService searchService;
-    private DictionaryService dictionaryService;
     private SeriesService seriesService;
     private VolumeService volumeService;
     private WorkflowService workflowService;
     private ParametersService parametersService;
+    private NamespaceService namespaceService;
     private List<StoreRef> allStores = null;
 
     @Override
@@ -542,11 +540,21 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         @SuppressWarnings("unchecked")
         final List<StoreRef> storeRefs = (List<StoreRef>) filter.getProperties().get(DocumentSearchModel.Props.STORE);
         String query = generateDocumentSearchQuery(filter);
-        List<Document> results = searchDocumentsImpl(query, true, /* queryName */ "documentsByFilter", storeRefs);
-        if (log.isDebugEnabled()) {
-            log.debug("Documents search total time " + (System.currentTimeMillis() - startTime) + " ms");
+        try {
+            List<Document> results = searchDocumentsImpl(query, true, /* queryName */ "documentsByFilter", storeRefs);
+            if (log.isDebugEnabled()) {
+                log.debug("Documents search total time " + (System.currentTimeMillis() - startTime) + " ms");
+            }
+            return results;
+        } catch (RuntimeException e) {
+            Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(filter.getProperties()));
+            filterProps.remove(DocumentSearchModel.Props.OUTPUT);
+            log.error("Document search failed: "
+                    + e.getMessage()
+                    + "\n  searchFilter=" + WmNode.toString(filterProps, namespaceService)
+                    + "\n  query=" + query, e);
+            throw e;
         }
-        return results;
     }
 
     @Override
@@ -579,18 +587,27 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
     public List<Document> searchDocumentsQuick(String searchString, boolean includeCaseTitles) {
         long startTime = System.currentTimeMillis();
         String query = generateQuickSearchQuery(searchString);
-        final List<Document> results;
-        if (includeCaseTitles) {
-            final String caseByTitleQuery = getCaseByTitleQuery(searchString);
-            query = joinQueryPartsOr(Arrays.asList(query, caseByTitleQuery));
-            results = searchDocumentsAndCaseTitlesImpl(query, true, /* queryName */ "documentsQuickAndCaseTitles");
-        } else {
-            results = searchDocumentsImpl(query, true, /* queryName */ "documentsQuick");
+        try {
+            final List<Document> results;
+            if (includeCaseTitles) {
+                final String caseByTitleQuery = getCaseByTitleQuery(searchString);
+                query = joinQueryPartsOr(Arrays.asList(query, caseByTitleQuery));
+                results = searchDocumentsAndCaseTitlesImpl(query, true, /* queryName */ "documentsQuickAndCaseTitles");
+            } else {
+                results = searchDocumentsImpl(query, true, /* queryName */ "documentsQuick");
+            }
+            if (log.isDebugEnabled()) {
+                log.debug("Quick search total time " + (System.currentTimeMillis() - startTime) + " ms");
+            }
+            return results;
+        } catch (RuntimeException e) {
+            log.error("Quick search failed: "
+                    + e.getMessage()
+                    + "\n  searchString=" + searchString
+                    + "\n  includeCaseTitles=" + includeCaseTitles
+                    + "\n  query=" + query, e);
+            throw e;
         }
-        if (log.isDebugEnabled()) {
-            log.debug("Quick search total time " + (System.currentTimeMillis() - startTime) + " ms");
-        }
-        return results;
     }
 
     private String getCaseByTitleQuery(String searchValue) {
@@ -787,10 +804,13 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         queryParts.add(generateMultiStringExactQuery(procurementType, DocumentSpecificModel.Props.PROCUREMENT_TYPE));
 
         // Quick search
-        List<String> searchWords = parseQuickSearchWords((String) props.get(DocumentSearchModel.Props.INPUT));
-        if (!searchWords.isEmpty()) {
-            queryParts.addAll(generateQuickSearchDocumentQuery(searchWords));
+        String quickSearchInput = (String) props.get(DocumentSearchModel.Props.INPUT);
+        if (StringUtils.isNotBlank(quickSearchInput)) {
+            Pair<List<String>, List<Date>> quickSearchWordsAndDates = parseQuickSearchWordsAndDates(quickSearchInput);
+            log.info("Quick search (document) - words: " + quickSearchWordsAndDates.getFirst().toString() + ", dates: " + quickSearchWordsAndDates.getSecond() + ", from string '" + quickSearchInput + "'");
+            queryParts.addAll(generateQuickSearchDocumentQuery(quickSearchWordsAndDates.getFirst(), quickSearchWordsAndDates.getSecond()));
         }
+
         String query = generateDocumentSearchQuery(queryParts);
         if (log.isDebugEnabled()) {
             log.debug("Documents search query construction time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
@@ -800,27 +820,24 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
 
     private String generateQuickSearchQuery(String searchString) {
         long startTime = System.currentTimeMillis();
-        List<String> searchWords = parseQuickSearchWords(searchString);
-        log.info("Quick search - words: " + searchWords.toString() + ", from string '" + searchString + "'");
-        if (searchWords.isEmpty()) {
-            return null;
-        }
-        String query = generateDocumentSearchQuery(generateQuickSearchDocumentQuery(searchWords));
+        Pair<List<String>, List<Date>> quickSearchWordsAndDates = parseQuickSearchWordsAndDates(searchString);
+        log.info("Quick search - words: " + quickSearchWordsAndDates.getFirst().toString() + ", dates: " + quickSearchWordsAndDates.getSecond() + ", from string '" + searchString + "'");
+        String query = generateDocumentSearchQuery(generateQuickSearchDocumentQuery(quickSearchWordsAndDates.getFirst(), quickSearchWordsAndDates.getSecond()));
         if (log.isDebugEnabled()) {
             log.debug("Quick search query construction time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
         }
         return query;
     }
 
-    private List<String> generateQuickSearchDocumentQuery(List<String> searchWords) {
+    private List<String> generateQuickSearchDocumentQuery(List<String> searchWords, List<Date> searchDates) {
         // Fetch a list of all the properties from document type and it's subtypes.
         List<QName> searchProperties = new ArrayList<QName>(50);
         List<QName> searchPropertiesDate = new ArrayList<QName>();
         addDocumentProperties(searchProperties, searchPropertiesDate);
-        return generateQuery(searchWords, searchProperties, searchPropertiesDate);
+        return generateQuery(searchWords, searchDates, searchProperties, searchPropertiesDate);
     }
 
-    private List<String> generateQuery(List<String> searchWords, List<QName> searchProperties, List<QName> searchPropertiesDate) {
+    private List<String> generateQuery(List<String> searchWords, List<Date> searchDates, List<QName> searchProperties, List<QName> searchPropertiesDate) {
         /*
          * Construct a query with following structure:
          * ASPECT:searchable AND (
@@ -832,37 +849,28 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
          * characters with latin-1 characters if the values are without wrapping " symbols and this breaks searches with estonian
          * special characters because Alfresco indexed them with ISOLatin1AccentFilter.
          */
-        // TODO: format should probably be read from bundle
-        DateFormat userDateFormat = new SimpleDateFormat("dd.MM.yyyy");
-        userDateFormat.setLenient(false);
 
-        List<String> wordQueries = new ArrayList<String>(10);
+        List<String> queryParts = new ArrayList<String>();
         for (String searchWord : searchWords) {
             if (StringUtils.isNotBlank(searchWord)) {
-                List<String> propQueries = new ArrayList<String>(searchProperties.size() + searchPropertiesDate.size());
+                List<String> propQueries = new ArrayList<String>(searchProperties.size());
 
                 for (QName property : searchProperties) {
                     propQueries.add(generatePropertyWildcardQuery(property, searchWord, false));
                 }
-                Date date = null;
-                try {
-                    date = userDateFormat.parse(searchWord);
-                } catch (ParseException e) {
-                    // do nothing
-                }
-                // if it's a date match, then also add date properties
-                if (date != null) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("getDocumentsQuickSearch - found date match: " + searchWord + " -> " + formatLuceneDate(date));
-                    }
-                    for (QName property : searchPropertiesDate) {
-                        propQueries.add(generatePropertyDateQuery(property, date));
-                    }
-                }
-                wordQueries.add(joinQueryPartsOr(propQueries, false));
+                queryParts.add(joinQueryPartsOr(propQueries, false));
             }
         }
-        return wordQueries;
+        for (Date searchDate: searchDates) {
+            if (searchDate != null) {
+                List<String> propQueries = new ArrayList<String>(searchPropertiesDate.size());
+                for (QName property : searchPropertiesDate) {
+                    propQueries.add(generatePropertyDateQuery(property, searchDate));
+                }
+                queryParts.add(joinQueryPartsOr(propQueries, false));
+            }
+        }
+        return queryParts;
     }
 
     private void addDocumentProperties(List<QName> searchProperties, List<QName> searchPropertiesDate) {
@@ -1234,10 +1242,6 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
         this.searchService = searchService;
     }
 
-    public void setDictionaryService(DictionaryService dictionaryService) {
-        this.dictionaryService = dictionaryService;
-    }
-
     public void setSeriesService(SeriesService seriesService) {
         this.seriesService = seriesService;
     }
@@ -1252,6 +1256,10 @@ public class DocumentSearchServiceImpl implements DocumentSearchService {
 
     public void setParametersService(ParametersService parametersService) {
         this.parametersService = parametersService;
+    }
+
+    public void setNamespaceService(NamespaceService namespaceService) {
+        this.namespaceService = namespaceService;
     }
 
     // END: getters / setters

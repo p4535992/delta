@@ -75,14 +75,25 @@ public final class Hits {
 
   private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(Hits.class);
 
+  public static class TooLongQueryException extends RuntimeException {
+    private static final long serialVersionUID = 1L;
+
+    public TooLongQueryException(String message) {
+        super(message);
+    }
+
+  }
+
   Hits(Searcher s, Query q, Filter f) throws IOException {
     boolean statisticsEnabled = SearchStatistics.isEnabled();
     long startTime = statisticsEnabled ? System.currentTimeMillis() : 0;
     String originalQuery = q.toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
     weight = q.weight(s);
     String rewrittenQuery = weight.getQuery().toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
-    if (originalQuery.length() > 100000) { // 65k appears to be largest normal query (input 3 words, each 10 chars)
-        log.warn("Very large query: original query length = " + originalQuery.length() + " chars, rewritten query length = " + rewrittenQuery.length() + " chars");
+    if (rewrittenQuery.length() > 300000) {
+        // 65k appears to be largest normal query (input 3 words, each 10 chars)
+        // 250k appears to be largest normal query (input 10 words, each 4 chars)
+        throw new TooLongQueryException("Very large query: original query length = " + originalQuery.length() + " chars, rewritten query length = " + rewrittenQuery.length() + " chars");
     }
     searcher = s;
     filter = f;
@@ -101,8 +112,10 @@ public final class Hits {
     String originalQuery = q.toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
     weight = q.weight(s);
     String rewrittenQuery = weight.getQuery().toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
-    if (originalQuery.length() > 100000) { // 65k appears to be largest normal query (input 3 words, each 10 chars)
-        log.warn("Very large query: original query length = " + originalQuery.length() + " chars, rewritten query length = " + rewrittenQuery.length() + " chars");
+    if (rewrittenQuery.length() > 300000) {
+        // 65k appears to be largest normal query (input 3 words, each 10 chars)
+        // 250k appears to be largest normal query (input 10 words, each 4 chars)
+        throw new TooLongQueryException("Very large query: original query length = " + originalQuery.length() + " chars, rewritten query length = " + rewrittenQuery.length() + " chars");
     }
     searcher = s;
     filter = f;

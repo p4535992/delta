@@ -45,8 +45,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -108,6 +108,7 @@ import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
@@ -129,10 +130,9 @@ import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -169,6 +169,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     /** NB! not injected - use getter to obtain instance of AdrService */
     private AdrService _adrService;
     private CaseService _caseService;
+    private DocumentSearchService _documentSearchService;
     protected BeanFactory beanFactory;
 
     private String fromDvkXPath;
@@ -2074,7 +2075,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         return documents;
     }
 
-    private static boolean isFilterPropNotBlankAndDoesNotMatch(Serializable nodeProp, List<Serializable> filterProps) {
+    private boolean isFilterPropNotBlankAndDoesNotMatch(Serializable nodeProp, List<Serializable> filterProps) {
         if (filterProps.size() == 1) {
             if (filterProps.get(0) == null) {
                 return false;
@@ -2115,8 +2116,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     }
 
     // Wildcard match - if text field
-    private static boolean isNotMatchWildcard(Serializable nodeProp, String filterProp) {
-        List<String> words = SearchUtil.parseQuickSearchWords(filterProp);
+    private boolean isNotMatchWildcard(Serializable nodeProp, String filterProp) {
+        List<String> words = getDocumentSearchService().parseQuickSearchWords(filterProp);
         for (String word : words) {
             if (nodeProp instanceof List<?>) {
                 boolean found = false;
@@ -2250,6 +2251,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             _caseService = (CaseService) beanFactory.getBean(CaseService.BEAN_NAME);
         }
         return _caseService;
+    }
+
+    protected DocumentSearchService getDocumentSearchService() {
+        if (_documentSearchService == null) {
+            _documentSearchService = (DocumentSearchService) beanFactory.getBean(DocumentSearchService.BEAN_NAME);
+        }
+        return _documentSearchService;
     }
 
     @Override

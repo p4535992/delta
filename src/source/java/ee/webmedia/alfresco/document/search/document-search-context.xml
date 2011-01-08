@@ -49,6 +49,8 @@
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="volumeService" ref="VolumeService" />
       <property name="parametersService" ref="ParametersService" />
+      <property name="namespaceService" ref="NamespaceService" />
+      <property name="luceneConfig" ref="admLuceneIndexerAndSearcherFactory" />
    </bean>
 
    <bean id="DocumentSearchService" class="org.springframework.aop.framework.ProxyFactoryBean">

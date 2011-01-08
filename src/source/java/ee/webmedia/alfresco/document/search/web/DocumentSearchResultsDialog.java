@@ -4,7 +4,6 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -16,6 +15,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.Hits;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -60,13 +60,23 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         } catch (BooleanQuery.TooManyClauses e) {
             Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(searchFilter.getProperties()));
             filterProps.remove(DocumentSearchModel.Props.OUTPUT);
-            log.error("Document search of failed: "
+            log.error("Document search failed: "
                     + e.getMessage()
                     + "\n  searchFilter="
                     + WmNode.toString(filterProps, Repository
                             .getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService())); // stack trace is logged in the service
             documents = Collections.emptyList();
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toomanyclauses");
+        } catch (Hits.TooLongQueryException e) {
+            Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(searchFilter.getProperties()));
+            filterProps.remove(DocumentSearchModel.Props.OUTPUT);
+            log.error("Document search failed: "
+                    + e.getMessage()
+                    + "\n  searchFilter="
+                    + WmNode.toString(filterProps, Repository
+                            .getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService())); // stack trace is logged in the service
+            documents = Collections.emptyList();
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toolongquery");
         }
         String dialog = "documentSearchResultsDialog";
         if (DocumentSearchDialog.OUTPUT_EXTENDED.equals(searchFilter.getProperties().get(DocumentSearchModel.Props.OUTPUT))) {
