@@ -55,5 +55,7 @@ public interface NotificationService {
     public List<GeneralNotification> getActiveGeneralNotifications();
     
     public int getUpdateCount();
+    
+    public void notifyTaskUnfinishedEvent(Task task);
 
 }

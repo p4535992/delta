@@ -8,12 +8,15 @@ import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.Task;
-import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
@@ -27,6 +30,7 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AssignmentWorkflowType.class);
 
     private DocumentService documentService;
+    private NodeService nodeService;
 
     @Override
     public void handle(WorkflowEvent event, WorkflowModifications workflowService, WorkflowEventQueue queue) {
@@ -57,17 +61,32 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
             }
         }
 
-        // If task is changed to IN_PROGRESS
-        if (event.getType() == WorkflowEventType.STATUS_CHANGED && WorkflowUtil.isStatus(event.getObject(), Status.IN_PROGRESS)) {
+        if (event.getType() == WorkflowEventType.STATUS_CHANGED){
+            // If task is changed to IN_PROGRESS
+            if(task.isStatus(Status.IN_PROGRESS)) {
 
-            // Change document owner
-            if (task.getOwnerId() != null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Active responsible task started, setting document ownerId to " + task.getOwnerId());
+                // Change document owner
+                if (task.getOwnerId() != null) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Active responsible task started, setting document ownerId to " + task.getOwnerId());
+                    }
+                    setDocumentOwnerFromTask(task);
                 }
-                setDocumentOwnerFromTask(task);
+            }
+            // if task status is changed to FINISHED
+            if(task.isStatus(Status.FINISHED)){
+                NodeRef docRef = task.getParent().getParent().getParent();
+                Node document = documentService.getDocument(docRef);
+                if(DocumentSubtypeModel.Types.INCOMING_LETTER.equals(document.getType())){
+                    if(nodeService.getProperty(docRef, DocumentSpecificModel.Props.COMPLIENCE_DATE) == null){
+                        documentService.setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, queue.getNow(), docRef);
+                    }
+                    documentService.setDocStatusFinished(docRef);
+                    workflowService.setWorkflowsAndTasksFinished(queue, task.getParent().getParent(), Status.UNFINISHED, "task_outcome_unfinished_by_finishing_responsible_task", null, false);
+                }                
             }
         }
+
     }
 
     private void setDocumentOwnerFromTask(final Task task) {
@@ -84,4 +103,8 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
         this.documentService = documentService;
     }
 
+    public void setNodeService(NodeService nodeService) {
+        this.nodeService = nodeService;
+    } 
+    
 }

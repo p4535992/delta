@@ -4,7 +4,7 @@
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
 
-<%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
+<%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
 <a:panel id="send-out-block-panel" label="#{msg.document_send_title}" styleClass="panel-100" progressive="true" rendered="#{SendOutBlockBean.rendered}" expanded="false">

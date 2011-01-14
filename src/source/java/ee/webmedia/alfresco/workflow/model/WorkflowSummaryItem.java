@@ -12,6 +12,10 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.collections.Transformer;
+import org.apache.commons.collections.comparators.ComparatorChain;
+import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.collections.comparators.TransformingComparator;
 
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
@@ -56,7 +60,7 @@ public class WorkflowSummaryItem implements Serializable, Comparable<WorkflowSum
             this.tasks.add(task);
         }
 
-        Collections.sort(tasks, new WorkflowSummaryItemTaskComparator());
+        Collections.sort(tasks, taskComparator);
         if (this.assignmentWorkflow) {
             separateAssignmentTasks();
         }
@@ -298,45 +302,30 @@ public class WorkflowSummaryItem implements Serializable, Comparable<WorkflowSum
         return 0;
     }
 
-    public class WorkflowSummaryItemTaskComparator implements Comparator<Task> {
-
-        @Override
-        public int compare(Task task1, Task task2) {
-            if (task1.getStartedDateTime() == null || task2.getStartedDateTime() == null) {
-                return checkDueDate(task1, task2);
+    private static final Comparator<Task> taskComparator;
+    static {
+        // ComparatorChain is not thread-safe at construction time, but it is thread-safe to perform multiple comparisons after all the setup operations are
+        // complete.
+        ComparatorChain chain = new ComparatorChain();
+        chain.addComparator(new TransformingComparator(new Transformer() {
+            @Override
+            public Object transform(Object input) {
+                return ((Task) input).getStartedDateTime();
             }
-
-            if (task1.getStartedDateTime().before(task2.getStartedDateTime())) {
-                return -1;
-            } else if (task1.getStartedDateTime().after(task2.getStartedDateTime())) {
-                return 1;
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new Transformer() {
+            @Override
+            public Object transform(Object input) {
+                return ((Task) input).getDueDate();
             }
-
-            return checkDueDate(task1, task2);
-        }
-
-        private int checkDueDate(Task task1, Task task2) {
-            if (task1.getDueDate() != null && task2.getDueDate() != null) {
-                if (task1.getDueDate().before(task2.getDueDate())) {
-                    return -1;
-                } else if (task1.getDueDate().after(task2.getDueDate())) {
-                    return 1;
-                }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new Transformer() {
+            @Override
+            public Object transform(Object input) {
+                return ((Task) input).getOwnerName();
             }
-
-            return checkOwnerName(task1, task2);
-        }
-
-        private int checkOwnerName(Task task1, Task task2) {
-            if(task1.getOwnerName() != null && task2.getOwnerName() != null) {
-                return task1.getOwnerName().compareTo(task2.getOwnerName());
-            }
-            if(task1.getOwnerName() == null) {
-                return 1;
-            }
-            return -1;
-        }
-
+        }, new NullComparator()));
+        taskComparator = chain;
     }
 
     public NodeRef getWorkflowRef() {

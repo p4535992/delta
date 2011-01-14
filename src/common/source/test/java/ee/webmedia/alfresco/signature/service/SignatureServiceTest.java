@@ -55,7 +55,7 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
         nodeRefList.add(contentCreator.createTestFile(folderNodeRef, "testFile1.txt"));
         
         contentCreator.writeTestContent(nodeRefList.get(0), TEST_ENCODING1, MimetypeMap.MIMETYPE_TEXT_PLAIN, TEST_DATA1);
-
+/*
         // Get the SignedDoc
         InputStream fileInputStream = ContentCreatorHelper.getClassPathResourceInputStream(TEST_RESOURCE_PATH + "/" + TEST_DIGIDOC); 
         DigiDocFactory digiDocFactory = new SAXDigiDocFactory();
@@ -67,7 +67,7 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
         OutputStream os = writer.getContentOutputStream();
         signedDoc.writeToStream(os);
         os.close();
-
+*/
         // get the cert, should be less than 2048 bytes
         certHex = ContentCreatorHelper.getClassPathResource(TEST_RESOURCE_PATH + "/" + TEST_CERTHEX);
     }
@@ -76,25 +76,6 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
         assertTrue(signatureService.isDigiDocContainer(nodeRef));
         assertFalse(signatureService.isDigiDocContainer(folderNodeRef));
         assertFalse(signatureService.isDigiDocContainer(nodeRefList.get(0)));
-    }
-
-    public void testGetSignatureItems() throws Exception {
-        List<SignatureItem> signatureItemList = signatureService.getSignatureItems(nodeRef);
-        assertNotNull(signatureItemList);
-        assertTrue(signatureItemList.size() >= 0);
-    }
-
-    public void testGetDataItems() throws Exception {
-        List<DataItem> dataItemList = signatureService.getDataItems(nodeRef, true);
-        assertNotNull(dataItemList);
-        assertTrue(dataItemList.size() > 0);
-        assertNotNull(dataItemList.get(0).getData());
-    }
-
-    public void testGetDataItem() throws Exception {
-        DataItem d = signatureService.getDataItem(nodeRef, 0, true);
-        assertNotNull(d);
-        assertNotNull(d.getData());
     }
 
     public void testGetSignatureDigestFromNodeRef() throws Exception {

@@ -35,6 +35,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -578,7 +580,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         NodeRef caseNodeRef = (NodeRef) docProps.get(TransientProps.CASE_NODEREF);
         String caseLabel = (String) docProps.get(TransientProps.CASE_LABEL_EDITABLE);
         if (StringUtils.isBlank(caseLabel)) {
-            docProps.put(TransientProps.CASE_LABEL_EDITABLE, null);
+            caseNodeRef = null;
         }
         if (caseNodeRef != null) {
             return caseNodeRef;
@@ -1331,13 +1333,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                         Date finalTermOfDeliveryAndReceiptDate = (Date) nodeService.getProperty(contractDocRef,
                                 DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT);
                         if (finalTermOfDeliveryAndReceiptDate == null) {
-                            AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
-                                @Override
-                                public NodeRef doWork() throws Exception {
-                                    nodeService.setProperty(contractDocRef, DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, now);
-                                    return null;
-                                }
-                            }, AuthenticationUtil.getSystemUserName());
+                            setPropertyAsSystemUser(DocumentSpecificModel.Props.FINAL_TERM_OF_DELIVERY_AND_RECEIPT, now, contractDocRef);
                         }
                     }
                 }
@@ -1348,28 +1344,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                         if (nodeService.hasAspect(originalDocRef, DocumentSpecificModel.Aspects.COMPLIENCE)) {
                             Date complienceDate = (Date) nodeService.getProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE);
                             if (complienceDate == null) {
-                                AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
-                                    @Override
-                                    public NodeRef doWork() throws Exception {
-                                        nodeService.setProperty(originalDocRef, DocumentSpecificModel.Props.COMPLIENCE_DATE, now);
-                                        return null;
-                                    }
-                                }, AuthenticationUtil.getSystemUserName());
-
-                                String docStatus = (String) nodeService.getProperty(originalDocRef, DOC_STATUS);
-                                if (!DocumentStatus.FINISHED.equals(docStatus)) {
-                                    AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
-                                        @Override
-                                        public NodeRef doWork() throws Exception {
-                                            nodeService.setProperty(originalDocRef, DOC_STATUS, DocumentStatus.FINISHED.getValueName());
-                                            return null;
-                                        }
-                                    }, AuthenticationUtil.getSystemUserName());
-                                    documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
-                                            , I18NUtil.getMessage("document_log_creator_dhs"));
-                                }
+                                setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, now, originalDocRef);
+                                setDocStatusFinished(originalDocRef);
                             }
                         }
+                        DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+                        String comment = I18NUtil.getMessage("task_comment_finished_by_register_doc", regNumber, dateFormat.format(now));
+                        workflowService.finishCompoundWorkflowsOnRegisterDoc(originalDocRef, comment);
                     }
                 }
             }
@@ -1409,6 +1390,26 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             return updateDocument(docNode);
         }
         throw new UnableToPerformException(MessageSeverity.INFO, "document_errorMsg_register_initialDocNotRegistered");
+    }
+
+    public void setDocStatusFinished(final NodeRef originalDocRef) {
+        String docStatus = (String) nodeService.getProperty(originalDocRef, DOC_STATUS);
+        if (!DocumentStatus.FINISHED.equals(docStatus)) {
+            setPropertyAsSystemUser(DOC_STATUS, DocumentStatus.FINISHED.getValueName(), originalDocRef);
+            documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
+                    , I18NUtil.getMessage("document_log_creator_dhs"));
+        }
+    }
+
+
+    public void setPropertyAsSystemUser(final QName propName, final Serializable value, final NodeRef docRef) {
+        AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
+            @Override
+            public NodeRef doWork() throws Exception {
+                nodeService.setProperty(docRef, propName, value);
+                return null;
+            }
+        }, AuthenticationUtil.getSystemUserName());
     }
 
     public void addDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc, ArrayList<DocAssocInfo> assocInfos) {

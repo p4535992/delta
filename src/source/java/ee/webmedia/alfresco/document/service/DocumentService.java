@@ -403,4 +403,8 @@ public interface DocumentService {
 
     StringBuilder getChildNodesPropsForIndexing(NodeRef parentRef, StringBuilder sb);
     
+    void setDocStatusFinished(final NodeRef docRef);
+    
+    void setPropertyAsSystemUser(final QName propName, final Serializable value, final NodeRef docRef);
+    
 }

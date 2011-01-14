@@ -65,6 +65,7 @@ public class ExternalAccessServlet extends BaseServlet {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         String uri = req.getRequestURI();
@@ -95,6 +96,10 @@ public class ExternalAccessServlet extends BaseServlet {
         FacesContext fc = FacesHelper.getFacesContext(req, res, getServletContext());
         ServiceRegistry serviceRegistry = getServiceRegistry(getServletContext());
 
+        // always allow missing bindings from ExternalAccessServlet:
+        // when redirecting from ExternalAccessServlet, jsp binding attribute value may be queried from wrong bean
+        // CL task 143975
+        req.setAttribute("allow_missing_bindings", Boolean.TRUE);
 
         if (OUTCOME_DOCUMENT.equals(outcome)) {
             String currentNodeId = args[0];

@@ -48,6 +48,7 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
+import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 
 import org.alfresco.repo.dictionary.constraint.ListOfValuesConstraint;
@@ -301,21 +302,40 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
    
     /**
      * Refactored custom property expression checking into separate method. 
-     * Evaluates expressions in format: "somePrefix:someProperty=someValue||otherValue". 
+     * Evaluates expressions in format: "somePrefix:someProperty=someValue||otherValue;someOtherPrefix:someOtherProperty=someOtherValue||stillOtherValue". 
      * 
      * @param context
      * @param propertySheet
-     * @param expression := <code>propertyPath + ("=" | "!=") + staticValue1 + ( "||" + staticValue ) *</code><br>
+     * @param <code>expression := valueExpression | methodBinding
+     * <code>valueExpression := expr + (";" + expr) *</code><br>
+     * <code>expr := <code>propertyPath + ("=" | "!=") + staticValue1 + ( "||" + staticValue ) *</code><br>
      * <code>propertyPath := "parent." * + propName</code> <br>
      * <code>propName</code> - qName of the property to be evaluated
+     * <code>methodBinding := "#{" + className + "." + methodName + "}"</code>
+     * <code>className</code> - valid class name
+     * <code>methodName</code> - valid method in the class className
      * @param fieldName
      * @param itemName
-     * @return true, if expression evaluates to true based on property value from node. <br>
+     * @return true, if any of expression parts (expr) evaluate to true based on property value from node. <br>
      * If using equals sign "=" then true will be returned if property value matches at least one of the given static values. <br>
      * If using negotation "!=" then true will be returned if none of the given static values match actual property value.
      */
     protected boolean checkCustomPropertyExpression(FacesContext context, UIPropertySheet propertySheet, String expression, String fieldName, String itemName) {
-        final String errMsg = fieldName + " must be defined as 'somePrefix:someProperty=someValue||otherValue'";
+        final String errMsg = fieldName + " must be defined as 'somePrefix:someProperty=someValue||otherValue;someOtherPrefix:someOtherProperty=someOtherValue||stillOtherValue' or '#{ClassName.methodName}'";
+        if(StringUtils.startsWithIgnoreCase(expression, "#{")){
+            return ((Boolean)context.getApplication().createMethodBinding(expression, new Class[] {}).invoke(context, null)).booleanValue();
+        }
+        String[] split = expression.split(";");
+        for (int i = 0; i < split.length; i++) {
+            if (checkSinglePropertyExpression(context, propertySheet, split[i], fieldName, itemName, errMsg)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean checkSinglePropertyExpression(FacesContext context, UIPropertySheet propertySheet, String expression, String fieldName, String itemName,
+            final String errMsg) {
         String[] split = expression.split("=");
         if (split.length != 2) {
             throw new IllegalArgumentException(errMsg);

@@ -8,21 +8,18 @@ public class SignatureItemsAndDataItems implements Serializable {
 
     private List<SignatureItem> signatureItems;
     private List<DataItem> dataItems;
+    
+    public SignatureItemsAndDataItems(List<SignatureItem> signatureItems, List<DataItem> dataItems) {
+        this.signatureItems = signatureItems;
+        this.dataItems = dataItems;
+    }
 
     public List<SignatureItem> getSignatureItems() {
         return signatureItems;
     }
 
-    public void setSignatureItems(List<SignatureItem> signatureItems) {
-        this.signatureItems = signatureItems;
-    }
-
     public List<DataItem> getDataItems() {
         return dataItems;
-    }
-
-    public void setDataItems(List<DataItem> dataItems) {
-        this.dataItems = dataItems;
     }
 
 }

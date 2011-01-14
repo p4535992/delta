@@ -16,6 +16,7 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 /**
@@ -120,6 +121,10 @@ public abstract class BaseWorkflowObject {
 
     protected void clearOriginalProperties() {
         originalProperties.clear();
+    }
+    
+    public boolean isStatus(Status... statuses){
+        return WorkflowUtil.isStatus(this, statuses);
     }
 
     protected String additionalToString() {

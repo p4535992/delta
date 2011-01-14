@@ -8,6 +8,7 @@ import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.notification.service.NotificationService;
+import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -59,7 +60,11 @@ public class WorkflowStatusEventListener implements WorkflowEventListener, Initi
 
         Task task = (Task) event.getObject();
         if (event.getType().equals(WorkflowEventType.STATUS_CHANGED)) {
-            notificationService.notifyTaskEvent(task);
+            if (!task.isStatus(Status.UNFINISHED)) {
+                notificationService.notifyTaskEvent(task);
+            } else {
+                notificationService.notifyTaskUnfinishedEvent(task);
+            }
         }
         
     }

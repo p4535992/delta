@@ -2,7 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 
-<%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
+<%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
 <a:panel id="page-controls1" styleClass="page-controls" style="font-size:9px">

@@ -45,6 +45,7 @@
       <property name="documentSearchService" ref="DocumentSearchService" />
       <property name="authorityService" ref="AuthorityService" />
       <property name="substituteService" ref="SubstituteService" />
+      <property name="workflowService" ref="WmWorkflowService" />
    </bean>
 
    <bean id="NotificationService" class="org.springframework.aop.framework.ProxyFactoryBean">

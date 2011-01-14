@@ -52,6 +52,8 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
 /**
@@ -74,6 +76,7 @@ public class NotificationServiceImpl implements NotificationService {
     private DocumentSearchService documentSearchService;
     private AuthorityService authorityService;
     private SubstituteService substituteService;
+    private WorkflowService workflowService;
     private int updateCount = 0;
 
     private static BeanPropertyMapper<GeneralNotification> generalNotificationBeanPropertyMapper;
@@ -169,7 +172,7 @@ public class NotificationServiceImpl implements NotificationService {
     @Override
     public void notifyTaskEvent(Task task) {
         Notification substitutionNotification = null;
-        if (Status.IN_PROGRESS.equals(task.getStatus())) {
+        if (task.isStatus(Status.IN_PROGRESS)) {
             substitutionNotification = processSubstituteNewTask(task, new Notification());
         }
         Notification notification = processNotification(task, new Notification());
@@ -184,6 +187,28 @@ public class NotificationServiceImpl implements NotificationService {
         } catch (EmailException e) {
             log.error("Workflow task event notification e-mail sending failed, ignoring and continuing", e);
         }
+    }
+    
+    @Override
+    public void notifyTaskUnfinishedEvent(Task task) {
+        Notification notification = processTaskUnfinishedNotification(task, new Notification());
+        NodeRef docRef = task.getParent().getParent().getParent();
+        if (notification != null) {
+            try {
+                sendNotification(notification, docRef, setupTemplateData(task));
+            } catch (EmailException e) {
+                log.error("Workflow task event notification e-mail sending failed, ignoring and continuing", e);
+            }
+        }
+    }
+    
+    private Notification processTaskUnfinishedNotification(Task task, Notification notification) {
+        if (StringUtils.isNotEmpty(task.getOwnerId())) {
+            notification = setupNotification(notification, NotificationModel.NotificationType.TASK_ASSIGNMENT_TASK_COMPLETED_BY_RESPONSIBLE);
+            notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
+            return notification;
+        }
+        return null;
     }
 
     @Override
@@ -242,9 +267,9 @@ public class NotificationServiceImpl implements NotificationService {
 
     private Notification processNotification(Workflow workflow, Notification notification, WorkflowEventType eventType) {
 
-        if (Status.FINISHED.equals(workflow.getStatus())) {
+        if (workflow.isStatus(Status.FINISHED)) {
             return processFinishedWorkflow(workflow, notification);
-        } else if (Status.IN_PROGRESS.equals(workflow.getStatus()) && eventType.equals(WorkflowEventType.WORKFLOW_STARTED_AUTOMATICALLY)) {
+        } else if (workflow.isStatus(Status.IN_PROGRESS) && eventType.equals(WorkflowEventType.WORKFLOW_STARTED_AUTOMATICALLY)) {
             return processNewWorkflow(workflow, notification, true);
         }
 
@@ -278,11 +303,11 @@ public class NotificationServiceImpl implements NotificationService {
     
     private Notification processNotification(Task task, Notification notification) {
 
-        if (Status.IN_PROGRESS.equals(task.getStatus())) {
+        if (task.isStatus(Status.IN_PROGRESS)) {
             notification = processNewTask(task, notification);
-        } else if (Status.STOPPED.equals(task.getStatus())) {
+        } else if (task.isStatus(Status.STOPPED)) {
             notification = processStoppedTask(task, notification);
-        } else if (Status.FINISHED.equals(task.getStatus())) {
+        } else if (task.isStatus(Status.FINISHED)) {
             QName taskType = task.getNode().getType();
 
             if (taskType.equals(WorkflowSpecificModel.Types.SIGNATURE_TASK)) {
@@ -345,7 +370,7 @@ public class NotificationServiceImpl implements NotificationService {
 
     }
 
-    public Notification processSubstituteNewTask(Task task, Notification notification) {
+    private Notification processSubstituteNewTask(Task task, Notification notification) {
         if (StringUtils.isNotEmpty(task.getOwnerId())) {
             List<Substitute> substitutes = substituteService.getSubstitutes(userService.getUser(task.getOwnerId()).getNodeRef());
             if (substitutes.size() > 0) {
@@ -427,7 +452,7 @@ public class NotificationServiceImpl implements NotificationService {
                 notification = setupNotification(notification, NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS);
             } else {
                 for (Task workflowTask : workflow.getTasks()) {
-                    if (StringUtils.isEmpty(workflowTask.getOwnerId()) || !Status.FINISHED.equals(workflowTask.getStatus())
+                    if (StringUtils.isEmpty(workflowTask.getOwnerId()) || !workflowTask.isStatus(Status.FINISHED)
                             || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS)) {
                         continue;
                     }
@@ -452,7 +477,7 @@ public class NotificationServiceImpl implements NotificationService {
                 notification = setupNotification(notification, NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED);
             } else {
                 for (Task workflowTask : workflow.getTasks()) {
-                    if (StringUtils.isEmpty(workflowTask.getOwnerId()) || !Status.FINISHED.equals(workflowTask.getStatus())
+                    if (StringUtils.isEmpty(workflowTask.getOwnerId()) || !workflowTask.isStatus(Status.FINISHED)
                             || !isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED)) {
                         continue;
                     }
@@ -474,6 +499,7 @@ public class NotificationServiceImpl implements NotificationService {
     private Notification processAssignmentTask(Task task, Notification notification) {
         Workflow workflow = task.getParent();
 
+        //co-responsible finished task
         if (StringUtils.isNotEmpty(task.getOwnerId()) && !task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
             for (Task workflowTask : workflow.getTasks()) {
                 final Serializable active = nodeService.getProperty(workflowTask.getNode().getNodeRef(), WorkflowSpecificModel.Props.ACTIVE); // responsible
@@ -488,7 +514,6 @@ public class NotificationServiceImpl implements NotificationService {
                 }
             }
         }
-
         return null;
     }
 
@@ -867,6 +892,10 @@ public class NotificationServiceImpl implements NotificationService {
     public void setSubstituteService(SubstituteService substituteService) {
         this.substituteService = substituteService;
     }
+    
+    public void setWorkflowService(WorkflowService workflowService) {
+        this.workflowService = workflowService;
+    }    
 
     // END: setters/getters
 

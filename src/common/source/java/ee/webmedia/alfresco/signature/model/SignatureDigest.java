@@ -3,6 +3,8 @@ package ee.webmedia.alfresco.signature.model;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.apache.commons.lang.StringUtils;
+
 public class SignatureDigest implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -27,6 +29,21 @@ public class SignatureDigest implements Serializable {
 
     public Date getDate() {
         return date;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder("SignatureDigest[");
+        sb.append("digestHex=").append(digestHex);
+        sb.append(", certHex=");
+        if (certHex == null) {
+            sb.append("null");
+        } else {
+            sb.append(StringUtils.left(certHex, 16)).append("...[").append(certHex.length()).append("]");
+        }
+        sb.append(", date=").append(date);
+        sb.append("]");
+        return sb.toString();
     }
 
 }

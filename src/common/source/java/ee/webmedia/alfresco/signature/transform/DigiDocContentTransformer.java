@@ -2,6 +2,8 @@ package ee.webmedia.alfresco.signature.transform;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.AbstractContentTransformer2;
@@ -11,10 +13,10 @@ import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.ContentService;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.TransformationOptions;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.springframework.util.FileCopyUtils;
 
-import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
@@ -47,24 +49,16 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
             log.trace("Starting the transformation process\nReader: " + reader + "\nWriter: " + writer);
         }
         long startTime = System.currentTimeMillis();
-        InputStream is = null;
+        Writer out = null;
         try {
-            StringBuilder text = new StringBuilder();
-            is = reader.getContentInputStream();
+            InputStream is = reader.getContentInputStream();
             SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(is, true);
+            out = new OutputStreamWriter(writer.getContentOutputStream(), writer.getEncoding());
             for (SignatureItem signatureItem : items.getSignatureItems()) {
-                transformSignatureItem(text, signatureItem);
+                transformSignatureItem(out, signatureItem);
             }
             for (DataItem dataItem : items.getDataItems()) {
-                transformDataItem(text, dataItem);
-            }
-            // add the data into the original writer
-            writer.putContent(text.toString());
-            if (log.isDebugEnabled()) {
-                log.debug("Finished DigiDoc transformation, produced " + text.length() + " characters of text, time " + (System.currentTimeMillis() - startTime) + " ms");
-            }
-            if (log.isTraceEnabled()) {
-                log.trace("Index data:\n" + text.toString());
+                transformDataItem(out, dataItem, writer.getEncoding());
             }
         } catch (SignatureException e) {
             if (log.isDebugEnabled()) {
@@ -76,6 +70,13 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
                 log.debug("Exception caught, rethrowing. ", e);
             }
             throw e;
+        } finally {
+            if (out != null) {
+                out.close();
+            }
+        }
+        if (log.isDebugEnabled()) {
+            log.debug("Finished DigiDoc transformation, produced " + writer.getSize() + " bytes of text, time " + (System.currentTimeMillis() - startTime) + " ms");
         }
     }
 
@@ -88,28 +89,32 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
         return true;
     }
 
-    private void transformSignatureItem(StringBuilder text, SignatureItem signatureItem) {
+    private void transformSignatureItem(Writer out, SignatureItem signatureItem) throws IOException {
         if (signatureItem.getName() != null) {
-            text.append(signatureItem.getName() + "\n");
+            out.write(signatureItem.getName());
+            out.write('\n');
         }
         if (signatureItem.getLegalCode() != null) {
-            text.append(signatureItem.getLegalCode() + "\n");
+            out.write(signatureItem.getLegalCode());
+            out.write('\n');
         }
         if (signatureItem.getAddress() != null) {
-            text.append(signatureItem.getAddress() + "\n");
+            out.write(signatureItem.getAddress());
+            out.write('\n');
         }
     }
 
-    private void transformDataItem(StringBuilder text, DataItem dataItem) throws ContentIOException, IOException {
+    private void transformDataItem(Writer out, DataItem dataItem, String encoding) throws ContentIOException, IOException, SignatureException {
         // add the file's name
         if (dataItem.getName() != null) {
-            text.append(dataItem.getName() + "\n");
+            out.write(dataItem.getName());
+            out.write('\n');
         }
 
         // create the writer
         ContentWriter dataItemWriter = contentService.getTempWriter();
         dataItemWriter.setMimetype(MimetypeMap.MIMETYPE_TEXT_PLAIN);
-        dataItemWriter.setEncoding(AppConstants.CHARSET);
+        dataItemWriter.setEncoding(encoding);
 
         // create the reader and get the transformer
         ContentReader dataItemReader = getTempContentReader(dataItem);
@@ -119,9 +124,14 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
                 transformer.transform(dataItemReader, dataItemWriter);
                 ContentReader r = dataItemWriter.getReader();
                 if (r.exists()) {
-                    String content = r.getContentString();
-                    if (content != null) {
-                        text.append(content + "\n");
+                    InputStream in = r.getContentInputStream();
+                    if (in != null) {
+                        try {
+                            IOUtils.copy(in, out, r.getEncoding());
+                        } finally {
+                            in.close();
+                        }
+                        out.write('\n');
                     }
                 }
             } catch (ContentIOException e) {
@@ -130,12 +140,12 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
         }
     }
 
-    private ContentReader getTempContentReader(DataItem dataItem) throws ContentIOException, IOException {
+    private ContentReader getTempContentReader(DataItem dataItem) throws ContentIOException, IOException, SignatureException {
         ContentWriter writer = contentService.getTempWriter();
         writer.setMimetype(dataItem.getMimeType());
         // this is what the analyzers expect on the stream
         writer.setEncoding(dataItem.getEncoding());
-        FileCopyUtils.copy(dataItem.getData(), writer.getContentOutputStream());
+        FileCopyUtils.copy(dataItem.getData(), writer.getContentOutputStream()); // closes both streams
         return writer.getReader();
     }
 

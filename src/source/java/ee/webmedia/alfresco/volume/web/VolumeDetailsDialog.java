@@ -16,9 +16,13 @@ import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.archivals.service.ArchivalsService;
+import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.volume.exception.VolumeContainsCasesException;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
@@ -34,12 +38,20 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     private static final String PARAM_VOLUME_NODEREF = "volumeNodeRef";
     private transient VolumeService volumeService;
     private transient ArchivalsService archivalsService;
+    private transient CaseService caseService;
+    private transient DocumentService documentService;
     private Volume currentEntry;
     private boolean newVolume;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        getVolumeService().saveOrUpdate(currentEntry);
+        try {
+            getVolumeService().saveOrUpdate(currentEntry);
+        } catch (VolumeContainsCasesException e) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "volume_contains_docs_or_cases");
+            super.isFinished = false;
+            return null;
+        }       
         resetFields();
         MessageUtil.addInfoMessage("save_success");
         return outcome;
@@ -77,7 +89,14 @@ public class VolumeDetailsDialog extends BaseDialogBean {
             return null;
         }
         if (!isClosed()) {
-            getVolumeService().closeVolume(currentEntry);
+            try {
+                getVolumeService().closeVolume(currentEntry);
+            }
+            catch (VolumeContainsCasesException e){
+                MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "volume_contains_docs_or_cases");
+                super.isFinished = false;
+                return null;
+            }
             MessageUtil.addInfoMessage("volume_close_success");
             return getDefaultFinishOutcome();
         }
@@ -106,6 +125,14 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     public Object getActionsContext() {
         return currentEntry;
     }
+    
+    public Boolean disableContainsCases() {
+        return !isNew() && (DocListUnitStatus.CLOSED.equals(currentEntry.getStatus())
+                            || DocListUnitStatus.DESTROYED.equals(currentEntry.getStatus())
+                            || getCaseService().getCasesCountByVolume(currentEntry.getNode().getNodeRef()) > 0
+                            || getDocumentService().getDocumentsCountByVolumeOrCase(currentEntry.getNode().getNodeRef()) > 0);
+    }
+    
 
     // END: jsf actions/accessors
 
@@ -130,6 +157,22 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         }
         return archivalsService;
     }
+    
+    protected CaseService getCaseService() {
+        if (caseService == null) {
+            caseService = (CaseService) FacesContextUtils.getRequiredWebApplicationContext(
+                    FacesContext.getCurrentInstance()).getBean(CaseService.BEAN_NAME);
+        }
+        return caseService;
+    } 
+    
+    protected DocumentService getDocumentService() {
+        if (documentService == null) {
+            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(
+                    FacesContext.getCurrentInstance()).getBean(DocumentService.BEAN_NAME);
+        }
+        return documentService;
+    }    
 
     public void setVolumeService(VolumeService volumeService) {
         this.volumeService = volumeService;

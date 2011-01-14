@@ -6,11 +6,9 @@ import java.util.List;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
 
-import ee.sk.digidoc.DigiDocException;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
-import ee.webmedia.alfresco.signature.model.DataItem;
+import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
-import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 
 /**
@@ -63,53 +61,22 @@ public interface SignatureService {
     SignatureDigest getSignatureDigest(List<NodeRef> selectedNodeRefs, String certHex) throws SignatureException;
 
     /**
-     * Given the <code>NodeRef</code> of the .ddoc, return its signatures.
-     * 
-     * @param nodeRef
-     * @return signature list. empty if no signatures exist.
-     * @throws SignatureException 
-     * @throws DigiDocException
-     */
-    List<SignatureItem> getSignatureItems(NodeRef nodeRef) throws SignatureException;
-
-    /**
-     * Given the <code>NodeRef</code> of the .ddoc, return contained data files.
-     * 
-     * @param nodeRef
-     * @param includeData include the data itself or not
-     * @return data files list. empty if no files exist.
-     * @throws SignatureException 
-     */
-    List<DataItem> getDataItems(NodeRef nodeRef, boolean includeData) throws SignatureException;
-
-    /**
-     * Given the <code>NodeRef</code> of the .ddoc, return a selected data file.
-     * 
-     * @param nodeRef
-     * @param id
-     * @param includeData include the data itself or not
-     * @return
-     * @throws SignatureException 
-     */
-    DataItem getDataItem(NodeRef nodeRef, int id, boolean includeData) throws SignatureException;
-
-    /**
      * Returns data files and signatures in a map. Keys are "signatureItems" for signature items and
      * "dataItems" for data files.
      * 
      * @param nodeRef
-     * @param includeData include the data itself or not
+     * @param includeData include file contents or not
      * @return
-     * @throws SignatureException 
+     * @throws SignatureException
      */
     SignatureItemsAndDataItems getDataItemsAndSignatureItems(NodeRef nodeRef, boolean includeData) throws SignatureException;
 
     /**
      * Returns data files and signatures in a map. Keys are "signatureItems" for signature items and
-     * "dataItems" for data files.
+     * "dataItems" for data files. Closes the inputStream itself.
      * 
      * @param inputStream
-     * @param includeData include the data itself or not
+     * @param includeData include file contents or not
      * @return
      * @throws SignatureException 
      */

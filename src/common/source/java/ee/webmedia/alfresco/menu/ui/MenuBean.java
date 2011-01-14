@@ -326,25 +326,41 @@ public class MenuBean implements Serializable {
                 if (item instanceof DropdownMenuItem) {
                     ((DropdownMenuItem) item).setExpanded(true); // Mark our trail
                 }
-                item = item.getSubItems().get(Integer.parseInt(step));
+                int index = Integer.parseInt(step);
+                if(index < item.getSubItems().size()){
+                    item = item.getSubItems().get(index);
+                }
+                else {
+                    //probably menu has changed so previous link is not valid any longer
+                    item = null;
+                    break;
+                }
             } else if (path.length > 1 && item instanceof DropdownMenuItem) { // if necessary, fetch children
                 DropdownMenuItem dropdownItem = ((DropdownMenuItem) item);
                 NodeRef nodeRef = dropdownItem.getNodeRef();
                 if (nodeRef == null) {
                     nodeRef = getGeneralService().getNodeRef(dropdownItem.getXPath());
                 }
+                if (item.getSubItems() == null) {
+                    item.setSubItems(new ArrayList<MenuItem>());
+                }                
                 for (NodeRef childItemRef : getMenuService().openTreeItem(dropdownItem, nodeRef)) {
                     DropdownMenuItem childItem = new DropdownMenuItem();
                     childItem.setChildFilter(dropdownItem.getChildFilter()); // By default pass on parent's filter. Can be overridden in setupTreeItem
                     getMenuService().setupTreeItem(childItem, childItemRef);
-                    if (item.getSubItems() == null) {
-                        item.setSubItems(new ArrayList<MenuItem>());
-                    }
                     item.getSubItems().add(childItem);
                 }
                 Collections.sort(item.getSubItems(), new DropdownMenuComparator());
                 dropdownItem.setExpanded(true);
-                item = dropdownItem.getSubItems().get(Integer.parseInt(step));
+                int index = Integer.parseInt(step);
+                if (index < item.getSubItems().size()){                
+                    item = dropdownItem.getSubItems().get(Integer.parseInt(step));
+                }
+                else {
+                    //probably menu has changed so previous link is not valid any longer
+                    item = null;
+                    break;                    
+                }
             }
         }
 

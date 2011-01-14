@@ -21,6 +21,16 @@ public class SignatureItem implements Serializable {
     private String address;
     private boolean valid;
 
+    
+    public SignatureItem(String name, String legalCode, Date signingTime, List<String> claimedRoles, String address, boolean valid) {
+        this.name = name;
+        this.legalCode = legalCode;
+        this.signingTime = signingTime;
+        this.claimedRoles = claimedRoles;
+        this.address = address;
+        this.valid = valid;
+    }
+
     public boolean isValid() {
         return valid;
     }
@@ -33,54 +43,24 @@ public class SignatureItem implements Serializable {
         return StringUtils.collectionToDelimitedString(claimedRoles, ", ");
     }
 
-    public SignatureItem setValid(boolean valid) {
-        this.valid = valid;
-        return this;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public SignatureItem setName(String name) {
-        this.name = name;
-        return this;
     }
 
     public String getLegalCode() {
         return legalCode;
     }
 
-    public SignatureItem setLegalCode(String legalCode) {
-        this.legalCode = legalCode;
-        return this;
-    }
-
     public Date getSigningTime() {
         return signingTime;
-    }
-
-    public SignatureItem setSigningTime(Date signingTime) {
-        this.signingTime = signingTime;
-        return this;
     }
 
     public List<String> getClaimedRoles() {
         return claimedRoles;
     }
 
-    public SignatureItem setClaimedRoles(List<String> claimedRoles) {
-        this.claimedRoles = claimedRoles;
-        return this;
-    }
-
     public String getAddress() {
         return address;
-    }
-
-    public SignatureItem setAddress(String address) {
-        this.address = address;
-        return this;
     }
 
 }

@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
+
 /**
  * @author Alar Kvell
  */

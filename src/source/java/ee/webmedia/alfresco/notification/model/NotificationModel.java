@@ -35,6 +35,7 @@ public interface NotificationModel {
         QName TASK_REVIEW_TASK_COMPLETED = QName.createQName(URI, "reviewTaskCompleted");
         QName TASK_INFORMATION_TASK_COMPLETED = QName.createQName(URI, "informationTaskCompleted");
         QName TASK_ASSIGNMENT_TASK_COMPLETED_BY_CO_RESPONSIBLE = QName.createQName(URI, "assignmentTaskCompletedByCoResponsible");
+        QName TASK_ASSIGNMENT_TASK_COMPLETED_BY_RESPONSIBLE = QName.createQName(URI, "assignmentTaskCompletedByResponsible");
         QName TASK_REVIEW_TASK_COMPLETED_NOT_ACCEPTED = QName.createQName(URI, "reviewTaskCompletedNotAccepted");
         QName TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS = QName.createQName(URI, "reviewTaskCompletedWithRemarks");
         QName WORKFLOW_WORKFLOW_COMPLETED = QName.createQName(URI, "workflowCompleted");

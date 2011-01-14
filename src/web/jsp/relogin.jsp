@@ -35,7 +35,7 @@
 <%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
 <%@ page import="javax.faces.context.FacesContext"%>
 
-<%@ page buffer="16kb" contentType="text/html;charset=UTF-8" %>
+<%@ page buffer="32kb" contentType="text/html;charset=UTF-8" %>
 <%@ page isELIgnored="false" %>
 
 <%

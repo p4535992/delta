@@ -5,7 +5,7 @@
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
 <%@ taglib uri="/WEB-INF/wm.tld" prefix="wm" %>
 
-<%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
+<%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 <%@ page import="javax.faces.context.FacesContext" %>
 <%@ page import="org.alfresco.web.app.Application" %>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <alfresco-config>
    <config>
       <actions>
@@ -51,7 +51,7 @@
          <show-property name="vol:volumeMark" display-label-id="volume_volumeMark" readOnlyIf="vol:status=suletud||hävitatud" />
          <show-property name="vol:title" display-label-id="volume_title" readOnlyIf="vol:status=suletud||hävitatud" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="vol:volumeType" display-label-id="volume_volumeType" classificatorName="volumeType" component-generator="ClassificatorSelectorGenerator" readOnlyIf="vol:status=suletud||hävitatud" />
-         <show-property name="vol:containsCases" display-label-id="volume_containsCases" component-generator="CheckboxGenerator" readOnlyIf="vol:status=suletud||hävitatud" />
+         <show-property name="vol:containsCases" display-label-id="volume_containsCases" component-generator="CheckboxGenerator" readOnlyIf="#{VolumeDetailsDialog.disableContainsCases}" />
          <show-property name="vol:description" display-label-id="volume_description" readOnlyIf="vol:status=suletud||hävitatud" styleClass="expand19-200" component-generator="TextAreaGenerator"/>
          <show-property name="vol:validFrom" display-label-id="volume_validFrom" readOnlyIf="vol:status=suletud||hävitatud" />
          <show-property name="vol:validTo" display-label-id="volume_validTo" readOnlyIf="vol:status=suletud||hävitatud" />

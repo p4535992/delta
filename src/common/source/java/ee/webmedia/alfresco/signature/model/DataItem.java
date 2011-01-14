@@ -1,10 +1,15 @@
 package ee.webmedia.alfresco.signature.model;
 
+import java.io.InputStream;
 import java.io.Serializable;
 
 import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.lang.ObjectUtils;
 
+import ee.sk.digidoc.DataFile;
+import ee.sk.digidoc.DigiDocException;
+import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.servlet.DownloadDigiDocContentServlet;
 
 public class DataItem implements Serializable {
@@ -16,10 +21,10 @@ public class DataItem implements Serializable {
     protected String mimeType;
     protected String encoding;
     protected long size;
-    protected byte[] data;
+    protected DataFile dataFile;
     protected String downloadUrl;
 
-    public DataItem(NodeRef nodeRef, int id, String name, String mimeType, String encoding, long size, byte[] data) {
+    public DataItem(NodeRef nodeRef, int id, String name, String mimeType, String encoding, long size, DataFile dataFile) {
         if (id < 0) {
             throw new IllegalArgumentException("DataItem id must not be negative");
         }
@@ -28,7 +33,7 @@ public class DataItem implements Serializable {
         this.mimeType = mimeType;
         this.encoding = encoding;
         this.size = size;
-        this.data = data;
+        this.dataFile = dataFile;
         if (nodeRef != null && name != null) {
             this.downloadUrl = DownloadDigiDocContentServlet.generateUrl(nodeRef, id, name);
         }
@@ -42,48 +47,36 @@ public class DataItem implements Serializable {
         return id;
     }
 
-    public void setId(int id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getMimeType() {
         return mimeType;
     }
 
-    public void setMimeType(String mimeType) {
-        this.mimeType = mimeType;
-    }
-
     public String getEncoding() {
         return encoding;
-    }
-
-    public void setEncoding(String encoding) {
-        this.encoding = encoding;
     }
 
     public long getSize() {
         return size;
     }
 
-    public void setSize(long size) {
-        this.size = size;
-    }
-
-    public byte[] getData() {
-        return data;
-    }
-
-    public void setData(byte[] data) {
-        this.data = data;
+    /**
+     * Returns a new stream each time. Caller must close the stream!
+     */
+    public InputStream getData() throws SignatureException {
+        InputStream inputStream = null;
+        try {
+            inputStream = dataFile.getBodyAsStream();
+        } catch (DigiDocException e) {
+            throw new SignatureException("Error getting data, " + toString(), e);
+        }
+        if (inputStream == null) {
+            throw new SignatureException("Error getting data, " + toString() + ": inputStream is null");
+        }
+        return inputStream;
     }
 
     public String getDownloadUrl() {
@@ -103,22 +96,15 @@ public class DataItem implements Serializable {
 
     @Override
     public String toString() {
-        return toString(false);
-    }
-
-    public String toString(boolean includeData) {
-        StringBuilder sb = new StringBuilder("DataItem:");
-        sb.append(" id=").append(id);
-        sb.append(" name=").append(name);
-        sb.append(" mimeType=").append(mimeType);
-        sb.append(" encoding=").append(encoding);
-        sb.append(" size=").append(size);
-        sb.append(" downloadUrl=").append(downloadUrl);
-        sb.append("\n");
-        if (includeData) {
-            sb.append(new String(data));
-            sb.append("\n");
-        }
+        StringBuilder sb = new StringBuilder("DataItem[");
+        sb.append("id=").append(id);
+        sb.append(", name=").append(name);
+        sb.append(", mimeType=").append(mimeType);
+        sb.append(", encoding=").append(encoding);
+        sb.append(", size=").append(size);
+        sb.append(", downloadUrl=").append(downloadUrl);
+        sb.append(", dataFile=").append(ObjectUtils.identityToString(dataFile));
+        sb.append("]");
         return sb.toString();
     }
 

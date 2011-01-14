@@ -4,7 +4,7 @@
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
 
-<%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
+<%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
 <a:panel id="assign-responsibility-panel" styleClass="column panel-100" label="#{msg.assign_responsibility}" progressive="true">

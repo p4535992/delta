@@ -143,6 +143,7 @@
       <property name="taskTypeString" value="wfs:assignmentTask" />
       <property name="taskOutcomes" value="1" />
       <property name="documentService" ref="DocumentService" />
+      <property name="nodeService" ref="NodeService" />
    </bean>
 
    <bean class="ee.webmedia.alfresco.workflow.service.type.DocRegistrationWorkflowType" parent="workflowType">

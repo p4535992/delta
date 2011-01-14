@@ -1,5 +1,5 @@
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
-<%@ page buffer="64kb" contentType="text/html;charset=UTF-8"%>
+<%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
 

@@ -31,7 +31,7 @@
 <%@ page import="org.alfresco.web.app.servlet.AuthenticationHelper" %>
 <%@ page import="javax.servlet.http.Cookie" %>
 
-<%@ page buffer="16kb" contentType="text/html;charset=UTF-8" %>
+<%@ page buffer="32kb" contentType="text/html;charset=UTF-8" %>
 <%@ page isELIgnored="false" %>
 
 <%

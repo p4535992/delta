@@ -100,6 +100,8 @@
       <delete file="${common.dir.lib.server}/commons-lang-2.1.jar" />
       <!-- Newer version (3.6) of poi is added from common/lib folder -->
       <delete file="${common.dir.lib.server}/poi-3.1.jar" />
+      <!-- Newer version (1.4) of commons-codec is added from common/lib folder -->
+      <delete file="${common.dir.lib.server}/commons-codec-1.3.jar" />
    </target>
 
    <target name="setup-project-done">
