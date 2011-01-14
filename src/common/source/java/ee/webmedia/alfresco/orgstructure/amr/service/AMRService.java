@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.orgstructure.amr.service;
 
-import java.math.BigInteger;
-
 import smit.ametnik.services.Ametnik;
 import smit.ametnik.services.Yksus;
 
@@ -13,9 +11,9 @@ import smit.ametnik.services.Yksus;
 public interface AMRService {
     String BEAN_NAME = "AmrService";
 
-    Yksus[] getYksusByAsutusId(BigInteger asutusId);
+    Yksus[] getYksusByAsutusId();
 
-    Ametnik[] getAmetnikByAsutusId(BigInteger asutusId);
+    Ametnik[] getAmetnikByAsutusId();
 
     Ametnik getAmetnikByIsikukood(String socialSecurityNr);
 }

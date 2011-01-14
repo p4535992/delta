@@ -46,8 +46,8 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     @Override
     public int updateOrganisationStructures() {
-        Long longParameter = parametersService.getLongParameter(Parameters.EMPLOYEE_REG_ORGANISATION_ID);
-        Yksus[] yksusArray = amrService.getYksusByAsutusId(BigInteger.valueOf(longParameter));
+        //Long longParameter = parametersService.getLongParameter(Parameters.EMPLOYEE_REG_ORGANISATION_ID);
+        Yksus[] yksusArray = amrService.getYksusByAsutusId();
         List<OrganizationStructure> orgStructures = new ArrayList<OrganizationStructure>(yksusArray.length);
         for (Yksus yksus : yksusArray) {
             orgStructures.add(yksusToOrganizationStructure(yksus));

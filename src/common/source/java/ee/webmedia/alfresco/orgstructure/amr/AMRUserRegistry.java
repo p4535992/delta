@@ -22,7 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import smit.ametnik.services.Ametnik;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
-import ee.webmedia.alfresco.parameters.model.Parameters;
+//import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 
 /**
@@ -44,8 +44,11 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     private boolean active = true;
 
     public Iterator<NodeDescription> getPersons(Date modifiedSince) {
-        BigInteger orgId = parametersService.getParameter(Parameters.EMPLOYEE_REG_ORGANISATION_ID, BigInteger.class);
-        Ametnik[] ametnikArray = amrService.getAmetnikByAsutusId(orgId);
+        //BigInteger orgId = parametersService.getParameter(Parameters.EMPLOYEE_REG_ORGANISATION_ID, BigInteger.class);
+        //String defaultAmrOrgId = amrService.getDefaultAmrOrgId();
+        //int orgId = Integer.parseInt(defaultAmrOrgId.trim());
+        //BigInteger orgIdBigInterger =  BigInteger.valueOf(orgId);
+        Ametnik[] ametnikArray = amrService.getAmetnikByAsutusId();
         ArrayList<NodeDescription> persons = new ArrayList<NodeDescription>(ametnikArray.length);
         for (Ametnik ametnik : ametnikArray) {
             NodeDescription person = mergePersonDescription(ametnik);

@@ -55,6 +55,7 @@
             <xs:complexType xmlns:xs="http://www.w3.org/2001/XMLSchema">
                <xs:sequence xmlns:xs="http://www.w3.org/2001/XMLSchema">
                   <xs:element name="isikukood" type="xs:string" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
+                  <xs:element name="asutusId" type="xs:integer" xmlns:xs="http://www.w3.org/2001/XMLSchema" />
                </xs:sequence>
             </xs:complexType>
          </xs:element>

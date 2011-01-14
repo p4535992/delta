@@ -60,6 +60,9 @@ cas.casServerUrl=https://localhost:8181/cas/
 # URL on AmetnikeRegister webservice
 amr.service.url=http://gfna1-dto.dwl.smit:38081/amr-sim/services/AmrRequest
 
+# Atribute what defines AMR organisatsion id
+amr.org.id=1
+
 # Enable session serialization filter in development
 #serializingfilter.enabled=false
 

@@ -18,6 +18,7 @@ import smit.ametnik.services.AmetnikByIsikukoodRequestDocument.AmetnikByIsikukoo
 import smit.ametnik.services.AmetnikByIsikukoodResponseDocument.AmetnikByIsikukoodResponse;
 import smit.ametnik.services.YksusByAsutusIdRequestDocument.YksusByAsutusIdRequest;
 import smit.ametnik.services.YksusByAsutusIdResponseDocument.YksusByAsutusIdResponse;
+import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Web service, to communicate with AmetnikeRegister
@@ -27,8 +28,11 @@ import smit.ametnik.services.YksusByAsutusIdResponseDocument.YksusByAsutusIdResp
 public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRServiceImpl.class);
 
+    private String defaultAmrOrgId;
+    private BigInteger asutusId;
+
     @Override
-    public Yksus[] getYksusByAsutusId(BigInteger asutusId) {
+    public Yksus[] getYksusByAsutusId() {
         long startTime = System.currentTimeMillis();
         YksusByAsutusIdRequest request = YksusByAsutusIdRequestDocument.Factory.newInstance().addNewYksusByAsutusIdRequest();
         request.setAsutusId(asutusId);
@@ -41,7 +45,7 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
     }
 
     @Override
-    public Ametnik[] getAmetnikByAsutusId(BigInteger asutusId) {
+    public Ametnik[] getAmetnikByAsutusId() {
         long startTime = System.currentTimeMillis();
         AmetnikByAsutusIdRequest request = AmetnikByAsutusIdRequestDocument.Factory.newInstance().addNewAmetnikByAsutusIdRequest();
         request.setAsutusId(asutusId);
@@ -60,6 +64,7 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
         long startTime = System.currentTimeMillis();
         AmetnikByIsikukoodRequest request = AmetnikByIsikukoodRequestDocument.Factory.newInstance().addNewAmetnikByIsikukoodRequest();
         request.setIsikukood(socialSecurityNr);
+        request.setAsutusId(asutusId);
         AmetnikByIsikukoodResponseDocument responseDoc = (AmetnikByIsikukoodResponseDocument) marshalSendAndReceive(request);
         if (log.isDebugEnabled()) {
             log.debug("getAmetnikByIsikukood socialSecurityNr '" + socialSecurityNr + "', time " + (System.currentTimeMillis() - startTime)
@@ -69,4 +74,8 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
         return response.getAmetnik();
     }
 
+    public void setDefaultAmrOrgId(String defaultAmrOrgId) {
+        this.defaultAmrOrgId = defaultAmrOrgId;
+        this.asutusId = BigInteger.valueOf(Integer.parseInt(defaultAmrOrgId.trim()));
+    }
 }

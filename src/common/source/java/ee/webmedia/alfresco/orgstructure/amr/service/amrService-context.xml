@@ -11,7 +11,9 @@
 
    <bean id="messageFactory" class="org.springframework.ws.soap.saaj.SaajSoapMessageFactory" />
 
-   <bean id="AmrService" class="ee.webmedia.alfresco.orgstructure.amr.service.AMRServiceImpl" parent="amrServiceTemplate" />
+   <bean id="AmrService" class="ee.webmedia.alfresco.orgstructure.amr.service.AMRServiceImpl" parent="amrServiceTemplate">
+        <property name="defaultAmrOrgId" value="${amr.org.id}" />
+   </bean>
 
    <bean id="xmlBeansMarshaller" class="org.springframework.oxm.xmlbeans.XmlBeansMarshaller" />
 
