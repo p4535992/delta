@@ -90,11 +90,7 @@ public final class Hits {
     String originalQuery = q.toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
     weight = q.weight(s);
     String rewrittenQuery = weight.getQuery().toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
-    if (rewrittenQuery.length() > 300000) {
-        // 65k appears to be largest normal query (input 3 words, each 10 chars)
-        // 250k appears to be largest normal query (input 10 words, each 4 chars)
-        throw new TooLongQueryException("Very large query: original query length = " + originalQuery.length() + " chars, rewritten query length = " + rewrittenQuery.length() + " chars");
-    }
+    checkQueryLength(originalQuery, rewrittenQuery);
     searcher = s;
     filter = f;
     nDeletions = countDeletions(s);
@@ -112,11 +108,7 @@ public final class Hits {
     String originalQuery = q.toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
     weight = q.weight(s);
     String rewrittenQuery = weight.getQuery().toString(); // this value is good to have, if we have to analyze memory dump after OutOfMemoryError
-    if (rewrittenQuery.length() > 300000) {
-        // 65k appears to be largest normal query (input 3 words, each 10 chars)
-        // 250k appears to be largest normal query (input 10 words, each 4 chars)
-        throw new TooLongQueryException("Very large query: original query length = " + originalQuery.length() + " chars, rewritten query length = " + rewrittenQuery.length() + " chars");
-    }
+    checkQueryLength(originalQuery, rewrittenQuery);
     searcher = s;
     filter = f;
     sort = o;
@@ -126,6 +118,17 @@ public final class Hits {
     if (statisticsEnabled) {
         SearchStatistics.getData().luceneHitsTime = System.currentTimeMillis() - startTime;
         SearchStatistics.getData().resultsBeforeAcl = length;
+    }
+  }
+
+  private void checkQueryLength(String originalQuery, String rewrittenQuery) {
+    if (rewrittenQuery.length() > 2000000) {
+      // 65k appears to be largest normal query (input 3 words, each 10 chars)
+      // 250k appears to be largest normal query (input 10 words, each 4 chars)
+      // BUT if WildCardQuery is rewritten to BooleanQuery (if *-at-the beginning is used for example), then rewrittenQuery length
+      // depends on the amount of data in the index (*-s are substituted with words from the index!)
+      // Ideal is not to use *-at-the beginning; and *-at-the-end queries rewrite to ConstantScorePrefixQuery
+      throw new TooLongQueryException("Very large query: original query length = " + originalQuery.length() + " chars, rewritten query length = " + rewrittenQuery.length() + " chars");
     }
   }
 

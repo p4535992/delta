@@ -645,13 +645,21 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private CompoundWorkflow finishCompoundWorkflowInner(WorkflowEventQueue queue, NodeRef nodeRef, Status taskStatus, String taskOutcomeLabelId,
             String userTaskComment, boolean finishOnRegisterDocument) {
         CompoundWorkflow compoundWorkflow = getCompoundWorkflow(nodeRef);
-        if (checkCompoundWorkflow(compoundWorkflow, Status.IN_PROGRESS, Status.FINISHED) == Status.FINISHED) {
+        //allow all statuses when finishing on registering reply document
+        if ((finishOnRegisterDocument && compoundWorkflow.isStatus(Status.FINISHED)) 
+                || (!finishOnRegisterDocument && checkCompoundWorkflow(compoundWorkflow, Status.IN_PROGRESS, Status.FINISHED) == Status.FINISHED)) {
             if (log.isDebugEnabled()) {
                 log.debug("CompoundWorkflow is already finished, finishing is not performed, saved as is: " + compoundWorkflow);
             }
         } else {
             setWorkflowsAndTasksFinished(queue, compoundWorkflow, taskStatus, taskOutcomeLabelId, userTaskComment, finishOnRegisterDocument);
-            stepAndCheck(queue, compoundWorkflow, Status.FINISHED);
+            if(finishOnRegisterDocument){
+                //don't check statuses when finishing on registering reply document
+                stepAndCheck(queue, compoundWorkflow, false, Status.FINISHED);
+            }
+            else {
+                stepAndCheck(queue, compoundWorkflow, Status.FINISHED);
+            }
             boolean changed = saveCompoundWorkflow(queue, compoundWorkflow, null);
             if (log.isDebugEnabled()) {
                 log.debug("Finished " + compoundWorkflow);
@@ -660,7 +668,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
         // also check repo status
         CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
-        checkCompoundWorkflow(freshCompoundWorkflow, Status.FINISHED);
+        if(!finishOnRegisterDocument){
+            checkCompoundWorkflow(freshCompoundWorkflow, Status.FINISHED);
+        }
         checkActiveResponsibleAssignmentTasks(freshCompoundWorkflow.getParent());
         return freshCompoundWorkflow;
     }
@@ -1240,13 +1250,19 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private boolean stepAndCheck(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow, Status... requiredStatuses) {
+        return stepAndCheck(queue, compoundWorkflow, true, requiredStatuses);
+    }
+    
+    private boolean stepAndCheck(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow, boolean check, Status... requiredStatuses) {
         fireCreatedEvents(queue, compoundWorkflow);
         int before;
         do {
             before = queue.getEvents().size();
             stepCompoundWorkflow(queue, compoundWorkflow);
         } while (queue.getEvents().size() > before);
-        checkCompoundWorkflow(compoundWorkflow, requiredStatuses);
+        if (check) {
+            checkCompoundWorkflow(compoundWorkflow, requiredStatuses);
+        }
         return !queue.getEvents().isEmpty();
     }
 
