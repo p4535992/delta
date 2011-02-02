@@ -263,7 +263,9 @@ public class SendOutServiceImpl implements SendOutService {
             ContentToSend content = new ContentToSend();
             content.setFileName(zipFileName);
             content.setMimeType(MimetypeMap.MIMETYPE_ZIP);
-            content.setInputStream(new ByteArrayInputStream(byteStream.toByteArray()));
+            byte[] byteArray = byteStream.toByteArray();
+            content.setSize(byteArray.length);
+            content.setInputStream(new ByteArrayInputStream(byteArray));
             result.add(content);
         } else {
             for (FileInfo fileInfo : fileFolderService.listFiles(document)) {
@@ -277,7 +279,9 @@ public class SendOutServiceImpl implements SendOutService {
                     // input stream life-cycle.
                     ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
                     reader.getContent(byteStream);
-                    content.setInputStream(new ByteArrayInputStream(byteStream.toByteArray()));
+                    byte[] byteArray = byteStream.toByteArray();
+                    content.setSize(byteArray.length);
+                    content.setInputStream(new ByteArrayInputStream(byteArray));
                     result.add(content);
                 }
             }

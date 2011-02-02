@@ -4,6 +4,8 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isActiveRespons
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isInactiveResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
 
+import java.util.List;
+
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
@@ -15,6 +17,7 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
@@ -77,13 +80,23 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
             if(task.isStatus(Status.FINISHED)){
                 NodeRef docRef = task.getParent().getParent().getParent();
                 Node document = documentService.getDocument(docRef);
-                if(DocumentSubtypeModel.Types.INCOMING_LETTER.equals(document.getType())){
-                    if(nodeService.getProperty(docRef, DocumentSpecificModel.Props.COMPLIENCE_DATE) == null){
+                if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(document.getType())) {
+                    if (nodeService.getProperty(docRef, DocumentSpecificModel.Props.COMPLIENCE_DATE) == null) {
                         documentService.setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, queue.getNow(), docRef);
                     }
-                    documentService.setDocStatusFinished(docRef);
-                    workflowService.setWorkflowsAndTasksFinished(queue, task.getParent().getParent(), Status.UNFINISHED, "task_outcome_unfinished_by_finishing_responsible_task", null, false);
-                }                
+                    documentService.setDocStatusFinished(docRef);                    
+                }
+                if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(document.getType())
+                        || DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(document.getType())) {
+                    workflowService.setWorkflowsAndTasksFinished(queue, task.getParent().getParent(), Status.UNFINISHED,
+                            "task_outcome_unfinished_by_finishing_responsible_task", null, false);
+                    workflowService.addOtherCompundWorkflows(task.getParent().getParent());
+                    List<CompoundWorkflow> compoundWorkflows = task.getParent().getParent().getOtherCompoundWorkflows();
+                    for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
+                        workflowService.setWorkflowsAndTasksFinished(queue, compoundWorkflow, Status.UNFINISHED,
+                                    "task_outcome_unfinished_by_finishing_responsible_task", null, false);
+                    }
+                }
             }
         }
 

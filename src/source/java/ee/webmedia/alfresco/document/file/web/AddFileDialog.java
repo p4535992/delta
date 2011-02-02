@@ -139,9 +139,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 if (isFileSelected) {
                     for (int i = 0; i < selectedFileNodeRef.size(); i++) {
                         String displayName = selectedFileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(selectedFileName.get(i));
-                        checkPlusInFileName(displayName);
-                        displayName = getFileService().getUniqueFileDisplayName(documentNodeRef, displayName);
-                        String name = getGeneralService().limitFileNameLength(displayName, 20, null);
+                        String name = checkAndGetUniqueFilename(documentNodeRef, displayName);
                         getFileService().addFileToDocument(
                                 name,
                                 displayName,
@@ -155,16 +153,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                     List<String> fileNameWithoutExtension = getFileUploadBean().getFileNameWithoutExtension();
                     for (int i = 0; i < files.size(); i++) {
                         String displayName = fileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(fileNames.get(i));
-                        checkPlusInFileName(displayName);
-                        String uniqueDisplayName = getFileService().getUniqueFileDisplayName(documentNodeRef, displayName);
-                        if (!displayName.equals(uniqueDisplayName)) {
-                            // Take care of "duplicate files"
-                            throw new FileExistsException(documentNodeRef, displayName);
-                        }
-
-                        String name = getGeneralService().limitFileNameLength(displayName, 20, null);
-                        name = getGeneralService().getUniqueFileName(documentNodeRef, name);
-
+                        String name = checkAndGetUniqueFilename(documentNodeRef, displayName);
                         getFileService().addFileToDocument(
                                 name,
                                 displayName,
@@ -183,6 +172,18 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
             isFinished = false;
             throw new RuntimeException(MessageUtil.getMessage(context, ERR_EXISTING_FILE, e.getName()));
         }
+    }
+
+    public String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName) {
+        checkPlusInFileName(displayName);
+        String uniqueDisplayName = getFileService().getUniqueFileDisplayName(documentNodeRef, displayName);
+        if (!displayName.equals(uniqueDisplayName)) {
+            // Take care of "duplicate files"
+            throw new FileExistsException(documentNodeRef, displayName);
+        }                        
+        String name = getGeneralService().limitFileNameLength(displayName, 20, null);
+        name = getGeneralService().getUniqueFileName(documentNodeRef, name);
+        return name;
     }
 
     public static void checkPlusInFileName(String displayName) {

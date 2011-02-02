@@ -16,4 +16,6 @@ public interface WorkflowModifications {
     
     void setWorkflowsAndTasksFinished(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow, Status taskStatus, String taskOutcomeLabelId, String userTaskComment, boolean finishOnRegisterDocument);
 
+    void addOtherCompundWorkflows(CompoundWorkflow compoundWorkflow);
+
 }
