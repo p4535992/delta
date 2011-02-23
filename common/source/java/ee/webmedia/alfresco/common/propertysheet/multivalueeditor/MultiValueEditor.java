@@ -150,12 +150,13 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         }
         UIPropertySheet propertySheet = null;
         String setterCallback = (String) getAttributes().get(Search.SETTER_CALLBACK);
+        boolean insertInMiddle = columnLists.get(0).size() > rowIndex + 1;
         for (int i = 0; i < results.length; i++) {
             MethodBinding b = getFacesContext().getApplication().createMethodBinding(setterCallback, new Class[] { String.class });
             @SuppressWarnings("unchecked")
             List<Object> rowList = (List<Object>) b.invoke(context, new Object[] { results[i] });
 
-            if (columnLists.get(0).size() > rowIndex + i) {
+            if (columnLists.get(0).size() > 0 && i == 0) {
                 int columnIndex = 0;
                 for (List<Object> columnList : columnLists) {
                     if (rowList.size() > columnIndex) {
@@ -169,18 +170,31 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
                 int columnIndex = 0;
                 for (List<Object> columnList : columnLists) {
                     if (rowList.size() > columnIndex) {
-                        columnList.add(rowList.get(columnIndex));
+                        if(insertInMiddle){
+                            columnList.add(rowIndex + i, rowList.get(columnIndex));
+                        } else {
+                            columnList.add(rowList.get(columnIndex));
+                        }
                     } else {
-                        columnList.add(null);
+                        if(insertInMiddle){
+                            columnList.add(rowIndex + i, null);
+                        } else {
+                            columnList.add(null);
+                        }
                     }
                     columnIndex++;
                 }
-                if (propertySheet == null) {
-                    propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
-                }
-                appendRowComponent(context, rowIndex + i, propertySheet);
             }
         }
+        if (propertySheet == null) {
+            propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
+        }
+        clearChildren();
+        int numRows = columnLists.get(0).size();
+        for (int ri = 0; ri < numRows; ri++) {
+            appendRowComponent(context, ri, propertySheet);
+        }
+
         for (List<Object> columnList : columnLists) {
             log.debug("Column list=" + columnList);
         }
@@ -284,29 +298,21 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             List<?> list = getList(context, propName);
             list.remove(removeIndex);
         }
+        clearChildren();
+        int numRows = getList(context, getPropNames().get(0)).size();
+        for (int ri = 0; ri < numRows; ri++) {
+            appendRowComponent(context, ri, ComponentUtil.getAncestorComponent(this, UIPropertySheet.class));
+        }
+    }
 
-        int rowIndex = 0;
-        @SuppressWarnings("unchecked")
+    public void clearChildren() {
         List<UIComponent> children = getChildren();
         for (Iterator<UIComponent> i = children.iterator(); i.hasNext();) {
             UIComponent container = i.next();
             if (!(container instanceof HtmlPanelGroup)) {
                 continue;
             }
-            if (rowIndex == removeIndex) {
-                // remove a row from the middle
-                i.remove();
-            } else if (rowIndex > removeIndex) {
-                // iterate over all rows, starting from the removed spot, and correct their value-binding to match the correct list element
-                if (container instanceof HtmlPanelGroup) {
-                    int columnIndex = 0;
-                    for (String propName : propNames) {
-                        UIComponent component = (UIComponent) container.getChildren().get(columnIndex++);
-                        setValueBinding(context, component, propName, rowIndex - 1);
-                    }
-                }
-            }
-            rowIndex++;
+            i.remove();
         }
     }
 

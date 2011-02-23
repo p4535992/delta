@@ -256,7 +256,7 @@
             ,docspec:errandEndDate¤¤styleClass=date inline¤readOnlyIf=parent.doccom:docStatus!=töös
             "
          />
-         <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance"
+         <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance" 
             addLabelId="document_errandsAbroad_addCatering" styleClass="add-catering" readOnlyIf="parent.doccom:docStatus!=töös"
             component-generator="MultiValueEditorGenerator" propsGeneration="
              docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceCateringCount¤styleClass=width120
@@ -302,7 +302,7 @@
             ,docspec:country
             " 
          />
-         <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance"
+         <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance" forcedMandatory="true"
             addLabelId="document_errandsAbroad_addCatering" styleClass="add-catering" readOnlyIf="parent.parent.doccom:docStatus!=töös"
             component-generator="MultiValueEditorGenerator" propsGeneration="
              docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceCateringCount¤styleClass=width120

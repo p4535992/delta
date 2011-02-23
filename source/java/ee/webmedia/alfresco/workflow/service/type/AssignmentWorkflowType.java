@@ -3,7 +3,10 @@ package ee.webmedia.alfresco.workflow.service.type;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isActiveResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isInactiveResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getExcludedNodeRefsOnFinishWorkflows;
 
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.alfresco.i18n.I18NUtil;
@@ -17,14 +20,17 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowModifications;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 
 /**
  * @author Alar Kvell
@@ -77,7 +83,8 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                 }
             }
             // if task status is changed to FINISHED
-            if(task.isStatus(Status.FINISHED)){
+            Boolean isRegisterDocQueue = queue.getParameter(WorkflowQueueParameter.TRIGGERED_BY_DOC_REGISTRATION);
+            if(task.isStatus(Status.FINISHED) && (isRegisterDocQueue == null || !isRegisterDocQueue)){
                 NodeRef docRef = task.getParent().getParent().getParent();
                 Node document = documentService.getDocument(docRef);
                 if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(document.getType())) {
@@ -89,18 +96,27 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                 if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(document.getType())
                         || DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(document.getType())) {
                     workflowService.setWorkflowsAndTasksFinished(queue, task.getParent().getParent(), Status.UNFINISHED,
-                            "task_outcome_unfinished_by_finishing_responsible_task", null, false);
+                            "task_outcome_unfinished_by_finishing_responsible_task", null, false, getExcludedNodeRefsOnFinishWorkflows(task.getParent().getParent()));
                     workflowService.addOtherCompundWorkflows(task.getParent().getParent());
                     List<CompoundWorkflow> compoundWorkflows = task.getParent().getParent().getOtherCompoundWorkflows();
-                    for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
-                        workflowService.setWorkflowsAndTasksFinished(queue, compoundWorkflow, Status.UNFINISHED,
-                                    "task_outcome_unfinished_by_finishing_responsible_task", null, false);
+                    for (Iterator<CompoundWorkflow> i = compoundWorkflows.iterator(); i.hasNext();) {
+                        CompoundWorkflow compoundWorkflow = i.next();
+                        if (compoundWorkflow.isStatus(Status.NEW)) {
+                            this.workflowService.deleteCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
+                            i.remove();
+                        } else {
+                            List<NodeRef> excludedNodeRefs = getExcludedNodeRefsOnFinishWorkflows(compoundWorkflow);
+                            workflowService.setWorkflowsAndTasksFinished(queue, compoundWorkflow, Status.UNFINISHED,
+                                    "task_outcome_unfinished_by_finishing_responsible_task", null, false, excludedNodeRefs);
+                        }
                     }
                 }
             }
         }
 
     }
+
+
 
     private void setDocumentOwnerFromTask(final Task task) {
         AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {

@@ -22,7 +22,7 @@ public class BaseWorkflowType implements WorkflowType, InitializingBean {
     private Class<? extends Task> taskClass = Task.class;
     private int taskOutcomes = 0;
 
-    private WorkflowService workflowService;
+    protected WorkflowService workflowService;
     private NamespaceService namespaceService;
 
     @Override

@@ -61,7 +61,7 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
      * @return
      */
     public List<CompoundWorkflow> getOtherCompoundWorkflows() {
-        return Collections.unmodifiableList(otherCompoundWorkflows);
+        return otherCompoundWorkflows;
     }
     
     public void setOtherCompoundWorkflows(List<CompoundWorkflow> otherCompoundWorkflows) {

@@ -511,7 +511,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
         if (existingParentNode == null || !targetParentRef.equals(existingParentNode.getNodeRef())) {
             // was not saved (under volume nor case) or saved, but parent (volume or case) must be changed
-
+            Node previousCase = getCaseByDocument(docNodeRef);
+            Node previousVolume = getVolumeByDocument(docNodeRef, previousCase);
             try {
                 // Moving is executed with System user rights, because this is not appropriate to implement in permissions model
                 AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
@@ -538,11 +539,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                         throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_hasReplyOrFollowUp");
                     }
                     final String existingRegNr = (String) docProps.get(REG_NUMBER.toString());
-                    if (StringUtils.isNotBlank(existingRegNr)
-                        && !(existingParentNode.getType().equals(CaseModel.Types.CASE) && nodeService.getType(targetParentRef).equals(CaseModel.Types.CASE))) {
-                        EventsLoggingHelper.disableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
-                        registerDocument(docNode, true);
-                        EventsLoggingHelper.enableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
+                    if (StringUtils.isNotBlank(existingRegNr)) {
+                        // reg. number is changed if function, series or volume is changed
+                        if (!previousVolume.getNodeRef().equals(volumeNodeRef)) {
+                            EventsLoggingHelper.disableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
+                            registerDocument(docNode, true);
+                            EventsLoggingHelper.enableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
+                        }
                     }
                 } else {
                     // Make sure that the node's volume is same as it's followUp's or reply's

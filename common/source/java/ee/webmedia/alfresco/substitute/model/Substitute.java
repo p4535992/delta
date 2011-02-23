@@ -31,6 +31,7 @@ public class Substitute implements Serializable {
     }
 
     public Substitute(Substitute sub) {
+        this.replacedPersonUserName = sub.replacedPersonUserName;
         this.substituteName = sub.substituteName;
         this.substituteId = sub.substituteId;
         this.substitutionStartDate = sub.substitutionStartDate;

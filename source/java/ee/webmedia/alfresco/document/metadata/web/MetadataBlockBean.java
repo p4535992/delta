@@ -1031,6 +1031,11 @@ public class MetadataBlockBean implements Serializable {
         }
         editDocument(getDocumentService().getDocument(document.getNodeRef()));
     }
+    
+    public void editNewDocument(Node docNode){
+        isDraft = true;
+        editDocument(docNode);
+    }
 
     public void editDocument(Node doc) {
         document = doc;
@@ -1102,16 +1107,7 @@ public class MetadataBlockBean implements Serializable {
         }
 
         final List<String> messages = new ArrayList<String>(4);
-        if (isDraft && DocListUnitStatus.CLOSED.equals(getFunctionsService().getFunctionByNodeRef(functionRef).getStatus())) {
-            messages.add("document_validationMsg_closed_function");
-        }
-        if (isDraft && DocListUnitStatus.CLOSED.equals(getSeriesService().getSeriesByNodeRef(seriesRef).getStatus())) {
-            messages.add("document_validationMsg_closed_series");
-        }
         Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
-        if (isDraft && DocListUnitStatus.CLOSED.equals(volume.getStatus())) {
-            messages.add("document_validationMsg_closed_volume");
-        }
 
         String caseLabel = StringUtils.trimToNull((String) props.get(TransientProps.CASE_LABEL_EDITABLE));
         if (volume.isContainsCases() && StringUtils.isBlank(caseLabel)) {
@@ -1123,23 +1119,39 @@ public class MetadataBlockBean implements Serializable {
         } else if (!volume.isContainsCases() && StringUtils.isNotBlank(caseLabel)) {
             caseLabel = null;
         }
+        Case docCase = null;
         if (volume.isContainsCases() && StringUtils.isNotBlank(caseLabel)) {
             List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef);
             NodeRef caseRef = null;
             for (Case tmpCase : allCases) {
                 if (StringUtils.equalsIgnoreCase(caseLabel, tmpCase.getTitle())) {
                     caseRef = tmpCase.getNode().getNodeRef();
-                    if (tmpCase.isClosed()) {
-                        if (log.isDebugEnabled()) {
-                            log.warn("validation failed: document_validationMsg_closed_case");
-                        }
-                        messages.add("document_validationMsg_closed_case");
-                    }
+                    docCase = tmpCase;
                     break;
                 }
             }
             props.put(TransientProps.CASE_NODEREF, caseRef);
         }
+        
+        boolean isClosedUnitCheckNeeded = isClosedUnitCheckNeeded(getDocumentService().getAncestorNodesByDocument(nodeRef), volumeRef, docCase);
+        
+        if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(getFunctionsService().getFunctionByNodeRef(functionRef).getStatus())) {
+            messages.add("document_validationMsg_closed_function");
+        }
+        if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(getSeriesService().getSeriesByNodeRef(seriesRef).getStatus())) {
+            messages.add("document_validationMsg_closed_series");
+        }
+        if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(volume.getStatus())) {
+            messages.add("document_validationMsg_closed_volume");
+        } 
+        if (isClosedUnitCheckNeeded && docCase != null && docCase.isClosed()) {
+            if (log.isDebugEnabled()) {
+                log.warn("validation failed: document_validationMsg_closed_case");
+            }
+            messages.add("document_validationMsg_closed_case");
+        }        
+        
+        
         props.put(TransientProps.CASE_LABEL_EDITABLE, caseLabel);
 
         validateErrandAbroadDailyCatering(messages);
@@ -1154,6 +1166,17 @@ public class MetadataBlockBean implements Serializable {
             return false;
         }
         return true;
+    }
+
+    public boolean isClosedUnitCheckNeeded(DocumentParentNodesVO parents, NodeRef volumeRef, Case docCase) {
+        return isDraft
+               || !(volumeRef.equals(parents.getVolumeNode().getNodeRef())
+                     && (parents.getCaseNode() == null ? docCase == null
+                            : (docCase == null ? false
+                                 : parents.getCaseNode().getNodeRef().equals(docCase.getNode().getNodeRef())
+                              )
+                         )
+                     );
     }
     
     private void validateErrandAbroadDailyCatering(List<String> messages) { 

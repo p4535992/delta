@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
@@ -68,8 +69,6 @@ public class WorkflowUtil {
         }
 
         /**
-         * Result remains the same no matter what
-         * FIXME: Alar: mis selle meetodi mõte on, kas tõesti ainult indexi suurendamine? praegu pole vahet, mis sodi sellele meetodile parameetrina ette söödetakse.
          * @param statuses
          * @return
          */
@@ -204,20 +203,20 @@ public class WorkflowUtil {
             }
             break;
         case IN_PROGRESS:
-            if (!isStatusOrder(workflows).requireAny(Status.FINISHED).requireOne(Status.IN_PROGRESS).requireAny(Status.NEW).check()) {
+            if (!isStatusOrder(workflows).requireAny(Status.FINISHED).requireOne(Status.IN_PROGRESS).requireAny(Status.NEW, Status.FINISHED).check()) {
                 throw new WorkflowChangedException(
-                        "If compoundWorkflow status is IN_PROGRESS, then workflows must have the following statuses, in order: 0..* FINISHED, 1 IN_PROGRESS, 0..* NEW\n"
+                        "If compoundWorkflow status is IN_PROGRESS, then workflows must have the following statuses, in order: 0..* FINISHED, 1 IN_PROGRESS, 0..* NEW or FINISHED\n"
                                 + compoundWorkflow);
             }
             break;
         case STOPPED:
-            if (!isStatusOrder(workflows).requireAny(Status.FINISHED).requireOne(Status.STOPPED).requireAny(Status.NEW).check()
-                    && !isStatusOrder(workflows).requireAtLeastOne(Status.FINISHED).requireAny(Status.NEW).check()) {
+            if (!isStatusOrder(workflows).requireAny(Status.FINISHED).requireOne(Status.STOPPED).requireAny(Status.NEW, Status.FINISHED).check()
+                    && !isStatusOrder(workflows).requireAtLeastOne(Status.FINISHED).requireAny(Status.NEW, Status.FINISHED).check()) {
                 throw new WorkflowChangedException(
-                        "If compoundWorkflow status is STOPPED, then workflows must have the following statuses, in order: (0..* FINISHED, 1 STOPPED, 0..* NEW) or (1..* FINISHED, 0..* NEW)\n"
+                        "If compoundWorkflow status is STOPPED, then workflows must have the following statuses, in order: (0..* FINISHED, 1 STOPPED, 0..* NEW or FINISHED) or (1..* FINISHED, 0..* NEW or FINISHED)\n"
                                 + compoundWorkflow);
             }
-            break;
+            break;            
         case FINISHED:
             if (!isStatusAll(workflows, Status.FINISHED)) {
                 throw new WorkflowChangedException("If compoundWorkflow status is FINISHED, then all workflows must have status FINISHED\n" + compoundWorkflow);
@@ -328,6 +327,16 @@ public class WorkflowUtil {
             }
         }
         return workflows;
+    }
+    
+    public static List<NodeRef> getExcludedNodeRefsOnFinishWorkflows(CompoundWorkflow compoundWorkflow) {
+        List<NodeRef> excludedNodeRefs = new ArrayList<NodeRef>();
+        for (Workflow workflow : compoundWorkflow.getWorkflows()){
+            if(WorkflowSpecificModel.Types.INFORMATION_WORKFLOW.equals(workflow.getNode().getType())){
+                excludedNodeRefs.add(workflow.getNode().getNodeRef());
+            }
+        }
+        return excludedNodeRefs;
     }
 
     public static boolean isActiveResponsible(Task task) {

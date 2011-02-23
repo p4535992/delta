@@ -58,8 +58,6 @@ public interface WorkflowService {
 
     CompoundWorkflow saveAndFinishCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
-    CompoundWorkflow finishCompoundWorkflow(NodeRef compoundWorkflow);
-
     CompoundWorkflow saveAndStopCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
     CompoundWorkflow stopCompoundWorkflow(NodeRef compoundWorkflow);

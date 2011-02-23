@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.Comb
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROPS_GENERATION;
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROP_GENERATOR_DESCRIPTORS;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALDIATION_DISABLED;
+import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALIDATION_MARKER_DISABLED;
 
 import java.util.List;
 import java.util.Map;
@@ -22,6 +23,7 @@ import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPro
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
+import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -38,6 +40,7 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator implements
     @Override
     public UIComponent generate(FacesContext context, String id) {
         getCustomAttributes().put(VALDIATION_DISABLED, Boolean.TRUE.toString());
+        getCustomAttributes().put(VALIDATION_MARKER_DISABLED, Boolean.FALSE.toString());
         UIComponent component = context.getApplication().createComponent(MultiValueEditor.MULTI_VALUE_EDITOR_FAMILY);
         FacesHelper.setupComponentId(context, component, id);
         component.setRendererType(MultiValueEditorRenderer.MULTI_VALUE_EDITOR_RENDERER_TYPE);

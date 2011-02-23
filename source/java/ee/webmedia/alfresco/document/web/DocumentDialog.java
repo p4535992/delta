@@ -298,7 +298,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public void setupAction(boolean mode) {
         isDraft = mode;
         if (isDraft) {
-            metadataBlockBean.editDocument(node);
+            metadataBlockBean.editNewDocument(node);
         } else {
             metadataBlockBean.viewDocument(node);
         }
