@@ -30,7 +30,9 @@
    <property name="project.dir.coverage.reports" location="${project.dir.test.reports}/coverage" />
    <property name="project.dir.coverage.instrumented" location="${project.dir.test}/classes-instrumented" />
    <property name="project.build.temporary.war" location="${project.dir.build}/temporary.war" />
-   <property name="project.build.result.war" location="${project.dir.build}/${project.name}.war" />
+
+   <property file="${project.basedir}/project.properties" />
+   <property name="project.build.result.war" location="${project.dir.build}/dhs-${currentVersion}.war" />
 
    <property name="conf.basedir" location="${project.dir.etc}/conf" />
    <property name="conf.name.file" location="${project.basedir}/conf-name.properties" />
