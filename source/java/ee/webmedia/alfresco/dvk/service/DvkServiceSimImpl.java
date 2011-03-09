@@ -16,6 +16,7 @@ import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
@@ -34,6 +35,7 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.MetainfoHelper;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.DhlDokumentType;
+import ee.webmedia.xtee.client.dhl.types.ee.riik.schemas.dhl.EdastusDocument.Edastus;
 import ee.webmedia.xtee.client.dhl.types.ee.riik.xtee.dhl.producers.producer.dhl.GetSendStatusResponseTypeUnencoded.Item;
 
 /**
@@ -48,29 +50,39 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     @Override
     public int updateDocSendStatuses() {
         // there are as many sendInfoRefs to the same dvkId as there were recipients whom doc were delivered using DVK
-        final Map<NodeRef /* sendInfo */, String /* dvkId */> refsAndIds = documentSearchService.searchOutboxDvkIds();
+        final Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr*/>> refsAndIds = documentSearchService.searchOutboxDvkIds();
         if (refsAndIds.size() == 0) {
             return 0; // no need to ask statuses
         }
         // get unique dvkIds
         final Set<String> dvkIds = new HashSet<String>(refsAndIds.size());
-        for (Entry<NodeRef, String> entry : refsAndIds.entrySet()) {
-            dvkIds.add(entry.getValue());
+        for (Entry<NodeRef, Pair<String, String>> entry : refsAndIds.entrySet()) {
+            dvkIds.add(entry.getValue().getFirst());
         }
         // get sendStatus for each dvkId
         final List<Item> sendStatuses = dhlXTeeService.getSendStatuses(dvkIds);
         // fill map containing statuses by ids
-        final HashMap<String /* dhlId */, SendStatus> statusesByIds = new HashMap<String, SendStatus>(sendStatuses.size());
+        final HashMap<String /* dhlId */, Map<String,SendStatus> > statusesByIds = new HashMap<String, Map<String, SendStatus> >();
         for (Item item : sendStatuses) {
-            statusesByIds.put(item.getDhlId(), SendStatus.get(item.getOlek()));
+            Map<String, SendStatus> statusesForDvkId = new HashMap<String, SendStatus>();
+            statusesByIds.put(item.getDhlId(), statusesForDvkId);
+            List<Edastus> forwardings = item.getEdastusList();
+            for (Edastus forwarding : forwardings){
+                statusesForDvkId.put(forwarding.getSaaja().getRegnr(), SendStatus.get(forwarding.getStaatus()));
+            }
         }
         final HashSet<String> dhlIdsStatusChanged = new HashSet<String>(dvkIds.size());
         // update each sendInfoRef if status has changed(from SENT to RECEIVED or CANCELLED)
-        for (Entry<NodeRef, String> refAndDvkId : refsAndIds.entrySet()) {
+        for (Entry<NodeRef, Pair<String, String>> refAndDvkId : refsAndIds.entrySet()) {
             final NodeRef sendInfoRef = refAndDvkId.getKey();
-            final String dvkId = refAndDvkId.getValue();
-            final SendStatus status = statusesByIds.get(dvkId);
-            if (!status.equals(SendStatus.SENT)) {
+            final String dvkId = refAndDvkId.getValue().getFirst();
+            final String recipientRegNr = refAndDvkId.getValue().getSecond();
+            Map<String, SendStatus> recipientStatuses = statusesByIds.get(dvkId);
+            SendStatus status = null;
+            if (recipientStatuses != null) {
+                status = recipientStatuses.get(recipientRegNr);
+            }
+            if (status != null && !status.equals(SendStatus.SENT)) {
                 dhlIdsStatusChanged.add(dvkId);
                 nodeService.setProperty(sendInfoRef, DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, status.toString());
             }

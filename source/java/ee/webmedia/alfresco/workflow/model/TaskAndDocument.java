@@ -46,6 +46,43 @@ public class TaskAndDocument implements Serializable {
     public Document getDocument() {
         return document;
     }
+    
+    // methods for sortLink tag in jsp
+    public String getDocName(){
+        return document.getDocName();
+    }
+    
+    public Date getTaskDueDate(){
+        return task.getDueDate();
+    }    
+    
+    public String getResolution(){
+        return task.getResolution();
+    } 
+    
+    public String getCreatorName(){
+        return task.getCreatorName();
+    }  
+    
+    public String getRegNumber(){
+        return document.getRegNumber();
+    }  
+    
+    public Date getRegDateTime(){
+        return document.getRegDateTime();
+    } 
+    
+    public String getSender(){
+        return document.getSender();
+    }   
+    
+    public Date getDocumentDueDate(){
+        return document.getDueDate();
+    } 
+    
+    public String getDocumentTypeName(){
+        return document.getDocumentTypeName();
+    }     
 
     @Override
     public String toString() {

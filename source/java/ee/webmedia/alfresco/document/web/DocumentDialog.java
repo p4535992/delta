@@ -168,6 +168,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } else {
             isDraft = false;
         }
+        metadataBlockBean.init(nodeRef, false);
     }
 
     public void copy(@SuppressWarnings("unused") ActionEvent event) {

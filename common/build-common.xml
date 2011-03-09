@@ -236,16 +236,6 @@
       <!-- Compile common separately from project, because it should be independent -->
       <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
          <src path="${common.dir.src}" />
-         <exclude name="ee/webmedia/**" />
-      </javac>
-      <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
-         <compilerarg value="-Xlint" />
-         <!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
-         <compilerarg value="-Xlint:-path" />
-         <src path="${common.dir.src}" />
-         <include name="ee/webmedia/**" />
-      </javac>
-      <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
          <src path="${project.dir.src}" />
          <exclude name="ee/webmedia/**" />
       </javac>
@@ -253,6 +243,7 @@
          <compilerarg value="-Xlint" />
          <!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
          <compilerarg value="-Xlint:-path" />
+         <src path="${common.dir.src}" />
          <src path="${project.dir.src}" />
          <include name="ee/webmedia/**" />
       </javac>

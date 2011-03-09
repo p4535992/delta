@@ -9,7 +9,7 @@
       <%-- dueDate --%>
       <a:column id="dueDate" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;">
          <f:facet name="header">
-            <a:sortLink id="dueDate-sort" label="#{msg.task_property_dueDate}" value="dueDate" styleClass="header" />
+            <a:sortLink id="dueDate-sort" label="#{msg.task_property_dueDate}" value="taskDueDate" styleClass="header" />
          </f:facet>
          <a:actionLink id="dueDate-text" value="#{r.task.dueDateStr}" action="dialog:document" tooltip="#{r.task.dueDateStr}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />
@@ -80,7 +80,7 @@
       <%-- DueDate --%>
       <a:column id="col7" primary="true" styleClass="#{r.task.cssStyleClass}" style="width: 10%;">
          <f:facet name="header">
-            <a:sortLink id="col7-sort" label="#{msg.document_dueDate}" value="dueDate" styleClass="header" />
+            <a:sortLink id="col7-sort" label="#{msg.document_dueDate}" value="documentDueDate" styleClass="header" />
          </f:facet>
          <a:actionLink id="col7-text" value="#{r.document.dueDateStr}" action="dialog:document" tooltip="#{r.document.dueDateStr}" actionListener="#{DocumentDialog.open}" styleClass="no-underline" >
             <f:param name="nodeRef" value="#{r.document.node.nodeRef}" />

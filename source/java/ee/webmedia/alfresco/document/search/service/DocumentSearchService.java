@@ -7,10 +7,12 @@ import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.series.model.Series;
+import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.workflow.search.model.TaskInfo;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -65,7 +67,7 @@ public interface DocumentSearchService {
     /**
      * @return dvkId's by sendInfos(aka dhl_id's - assigned to documents by DVK when sent to DVK, to be able to ask sending statuses)
      */
-    Map<NodeRef /*sendInfo*/, String /*dvkId*/> searchOutboxDvkIds();
+    Map<NodeRef, Pair<String, String>> searchOutboxDvkIds();
 
     /**
      * Fetches list of documents where ownerId = logged in userId and docStatus is working
@@ -184,5 +186,11 @@ public interface DocumentSearchService {
     List<QName> searchAdrDeletedDocumentTypes(Date deletedDateBegin, Date deletedDateEnd);
 
     List<QName> searchAdrAddedDocumentTypes(Date addedDateBegin, Date addedDateEnd);
+
+    /**
+     * Searches for groups by name. If {@code input} is empty, all groups are returned if {@code returnAllGroups} is {@code true}, otherwise an empty list is
+     * returned.
+     */    
+    List<Authority> searchAuthorityGroups(String groupName, boolean returnAllGroups);
 
 }

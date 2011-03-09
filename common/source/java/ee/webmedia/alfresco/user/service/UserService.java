@@ -80,12 +80,6 @@ public interface UserService {
      */
     Node getUser(String userName);
 
-    /**
-     * Searches for groups by name. If {@code input} is empty, all groups are returned if {@code returnAllGroups} is {@code true}, otherwise an empty list is
-     * returned.
-     */
-    List<Authority> searchGroups(String input, boolean returnAllGroups);
-
     Authority getAuthority(String authority);
 
     Authority getAuthorityOrNull(String authority);

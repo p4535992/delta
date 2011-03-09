@@ -43,10 +43,14 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
+import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.lucene.search.BooleanQuery;
@@ -74,6 +78,8 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.substitute.model.SubstitutionInfo;
 import ee.webmedia.alfresco.substitute.web.SubstitutionBean;
+import ee.webmedia.alfresco.user.model.Authority;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
@@ -103,6 +109,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     private WorkflowService workflowService;
     private ParametersService parametersService;
     private NamespaceService namespaceService;
+    private AuthorityService authorityService;
+    private UserService userService;
     private List<StoreRef> allStores = null;
 
     @Override
@@ -431,6 +439,52 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         return results;
     }
+    
+    @SuppressWarnings("unchecked")
+    @Override
+    public List<Authority> searchAuthorityGroups(String input, boolean returnAllGroups) {
+        input = StringUtils.trimToEmpty(input);
+        Set<String> results;
+        List<Authority> authorities = new ArrayList<Authority>();
+        if (input.length() == 0) {
+            if (!returnAllGroups) {
+                return Collections.emptyList();
+            }
+            results = authorityService.getAllAuthorities(AuthorityType.GROUP);
+        } else {
+            List<NodeRef> authorityRefs = searchAuthorityGroups(input);
+            results = new HashSet<String>(authorityRefs.size());
+            results.addAll(CollectionUtils.collect(authorityRefs, new Transformer(){
+                @Override
+                public Object transform(Object arg0) {
+                    NodeRef groupRef = (NodeRef) arg0;
+                    return nodeService.getProperty(groupRef, ContentModel.PROP_AUTHORITY_NAME);
+                }
+                
+            }));
+        }
+        for (String result : results) {
+            if (!userService.getAdministratorsGroup().equals(result) && !userService.getDocumentManagersGroup().equals(result)) {
+                authorities.add(userService.getAuthority(result));
+            }
+        }        
+        return authorities;
+    }    
+    
+    private List<NodeRef> searchAuthorityGroups(String groupName) {
+        long startTime = System.currentTimeMillis();
+        List<String> queryParts = new ArrayList<String>(2);
+        queryParts.add(generateTypeQuery(ContentModel.TYPE_AUTHORITY_CONTAINER));
+        queryParts.add(generateStringWordsWildcardQuery(groupName, ContentModel.PROP_AUTHORITY_DISPLAY_NAME));
+
+        String query = joinQueryPartsAnd(queryParts);
+        List<NodeRef> results = searchNodes(query, false, /* queryName */ "authorityGroups");
+        if (log.isDebugEnabled()) {
+            log.debug("Authority groups search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() //
+                    + ", query: " + query);
+        }
+        return results;
+    }    
 
     @Override
     public int getCurrentUsersTaskCount(QName taskType) {
@@ -572,7 +626,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public Map<NodeRef /* sendInfo */, String /* dvkId */> searchOutboxDvkIds() {
+    public Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr */>> searchOutboxDvkIds() {
         String query = getDvkOutboxQuery();
         log.debug("searchDocumentsInOutbox with query '" + query + "'");
         return searchDhlIdsBySendInfoImpl(query, false, /* queryName */ "outboxDvkIds");
@@ -667,13 +721,16 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return query;
     }
 
-    private Map<NodeRef /* sendInfo */, String /* dvkId */> searchDhlIdsBySendInfoImpl(String query, boolean limited, String queryName) {
-        final HashMap<NodeRef, String> refsAndDvkIds = new HashMap<NodeRef, String>();
+    private Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr */> > searchDhlIdsBySendInfoImpl(String query, boolean limited, String queryName) {
+        final HashMap<NodeRef, Pair<String, String>> refsAndDvkIds = new HashMap<NodeRef, Pair<String, String> >();
         searchGeneralImpl(query, limited, queryName, new SearchCallback<String>() {
             @Override
             public String addResult(ResultSetRow row) {
                 final NodeRef sendInfoRef = row.getNodeRef();
-                refsAndDvkIds.put(sendInfoRef, (String) nodeService.getProperty(sendInfoRef, DocumentCommonModel.Props.SEND_INFO_DVK_ID));
+                Pair<String, String> dvkIdAndRecipientregNr = 
+                    new Pair<String, String>((String) nodeService.getProperty(sendInfoRef, DocumentCommonModel.Props.SEND_INFO_DVK_ID), 
+                            (String) nodeService.getProperty(sendInfoRef, DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR));
+                refsAndDvkIds.put(sendInfoRef, dvkIdAndRecipientregNr);
                 return null;
             }
         });
@@ -1261,6 +1318,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public void setNamespaceService(NamespaceService namespaceService) {
         this.namespaceService = namespaceService;
     }
+    
+    public void setUserService(UserService userService) {
+        this.userService = userService;
+    }  
+    
+    public void setAuthorityService(AuthorityService authorityService) {
+        this.authorityService = authorityService;
+    }     
 
     // END: getters / setters
 

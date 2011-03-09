@@ -20,6 +20,7 @@ import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -32,6 +33,7 @@ public class PermissionsAddDialog extends BaseDialogBean {
     private UserListDialog userListDialog;
     private transient UserService userService;
     private transient PermissionService permissionService;
+    private transient DocumentSearchService documentSearchService;
 
     private NodeRef nodeRef;
     private String permission;
@@ -110,7 +112,7 @@ public class PermissionsAddDialog extends BaseDialogBean {
     }
 
     public SelectItem[] searchGroups(int filterIndex, String contains) {
-        List<Authority> results = getUserService().searchGroups(contains, true);
+        List<Authority> results = getDocumentSearchService().searchAuthorityGroups(contains, true);
         SelectItem[] selectItems = new SelectItem[results.size()];
         int i = 0;
         for (Authority authority : results) {
@@ -203,5 +205,13 @@ public class PermissionsAddDialog extends BaseDialogBean {
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
+    
+    protected DocumentSearchService getDocumentSearchService() {
+        if (documentSearchService == null) {
+            documentSearchService = (DocumentSearchService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+            .getBean(DocumentSearchService.BEAN_NAME);
+        }
+        return documentSearchService;
+    }    
     // END: getters / setters
 }

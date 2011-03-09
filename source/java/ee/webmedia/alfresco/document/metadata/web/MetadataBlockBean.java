@@ -104,6 +104,7 @@ public class MetadataBlockBean implements Serializable {
     private transient InMemoryChildNodeHelper inMemoryChildNodeHelper;
 
     private Node document;
+    private Node propertySheetControlDocument;
     private boolean inEditMode;
     private boolean isDraft;
     private DateFormat dateFormat;
@@ -809,7 +810,7 @@ public class MetadataBlockBean implements Serializable {
             volumes = null;
             volumeRef = null;
         } else {
-            UIPropertySheet ps = getPropertySheet();
+            UIPropertySheet ps = getPropertySheetInner();
             if (ps == null) { // when metadata block is first rendered
                 updateAccessRestrictionProperties(seriesRef);
             } else { // when value change event is fired
@@ -1423,11 +1424,24 @@ public class MetadataBlockBean implements Serializable {
         return true;
     }
 
+    /**
+     * NB! Don't call this method from java code; this is meant ONLY for metadata-block.jsp binding.
+     * For code use getPropertySheetInner() instead
+     */    
     public UIPropertySheet getPropertySheet() {
+        propertySheetControlDocument = this.document;
         return propertySheet;
     }
+    
+    public UIPropertySheet getPropertySheetInner() {
+        return propertySheet;
+    }    
 
-    public void setPropertySheet(UIPropertySheet propertySheet) {
+    public void setPropertySheet(UIPropertySheet propertySheet) throws IOException {
+        if(propertySheetControlDocument != null && !propertySheetControlDocument.equals(this.document)){
+            propertySheet.getChildren().clear();
+            propertySheetControlDocument = this.document;
+        }
         this.propertySheet = propertySheet;
         propertySheet.setMode(getMode());
     }

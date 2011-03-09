@@ -30,12 +30,10 @@ import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.SearchLanguageConversion;
 import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
-import org.apache.commons.lang.StringUtils;
-
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -53,7 +51,6 @@ public class UserServiceImpl implements UserService {
     private OrganizationStructureService organizationStructureService;
     private ConfigurableService configurableService;
     private NamespaceService namespaceService;
-
     @Override
     public NodeRef getUsersPreferenceNodeRef(String userName) {
         if(userName == null) {
@@ -170,29 +167,6 @@ public class UserServiceImpl implements UserService {
     @Override
     public Node getUser(String userName) {
         return new Node(personService.getPerson(userName));
-    }
-
-    @Override
-    public List<Authority> searchGroups(String input, boolean returnAllGroups) {
-        input = StringUtils.trimToEmpty(input);
-        Set<String> results;
-        if (input.length() == 0) {
-            if (!returnAllGroups) {
-                return Collections.emptyList();
-            }
-            results = authorityService.getAllAuthorities(AuthorityType.GROUP);
-        } else {
-            String query = "*" + SearchLanguageConversion.escapeForLucene(input) + "*";
-            log.debug("Query in Lucene format: " + query);
-            results = authorityService.findAuthoritiesByShortName(AuthorityType.GROUP, query);
-        }
-        List<Authority> authorities = new ArrayList<Authority>(results.size());
-        for (String result : results) {
-            if (!getAdministratorsGroup().equals(result) && !getDocumentManagersGroup().equals(result)) {
-                authorities.add(getAuthority(result, AuthorityType.GROUP, false));
-            }
-        }
-        return authorities;
     }
 
     @Override
