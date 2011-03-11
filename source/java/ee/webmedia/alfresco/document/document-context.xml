@@ -277,4 +277,16 @@ DaoAuthenticationProvider.authenticate()
       <property name="beginDate" value="${fileMimeTypeUpdater.begin.date}" />
    </bean>    
 
+   <!-- Used to fix mimeType on files (CL task 122959) -->
+   <bean id="generatedFileMimeTypeUpdater" class="ee.webmedia.alfresco.document.bootstrap.GeneratedFileMimeTypeUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="generatedFileMimeTypeUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="searchService" ref="searchService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="generalService" ref="generalService" />
+      <property name="mimetypeService" ref="mimetypeService" />
+   </bean>    
+
 </beans>

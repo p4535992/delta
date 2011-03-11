@@ -37,6 +37,7 @@ import org.alfresco.repo.webdav.WebDAVServerException;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
+import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 
@@ -46,6 +47,9 @@ import org.alfresco.service.cmr.repository.NodeRef;
  * @author Gavin Cornwell
  */
 public class PutMethod extends WebDAVMethod {
+
+    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PutMethod.class);
+
     // Request parameters
     private String m_strContentType = null;
     
@@ -101,27 +105,42 @@ public class PutMethod extends WebDAVMethod {
 
         // Access the content
         ContentWriter writer = fileFolderService.getWriter(contentNodeInfo.getNodeRef());
-        // set content properties
-        String mimetype = null;
-        if (m_strContentType != null) {
-            mimetype = m_strContentType;
-        } else {
-            String guessedMimetype = getMimetypeService().guessMimetype(contentNodeInfo.getName());
-            mimetype = guessedMimetype;
-        }
-        writer.setMimetype(mimetype);
 
         // Get the input stream from the request data
         InputStream is = m_request.getInputStream();
-        is = is.markSupported() ? is : new BufferedInputStream(is);
 
-        ContentCharsetFinder charsetFinder = getMimetypeService().getContentCharsetFinder();
-        Charset encoding = charsetFinder.getCharset(is, mimetype);
-        writer.setEncoding(encoding.name());
+        // Do not allow to change mimeType or locale, use the same values as were set during file creation
+        ContentData contentData = contentNodeInfo.getContentData();
+        if (contentData == null) {
+            log.warn("ContentData for node is null: " + contentNodeInfo.getNodeRef());
+
+            // set content properties
+            String mimetype = getMimetypeService().guessMimetype(contentNodeInfo.getName());
+            writer.setMimetype(mimetype);
+
+            // Get the input stream from the request data
+            is = is.markSupported() ? is : new BufferedInputStream(is);
+
+            ContentCharsetFinder charsetFinder = getMimetypeService().getContentCharsetFinder();
+            Charset encoding = charsetFinder.getCharset(is, mimetype);
+            writer.setEncoding(encoding.name());
+
+        } else {
+            String mimetype = contentData.getMimetype();
+            writer.setMimetype(mimetype);
+            writer.setEncoding(contentData.getEncoding());
+            if (m_strContentType != null && !mimetype.equalsIgnoreCase(m_strContentType)) {
+                log.info("Client sent different mimetype '" + m_strContentType + "' when updating file with original mimetype '" + mimetype + "', ignoring");
+            }
+        }
 
         // Write the new data to the content node
         writer.putContent(is);
-        
+
+        if (writer.getSize() == 0) {
+            throw new RuntimeException("Saving zero-length content is not allowed");
+        }
+
         // add the user and date information to the custom aspect properties
         ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().updateVersionModifiedAspect(contentNodeInfo.getNodeRef());
         

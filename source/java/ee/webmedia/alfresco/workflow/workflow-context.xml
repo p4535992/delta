@@ -81,6 +81,17 @@
          </list>
       </property>
    </bean>
+   
+   <!-- Used to fix invalid parallelTasks property and update lucene index (CL task 155454) -->
+   <bean id="ParallelTasksPropertiesUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.ParallelTasksPropertiesUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="parallelTasksPropertiesUpdater" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="generalService" ref="generalService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="searchService" ref="searchService" />
+      <property name="enabled" value="${parallelTasksPropertiesUpdater.enabled}" />
+   </bean>   
 
    <bean id="wmWorkflowService" class="ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl">
       <property name="nodeService" ref="NodeService" />
