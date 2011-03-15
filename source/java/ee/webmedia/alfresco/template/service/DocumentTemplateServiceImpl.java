@@ -93,7 +93,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             // This check ensures, that only proper DOC files are passed to Word
             // Unfortunately DOT files have mimetype application/octet-stream, and therefore MsoService must accept this mimetype also
             // So without this check, every binary file would be passed to word, which would be unnecessary and very time consuming
-            if (Boolean.TRUE.equals(file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.ACTIVE))
+            if ((file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.ACTIVE) == null
+                    || Boolean.TRUE.equals(file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.ACTIVE)))
                     && file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.GENERATED) != null) {
                 replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName());
             }
