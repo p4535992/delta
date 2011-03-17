@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.document.file.model;
 
+import static ee.webmedia.alfresco.document.file.model.FileModel.Props.ACTIVE;
+import static ee.webmedia.alfresco.document.file.model.FileModel.Props.DISPLAY_NAME;
+import static ee.webmedia.alfresco.document.file.model.FileModel.Props.GENERATED;
+
 import java.io.Serializable;
 import java.util.Date;
 import java.util.List;
@@ -8,23 +12,17 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
-
 /**
  * @author Dmitri Melnikov
  */
 public class File implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    public static final String URI = "http://alfresco.webmedia.ee/model/file/1.0";
-    public static final QName GENERATED = QName.createQName(URI, "generated");
-    public static final QName ACTIVE = QName.createQName(URI, "active");
-    public static final QName DISPLAY_NAME = QName.createQName(URI, "displayName");
 
     private String name;
     private String displayName;
@@ -55,7 +53,8 @@ public class File implements Serializable {
         displayName = (fileInfo.getProperties().get(DISPLAY_NAME) == null) ? name : fileInfo.getProperties().get(DISPLAY_NAME).toString();
         created = fileInfo.getCreatedDate();
         modified = fileInfo.getModifiedDate();
-        if (!fileInfo.isFolder()) {
+        // fileInfo.getContentData() != null is here for testing purposes only; normally fileInfo.getContentData() shouldn't be null
+        if (!fileInfo.isFolder() && fileInfo.getContentData() != null) {
             encoding = fileInfo.getContentData().getEncoding();
             mimeType = fileInfo.getContentData().getMimetype();
             size = fileInfo.getContentData().getSize();
@@ -77,7 +76,7 @@ public class File implements Serializable {
     public void setName(String name) {
         this.name = name;
     }
-    
+
     public String getDisplayName() {
         return displayName;
     }
@@ -91,7 +90,7 @@ public class File implements Serializable {
     }
 
     public void setDownloadUrl(String url) {
-        this.downloadUrl = url;
+        downloadUrl = url;
     }
 
     public String getCreator() {

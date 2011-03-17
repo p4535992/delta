@@ -6,14 +6,16 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.faces.FacesException;
+import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
+import javax.faces.component.UIParameter;
 import javax.faces.component.UISelectItem;
 import javax.faces.component.UIViewRoot;
 import javax.faces.component.ValueHolder;
@@ -27,6 +29,7 @@ import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.service.cmr.repository.datatype.TypeConversionException;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
@@ -83,10 +86,34 @@ public class ComponentUtil {
         return attributes;
     }
 
-    public static <T> T gettAttribute(UIComponent component, String key, Class<T> requiredClazz) {
-        @SuppressWarnings("unchecked")
-        final Map<String, Object> attributes = component.getAttributes();
-        return DefaultTypeConverter.INSTANCE.convert(requiredClazz, attributes.get(key));
+    /**
+     * Convenience method that doesn't produce compiler warning
+     * "Type safety: The expression of type Map needs unchecked conversion to conform to Map<String,Object>"
+     * 
+     * @param component
+     * @return <code>component.getAttributes()</code>
+     */
+    @SuppressWarnings("unchecked")
+    public static Map<String, Object> getAttributes(UIComponent component) {
+        return component.getAttributes();
+    }
+
+    public static <T> T getAttribute(UIComponent component, String key, Class<T> requiredClazz) {
+        Object value = getAttributes(component).get(key);
+        T result;
+        try {
+            result = DefaultTypeConverter.INSTANCE.convert(requiredClazz, value);
+        } catch (TypeConversionException e) {
+            throw new TypeConversionException("Failed to convert component attribute '" + key + "'='" + value + "' to " + requiredClazz.getCanonicalName(), e);
+        }
+        return result;
+    }
+
+    public static UIParameter createUIParam(String paramName, Object paramValue, Application application) {
+        UIParameter param = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
+        param.setName(paramName);
+        param.setValue(paramValue);
+        return param;
     }
 
     public static UIComponent setTooltip(final UIComponent component, final String tooltip) {
@@ -146,8 +173,9 @@ public class ComponentUtil {
      */
     public static <T extends UIComponent> T getAncestorComponent(UIComponent componentFrom //
             , Class<T> toComponentClass, boolean useInstanceOf, StringBuilder debugBuffer) {
-        if (componentFrom == null)
+        if (componentFrom == null) {
             return null;
+        }
         if (debugBuffer != null) {
             StringBuilder intBuf = new StringBuilder("[Class: ");
             intBuf.append(componentFrom.getClass().getName());
@@ -570,7 +598,7 @@ public class ComponentUtil {
                     final Converter converter = converterClass.newInstance();
                     ((UIOutput) component).setConverter(converter);
                 } catch (Exception e) {
-                    throw new RuntimeException("Can't initialize converter with class name '" + converterName // 
+                    throw new RuntimeException("Can't initialize converter with class name '" + converterName //
                             + "' while creating property '" + propName + "'", e);
                 }
             }
@@ -804,7 +832,7 @@ public class ComponentUtil {
     private static GeneralService getGeneralService() {
         if (generalService == null) {
             generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(GeneralService.BEAN_NAME);
+            .getBean(GeneralService.BEAN_NAME);
         }
         return generalService;
     }

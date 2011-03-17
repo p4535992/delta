@@ -53,14 +53,10 @@ public class ParallelTasksPropertiesUpdater extends AbstractNodeUpdater {
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
         
-        if (!nodeService.exists(nodeRef)) {
-            return new String[] { nodeRef.toString(), "nodeDoesNotExist" };
-        }
-        
         nodeService.setProperty(nodeRef, WorkflowCommonModel.Props.PARALLEL_TASKS, Boolean.TRUE);
         
         List<String> updatedRefs = new ArrayList<String>();
-        updatedRefs.add(nodeRef.toString());
+
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(nodeRef);
         for (ChildAssociationRef childAssoc : childAssocs) {
             NodeRef taskRef = childAssoc.getChildRef();

@@ -8,6 +8,7 @@ import org.alfresco.service.cmr.repository.ContentReader;
 import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 
 /**
  * @author Dmitri Melnikov
@@ -78,7 +79,7 @@ public interface FileService {
 
     /**
      * Gets list of scanned files.
-     * @param folderRef 
+     * @param folderRef
      * 
      * @return list of scanned files
      */
@@ -116,5 +117,7 @@ public interface FileService {
     void setAllFilesInactiveExcept(NodeRef parent, NodeRef activeFile);
 
     String getUniqueFileDisplayName(NodeRef folder, String displayName);
+
+    void deleteGeneratedFilesByType(NodeRef parentRef, GeneratedFileType type);
 
 }

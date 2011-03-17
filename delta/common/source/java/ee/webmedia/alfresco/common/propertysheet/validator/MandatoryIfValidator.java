@@ -42,7 +42,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class MandatoryIfValidator extends ForcedMandatoryValidator implements StateHolder {
     private static final long serialVersionUID = 1L;
-    
+
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MandatoryIfValidator.class);
 
     private static final String MESSAGE_ID = "common_propertysheet_validator_mandatoryIf";
@@ -106,46 +106,59 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
     private void validateInternal(FacesContext context, UIComponent component) {
         UIInput input = (UIInput) component;
 
-        String propName = evaluationExpression;
-        String propExpectedVal = null;
-        Boolean checkEquals = null;
-        final int neIndex = evaluationExpression.indexOf("!=");
-        final int eqIndex;
-        if (neIndex >= 0) {
-            checkEquals = false;
-            propName = evaluationExpression.substring(0, neIndex);
-            propExpectedVal = evaluationExpression.substring(neIndex + 2);
-        } else if (0 <= (eqIndex = evaluationExpression.indexOf("="))) {
-            checkEquals = true;
-            propName = evaluationExpression.substring(0, eqIndex);
-            propExpectedVal = evaluationExpression.substring(eqIndex + 1);
+        String[] expressions = null;
+        if (evaluationExpression.indexOf(',') > -1) {
+            expressions = evaluationExpression.split(",");
+        } else {
+            expressions = new String[] { evaluationExpression };
         }
-        propName = StringUtils.replace(propName, ":", "x003a_"); // colon is encoded, as it is also used as it is used in id to separate parent components
-        UIInput otherInput = findOtherInputComponent(context, component, propName);
-        if(otherInput==null) {
+        List<Boolean> operands = new ArrayList<Boolean>(expressions.length);
+
+        for (String expression : expressions) {
+            String propName = expression;
+            String propExpectedVal = null;
+            Boolean checkEquals = null;
+            final int neIndex = expression.indexOf("!=");
+            final int eqIndex;
+            if (neIndex >= 0) {
+                checkEquals = false;
+                propName = expression.substring(0, neIndex);
+                propExpectedVal = expression.substring(neIndex + 2);
+            } else if (0 <= (eqIndex = expression.indexOf("="))) {
+                checkEquals = true;
+                propName = expression.substring(0, eqIndex);
+                propExpectedVal = expression.substring(eqIndex + 1);
+            }
+            propName = StringUtils.replace(propName, ":", "x003a_"); // colon is encoded, as it is also used as it is used in id to separate parent components
+            UIInput otherInput = findOtherInputComponent(context, component, propName);
+            if (otherInput == null) {
+                return;
+            }
+            // boolean required = true;
+            if (checkEquals != null) {
+                operands.add(isRequired(propExpectedVal, checkEquals, otherInput));
+            } else {
+                operands.add(isOtherFilledAndMandatory(otherInput));
+            }
+        }
+
+        boolean required = !operands.contains(Boolean.FALSE);
+        input.setRequired(required);
+        if (!required) {
             return;
         }
-        // boolean required = true;
-        if (checkEquals != null) {
 
-            final boolean required = isRequired(propExpectedVal, checkEquals, otherInput);
-            input.setRequired(required);
-            if (required) {
-                final FacesMessage msg = new FacesMessage(MessageUtil.getMessage(context, mandatoryIfLabelId));
-                handleValidationException(input, msg, context);
+        if (evaluationExpression.indexOf('=') < 0) {
+            String label = (String) input.getAttributes().get(ComponentUtil.ATTR_DISPLAY_LABEL);
+            if (label == null) {
+                UIProperty thisUIProperty = ComponentUtil.getAncestorComponent(component, UIProperty.class, true);
+                label = ComponentUtil.getPropertyLabel(thisUIProperty, component.getId());
             }
+            String msg = MessageUtil.getMessage(context, MESSAGE_ID, label);
+            handleValidationException(input, new FacesMessage(msg), context);
         } else {
-            boolean mustBeFilled = isOtherFilledAndMandatory(otherInput);
-            if (mustBeFilled) {
-                String label = (String) input.getAttributes().get(ComponentUtil.ATTR_DISPLAY_LABEL);
-                if (label == null) {
-                    UIProperty thisUIProperty = ComponentUtil.getAncestorComponent(component, UIProperty.class, true);
-                    label = ComponentUtil.getPropertyLabel(thisUIProperty, component.getId());
-                }
-                String msg = MessageUtil.getMessage(context, MESSAGE_ID, label);
-                handleValidationException(input, new FacesMessage(msg), context);
-            }
-            input.setRequired(false);
+            final FacesMessage msg = new FacesMessage(MessageUtil.getMessage(context, mandatoryIfLabelId));
+            handleValidationException(input, msg, context);
         }
     }
 
@@ -185,8 +198,8 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
 
     private UIInput findOtherInputComponent(FacesContext context, UIComponent component, String otherPropertyName) {
         UIPropertySheet propSheetComponent = ComponentUtil.getAncestorComponent(component, UIPropertySheet.class, true);
-        if(propSheetComponent==null) {
-            log.info("No parent propSheetComponent found for component '"+component.getId()+"'");
+        if (propSheetComponent == null) {
+            log.info("No parent propSheetComponent found for component '" + component.getId() + "'");
             return null;
         }
         List<UIInput> inputs = new ArrayList<UIInput>();
@@ -200,7 +213,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
                 ids.append(wrongInput.getClientId(context));
             }
             // component might be multiValued (let's search for component with the same multiValue index)
-            final Integer multivalueIndex = ComponentUtil.gettAttribute(component, VALUE_INDEX_IN_MULTIVALUED_PROPERTY, Integer.class);
+            final Integer multivalueIndex = ComponentUtil.getAttribute(component, VALUE_INDEX_IN_MULTIVALUED_PROPERTY, Integer.class);
             if (multivalueIndex != null) {
                 return findOtherInputComponent(context, propSheetComponent, otherPropertyName + "_" + multivalueIndex);
             }

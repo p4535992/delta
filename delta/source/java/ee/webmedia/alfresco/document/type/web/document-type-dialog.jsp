@@ -29,7 +29,7 @@
          <f:facet name="header">
             <a:sortLink id="documentTypeNameCol-sort" label="#{msg.document_type_name}" value="name" mode="case-insensitive" />
          </f:facet>
-         <h:outputText value="#{type.name}" />
+         <h:inputText id="documentTypeNameCol-input" value="#{type.name}" size="45" />
       </a:column>
 
       <a:column id="documentTypeCommentCol">

@@ -19,6 +19,7 @@ import org.apache.commons.collections.comparators.TransformingComparator;
 
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 public class WorkflowSummaryItem implements Serializable, Comparable<WorkflowSummaryItem> {
 
@@ -57,7 +58,10 @@ public class WorkflowSummaryItem implements Serializable, Comparable<WorkflowSum
 
         this.tasks = new ArrayList<Task>();
         for (Task task : workflow.getTasks()) {
-            this.tasks.add(task);
+            // when assignment task is shown, then Information and Opinion workflows could be temporarily created during delegating
+            if (!WorkflowUtil.isGeneratedByDelegation(task)) {
+                this.tasks.add(task);
+            }
         }
 
         Collections.sort(tasks, taskComparator);
@@ -100,6 +104,9 @@ public class WorkflowSummaryItem implements Serializable, Comparable<WorkflowSum
         } else if (type.equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW) && !workflow.isParallelTasks()) {
             name = I18NUtil.getMessage("workflow_review_title");
             taskOwnerRole = I18NUtil.getMessage("workflow_review_task_owner_role");
+        } else if (type.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
+            name = I18NUtil.getMessage("workflow_externalReview_title");
+            taskOwnerRole = I18NUtil.getMessage("workflow_externalReview_task_owner_role");
         }
     }
 
@@ -343,7 +350,6 @@ public class WorkflowSummaryItem implements Serializable, Comparable<WorkflowSum
             return false;
         }
         return getWorkflowRef().equals(((WorkflowSummaryItem)obj).getWorkflowRef());
-        
     }
 
     @Override

@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.search.web;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,9 +28,14 @@ public class SearchBlockBean implements Serializable {
     private transient DocumentSearchService documentSearchService;
     private transient CaseService caseService;
     private transient DocumentService documentService;
-    
+
+    private DocumentSearchBean documentSearchBean;
+
     private Node node;
     private String searchValue;
+    private Date regDateTimeBegin;
+    private Date regDateTimeEnd;
+    private List<QName> selectedDocumentTypes;
     private List<Document> documents;
     private boolean show;
     private boolean foundSimilar;
@@ -39,20 +45,22 @@ public class SearchBlockBean implements Serializable {
         reset();
         this.node = node;
     }
-    
+
     public void reset() {
         searchValue = null;
         documents = null;
         show = true;
         foundSimilar = false;
         includeCaseTitles = false;
+        documentSearchBean.reset();
     }
-    
+
     /** @param event from JSP */
     public void setup(ActionEvent event) {
-        documents = getDocumentSearchService().searchDocumentsQuick(searchValue, isIncludeCases());
+        documents = getDocumentSearchService()
+        .searchDocumentsAndOrCases(searchValue, regDateTimeBegin, regDateTimeEnd, selectedDocumentTypes, isIncludeCases());
     }
-    
+
     public DocAssocInfo addTargetAssoc(NodeRef targetRef, QName assocType) {
         Map<String, Map<String, AssociationRef>> addedAssociations = node.getAddedAssociations();
         Map<String, AssociationRef> newAssoc = addedAssociations.get(assocType.toString());
@@ -75,39 +83,40 @@ public class SearchBlockBean implements Serializable {
         snapshot.restoreState(this);
     }
 
-    public static class Snapshot implements Serializable{
+    public static class Snapshot implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        private Node node;
-        private String searchValue;
-        private List<Document> documents;
-        private boolean show;
-        private boolean foundSimilar;
-        private boolean includeCaseTitles;
+        private final Node node;
+        private final String searchValue;
+        private final List<Document> documents;
+        private final boolean show;
+        private final boolean foundSimilar;
+        private final boolean includeCaseTitles;
 
         private Snapshot(SearchBlockBean bean) {
-            this.node = bean.node;
-            this.searchValue = bean.searchValue;
-            this.documents = bean.documents;
-            this.show = bean.show;
-            this.foundSimilar = bean.foundSimilar;
-            this.includeCaseTitles = bean.includeCaseTitles;
+            node = bean.node;
+            searchValue = bean.searchValue;
+            documents = bean.documents;
+            show = bean.show;
+            foundSimilar = bean.foundSimilar;
+            includeCaseTitles = bean.includeCaseTitles;
         }
 
         private void restoreState(SearchBlockBean bean) {
-            bean.node = this.node;
-            bean.searchValue = this.searchValue;
-            bean.documents = this.documents;
-            bean.show = this.show;
-            bean.foundSimilar = this.foundSimilar;
-            bean.includeCaseTitles = this.includeCaseTitles;
+            bean.node = node;
+            bean.searchValue = searchValue;
+            bean.documents = documents;
+            bean.show = show;
+            bean.foundSimilar = foundSimilar;
+            bean.includeCaseTitles = includeCaseTitles;
         }
     }
+
     // END: snapshot logic
-    
-    public void findSimilarDocuments(String senderRegNumber) {
+
+    public void findSimilarDocuments(String senderRegNumber, QName documentType) {
         if (StringUtils.isNotBlank(senderRegNumber)) {
-            documents = getDocumentSearchService().searchIncomingLetterRegisteredDocuments(senderRegNumber);
+            documents = getDocumentSearchService().searchIncomingLetterRegisteredDocuments(senderRegNumber, documentType);
             foundSimilar = documents.size() > 0;
         }
     }
@@ -115,24 +124,29 @@ public class SearchBlockBean implements Serializable {
     private DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentService.BEAN_NAME);
+            .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
     }
-    
+
     public boolean isIncludeCases() {
         return includeCaseTitles;
     }
-    
+
     public void setIncludeCaseTitles(boolean includeCaseTitles) {
         this.includeCaseTitles = includeCaseTitles;
     }
+
+    public void initDocSearch() {
+        documentSearchBean.init();
+    }
+
     // START: getters / setters
 
     public boolean isShow() {
         return show;
     }
-    
+
     public boolean isFoundSimilar() {
         return foundSimilar;
     }
@@ -147,21 +161,21 @@ public class SearchBlockBean implements Serializable {
         }
         return documents.size();
     }
-    
+
     public List<Document> getDocuments() {
         return documents;
     }
 
     protected DocumentSearchService getDocumentSearchService() {
         if (documentSearchService == null) {
-            documentSearchService = (DocumentSearchService) FacesContextUtils.getRequiredWebApplicationContext( // 
+            documentSearchService = (DocumentSearchService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(DocumentSearchService.BEAN_NAME);
         }
         return documentSearchService;
     }
-    
-    public void setDocumentSearchService(DocumentSearchService documentSearchService) {
-        this.documentSearchService = documentSearchService;
+
+    public void setDocumentSearchBean(DocumentSearchBean documentSearchBean) {
+        this.documentSearchBean = documentSearchBean;
     }
 
     public String getSearchValue() {
@@ -170,6 +184,30 @@ public class SearchBlockBean implements Serializable {
 
     public void setSearchValue(String searchValue) {
         this.searchValue = searchValue;
+    }
+
+    public Date getRegDateTimeBegin() {
+        return regDateTimeBegin;
+    }
+
+    public void setRegDateTimeBegin(Date regDateTimeBegin) {
+        this.regDateTimeBegin = regDateTimeBegin;
+    }
+
+    public Date getRegDateTimeEnd() {
+        return regDateTimeEnd;
+    }
+
+    public void setRegDateTimeEnd(Date regDateTimeEnd) {
+        this.regDateTimeEnd = regDateTimeEnd;
+    }
+
+    public List<QName> getSelectedDocumentTypes() {
+        return selectedDocumentTypes;
+    }
+
+    public void setSelectedDocumentTypes(List<QName> selectedDocumentTypes) {
+        this.selectedDocumentTypes = selectedDocumentTypes;
     }
 
     protected CaseService getCaseService() {

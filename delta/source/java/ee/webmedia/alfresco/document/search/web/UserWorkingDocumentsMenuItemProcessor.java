@@ -12,29 +12,31 @@ import ee.webmedia.alfresco.menu.service.MenuService;
  * @author Kaarel Jõgeva
  */
 public class UserWorkingDocumentsMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
-    
-        private MenuService menuService;
-        private DocumentSearchService documentSearchService;
 
-        @Override
-        public void afterPropertiesSet() throws Exception {
-            menuService.setCountHandler("userWorkingDocuments", this);
-        }
+    private MenuService menuService;
+    private DocumentSearchService documentSearchService;
 
-        @Override
-        public int getCount(MenuItem menuItem) {
-            return documentSearchService.searchUserWorkingDocumentsCount();
-        }
-
-        // START: getters / setters
-
-        public void setMenuService(MenuService menuService) {
-            this.menuService = menuService;
-        }
-
-        public void setDocumentSearchService(DocumentSearchService documentSearchService) {
-            this.documentSearchService = documentSearchService;
-        }
-
-        // END: getters / setters
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        menuService.setCountHandler("userWorkingDocuments", this);
     }
+
+    @Override
+    public int getCount(MenuItem menuItem) {
+        return documentSearchService.searchUserWorkingDocumentsCount();
+        // CL_TASK 152338
+        // return documentSearchService.searchInProcessUserDocumentsCount();
+    }
+
+    // START: getters / setters
+
+    public void setMenuService(MenuService menuService) {
+        this.menuService = menuService;
+    }
+
+    public void setDocumentSearchService(DocumentSearchService documentSearchService) {
+        this.documentSearchService = documentSearchService;
+    }
+
+    // END: getters / setters
+}

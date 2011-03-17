@@ -28,6 +28,8 @@ public interface NotificationModel {
     }
     
     interface NotificationType {
+        QName TASK_EXTERNAL_REVIEW_TASK_COMPLETED = QName.createQName(URI, "externalReviewTaskCompleted");
+        QName TASK_EXTERNAL_REVIEW_TASK_COMPLETED_NOT_ACCEPTED = QName.createQName(URI, "externalReviewTaskCompletedNotAccepted");
         QName TASK_NEW_TASK_NOTIFICATION = QName.createQName(URI, "newTaskNotification");
         QName TASK_CANCELLED_TASK_NOTIFICATION = QName.createQName(URI, "cancelledTaskNotification");
         QName TASK_SIGNATURE_TASK_COMPLETED = QName.createQName(URI, "signatureTaskCompleted");
@@ -40,6 +42,10 @@ public interface NotificationModel {
         QName TASK_REVIEW_TASK_COMPLETED_WITH_REMARKS = QName.createQName(URI, "reviewTaskCompletedWithRemarks");
         QName WORKFLOW_WORKFLOW_COMPLETED = QName.createQName(URI, "workflowCompleted");
         QName WORKFLOW_NEW_WORKFLOW_STARTED = QName.createQName(URI, "newWorkflowStarted");
+        
+        QName EXTERNAL_REVIEW_WORKFLOW_RECIEVING_ERROR = QName.createQName(URI, "externalReviewWorkflowRecievingError");
+        QName EXTERNAL_REVIEW_WORKFLOW_SERIES_ERROR = QName.createQName(URI, "externalReviewWorkflowSeriesError");
+        QName EXTERNAL_REVIEW_WORKFLOW_OWNER_ERROR = QName.createQName(URI, "externalReviewWorkflowOwnerError");
         
         QName DISCUSSION_INVITATION = QName.createQName(URI, "discussionInvitation");
         

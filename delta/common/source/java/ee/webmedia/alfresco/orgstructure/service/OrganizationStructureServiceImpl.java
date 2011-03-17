@@ -26,8 +26,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
-import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 public class OrganizationStructureServiceImpl implements OrganizationStructureService {
@@ -42,11 +40,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
     private GeneralService generalService;
     private NodeService nodeService;
     private AMRService amrService;
-    private ParametersService parametersService;
 
     @Override
     public int updateOrganisationStructures() {
-        //Long longParameter = parametersService.getLongParameter(Parameters.EMPLOYEE_REG_ORGANISATION_ID);
         Yksus[] yksusArray = amrService.getYksusByAsutusId();
         List<OrganizationStructure> orgStructures = new ArrayList<OrganizationStructure>(yksusArray.length);
         for (Yksus yksus : yksusArray) {
@@ -200,10 +196,6 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     public void setAmrService(AMRService amrService) {
         this.amrService = amrService;
-    }
-
-    public void setParametersService(ParametersService parametersService) {
-        this.parametersService = parametersService;
     }
     // END: getters / setters
 }

@@ -5,6 +5,7 @@ import java.io.Serializable;
 
 import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ObjectUtils;
 
 import ee.sk.digidoc.DataFile;
@@ -49,6 +50,14 @@ public class DataItem implements Serializable {
 
     public String getName() {
         return name;
+    }
+    
+    public String getDisplayName() {
+        if(FilenameUtils.getBaseName(name).length() < 51) {
+            return name;
+        }
+        
+        return FilenameUtils.getBaseName(name).substring(0, 50) + "...." + FilenameUtils.getExtension(name);
     }
 
     public String getMimeType() {

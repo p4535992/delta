@@ -18,6 +18,7 @@ import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.menu.ui.component.YahooTreeItem;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * @author Kaarel Jõgeva
@@ -36,8 +37,12 @@ public class BrowseMenuItem extends MenuItem {
     }
     
     @Override
-    public UIComponent createComponent(FacesContext context, String id, UserService userService) {
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService) {
         if(isRestricted() && !hasPermissions(userService)) {
+            return null;
+        }
+        
+        if (isExternalReview() && !isExternalReviewEnabled(workflowService)) {
             return null;
         }
 

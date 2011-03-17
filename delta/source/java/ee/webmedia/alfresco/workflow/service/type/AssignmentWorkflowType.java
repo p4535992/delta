@@ -1,11 +1,10 @@
 package ee.webmedia.alfresco.workflow.service.type;
 
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getExcludedNodeRefsOnFinishWorkflows;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isActiveResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isInactiveResponsible;
 import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
-import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.getExcludedNodeRefsOnFinishWorkflows;
 
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -14,29 +13,30 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
-import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.Task;
-import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowModifications;
-import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 
 /**
  * @author Alar Kvell
  */
 public class AssignmentWorkflowType extends BaseWorkflowType implements WorkflowEventListenerWithModifications {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AssignmentWorkflowType.class);
+    public static final QName TEMP_DELEGATED = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "delegated");
 
     private DocumentService documentService;
     private NodeService nodeService;
@@ -48,7 +48,8 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
             return;
         }
         Task task = (Task) event.getObject();
-        if (!isActiveResponsible(task) || (task.getParent().getParent() instanceof CompoundWorkflowDefinition)) {
+        CompoundWorkflow cWorkflow = task.getParent().getParent();
+        if (!isActiveResponsible(task) || (cWorkflow instanceof CompoundWorkflowDefinition)) {
             return;
         }
 
@@ -68,9 +69,8 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                     otherTask.setComment(I18NUtil.getMessage("task_comment_delegated"));
                 }
             }
-        }
-
-        if (event.getType() == WorkflowEventType.STATUS_CHANGED){
+        } else if (event.getType() == WorkflowEventType.STATUS_CHANGED) {
+            Boolean isRegisterDocQueue = queue.getParameter(WorkflowQueueParameter.TRIGGERED_BY_DOC_REGISTRATION);
             // If task is changed to IN_PROGRESS
             if(task.isStatus(Status.IN_PROGRESS)) {
 
@@ -81,24 +81,24 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                     }
                     setDocumentOwnerFromTask(task);
                 }
-            }
-            // if task status is changed to FINISHED
-            Boolean isRegisterDocQueue = queue.getParameter(WorkflowQueueParameter.TRIGGERED_BY_DOC_REGISTRATION);
-            if(task.isStatus(Status.FINISHED) && (isRegisterDocQueue == null || !isRegisterDocQueue)){
-                NodeRef docRef = task.getParent().getParent().getParent();
+            } else if (task.isStatus(Status.FINISHED) && !isDelegated(task) && (isRegisterDocQueue == null || !isRegisterDocQueue)) { // if task status is changed to FINISHED
+                NodeRef docRef = cWorkflow.getParent();
                 Node document = documentService.getDocument(docRef);
-                if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(document.getType())) {
-                    if (nodeService.getProperty(docRef, DocumentSpecificModel.Props.COMPLIENCE_DATE) == null) {
+                boolean isIncomingLetter = DocumentSubtypeModel.Types.INCOMING_LETTER.equals(document.getType())
+                || DocumentSubtypeModel.Types.INCOMING_LETTER_MV.equals(document.getType());
+                if (isIncomingLetter) {
+                    if(nodeService.getProperty(docRef, DocumentSpecificModel.Props.COMPLIENCE_DATE) == null){
                         documentService.setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, queue.getNow(), docRef);
                     }
-                    documentService.setDocStatusFinished(docRef);                    
+                    documentService.setDocStatusFinished(docRef);
                 }
-                if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(document.getType())
-                        || DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(document.getType())) {
-                    workflowService.setWorkflowsAndTasksFinished(queue, task.getParent().getParent(), Status.UNFINISHED,
-                            "task_outcome_unfinished_by_finishing_responsible_task", null, false, getExcludedNodeRefsOnFinishWorkflows(task.getParent().getParent()));
-                    workflowService.addOtherCompundWorkflows(task.getParent().getParent());
-                    List<CompoundWorkflow> compoundWorkflows = task.getParent().getParent().getOtherCompoundWorkflows();
+                if (isIncomingLetter
+                        || DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(document.getType())
+                        || DocumentSubtypeModel.Types.OUTGOING_LETTER_MV.equals(document.getType())) {
+                    workflowService.setWorkflowsAndTasksFinished(queue, cWorkflow, Status.UNFINISHED,
+                            "task_outcome_unfinished_by_finishing_responsible_task", null, false, getExcludedNodeRefsOnFinishWorkflows(cWorkflow));
+                    workflowService.addOtherCompundWorkflows(cWorkflow);
+                    List<CompoundWorkflow> compoundWorkflows = cWorkflow.getOtherCompoundWorkflows();
                     for (Iterator<CompoundWorkflow> i = compoundWorkflows.iterator(); i.hasNext();) {
                         CompoundWorkflow compoundWorkflow = i.next();
                         if (compoundWorkflow.isStatus(Status.NEW)) {
@@ -110,13 +110,16 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                                     "task_outcome_unfinished_by_finishing_responsible_task", null, false, excludedNodeRefs);
                         }
                     }
-                }
+                }                
             }
         }
 
     }
 
-
+    private boolean isDelegated(Task task) {
+        Boolean delegated = (Boolean) task.getNode().getProperties().get(TEMP_DELEGATED);
+        return delegated != null && delegated;
+    }
 
     private void setDocumentOwnerFromTask(final Task task) {
         AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
@@ -134,6 +137,6 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
-    } 
-    
+    }
+
 }

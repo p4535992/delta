@@ -18,7 +18,6 @@ import smit.ametnik.services.AmetnikByIsikukoodRequestDocument.AmetnikByIsikukoo
 import smit.ametnik.services.AmetnikByIsikukoodResponseDocument.AmetnikByIsikukoodResponse;
 import smit.ametnik.services.YksusByAsutusIdRequestDocument.YksusByAsutusIdRequest;
 import smit.ametnik.services.YksusByAsutusIdResponseDocument.YksusByAsutusIdResponse;
-import org.springframework.beans.factory.InitializingBean;
 
 /**
  * Web service, to communicate with AmetnikeRegister
@@ -28,7 +27,6 @@ import org.springframework.beans.factory.InitializingBean;
 public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AMRServiceImpl.class);
 
-    private String defaultAmrOrgId;
     private BigInteger asutusId;
 
     @Override
@@ -74,8 +72,8 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
         return response.getAmetnik();
     }
 
-    public void setDefaultAmrOrgId(String defaultAmrOrgId) {
-        this.defaultAmrOrgId = defaultAmrOrgId;
-        this.asutusId = BigInteger.valueOf(Integer.parseInt(defaultAmrOrgId.trim()));
+    public void setAsutusId(String asutusId) {
+        this.asutusId = new BigInteger(asutusId);
     }
+
 }

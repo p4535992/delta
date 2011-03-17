@@ -56,4 +56,8 @@ public interface DocumentTypeService {
      */
     DocumentType getDocumentType(String documentTypeId);
 
+    QName getIncomingLetterType();
+
+    QName getOutgoingLetterType();
+
 }

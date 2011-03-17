@@ -48,6 +48,7 @@ import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * @author Kaarel Jõgeva
@@ -74,6 +75,7 @@ public class MenuBean implements Serializable {
     private transient MenuService menuService;
     private transient GeneralService generalService;
     private transient UserService userService;
+    private transient WorkflowService workflowService;
 
     private Menu menu;
     private int updateCount = 0;
@@ -552,7 +554,7 @@ public class MenuBean implements Serializable {
         if (item == null) {
             return false;
         }
-        MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, "shortcut-" + shortcutsPanelGroup.getChildCount(), getUserService(), false);
+        MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, "shortcut-" + shortcutsPanelGroup.getChildCount(), getUserService(), getWorkflowService(), false);
         wrapper.setPlain(true);
 
         UIActionLink link = (UIActionLink) wrapper.getChildren().get(0);
@@ -730,6 +732,14 @@ public class MenuBean implements Serializable {
         }
         return userService;
     }
+    
+    protected WorkflowService getWorkflowService() {
+        if (workflowService == null) {
+            workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(WorkflowService.BEAN_NAME);
+        }
+        return workflowService;
+    }    
 
     public void setUserService(UserService userService) {
         this.userService = userService;

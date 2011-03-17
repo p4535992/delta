@@ -93,7 +93,7 @@ public class ViewParser implements Parser
     private XmlPullParserFactory factory;
     
     // Supporting services
-    private NamespaceService namespaceService;
+    protected NamespaceService namespaceService;
     protected NodeService nodeService;
     protected DictionaryService dictionaryService;
 
@@ -152,6 +152,7 @@ public class ViewParser implements Parser
     /* (non-Javadoc)
      * @see org.alfresco.repo.importer.Parser#parse(java.io.Reader, org.alfresco.repo.importer.Importer)
      */
+    @Override
     public void parse(Reader viewReader, Importer importer)
     {
         try
@@ -381,10 +382,13 @@ public class ViewParser implements Parser
         String value = null;
         
         int eventType = xpp.next();
-        if (eventType == XmlPullParser.TEXT)
+        while (eventType == XmlPullParser.TEXT)
         {
             // Extract value
-            value = xpp.getText();
+            if(value == null){
+                value = "";
+            }
+            value += xpp.getText();
             eventType = xpp.next();
         }
         if (eventType != XmlPullParser.END_TAG)
@@ -914,7 +918,7 @@ public class ViewParser implements Parser
      * @param parserContext  parser context
      * @param node  node context
      */
-    private void importNode(ParserContext parserContext, NodeContext node)
+    protected void importNode(ParserContext parserContext, NodeContext node)
     {
         if (node.getNodeRef() == null)
         {
@@ -1004,7 +1008,7 @@ public class ViewParser implements Parser
      * @param depth
      * @return
      */
-    private String indentLog(String msg, int depth)
+    protected String indentLog(String msg, int depth)
     {
         StringBuffer buf = new StringBuffer(1024);
         for (int i = 0; i < depth; i++)

@@ -48,7 +48,7 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
         // add each selected user to the current group in turn
         try {
             final FeedbackWrapper feedback = getAddressbookService().addToGroup(getCurrentNode().getNodeRef(), usersForGroup);
-            final boolean isErrorAdded = MessageUtil.addStatusMessage(context, feedback);
+            final boolean isErrorAdded = MessageUtil.addStatusMessages(context, feedback);
             if(!isErrorAdded) {
                 MessageUtil.addInfoMessage("save_success");
             }

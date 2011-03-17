@@ -19,8 +19,8 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.BaseAlfrescoSpringTest;
 import org.apache.commons.io.output.ByteArrayOutputStream;
 
-import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
-import ee.webmedia.alfresco.dvk.model.DvkSendDocumentsImpl;
+import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
+import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocumentsImpl;
 import ee.webmedia.alfresco.util.ContentCreatorHelper;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplTest;
@@ -56,8 +56,8 @@ public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
     public final void testSendDocuments() {
 //        Collection<ContentToSend> contentsToSend = getContentsToSend();
         Collection<ContentToSend> contentsToSend = getContentsToSend();
-        final DvkSendDocuments sendDocument = getSendDocument();
-        final String dvkId = dvkService.sendDocuments(sendableDocFolderNodeRef, contentsToSend, sendDocument);
+        final DvkSendLetterDocuments sendDocument = getSendDocument();
+        final String dvkId = dvkService.sendLetterDocuments(sendableDocFolderNodeRef, contentsToSend, sendDocument);
         log.debug("Sent document id's:"+dvkId);
         //TODO: SendOutService
 //        final List<SendOutItem> sendOutItems = sendOutService.getSendOut(sendableDocFolderNodeRef);
@@ -67,8 +67,8 @@ public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
 //        }
     }
     
-    private static DvkSendDocuments getSendDocument() {
-        DvkSendDocuments sd = new DvkSendDocumentsImpl();
+    private static DvkSendLetterDocuments getSendDocument() {
+        DvkSendLetterDocuments sd = new DvkSendLetterDocumentsImpl();
         sd.setSenderOrgName("Test Org");
         sd.setSenderRegNr("10391131");
         sd.setSenderEmail("test@alfresco.wm.komm");

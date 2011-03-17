@@ -2,13 +2,16 @@
 <beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-   <bean id="signatureService" class="ee.webmedia.alfresco.signature.service.SignatureServiceImpl" init-method="init">
+   <bean id="signatureService" class="ee.webmedia.alfresco.signature.service.SignatureServiceImpl">
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="nodeService" ref="NodeService" />
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="test" value="${jdigidoc.test}" />
       <property name="jDigiDocCfg" value="ee/webmedia/alfresco/signature/service/jdigidoc.cfg" />
       <property name="jDigiDocCfgTest" value="ee/webmedia/alfresco/signature/service/jdigidoc-test.cfg" />
+      <property name="pkcs12Container" value="${jdigidoc.pkcs12.container}" />
+      <property name="pkcs12Password" value="${jdigidoc.pkcs12.passwd}" />
+      <property name="pkcs12CertSerial" value="${jdigidoc.pkcs12.cert_serial}" />
    </bean>
 
    <bean id="SignatureService" class="org.springframework.aop.framework.ProxyFactoryBean">

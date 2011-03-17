@@ -20,10 +20,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import smit.ametnik.services.Ametnik;
-import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
-//import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
 
 /**
  * A {@link UserRegistry} implementation with the ability to query Alfresco-like descriptions of users and groups from a SIM "Ametnikeregister".
@@ -36,18 +33,11 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     private PersonService personService;
     private NodeService nodeService;
     private AMRService amrService;
-    private ParametersService parametersService;
-    private ApplicationService applicationService;
-    private String testEmail;
 
     /** Is this bean active? I.e. should this part of the subsystem be used? */
     private boolean active = true;
 
     public Iterator<NodeDescription> getPersons(Date modifiedSince) {
-        //BigInteger orgId = parametersService.getParameter(Parameters.EMPLOYEE_REG_ORGANISATION_ID, BigInteger.class);
-        //String defaultAmrOrgId = amrService.getDefaultAmrOrgId();
-        //int orgId = Integer.parseInt(defaultAmrOrgId.trim());
-        //BigInteger orgIdBigInterger =  BigInteger.valueOf(orgId);
         Ametnik[] ametnikArray = amrService.getAmetnikByAsutusId();
         ArrayList<NodeDescription> persons = new ArrayList<NodeDescription>(ametnikArray.length);
         for (Ametnik ametnik : ametnikArray) {
@@ -61,6 +51,16 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
             }
         }
         return persons.iterator();
+    }
+
+    @Override
+    public Iterator<NodeDescription> getPersonByIdCode(String idCode) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Iterator<NodeDescription> getPersonByUsername(String username) {
+        throw new UnsupportedOperationException();
     }
 
     public Iterator<NodeDescription> getGroups(Date modifiedSince) {
@@ -95,9 +95,6 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     public void fillPropertiesFromAmetnik(Ametnik ametnik, Map<QName, Serializable> properties) {
         String email = ametnik.getEmail();
         BigInteger yksusId = ametnik.getYksusId();
-        if (applicationService.isTest()) {
-            email = testEmail;
-        }
         if (BigInteger.valueOf(-1).equals(yksusId)) {
             yksusId = null;
         }
@@ -134,18 +131,6 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     public void setAmrService(AMRService amrService) {
         this.amrService = amrService;
-    }
-
-    public void setParametersService(ParametersService parametersService) {
-        this.parametersService = parametersService;
-    }
-
-    public void setApplicationService(ApplicationService applicationService) {
-        this.applicationService = applicationService;
-    }
-
-    public void setTestEmail(String testEmail) {
-        this.testEmail = testEmail;
     }
     // END: getters / setters
 

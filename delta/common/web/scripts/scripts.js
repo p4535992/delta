@@ -276,6 +276,32 @@ function addAutocompleter(inputId, valuesArray){
    });
 }
 
+function addSearchSuggest(inputId, suggestChars, pickerCallback) {
+   autocompleters.push(function() {
+      var jQInput = $jQ("#"+escapeId4JQ(inputId));
+      var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
+      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, minChars: suggestChars, suggestAll: 1, delay: 50, onItemSelect: function(li) {
+         processButtonState(); 
+      }});
+
+      suggest.bind("autoComplete", function(e, data){
+         var ac = $jQ(this);
+         ac.val(data.newVal.substring(0, data.newVal.indexOf(" (")));
+         
+         // Check if we can find and fill email value
+         var emailInput = ac.closest("table.subPropSheet").find('input[name*="partyEmail"]');
+         if(emailInput != null) {
+            email = data.newVal.contains("@") ? data.newVal.substring(data.newVal.lastIndexOf(",") + 1, data.newVal.length - 1) : ""; 
+            emailInput.val(email);
+         }
+      });
+      jQInput.focus(function() {
+         jQInput.keydown();
+      });
+   });
+}
+
+
 // Autocompleters are applied here, this guarantees sequentiality
 // When they were applied in random order from AJAX updating function, then something was broken
 function applyAutocompleters() {
@@ -476,7 +502,10 @@ function propSheetValidateSubmit() {
 function propSheetValidateOnDocumentReady() {
    if (propSheetValidateBtnFn.length > 0 || propSheetValidateSubmitFn.length > 0) {
       document.getElementById(propSheetValidateFormId).onsubmit = propSheetValidateSubmit;
-      document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId).onclick = function() { propSheetFinishBtnPressed = true; }
+      var finishBtn = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId);
+      if(finishBtn){
+         finishBtn.onclick = function() { propSheetFinishBtnPressed = true; }
+      }
       var secondaryFinishButton = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryFinishId);
       if(secondaryFinishButton != null) {
     	  secondaryFinishButton.onclick = function() { propSheetFinishBtnPressed = true; }

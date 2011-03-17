@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.dvk.model;
 
+import java.util.Collection;
 import java.util.Date;
 
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
@@ -10,24 +11,6 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
  */
 @AlfrescoModelType(uri = DvkModel.URI)
 public interface LetterSender {
-
-    /**
-     * @return Senders organization number from business register
-     */
-    String getSenderRegNr();
-
-    void setSenderRegNr(String senderRegNr);
-
-    /**
-     * @return Senders organization name according to business register
-     */
-    String getSenderOrgName();
-
-    void setSenderOrgName(String senderOrgName);
-
-    String getSenderEmail();
-
-    void setSenderEmail(String senderEmail);
 
     /**
      * @return DateTime when the document was signed or affirmed

@@ -34,10 +34,12 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
  * @author Aleksei Lissitsin
  */
 public class PostipoissDocumentsMapper {
+    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissDocumentsMapper.class);
 
     static class Mapping {
         String from;
         QName to;
+        QName assoc;
         List<PropMapping> props;
         Set<Mapping> subMappings = new HashSet<Mapping>();
         TypeInfo typeInfo;
@@ -45,7 +47,7 @@ public class PostipoissDocumentsMapper {
 
         @Override
         public String toString() {
-            StringBuilder s = new StringBuilder(String.format("[%s -> %s :\n", from, to));
+            StringBuilder s = new StringBuilder(String.format("[%s -> %s %s :\n", from, to, assoc));
             for (PropMapping m : props) {
                 s.append(m);
                 s.append("\n");
@@ -81,6 +83,22 @@ public class PostipoissDocumentsMapper {
 
         public void add(PropMapping pm) {
             props.add(pm);
+        }
+
+        public PropMapping requirePropMappingTo(String to) {
+            PropMapping result = null;
+            for (PropMapping propMapping : props) {
+                if (to.equals(propMapping.to)) {
+                    if (result != null) {
+                        throw new RuntimeException("Multiple <prop> elements with same to='" + to + "' found under <mapping from='" + this.from + "' to='" + this.to + "'>");
+                    }
+                    result = propMapping;
+                }
+            }
+            if (result == null) {
+                throw new RuntimeException("No <prop> elements with to='" + to + "' found under <mapping from='" + this.from + "' to='" + this.to + "'>");
+            }
+            return result;
         }
     }
 
@@ -130,6 +148,11 @@ public class PostipoissDocumentsMapper {
     private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
     private static DateFormat dateFormatWithoutYear = new SimpleDateFormat("dd.MM");
     private static DateFormat dateFormatOnlyDay = new SimpleDateFormat("dd");
+    static {
+        dateFormat.setLenient(false);
+        dateFormatWithoutYear.setLenient(false);
+        dateFormatOnlyDay.setLenient(false);
+    }
 
     @SuppressWarnings("serial")
     static class ConvertException extends Exception {
@@ -428,7 +451,7 @@ public class PostipoissDocumentsMapper {
             try {
                 value = dateFormat.parse(s);
             } catch (ParseException e) {
-                //throw new RuntimeException(e);
+                throw new RuntimeException(e);
             }
         }
 
@@ -504,7 +527,8 @@ public class PostipoissDocumentsMapper {
     }
 
     static PropertyValueProvider getProvider(String name, PropertyDefinition propDef) {
-        if ("comment".equals(name) || "errandComment".equals(name) || "sendDesc".equals(name)) {
+        // SIM "errandComment".equals(name) || "sendDesc".equals(name)
+        if ("comment".equals(name) || "content".equals(name) || "price".equals(name)) {
             return new CommentPropertyValueProvider();
         }
         String javaClassName = propDef.getDataType().getJavaClassName();
@@ -561,10 +585,11 @@ public class PostipoissDocumentsMapper {
 
         String from = el.attributeValue("from");
         String to = el.attributeValue("to");
+        String assoc = el.attributeValue("assoc");
         String defaultVolume = el.attributeValue("defaultVolume");
-        
+
         if (to == null) {
-            to = "memo";
+            to = "memo"; // doesn't matter which doctype, generalType just has to have a base mapping 
         }
         TypeInfo typeInfo = typeInfos.get(to);
         if (typeInfo == null) {
@@ -574,6 +599,10 @@ public class PostipoissDocumentsMapper {
 
         Mapping m = new Mapping(base, from, typeInfo);
         m.defaultVolume = defaultVolume;
+        
+        if (StringUtils.isNotEmpty(assoc)) {
+            m.assoc = QName.createQName(prefix, assoc, namespaceService);
+        }
 
         for (Object o : el.elements("prop")) {
             m.add(createPropMapping((Element) o, typeInfo));
@@ -614,9 +643,11 @@ public class PostipoissDocumentsMapper {
             mappings.put(m.from, m);
         }
 
+        StringBuilder s = new StringBuilder("Loaded " + mappings.size() + " meta-data mappings:");
         for (Mapping m : mappings.values()) {
-            System.out.println(m);
+            s.append("\n").append(m);
         }
+        log.info(s.toString());
         return mappings;
     }
 

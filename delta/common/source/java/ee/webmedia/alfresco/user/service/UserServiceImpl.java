@@ -51,6 +51,7 @@ public class UserServiceImpl implements UserService {
     private OrganizationStructureService organizationStructureService;
     private ConfigurableService configurableService;
     private NamespaceService namespaceService;
+    private boolean groupsEditingAllowed;
     @Override
     public NodeRef getUsersPreferenceNodeRef(String userName) {
         if(userName == null) {
@@ -262,6 +263,11 @@ public class UserServiceImpl implements UserService {
         return authenticationService.getCurrentUserName();
     }
 
+    @Override
+    public boolean isGroupsEditingAllowed() {
+        return groupsEditingAllowed;
+    }
+
     private Authority getAuthority(String authority, boolean returnNull) {
         AuthorityType authorityType = AuthorityType.getAuthorityType(authority);
         return getAuthority(authority, authorityType, returnNull);
@@ -369,6 +375,10 @@ public class UserServiceImpl implements UserService {
 
     public void setNamespaceService(NamespaceService namespaceService) {
         this.namespaceService = namespaceService;
+    }
+
+    public void setGroupsEditingAllowed(boolean groupsEditingAllowed) {
+        this.groupsEditingAllowed = groupsEditingAllowed;
     }
 
     // END: setters/getters

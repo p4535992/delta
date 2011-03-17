@@ -1,53 +1,22 @@
 package ee.webmedia.alfresco.document.sendout.model;
 
-import java.io.Serializable;
+
+import java.util.Date;
 
 import org.alfresco.web.bean.repository.Node;
 
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+public interface SendInfo {
 
-/**
- * @author Erko Hansar
- */
-public class SendInfo implements Serializable {
+    public abstract Node getNode();
 
-    private static final long serialVersionUID = 1L;
+    public abstract String getRecipient();
 
-    private Node node;
-    
-    public SendInfo() {
-    }
+    public abstract Date getSendDateTime();
 
-    public SendInfo(Node node) {
-        this.node = node;
-    }
+    public abstract String getSendMode();
 
-    public Node getNode() {
-        return node;
-    }
+    public abstract String getSendStatus();
 
-    public void setNode(Node node) {
-        this.node = node;
-    }
-
-    public Object getRecipient() {
-        return node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_RECIPIENT);
-    }
-
-    public Object getSendDateTime() {
-        return node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME);
-    }
-
-    public Object getSendMode() {
-        return node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE);
-    }
-
-    public Object getSendStatus() {
-        return node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS);
-    }
-
-    public Object getResolution() {
-        return node.getProperties().get(DocumentCommonModel.Props.SEND_INFO_RESOLUTION);
-    }
+    public abstract String getResolution();
 
 }

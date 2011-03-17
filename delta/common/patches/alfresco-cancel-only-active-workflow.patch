@@ -1,0 +1,18 @@
+Not submitted to ACT
+Not submitted to JIRA
+
+TODO: WorkflowService.cancelWorkflow - check if active...
+
+Index: org/alfresco/web/action/evaluator/CancelWorkflowEvaluator.java
+===================================================================
+--- org/alfresco/web/action/evaluator/CancelWorkflowEvaluator.java	(revision 133350)
++++ org/alfresco/web/action/evaluator/CancelWorkflowEvaluator.java	(working copy)
+@@ -57,7 +57,7 @@
+    
+       // get the task from the node
+       WorkflowTask task = (WorkflowTask)node.getProperties().get("workflowTask");
+-      if (task != null)
++      if (task != null && task.path.instance.active)
+       {
+          NodeRef initiator = task.path.instance.initiator;
+          if (initiator != null)

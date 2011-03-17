@@ -43,6 +43,23 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
          </list>
       </property>
    </bean>
+   
+   <bean id="documentTypeSpacesBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="documentTypeSpacesBootstrap2" />
+      <property name="sinceVersion" value="2.1.1" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/doctype:documentTypes</prop>
+               <prop key="location">ee/webmedia/alfresco/document/type/bootstrap/documentTypes2.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>   
 
    <bean id="documentTypeService" class="ee.webmedia.alfresco.document.type.service.DocumentTypeServiceImpl">
       <property name="generalService" ref="GeneralService" />
@@ -83,5 +100,18 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
          </list>
       </property>
    </bean>
+   
+   <bean id="changeMinistersOrderNameBootstrap" class="ee.webmedia.alfresco.document.type.bootstrap.ChangeMinistersOrderNameBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="changeMinistersOrderNameBootstrap" />
+      <property name="sinceVersion" value="2.2.1.1" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentTypeSpacesBootstrap" />
+         </list>
+      </property>
+   </bean>     
 
 </beans>

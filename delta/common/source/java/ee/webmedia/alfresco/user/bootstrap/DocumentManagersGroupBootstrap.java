@@ -8,6 +8,7 @@ import org.alfresco.service.cmr.security.AuthorityType;
 import ee.webmedia.alfresco.user.service.UserService;
 
 //Handle 2 special groups - their system name is different from display name
+// The same names are used in ChainingUserRegistrySynchronizer
 public class DocumentManagersGroupBootstrap extends AbstractModuleComponent {
 
     @Override

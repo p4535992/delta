@@ -47,6 +47,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
     private long startDelay = 0;
     private Trigger trigger;
     private boolean fireAtStartup;
+    private boolean enabled = true;
 
     public ParameterRescheduledTriggerBean() {
         super();
@@ -54,6 +55,9 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
 
     @Override
     public void afterPropertiesSet() throws ParseException {
+        if (!enabled) {
+            return;
+        }
         if (parameterFormat == null || parameterName == null) {
             throw new RuntimeException("You must specify parameter name and the repetition format that values of this parameter represent.");
         }
@@ -269,6 +273,10 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
      */
     public void setFireAtStartup(boolean fireAtStartup) {
         this.fireAtStartup = fireAtStartup;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
     // END: getters / setters
 

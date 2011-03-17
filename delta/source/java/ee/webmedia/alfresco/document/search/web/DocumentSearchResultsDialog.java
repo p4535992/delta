@@ -25,6 +25,7 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCreateOrRegistrateDateComparator;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
+import ee.webmedia.alfresco.document.sendout.model.DocumentSendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.simdhs.CSVExporter;
@@ -126,7 +127,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             List<List<String>> data = new ArrayList<List<String>>();
             while (list.isDataAvailable()) {
                 Document document = (Document) list.nextRow();
-                List<SendInfo> sendInfos = getSendOutService().getSendInfos(document.getNodeRef());
+                List<SendInfo> sendInfos = getSendOutService().getDocumentSendInfos(document.getNodeRef());
                 for (SendInfo sendInfo : sendInfos) {
                     if (EP_EXPORT_SEND_MODES.contains(sendInfo.getSendMode().toString())) {
                         data.add(Arrays.asList(sendInfo.getSendMode().toString(), document.getRegNumber(), sendInfo.getRecipient().toString()));

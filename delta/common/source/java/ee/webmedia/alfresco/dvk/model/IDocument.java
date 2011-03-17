@@ -1,11 +1,26 @@
 package ee.webmedia.alfresco.dvk.model;
 
-import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
+import java.util.Collection;
 
-/**
- * @author Ats Uiboupin
- */
-@AlfrescoModelType(uri = "")
-public interface IDocument extends LetterSender, AccessRights {
-    // parent interface for documents
+//TODO: if not used, remove the interface
+public interface IDocument {
+
+    /**
+     * @return Senders organization number from business register
+     */
+    String getSenderRegNr();
+
+    void setSenderRegNr(String senderRegNr);
+
+    /**
+     * @return Senders organization name according to business register
+     */
+    String getSenderOrgName();
+
+    void setSenderOrgName(String senderOrgName);
+
+    String getSenderEmail();
+
+    void setSenderEmail(String senderEmail);
+    
 }

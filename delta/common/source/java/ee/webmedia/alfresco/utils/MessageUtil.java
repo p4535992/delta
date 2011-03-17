@@ -76,7 +76,7 @@ public class MessageUtil {
         addStatusMessage(currentInstance, msgKey, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
     }
 
-    public static boolean addStatusMessage(FacesContext facesContext, FeedbackWrapper feedbackWrapper) {
+    public static boolean addStatusMessages(FacesContext facesContext, FeedbackWrapper feedbackWrapper) {
         boolean isErrorAdded = false;
         for (FeedbackVO feedbackVO : feedbackWrapper) {
             isErrorAdded |= addStatusMessage(facesContext, feedbackVO);

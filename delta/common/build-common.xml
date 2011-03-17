@@ -13,7 +13,6 @@
 
    <property name="project.dir.amp" location="${project.basedir}/amp" />
    <property name="project.dir.etc" location="${project.basedir}/etc" />
-   <property name="project.dir.lib.appserver" location="${project.dir.etc}/lib-appserver" />
    <property name="project.dir.lib" location="${project.basedir}/lib" />
    <property name="project.dir.lib.dev" location="${project.basedir}/lib-dev" />
    <property name="project.dir.src" location="${project.basedir}/source/java" />
@@ -35,12 +34,19 @@
    <property name="project.build.result.war" location="${project.dir.build}/dhs-${currentVersion}.war" />
 
    <property name="conf.basedir" location="${project.dir.etc}/conf" />
+   <property name="conf.organization.basedir" location="${project.dir.etc}/conf-organization" />
    <property name="conf.name.file" location="${project.basedir}/conf-name.properties" />
+   <!-- Provides ${conf.name} and ${conf.organization.name} and ${appserver} -->
    <property file="${conf.name.file}" />
+   <!-- Provide default value -->
+   <property name="conf.organization.name" value="default" />
+   <property name="appserver" value="glassfish" />
+   <import file="build-${appserver}.xml" />
 
    <path id="classpath">
       <fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
       <fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
+      <fileset dir="${common.basedir}/lib-dev-${appserver}" includes="**/*.jar" />
       <fileset dir="${project.dir.lib.dev}" includes="**/*.jar" />
    </path>
 
@@ -55,7 +61,6 @@
       <path refid="classpath" />
       <path refid="classpath.test.base" />
       <fileset dir="${common.dir.lib.server}" includes="**/*.jar" />
-      <fileset dir="${project.dir.lib.appserver}" includes="**/*.jar" />
    </path>
 
    <path id="classpath.test.compile">
@@ -65,11 +70,10 @@
 	  -->
       <fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
       <fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
+      <fileset dir="${common.basedir}/lib-dev-${appserver}" includes="**/*.jar" />
       <fileset dir="${project.dir.lib.dev}" includes="**/*.jar" />
-      
+
       <path refid="classpath.test.base" />
-      
-      <fileset dir="${project.dir.lib.appserver}" includes="**/*.jar" />
    </path>
 
 
@@ -155,7 +159,7 @@
 
    <!-- ============= Exploded development targets ============= -->
 
-   <target name="init" depends="load-conf,setup-project-done,setup-exploded-done,generate-amr-done" />
+   <target name="init" depends="load-conf,setup-project-done,setup-exploded-done,generate-all" />
 
    <target name="create-version-file">
       <property file="${source}" />
@@ -176,6 +180,7 @@
       <!-- You must also define source folders in Eclipse in a certain order - common ones first and project ones later -->
       <copy todir="${project.dir.exploded.lib}" preservelastmodified="true" overwrite="true">
          <fileset dir="${common.dir.lib}" includes="**/*.jar" />
+         <fileset dir="${common.basedir}/lib-${appserver}" includes="**/*.jar" />
       </copy>
       <copy todir="${project.dir.exploded.lib}" preservelastmodified="true" overwrite="true">
          <fileset dir="${project.dir.lib}" includes="**/*.jar" />
@@ -232,8 +237,13 @@
       </replace>
       <!-- Provide project name -->
       <echo file="${project.dir.exploded.classes}/ee/webmedia/alfresco/common/project-name.properties">project.name=${project.name}${line.separator}</echo>
+      <!-- Organization config override -->
+      <copy tofile="${project.dir.exploded.classes}/organization-alfresco-global.properties"
+            file="${conf.organization.basedir}/${conf.organization.name}/organization-alfresco-global.properties"
+            preservelastmodified="true"
+            overwrite="true" />
 
-      <!-- Compile common separately from project, because it should be independent -->
+      <!-- Compile alfresco classes separately from ee.webmedia, because alfresco classes should not contain references to ee.webmedia -->
       <javac destdir="${project.dir.exploded.classes}" classpathref="classpath" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
          <src path="${common.dir.src}" />
          <src path="${project.dir.src}" />
@@ -318,17 +328,11 @@
       <copy todir="${project.dir.test.classes}" preservelastmodified="true" overwrite="true" verbose="true">
          <fileset dir="${conf.basedir}/${conf.name}/classes" excludes="**/*.java,**/*_en_US.properties" />
       </copy>
-      <!-- Compile common separately from project, because it should be independent -->
       <javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
          <compilerarg value="-Xlint" />
          <!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
          <compilerarg value="-Xlint:-path" />
          <src path="${common.dir.src.test}" />
-      </javac>
-      <javac destdir="${project.dir.test.classes}" classpathref="classpath.test.compile" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
-         <compilerarg value="-Xlint" />
-         <!-- XXX why do I have "bad path element" warnings, where do these path elements come from? -->
-         <compilerarg value="-Xlint:-path" />
          <src path="${project.dir.src.test}" />
       </javac>
    </target>
@@ -461,14 +465,29 @@
              addproperty="conf.name" />
       <antcall target="check-conf" />
 
+      <input message="Enter name of the organization configuration directory name to be used (directory name from directory ${conf.organization.basedir}/&lt;dirname&gt;)"
+             addproperty="conf.organization.name" />
+      <antcall target="check-organization-conf" />
+
+      <input message="Enter name of application server [tomcat,glassfish]"
+            addproperty="appserver" />
+
       <echo file="${conf.name.file}">## environment configuration to be used (name of the folder under etc/conf/)${line.separator}</echo>
       <echo file="${conf.name.file}" append="true">conf.name=${conf.name}${line.separator}</echo>
+      <echo file="${conf.name.file}" append="true">conf.organization.name=${conf.organization.name}${line.separator}</echo>
+      <echo file="${conf.name.file}" append="true">appserver=${appserver}${line.separator}</echo>
    </target>
 
    <target name="check-conf">
       <available file="${conf.basedir}/${conf.name}/build.properties" property="exists.file.build.properties" />
       <fail unless="exists.file.build.properties"
             message="File '${conf.basedir}/${conf.name}/build.properties' does not exist, please create it based on 'build.properties.sample'" />
+   </target>
+
+   <target name="check-organization-conf">
+      <available file="${conf.organization.basedir}/${conf.organization.name}/organization-alfresco-global.properties" property="exists.file.organization.properties" />
+      <fail unless="exists.file.organization.properties"
+            message="File '${conf.organization.basedir}/${conf.organization.name}/organization-alfresco-global.properties' does not exist, please create an empty file" />
    </target>
 
    <!-- ============= Changelogic ============= -->
@@ -493,32 +512,87 @@
 
    <!-- ============= Code generation ============= -->
 
-   <property name="project.dir.amr" location="${project.basedir}/build/amr" />
-   <property name="project.file.amr.jar" location="${common.dir.lib.server}/amr.jar" />
-
-   <path id="classpath-amr">
+   <path id="classpath-generate">
       <fileset dir="${common.dir.lib}" includes="**/*.jar" />
+      <fileset dir="${common.dir.lib.dev}" includes="**/*.jar" />
+      <fileset dir="${project.dir.lib.dev}" includes="**/*.jar" />
+      <fileset dir="${common.dir.lib.server}" includes="**/*.jar" />
+      <fileset dir="${common.basedir}/lib-${appserver}" includes="**/*.jar" />
+      <fileset dir="${common.basedir}/lib-dev-${appserver}" includes="**/*.jar" />
    </path>
 
-   <target name="generate-amr-done">
-      <available file="${project.file.amr.jar}" property="generate.amr.done" />
-      <antcall target="generate-amr-conditionally" />
+   <target name="generate-all" depends="setup-exploded-done" description="Generate code from WSDL files using JAX-WS">
+      <antcall target="generate-xmlbeans-conditionally">
+         <param name="name" value="amr" />
+         <param name="wsdl" value="amr.wsdl" />
+      </antcall>
+      <antcall target="generate-jaxws-conditionally">
+         <param name="name" value="adr" />
+         <param name="wsdl" value="AvalikDokumendiRegisterService.wsdl" />
+      </antcall>
+      <antcall target="generate-jaxws-conditionally">
+         <param name="name" value="mso" />
+         <param name="wsdl" value="MsoService.wsdl" />
+      </antcall>
+      <antcall target="generate-jaxws-conditionally">
+         <param name="name" value="ocr" />
+         <param name="wsdl" value="OcrService.wsdl" />
+      </antcall>
    </target>
 
-   <target name="generate-amr-conditionally" unless="generate.amr.done">
-      <antcall target="generate-amr" />
+   <target name="generate-xmlbeans-conditionally">
+      <uptodate property="generate.xmlbeans.done" srcfile="${common.dir.etc}/${wsdl}" targetfile="${common.dir.lib.server}/${name}-ws.jar" />
+      <antcall target="generate-xmlbeans" />
    </target>
 
-   <target name="generate-amr" unless="setup.project.done" depends="setup-exploded-done" description="Generate AMR code from WSDL">
-      <delete dir="${project.dir.amr}" failonerror="false" />
-      <taskdef name="xmlbean" classname="org.apache.xmlbeans.impl.tool.XMLBean" classpathref="classpath-amr" />
-      <xmlbean classpathref="classpath-amr" schema="${common.dir.etc}/amr.wsdl" javasource="1.6" srconly="true" srcgendir="${project.dir.amr}" classgendir="${project.dir.amr}" />
-      <javac destdir="${project.dir.amr}" classpathref="classpath-amr" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
-         <src path="${project.dir.amr}" />
+   <target name="generate-xmlbeans" unless="generate.xmlbeans.done">
+      <echo>Generating ${name}-ws.jar from ${wsdl}</echo>
+      <delete dir="${project.dir.build}/${name}" failonerror="false" />
+      <taskdef name="xmlbean" classname="org.apache.xmlbeans.impl.tool.XMLBean" classpathref="classpath-generate" />
+      <xmlbean classpathref="classpath-generate" schema="${common.dir.etc}/${wsdl}" javasource="1.6" srconly="true" srcgendir="${project.dir.build}/${name}" classgendir="${project.dir.build}/${name}" />
+      <javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+         <src path="${project.dir.build}/${name}" />
       </javac>
-      <delete file="${project.file.amr.jar}" failonerror="false" />
-      <jar destfile="${project.file.amr.jar}" basedir="${project.dir.amr}" />
-      <copy todir="${project.dir.exploded.lib}" preservelastmodified="true" file="${project.file.amr.jar}" />
+      <delete file="${common.dir.lib.server}/${name}-ws.jar" failonerror="false" />
+      <jar destfile="${common.dir.lib.server}/${name}-ws.jar" basedir="${project.dir.build}/${name}" />
+      <copy todir="${project.dir.exploded.lib}" preservelastmodified="true" file="${common.dir.lib.server}/${name}-ws.jar" />
+   </target>
+
+   <target name="generate-jaxws-conditionally">
+      <!-- (re-)generate xyz-ws.jar if it doesn't exist or if wsdl modification time is later than xyz-ws.jar modification time --> 
+      <uptodate property="generate.jaxws.done" srcfile="${common.dir.etc}/${wsdl}" targetfile="${common.dir.lib.server}/${name}-ws.jar" />
+      <antcall target="generate-jaxws" />
+   </target>
+
+   <target name="generate-jaxws" unless="generate.jaxws.done">
+      <echo>Generating ${name}-ws.jar from ${wsdl}</echo>
+      <delete dir="${project.dir.build}/${name}" failonerror="false" />
+      <delete dir="${project.dir.build}/${name}-classes" failonerror="false" />
+      <mkdir dir="${project.dir.build}/${name}" />
+      <mkdir dir="${project.dir.build}/${name}-classes" />
+      <taskdef name="wsimport" classname="com.sun.tools.ws.ant.WsImport" classpathref="classpath-generate" />
+      <wsimport
+         wsdl="${common.dir.etc}/${wsdl}"
+         package="ee.webmedia.alfresco.${name}.ws"
+         sourcedestdir="${project.dir.build}/${name}"
+         destdir="${project.dir.build}/${name}-classes"
+         debug="true"
+      />
+      <!-- wsimport writes full path of wsdl file into java file - remove full path, filename stays as "xyz.wsdl" -->
+      <replaceregexp match="file:[^'&quot;]*/([^/]*\.wsdl)" replace="\1" flags="g">
+          <fileset dir="${project.dir.build}/${name}" includes="**/*.java"/>
+      </replaceregexp>
+      <!-- getResource(".") doesn't work, but getResource("") does - maybe it's a JRebel bug... -->
+      <replaceregexp match="\.getResource\(&quot;\.&quot;\)" replace=".getResource(&quot;&quot;)" flags="g">
+          <fileset dir="${project.dir.build}/${name}" includes="**/*.java"/>
+      </replaceregexp>
+      <javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" encoding="UTF-8">
+         <src path="${project.dir.build}/${name}" />
+      </javac>
+      <copy todir="${project.dir.build}/${name}/ee/webmedia/alfresco/${name}/ws" preservelastmodified="true" file="${common.dir.etc}/${wsdl}" />
+      <delete file="${common.dir.lib.server}/${name}-ws.jar" failonerror="false" />
+      <jar destfile="${common.dir.lib.server}/${name}-ws.jar" basedir="${project.dir.build}/${name}" />
+      <copy todir="${project.dir.exploded.lib}" preservelastmodified="true" file="${common.dir.lib.server}/${name}-ws.jar" />
    </target>
 
 </project>

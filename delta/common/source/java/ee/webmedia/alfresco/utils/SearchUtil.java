@@ -189,6 +189,10 @@ public class SearchUtil {
         return "ISNULL:" + Repository.escapeQName(documentPropName);
     }
     
+    public static String generatePropertyNotNullQuery(QName documentPropName) {
+        return "ISNOTNULL:" + Repository.escapeQName(documentPropName);
+    }    
+    
     public static String generatePropertyUnsetQuery(QName documentPropName) {
         return "ISUNSET:" + Repository.escapeQName(documentPropName);
     }

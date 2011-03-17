@@ -36,6 +36,7 @@ public class MyTasksBean extends BaseDialogBean {
     public static final String LIST_OPINION = "opinion";
     public static final String LIST_REVIEW = "review";
     public static final String LIST_SIGNATURE = "signature";
+    public static final String LIST_EXTERNAL_REVIEW = "externalReview";
     
     private String dialogTitle;
     private String listTitle;
@@ -46,6 +47,7 @@ public class MyTasksBean extends BaseDialogBean {
     private List<TaskAndDocument> opinionTasks;
     private List<TaskAndDocument> reviewTasks;
     private List<TaskAndDocument> signatureTasks;
+    private List<TaskAndDocument> externalReviewTasks;
     private long lastLoadMillis = 0;
 
     private transient ParametersService parametersService;
@@ -136,6 +138,15 @@ public class MyTasksBean extends BaseDialogBean {
         loadTasks();
     }
     
+    public void setupExternalReviewTasks(ActionEvent event) {
+        reset();
+        dialogTitle = MessageUtil.getMessage("externalReviewWorkflow");
+        listTitle = MessageUtil.getMessage("task_list_external_review_title");
+        lessColumns = true;
+        specificList = LIST_EXTERNAL_REVIEW;
+        loadTasks();
+    }    
+    
     // END: dialog setup
 
     public List<TaskAndDocument> getTasks() {
@@ -150,7 +161,9 @@ public class MyTasksBean extends BaseDialogBean {
             result = reviewTasks;
         } else if (LIST_SIGNATURE.equals(specificList)) {
             result = signatureTasks;
-        }        
+        } else if (LIST_EXTERNAL_REVIEW.equals(specificList)) {
+            result = externalReviewTasks;
+        }       
         return result;
     }
 
@@ -173,6 +186,10 @@ public class MyTasksBean extends BaseDialogBean {
     public List<TaskAndDocument> getSignatureTasks() {
         return filterTasksByDate(signatureTasks);
     }
+    
+    public List<TaskAndDocument> getExternalReviewTasks() {
+        return filterTasksByDate(externalReviewTasks);
+    }    
 
     public boolean isAssignmentPagerVisible() {
         return getAssignmentTasks().size() > PAGE_SIZE; 
@@ -193,6 +210,10 @@ public class MyTasksBean extends BaseDialogBean {
     public boolean isOpinionPagerVisible() {
         return getOpinionTasks().size() > PAGE_SIZE;
     }
+    
+    public boolean isExternalReviewPagerVisible() {
+        return getExternalReviewTasks().size() > PAGE_SIZE;
+    }    
 
     public boolean isTitlebarRendered() {
         return getContainerTitle().length() > 0;
@@ -328,6 +349,13 @@ public class MyTasksBean extends BaseDialogBean {
             signatureTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
             log.debug("loadTasks - signatureTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
         }
+        if (specificList == null || LIST_EXTERNAL_REVIEW.equals(specificList)) {
+            long startB = System.currentTimeMillis();
+            List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK);
+            long startC = System.currentTimeMillis();
+            externalReviewTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
+            log.debug("loadTasks - externalReviewTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
+        }         
         log.debug("loadTasks - END: " + (System.currentTimeMillis() - startA) + "ms");
     }
 

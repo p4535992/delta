@@ -22,6 +22,14 @@
             <aspect>docspec:errandOrderApplicantAbroad</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="docspec:errandOrderAbroadMvApplicantType"><!-- VälisLähetuse (MV) taotleja(dokument->taotleja) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandApplicant</aspect>
+            <aspect>docspec:errandOrderAbroadMvApplicant</aspect>
+         </mandatory-aspects>
+      </type>      
 
       <type name="docspec:errandApplicationDomesticApplicantType"><!-- Siselähetuse taotleja(dokument->taotleja) -->
          <parent>doccom:metadataContainer</parent>
@@ -52,6 +60,15 @@
             <aspect>docspec:dailyAllowance</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="docspec:errandsAbroadMvType"><!-- VälisLähetuse (MV) blokk (dokument->taotleja->lähetus) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandBlockCommon</aspect>
+            <aspect>docspec:errandBlockAbroad</aspect>
+            <aspect>docspec:dailyAllowance</aspect>
+         </mandatory-aspects>
+      </type>      
 
       <type name="docspec:errandsDomesticType"><!-- Siselähetuse blokk (dokument->taotleja->lähetus) -->
          <parent>doccom:metadataContainer</parent>
@@ -60,9 +77,46 @@
             <aspect>docspec:errandBlockDomestic</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="docspec:contractMvPartyType"><!-- Leping (MV) (dokument->lepingu osapool) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:contractParty</aspect>
+         </mandatory-aspects>
+      </type>      
+      
+      <type name="docspec:contractPartyType"><!-- Leping (dokument->lepingu osapool) -->
+         <parent>docspec:contractMvPartyType</parent>
+      </type>
    </types>
 
    <aspects>
+      <aspect name="docspec:contractParty">
+         <properties>
+            <property name="docspec:partyName">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:partySigner">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:partyEmail">
+               <type>d:text</type>
+            </property>  
+            <property name="docspec:partyContactPerson">
+               <type>d:text</type>
+            </property>              
+         </properties>
+      </aspect>
+
+      <aspect name="docspec:notEditable">
+         <properties>
+            <property name="docspec:notEditable">
+               <type>d:boolean</type>
+               <mandatory>true</mandatory>
+               <default>false</default>
+            </property>
+         </properties>
+      </aspect>   
 
       <aspect name="docspec:senderDetails">
          <properties>
@@ -73,8 +127,39 @@
                <type>d:text</type>
             </property>
          </properties>
+      </aspect> 
+      
+      <aspect name="docspec:senderDetailsMv">
+         <properties>
+            <property name="docspec:senderSigner">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:senderWriter">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:senderPhone">
+               <type>d:text</type>
+            </property>   
+            <property name="docspec:senderAddress1">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:senderAddress2">
+               <type>d:text</type>
+            </property> 
+            <property name="docspec:senderPostalCode">
+               <type>d:text</type>
+            </property>  
+         </properties>
       </aspect>
-
+      
+      <aspect name="docspec:annex">
+         <properties>
+            <property name="docspec:annex">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>       
+      
       <aspect name="docspec:sender">
          <properties>
             <property name="docspec:senderRegNumber"><!-- Saatja kirja reg nr -->
@@ -216,9 +301,8 @@
          </properties>
       </aspect>
       
-      <aspect name="docspec:vacationOrder">
+      <aspect name="docspec:vacationOrderCommon">
          <properties>
-            
             <property name="docspec:leaveAnnual">
                <type>d:boolean</type>
             </property>
@@ -227,9 +311,6 @@
             </property>
             <property name="docspec:leaveAnnualEndDate">
                <type>d:date</type>
-            </property>
-            <property name="docspec:leaveAnnualDays">
-               <type>d:int</type>
             </property>
             
             <property name="docspec:leaveWithoutPay">
@@ -241,9 +322,6 @@
             <property name="docspec:leaveWithoutPayEndDate">
                <type>d:date</type>
             </property>
-            <property name="docspec:leaveWithoutPayDays">
-               <type>d:int</type>
-            </property>
             
             <property name="docspec:leaveChild">
                <type>d:boolean</type>
@@ -254,9 +332,6 @@
             <property name="docspec:leaveChildEndDate">
                <type>d:date</type>
             </property>
-            <property name="docspec:leaveChildDays">
-               <type>d:int</type>
-            </property>
             
             <property name="docspec:leaveStudy">
                <type>d:boolean</type>
@@ -266,9 +341,6 @@
             </property>
             <property name="docspec:leaveStudyEndDate">
                <type>d:date</type>
-            </property>
-            <property name="docspec:leaveStudyDays">
-               <type>d:int</type>
             </property>
             
             <property name="docspec:leaveChange">
@@ -286,9 +358,6 @@
             <property name="docspec:leaveNewEndDate">
                <type>d:date</type>
             </property>
-            <property name="docspec:leaveNewDays">
-               <type>d:int</type>
-            </property>
             
             <property name="docspec:leaveCancel">
                <type>d:boolean</type>
@@ -298,9 +367,6 @@
             </property>
             <property name="docspec:leaveCancelEndDate">
                <type>d:date</type>
-            </property>
-            <property name="docspec:leaveCancelDays">
-               <type>d:int</type>
             </property>
             
             <property name="docspec:substituteName">
@@ -320,9 +386,42 @@
             <property name="docspec:substitutionEndDate">
                <type>d:date</type>
                <multiple>true</multiple>
+            </property>            
+         
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:vacationOrder">
+         <properties>
+            
+            <property name="docspec:leaveAnnualDays">
+               <type>d:int</type>
+            </property>
+            
+            <property name="docspec:leaveWithoutPayDays">
+               <type>d:int</type>
+            </property>
+            
+            <property name="docspec:leaveChildDays">
+               <type>d:int</type>
+            </property>
+            
+            <property name="docspec:leaveStudyDays">
+               <type>d:int</type>
+            </property>
+            
+            <property name="docspec:leaveNewDays">
+               <type>d:int</type>
+            </property>  
+            
+            <property name="docspec:leaveCancelDays">
+               <type>d:int</type>
             </property>
             
          </properties>
+         <mandatory-aspects>
+            <aspect>docspec:vacationOrderCommon</aspect>
+         </mandatory-aspects>
       </aspect>
 
       <aspect name="docspec:leaveDetails">
@@ -436,7 +535,12 @@
             <property name="docspec:firstPartyContactPerson">
                <type>d:text</type>
             </property>
-            <property name="docspec:secondPartyName">
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:contractDetailsV1">
+      	<properties>
+      		<property name="docspec:secondPartyName">
                <type>d:text</type>
                <mandatory enforced="false">true</mandatory>
             </property>
@@ -461,17 +565,50 @@
             <property name="docspec:thirdPartyContactPerson">
                <type>d:text</type>
             </property>
-         </properties>
+      	</properties>
+         <mandatory-aspects>
+            <aspect>docspec:contractDetails</aspect>
+         </mandatory-aspects>
       </aspect>
       
-      <aspect name="docspec:contractSimDetails">
-         <properties>
+      <aspect name="docspec:contractDetailsV2">
+	      <associations>
+            <child-association name="docspec:contractParties">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:contractPartyType</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>docspec:contractDetails</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+	  <aspect name="docspec:contractCommonDetails">
+	  	<properties>
             <property name="docspec:secondPartyContractDate">
                <type>d:date</type>
             </property>
             <property name="docspec:secondPartyContractNumber">
                <type>d:text</type>
+            </property>	  	
+            <property name="docspec:finalTermOfDeliveryAndReceipt">
+               <type>d:date</type>
             </property>
+            <property name="docspec:paymentAnnotation">
+               <type>d:text</type>
+            </property>
+         </properties> 	
+	  </aspect>     
+      
+      <aspect name="docspec:contractSimDetails">
+         <properties>
             <property name="docspec:inclusivePriceExclVat">
                <type>d:double</type>
                <mandatory enforced="false">true</mandatory>
@@ -482,19 +619,62 @@
             </property>
             <property name="docspec:contractSimEndDate">
                <type>d:date</type>
-               <mandatory enforced="false">true</mandatory>
             </property>
-            <property name="docspec:finalTermOfDeliveryAndReceipt">
-               <type>d:date</type>
-            </property>
-            <property name="docspec:paymentAnnotation">
+            <property name="docspec:contractSimEndDateDesc">
                <type>d:text</type>
             </property>
          </properties>
          <mandatory-aspects>
             <aspect>docspec:costManager</aspect>
+            <aspect>docspec:contractCommonDetails</aspect>
          </mandatory-aspects>
       </aspect>
+      
+      <aspect name="docspec:contractMvDetails">
+         <properties>
+            <property name="docspec:firstPartyContactPersonMv">
+               <type>d:text</type>
+            </property>          
+            <property name="docspec:price">
+               <type>d:double</type>
+            </property>
+            <property name="docspec:costClassificator">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:project">
+               <type>d:text</type>
+            </property>     
+            <property name="docspec:fieldOfActivity">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:costCenter">
+               <type>d:text</type>
+            </property>       
+			<property name="docspec:costCode">
+               <type>d:text</type>
+            </property>  
+            <property name="docspec:contractMvEndDate">
+               <type>d:date</type>
+            </property>            
+         </properties>
+         <associations>
+            <child-association name="docspec:contractMvParties">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:contractMvPartyType</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>            
+         <mandatory-aspects>
+            <aspect>docspec:contractCommonDetails</aspect>
+            <aspect>docspec:costManager</aspect>
+         </mandatory-aspects>
+      </aspect>      
 
       <aspect name="docspec:procurementApplicants">
          <properties>
@@ -640,14 +820,12 @@
          <properties>
             <property name="docspec:costManager">
                <type>d:text</type>
-               <mandatory enforced="false">true</mandatory>
             </property>
          </properties>
       </aspect>
 
       <!-- VälisLähetuse ja siselähetuse DOKUMENDI ühised väljad -->
-      <aspect name="docspec:errandDoc">
-
+      <aspect name="docspec:errandDocCommon">
          <properties>
             <!-- Ürituse toimumise aeg -->
             <property name="docspec:eventBeginDate">
@@ -658,11 +836,20 @@
                <type>d:date</type>
                <mandatory>true</mandatory>
             </property>
+         </properties>
+
+      </aspect>      
+      
+      <aspect name="docspec:errandDoc">
+         <properties>
             <property name="docspec:eventOrganizer">
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
          </properties>
+         <mandatory-aspects>
+            <aspect>docspec:errandDocCommon</aspect>
+         </mandatory-aspects>         
       </aspect>
 
       <!-- lähetuse taotleja (välislähetuse ja siselähetuse puhul taotleja ühised väljad) -->
@@ -687,7 +874,7 @@
             <property name="docspec:expenditureItem"><!-- Kulukoht -->
                <type>d:text</type>
             </property>
-         </properties>
+         </properties>      
          <associations>
             <child-association name="docspec:errandsAbroad">
                <source>
@@ -705,6 +892,22 @@
             <aspect>docspec:costManager</aspect>
          </mandatory-aspects>
       </aspect>
+      
+      <aspect name="docspec:errandOrderAbroadMvApplicant">
+         <associations>
+            <child-association name="docspec:errandsAbroadMv">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:errandsAbroadMvType</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>      
       
       <!-- siseLähetuse taotleja spetsiifilised väljad -->
       <aspect name="docspec:errandApplicationApplicantDomestic">
@@ -857,6 +1060,7 @@
       </aspect>
       
       <!-- VälisLähetuse dokumendi spetsiifilised väljad -->
+            
       <aspect name="docspec:errandOrderAbroad">
          <properties>
             <property name="docspec:legalBasisForOfficials">
@@ -864,7 +1068,7 @@
             </property>
             <property name="docspec:legalBasisForSupportStaff">
                <type>d:text</type>
-            </property>
+            </property>          
             <property name="docspec:reportDueDate">
                <type>d:date</type>
             </property>
@@ -886,6 +1090,25 @@
             <aspect>docspec:travelPurpose</aspect>
          </mandatory-aspects>
       </aspect>
+      
+      <aspect name="docspec:errandOrderAbroadMv">
+         <associations>
+            <child-association name="docspec:errandOrderAbroadMvApplicants">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:errandOrderAbroadMvApplicantType</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>docspec:travelPurpose</aspect>
+         </mandatory-aspects>
+      </aspect>      
 
       
       <!-- Siselähetuse dokumendi spetsiifilised väljad -->
@@ -940,6 +1163,135 @@
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:content">
+         <properties>
+            <property name="docspec:content">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:minutesMv">
+         <properties>
+            <property name="docspec:minutesDirector">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:minutesRecorder">
+               <type>d:text</type>
+            </property> 
+            <property name="docspec:minutesDateTime">
+               <type>d:date</type>
+            </property>             
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:orderType">
+         <properties>
+            <property name="docspec:orderType">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:invoice">
+         <properties>
+            <property name="docspec:bankAccount">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:referenceNumber">
+               <type>d:text</type>
+            </property>            
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:personalVehicleUsageCompensationMv">
+         <properties>
+            <property name="docspec:travelItinerary">
+               <type>d:text</type>
+            </property>   
+            <property name="docspec:compensationSum">
+               <type>d:double</type>
+            </property> 
+            <property name="docspec:vehicleEventBeginDate">
+               <type>d:date</type>
+            </property>     
+            <property name="docspec:vehicleEventEndDate">
+               <type>d:date</type>
+            </property>  
+            <property name="docspec:vehicleRegNumber">
+               <type>d:text</type>
+            </property> 
+            <property name="docspec:compensationLimit">
+               <type>d:double</type>
+            </property> 
+            <property name="docspec:compensationApplicantName">
+               <type>d:text</type>
+            </property> 
+            <property name="docspec:compensationApplicantJobTitle">
+               <type>d:text</type>
+            </property>   
+            <property name="docspec:compensationApplicantStructUnitName">
+               <type>d:text</type>
+            </property>                     
+         </properties>
+         <mandatory-aspects>
+            <aspect>docspec:travelPurpose</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="docspec:projectApplication">
+         <properties>
+            <property name="docspec:applicantInstitution">
+               <type>d:text</type>
+            </property>         
+            <property name="docspec:applicantPerson">
+               <type>d:text</type>
+            </property>
+            <property name="docspec:coApplicantInstitution">
+               <type>d:text</type>
+            </property>  
+            <property name="docspec:coApplicantPerson">
+               <type>d:text</type>
+            </property> 
+            <property name="docspec:applicationSum">
+               <type>d:double</type>
+            </property> 
+         </properties>
+         <mandatory-aspects>
+            <aspect>docspec:coFinancer</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="docspec:coFinancer">
+         <properties>
+            <property name="docspec:coFinancerInstitution">
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <default></default>               
+            </property> 
+            <property name="docspec:coFinancerPersona">
+               <type>d:text</type>
+               <multiple>true</multiple>
+               <default></default>               
+            </property> 
+            <property name="docspec:coFinancerSum">
+               <type>d:double</type>
+               <multiple>true</multiple>
+            </property>            
+         </properties>      
+      </aspect>
+      
+      <aspect name="docspec:outgoingLetterMv">
+         <properties>
+            <property name="docspec:replyDate">
+               <type>d:date</type>
+            </property>
+            <property name="docspec:replyDueDate">
+               <type>d:date</type>
+            </property>            
          </properties>
       </aspect>
 

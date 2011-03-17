@@ -23,6 +23,8 @@ public class SearchTag extends UIComponentTag {
     private String dialogTitleId;
     private Boolean editable;
     private String readonly;
+    private Boolean showFilter;
+    private String filters;
 
     public String getComponentType() {
         return Search.SEARCH_FAMILY;
@@ -110,5 +112,21 @@ public class SearchTag extends UIComponentTag {
 
     public void setReadonly(String readonly) {
         this.readonly = readonly;
+    }
+
+    public void setShowFilter(Boolean showFilter) {
+        this.showFilter = showFilter;
+    }
+
+    public Boolean getShowFilter() {
+        return showFilter;
+    }
+
+    public void setFilters(String filters) {
+        this.filters = filters;
+    }
+
+    public String getFilters() {
+        return filters;
     }
 }

@@ -38,6 +38,7 @@ public interface AddressbookModel {
         QName ORGANIZATION_ACRONYM = QName.createQName(AddressbookModel.URI, "orgAcronym");
         QName ORGANIZATION_CODE = QName.createQName(AddressbookModel.URI, "orgCode");
         QName DVK_CAPABLE = QName.createQName(AddressbookModel.URI, "dvkCapable");
+        QName TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "taskCapable");
         QName GROUP_NAME = QName.createQName(AddressbookModel.URI, "groupName");
         QName EMAIL = QName.createQName(AddressbookModel.URI, "email");
         QName FAX = QName.createQName(AddressbookModel.URI, "fax");
@@ -46,5 +47,10 @@ public interface AddressbookModel {
         QName ADDRESS2 = QName.createQName(AddressbookModel.URI, "address2");
         QName CITY = QName.createQName(AddressbookModel.URI, "city");
         QName COUNTRY = QName.createQName(AddressbookModel.URI, "country");
+    }
+    
+    interface Aspects {
+        QName ORGANIZATION_PROPERTIES = QName.createQName(AddressbookModel.URI, "organizationProperties");
+        QName EVERYONE = QName.createQName(AddressbookModel.URI, "everyone");
     }
 }

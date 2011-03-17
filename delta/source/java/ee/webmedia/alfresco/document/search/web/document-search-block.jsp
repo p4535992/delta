@@ -21,9 +21,27 @@
                function _ifenter2(event) { if (event && event.keyCode == 13) {$jQ('#docsearch-button.panel input[id$=quickSearchBtn2]').click();return false;} else {return true;} }
             </script>
          </f:verbatim>
-         <h:inputText id="docsearchField" value="#{DocumentDialog.search.searchValue}" maxlength="50" onkeypress="return _ifenter2(event)"/>
-         <f:verbatim>&nbsp;</f:verbatim>
-         <h:commandButton id="quickSearchBtn2" value="#{msg.search}" type="submit" actionListener="#{DocumentDialog.search.setup}" action="#docsearch-panel" />
+         <h:panelGrid styleClass="docSearch-inputs" columns="2" columnClasses="propertiesLabel" >
+            <h:outputText value="#{msg.document_search_input} " />
+            <h:inputText id="docsearchField" value="#{DocumentDialog.search.searchValue}" maxlength="50" onkeypress="return _ifenter2(event)" />
+            <h:outputText value="#{msg.document_regDateTime2}" />
+            <h:outputText>
+               <h:outputText value="#{msg.from} " />
+               <h:inputText id="regDateTimeBegin" value="#{DocumentDialog.search.regDateTimeBegin}" styleClass="date">
+                  <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter" />
+               </h:inputText>
+               <h:outputText value=" #{msg.to} " />
+               <h:inputText id="regDateTimeEnd" value="#{DocumentDialog.search.regDateTimeEnd}" styleClass="date">
+                  <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter" />
+               </h:inputText>
+            </h:outputText>
+            <h:outputText value="#{msg.document_docType}" />
+            <h:selectManyListbox value="#{DocumentDialog.search.selectedDocumentTypes}" size="5"
+               converter="ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter">
+               <f:selectItems value="#{DocumentSearchBean.documentTypes}" />
+            </h:selectManyListbox>
+            <h:commandButton id="quickSearchBtn2" value="#{msg.search}" type="submit" actionListener="#{DocumentDialog.search.setup}" action="#docsearch-panel" />
+         </h:panelGrid>
       </a:panel>
 
       <a:panel id="docsearch-results-panel" styleClass="panel-100 with-pager" label="#{msg.search}" progressive="true" rendered="#{DocumentDialog.search.count > 0}">

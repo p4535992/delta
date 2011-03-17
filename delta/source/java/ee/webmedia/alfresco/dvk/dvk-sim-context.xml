@@ -9,6 +9,15 @@
       <property name="documentService" ref="DocumentService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
+      <property name="documentTypeService" ref="DocumentTypeService" />
+      <property name="seriesService" ref="SeriesService" />
+      <property name="volumeService" ref="VolumeService" />
+      <property name="importerService" ref="externalReviewWorkflowImporterComponent" />
+      <property name="exporterService" ref="exporterComponent" />
+      <property name="sendOutService" ref="SendOutService" />
+      <property name="fileService" ref="FileService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="notificationService" ref="NotificationService" />      
    </bean>
 
    <bean id="dvkCorruptDocumentPermissionsBootstrap" class="ee.webmedia.alfresco.dvk.bootstrap.DvkCorruptDocumentPermissionsBootstrap" parent="module.baseComponent">

@@ -150,15 +150,20 @@ public class GeneralServiceImpl implements GeneralService {
 
     @Override
     public NodeRef getAncestorNodeRefWithType(NodeRef childRef, QName ancestorType) {
+        return getAncestorNodeRefWithType(childRef, ancestorType, false);
+    }
+
+    @Override
+    public NodeRef getAncestorNodeRefWithType(NodeRef childRef, QName ancestorType, boolean checkSubTypes) {
         final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
         final QName realParentType = nodeService.getType(parentRef);
-        if (ancestorType.equals(realParentType)) {
+        if (ancestorType.equals(realParentType) || (checkSubTypes && dictionaryService.isSubClass(realParentType, ancestorType))) {
             return parentRef;
         }
         if (realParentType.equals(ContentModel.TYPE_STOREROOT)) {
             return null;
         }
-        return getAncestorNodeRefWithType(parentRef, ancestorType);
+        return getAncestorNodeRefWithType(parentRef, ancestorType, checkSubTypes);
     }
 
     @Override
@@ -465,8 +470,8 @@ public class GeneralServiceImpl implements GeneralService {
         String oldMimetype = StringUtils.lowerCase(mimetype);
         mimetype = mimetypeService.guessMimetype(fileName);
         if (log.isDebugEnabled() && !StringUtils.equals(oldMimetype, mimetype)) {
-            log.debug("User provided mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '" + fileName + "' => '"
-                        + mimetype + "'");
+            log.debug("User provided mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '"
+                    + fileName + "' => '" + mimetype + "'");
         }
 
         String encoding;
@@ -492,6 +497,7 @@ public class GeneralServiceImpl implements GeneralService {
         writer.putContent(file);
     }
 
+    @Override
     public NodeRef getParentNodeRefWithType(NodeRef childRef, QName parentType) {
         final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
         final QName realParentType = nodeService.getType(parentRef);

@@ -44,7 +44,7 @@ public interface DocumentSearchService {
      */
     List<Document> searchDocumentsQuick(String searchString);
 
-    List<Document> searchDocumentsQuick(String searchValue, boolean includeCaseTitles); 
+    List<Document> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<QName> documentTypes, boolean includeCaseTitles);
 
     /**
      * Searches for documents using a search filter.
@@ -63,21 +63,41 @@ public interface DocumentSearchService {
     List<Document> searchDocumentsInOutbox();
 
     int searchDocumentsInOutboxCount();
-    
+
     /**
      * @return dvkId's by sendInfos(aka dhl_id's - assigned to documents by DVK when sent to DVK, to be able to ask sending statuses)
      */
     Map<NodeRef, Pair<String, String>> searchOutboxDvkIds();
 
     /**
+     * Fetches list of documents where ownerId = logged in userId and (
+     * (docType = incomingLetter* && dokumendi regNumber = null)
+     * OR
+     * (docType != incomingLetter* && !hasCompoundWorkflows(document))
+     * )
+     * 
+     * @return list of Document objects
+     */
+    // CL_TASK 152338 new version of searchUserWorkingDocuments()
+    // List<Document> searchInProcessUserDocuments();
+
+    /**
+     * @see #searchInProcessUserDocuments()
+     */
+    // CL_TASK 152338 new version of searchUserWorkingDocumentsCount()
+    // int searchInProcessUserDocumentsCount();
+
+    /**
      * Fetches list of documents where ownerId = logged in userId and docStatus is working
      * 
      * @return list of Document objects
      */
+    // CL_TASK 152338 old version of searchInProcessUserDocuments()
     List<Document> searchUserWorkingDocuments();
 
+    // CL_TASK 152338 old version of searchInProcessUserDocumentsCount()
     int searchUserWorkingDocumentsCount();
-    
+
     /**
      * Fetches list of documents where date in regDateTime property is current date
      * 
@@ -94,7 +114,7 @@ public interface DocumentSearchService {
     List<Document> searchRecipientFinishedDocuments();
 
     int searchRecipientFinishedDocumentsCount();
-    
+
     /**
      * Fetches a list of Series where series' structUnit is unit
      * 
@@ -105,31 +125,33 @@ public interface DocumentSearchService {
 
     /**
      * Searches documents are available for registering.
-     *
+     * 
      * @return list of documents
      */
     List<Document> searchDocumentsForRegistering();
 
     /**
      * Gets the count of documents available for registering.
-     *
+     * 
      * @return count
      */
     int getCountOfDocumentsForRegistering();
-    
+
     /**
-     * Returns all tasks that are in progress for currently logged in user 
+     * Returns all tasks that are in progress for currently logged in user
+     * 
      * @param taskType
      */
     List<Task> searchCurrentUsersTasksInProgress(QName taskType);
-    
+
     /**
      * Returns number of tasks of specified type that are assigned to currently logged in user
+     * 
      * @param taskType
      * @return
      */
     int getCurrentUsersTaskCount(QName taskType);
-    
+
     /**
      * Searches for tasks using a search filter.
      * 
@@ -137,9 +159,10 @@ public interface DocumentSearchService {
      * @return list of matching tasks
      */
     List<TaskInfo> searchTasks(Node filter);
-    
+
     /**
      * If due date is null, then list with due tasks is returned (dueDate < sysDate)
+     * 
      * @param dueDate
      * @return
      */
@@ -148,12 +171,13 @@ public interface DocumentSearchService {
     List<Volume> searchVolumesDispositionedAfterDate(Date dispositionDate);
 
     /**
-     * Search for documents of type INCOMING_LETTER, where register data and number is not empty
+     * Search for documents of type INCOMING_LETTER or INCOMING_LETTER_MV, where register data and number is not empty
      * and sender's reg numbers are same.
+     * 
      * @param senderRegNumber
      * @return list of found documents
      */
-    List<Document> searchIncomingLetterRegisteredDocuments(String senderRegNumber);
+    List<Document> searchIncomingLetterRegisteredDocuments(String senderRegNumber, QName documentType);
 
     List<Document> searchAccessRestictionEndsAfterDate(Date restrictionEndDate);
 
@@ -163,6 +187,7 @@ public interface DocumentSearchService {
 
     /**
      * Used by ADR web service to search documents.
+     * 
      * @param regDateBegin
      * @param regDateEnd
      * @param docType
@@ -172,7 +197,8 @@ public interface DocumentSearchService {
     List<Document> searchAdrDocuments(Date regDateBegin, Date regDateEnd, QName docType, String searchString, Set<QName> documentTypes);
 
     /**
-     * Used by ADR web service to search document details. 
+     * Used by ADR web service to search document details.
+     * 
      * @param regNumber
      * @param regDate
      * @return
@@ -186,6 +212,14 @@ public interface DocumentSearchService {
     List<QName> searchAdrDeletedDocumentTypes(Date deletedDateBegin, Date deletedDateEnd);
 
     List<QName> searchAdrAddedDocumentTypes(Date addedDateBegin, Date addedDateEnd);
+
+    Map<NodeRef, Pair<String, String>> searchTaskBySendStatusQuery(QName taskType);
+
+    List<Task> searchTasksByOriginalDvkIdsQuery(Iterable<String> originalDvkIds);
+
+    Task searchTaskByOriginalDvkIdQuery(String originalDvkId);
+
+    Series searchSeriesByIdentifier(String identifier);
 
     /**
      * Searches for groups by name. If {@code input} is empty, all groups are returned if {@code returnAllGroups} is {@code true}, otherwise an empty list is

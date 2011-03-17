@@ -7,11 +7,13 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 
-import ee.webmedia.alfresco.adr.Dokumendiliik;
-import ee.webmedia.alfresco.adr.Dokument;
-import ee.webmedia.alfresco.adr.DokumentDetailidega;
-import ee.webmedia.alfresco.adr.DokumentDetailidegaFailita;
-import ee.webmedia.alfresco.adr.Fail;
+import ee.webmedia.alfresco.adr.ws.Dokumendiliik;
+import ee.webmedia.alfresco.adr.ws.Dokument;
+import ee.webmedia.alfresco.adr.ws.DokumentDetailidega;
+import ee.webmedia.alfresco.adr.ws.DokumentDetailidegaV2;
+import ee.webmedia.alfresco.adr.ws.DokumentId;
+import ee.webmedia.alfresco.adr.ws.Fail;
+import ee.webmedia.alfresco.adr.ws.FailV2;
 
 public interface AdrService {
 
@@ -31,24 +33,35 @@ public interface AdrService {
     List<Dokument> otsiDokumendid(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev, String dokumendiLiik, String otsingusona);
 
     // tagastab ühe dokumendi detailinfo + nimekirja seotud dokumentidest lühiinfoga + nimekirja failidest (ilma faili sisudeta)
+    // kui JPP != Avalik, siis nimekirja failidest ei tagastata
     // kõik parameetrid on kohustuslikud, otsitakse täpset vastet!
     DokumentDetailidega dokumentDetailidega(String viit, XMLGregorianCalendar registreerimiseAeg);
 
     // tagastab ühe faili info ja faili sisu
     // kõik parameetrid on kohustuslikud, otsitakse täpset vastet!
+    // kui JPP != Avalik, siis tagastatakse tühi vastus (mitte faili info ilma sisuta)
     Fail failSisuga(String viit, XMLGregorianCalendar registreerimiseAeg, String filename);
+    // sama mis eelmine
+    // aga dokumendi identifitseerimine käib nodeRef järgi
+    // + lisaväljad
+    FailV2 failSisugaV2(NodeRef nodeRef, String filename);
 
     List<Dokumendiliik> dokumendiliigid();
 
     // ---------- Perioodilise sünkimise osa -----------
 
     // tagastab nimekirja dokumentidest koos detailinfoga + nimekirja seotud dokumentidest (ainult viitadega) + nimekirja failidest (koos faili sisudega)
+    // kui JPP != Avalik, siis nimekirja failidest ei tagastata
     // vastuste arvu piirangut ei ole
     // sisendparameetrites olev periood tähendab viimase muutmise aega
     // kuupäevade vahemikus on nii algus- kui lõppkuupäeva kaasaarvatud (ehk aaaa-kk-ppT00:00:00 kuni aaaa-kk-ppT23:59:59)
     // kõik parameetrid on kohustuslikud
     List<DokumentDetailidega> koikDokumendidLisatudMuudetud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
-    List<DokumentDetailidegaFailita> koikDokumendidLisatudMuudetudFailita(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
+    // sama mis eelmine
+    // aga dokumendi identifitseerimine käib nodeRef järgi
+    // + lisaväljad
+    // ja failid on ilma sisuta
+    List<DokumentDetailidegaV2> koikDokumendidLisatudMuudetudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
 
     // XXX kui dokumenti on muudetud pärast perioodiLoppKuupaev'a, siis ta ei ole näha siin vastuses, olenemata sellest et registreeriti ta näiteks selles vahemikus
     // Aga ei tohiks olla oluline, sest ADR võtab samal öösel eelmise kuupäeva kohta, ehk vahemik on ainult paar tundi ja keegi siis enam ei muuda
@@ -60,6 +73,9 @@ public interface AdrService {
     // kuupäevade vahemikus on nii algus- kui lõppkuupäeva kaasaarvatud (ehk aaaa-kk-ppT00:00:00 kuni aaaa-kk-ppT23:59:59)
     // kõik parameetrid on kohustuslikud
     List<Dokument> koikDokumendidKustutatud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
+    // sama mis eelmine
+    // aga dokumendi identifitseerimine käib nodeRef järgi
+    List<DokumentId> koikDokumendidKustutatudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
 
 
     // ---------- Internal use -----------

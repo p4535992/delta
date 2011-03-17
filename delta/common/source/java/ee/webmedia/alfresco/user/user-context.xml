@@ -13,6 +13,7 @@
       <property name="organizationStructureService" ref="OrganizationStructureService" />
       <property name="configurableService" ref="ConfigurableService" />
       <property name="namespaceService" ref="NamespaceService" />
+      <property name="groupsEditingAllowed" value="${groups.editingAllowed}" />
    </bean>
    
    <bean id="userResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">

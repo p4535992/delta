@@ -5,7 +5,7 @@ package ee.webmedia.alfresco.classificator.enums;
  */
 public enum SeriesType {
     SERIES("sari"),
-    SUBSERIES("peatatud");
+    SUBSERIES("allsari");
     
     private String valueName;
     

@@ -29,8 +29,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.document.type.model.DocumentType;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.filter.web.AbstractSearchFilterBlockBean;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
@@ -40,7 +38,6 @@ import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
-import ee.webmedia.alfresco.utils.WebUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
@@ -56,8 +53,8 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     private static String OUTPUT_SIMPLE = "simple";
 
     private DocumentSearchResultsDialog documentSearchResultsDialog;
+    private DocumentSearchBean documentSearchBean;
 
-    private transient DocumentTypeService documentTypeService;
     private transient FunctionsService functionsService;
     private transient SeriesService seriesService;
     private transient VolumeService volumeService;
@@ -68,7 +65,6 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
 
     private List<SelectItem> stores;
     private List<SelectItem> searchOutput;
-    private List<SelectItem> documentTypes;
     private List<SelectItem> functions;
     private List<SelectItem> series;
     private List<SelectItem> volumes;
@@ -77,6 +73,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
+        documentSearchBean.init();
 
         // Search output types
         if (searchOutput == null) {
@@ -90,14 +87,6 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
             stores.add(new SelectItem(getGeneralService().getStore(), MessageUtil.getMessage("functions_title")));
             stores.add(new SelectItem(getGeneralService().getArchivalsStoreRef(), MessageUtil.getMessage("archivals_list")));
         }
-
-        // Document types
-        List<DocumentType> types = getDocumentTypeService().getAllDocumentTypes(true);
-        documentTypes = new ArrayList<SelectItem>(types.size());
-        for (DocumentType documentType : types) {
-            documentTypes.add(new SelectItem(documentType.getId(), documentType.getName()));
-        }
-        WebUtil.sort(documentTypes);
 
         // Functions
         List<Function> allFunctions = getFunctionsService().getAllFunctions();
@@ -170,7 +159,7 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     protected void reset() {
         super.reset();
         // searchOutput, stores doesn't need to be set to null, they never change
-        documentTypes = null;
+        documentSearchBean.reset();
         functions = null;
         series = null;
         volumes = null;
@@ -187,16 +176,6 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     public List<SelectItem> getStores(FacesContext context, UIInput selectComponent) {
         ((HtmlSelectManyListbox) selectComponent).setSize(5);
         return stores;
-    }
-
-    /**
-     * @param context
-     * @param selectComponent
-     * @return dropdown items for JSP
-     */
-    public List<SelectItem> getDocumentTypes(FacesContext context, UIInput selectComponent) {
-        ((HtmlSelectManyListbox) selectComponent).setSize(5);
-        return documentTypes;
     }
 
     /**
@@ -309,21 +288,17 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         this.documentSearchResultsDialog = documentSearchResultsDialog;
     }
 
+    public void setDocumentSearchBean(DocumentSearchBean documentSearchBean) {
+        this.documentSearchBean = documentSearchBean;
+    }
+
     @Override
     protected DocumentSearchFilterService getFilterService() {
         if (filterService == null) {
-            filterService = (DocumentSearchFilterService) FacesContextUtils.getRequiredWebApplicationContext( // 
+            filterService = (DocumentSearchFilterService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(DocumentSearchFilterService.BEAN_NAME);
         }
         return filterService;
-    }
-
-    protected DocumentTypeService getDocumentTypeService() {
-        if (documentTypeService == null) {
-            documentTypeService = (DocumentTypeService) FacesContextUtils.getRequiredWebApplicationContext( //
-                    FacesContext.getCurrentInstance()).getBean(DocumentTypeService.BEAN_NAME);
-        }
-        return documentTypeService;
     }
 
     protected FunctionsService getFunctionsService() {

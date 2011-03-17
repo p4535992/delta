@@ -29,6 +29,10 @@
          <property-name>permissionsAddDialog</property-name>
          <value>#{PermissionsAddDialog}</value>
       </managed-property>
+      <managed-property>
+         <property-name>ownerSearchBean</property-name>
+         <value>#{OwnerSearchBean}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>
@@ -61,6 +65,10 @@
          <property-name>permissionsAddDialog</property-name>
          <value>#{PermissionsAddDialog}</value>
       </managed-property>
+      <managed-property>
+         <property-name>ownerSearchBean</property-name>
+         <value>#{OwnerSearchBean}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>
@@ -75,6 +83,16 @@
          <property-name>metadataBlockBean</property-name>
          <value>#{MetadataBlockBean}</value>
       </managed-property>
+      <managed-property>
+         <property-name>delegationBean</property-name>
+         <value>#{DelegationBean}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DelegationBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.DelegationBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
 
    <managed-bean>
@@ -98,6 +116,22 @@
    <managed-bean>
       <managed-bean-name>TaskListGenerator</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.workflow.web.TaskListGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+         <property-name>dialogManager</property-name>
+         <value>#{DialogManager}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DelegationHistoryGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.DelegationHistoryGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DelegationTaskListGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.DelegationTaskListGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
       <managed-property>
          <property-name>dialogManager</property-name>

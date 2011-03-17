@@ -23,6 +23,7 @@ public enum Parameters {
     /** period that is used to update users registry */
     EMPLOYEE_REG_RECEIVE_USERS_PERIOD("employeeRegReceiveUsersPeriod"),
     EMPLOYEE_REG_ORGANISATION_ID("employeeRegOrganisationId"),
+    EXTERNAL_REVIEW_AUTOMATIC_FOLDER("externalReviewAutomaticFolder"),
     // Default sender email value when sending out a document
     DOC_SENDER_EMAIL("docSenderEmail"),
     // Info message for document sendout view
@@ -77,12 +78,11 @@ public enum Parameters {
     HEADER_TEXT("headerText"),
     FOOTER_TEXT("footerText"),
     VOLUME_AUTOMATIC_CLOSING_TIME("volumeAutomaticClosingTime"),
-    /** 
-     * TK Parameters
-     */
-    EMPIS_CONTRACT_DOCUMENT("empisContractDocumentRecieveInterval"),
-    EMPIS_SCHEMA_NAME("empisSchemaName"),
-    DAILY_IMPORT_EXECUTION_TIME("dailyImportExecutionTime");
+    SIGNER_NAME("signerName"),
+    CONTRACT_FIRST_PARTY_NAME("contractFirstPartyName"),
+    EXTERNAL_REVIEW_WORKFLOW_ENABLED("externalReviewWorkflowEnabled"),
+
+    COST_MANAGER_FIELD_NAME("costManagerFieldName");
 
     private String xPath;
     private String parameterName;

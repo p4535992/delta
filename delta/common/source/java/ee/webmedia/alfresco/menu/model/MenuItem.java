@@ -31,7 +31,9 @@ import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * Base class for menu items.
@@ -76,16 +78,16 @@ public class MenuItem implements Serializable {
 
     public MenuItem() {}
 
-    public UIComponent createComponent(FacesContext context, String id, UserService userService) {
-        return createComponent(context, id, false, userService, false);
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService) {
+        return createComponent(context, id, false, userService, workflowService, false);
     }
     
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, boolean createChildren) {
-        return createComponent(context, id, false, userService, false);
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, boolean createChildren) {
+        return createComponent(context, id, false, userService, workflowService, false);
     }
     
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, boolean createChildren, boolean plainLink) {
-        return createComponent(context, id, false, userService, true);
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, boolean createChildren, boolean plainLink) {
+        return createComponent(context, id, false, userService, workflowService, true);
     }
 
     /**
@@ -95,11 +97,15 @@ public class MenuItem implements Serializable {
      * @param application Faces Application
      * @return
      */
-    public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService, boolean plainLink) {
+    public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService, WorkflowService workflowService, boolean plainLink) {
 
         if (isRestricted() && !hasPermissions(userService)) {
             return null;
         }
+        
+        if (isExternalReview() && !isExternalReviewEnabled(workflowService)) {
+            return null;
+        }        
 
         javax.faces.application.Application application = context.getApplication();
         UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
@@ -238,6 +244,14 @@ public class MenuItem implements Serializable {
 
     public boolean isRestricted() {
         return isAdmin() || isDocManager();
+    }
+    
+    public boolean isExternalReview() {
+        return "externalReviewTasks".equals(this.id);
+    } 
+    
+    public boolean isExternalReviewEnabled(WorkflowService workflowService){
+        return workflowService.externalReviewWorkflowEnabled();
     }
 
     public String getActionListener() {

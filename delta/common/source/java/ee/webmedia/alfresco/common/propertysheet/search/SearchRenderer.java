@@ -185,6 +185,7 @@ public class SearchRenderer extends BaseRenderer {
             out.write("<td>");
             setInputStyleClass(child, search);
             Utils.encodeRecursive(context, child);
+            renderSuggestScript(context, child, search, out);
             out.write("</td>");
             if(isRemoveLinkRendered(search)) {
                 out.write("<td>");
@@ -205,6 +206,31 @@ public class SearchRenderer extends BaseRenderer {
             Map<String, Object> childAttributes = child.getAttributes();
             childAttributes.put(Search.STYLE_CLASS_KEY, searchAttributes.get(Search.STYLE_CLASS_KEY));
         }
+    }
+    
+    /**
+     * NB! Before calling this, check if given child is rendered!
+     * 
+     * @param child
+     * @param search
+     * @param out
+     * @throws IOException 
+     */
+    private void renderSuggestScript(FacesContext context, UIComponent child, Search search, ResponseWriter out) throws IOException {
+        Integer suggestChars = search.getSuggestChars();
+        if(!(child instanceof UIInput) || suggestChars == null) { 
+            return;
+        }
+        
+        String clientId = child.getClientId(context);
+        String callback = (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY);
+        // Strip method binding delimiters for javascript
+        if(callback.contains("#{")) {
+            callback = callback.substring("#{".length(), callback.length()-1);
+        }
+        out.write("<script type=\"text/javascript\">");
+        out.write("addSearchSuggest('" + clientId + "', " + suggestChars + ", '" + callback + "');");
+        out.write("</script>");
     }
     
     /**

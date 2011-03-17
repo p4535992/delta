@@ -55,6 +55,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String ID_KEY = "id";
     public static final String STYLE_CLASS_KEY = "styleClass";
     public static final String AJAX_PARENT_LEVEL_KEY = "ajaxParentLevel";
+    public static final String SUGGEST_CHARS_KEY = "suggestChars";
 
     @Override
     public String getFamily() {
@@ -345,6 +346,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = getAttributes();
         return attributes.containsKey("editable") && (Boolean) attributes.get("editable");
+    }
+    
+    protected Integer getSuggestChars() {
+        return (Integer) getAttributes().get(SUGGEST_CHARS_KEY);
     }
 
     private int getNextCounterValue() {

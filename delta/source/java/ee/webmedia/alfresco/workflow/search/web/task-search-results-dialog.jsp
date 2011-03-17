@@ -39,7 +39,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-header" label="#{msg.task_search_result_docName}" value="docName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col4-txt" value="#{r.docName}" action="dialog:document" tooltip="#{msg.document_details_info}" showLink="false" actionListener="#{DocumentDialog.open}" >
+         <a:actionLink id="col4-txt" value="#{r.docName}" action="dialog:document" tooltip="#{r.docName}" showLink="false" actionListener="#{DocumentDialog.open}" styleClass="tooltip condence20-">
             <f:param name="nodeRef" value="#{r.document.nodeRef}" />
          </a:actionLink>
       </a:column>

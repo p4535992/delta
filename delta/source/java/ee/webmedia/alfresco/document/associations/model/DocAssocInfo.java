@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.associations.model;
 
 import java.io.Serializable;
+import java.util.Date;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
@@ -17,7 +18,9 @@ public class DocAssocInfo implements Serializable {
     private String title;
     private AssocType assocType;
     private boolean source;
-    //
+    private String regNumber; 
+    private Date regDateTime; 
+
     private NodeRef nodeRef;
 
     private NodeRef caseNodeRef;
@@ -77,6 +80,22 @@ public class DocAssocInfo implements Serializable {
     @Override
     public String toString() {
         return "DocAssocInfo [assocType=" + assocType + ", caseNodeRef=" + caseNodeRef + ", nodeRef=" + nodeRef + ", title=" + title + ", type=" + type + ", source=" + source + "]";
+    }
+
+    public void setRegNumber(String regNumber) {
+        this.regNumber = regNumber;
+    }
+
+    public String getRegNumber() {
+        return regNumber;
+    }
+
+    public void setRegDateTime(Date regDateTime) {
+        this.regDateTime = regDateTime;
+    }
+
+    public Date getRegDateTime() {
+        return regDateTime;
     }
 
 }

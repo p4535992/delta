@@ -67,6 +67,17 @@
             </params>
          </action>
          
+         <action id="document_createFollowUp_incomingLetterMv">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.LetterMvFollowupEvaluator</evaluator>
+            <label-id>document_type_incomingLetterMv</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">incomingLetterMv</param>
+            </params>
+         </action>         
+         
          <action id="document_createFollowUp_outgoingLetter">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.LetterFollowupEvaluator</evaluator>
             <label-id>document_type_outgoingLetter</label-id>
@@ -77,6 +88,17 @@
                <param name="documentType">outgoingLetter</param>
             </params>
          </action>
+         
+         <action id="document_createFollowUp_outgoingLetterMv">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.LetterMvFollowupEvaluator</evaluator>
+            <label-id>document_type_outgoingLetterMv</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">outgoingLetterMv</param>
+            </params>
+         </action>         
          
          <action id="document_createFollowUp_contractSim">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractSimNodeTypeEvaluator</evaluator>
@@ -100,6 +122,17 @@
             </params>
          </action>
          
+         <action id="document_createFollowUp_contractMv">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractMvNodeTypeEvaluator</evaluator>
+            <label-id>document_type_contractMv</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">contractMv</param>
+            </params>
+         </action>         
+         
          <action id="document_createFollowUp_report">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractSimOrSmitNodeTypeEvaluator</evaluator>
             <label-id>document_type_report</label-id>
@@ -111,6 +144,17 @@
             </params>
          </action>
          
+         <action id="document_createFollowUp_reportMv">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractMvNodeTypeEvaluator</evaluator>
+            <label-id>document_type_reportMv</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">reportMv</param>
+            </params>
+         </action>         
+         
          <action id="document_createFollowUp_instrumentOfDeliveryAndReceipt">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractSimOrSmitNodeTypeEvaluator</evaluator>
             <label-id>document_type_instrumentOfDeliveryAndReceipt</label-id>
@@ -121,6 +165,28 @@
                <param name="documentType">instrumentOfDeliveryAndReceipt</param>
             </params>
          </action>
+         
+         <action id="document_createFollowUp_instrumentOfDeliveryAndReceiptMv">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractMvNodeTypeEvaluator</evaluator>
+            <label-id>document_type_instrumentOfDeliveryAndReceiptMv</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">instrumentOfDeliveryAndReceiptMv</param>
+            </params>
+         </action>   
+         
+         <action id="document_createFollowUp_invoice">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ContractMvNodeTypeEvaluator</evaluator>
+            <label-id>document_type_invoice</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
+            <action-listener>#{DocumentDialog.createFollowUp}</action-listener>
+            <params>
+               <param name="documentType">invoice</param>
+            </params>
+         </action> 
 
          <action id="document_send_out">
             <evaluator>ee.webmedia.alfresco.document.sendout.web.SendOutActionEvaluator</evaluator>
@@ -158,6 +224,13 @@
             <image>/images/icons/remove_item.gif</image>
             <action-listener>#{MetadataBlockBean.removeErrand}</action-listener>
          </action>
+         
+         <action id="document_contractMvParty_add">
+            <label-id>document_contractMv_addParty</label-id>
+            <tooltip-id>document_contractMv_addParty_tooltip</tooltip-id>
+            <image>/images/icons/add_user.gif</image>
+            <action-listener>#{MetadataBlockBean.addParty}</action-listener>
+         </action>
 
          <action-group id="document_errandOrderApplicant">
             <action idref="document_errandOrderApplicant_remove" />
@@ -168,6 +241,10 @@
             <action idref="document_errandsAbroad_remove" />
             <action idref="document_errandsAbroad_add" />
          </action-group>
+         
+         <action-group id="document_contractMvParty">
+            <action idref="document_contractMvParty_add" />
+         </action-group>         
 
           <action id="document_end">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.EndDocumentEvaluator</evaluator>
@@ -250,11 +327,17 @@
         <action-group id="document_more_actions">
 	        <action idref="document_createFollowUp_tenderingApplication" />
 	        <action idref="document_createFollowUp_incomingLetter" />
+            <action idref="document_createFollowUp_incomingLetterMv" />
 	        <action idref="document_createFollowUp_outgoingLetter" />
+            <action idref="document_createFollowUp_outgoingLetterMv" />
 	        <action idref="document_createFollowUp_contractSim" />
 	        <action idref="document_createFollowUp_contractSmit" />
+            <action idref="document_createFollowUp_contractMv" />
 	        <action idref="document_createFollowUp_report" />
+            <action idref="document_createFollowUp_reportMv" />
 	        <action idref="document_createFollowUp_instrumentOfDeliveryAndReceipt" />
+            <action idref="document_createFollowUp_instrumentOfDeliveryAndReceiptMv" />
+            <action idref="document_createFollowUp_invoice" />
         </action-group>
 
         <action-group id="dvk_actions">

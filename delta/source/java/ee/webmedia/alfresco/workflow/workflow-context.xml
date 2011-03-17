@@ -82,6 +82,27 @@
       </property>
    </bean>
    
+   <bean id="workflowParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="name" value="workflowParametersBootstrap" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/workflow/bootstrap/workflow-parameters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>   
+   
    <!-- Used to fix invalid parallelTasks property and update lucene index (CL task 155454) -->
    <bean id="ParallelTasksPropertiesUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.ParallelTasksPropertiesUpdater" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
@@ -96,10 +117,14 @@
    <bean id="wmWorkflowService" class="ee.webmedia.alfresco.workflow.service.WorkflowServiceImpl">
       <property name="nodeService" ref="NodeService" />
       <property name="dictionaryService" ref="DictionaryService" />
+      <property name="copyService" ref="CopyService" />
       <property name="generalService" ref="GeneralService" />
       <property name="userService" ref="UserService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="organizationStructureService" ref="OrganizationStructureService" />
+      <property name="dvkService" ref="DvkService" />
+      <property name="parametersService" ref="ParametersService" />
+      <property name="internalTesting" value="${project.test}" />
    </bean>
 
    <bean id="WmWorkflowService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -147,6 +172,12 @@
       <property name="taskTypeString" value="wfs:reviewTask" />
       <property name="taskOutcomes" value="3" />
    </bean>
+   
+   <bean parent="workflowType">
+      <property name="workflowTypeString" value="wfs:externalReviewWorkflow" />
+      <property name="taskTypeString" value="wfs:externalReviewTask" />
+      <property name="taskOutcomes" value="2" />
+   </bean>   
 
    <bean class="ee.webmedia.alfresco.workflow.service.type.AssignmentWorkflowType" parent="workflowType">
       <property name="workflowTypeString" value="wfs:assignmentWorkflow" />
@@ -168,5 +199,39 @@
       <property name="menuService" ref="MenuService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
+   
+   <bean id="externalReviewWorkflowImporterComponent" class="ee.webmedia.alfresco.workflow.service.ExternalReviewWorkflowImporterComponent" parent="importerComponent">
+      <property name="documentService" ref="DocumentService"/>
+      <property name="workflowService" ref="WmWorkflowService"/>
+      <property name="classificatorService" ref="ClassificatorService" />
+      <property name="userService" ref="UserService" />
+      <property name="dvkService" ref="DvkService" />
+      <property name="mimetypeService" ref="MimetypeService" />
+      <property name="fileService" ref="FileService" />
+      <property name="personService" ref="PersonService" />
+   </bean>
+   
+   <bean id="WorkflowSendExternalReviewDocListener" class="ee.webmedia.alfresco.workflow.service.WorkflowSendExternalReviewDocListener">
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="dvkService" ref="DvkService" />
+      <property name="nodeService" ref="NodeService" />
+   </bean>  
+   
+   <!-- Used to add temOutcome aspect to external review workflows -->
+   <bean id="Version22ReviewWorkflowTempOutcomeUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.Version22ReviewWorkflowTempOutcomeUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="Version22ReviewWorkflowTempOutcomeUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="generalService" ref="generalService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="searchService" ref="searchService" />
+   </bean> 
+
+   <!-- START: web beans: -->
+      
+   <bean id="DvkWorkflowExporter" class="ee.webmedia.alfresco.workflow.web.DvkWorkflowExporter" scope="session" />
+
+   <bean id="OwnerSearchBean" class="ee.webmedia.alfresco.workflow.web.OwnerSearchBean" scope="session" />
+   <!-- END: web beans: -->
 
 </beans>

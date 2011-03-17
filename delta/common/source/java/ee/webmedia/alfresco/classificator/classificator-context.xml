@@ -41,6 +41,52 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="classificatorRootBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="name" value="classificatorRootBootstrap2" />
+      <property name="sinceVersion" value="2.1.1" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="classificatorRootBootstrap" />
+         </list>
+      </property>      
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
+               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators2.xml</prop>
+               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
+            </props>
+         </list>
+      </property>
+   </bean>  
+   
+   <bean id="classificatorRootBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="name" value="classificatorRootBootstrap3" />
+      <property name="sinceVersion" value="@currentVersion@" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="classificatorRootBootstrap" />
+         </list>
+      </property>      
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}</prop>
+               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/classificators3.xml</prop>
+               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
+            </props>
+         </list>
+      </property>
+   </bean>   
 
    <bean id="classificatorResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
       <property name="resourceBundles">

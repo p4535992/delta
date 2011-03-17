@@ -253,6 +253,18 @@
          <rtexprvalue>true</rtexprvalue>
          <description>Indicates whether component value is changeable.</description>
       </attribute>
+      <attribute>
+         <name>showFilter</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Indicates whether to show filters.</description>
+      </attribute>   
+      <attribute>
+         <name>filters</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Binding to filters.</description>
+      </attribute>       
    </tag>
       
 </taglib>

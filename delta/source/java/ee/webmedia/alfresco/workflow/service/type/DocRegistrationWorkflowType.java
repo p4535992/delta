@@ -9,6 +9,7 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
 /**
@@ -20,7 +21,7 @@ public class DocRegistrationWorkflowType extends BaseWorkflowType implements Wor
     private DocumentService documentService;
 
     @Override
-    public void handle(WorkflowEvent event) {
+    public void handle(WorkflowEvent event, WorkflowEventQueue queue) {
         if (event.getType() == WorkflowEventType.STATUS_CHANGED && event.getObject() instanceof Workflow
                 && WorkflowUtil.isStatus(event.getObject(), Status.IN_PROGRESS)) {
             if (log.isDebugEnabled()) {

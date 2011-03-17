@@ -1,15 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="glassfish" basedir=".">
+
    <import file="build-common.xml" />
 
    <!-- ============= Glassfish setup targets ============= -->
 
    <target name="setup-glassfish" depends="load-conf">
-      <echo message="Copying PostgreSQL JDBC driver and environment configuration file to GlassFish domain classpath" />
-      <copy todir="${dir.glassfish.domain.lib}" preservelastmodified="true" overwrite="true">
-         <fileset dir="${project.dir.lib.appserver}" includes="**/*.jar" />
-         <flattenmapper />
-      </copy>
+      <echo message="Copying configuration file to GlassFish domain classpath" />
       <copy todir="${dir.glassfish.domain.lib.classes}" preservelastmodified="true" overwrite="true">
          <fileset dir="${conf.basedir}/${conf.name}/classes" />
       </copy>

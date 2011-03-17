@@ -16,6 +16,8 @@ import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 
 /**
  * Class that supports having custom attributes on property-sheet/show-property element, <br>
@@ -26,6 +28,7 @@ import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 public class WMUIProperty extends UIProperty implements CustomAttributes {
 
     public static final String LABEL_STYLE_CLASS = "labelStyleClass";
+    public static final String DISPLAY_LABEL_PARAMETER = "displayLabelParameter";
     public static final String REPO_NODE = "__repo_node";
     public static final String DONT_RENDER_IF_DISABLED_ATTR = "dontRenderIfDisabled";
     protected Map<String, String> propertySheetItemAttributes;
@@ -91,6 +94,13 @@ public class WMUIProperty extends UIProperty implements CustomAttributes {
         label.setRendererType(ComponentConstants.JAVAX_FACES_TEXT);
         FacesHelper.setupComponentId(context, label, "label_" + getName());
         getChildren().add(label);
+        
+        // Check if config has overriden the label with parameter
+        if(getCustomAttributes().containsKey(DISPLAY_LABEL_PARAMETER)) {
+            String parameterName = getCustomAttributes().get(DISPLAY_LABEL_PARAMETER);
+            ParametersService parametersService = (ParametersService) FacesHelper.getManagedBean(context, ParametersService.BEAN_NAME);
+            displayLabel = parametersService.getStringParameter(Parameters.get(parameterName));
+        }
 
         // remember the display label used (without the : separator)
         this.resolvedDisplayLabel = displayLabel;

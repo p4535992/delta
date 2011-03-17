@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.signature.service;
 
 import java.io.BufferedOutputStream;
 import java.io.FileOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -10,6 +11,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
@@ -29,6 +31,7 @@ import org.apache.commons.codec.binary.Base64OutputStream;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.log4j.Logger;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
@@ -50,7 +53,7 @@ import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.utils.Timer;
 
-public class SignatureServiceImpl implements SignatureService {
+public class SignatureServiceImpl implements SignatureService, InitializingBean {
 
     private static Logger log = Logger.getLogger(SignatureServiceImpl.class);
 
@@ -61,6 +64,9 @@ public class SignatureServiceImpl implements SignatureService {
 
     private String jDigiDocCfg;
     private String jDigiDocCfgTest;
+    private String pkcs12Container;
+    private String pkcs12Password;
+    private String pkcs12CertSerial;
 
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
@@ -82,9 +88,46 @@ public class SignatureServiceImpl implements SignatureService {
         this.jDigiDocCfgTest = jDigiDocCfg;
     }
 
-    public void init() {
-        if (!ConfigManager.init("jar://" + (isTest()?jDigiDocCfgTest:jDigiDocCfg))) {
-            log.error("JDigiDoc initialization failed");
+    public void setPkcs12Container(String pkcs12Container) {
+        this.pkcs12Container = pkcs12Container;
+    }
+
+    public void setPkcs12Password(String pkcs12Password) {
+        this.pkcs12Password = pkcs12Password;
+    }
+
+    public void setPkcs12CertSerial(String pkcs12CertSerial) {
+        this.pkcs12CertSerial = pkcs12CertSerial;
+    }
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        if (StringUtils.hasLength(pkcs12Container)) {
+            File container = new File(pkcs12Container);
+            if (!container.canRead()) {
+                throw new RuntimeException("Cannot read PKCS12 container file: " + container);
+            }
+            if (!container.isFile()) {
+                throw new RuntimeException("PKCS12 container is not a regular file: " + container);
+            }
+            if (!StringUtils.hasText(pkcs12Password)) {
+                throw new RuntimeException("PKCS12 container password must not be empty");
+            }
+            if (!StringUtils.hasText(pkcs12CertSerial)) {
+                throw new RuntimeException("PKCS12 certificate serial number must not be empty");
+            }
+            Hashtable<String, String> props = new Hashtable<String, String>();
+            props.put("SIGN_OCSP_REQUESTS", "true");
+            props.put("DIGIDOC_PKCS12_CONTAINER", pkcs12Container);
+            props.put("DIGIDOC_PKCS12_PASSWD", pkcs12Password);
+            props.put("DIGIDOC_OCSP_SIGN_CERT_SERIAL", pkcs12CertSerial);
+            log.info("Signing OCSP requests with certificate (serial number " + pkcs12CertSerial + ") from PKCS12 container " + pkcs12Container);
+            // This must be done first, because init(Hashtable) resets configuration
+            ConfigManager.init(props);
+        }
+        // This is done second, because init(String) does not reset configuration
+        if (!ConfigManager.init("jar://" + (isTest() ? jDigiDocCfgTest : jDigiDocCfg))) {
+            throw new RuntimeException("JDigiDoc initialization failed");
         }
     }
 
@@ -203,7 +246,43 @@ public class SignatureServiceImpl implements SignatureService {
 
         sig.setSignatureValue(signatureBytes);
         Timer timer = new Timer("signatureConfirmation");
+
+        // If OCSP response is successful, then no exception is thrown
         sig.getConfirmation();
+
+        // If certificate has been revoked, then the following error is logged:
+        // ERROR [ee.sk.digidoc.factory.BouncyCastleNotaryFactory] - <Certificate has been revoked!>
+        // And the following exception is thrown:
+        // DigiDocException.code: 88
+        // DigiDocException.message: Certificate has been revoked!
+
+        // If certificate is unknown, then the following error is logged:
+        // ERROR [ee.sk.digidoc.factory.BouncyCastleNotaryFactory] - <Certificate status is unknown!>
+        // And the following exception is thrown:
+        // DigiDocException.code: 88
+        // DigiDocException.message: Certificate status is unknown!
+
+        // If OCSP server refuses request (for example there is no access allowed from this IP, or PKCS12 (juurdepääsutõend) is expired),
+        // then the following error is logged:
+        // ERROR [ee.sk.digidoc.factory.BouncyCastleNotaryFactory] - <The server could not authenticate you!>
+        // And the following exception is thrown:
+        // DigiDocException.code: 69
+        // DigiDocException.message: OCSP response unsuccessfull!
+
+        // If connection to OCSP server fails, then the following error is logged:
+        // ERROR [ee.sk.digidoc.DigiDocException] - <java.net.ConnectException: Connection refused>
+        // And the following exception is thrown:
+        // DigiDocException.code: 65
+        // DigiDocException.message: ERROR: 65java.net.ConnectException; nested exception is:
+        //      java.net.ConnectException: Connection refused
+
+        // If connection to OCSP server fails, then the following error is logged:
+        // ERROR [ee.sk.digidoc.DigiDocException] - <java.net.ConnectException: Connection timed out>
+        // And the following exception is thrown:
+        // DigiDocException.code: 65
+        // DigiDocException.message: ERROR: 65java.net.ConnectException; nested exception is:
+        //      java.net.ConnectException: Connection timed out
+
         log.debug(timer);
     }
 

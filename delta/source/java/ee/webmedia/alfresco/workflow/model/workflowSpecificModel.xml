@@ -37,15 +37,24 @@
 
       <type name="wfs:reviewWorkflow"><!-- user chooses if sequential or parallel tasks -->
          <parent>wfc:workflow</parent>
-         <properties>
-            <property name="wfs:tempOutcome">
-               <type>d:text</type>
-            </property>
-         </properties>
          <mandatory-aspects>
             <aspect>wfs:commonWorkflow</aspect>
+            <aspect>wfs:tempOutcome</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="wfs:externalReviewWorkflow"><!-- always sequential tasks -->
+         <parent>wfc:workflow</parent>
+         <overrides>
+            <property name="wfc:parallelTasks">
+               <default>false</default>
+            </property>
+         </overrides>         
+         <mandatory-aspects>
+            <aspect>wfs:commonWorkflow</aspect>
+            <aspect>wfs:tempOutcome</aspect>
+         </mandatory-aspects>
+      </type>      
 
       <type name="wfs:informationWorkflow"><!-- always parallel tasks -->
          <parent>wfc:workflow</parent>
@@ -88,6 +97,14 @@
             <aspect>wfs:commonTask</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="wfs:externalReviewTask">
+         <parent>wfc:task</parent>
+         <mandatory-aspects>
+            <aspect>wfs:commonTask</aspect>
+            <aspect>wfs:externalReviewDetails</aspect>
+         </mandatory-aspects>
+      </type>      
 
       <type name="wfs:informationTask">
          <parent>wfc:task</parent>
@@ -149,6 +166,14 @@
             </property>
          </properties>
       </aspect>
+      
+      <aspect name="wfs:tempOutcome">
+         <properties>
+            <property name="wfs:tempOutcome">
+               <type>d:text</type>
+            </property>
+         </properties>      
+      </aspect>
 
       <aspect name="wfs:dueDate">
          <properties>
@@ -163,6 +188,39 @@
             <property name="wfs:comment">
                <type>d:text</type>
             </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="wfs:externalReviewDetails">
+         <properties>
+            <!-- TODO: check mandatory property requirements -->
+            <property name="wfs:institutionName">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="wfs:institutionCode">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>  
+            <property name="wfs:creatorInstitutionCode">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="wfs:originalDvkId">
+               <type>d:text</type>
+            </property>             
+            <property name="wfs:sentDvkId">
+               <type>d:text</type>
+            </property>  
+            <property name="wfs:recievedDvkId">
+               <type>d:text</type>
+            </property>              
+            <property name="wfs:sendStatus">
+               <type>d:text</type>
+            </property> 
+            <property name="wfs:sendDateTime">
+               <type>d:date</type>
+            </property>    
          </properties>
       </aspect>
 

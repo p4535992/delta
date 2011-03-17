@@ -41,7 +41,7 @@
         </property>
         <property name="id">
             <list>
-                <value>simdhs</value>
+                <value>${imap.subsystem}</value>
             </list>
         </property>
     </bean>

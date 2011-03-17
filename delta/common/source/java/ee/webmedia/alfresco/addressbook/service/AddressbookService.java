@@ -122,7 +122,7 @@ public interface AddressbookService {
      * @param searchCriteria - the search string
      * @return list of node results
      */
-    List<Node> searchContactGroups(String searchCriteria);
+    List<Node> searchTaskCapableContactGroups(String searchCriteria, boolean orgOnly, String institutionToRemove);
 
     /**
      * returns the parent of the given node
@@ -152,5 +152,11 @@ public interface AddressbookService {
     List<Node> getContacts(NodeRef nodeRef);
 
     NodeRef getAddressbookNodeRef();
+    
+    List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, String institutionToRemove);    
 
+    List<Node> getDvkCapableOrgs();
+
+    List<Node> searchContactGroups(String searchCriteria);
+    
 }

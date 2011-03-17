@@ -51,6 +51,8 @@
       <property name="sourceBeanName">
          <value>userRegistry</value>
       </property>
+      <property name="applicationService" ref="ApplicationService" />
+      <property name="testEmail" value="${mail.from.default}" />
    </bean>
 
 </beans>

@@ -27,17 +27,24 @@ import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
+import ee.webmedia.alfresco.document.sendout.model.DocumentSendInfo;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
-import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
-import ee.webmedia.alfresco.dvk.model.DvkSendDocumentsImpl;
+import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
+import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocumentsImpl;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.sendout.TaskSendInfo;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
+import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
@@ -56,16 +63,34 @@ public class SendOutServiceImpl implements SendOutService {
     private ParametersService parametersService;
     private DocumentTypeService documentTypeService;
     private FileFolderService fileFolderService;
+    private WorkflowService workflowService;
 
     @Override
-    public List<SendInfo> getSendInfos(NodeRef document) {
+    public List<SendInfo> getDocumentSendInfos(NodeRef document) {
         List<ChildAssociationRef> assocs = nodeService.getChildAssocs(document, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Assocs.SEND_INFO);
         List<SendInfo> result = new ArrayList<SendInfo>(assocs.size());
         for (ChildAssociationRef assoc : assocs) {
-            result.add(new SendInfo(generalService.fetchNode(assoc.getChildRef())));
+            result.add(new DocumentSendInfo(generalService.fetchNode(assoc.getChildRef())));
         }
         return result;
     }
+    
+    @Override
+    public List<SendInfo> getDocumentAndTaskSendInfos(NodeRef document, List<CompoundWorkflow> compoundWorkflows) {
+        List<SendInfo> result = getDocumentSendInfos(document);
+        for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)){
+                    for (Task task : workflow.getTasks()) {
+                        if (task.getProp(WorkflowSpecificModel.Props.SEND_STATUS) != null){
+                            result.add(new TaskSendInfo(task.getNode()));
+                        }
+                    }
+                }
+            }
+        }
+        return result;
+    }    
 
     @Override
     public boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, String fromEmail, String subject, String content,
@@ -75,17 +100,9 @@ public class SendOutServiceImpl implements SendOutService {
         Map<QName, Serializable> docProperties = nodeService.getProperties(document);
         List<Map<QName, Serializable>> sendInfoProps = new ArrayList<Map<QName, Serializable>>();
         Date now = new Date();
-        SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
 
         // Collect DVK data
         List<String> toRegNums = new ArrayList<String>();
-        List<Node> dvkCapableOrgs = new ArrayList<Node>();
-        for (Node organization : addressbookService.listOrganization()) {
-            Object dvkObj = organization.getProperties().get(AddressbookModel.Props.DVK_CAPABLE);
-            if (dvkObj != null && (Boolean) dvkObj) {
-                dvkCapableOrgs.add(organization);
-            }
-        }
 
         // Collect email data
         List<String> toEmails = new ArrayList<String>();
@@ -107,7 +124,7 @@ public class SendOutServiceImpl implements SendOutService {
                 if (SendMode.EMAIL_DVK.equals(modes.get(i))) {
                     // Check if matches a DVK capable organization entry in addressbook
                     boolean hasDvkContact = false;
-                    for (Node organization : dvkCapableOrgs) {
+                    for (Node organization : addressbookService.getDvkCapableOrgs()) {
                         String orgName = (String) organization.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME.toString());
                         String orgEmail = (String) organization.getProperties().get(AddressbookModel.Props.EMAIL.toString());
                         if (recipientName.equalsIgnoreCase(orgName) && email.equalsIgnoreCase(orgEmail)) {
@@ -119,7 +136,7 @@ public class SendOutServiceImpl implements SendOutService {
 
                     if (hasDvkContact) {
                         toRegNums.add(recipientRegNr);
-                        sendMode = SEND_MODE_DVK;
+                        sendMode = SendMode.DVK.getValueName();
                         sendStatus = SendStatus.SENT;
                     } else {
                         toEmails.add(email);
@@ -146,29 +163,14 @@ public class SendOutServiceImpl implements SendOutService {
         // Prepare zip file name if needed
         String zipFileName = null;
         if (fileNodeRefs != null && fileNodeRefs.size() > 0 && zipIt && (toRegNums.size() > 0 || toEmails.size() > 0)) {
-            StringBuilder docName = new StringBuilder();
-            String regNum = (String) docProperties.get(DocumentCommonModel.Props.REG_NUMBER);
-            if (StringUtils.isNotBlank(regNum)) {
-                docName.append(regNum);
-            }
-            Date regDateTime = (Date) docProperties.get(DocumentCommonModel.Props.REG_DATE_TIME);
-            if (regDateTime != null) {
-                if (docName.length() > 0) {
-                    docName.append(" ");
-                }
-                docName.append(format.format(regDateTime));
-            }
-            if (docName.length() == 0) {
-                docName.append("dokument");
-            }
-            zipFileName = FilenameUtil.buildFileName(docName.toString(), "zip");
+            zipFileName = buildZipFileName(docProperties);
         }
 
         // Send through DVK
         String dvkId = "";
         if (toRegNums.size() > 0) {
             // Construct DvkSendDocument
-            DvkSendDocuments sd = new DvkSendDocumentsImpl();
+            DvkSendLetterDocuments sd = new DvkSendLetterDocumentsImpl();
             sd.setSenderOrgName(parametersService.getStringParameter(Parameters.DVK_ORGANIZATION_NAME));
             sd.setSenderEmail(fromEmail);
             sd.setLetterSenderDocNr((String) docProperties.get(DocumentCommonModel.Props.REG_NUMBER));
@@ -193,7 +195,7 @@ public class SendOutServiceImpl implements SendOutService {
             sd.setLetterCompilatorFirstname(ownerFirstname);
             sd.setLetterCompilatorSurname(ownerSurname);
             sd.setLetterCompilatorJobTitle((String) docProperties.get(DocumentCommonModel.Props.OWNER_JOB_TITLE));
-            if (docType.equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
+            if (DocumentTypeHelper.isOutgoingLetter(docType)) {
                 sd.setDocType("Kiri");
             } else {
                 sd.setDocType(documentTypeService.getDocumentType(docType).getName());
@@ -204,7 +206,7 @@ public class SendOutServiceImpl implements SendOutService {
             List<ContentToSend> contentsToSend = prepareContents(document, fileNodeRefs, zipIt, zipFileName);
 
             // Send it out
-            dvkId = dvkService.sendDocuments(document, contentsToSend, sd);
+            dvkId = dvkService.sendLetterDocuments(document, contentsToSend, sd);
         }
 
         // Send through email
@@ -218,7 +220,7 @@ public class SendOutServiceImpl implements SendOutService {
 
         // Create the sendInfo nodes under the document
         for (Map<QName, Serializable> props : sendInfoProps) {
-            if (((String) props.get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE)).equals(SEND_MODE_DVK)) {
+            if (SendMode.DVK.getValueName().equalsIgnoreCase((String) props.get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE))) {
                 props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, dvkId);
             }
 
@@ -226,6 +228,29 @@ public class SendOutServiceImpl implements SendOutService {
         }
 
         return true;
+    }
+
+    @Override
+    public String buildZipFileName(Map<QName, Serializable> docProperties) {
+        String zipFileName;
+        SimpleDateFormat format = new SimpleDateFormat("dd.MM.yyyy");
+        StringBuilder docName = new StringBuilder();
+        String regNum = (String) docProperties.get(DocumentCommonModel.Props.REG_NUMBER);
+        if (StringUtils.isNotBlank(regNum)) {
+            docName.append(regNum);
+        }
+        Date regDateTime = (Date) docProperties.get(DocumentCommonModel.Props.REG_DATE_TIME);
+        if (regDateTime != null) {
+            if (docName.length() > 0) {
+                docName.append(" ");
+            }
+            docName.append(format.format(regDateTime));
+        }
+        if (docName.length() == 0) {
+            docName.append("dokument");
+        }
+        zipFileName = FilenameUtil.buildFileName(docName.toString(), "zip");
+        return zipFileName;
     }
 
     @Override
@@ -237,13 +262,15 @@ public class SendOutServiceImpl implements SendOutService {
         return sendInfoRef;
     }
 
+    @Override
     public void updateSearchableSendMode(NodeRef document) {
         ArrayList<String> sendModes = buildSearchableSendMode(document);
         nodeService.setProperty(document, DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendModes);
     }
 
+    @Override
     public ArrayList<String> buildSearchableSendMode(NodeRef document) {
-        List<SendInfo> sendInfos = getSendInfos(document);
+        List<SendInfo> sendInfos = getDocumentSendInfos(document);
         ArrayList<String> sendModes = new ArrayList<String>(sendInfos.size());
         for (SendInfo sendInfo : sendInfos) {
             sendModes.add((String) sendInfo.getSendMode());
@@ -251,9 +278,8 @@ public class SendOutServiceImpl implements SendOutService {
         return sendModes;
     }
 
-    // /// PRIVATE METHODS    
-    
-    private List<ContentToSend> prepareContents(NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName) {
+    @Override
+    public List<ContentToSend> prepareContents(NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName) {
         List<ContentToSend> result = new ArrayList<ContentToSend>();
         if (fileNodeRefs == null || fileNodeRefs.size() == 0) {
             return result;
@@ -264,7 +290,6 @@ public class SendOutServiceImpl implements SendOutService {
             content.setFileName(zipFileName);
             content.setMimeType(MimetypeMap.MIMETYPE_ZIP);
             byte[] byteArray = byteStream.toByteArray();
-            content.setSize(byteArray.length);
             content.setInputStream(new ByteArrayInputStream(byteArray));
             result.add(content);
         } else {
@@ -280,7 +305,6 @@ public class SendOutServiceImpl implements SendOutService {
                     ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
                     reader.getContent(byteStream);
                     byte[] byteArray = byteStream.toByteArray();
-                    content.setSize(byteArray.length);
                     content.setInputStream(new ByteArrayInputStream(byteArray));
                     result.add(content);
                 }
@@ -320,6 +344,10 @@ public class SendOutServiceImpl implements SendOutService {
 
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
+    }
+
+    public void setWorkflowService(WorkflowService workflowService) {
+        this.workflowService = workflowService;
     }
 
     // END: getters / setters

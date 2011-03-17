@@ -37,9 +37,9 @@ import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -49,180 +49,182 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class DeleteContentDialog extends BaseDialogBean
 {
-   private static final long serialVersionUID = 4199496011879649213L;
+    private static final long serialVersionUID = 4199496011879649213L;
 
-   transient private MultilingualContentService multilingualContentService;
+    transient private MultilingualContentService multilingualContentService;
 
-   private static final Log logger = LogFactory.getLog(DeleteContentDialog.class);
-   
-   private static final String MSG_DELETE = "delete";
+    private static final Log logger = LogFactory.getLog(DeleteContentDialog.class);
 
-   // ------------------------------------------------------------------------------
-   // Dialog implementation
-   
-   @Override
+    private static final String MSG_DELETE = "delete";
+
+    // ------------------------------------------------------------------------------
+    // Dialog implementation
+
+    @Override
     public String getFinishButtonLabel() {
         return Application.getMessage(FacesContext.getCurrentInstance(), MSG_DELETE);
     }
 
-   @Override
-   protected String finishImpl(FacesContext context, String outcome)
-         throws Exception
-   {
-      // get the content to delete
-      Node node = getNodeToDelete();
-      if (node != null)
-      {
-         if(ContentModel.TYPE_MULTILINGUAL_CONTAINER.equals(node.getType()))
-         {
-             if (logger.isDebugEnabled())
-                 logger.debug("Trying to delete multilingual container: " + node.getId() + " and its translations" );
+    @Override
+    protected String finishImpl(FacesContext context, String outcome)
+    throws Exception
+    {
+        // get the content to delete
+        Node node = getNodeToDelete();
+        if (node != null)
+        {
+            if(ContentModel.TYPE_MULTILINGUAL_CONTAINER.equals(node.getType()))
+            {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Trying to delete multilingual container: " + node.getId() + " and its translations" );
+                }
 
-             // delete the mlContainer and its translations
-             getMultilingualContentService().deleteTranslationContainer(node.getNodeRef());
-         }
-         else
-         {
-             if (logger.isDebugEnabled())
-                 logger.debug("Trying to delete content node: " + node.getId());
+                // delete the mlContainer and its translations
+                getMultilingualContentService().deleteTranslationContainer(node.getNodeRef());
+            }
+            else
+            {
+                if (logger.isDebugEnabled()) {
+                    logger.debug("Trying to delete content node: " + node.getId());
+                }
 
-             // delete the node
-             this.getNodeService().deleteNode(node.getNodeRef());
-         }
+                // delete the node
+                getNodeService().deleteNode(node.getNodeRef());
+            }
 
-      }
-      else
-      {
-         logger.warn("WARNING: delete called without a current Document!");
-      }
+        }
+        else
+        {
+            logger.warn("WARNING: delete called without a current Document!");
+        }
 
-      return outcome;
-   }
+        return outcome;
+    }
 
-   @Override
-   protected String doPostCommitProcessing(FacesContext context, String outcome)
-   {
-      // clear action context
-      this.browseBean.setDocument(null);
+    @Override
+    protected String doPostCommitProcessing(FacesContext context, String outcome)
+    {
+        // clear action context
+        browseBean.setDocument(null);
 
-      // setting the outcome will show the browse view again
-      return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME +
-             AlfrescoNavigationHandler.OUTCOME_SEPARATOR + "browse";
-   }
+        // setting the outcome will show the browse view again
+        return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME +
+        AlfrescoNavigationHandler.OUTCOME_SEPARATOR + "browse";
+    }
 
-   @Override
-   protected String getErrorMessageId()
-   {
-      return "error_delete_file";
-   }
+    @Override
+    protected String getErrorMessageId()
+    {
+        return "error_delete_file";
+    }
 
-   @Override
-   public boolean getFinishButtonDisabled()
-   {
-      return false;
-   }
+    @Override
+    public boolean getFinishButtonDisabled()
+    {
+        return false;
+    }
 
-   // ------------------------------------------------------------------------------
-   // Bean Getters and Setters
+    // ------------------------------------------------------------------------------
+    // Bean Getters and Setters
 
-   /**
-    * Returns the confirmation to display to the user before deleting the content.
-    *
-    * @return The formatted message to display
-    */
-   public String getConfirmMessage()
-   {
-      final Pair<String, Object[]> pair = getConfirmMessageKeyAndPlaceholders();
-      return MessageUtil.getMessage(pair.getFirst(), pair.getSecond());
-   }
+    /**
+     * Returns the confirmation to display to the user before deleting the content.
+     *
+     * @return The formatted message to display
+     */
+    public String getConfirmMessage()
+    {
+        final Pair<String, Object[]> pair = getConfirmMessageKeyAndPlaceholders();
+        return MessageUtil.getMessage(pair.getFirst(), pair.getSecond());
+    }
 
-   protected Pair<String, Object[]> getConfirmMessageKeyAndPlaceholders() {
-      String fileConfirmMsg = null;
+    protected Pair<String, Object[]> getConfirmMessageKeyAndPlaceholders() {
+        String fileConfirmMsg = null;
 
-      Node document = getNodeToDelete();
-      String documentName = document.getName();
-      String displayName = (String) getNodeService().getProperty(document.getNodeRef(), File.DISPLAY_NAME);
-      documentName = (displayName == null) ? documentName : displayName;
+        Node document = getNodeToDelete();
+        String documentName = document.getName();
+        String displayName = (String) getNodeService().getProperty(document.getNodeRef(), FileModel.Props.DISPLAY_NAME);
+        documentName = (displayName == null) ? documentName : displayName;
 
-      if(document.getType().equals(ContentModel.TYPE_MULTILINGUAL_CONTAINER))
-      {
-          fileConfirmMsg = "delete_ml_container_confirm";
-      }
-      else if(document.hasAspect(ContentModel.ASPECT_MULTILINGUAL_EMPTY_TRANSLATION))
-      {
-          fileConfirmMsg = "delete_empty_translation_confirm";
-      }
-      else if(document.hasAspect(ContentModel.ASPECT_MULTILINGUAL_DOCUMENT))
-      {
-          fileConfirmMsg = "delete_translation_confirm";
-          
-      // XXX: could decouple getting confirmation message in a generic way, so this class could be moved to common
-      } else if (document.getType().equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
-          fileConfirmMsg = "imap_delete_outgoing_letter_confirm";
-          documentName = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
-      } else if (document.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
-          fileConfirmMsg = "imap_delete_incoming_letter_confirm";
-          documentName = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
-      }
-      else
-      {
-          String strHasMultipleParents = this.parameters.get("hasMultipleParents");
-          if (strHasMultipleParents != null && "true".equals(strHasMultipleParents))
-          {
-             fileConfirmMsg = "delete_file_multiple_parents_confirm";
-          }
-          else
-          {
-             fileConfirmMsg = "delete_file_confirm";
-          }
-      }
-      final Pair<String, Object[]> pair = new Pair<String, Object[]>(fileConfirmMsg, new Object[] {documentName});
-      return pair;
-   }
-   
+        if(document.getType().equals(ContentModel.TYPE_MULTILINGUAL_CONTAINER))
+        {
+            fileConfirmMsg = "delete_ml_container_confirm";
+        }
+        else if(document.hasAspect(ContentModel.ASPECT_MULTILINGUAL_EMPTY_TRANSLATION))
+        {
+            fileConfirmMsg = "delete_empty_translation_confirm";
+        }
+        else if(document.hasAspect(ContentModel.ASPECT_MULTILINGUAL_DOCUMENT))
+        {
+            fileConfirmMsg = "delete_translation_confirm";
+
+            // XXX: could decouple getting confirmation message in a generic way, so this class could be moved to common
+        } else if (DocumentTypeHelper.isOutgoingLetter(document.getType())) {
+            fileConfirmMsg = "imap_delete_outgoing_letter_confirm";
+            documentName = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
+        } else if (DocumentTypeHelper.isIncomingLetter(document.getType())) {
+            fileConfirmMsg = "imap_delete_incoming_letter_confirm";
+            documentName = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_NAME);
+        }
+        else
+        {
+            String strHasMultipleParents = parameters.get("hasMultipleParents");
+            if (strHasMultipleParents != null && "true".equals(strHasMultipleParents))
+            {
+                fileConfirmMsg = "delete_file_multiple_parents_confirm";
+            }
+            else
+            {
+                fileConfirmMsg = "delete_file_confirm";
+            }
+        }
+        final Pair<String, Object[]> pair = new Pair<String, Object[]>(fileConfirmMsg, new Object[] {documentName});
+        return pair;
+    }
+
     protected Node getNodeToDelete() {
-        return this.browseBean.getDocument();
+        return browseBean.getDocument();
     }
 
-   @Override
+    @Override
     public String getContainerTitle() {
-       String title = getContainerTitleMsgKey();
-       if(title!=null) {
-           return MessageUtil.getMessage(title);
-       }
-       Node document = getNodeToDelete();
-       
-       // XXX: could decouple getting container title in a generic way, so this class could be moved to common
-       if (document.getType().equals(DocumentSubtypeModel.Types.OUTGOING_LETTER)) {
-           title = MessageUtil.getMessage("imap_delete_outgoing_letter_title");
-       } else if (document.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
-           title = MessageUtil.getMessage("imap_delete_incoming_letter_title");
-       }
-       return title;
+        String title = getContainerTitleMsgKey();
+        if(title!=null) {
+            return MessageUtil.getMessage(title);
+        }
+        Node document = getNodeToDelete();
+
+        // XXX: could decouple getting container title in a generic way, so this class could be moved to common
+        if (DocumentTypeHelper.isOutgoingLetter(document.getType())) {
+            title = MessageUtil.getMessage("imap_delete_outgoing_letter_title");
+        } else if (DocumentTypeHelper.isIncomingLetter(document.getType())) {
+            title = MessageUtil.getMessage("imap_delete_incoming_letter_title");
+        }
+        return title;
     }
 
-   /**
-    * Container title for confirm page
-    */
-   public String getContainerTitleMsgKey() {
-       return null;
-   }
+    /**
+     * Container title for confirm page
+     */
+    public String getContainerTitleMsgKey() {
+        return null;
+    }
 
-   /**
-   * @param multilingualContentService the Multilingual Content Service to set
-   */
-   public void setMultilingualContentService(MultilingualContentService multilingualContentService)
-   {
-       this.multilingualContentService = multilingualContentService;
-   }
-   
-   protected MultilingualContentService getMultilingualContentService()
-   {
-      if (multilingualContentService == null)
-      {
-         multilingualContentService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getMultilingualContentService();
-      }
-      return multilingualContentService;
-   }
+    /**
+     * @param multilingualContentService the Multilingual Content Service to set
+     */
+    public void setMultilingualContentService(MultilingualContentService multilingualContentService)
+    {
+        this.multilingualContentService = multilingualContentService;
+    }
+
+    protected MultilingualContentService getMultilingualContentService()
+    {
+        if (multilingualContentService == null)
+        {
+            multilingualContentService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getMultilingualContentService();
+        }
+        return multilingualContentService;
+    }
 
 }

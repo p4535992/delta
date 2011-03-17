@@ -1,0 +1,26 @@
+Resolve label during creation of object instance.
+We may wish to invoke toString() later when FacesContext is not available.
+For example, session attributes serialization + -Dsun.io.serialization.extendedDebugInfo=true does this.
+
+Index: source/java/org/alfresco/web/bean/NavigationBean.java
+===================================================================
+--- source/java/org/alfresco/web/bean/NavigationBean.java	(revision 147189)
++++ source/java/org/alfresco/web/bean/NavigationBean.java	(working copy)
+@@ -447,6 +447,8 @@
+          List<IBreadcrumbHandler> elements = new ArrayList<IBreadcrumbHandler>(1);
+          elements.add(new IBreadcrumbHandler()
+             {
++               private String label = Application.getMessage(FacesContext.getCurrentInstance(), MSG_MYALFRESCO);
++               
+                @SuppressWarnings("unchecked")
+                public String navigationOutcome(UIBreadcrumb breadcrumb)
+                {
+@@ -456,7 +458,7 @@
+                
+                public String toString()
+                {
+-                  return Application.getMessage(FacesContext.getCurrentInstance(), MSG_MYALFRESCO);
++                  return label;
+                };
+             });
+          

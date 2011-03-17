@@ -120,4 +120,6 @@ public interface UserService {
 
     String getUserEmail(String userName);
 
+    boolean isGroupsEditingAllowed();
+
 }

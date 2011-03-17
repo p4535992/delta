@@ -1,7 +1,8 @@
 package ee.webmedia.alfresco.workflow.web;
 
-import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
+import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
+import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,9 +41,10 @@ import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.Task.Action;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-import ee.webmedia.alfresco.workflow.service.Task.Action;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
  * Generator for compound workflow tasks setup block.
@@ -54,22 +56,43 @@ public class TaskListGenerator extends BaseComponentGenerator {
     // private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(TaskListGenerator.class);
 
     public static final String ATTR_WORKFLOW_INDEX = "workflow_index";
+    /**
+     * workflow index attribute.
+     * (seda ilmselt kasutatakse teistes olukordades, kui ATTR_WORKFLOW_INDEX attribuuti
+     * XXX: Alar: kas võiks attribuudi nimed ühtlustada
+     * või pigem meelega hoida erineva olukorra jaoks erinevaid väärtuseid, et okeks paremini võimalik eristada kus ühte konkreetset parameetrit kasutatakse?)
+     */
+    public static final String WF_INDEX = "index";
 
-    private DialogManager dialogManager;
+    protected DialogManager dialogManager;
 
     @Override
     public UIComponent generate(FacesContext context, String id) {
         throw new RuntimeException("This is never called!");
     }
 
+    enum TaskOwnerSearchType {
+        TASK_OWNER_SEARCH_RESPONSIBLE,
+        TASK_OWNER_SEARCH_EXTERNAL_REVIEW,
+        TASK_OWNER_SEARCH_DEFAULT
+    }
+
     @Override
     protected UIComponent createComponent(FacesContext context, UIPropertySheet propertySheet, final PropertySheetItem item) {
         Application application = context.getApplication();
         String listId = context.getViewRoot().createUniqueId();
-        int index = (Integer) propertySheet.getAttributes().get(ATTR_WORKFLOW_INDEX);
-        Workflow block = ((CompoundWorkflowDefinitionDialog) dialogManager.getBean()).getWorkflow().getWorkflows().get(index);
+        @SuppressWarnings("unchecked")
+        Map<String, Object> propSheetAttrs = propertySheet.getAttributes();
+        int wfIndex = (Integer) propSheetAttrs.get(ATTR_WORKFLOW_INDEX);
+        Workflow workflow = ((CompoundWorkflowDefinitionDialog) dialogManager.getBean()).getWorkflow().getWorkflows().get(wfIndex);
+        TaskOwnerSearchType searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_DEFAULT;
         boolean responsible = new Boolean(getCustomAttributes().get("responsible"));
-        QName blockType = block.getNode().getType();
+        QName blockType = workflow.getNode().getType();
+        if (responsible) {
+            searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE;
+        } else if (blockType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
+            searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_EXTERNAL_REVIEW;
+        }
         boolean fullAccess = propertySheet.inEditMode() || (blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) && !responsible);
 
         final HtmlPanelGroup result = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
@@ -84,15 +107,16 @@ public class TaskListGenerator extends BaseComponentGenerator {
         taskGrid.setStyleClass("recipient tasks" + " " + customStyleClass);
         final List<UIComponent> resultChildren = addChildren(result, taskGrid);
 
-        List<Integer> visibleTasks = filterTasks(block.getTasks(), responsible);
-
+        List<Task> tasks = workflow.getTasks();
+        List<Integer> visibleTasks = filterTasks(tasks, responsible);
+        boolean sendDateDisplayed = false;
         if (!visibleTasks.isEmpty()) {
             HtmlPanelGroup pickerPanel = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
             pickerPanel.setId("task-picker-panel-" + listId);
             pickerPanel.setRendererType(TaskListPickerRenderer.class.getCanonicalName());
             resultChildren.add(pickerPanel);
 
-            UIGenericPicker picker = createOwnerPickerComponent(application, listId, index, responsible);
+            UIGenericPicker picker = createOwnerPickerComponent(application, listId, wfIndex, searchType);
             addChildren(pickerPanel, picker);
 
             // This disables doing AJAX submit when picker finish button is pressed
@@ -104,7 +128,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             if (blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW) || blockType.equals(WorkflowSpecificModel.Types.OPINION_WORKFLOW)) {
                 commentPopup = (TaskListCommentComponent) application.createComponent(TaskListCommentComponent.class.getCanonicalName());
                 commentPopup.setId("task-comment-popup-" + listId);
-                putAttribute(commentPopup, TaskListGenerator.ATTR_WORKFLOW_INDEX, index);
+                putAttribute(commentPopup, TaskListGenerator.ATTR_WORKFLOW_INDEX, wfIndex);
                 commentPopup.setActionListener(application.createMethodBinding("#{DialogManager.bean.finishWorkflowTask}", UIActions.ACTION_CLASS_ARGS));
                 resultChildren.add(commentPopup);
             }
@@ -113,6 +137,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             header.setId("task-grid-name-" + listId);
             header.setEscape(false);
             final List<UIComponent> taskGridChildren = addChildren(taskGrid);
+            // create table header
             if (dialogManager.getBean() instanceof CompoundWorkflowDialog) {
                 UIOutput ownerNameHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
                 putAttribute(ownerNameHeading, "styleClass", "th");
@@ -129,10 +154,33 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 wfStatusHeading.setValue(MessageUtil.getMessage("workflow_status"));
                 taskGridChildren.add(wfStatusHeading);
 
+                if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
+                    taskGrid.setColumns(5);
+                    UIOutput sendStatusHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+                    putAttribute(sendStatusHeading, "styleClass", "th");
+                    sendStatusHeading.setValue(MessageUtil.getMessage("task_property_sendStatus_externalReviewTask"));
+                    taskGridChildren.add(sendStatusHeading);
+                    for (int counter = 0; counter < tasks.size(); counter++) {
+                        if (visibleTasks.contains(counter)) {
+                            Task task = tasks.get(counter);
+                            if (SendStatus.SENT.toString().equals(task.getSendStatus())) {
+                                taskGrid.setColumns(6);
+                                UIOutput sendDateHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+                                putAttribute(sendDateHeading, "styleClass", "th");
+                                sendDateHeading.setValue(MessageUtil.getMessage("task_property_sendDateTime_externalReviewTask"));
+                                taskGridChildren.add(sendDateHeading);
+                                sendDateDisplayed = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 UIOutput actionsHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
                 putAttribute(actionsHeading, "styleClass", "th");
                 actionsHeading.setValue("");
                 taskGridChildren.add(actionsHeading);
+
             } else {
                 header.setValue(MessageUtil.getMessage("workflow_task_owner_name"));
                 @SuppressWarnings("unchecked")
@@ -140,17 +188,23 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 facets.put("header", header);
             }
 
-            for (int counter = 0; counter < block.getTasks().size(); counter++) {
+            // create table rows for each task
+            for (int counter = 0; counter < tasks.size(); counter++) {
                 if (visibleTasks.contains(counter)) {
-                    Task task = block.getTasks().get(counter);
+                    Task task = tasks.get(counter);
                     String taskStatus = task.getStatus();
 
                     HtmlInputText nameInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
                     nameInput.setId("task-name-" + listId + "-" + counter);
                     nameInput.setReadonly(true);
                     putAttribute(nameInput, "styleClass", "ownerName medium");
-                    String nameValueBinding = "#{DialogManager.bean.workflow.workflows[" + index + "].tasks[" + counter + "].node.properties[\""
-                            + WorkflowCommonModel.Props.OWNER_NAME + "\"]}";
+                    String nameValueBinding = null;
+                    if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)){
+                        nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.INSTITUTION_NAME);
+                    }
+                    else {
+                        nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.OWNER_NAME);
+                    }
                     nameInput.setValueBinding("value", application.createValueBinding(nameValueBinding));
                     taskGridChildren.add(nameInput);
 
@@ -158,8 +212,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         final HtmlInputText dueDateInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
                         taskGridChildren.add(dueDateInput);
                         dueDateInput.setId("task-duedate-" + listId + "-" + counter);
-                        String dueDateValueBinding = "#{DialogManager.bean.workflow.workflows[" + index + "].tasks[" + counter + "].node.properties[\""
-                                + WorkflowSpecificModel.Props.DUE_DATE + "\"]}";
+                        String dueDateValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.DUE_DATE);
                         dueDateInput.setValueBinding("value", application.createValueBinding(dueDateValueBinding));
                         ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, dueDateInput);
                         @SuppressWarnings("unchecked")
@@ -182,11 +235,38 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         HtmlInputText statusInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
                         statusInput.setId("task-status-" + listId + "-" + counter);
                         statusInput.setReadonly(true);
-                        String statusValueBinding = "#{DialogManager.bean.workflow.workflows[" + index + "].tasks[" + counter + "].node.properties[\""
-                                + WorkflowCommonModel.Props.STATUS + "\"]}";
+                        String statusValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.STATUS);
                         statusInput.setValueBinding("value", application.createValueBinding(statusValueBinding));
                         putAttribute(statusInput, "styleClass", "margin-left-4 small");
                         taskGridChildren.add(statusInput);
+
+                        if(task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)){
+                            HtmlInputText sendStatusInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
+                            sendStatusInput.setId("task-sendStatus-" + listId + "-" + counter);
+                            sendStatusInput.setReadonly(true);
+                            String sendStatusValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.SEND_STATUS);
+                            sendStatusInput.setValueBinding("value", application.createValueBinding(sendStatusValueBinding));
+                            putAttribute(sendStatusInput, "styleClass", "margin-left-4 small");
+                            taskGridChildren.add(sendStatusInput);
+
+                            if (sendDateDisplayed) {
+                                if (SendStatus.SENT.toString().equals(task.getSendStatus())) {
+                                    final HtmlInputText sendDateInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
+                                    taskGridChildren.add(sendDateInput);
+                                    sendDateInput.setId("task-senddate-" + listId + "-" + counter);
+                                    String sendDateValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.DUE_DATE);
+                                    sendDateInput.setValueBinding("value", application.createValueBinding(sendDateValueBinding));
+                                    ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, sendDateInput);
+                                    ComponentUtil.putAttribute(sendDateInput, "styleClass", "margin-left-4 disabled-date");
+                                    sendDateInput.setReadonly(true);
+                                } else {
+                                    UIOutput dummyOutput = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+                                    putAttribute(dummyOutput, "styleClass", "margin-left-4");
+                                    dummyOutput.setValue("");
+                                    taskGridChildren.add(dummyOutput);
+                                }
+                            }
+                        }
                     }
 
                     final HtmlPanelGroup columnActions = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
@@ -198,21 +278,14 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     if (fullAccess
                             && (taskAction == Action.NONE)
                             && (Status.NEW.equals(taskStatus)
-                            || (task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE) && (Status.IN_PROGRESS.equals(taskStatus) || Status.STOPPED
-                                    .equals(taskStatus))))
-                            && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)))) {
+                                    || (task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE) && (Status.IN_PROGRESS.equals(taskStatus) || Status.STOPPED
+                                            .equals(taskStatus))))
+                                            && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)))) {
                         UIActionLink taskSearchLink = createOwnerSearchLink(context, application, listId, picker, counter);
                         actionChildren.add(taskSearchLink);
                     }
                     if (fullAccess && Status.NEW.equals(taskStatus)
                             && (!responsible || Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE)))) {
-                        UIParameter blockIndex = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
-                        blockIndex.setName("index");
-                        blockIndex.setValue(index);
-
-                        UIParameter taskIndex = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
-                        taskIndex.setName("taskIndex");
-                        taskIndex.setValue(counter);
 
                         final UIActionLink taskDeleteLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
                         taskDeleteLink.setId("task-remove-link-" + listId + "-" + counter);
@@ -222,19 +295,12 @@ public class TaskListGenerator extends BaseComponentGenerator {
                                 UIActions.ACTION_CLASS_ARGS));
                         taskDeleteLink.setShowLink(false);
                         putAttribute(taskDeleteLink, "styleClass", "icon-link margin-left-4 delete");
-                        addChildren(taskDeleteLink, blockIndex, taskIndex);
+                        addChildren(taskDeleteLink, createWfIndexPraram(wfIndex, application), createTaskIndexParam(counter, application));
                         actionChildren.add(taskDeleteLink);
                     }
                     if (taskAction == Action.NONE) {
                         if (fullAccess && (Status.IN_PROGRESS.equals(taskStatus) || Status.STOPPED.equals(taskStatus))
                                 && !WorkflowUtil.isInactiveResponsible(task)) {
-                            UIParameter blockIndex = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
-                            blockIndex.setName("index");
-                            blockIndex.setValue(index);
-
-                            UIParameter taskIndex = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
-                            taskIndex.setName("taskIndex");
-                            taskIndex.setValue(counter);
 
                             final UIActionLink taskCancelLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
                             taskCancelLink.setId("task-cancel-link-" + listId + "-" + counter);
@@ -244,7 +310,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                                     UIActions.ACTION_CLASS_ARGS));
                             taskCancelLink.setShowLink(false);
                             putAttribute(taskCancelLink, "styleClass", "icon-link margin-left-4 cancel-task");
-                            addChildren(taskCancelLink, blockIndex, taskIndex);
+                            addChildren(taskCancelLink, createWfIndexPraram(wfIndex, application), createTaskIndexParam(counter, application));
                             actionChildren.add(taskCancelLink);
                         }
                         if (fullAccess && (Status.IN_PROGRESS.equals(taskStatus) || Status.STOPPED.equals(taskStatus) || Status.UNFINISHED.equals(taskStatus))
@@ -264,8 +330,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
                                 actionChildren.add(taskFinishLink);
                             }
                         }
-                        if (mustCreateAddTaskLink(block, responsible, fullAccess)) {
-                            createAddTaskLink(application, listId, blockType, counter, columnActions, index, counter + 1, false);
+                        if (mustCreateAddTaskLink(workflow, responsible, fullAccess)) {
+                            createAddTaskLink(application, listId, blockType, counter, columnActions, wfIndex, counter + 1, false);
                         }
                     } else {
                         HtmlOutputText actionTxt = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
@@ -273,14 +339,14 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         String actionMsg = MessageUtil.getMessage(taskAction == Action.UNFINISH ? "task_cancel_marked" : "task_finish_marked");
                         actionTxt.setValue(actionMsg);
                         actionChildren.add(actionTxt);
-                        if (mustCreateAddTaskLink(block, responsible, fullAccess)) {
-                            createAddTaskLink(application, listId, blockType, counter, columnActions, index, counter + 1, false);
+                        if (mustCreateAddTaskLink(workflow, responsible, fullAccess)) {
+                            createAddTaskLink(application, listId, blockType, counter, columnActions, wfIndex, counter + 1, false);
                         }
                         if (blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)) {
                             final boolean mustCreateOwnerSearchLink;
-                            if (!responsible && Status.NEW.equals(block.getStatus())) {
+                            if (!responsible && Status.NEW.equals(workflow.getStatus())) {
                                 mustCreateOwnerSearchLink = true;
-                            } else if (responsible && !Status.FINISHED.equals(block.getStatus()) && WorkflowUtil.isActiveResponsible(task)) {
+                            } else if (responsible && !Status.FINISHED.equals(workflow.getStatus()) && WorkflowUtil.isActiveResponsible(task)) {
                                 mustCreateOwnerSearchLink = true;
                             } else {
                                 mustCreateOwnerSearchLink = false;
@@ -294,11 +360,23 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 }
             }
         } else {
-            if (mustCreateAddTaskLink(block, responsible, fullAccess)) {
-                createAddTaskLink(application, listId, blockType, 0, result, index, 0, true);
+            if (mustCreateAddTaskLink(workflow, responsible, fullAccess)) {
+                createAddTaskLink(application, listId, blockType, 0, result, wfIndex, 0, true);
             }
         }
         return result;
+    }
+
+    private UIParameter createWfIndexPraram(int wfIndex, Application application) {
+        return createUIParam(WF_INDEX, wfIndex, application);
+    }
+
+    protected UIParameter createTaskIndexParam(int taskIndexCounter, Application application) {
+        return createUIParam(TaskListCommentComponent.TASK_INDEX, taskIndexCounter, application);
+    }
+
+    private String createPropValueBinding(int wfIndex, int taskIndex, QName propName) {
+        return "#{DialogManager.bean.workflow.workflows[" + wfIndex + "].tasks[" + taskIndex + "].node.properties[\"" + propName + "\"]}";
     }
 
     private boolean mustCreateAddTaskLink(Workflow block, boolean responsible, boolean fullAccess) {
@@ -308,32 +386,22 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return false;
     }
 
-    private void createAddTaskLink(Application application, String listId, QName blockType, int counter, HtmlPanelGroup parentComponent, int index,
+    private void createAddTaskLink(Application application, String listId, QName blockType, int counter, HtmlPanelGroup parentComponent, int wfIndex,
             int taskIndexValue, boolean setValue) {
-        UIParameter blockIndex = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
-        blockIndex.setName("index");
-        blockIndex.setValue(index);
-
-        UIParameter taskIndex = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
-        taskIndex.setName("taskIndex");
-        taskIndex.setValue(taskIndexValue); // Add after current
-
         UIActionLink taskAddLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
         taskAddLink.setId("task-add-link-" + listId + "-" + counter);
         taskAddLink.setValue(setValue ? MessageUtil.getMessage("workflow_compound_add_" + blockType.getLocalName() + "_user") : "");
         taskAddLink.setTooltip(MessageUtil.getMessage("workflow_compound_add_" + blockType.getLocalName() + "_user"));
-        taskAddLink.setActionListener(application.createMethodBinding("#{DialogManager.bean.addWorkflowTask}", UIActions.ACTION_CLASS_ARGS));
-        @SuppressWarnings("unchecked")
-        Map<String, Object> attributes = taskAddLink.getAttributes();
-        attributes.put("styleClass", "icon-link add-person");
+        taskAddLink.setActionListener(createAddTaskMethodBinding(application));
         taskAddLink.setShowLink(false);
-        @SuppressWarnings("unchecked")
-        final List<UIComponent> children = taskAddLink.getChildren();
-        children.add(blockIndex);
-        children.add(taskIndex);
-        @SuppressWarnings("unchecked")
-        final List<UIComponent> parentChildren = parentComponent.getChildren();
-        parentChildren.add(taskAddLink);
+        ComponentUtil.putAttribute(taskAddLink, "styleClass", "icon-link add-person");
+        addChildren(taskAddLink, createWfIndexPraram(wfIndex, application), createTaskIndexParam(taskIndexValue, application));
+        addChildren(parentComponent, taskAddLink);
+    }
+
+    private MethodBinding createAddTaskMethodBinding(Application application) {
+        // DialogManager.bean is either CompoundWorkflowDialog or CompoundWorkflowDefinitionDialog
+        return application.createMethodBinding("#{DialogManager.bean.addWorkflowTask}", UIActions.ACTION_CLASS_ARGS);
     }
 
     public static UIActionLink createOwnerSearchLink(FacesContext context, Application application, String listId, UIGenericPicker picker, int taskNumber) {
@@ -351,32 +419,48 @@ public class TaskListGenerator extends BaseComponentGenerator {
         return taskSearchLink;
     }
 
-    private static UIGenericPicker createOwnerPickerComponent(Application application, String listId, int workflowIndex, boolean isResponsibleTask) {
+    private UIGenericPicker createOwnerPickerComponent(Application application, String listId, int workflowIndex, TaskOwnerSearchType searchType) {
         UIGenericPicker picker = (UIGenericPicker) application.createComponent("org.alfresco.faces.GenericPicker");
         picker.setId("task-picker-" + listId);
         picker.setShowFilter(false);
         picker.setWidth(400);
-        picker.setMultiSelect(!isResponsibleTask);
-        MethodBinding pickerB = null;
-        if (isResponsibleTask) {
-            pickerB = application.createMethodBinding("#{DialogManager.bean.executeResponsibleOwnerSearch}", new Class[] { int.class, String.class });
+        if (TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE.equals(searchType)) {
+            picker.setMultiSelect(false);
         } else {
-            pickerB = application.createMethodBinding("#{DialogManager.bean.executeOwnerSearch}", new Class[] { int.class, String.class });
+            picker.setMultiSelect(true);
         }
-        picker.setQueryCallback(pickerB);
-        picker.setActionListener(application.createMethodBinding("#{DialogManager.bean.processOwnerSearchResults}", UIActions.ACTION_CLASS_ARGS));
-        @SuppressWarnings("unchecked")
-        Map<String, Object> attributes = picker.getAttributes();
-        attributes.put(TaskListGenerator.ATTR_WORKFLOW_INDEX, workflowIndex);
+        setPickerActionListenerAndQueryCallback(picker, searchType, application);
+        ComponentUtil.putAttribute(picker, TaskListGenerator.ATTR_WORKFLOW_INDEX, workflowIndex);
         picker.setShowFilter(true);
-        ValueBinding pickerV = null;
-        if (isResponsibleTask) {
-            pickerV = application.createValueBinding("#{DialogManager.bean.responsibleOwnerSearchFilters}");
-        } else {
-            pickerV = application.createValueBinding("#{DialogManager.bean.ownerSearchFilters}");
-        }
-        picker.setValueBinding("filters", pickerV);
+        picker.setValueBinding("filters", createPickerValueBinding(application, searchType));
         return picker;
+    }
+
+    private static void setPickerActionListenerAndQueryCallback(UIGenericPicker picker, TaskOwnerSearchType searchType, Application application) {
+        String callbackB;
+        String searchProcessingB;
+        if (TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE.equals(searchType)) {
+            callbackB = "#{DialogManager.bean.executeResponsibleOwnerSearch}";
+            searchProcessingB = "#{DialogManager.bean.processResponsibleOwnerSearchResults}";
+        } else if (TaskOwnerSearchType.TASK_OWNER_SEARCH_EXTERNAL_REVIEW.equals(searchType)){
+            callbackB = "#{DialogManager.bean.executeExternalReviewOwnerSearch}";
+            searchProcessingB = "#{DialogManager.bean.processExternalReviewOwnerSearchResults}";
+        } else {
+            callbackB = "#{DialogManager.bean.executeTaskOwnerSearch}";
+            searchProcessingB = "#{DialogManager.bean.processOwnerSearchResults}";
+        }
+        picker.setQueryCallback(application.createMethodBinding(callbackB, new Class[] { int.class, String.class }));
+        picker.setActionListener(application.createMethodBinding(searchProcessingB, UIActions.ACTION_CLASS_ARGS));
+    }
+
+    protected ValueBinding createPickerValueBinding(Application application, TaskOwnerSearchType searchType) {
+        if (TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE.equals(searchType)) {
+            return application.createValueBinding("#{OwnerSearchBean.responsibleOwnerSearchFilters}");
+        } else if (TaskOwnerSearchType.TASK_OWNER_SEARCH_EXTERNAL_REVIEW.equals(searchType)){
+            return application.createValueBinding("#{DialogManager.bean.externalReviewOwnerSearchFilters}");
+        } else {
+            return application.createValueBinding("#{DialogManager.bean.ownerSearchFilters}");
+        }
     }
 
     @Override

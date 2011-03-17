@@ -7,6 +7,7 @@ package ee.webmedia.alfresco.classificator.enums;
  */
 public enum SendMode {
     
+    DVK("DVK"),
     EMAIL_DVK("e-post/DVK"),
     EMAIL("e-post"),
     MAIL("post"),

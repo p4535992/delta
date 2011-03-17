@@ -52,13 +52,13 @@ public AMRSimpleAuthenticationImpl() {
             return;
         }
         try {
-            Ametnik user = null;
-            user = amrService.getAmetnikByIsikukood(userName);
+            Ametnik user = amrService.getAmetnikByIsikukood(userName);
             if (user == null) {
                 log.debug("Didn't manage to get user with id '" + userName + "' from AMRService.");
                 throw new UserNotFoundException("Didn't manage to get user with id '" + userName + "' from AMRService.");
+            } else {
+                log.debug("Found user with id '" + userName + "'");
             }
-            else log.debug("Found user with id '" + userName + "'");
             if (!StringUtils.equals(userName, user.getIsikukood())) {
                 throw new AuthenticationException("Social security id is supposed to be equal to userName");
             }
@@ -80,8 +80,6 @@ public AMRSimpleAuthenticationImpl() {
         } catch (SoapFaultClientException e) {
             log.error("Didn't manage to get user with id '" + userName + "' from AMRService.", e);
             throw new UserNotFoundException("Didn't manage to get user with id '" + userName + "' from AMRService: " + e.getMessage(), e);
-        } catch (java.lang.NullPointerException e) {
-            log.error("NullPointerException in updateUserData method." + e.getMessage(), e);
         }
     }
 

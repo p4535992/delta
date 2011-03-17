@@ -13,6 +13,10 @@ public class DoubleCurrencyConverter extends DoubleConverter {
     
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object value) {
+        return getAsString(value);
+    }
+
+    public String getAsString(Object value) {
         if (value == null) {
             return "";
         }

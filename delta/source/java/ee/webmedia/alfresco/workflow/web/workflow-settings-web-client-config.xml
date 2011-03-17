@@ -18,12 +18,14 @@
 
    <config evaluator="aspect-name" condition="wfs:commonWorkflow" >
       <property-sheet>
-         <show-property name="wfs:description" component-generator="TextAreaGenerator" styleClass="expand19-200" display="inline" />
+         <show-property name="wfs:description" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
    </config>
-   
-   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:docRegistrationWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow" >
+
+   <config evaluator="node-type" condition="wfs:reviewWorkflow,wfs:externalReviewWorkflow" >
       <property-sheet>
+         <!-- Override description from aspect-name=wfs:commonWorkflow: description display="inline" so that following property(stopOnFinish) is shown on the same line for reviewWorkflow  -->
+         <show-property name="wfs:description" component-generator="TextAreaGenerator" styleClass="expand19-200" display="inline" />
          <show-property name="wfc:stopOnFinish" />
       </property-sheet>
    </config>
@@ -33,7 +35,7 @@
          <show-property name="wfs:resolution" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
    </config>
-
+   
    <config evaluator="node-type" condition="wfs:signatureWorkflow">
       <property-sheet>
          <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="signatureWorkflow_tasks" />
@@ -51,6 +53,12 @@
          <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="reviewWorkflow_tasks" />
       </property-sheet>
    </config>
+   
+   <config evaluator="node-type" condition="wfs:externalReviewWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="externalReviewWorkflow_tasks" />
+      </property-sheet>
+   </config>   
 
    <config evaluator="node-type" condition="wfs:informationWorkflow">
       <property-sheet>

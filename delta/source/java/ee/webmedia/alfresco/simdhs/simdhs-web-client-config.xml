@@ -9,6 +9,19 @@
    
       </dialogs>
       <actions>
+         <!-- @Override web-client-config-actions.xml -->
+         <action id="create_group">
+            <evaluator>ee.webmedia.alfresco.user.web.GroupsEditingAllowedEvaluator</evaluator>
+            <label-id>new_group</label-id>
+            <image>/images/icons/create_group.gif</image>
+            <action>dialog:createGroup</action>
+            <action-listener>#{DialogManager.setupParameters}</action-listener>
+            <params>
+               <param name="group">#{actionContext.group}</param>
+               <param name="groupName">#{actionContext.groupName}</param>
+            </params>
+         </action>
+
          <!-- These groups are used in group list dialog, since adding subgroups is not allowed per spec.  -->
          <action-group id="group_inline_actions_no_subgroup">
             <action idref="add_group_user" />

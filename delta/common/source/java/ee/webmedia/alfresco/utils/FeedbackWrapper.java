@@ -5,6 +5,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+
 /**
  * This class can be used to give feedback about actions done service layer to web layer (where information could be formated into faces message using
  * {@link MessageUtil})
@@ -24,6 +26,20 @@ public class FeedbackWrapper implements Iterable<FeedbackVO> {
     @Override
     public Iterator<FeedbackVO> iterator() {
         return feedbackItems == null ? Collections.<FeedbackVO> emptyList().iterator() : feedbackItems.iterator();
+    }
+
+    public boolean hasErrors() {
+        for (FeedbackVO feedBack : this) {
+            if (MessageSeverity.ERROR.equals(feedBack.getSeverity()) || MessageSeverity.FATAL.equals(feedBack.getSeverity())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public String toString() {
+        return hasErrors() ? "HAS ERRORS:\n" : "Feedback:\n" + feedbackItems;
     }
 
 }

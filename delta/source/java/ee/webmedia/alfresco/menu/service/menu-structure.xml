@@ -36,6 +36,11 @@
                   <action-listener>#{MyTasksBean.setupReviewTasks}</action-listener>
                   <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}reviewTask</processor>
                </item>
+               <item id="externalReviewTasks" title-id="menu_for_external_review">
+                  <outcome>dialog:taskListDialog</outcome>
+                  <action-listener>#{MyTasksBean.setupExternalReviewTasks}</action-listener>
+                  <processor>{http://alfresco.webmedia.ee/model/workflow/specific/1.0}externalReviewTask</processor>
+               </item>               
                <item id="signatureTasks" title-id="menu_for_signature">
                   <outcome>dialog:taskListDialog</outcome>
                   <action-listener>#{MyTasksBean.setupSignatureTasks}</action-listener>
@@ -230,7 +235,16 @@
             </subitems>
          </dropdown>
          <item>
+            <outcome>docsub:instrumentOfDeliveryAndReceiptMv</outcome>
+         </item>          
+         <item>
             <outcome>docsub:report</outcome>
+         </item>
+         <item>
+            <outcome>docsub:reportMv</outcome>
+         </item>   
+         <item>
+            <outcome>docsub:invoice</outcome>
          </item>
          <item>
             <outcome>docsub:managementsOrder</outcome>
@@ -242,10 +256,19 @@
                   <outcome>docsub:incomingLetter</outcome>
                </item>
                <item>
+                  <outcome>docsub:incomingLetterMv</outcome>
+               </item>               
+               <item>
                   <outcome>docsub:outgoingLetter</outcome>
+               </item>
+               <item>
+                  <outcome>docsub:outgoingLetterMv</outcome>
                </item>
             </subitems>
          </dropdown>
+         <item>
+            <outcome>docsub:orderMv</outcome>
+         </item>          
          <dropdown title-id="menu_order">
             <submenu-id>order-submenu</submenu-id>
             <subitems>
@@ -273,11 +296,17 @@
             <outcome>docsub:contractSmit</outcome>
          </item>
          <item>
+            <outcome>docsub:contractMv</outcome>
+         </item> 
+         <item>
             <outcome>docsub:licence</outcome>
          </item>
          <dropdown title-id="menu_internal_application">
             <submenu-id>internal-application-submenu</submenu-id>
             <subitems>
+            <item>
+               <outcome>docsub:personalVehicleUsageCompensationMv</outcome>
+            </item>            
             <item>
                <outcome>docsub:trainingApplication</outcome>
             </item>
@@ -288,8 +317,14 @@
                <outcome>docsub:internalApplication</outcome>
             </item>
             <item>
+               <outcome>docsub:internalApplicationMv</outcome>
+            </item>            
+            <item>
                <outcome>docsub:vacationOrderSmit</outcome>
             </item>
+            <item>
+               <outcome>docsub:vacationApplication</outcome>
+            </item>            
             <item>
                <outcome>docsub:vacationOrder</outcome>
             </item>
@@ -302,17 +337,32 @@
             <item>
                <outcome>docsub:errandOrderAbroad</outcome>
             </item>
+            <item>
+               <outcome>docsub:errandOrderAbroadMv</outcome>
+            </item>
             </subitems>
          </dropdown>
          <item>
             <outcome>docsub:memo</outcome>
          </item>
          <item>
+            <outcome>docsub:otherDocumentMv</outcome>
+         </item>         
+         <item>
             <outcome>docsub:decree</outcome>
+         </item>
+         <item>
+            <outcome>docsub:resolutionMv</outcome>
+         </item>
+         <item>
+            <outcome>docsub:projectApplication</outcome>
          </item>
          <item>
             <outcome>docsub:minutes</outcome>
          </item>
+         <item>
+            <outcome>docsub:minutesMv</outcome>
+         </item> 
       </subitems>
    </dropdown>
 

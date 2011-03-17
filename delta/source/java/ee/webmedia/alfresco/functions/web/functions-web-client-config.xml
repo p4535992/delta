@@ -76,7 +76,7 @@
             <style-class>docList_importPP</style-class>
             <target>no_wait_workaround</target>
          </action>
-
+<!--
          <action id="postipoiss_documents_fix">
             <evaluator>ee.webmedia.alfresco.postipoiss.evaluator.IsDocumentsImportEnabledEvaluator</evaluator>
             <label>Alusta Postipoisi dokumentide parandust</label>
@@ -84,7 +84,7 @@
             <style-class>docList_importPP</style-class>
             <target>no_wait_workaround</target>
          </action>
-
+-->
          <action-group id="browse_actions_functions">
             <action idref="function_add_new" />
             <action idref="docList_export" />
@@ -93,7 +93,7 @@
             <action idref="docList_updateDocCounters" />
             <action idref="postipoiss_structure_import" />
             <action idref="postipoiss_documents_import" />
-            <action idref="postipoiss_documents_fix" />
+            <!--<action idref="postipoiss_documents_fix" />-->
             <!-- disabled to prevent accidental deleting(importing) after import has completed 
             <action idref="docList_import_smitExcel" />
             <action idref="docList_deleteAllDocuments" />

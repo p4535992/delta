@@ -250,6 +250,10 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>
+            <property name="doccom:searchablePartyName">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
             <property name="doccom:searchableSubNodeProperties">
                <type>d:text</type>
             </property>
@@ -396,6 +400,17 @@
       </aspect>
 
       <aspect name="doccom:signer">
+         <properties>
+            <property name="doccom:signerJobTitle"><!-- Allkirjastaja ametinimetus -->
+               <type>d:text</type>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>doccom:signerName</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="doccom:signerName">
          <!--
             Valik DHS kasutajate hulgast (kõik gruppi kuuluvad väljad täidetakse valitud kasutaja andmetega)
             või sisestatakse tekstina
@@ -404,11 +419,8 @@
             <property name="doccom:signerName"><!-- Allkirjastaja -->
                <type>d:text</type>
             </property>
-            <property name="doccom:signerJobTitle"><!-- Allkirjastaja ametinimetus -->
-               <type>d:text</type>
-            </property>
          </properties>
-      </aspect>
+      </aspect>  
       
       <aspect name="doccom:legalBasis">
          <properties>

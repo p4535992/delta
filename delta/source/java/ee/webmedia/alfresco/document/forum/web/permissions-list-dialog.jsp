@@ -19,14 +19,6 @@
          <h:outputText value="#{r.name}" />
       </a:column>
 
-      <%-- Username column --%>
-      <a:column style="text-align:left">
-         <f:facet name="header">
-            <a:sortLink label="#{msg.user_username}" value="authority" styleClass="header"/>
-         </f:facet>
-         <h:outputText value="#{r.authority}" rendered="#{!r.group}" />
-      </a:column>
-
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="pager1" styleClass="pager" />
    </a:richList>

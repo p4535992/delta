@@ -15,6 +15,9 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.search.ResultSet;
+import org.alfresco.service.cmr.search.SearchParameters;
+import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
@@ -51,6 +54,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private VolumeService _volumeService;
     /** NB! not injected - use getter to obtain instance of functionsService */
     private FunctionsService _functionsService;
+    private SearchService searchService;
 
     
     public List<ChildAssociationRef> getAllSeriesAssocsByFunction(NodeRef functionRef) {
@@ -262,6 +266,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     
+    @Override
     public void updateContainingDocsCountByVolume(NodeRef seriesNodeRef, NodeRef volumeNodeRef, boolean volumeAdded) {
         Integer count = (Integer) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT);
         generalService.updateParentContainingDocsCount(seriesNodeRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, volumeAdded, count);
@@ -283,6 +288,10 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     public void setLogService(DocumentLogService logService) {
         this.logService = logService;
     }
+    
+    public void setSearchService(SearchService searchService) {
+        this.searchService = searchService;
+    }    
 
     
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {

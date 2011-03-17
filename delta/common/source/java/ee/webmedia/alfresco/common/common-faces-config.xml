@@ -24,6 +24,12 @@
    </managed-bean>
 
    <managed-bean>
+      <managed-bean-name>AjaxSearchBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.ajax.AjaxSearchBean</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
       <description>
          Bean that generates a date picker component
       </description>

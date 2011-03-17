@@ -83,7 +83,18 @@
       </dialogs>
    </config>
 
-   <config evaluator="aspect-name" condition="wfs:commonTask">
+   <config evaluator="node-type" condition="wfs:assignmentTask">
+      <property-sheet>
+         <show-property name="{temp}delegationHistory" ignore-if-missing="false" component-generator="DelegationHistoryGenerator" display-label-id="delegation_history" />
+         <show-property name="{temp}delegateAsResponsibleAssignmentTask" component-generator="DelegationTaskListGenerator" display-label-id="assignmentWorkflow_tasks" taskType="ASSIGNMENT_RESPONSIBLE" />
+         <show-property name="{temp}delegateAsAssignmentTask" component-generator="DelegationTaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks_co" taskType="ASSIGNMENT_NOT_RESPONSIBLE" />
+         <show-property name="{temp}delegateAsInformationTask" component-generator="DelegationTaskListGenerator" ignore-if-missing="false" display-label-id="informationWorkflow" taskType="INFORMATION" />
+         <show-property name="{temp}delegateAsOpinionTask" component-generator="DelegationTaskListGenerator" display-label-id="opinionWorkflow" taskType="OPINION" />
+      </property-sheet>
+   </config>
+
+   <!-- All nodes with aspect wfs:commonTask except wfs:assignmentTask(that shows the same information in delegation history) -->
+   <config evaluator="node-type" condition="wfs:signatureTask,wfs:opinionTask,wfs:reviewTask,wfs:externalReviewTask,wfs:informationTask">
       <property-sheet>
          <!--
             See Task class, it adds a resolver which returns task's resolution if present or workflow's resolution otherwise 
@@ -91,15 +102,22 @@
          <show-property name="{temp}resolution" outputText="true" display-label-id="task_property_resolution" />
          <show-property name="wfc:creatorName" outputText="true" />
          <show-property name="wfs:dueDate" outputText="true" styleClass="date" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="wfs:commonTask">
+      <property-sheet>
          <show-property name="wfs:comment" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
    </config>
+
    <!-- Override: comment property label is different for assignmentTask -->
    <config evaluator="node-type" condition="wfs:assignmentTask">
       <property-sheet>
-         <show-property name="wfs:comment" display-label-id="task_property_comment_assignmentTask" component-generator="TextAreaGenerator" styleClass="expand19-200" forcedMandatory="true"/>
+         <show-property name="wfs:comment" display-label-id="task_property_comment_assignmentTask" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
    </config>
+
    <!-- Override: comment property label is different for opinionTask -->
    <config evaluator="node-type" condition="wfs:opinionTask">
       <property-sheet>
@@ -112,6 +130,12 @@
          <show-property name="wfs:comment" display-label-id="task_property_comment_reviewTask" component-generator="TextAreaGenerator" styleClass="expand19-200" />
       </property-sheet>
    </config>
+   <!-- Override: comment property label is different for externalReviewTask -->
+   <config evaluator="node-type" condition="wfs:externalReviewTask">
+      <property-sheet>
+         <show-property name="wfs:comment" display-label-id="task_property_comment_externalReviewTask" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+      </property-sheet>
+   </config>   
    
    <config evaluator="node-type" condition="wfs:reviewTask">
       <property-sheet>
@@ -119,6 +143,13 @@
             selectionItems="#{WorkflowBlockBean.getReviewTaskOutcomes}" converter="javax.faces.Integer" ignore-if-missing="false" />
       </property-sheet>
    </config>
+   
+   <config evaluator="node-type" condition="wfs:externalReviewTask">
+      <property-sheet>
+         <show-property name="wfs:tempOutcome" display-label-id="task_property_outcomes_externalReviewTask" component-generator="GeneralSelectorGenerator"
+            selectionItems="#{WorkflowBlockBean.getExternalReviewTaskOutcomes}" converter="javax.faces.Integer" ignore-if-missing="false" />
+      </property-sheet>
+   </config>   
    
    <config evaluator="aspect-name" condition="wfs:file">
       <property-sheet>
@@ -145,20 +176,23 @@
       </property-sheet>
    </config>
 
-   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow" >
+   <config evaluator="aspect-name" condition="wfs:commonWorkflow" >
       <property-sheet>
-         <show-property name="wfs:resolution" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud||teostamata" component-generator="TextAreaGenerator" styleClass="expand19-200 short-resolution" display="inline" />
+         <show-property name="wfs:resolution" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud||teostamata" component-generator="TextAreaGenerator" styleClass="expand19-200 short-resolution" />
       </property-sheet>
    </config>
 
    <config evaluator="node-type" condition="wfs:assignmentWorkflow" >
       <property-sheet>
-         <show-property name="wfs:resolution" readOnlyIf="wfc:status=lõpetatud||teostamata" component-generator="TextAreaAlwaysEditGenerator" styleClass="expand19-200 short-resolution" display="inline" />
+         <!-- Override resolution from aspect-name=wfs:commonWorkflow - different readOnlyIf and component-generator -->
+         <show-property name="wfs:resolution" readOnlyIf="wfc:status=lõpetatud||teostamata" component-generator="TextAreaAlwaysEditGenerator" styleClass="expand19-200 short-resolution" />
       </property-sheet>
    </config>
 
-   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:docRegistrationWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow" >
+   <config evaluator="node-type" condition="wfs:reviewWorkflow,wfs:externalReviewWorkflow" >
       <property-sheet>
+         <!-- Override resolution from aspect-name=wfs:commonWorkflow: resolution display="inline" so that following property(stopOnFinish) is shown on the same line for reviewWorkflow  -->
+         <show-property name="wfs:resolution" readOnlyIf="wfc:status=teostamisel||peatatud||lõpetatud||teostamata" component-generator="TextAreaGenerator" styleClass="expand19-200 short-resolution" display="inline" />
          <show-property name="wfc:stopOnFinish" readOnlyIf="wfc:status=lõpetatud" />
       </property-sheet>
    </config>
@@ -180,6 +214,12 @@
          <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="reviewWorkflow_tasks" />
       </property-sheet>
    </config>
+   
+   <config evaluator="node-type" condition="wfs:externalReviewWorkflow">
+      <property-sheet>
+         <show-property name="{temp}workflowTasks" component-generator="TaskListGenerator" ignore-if-missing="false" forcedMandatory="true" display-label-id="externalReviewWorkflow_tasks" />
+      </property-sheet>
+   </config>   
 
    <config evaluator="node-type" condition="wfs:informationWorkflow">
       <property-sheet>

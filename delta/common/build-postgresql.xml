@@ -8,7 +8,7 @@
       <property file="${conf.basedir}/${conf.name}/classes/alfresco-global.properties" userproperty="true" />
       <property name="db.pgadmin.url" value="jdbc:postgresql://${db.host}:${db.port}/postgres" />
 
-      <echo>Droping database '${db.name}'</echo>
+      <echo>Dropping database '${db.name}'</echo>
       <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
          <classpath location="lib/postgresql-8.3-605.jdbc3.jar" />
          DROP DATABASE ${db.name};
@@ -23,10 +23,10 @@
          <classpath location="lib/postgresql-8.3-605.jdbc3.jar" />
          CREATE ROLE ${db.username} LOGIN PASSWORD '${db.password}' NOSUPERUSER NOINHERIT NOCREATEDB NOCREATEROLE;
       </sql>
-      <echo>Creating database user '${db.username}'</echo>
+      <echo>Creating database '${db.name}'</echo>
       <sql driver="${db.driver}" password="${db.pgadmin.pass}" url="${db.pgadmin.url}" userid="${db.pgadmin.user}" autocommit="true" onerror="continue">
          <classpath location="lib/postgresql-8.3-605.jdbc3.jar" />
-         CREATE DATABASE alfresco WITH OWNER = ${db.username} ENCODING ='UTF8';
+         CREATE DATABASE ${db.name} WITH OWNER = ${db.username} ENCODING ='UTF8';
       </sql>
       <echo>Deleting alfresco repository data directory '${dir.root}'</echo>
       <delete dir="${dir.root}" />

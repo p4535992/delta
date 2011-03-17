@@ -858,10 +858,10 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
                 if (!index || contentData.getMimetype() == null)
                 {
                     // no mimetype or property not indexed
-                    log.info("NOT indexing property " + propertyName.toString());
+                    log.debug("NOT indexing property " + propertyName.toString());
                     continue;
                 }
-                log.info("Starting to index property " + propertyName.toString());
+                log.debug("Starting to index property " + propertyName.toString());
                 long startTime = System.currentTimeMillis();
 
                 // store mimetype in index - even if content does not index it is useful
@@ -971,7 +971,7 @@ public class ADMLuceneIndexerImpl extends AbstractLuceneIndexerImpl<NodeRef> imp
                         StringReader prefix = new StringReader(builder.toString());
                         Reader multiReader = new MultiReader(prefix, isr);
                         doc.add(new Field(attributeName, multiReader, Field.TermVector.NO));
-                        log.info("Finished adding property " + propertyName.toString() + " to index - " + (System.currentTimeMillis() - startTime) + " ms, " + reader.getSize() + " bytes");
+                        log.debug("Finished adding property " + propertyName.toString() + " to index - " + (System.currentTimeMillis() - startTime) + " ms, " + reader.getSize() + " bytes");
                     }
                 }
                 else

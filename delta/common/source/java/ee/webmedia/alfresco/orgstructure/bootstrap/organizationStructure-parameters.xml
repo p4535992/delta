@@ -9,12 +9,6 @@
       </view:properties>
    </param:stringParameter>
 
-   <param:intParameter view:childName="param:employeeRegOrganisationId">
-      <view:properties>
-         <param:value>6</param:value>
-      </view:properties>
-   </param:intParameter>
-
    <param:intParameter view:childName="param:employeeRegReceiveUsersPeriod">
       <view:properties>
          <param:value>60</param:value>

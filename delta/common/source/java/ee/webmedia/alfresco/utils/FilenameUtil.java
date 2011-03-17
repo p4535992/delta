@@ -51,5 +51,9 @@ public class FilenameUtil {
         // remove dots and spaces from beginning and end of string
         return filename.replaceAll("^([ \\.])+", "").replaceAll("([ \\.])+$", "");
     }
+    
+    public static String replaceAmpersand(String filename) {
+        return filename.replaceAll(" & ", " ja ").replaceAll("&", " ja ");
+    }
 
 }

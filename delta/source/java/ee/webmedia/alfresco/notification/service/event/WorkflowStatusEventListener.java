@@ -16,7 +16,9 @@ import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 
 public class WorkflowStatusEventListener implements WorkflowEventListener, InitializingBean {
 
@@ -29,17 +31,26 @@ public class WorkflowStatusEventListener implements WorkflowEventListener, Initi
     }
 
     @Override
-    public void handle(WorkflowEvent event) {
+    public void handle(WorkflowEvent event, WorkflowEventQueue queue) {
         final BaseWorkflowObject object = event.getObject();
 
-        if (object instanceof CompoundWorkflow)
-            handleCompoundWorkflowNotifications(event);
+        boolean sendNotifications = !Boolean.TRUE.equals(queue
+                .getParameter(WorkflowQueueParameter.TRIGGERED_BY_FINISHING_EXTERNAL_REVIEW_TASK_ON_CURRENT_SYSTEM));
 
-        if (object instanceof Workflow)
-            handleWorkflowNotifications(event);
+        if (sendNotifications) {
+            if (object instanceof CompoundWorkflow) {
+                handleCompoundWorkflowNotifications(event);
+            }
+
+            if (object instanceof Workflow) {
+                handleWorkflowNotifications(event);
+            }
+        }
 
         if (object instanceof Task) {
-            handleTaskNotifications(event);
+            if (sendNotifications) {
+                handleTaskNotifications(event);
+            }
             refreshMenuTaskCount(event);
         }
 

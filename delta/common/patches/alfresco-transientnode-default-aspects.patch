@@ -1,0 +1,46 @@
+Not submitted to ACT
+Not submitted to JIRA  
+
+Index: java/org/alfresco/web/bean/repository/TransientNode.java
+===================================================================
+--- java/org/alfresco/web/bean/repository/TransientNode.java	(revision 142724)
++++ java/org/alfresco/web/bean/repository/TransientNode.java	(working copy)
+@@ -30,6 +30,7 @@
+ import java.util.HashSet;
+ import java.util.List;
+ import java.util.Map;
++import java.util.Set;
+ 
+ import org.alfresco.error.AlfrescoRuntimeException;
+ import org.alfresco.service.cmr.dictionary.AspectDefinition;
+@@ -102,8 +103,7 @@
+    public static TransientNode createNew(DictionaryService dictionaryService, TypeDefinition typeDef, String name, Map<QName, Serializable> data)
+    {
+        // build a complete anonymous type for the start task
+-       List<AspectDefinition> aspects = typeDef.getDefaultAspects();
+-       List<QName> aspectNames = new ArrayList<QName>(aspects.size());
++       Set<QName> aspectNames = new HashSet<QName>();
+        getMandatoryAspects(typeDef, aspectNames);
+        ClassDefinition startTaskDef = dictionaryService.getAnonymousType(typeDef.getName(), aspectNames);
+ 
+@@ -137,7 +137,7 @@
+     * @param classDef  the class
+     * @param aspects  a list to hold the mandatory aspects
+     */
+-   private static void getMandatoryAspects(ClassDefinition classDef, List<QName> aspects)
++   private static void getMandatoryAspects(ClassDefinition classDef, Set<QName> aspects)
+    {
+        for (AspectDefinition aspect : classDef.getDefaultAspects())
+        {
+@@ -279,10 +279,7 @@
+       }
+       
+       this.aspects = new HashSet<QName>();
+-      for (AspectDefinition aspectDef : typeDef.getDefaultAspects())
+-      {
+-         this.aspects.add(aspectDef.getName());
+-      }
++      getMandatoryAspects(typeDef, this.aspects);
+       
+       // setup remaining variables
+       this.path = null;

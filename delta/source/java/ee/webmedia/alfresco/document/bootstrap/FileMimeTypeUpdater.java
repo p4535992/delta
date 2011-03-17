@@ -15,7 +15,6 @@ import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
@@ -34,7 +33,6 @@ public class FileMimeTypeUpdater extends AbstractNodeUpdater {
 
     private BehaviourFilter behaviourFilter;
     private SearchService searchService;
-    private NodeService nodeService;
     private GeneralService generalService;
     private MimetypeService mimetypeService;
     private Date beginDate;
@@ -67,23 +65,21 @@ public class FileMimeTypeUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
-        if (!nodeService.exists(nodeRef)) {
-            return new String[] { nodeRef.toString(), "0" };
-        }
+
         Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);
         String name = (String) origProps.get(ContentModel.PROP_NAME);
         if (StringUtils.isEmpty(name)) {
-            return new String[] { nodeRef.toString(), "1" };
+            return new String[] { "1" };
         }
         String correctMimeType = mimetypeService.guessMimetype(name);
 
         ContentData oldContent = (ContentData) origProps.get(ContentModel.PROP_CONTENT);
         if (oldContent == null) {
-            return new String[] { nodeRef.toString(), "2", name };
+            return new String[] { "2", name };
         }
         if (correctMimeType.equals(oldContent.getMimetype())) {
-            return new String[] { nodeRef.toString(), "3", name, oldContent.getMimetype(), oldContent.getMimetype(), oldContent.getEncoding(),
-                    Long.toString(oldContent.getSize()), oldContent.getContentUrl() };
+            return new String[] { "3", name, oldContent.getMimetype(), oldContent.getMimetype(), oldContent.getEncoding(), Long.toString(oldContent.getSize()),
+                    oldContent.getContentUrl() };
         }
         ContentData newContent = ContentData.setMimetype(oldContent, correctMimeType);
 
@@ -93,7 +89,7 @@ public class FileMimeTypeUpdater extends AbstractNodeUpdater {
         setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
         nodeService.addProperties(nodeRef, setProps);
 
-        return new String[] { nodeRef.toString(), "4", name, oldContent.getMimetype(), newContent.getMimetype(), newContent.getEncoding(),
+        return new String[] { "4", name, oldContent.getMimetype(), newContent.getMimetype(), newContent.getEncoding(),
                 Long.toString(newContent.getSize()), newContent.getContentUrl() };
     }
 
@@ -103,10 +99,6 @@ public class FileMimeTypeUpdater extends AbstractNodeUpdater {
 
     public void setSearchService(SearchService searchService) {
         this.searchService = searchService;
-    }
-
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
     }
 
     public void setGeneralService(GeneralService generalService) {

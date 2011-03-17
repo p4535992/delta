@@ -2,12 +2,14 @@ package ee.webmedia.alfresco.workflow.service;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -18,6 +20,12 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
  * @author Alar Kvell
  */
 public class WorkflowUtil {
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WorkflowUtil.class);
+    /**
+     * denotes that BaseWorkflowObject (task or information/opinion workflow) temporarily having this property is not saved,
+     * but generated for delegating original assignment task to other people
+     */
+    private static final QName TMP_ADDED_BY_DELEGATION = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "addedByDelegation");
 
     public static WorkflowEventQueue getNewEventQueue() {
         return new WorkflowEventQueue();
@@ -45,14 +53,21 @@ public class WorkflowUtil {
     }
 
     public static boolean isStatus(BaseWorkflowObject object, Status... statuses) {
-        boolean equals = false;
         for (Status status : statuses) {
             if (status.equals(object.getStatus())) {
-                equals = true;
-                break;
+                return true;
             }
         }
-        return equals;
+        return false;
+    }
+
+    public static boolean isType(BaseWorkflowObject object, QName... types) {
+        for (QName type : types) {
+            if (type.equals(object.getType())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static StatusOrderChecker isStatusOrder(List<? extends BaseWorkflowObject> objects) {
@@ -60,7 +75,7 @@ public class WorkflowUtil {
     }
 
     public static class StatusOrderChecker {
-        private List<? extends BaseWorkflowObject> objects;
+        private final List<? extends BaseWorkflowObject> objects;
         private boolean result = true;
         private int index = 0;
 
@@ -109,7 +124,7 @@ public class WorkflowUtil {
 
     public static Status checkTask(Task task, boolean skipPropChecks, Status... requiredStatuses) {
         if (!skipPropChecks) {
-            // ERKO: Specification and existing code act in a different way. When a user is chosen, both the id and email are stored and used. 
+            // ERKO: Specification and existing code act in a different way. When a user is chosen, both the id and email are stored and used.
             //if (StringUtils.isBlank(task.getOwnerId()) == StringUtils.isBlank(task.getOwnerEmail())) {
             //    throw new RuntimeException("Exactly one of task's ownerId or ownerEmail must be filled\n" + task);
             //}
@@ -145,13 +160,13 @@ public class WorkflowUtil {
                 if (!isStatusAny(tasks, Status.IN_PROGRESS) || !isStatusAll(tasks, Status.IN_PROGRESS, Status.FINISHED, Status.UNFINISHED)) {
                     throw new WorkflowChangedException(
                             "If workflow status is IN_PROGRESS, then at least one task must have status IN_PROGRESS and other must have status FINISHED or UNFINISHED\n"
-                                    + workflow);
+                            + workflow);
                 }
             } else {
                 if (!isStatusOrder(tasks).requireAny(Status.FINISHED, Status.UNFINISHED).requireOne(Status.IN_PROGRESS).requireAny(Status.NEW).check()) {
                     throw new WorkflowChangedException(
                             "If workflow status is IN_PROGRESS, then tasks must have the following statuses, in order: 0..* FINISHED or UNFINISHED, 1 IN_PROGRESS, 0..* NEW\n"
-                                    + workflow);
+                            + workflow);
                 }
             }
             break;
@@ -165,7 +180,7 @@ public class WorkflowUtil {
                         && !isStatusOrder(tasks).requireAtLeastOne(Status.FINISHED, Status.UNFINISHED).requireAny(Status.NEW).check()) {
                     throw new WorkflowChangedException(
                             "If workflow status is STOPPED, then tasks must have the following statuses, in order: (0..* FINISHED or UNFINISHED, 1 STOPPED, 0..* NEW) or (1..* FINISHED or UNFINISHED, 0..* NEW)\n"
-                                    + workflow);
+                            + workflow);
                 }
             }
             break;
@@ -203,10 +218,14 @@ public class WorkflowUtil {
             }
             break;
         case IN_PROGRESS:
-            if (!isStatusOrder(workflows).requireAny(Status.FINISHED).requireOne(Status.IN_PROGRESS).requireAny(Status.NEW, Status.FINISHED).check()) {
+
+            if (!isStatusOrder(workflows).requireAny(Status.FINISHED).requireAtLeastOne(Status.IN_PROGRESS).requireAny(Status.NEW, Status.FINISHED).check()) {
                 throw new WorkflowChangedException(
                         "If compoundWorkflow status is IN_PROGRESS, then workflows must have the following statuses, in order: 0..* FINISHED, 1 IN_PROGRESS, 0..* NEW or FINISHED\n"
-                                + compoundWorkflow);
+                        + compoundWorkflow);
+            } else if (!isStatusOrder(workflows).requireAny(Status.FINISHED).requireOne(Status.IN_PROGRESS).requireAny(Status.NEW, Status.FINISHED).check()) {
+                // CL_TASK 152350 - add more strict checks than just requireAtLeastOne(Status.IN_PROGRESS)
+                LOG.warn("according to old rules here should be error, as only one workflow was supposed to be IN_PROGRESS, but at the moment there are more (task 152350 will add more strict checks)");
             }
             break;
         case STOPPED:
@@ -214,9 +233,9 @@ public class WorkflowUtil {
                     && !isStatusOrder(workflows).requireAtLeastOne(Status.FINISHED).requireAny(Status.NEW, Status.FINISHED).check()) {
                 throw new WorkflowChangedException(
                         "If compoundWorkflow status is STOPPED, then workflows must have the following statuses, in order: (0..* FINISHED, 1 STOPPED, 0..* NEW or FINISHED) or (1..* FINISHED, 0..* NEW or FINISHED)\n"
-                                + compoundWorkflow);
+                        + compoundWorkflow);
             }
-            break;            
+            break;
         case FINISHED:
             if (!isStatusAll(workflows, Status.FINISHED)) {
                 throw new WorkflowChangedException("If compoundWorkflow status is FINISHED, then all workflows must have status FINISHED\n" + compoundWorkflow);
@@ -328,7 +347,7 @@ public class WorkflowUtil {
         }
         return workflows;
     }
-    
+
     public static List<NodeRef> getExcludedNodeRefsOnFinishWorkflows(CompoundWorkflow compoundWorkflow) {
         List<NodeRef> excludedNodeRefs = new ArrayList<NodeRef>();
         for (Workflow workflow : compoundWorkflow.getWorkflows()){
@@ -341,12 +360,47 @@ public class WorkflowUtil {
 
     public static boolean isActiveResponsible(Task task) {
         return task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)
-                && Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
+        && Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
     }
 
     public static boolean isInactiveResponsible(Task task) {
         return task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)
         && Boolean.FALSE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
     }
-    
+
+    public static void removeEmptyTasks(CompoundWorkflow cWorkflow) {
+        for (Workflow workflow : cWorkflow.getWorkflows()) {
+            WorkflowUtil.removeEmptyTasks(workflow);
+        }
+    }
+
+    private static void removeEmptyTasks(Workflow workflow) {
+        ArrayList<Integer> emptyTaskIndexes = new ArrayList<Integer>();
+        int index = 0;
+        for (Task task : workflow.getTasks()) {
+            if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
+                if (StringUtils.isBlank(task.getInstitutionName())
+                        && task.getDueDate() == null) {
+                    emptyTaskIndexes.add(index);
+                }
+            } else if (StringUtils.isBlank(task.getOwnerName()) && task.getDueDate() == null && StringUtils.isBlank(task.getResolutionOfTask())
+                    && !(isGeneratedByDelegation(task) && WorkflowUtil.isActiveResponsible(task))) {
+                emptyTaskIndexes.add(index);
+            }
+            index++;
+        }
+        Collections.reverse(emptyTaskIndexes);
+        for (int taskIndex : emptyTaskIndexes) {
+            workflow.removeTask(taskIndex);
+        }
+    }
+
+    public static boolean isGeneratedByDelegation(BaseWorkflowObject workflowObject) {
+        return Boolean.TRUE.equals(workflowObject.getNode().getProperties().get(TMP_ADDED_BY_DELEGATION.toString()));
+    }
+
+    public static void markAsGeneratedByDelegation(BaseWorkflowObject workflowObject) {
+        workflowObject.getNode().getProperties().put(TMP_ADDED_BY_DELEGATION.toString(), Boolean.TRUE);
+    }
+
 }

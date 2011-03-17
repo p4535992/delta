@@ -20,6 +20,7 @@ public interface AdrModel {
     }
 
     public interface Props {
+        QName NODEREF = QName.createQName(URI, "nodeRef");
         QName REG_NUMBER = QName.createQName(URI, "regNumber");
         QName REG_DATE_TIME = QName.createQName(URI, "regDateTime");
         QName DELETED_DATE_TIME = QName.createQName(URI, "deletedDateTime");

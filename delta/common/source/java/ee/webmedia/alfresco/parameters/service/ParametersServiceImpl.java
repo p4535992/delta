@@ -147,7 +147,7 @@ public class ParametersServiceImpl implements ParametersService {
     }
 
     @Override
-    public void updateParameters(Collection<Parameter<?>> parameters) {
+    public void updateParameters(Collection<Parameter<? extends Serializable>> parameters) {
         for (Parameter<?> parameter : parameters) {
             updateParameter(parameter);
         }

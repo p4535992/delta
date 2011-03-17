@@ -1,11 +1,14 @@
 package ee.webmedia.alfresco.dvk.service;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
-import ee.webmedia.alfresco.dvk.model.DvkSendDocuments;
+import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
+import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
+import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 
 /**
@@ -21,9 +24,9 @@ public interface DvkService {
 
     void updateOrganizationList();
 
-    int updateDocSendStatuses();
+    int updateDocAndTaskSendStatuses();
 
-    String sendDocuments(NodeRef document, Collection<ContentToSend> contentsToSend, DvkSendDocuments sendDocument);
+    String sendLetterDocuments(NodeRef document, Collection<ContentToSend> contentsToSend, DvkSendLetterDocuments sendDocument);
 
     /**
      * Receive all documents from DVK server(using multiple service calls, if server has more documents than can be fetched at a time)
@@ -37,5 +40,16 @@ public interface DvkService {
     int updateOrganizationsDvkCapability();
 
     String getCorruptDvkDocumentsPath();
+
+    /**
+     * @param docNodeRef document to send
+     * @param compoundWorkflowRef if not null, only this compund workflow recipients are sent updates, 
+     * otherwise all document's compound workflows recipients are sent updates
+     */
+    void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients);
+
+    void sendDvkTask(Task task);
+    
+    String getInstitutionCode();
 
 }

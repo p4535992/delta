@@ -25,5 +25,7 @@ public class UserWorkingDocumentsSearchResultsDialog extends BaseDocumentListDia
     @Override
     public void restored() {
         documents = getDocumentSearchService().searchUserWorkingDocuments();
+        // CL_TASK 152338
+        // documents = getDocumentSearchService().searchInProcessUserDocuments();
     }
 }

@@ -18,6 +18,7 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
     private static final long serialVersionUID = 1L;
 
     private String valueName;
+    private String classificatorDescription;
     private int order;
     private boolean byDefault;
     private boolean readOnly;
@@ -215,6 +216,14 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
             return 1;
         }
         return 0;
+    }
+
+    public void setClassificatorDescription(String classificatorDescription) {
+        this.classificatorDescription = classificatorDescription;
+    }
+
+    public String getClassificatorDescription() {
+        return classificatorDescription;
     }
 
 }

@@ -31,11 +31,11 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.ocr.model.OcrModel;
+import ee.webmedia.alfresco.ocr.ws.Ocr;
+import ee.webmedia.alfresco.ocr.ws.OcrInput;
+import ee.webmedia.alfresco.ocr.ws.OcrOutput;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ContentReaderDataSource;
-import ee.webmedia.ocr.Ocr;
-import ee.webmedia.ocr.OcrInput;
-import ee.webmedia.ocr.OcrOutput;
 
 public class OcrServiceImpl implements OcrService, InitializingBean {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(OcrServiceImpl.class);
@@ -62,7 +62,7 @@ public class OcrServiceImpl implements OcrService, InitializingBean {
         if (log.isDebugEnabled()) {
             log.debug("Initializing Ocr service port");
         }
-        Ocr port = (new ee.webmedia.ocr.OcrService()).getOcrPort();
+        Ocr port = (new ee.webmedia.alfresco.ocr.ws.OcrService()).getOcrPort();
         BindingProvider bp = (BindingProvider) port;
         bp.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointAddress);
 

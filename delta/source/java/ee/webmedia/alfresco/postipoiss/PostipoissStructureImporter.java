@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.postipoiss;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -19,14 +20,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.Set;
-import java.util.Map.Entry;
 
+import org.alfresco.model.ContentModel;
+import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.GUID;
 import org.alfresco.web.bean.repository.Node;
@@ -37,17 +41,19 @@ import org.apache.commons.lang.time.DateUtils;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
+import de.schlichtherle.io.FileInputStream;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Assocs;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
-import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
+import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.classificator.enums.SeriesType;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
-import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
@@ -68,24 +74,63 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
  * @author Aleksei Lissitsin
  */
 public class PostipoissStructureImporter {
+
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PostipoissStructureImporter.class);
 
     private static final String CONTACT_GROUPS_FILENAME = "kontakt_grupid.csv";
     private static final String CONTACTS_FILENAME = "kontaktid.csv";
     private static final String CONTACTS_IN_GROUPS_FILENAME = "kontakti_kuulumine_gruppi.csv";
+    private static final String FUNCTIONS_FILENAME = "struktuur.csv";
     private static final String VOLUMES_FILENAME = "toimikud.csv";
     private static final String COMPLETED_VOLUMES_FILENAME = "completed_toimikud.csv";
     private static final String ATTR_MULTIPLE_YEARS = "mitu asjaajamisaastat";
     private static final String ATTR_SINGLE_YEAR = "üks asjaajamisaasta";
 
+    final private static String REGISTER_NAME = "vana_register";
+
     private static final String INPUT_ENCODING = "ISO-8859-1";
     private static final String OUTPUT_ENCODING = "UTF-8";
     private static final char OUTPUT_SEPARATOR = ';';
+    private static final String CREATOR_MODIFIER = "DELTA";
 
     private Map<String, NodeRef> contactCache = new LinkedHashMap<String, NodeRef>();
     private Map<String, NodeRef> contactGroupCache = new LinkedHashMap<String, NodeRef>();
 
     private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+
+    // ========= THINGS YOU MAY WANT TO CHANE =========
+
+    private static final QName SERIES_DEFAULT_DOC_TYPE = DocumentSubtypeModel.Types.OTHER_DOCUMENT_MV;
+
+    private static boolean isSeriesOpen(Toimik t) {
+        return false;
+    }
+
+    private static boolean isVolumeOpen(Toimik t) {
+        return t.year() == 2010;
+    }
+
+    private static Date endOfArchive;
+    static {
+        try {
+            endOfArchive = dateFormat.parse("01.01.2010");
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static boolean isArchived(int year, Date validTo) {
+        if (year < 2009)
+            return true;
+        if (year == 2009) {
+            if (validTo != null && validTo.before(endOfArchive)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // ================================================
 
     private AddressbookService addressbookService;
     private FunctionsService functionsService;
@@ -97,13 +142,14 @@ public class PostipoissStructureImporter {
     private GeneralService generalService;
     private NodeService nodeService;
     private CaseService caseService;
+    private BehaviourFilter behaviourFilter;
     private String inputFolderPath;
 
     private StoreRef archivalStore;
     private NodeRef archivalRoot;
 
     private boolean started = false;
-    private List<QName> allDocumentTypes;
+    // private List<QName> allDocumentTypes;
 
     private boolean enabled;
 
@@ -116,13 +162,15 @@ public class PostipoissStructureImporter {
             if (!enabled) {
                 return;
             }
-            List<DocumentType> dts = documentTypeService.getAllDocumentTypes();
-            allDocumentTypes = new ArrayList<QName>();
-            for (DocumentType dt : dts) {
-                allDocumentTypes.add(dt.getId());
-            }
 
-            log.info("Import is starting to run");
+
+//            List<DocumentType> dts = documentTypeService.getAllDocumentTypes();
+//            allDocumentTypes = new ArrayList<QName>();
+//            for (DocumentType dt : dts) {
+//                allDocumentTypes.add(dt.getId());
+//            }
+
+            log.info("Structure import is starting to run");
 
             RetryingTransactionHelper helper = getTransactionHelper();
 
@@ -134,18 +182,27 @@ public class PostipoissStructureImporter {
                 }
             });
 
-            initialize();
-            readFunks();
-            createSeries();
-            writeToimikud();
-            log.info("Structure import is COMPLETED.");
+            helper.doInTransaction(new RetryingTransactionCallback<Object>() {
+                @Override
+                public Object execute() throws Throwable {
+                    behaviourFilter.disableBehaviour(ContentModel.ASPECT_AUDITABLE);
+                    initialize();
+                    readFunks();
+                    createSeries();
+                    writeToimikud();
+                    log.info("Structure import is COMPLETED");
+                    return null;
+                }
+            });
+        } catch (Exception e) {
+            log.error("IMPORT FAILED: STRUCTURE IMPORT FAILED", e);
+            throw e;
         } finally {
             reset();
             started = false;
         }
     }
 
-    final private static String REGISTER_NAME = "vana_register";
     private Integer registerId;
 
     private int getRegisterId() {
@@ -158,7 +215,7 @@ public class PostipoissStructureImporter {
             }
             if (registerId == null) {
                 Node register = registerService.createRegister();
-                register.getProperties().put(RegisterModel.Prop.NAME.toString(), "vana_register");
+                register.getProperties().put(RegisterModel.Prop.NAME.toString(), REGISTER_NAME);
                 registerService.updateProperties(register);
                 registerId = (Integer) register.getProperties().get(RegisterModel.Prop.ID.toString());
             }
@@ -170,9 +227,14 @@ public class PostipoissStructureImporter {
     // CONTACTS
     // /////////////////////////////////////////////////////////////////////////
     protected void createContacts() throws Exception {
-        final String contactFilePath = inputFolderPath + "/" + CONTACTS_FILENAME;
-        log.info("Reading Postipoiss contacts file '" + contactFilePath + "' with encoding " + INPUT_ENCODING);
-        CsvReader contactReader = new CsvReader(contactFilePath, ';', Charset.forName(INPUT_ENCODING));
+        File contactFile = new File(inputFolderPath, CONTACTS_FILENAME);
+        if (!contactFile.exists()) {
+            log.info("Contacts file '" + contactFile + "' does not exist, skipping contacts and contact groups import");
+            return;
+        }
+
+        log.info("Reading Postipoiss contacts file '" + contactFile + "' with encoding " + INPUT_ENCODING);
+        CsvReader contactReader = new CsvReader(new FileInputStream(contactFile), ';', Charset.forName(INPUT_ENCODING));
 
         try {
             while (contactReader.readRecord()) {
@@ -180,7 +242,7 @@ public class PostipoissStructureImporter {
                     createContact(contactReader);
                 } catch (Exception e) {
                     throw new RuntimeException("Error while importing contact from row index " + contactReader.getCurrentRecord() + " in file "
-                            + contactFilePath, e);
+                            + contactFile, e);
                 }
             }
         } finally {
@@ -340,14 +402,14 @@ public class PostipoissStructureImporter {
     // /////////////////////////////////////////////////////////////////////////
     private Map<String, NodeRef> functions = new HashMap<String, NodeRef>();
     private Map<String, NodeRef> archivedFunctions = new HashMap<String, NodeRef>();
-    private Map<Integer, Map<String, Toimik>> toimikMap = new HashMap<Integer, Map<String, Toimik>>();
 
-    private Map<String, Volume> preenteredVolumes = new HashMap<String, Volume>();
-    private Map<String, Case> preenteredCases = new HashMap<String, Case>();
+    // private Map<Integer, Map<String, Toimik>> toimikMap = new HashMap<Integer, Map<String, Toimik>>();
+    // private Map<String, Volume> preenteredVolumes = new HashMap<String, Volume>();
+    // private Map<String, Case> preenteredCases = new HashMap<String, Case>();
 
     private void initialize() {
         reset();
-        loadPreenteredVolumes();
+        // loadPreenteredVolumes();
     }
 
     private void reset() {
@@ -356,43 +418,43 @@ public class PostipoissStructureImporter {
         archivedFunctions = new HashMap<String, NodeRef>();
         seriesByIndex = new HashMap<String, Map<String, NodeRef>>();
         archivedSeriesByIndex = new HashMap<String, Map<String, NodeRef>>();
-        toimikMap = new HashMap<Integer, Map<String, Toimik>>();
-        preenteredVolumes = new HashMap<String, Volume>();
+        // toimikMap = new HashMap<Integer, Map<String, Toimik>>();
+        // preenteredVolumes = new HashMap<String, Volume>();
     }
 
-    private Date year2010;
-    {
-        try {
-            year2010 = dateFormat.parse("01.01.2010");
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
-    }
+//    private Date year2010;
+//    {
+//        try {
+//            year2010 = dateFormat.parse("01.01.2010");
+//        } catch (ParseException e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
-    private void loadPreenteredVolumes() {
-        List<Function> allFunctions = functionsService.getAllFunctions();
-        for (Function f : allFunctions) {
-            List<Series> allSeries = seriesService.getAllSeriesByFunction(f.getNodeRef());
-            for (Series s : allSeries) {
-                List<Volume> vols = volumeService.getAllVolumesBySeries(s.getNode().getNodeRef());
-                for (Volume v : vols) {
-                    if (StringUtils.isNotEmpty(v.getVolumeMark()) && v.getValidFrom() != null && !v.getValidFrom().before(year2010)) {
-                        if (v.isContainsCases()) {
-                            List<Case> casesByVolume = caseService.getAllCasesByVolume(v.getNode().getNodeRef());
-                            for (Case asi : casesByVolume) {
-                                String title = asi.getTitle();
-                                if (StringUtils.isNotBlank(title)) {
-                                    title = title.trim();
-                                    preenteredCases.put(title, asi);
-                                }
-                            }
-                        }
-                        preenteredVolumes.put(v.getVolumeMark(), v);
-                    }
-                }
-            }
-        }
-    }
+//    private void loadPreenteredVolumes() {
+//        List<Function> allFunctions = functionsService.getAllFunctions();
+//        for (Function f : allFunctions) {
+//            List<Series> allSeries = seriesService.getAllSeriesByFunction(f.getNodeRef());
+//            for (Series s : allSeries) {
+//                List<Volume> vols = volumeService.getAllVolumesBySeries(s.getNode().getNodeRef());
+//                for (Volume v : vols) {
+//                    if (StringUtils.isNotEmpty(v.getVolumeMark()) && v.getValidFrom() != null && !v.getValidFrom().before(year2010)) {
+//                        if (v.isContainsCases()) {
+//                            List<Case> casesByVolume = caseService.getAllCasesByVolume(v.getNode().getNodeRef());
+//                            for (Case asi : casesByVolume) {
+//                                String title = asi.getTitle();
+//                                if (StringUtils.isNotBlank(title)) {
+//                                    title = title.trim();
+//                                    preenteredCases.put(title, asi);
+//                                }
+//                            }
+//                        }
+//                        preenteredVolumes.put(v.getVolumeMark(), v);
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     private Map<String, Funk> funks = new HashMap<String, Funk>();
 
@@ -417,7 +479,7 @@ public class PostipoissStructureImporter {
     }
 
     private void readFunks() throws Exception {
-        final String inputFilePath = inputFolderPath + "/struktuur.csv";
+        final String inputFilePath = inputFolderPath + "/" + FUNCTIONS_FILENAME;
         log.info("Reading Postipoiss functions file '" + inputFilePath + "' with encoding " + INPUT_ENCODING);
         CsvReader reader = new CsvReader(inputFilePath, ';', Charset.forName(INPUT_ENCODING));
         try {
@@ -459,7 +521,7 @@ public class PostipoissStructureImporter {
     }
 
     private NodeRef createFunction(Funk funk) {
-        String trimmedTitle = trimPostipoissFunctionName(funk.title);
+        String trimmedTitle = funk.title; // A specific logic for SIM: trimPostipoissFunctionName(funk.title)
         String ppMark = getPostipoissMark(trimmedTitle);
         trimmedTitle = trimmedTitle.substring(ppMark.length());
         trimmedTitle = trimmedTitle.trim();
@@ -473,6 +535,8 @@ public class PostipoissStructureImporter {
         props.put(FunctionsModel.Props.MARK.toString(), ppMark);
         props.put(FunctionsModel.Props.ORDER.toString(), funk.order);
         props.put(FunctionsModel.Props.STATUS.toString(), DocListUnitStatus.CLOSED.getValueName());
+        props.put(ContentModel.PROP_CREATOR.toString(), CREATOR_MODIFIER);
+        props.put(ContentModel.PROP_MODIFIER.toString(), CREATOR_MODIFIER);
         functionsService.saveOrUpdate(function);
 
         log.info(function.getNodeRef());
@@ -482,8 +546,13 @@ public class PostipoissStructureImporter {
     }
 
     private NodeRef archiveFunction(NodeRef function) {
-        return nodeService.moveNode(function, getArchivalRoot(),
+        NodeRef changedNodeRef = nodeService.moveNode(function, getArchivalRoot(),
                 FunctionsModel.Associations.FUNCTION, FunctionsModel.Associations.FUNCTION).getChildRef();
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
+        props.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
+        nodeService.addProperties(changedNodeRef, props);
+        return changedNodeRef;
     }
 
     private NodeRef getArchivalRoot() {
@@ -497,60 +566,60 @@ public class PostipoissStructureImporter {
     // SERIES/VOLUMES
     // /////////////////////////////////////////////////////////////////////////
 
-    private NodeRef createNewCase(Volume v) {
-        Case asi = caseService.createCase(v.getNode().getNodeRef());
-        asi.setTitle(v.getTitle());
-        caseService.saveOrUpdate(asi, false);
-        return asi.getNode().getNodeRef();
-    }
+//    private NodeRef createNewCase(Volume v) {
+//        Case asi = caseService.createCase(v.getNode().getNodeRef());
+//        asi.setTitle(v.getTitle());
+//        caseService.saveOrUpdate(asi, false);
+//        return asi.getNode().getNodeRef();
+//    }
 
-    private Toimik create2010Toimik(Toimik t) {
-        Volume v = preenteredVolumes.get(t.volumeMarkNormed);
-        if (v != null) {
-            NodeRef nodeRef = v.getNode().getNodeRef();
-            if (v.isContainsCases()) {
-                nodeRef = createNewCase(v);
-            }
-            t.nodeRef = nodeRef;
-            putToimik(t);
-            return t;
-        } else {
-            for (Entry<String, Case> entry : preenteredCases.entrySet()) {
-                if (entry.getKey().startsWith(t.volumeMarkNormed)) {
-                    t.nodeRef = entry.getValue().getNode().getNodeRef();
-                    putToimik(t);
-                    return t;
-                }
-            }
-        }
-        return null;
-    }
+//    private Toimik create2010Toimik(Toimik t) {
+//        Volume v = preenteredVolumes.get(t.volumeMarkNormed);
+//        if (v != null) {
+//            NodeRef nodeRef = v.getNode().getNodeRef();
+//            if (v.isContainsCases()) {
+//                nodeRef = createNewCase(v);
+//            }
+//            t.nodeRef = nodeRef;
+//            putToimik(t);
+//            return t;
+//        } else {
+//            for (Entry<String, Case> entry : preenteredCases.entrySet()) {
+//                if (entry.getKey().startsWith(t.volumeMarkNormed)) {
+//                    t.nodeRef = entry.getValue().getNode().getNodeRef();
+//                    putToimik(t);
+//                    return t;
+//                }
+//            }
+//        }
+//        return null;
+//    }
 
-    private Toimik getToimik(Toimik t) {
-        Toimik r = findToimik(t);
-        if (r == null && t.year() == 2010) {
-            r = create2010Toimik(t);
-        }
-        return r;
-    }
+//    private Toimik getToimik(Toimik t) {
+//        Toimik r = findToimik(t);
+//        if (r == null && isSeriesOpen(t)) {
+//            r = create2010Toimik(t);
+//        }
+//        return r;
+//    }
 
-    private Toimik findToimik(Toimik t) {
-        Map<String, Toimik> map = toimikMap.get(t.year());
-        if (map == null) {
-            return null;
-        }
+//    private Toimik findToimik(Toimik t) {
+//        Map<String, Toimik> map = toimikMap.get(t.year());
+//        if (map == null) {
+//            return null;
+//        }
+//
+//        return map.get(t.volumeMarkNormed);
+//    }
 
-        return map.get(t.volumeMarkNormed);
-    }
-
-    private void putToimik(Toimik t) {
-        Map<String, Toimik> map = toimikMap.get(t.year());
-        if (map == null) {
-            map = new HashMap<String, Toimik>();
-            toimikMap.put(t.year(), map);
-        }
-        map.put(t.volumeMarkNormed, t);
-    }
+//    private void putToimik(Toimik t) {
+//        Map<String, Toimik> map = toimikMap.get(t.year());
+//        if (map == null) {
+//            map = new HashMap<String, Toimik>();
+//            toimikMap.put(t.year(), map);
+//        }
+//        map.put(t.volumeMarkNormed, t);
+//    }
 
     static class Toimik implements Comparable<Toimik> {
         String rowId;
@@ -565,6 +634,8 @@ public class PostipoissStructureImporter {
         Date validFrom;
         Date validTo;
         int bestBefore;
+        String seriesAccessRestriction;
+        String seriesAccessRestrictionReason;
         private int year = 0;
         boolean archived = false;
 
@@ -586,8 +657,10 @@ public class PostipoissStructureImporter {
             validFrom = parseDate(r.get(9));
             validTo = parseDate(r.get(10));
             bestBefore = toBestBefore(r.get(11));
+            seriesAccessRestriction = r.get(12);
+            seriesAccessRestrictionReason = r.get(13);
 
-            archived = isArchived();
+            archived = isArchived(year(), validTo);
             prepareOrderArray();
         }
 
@@ -605,31 +678,12 @@ public class PostipoissStructureImporter {
             names.add(name);
         }
 
-        private static Date endOfArchive;
-        static {
-            try {
-                endOfArchive = dateFormat.parse("31.12.2007");
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-        }
-
-        private boolean isArchived() {
-            if (year() < 2007)
-                return true;
-            if (year() == 2007) {
-                if (validTo != null && validTo.before(endOfArchive)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
         @Override
         public String toString() {
             return "Toimik [rowId=" + rowId + ", functionId=" + functionId + ", seriesIndex=" + seriesIndex + ", seriesTitle="
                     + seriesTitle + ", volumeMarkNormed=" + volumeMarkNormed + ", volumeTitleNormed=" + volumeTitleNormed + ", validFrom=" + validFrom
-                    + ", volumeType=" + volumeType.getValueName() + ", validTo=" + validTo + ", bestBefore=" + bestBefore + "]";
+                    + ", volumeType=" + volumeType.getValueName() + ", validTo=" + validTo + ", bestBefore=" + bestBefore + ", seriesAccessRestriction="
+                    + seriesAccessRestriction + ", seriesAccessRestrictionReason=" + seriesAccessRestrictionReason + "]";
         }
 
         private Integer[] orderArray;
@@ -728,11 +782,11 @@ public class PostipoissStructureImporter {
     private List<Toimik> toimikud = new ArrayList<Toimik>(6000);
 
     private void importToimik(Toimik t) {
-        Toimik theOtherOne = getToimik(t);
-        if (theOtherOne != null) {
-            theOtherOne.add(t.volumeMark);
-            return;
-        }
+//        Toimik theOtherOne = getToimik(t);
+//        if (theOtherOne != null) {
+//            theOtherOne.add(t.volumeMark);
+//            return;
+//        }
 
         NodeRef series = getSeries(t);
 
@@ -754,16 +808,14 @@ public class PostipoissStructureImporter {
         volume.setVolumeMark(t.volumeMarkNormed);
         volume.setTitle(t.volumeTitleNormed);
         volume.setVolumeType(t.volumeType.getValueName());
-        if (t.year() != 2010) {
-            volume.setContainsCases(false);
-        }
+        // A specific logic for SIM
+        // if (t.year() != 2010) {
+        // volume.setContainsCases(false);
+        // }
 
         volume.setValidFrom(t.validFrom);
         volume.setValidTo(t.validTo);
-
-        if (t.year() != 2010) {
-            volume.setStatus(DocListUnitStatus.CLOSED.getValueName());
-        }
+        volume.setStatus(isVolumeOpen(t) ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
 
         if (t.validTo != null) {
             volume.setDispositionDate(DateUtils.addYears(t.validTo, t.bestBefore));
@@ -771,13 +823,20 @@ public class PostipoissStructureImporter {
 
         volumeService.saveOrUpdate(volume, false);
         t.nodeRef = volume.getNode().getNodeRef();
-        putToimik(t);
+
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
+        props.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
+        nodeService.addProperties(t.nodeRef, props);
+
+        // putToimik(t);
         t.add(t.volumeMark);
     }
 
-    private int getStructUnit() {
-        return 20201;
-    }
+    // A specific logic for SIM
+    // private int getStructUnit() {
+    // return 20201;
+    // }
 
     private boolean sameOrderExists(int order, NodeRef fRef) {
         for (Series s : seriesService.getAllSeriesByFunction(fRef)) {
@@ -798,12 +857,12 @@ public class PostipoissStructureImporter {
         }
         Series series = seriesService.createSeries(fRef);
         Map<String, Object> props = series.getNode().getProperties();
-        props.put(SeriesModel.Props.TYPE.toString(), toSeriesType(t));
+        props.put(SeriesModel.Props.TYPE.toString(), SeriesType.SERIES.getValueName() /*toSeriesType(t)*/);
         props.put(SeriesModel.Props.SERIES_IDENTIFIER.toString(), t.seriesIndex);
         props.put(SeriesModel.Props.TITLE.toString(), t.seriesTitle);
-        props.put(SeriesModel.Props.STATUS.toString(), t.year() == 2010 ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
+        props.put(SeriesModel.Props.STATUS.toString(), isSeriesOpen(t) ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
         props.put(SeriesModel.Props.RETENTION_PERIOD.toString(), t.bestBefore);
-        props.put(SeriesModel.Props.DOC_TYPE.toString(), DocumentSubtypeModel.Types.MEMO);
+        props.put(SeriesModel.Props.DOC_TYPE.toString(), SERIES_DEFAULT_DOC_TYPE);
         try {
             int order = PostipoissUtil.inferLastNumber(t.seriesIndex);
             // If condition fails, the original order should be ok for insertion
@@ -813,26 +872,49 @@ public class PostipoissStructureImporter {
         } catch (Exception e) {
         }
         props.put(SeriesModel.Props.REGISTER.toString(), getRegisterId());
-
-        if (t.year() != 2010) {
-            props.put(SeriesModel.Props.STRUCT_UNIT.toString(), getStructUnit());
-            props.put(SeriesModel.Props.INDIVIDUALIZING_NUMBERS.toString(), false);
+        // Default access restriction value is OPEN
+        props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString(), AccessRestriction.OPEN.getValueName());
+        if (StringUtils.isNotEmpty(t.seriesAccessRestriction)) {
+            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString(), t.seriesAccessRestriction);
         }
+        if (StringUtils.isNotEmpty(t.seriesAccessRestrictionReason)) {
+            props.put(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString(), t.seriesAccessRestrictionReason);
+        }
+        props.put(ContentModel.PROP_CREATOR.toString(), CREATOR_MODIFIER);
+        props.put(ContentModel.PROP_MODIFIER.toString(), CREATOR_MODIFIER);
+
+        // A specific logic for SIM
+        // if (t.year() != 2010) {
+        // props.put(SeriesModel.Props.STRUCT_UNIT.toString(), getStructUnit());
+        // props.put(SeriesModel.Props.INDIVIDUALIZING_NUMBERS.toString(), false);
+        // }
 
         // We check order ourselves above
         seriesService.saveOrUpdateWithoutReorder(series);
-        return series.getNode().getNodeRef();
+        
+        NodeRef seriesRef = series.getNode().getNodeRef();
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(seriesRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES_LOG);
+        for (ChildAssociationRef childRef : childAssocs) {
+            Map<QName, Serializable> childProps = new HashMap<QName, Serializable>();
+            childProps.put(DocumentCommonModel.Props.CREATOR_NAME, CREATOR_MODIFIER);
+            childProps.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
+            childProps.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
+            nodeService.addProperties(childRef.getChildRef(), childProps);
+        }
+        
+        return seriesRef;
     }
 
-    private String toSeriesType(Toimik t) {
-        if ("11302".equals(t.functionId)) {
-            int year = t.year();
-            if ((year == 2007) || (year == 2008) || (year == 2009)) {
-                return VolumeType.OBJECT.getValueName();
-            }
-        }
-        return VolumeType.YEAR_BASED.getValueName();
-    }
+    // A specific logic for SIM
+    // private String toSeriesType(Toimik t) {
+    // if ("11302".equals(t.functionId)) {
+    // int year = t.year();
+    // if ((year == 2007) || (year == 2008) || (year == 2009)) {
+    // return VolumeType.OBJECT.getValueName();
+    // }
+    // }
+    // return VolumeType.YEAR_BASED.getValueName();
+    // }
 
     private void createSeries() throws Exception {
         final String inputFilePath = inputFolderPath + "/" + VOLUMES_FILENAME;
@@ -956,20 +1038,21 @@ public class PostipoissStructureImporter {
         return "";
     }
 
-    private static String trimPostipoissFunctionName(String name) {
-        String result = name;
-        String validityPrefix = "Kehtib kuni 01.01.2010";
-        String endedPartialPrefix = "PETATUD";
-        if (name.startsWith(validityPrefix)) { // is PP 'function' that was open until 2010
-            result = name.substring(validityPrefix.length());
-            result = result.trim();
-        }
-        if (name.substring(2).startsWith(endedPartialPrefix)) { // if is ended PP 'function'
-            result = name.substring(endedPartialPrefix.length() + 2);
-            result = result.trim();
-        }
-        return result;
-    }
+    // A specific logic for SIM
+//    private static String trimPostipoissFunctionName(String name) {
+//        String result = name;
+//        String validityPrefix = "Kehtib kuni 01.01.2010";
+//        String endedPartialPrefix = "PETATUD";
+//        if (name.startsWith(validityPrefix)) { // is PP 'function' that was open until 2010
+//            result = name.substring(validityPrefix.length());
+//            result = result.trim();
+//        }
+//        if (name.substring(2).startsWith(endedPartialPrefix)) { // if is ended PP 'function'
+//            result = name.substring(endedPartialPrefix.length() + 2);
+//            result = result.trim();
+//        }
+//        return result;
+//    }
 
     private static void logAllCreation(String s, NodeRef node) {
         if (node == null) {
@@ -1049,6 +1132,10 @@ public class PostipoissStructureImporter {
 
     public void setCaseService(CaseService caseService) {
         this.caseService = caseService;
+    }
+
+    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
+        this.behaviourFilter = behaviourFilter;
     }
 
     // CONFIGURATION INFORMATION

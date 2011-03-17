@@ -26,6 +26,7 @@ import ee.webmedia.alfresco.menu.service.MenuService.MenuItemFilter;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 public class MenuRenderer extends BaseRenderer {
 
@@ -35,6 +36,7 @@ public class MenuRenderer extends BaseRenderer {
     public static final String PRIMARY_MENU_PREFIX = "pm";
 
     private UserService userService;
+    private WorkflowService workflowService;
     private MenuService menuService;
 
     @Override
@@ -184,7 +186,7 @@ public class MenuRenderer extends BaseRenderer {
             int i = 0;
             String id = SECONDARY_MENU_PREFIX;
             for (MenuItem item : menuItems) {
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService());
                 if (menuItem != null) {
                     children.add(menuItem);
                     i++;
@@ -219,7 +221,7 @@ public class MenuRenderer extends BaseRenderer {
         Map<String, MenuItemFilter> menuItemFilters = getMenuService().getMenuItemFilters();
         for (MenuItem item : menuItems) {
             if (activeItemid.equals(Integer.toString(i))) {
-                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), false);
+                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), getWorkflowService(), false);
                 if (menuItem != null)
                     children.add(menuItem);
             } else if (item instanceof DropdownMenuItem) { // Only the drop-down item in primary menu needs the DocumentTypeService
@@ -234,11 +236,11 @@ public class MenuRenderer extends BaseRenderer {
                     filter = null; // reset for next cycle
                 }
 
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService());
                 if (menuItem != null)
                     children.add(removeTooltipRecursive(menuItem));
             } else {
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService());
                 if (menuItem != null)
                     children.add(menuItem);
             }
@@ -290,6 +292,14 @@ public class MenuRenderer extends BaseRenderer {
         }
         return userService;
     }
+    
+    protected WorkflowService getWorkflowService() {
+        if (workflowService == null) {
+            workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(WorkflowService.BEAN_NAME);
+        }
+        return workflowService;
+    }    
 
     protected MenuService getMenuService() {
         if (menuService == null) {

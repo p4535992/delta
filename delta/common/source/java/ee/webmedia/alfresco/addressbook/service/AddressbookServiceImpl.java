@@ -216,29 +216,48 @@ public class AddressbookServiceImpl implements AddressbookService {
 
     @Override
     public List<Node> search(String searchCriteria) {
-        return executeSearch(searchCriteria, searchFields);
+        return executeSearch(searchCriteria, searchFields, false, false, null);
     }
 
     @Override
     public List<Node> searchContactGroups(String searchCriteria) {
-        return executeSearch(searchCriteria, contactGroupSearchFields);
+        return executeSearch(searchCriteria, contactGroupSearchFields, false, false, null);
+    }    
+    
+    @Override
+    public List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, String institutionToRemove) {
+        return executeSearch(searchCriteria, searchFields, true, orgOnly, institutionToRemove);
+    }    
+
+    @Override
+    public List<Node> searchTaskCapableContactGroups(String searchCriteria, boolean orgOnly, String institutionToRemove) {
+        return executeSearch(searchCriteria, contactGroupSearchFields, true, orgOnly, institutionToRemove);
     }
 
-    private List<Node> executeSearch(String searchCriteria, Set<QName> fields) {
+    private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean orgOnly, String institutionToRemove) {
         List<NodeRef> nodeRefs = null;
         final ResultSet searchResult;
-        if (StringUtils.isNotBlank(searchCriteria)) {
+        if (StringUtils.isNotBlank(searchCriteria) || ((taskCapableOnly || orgOnly) && fields == searchFields)) {
 
             StringBuilder query = new StringBuilder();
-            for (StringTokenizer t = new StringTokenizer(searchCriteria.trim(), " "); t.hasMoreTokens(); /**/) {
-                String term = QueryParser.escape(t.nextToken());
-                for (QName field : fields) {
-                    String fieldPrefixed = field.toPrefixString(namespaceService);
-                    String fieldEscaped = StringUtils.replace(fieldPrefixed, "" + QName.NAMESPACE_PREFIX, "\\" + QName.NAMESPACE_PREFIX);
-                    query.append("@").append(fieldEscaped).append(":\"*").append(term).append("*\" ");
+            if(searchCriteria != null){
+                for (StringTokenizer t = new StringTokenizer(searchCriteria.trim(), " "); t.hasMoreTokens(); /**/) {
+                    String term = QueryParser.escape(t.nextToken());
+                    for (QName field : fields) {
+                        String fieldPrefixed = field.toPrefixString(namespaceService);
+                        String fieldEscaped = StringUtils.replace(fieldPrefixed, "" + QName.NAMESPACE_PREFIX, "\\" + QName.NAMESPACE_PREFIX);
+                        query.append("@").append(fieldEscaped).append(":\"*").append(term).append("*\" ");
+                    }
                 }
             }
-            searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, query.toString());
+            if(taskCapableOnly && fields == searchFields){
+                addTaskCapableCondition(query);
+            }
+            String queryString = query.toString();
+            if(orgOnly && fields == searchFields){
+                queryString = SearchUtil.joinQueryPartsAnd(Arrays.asList(queryString, SearchUtil.generateAspectQuery(AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)));
+            }            
+            searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, queryString);
         } else {
             if (fields == contactGroupSearchFields) {
                 // get all contact groups under addressBook
@@ -271,10 +290,53 @@ public class AddressbookServiceImpl implements AddressbookService {
         // nodeRefs shouldn't be null here as it is initialized based on searchResult when searching
         // or directly set in when getting all contact groups under addressBook
         List<Node> result = new ArrayList<Node>(nodeRefs.size());
-        for (NodeRef nodeRef : nodeRefs) {
-            result.add(getNode(nodeRef));
-        }
+        boolean filterContactGroups = (taskCapableOnly || orgOnly) && fields == contactGroupSearchFields;
+        filterAndAddResults(nodeRefs, result, filterContactGroups, orgOnly, institutionToRemove);
         return result;
+    }
+
+    public void addTaskCapableCondition(StringBuilder query) {
+        if(query.length() > 0){
+            query.insert(0, "(");
+            query.append(") AND "); 
+        }
+        String fieldPrefixed = AddressbookModel.Props.TASK_CAPABLE.toPrefixString(namespaceService);
+        String fieldEscaped = StringUtils.replace(fieldPrefixed, "" + QName.NAMESPACE_PREFIX, "\\" + QName.NAMESPACE_PREFIX);                
+        query.append("@").append(fieldEscaped).append(":true");
+    }
+
+    private void filterAndAddResults(List<NodeRef> nodeRefs, List<Node> result, boolean filterContactGroups, boolean orgOnly, String institutionToRemove) {
+        if (filterContactGroups) {
+            for (NodeRef nodeRef : nodeRefs) {
+                for (Node contact : getContacts(nodeRef)) {
+                    if (Boolean.TRUE.equals(contact.getProperties().get(AddressbookModel.Props.TASK_CAPABLE))) {
+                        if((!orgOnly || contact.getType().equals(AddressbookModel.Types.ORGANIZATION))
+                                && !isInstitution(institutionToRemove, contact)){
+                            result.add(getNode(nodeRef));
+                            break;                            
+                        }
+                    }
+                }
+            }
+        } else {
+            for (NodeRef nodeRef : nodeRefs) {
+                Node contact = getNode(nodeRef);
+                if((!orgOnly || contact.getType().equals(AddressbookModel.Types.ORGANIZATION))
+                        && !isInstitution(institutionToRemove, contact)){
+                    result.add(getNode(nodeRef));                    
+                }
+            }
+        }
+    }
+
+    private boolean isInstitution(String institutionToRemove, Node contact) {
+        if(institutionToRemove == null){
+            return false;
+        }
+        if(!contact.getType().equals(AddressbookModel.Types.ORGANIZATION)){
+            return false;
+        }
+        return institutionToRemove.equalsIgnoreCase((String) nodeService.getProperty(contact.getNodeRef(), AddressbookModel.Props.ORGANIZATION_CODE));
     }
 
     @Override
@@ -354,6 +416,18 @@ public class AddressbookServiceImpl implements AddressbookService {
         return nodeService.getChildAssocs(getRootNodeRef(), RegexQNamePattern.MATCH_ALL, Assocs.ADDRESSBOOK)
                 .get(0).getChildRef();
     }
+    
+    @Override
+    public List<Node> getDvkCapableOrgs() {
+        List<Node> dvkCapableOrgs = new ArrayList<Node>();
+        for (Node organization : listOrganization()) {
+            Object dvkObj = organization.getProperties().get(AddressbookModel.Props.DVK_CAPABLE);
+            if (dvkObj != null && (Boolean) dvkObj) {
+                dvkCapableOrgs.add(organization);
+            }
+        }
+        return dvkCapableOrgs;
+    }    
 
     private List<Node> listNodeChildren(QName type, NodeRef parent) {
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parent);

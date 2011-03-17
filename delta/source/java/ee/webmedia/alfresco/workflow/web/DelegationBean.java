@@ -1,0 +1,484 @@
+package ee.webmedia.alfresco.workflow.web;
+
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isGeneratedByDelegation;
+import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.markAsGeneratedByDelegation;
+import static ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.TASK_INDEX;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+
+import org.alfresco.model.ContentModel;
+import org.alfresco.service.cmr.lock.NodeLockedException;
+import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.cmr.security.AuthorityType;
+import org.alfresco.service.cmr.security.PersonService;
+import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.Repository;
+import org.alfresco.web.ui.common.component.UIActionLink;
+import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.springframework.web.jsf.FacesContextUtils;
+
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.propertysheet.search.Search;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.FeedbackWrapper;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
+import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.AssignmentWorkflow;
+import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
+import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.Task.Action;
+import ee.webmedia.alfresco.workflow.service.Workflow;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
+import ee.webmedia.alfresco.workflow.web.DelegationTaskListGenerator.DelegatableTaskType;
+
+/**
+ * Bean that helps to create controls and manage state related to delegating assignment task
+ * 
+ * @author Ats Uiboupin
+ */
+public class DelegationBean implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DelegationBean.class);
+    public static final String BEAN_NAME = "DelegationBean";
+
+    /** Index of the assignment task, that could be delegated */
+    public static final String ATTRIB_DELEGATABLE_TASK_INDEX = "delegatableTaskIndex";
+
+    /** if this property added to assignmentTask, then web-client will generate responsible assignment task delegation */
+    private static final String TMP_GENERATE_RESPONSIBLE_ASSIGNMENT_TASK_DELEGATION = "{temp}delegateAsResponsibleAssignmentTask";
+    /** if this property added to assignmentTask, then web-client will generate opinion task delegation */
+    private static final String TMP_GENERATE_OPINION_TASK_DELEGATION = "{temp}delegateAsOpinionTask";
+
+    private transient NodeService nodeService;
+    private transient AuthorityService authorityService;
+    private transient PersonService personService;
+    private transient OrganizationStructureService organizationStructureService;
+    private transient WorkflowService workflowService;
+    private WorkflowBlockBean workflowBlockBean;
+    private final List<Task> delegatableTasks = new ArrayList<Task>();
+
+    /**
+     * @param event passed to MethodBinding
+     */
+    public void addDelegationTask(ActionEvent event) {
+        Integer taskIndex = null;
+        if (ActionUtil.hasParam(event, TASK_INDEX)) {
+            taskIndex = Integer.parseInt(ActionUtil.getParam(event, TASK_INDEX));
+        }
+        DelegatableTaskType delegateTaskType = DelegatableTaskType.valueOf(ActionUtil.getParam(event, DelegationTaskListGenerator.ATTRIB_DELEGATE_TASK_TYPE));
+        Workflow workflowForNewTask = getWorkflowByAction(event);
+        addDelegationTask(delegateTaskType, workflowForNewTask, taskIndex);
+        updatePanelGroup();
+    }
+
+    private void addDelegationTask(DelegatableTaskType delegateTaskType, Workflow workflow, Integer taskIndex) {
+        Task task = taskIndex != null ? workflow.addTask(taskIndex) : workflow.addTask();
+        markAsGeneratedByDelegation(task);
+        task.setParallel(true);
+        if (DelegatableTaskType.ASSIGNMENT_RESPONSIBLE.equals(delegateTaskType)) {
+            task.setResponsible(true);
+            task.setActive(true);
+        }
+    }
+
+    private void updatePanelGroup() {
+        workflowBlockBean.constructTaskPanelGroup();
+    }
+
+    public void removeDelegationTask(ActionEvent event) {
+        Workflow workflow = getWorkflowByAction(event);
+        int taskIndex = ActionUtil.getParam(event, TaskListCommentComponent.TASK_INDEX, Integer.class);
+        workflow.removeTask(taskIndex);
+        updatePanelGroup();
+    }
+
+    public void resetDelegationTask(ActionEvent event) {
+        Task task = getTaskByActionParams(event);
+        Map<String, Object> props = task.getNode().getProperties();
+        props.put(WorkflowCommonModel.Props.OWNER_NAME.toString(), null);
+        props.put(WorkflowSpecificModel.Props.RESOLUTION.toString(), null);
+        props.put(WorkflowSpecificModel.Props.DUE_DATE.toString(), null);
+    }
+
+    public int initDelegatableTask(Task assignmentTask) {
+        int delegatableTaskIndex = delegatableTasks.indexOf(assignmentTask);
+        if (delegatableTaskIndex >= 0) {
+            return delegatableTaskIndex; // this method is called also after update, but logic shouldn't execute
+        }
+        delegatableTasks.add(assignmentTask);
+        delegatableTaskIndex = delegatableTasks.size() - 1;
+        AssignmentWorkflow workflow = (AssignmentWorkflow) assignmentTask.getParent();
+        { // by default there should be one empty responsible assignment task and one empty non-responsible assignment task for delegating
+            if (assignmentTask.isResponsible()) {
+                assignmentTask.getNode().getProperties().put(TMP_GENERATE_RESPONSIBLE_ASSIGNMENT_TASK_DELEGATION, Boolean.TRUE);
+                addDelegationTask(DelegatableTaskType.ASSIGNMENT_RESPONSIBLE, workflow, null);
+            } else {
+                addDelegationTask(DelegatableTaskType.ASSIGNMENT_NOT_RESPONSIBLE, workflow, null);
+            }
+        }
+        // create information and opinion workflows under the compoundWorkflow of the assignment task in case user adds corresponding task.
+        // If no tasks are added to following workflow, then that workflows is not saved when saving compound workflow
+        NodeRef docRef = assignmentTask.getParent().getParent().getParent();
+        String docStatus = (String) getNodeService().getProperty(docRef, DocumentCommonModel.Props.DOC_STATUS);
+        if (!DocumentStatus.FINISHED.equals(docStatus)) {
+            Node taskNode = assignmentTask.getNode();
+            taskNode.getProperties().put(TMP_GENERATE_OPINION_TASK_DELEGATION, Boolean.TRUE);
+            getOrCreateWorkflow(workflow, DelegatableTaskType.OPINION);
+        }
+        getOrCreateWorkflow(workflow, DelegatableTaskType.INFORMATION);
+        return delegatableTaskIndex;
+    }
+
+    public void reset() {
+        delegatableTasks.clear();
+    }
+
+    private Workflow getWorkflowByAction(ActionEvent event) {
+        UIComponent component = event.getComponent();
+        DelegatableTaskType dTaskType;
+        AssignmentWorkflow originalTaskWorkflow;
+        if (component instanceof UIActionLink && ActionUtil.hasParam(event, ATTRIB_DELEGATABLE_TASK_INDEX)) {
+            originalTaskWorkflow = getWorkflowByOriginalTask(ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class));
+            dTaskType = DelegatableTaskType.valueOf(ActionUtil.getParam(event, DelegationTaskListGenerator.ATTRIB_DELEGATE_TASK_TYPE));
+        } else { // when component is for example picker
+            Map<String, Object> attributes = ComponentUtil.getAttributes(component);
+            int delegatableTaskIndex = (Integer) attributes.get(ATTRIB_DELEGATABLE_TASK_INDEX);
+            originalTaskWorkflow = getWorkflowByOriginalTask(delegatableTaskIndex);
+            dTaskType = (DelegatableTaskType) attributes.get(DelegationTaskListGenerator.ATTRIB_DELEGATE_TASK_TYPE);
+        }
+        return dTaskType.isAssignmentWorkflow() ? originalTaskWorkflow : getOrCreateWorkflow(originalTaskWorkflow, dTaskType);
+    }
+
+    private Workflow getOrCreateWorkflow(AssignmentWorkflow originalTaskWorkflow, DelegatableTaskType dTaskType) {
+        boolean isInformation = DelegatableTaskType.INFORMATION.equals(dTaskType);
+        if (!isInformation && !DelegatableTaskType.OPINION.equals(dTaskType)) {
+            throw new IllegalStateException("Unknown DelegatableTaskType=" + dTaskType);
+        }
+        CompoundWorkflow compoundWorkflow = originalTaskWorkflow.getParent();
+        QName workflowTypeQName = dTaskType.getWorkflowTypeQName();
+        int lastInprogressWfIndex = 0;
+        int i = 0;
+        for (Workflow otherWorkflow : compoundWorkflow.getWorkflows()) {
+            boolean isGeneratedByDelegation = isGeneratedByDelegation(otherWorkflow);
+            if (isGeneratedByDelegation) {
+                if (workflowTypeQName.equals(otherWorkflow.getType())) {
+                    return otherWorkflow;
+                }
+            }
+            if (WorkflowUtil.isStatus(otherWorkflow, Status.IN_PROGRESS)) {
+                lastInprogressWfIndex = i;
+            }
+            i++;
+        }
+        Workflow newWorkflow = getWorkflowService().addNewWorkflow(compoundWorkflow, workflowTypeQName, lastInprogressWfIndex + 1, false);
+        markAsGeneratedByDelegation(newWorkflow);
+        return newWorkflow;
+    }
+
+    private Task getTaskByActionParams(ActionEvent event) {
+        Workflow workflow = getWorkflowByAction(event);
+        int taskIndex = ActionUtil.getParam(event, TaskListCommentComponent.TASK_INDEX, Integer.class);
+        return workflow.getTasks().get(taskIndex);
+    }
+
+    private AssignmentWorkflow getWorkflowByOriginalTask(int delegatableTaskIndex) {
+        return (AssignmentWorkflow) delegatableTasks.get(delegatableTaskIndex).getParent();
+    }
+
+    /**
+     * If <code>!dTaskType.isAssignmentWorkflow()</code> then result should be equivalent to
+     * <code>getNewWorkflowTasksFetchers().get(delegatableTaskIndex).getNonAssignmentTasksByType().get(dTaskType.name());</code><br>
+     * that is slower, but used for value binding of non-assignment tasks.
+     * 
+     * @param delegatableTaskIndex
+     * @param dTaskType
+     * @return tasks of type <code>dTaskType</code> that should be displayed for delegating when showing assigment task <code>delegatableTaskIndex</code>
+     */
+    public List<Task> getTasks(int delegatableTaskIndex, DelegatableTaskType dTaskType) {
+        Workflow workflow = getWorkflowByOriginalTask(delegatableTaskIndex);
+        List<Task> tasks;
+        if (dTaskType.isAssignmentWorkflow()) {
+            tasks = workflow.getTasks();
+        } else {
+            tasks = getNonAssignmentTasks(dTaskType, workflow.getParent().getWorkflows());
+        }
+        return tasks;
+    }
+
+    /**
+     * Used for JSF binding in {@link DelegationTaskListGenerator#setPickerBindings()}
+     * 
+     * @throws Exception
+     */
+    public void delegate(ActionEvent event) throws Exception {
+        Task originalTask = delegatableTasks.get(ActionUtil.getParam(event, ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class));
+        originalTask.setAction(Action.FINISH);
+        FacesContext context = FacesContext.getCurrentInstance();
+        try {
+            Pair<FeedbackWrapper, CompoundWorkflow> result = getWorkflowService().delegate(originalTask);
+            FeedbackWrapper feedback = result.getFirst();
+            MessageUtil.addStatusMessages(context, feedback);
+            if (!feedback.hasErrors()) {
+                workflowBlockBean.restore();
+                MessageUtil.addInfoMessage("delegated_successfully");
+            }
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(context, e);
+        } catch (NodeLockedException e) {
+            LOG.debug("Compound workflow action failed: document locked!", e);
+            MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_docLocked");
+        } catch (WorkflowChangedException e) {
+            CompoundWorkflowDialog.handleException(e, null);
+        } catch (Exception e) {
+            throw e;
+        }
+    }
+
+    /** Used for JSF binding in {@link DelegationTaskListGenerator#setPickerBindings()} */
+    public void processResponsibleOwnerSearchResults(ActionEvent event) {
+        UIGenericPicker picker = (UIGenericPicker) event.getComponent();
+        int filterIndex = picker.getFilterIndex();
+        if (filterIndex == 1) {
+            filterIndex = 2;
+        }
+        processOwnerSearchResults(event, filterIndex);
+    }
+
+    /** Used for JSF binding in {@link DelegationTaskListGenerator#setPickerBindings()} */
+    public void processOwnerSearchResults(ActionEvent event) {
+        UIGenericPicker picker = (UIGenericPicker) event.getComponent();
+        int filterIndex = picker.getFilterIndex();
+        processOwnerSearchResults(event, filterIndex);
+    }
+
+    /** Used for JSF binding in {@link DelegationTaskListGenerator#createTaskPropValueBinding()} */
+    public List<Task> getDelegatableTasks() {
+        return delegatableTasks;
+    }
+
+    /**
+     * Used for value binding in {@link DelegationTaskListGenerator#createTaskPropValueBinding()} <br>
+     * (key must be Long, as numeric map keys are converted to Long when resolving ValueBinding)
+     */
+    public Map<Long/* delegatableTaskIndex */, NewWorkflowTasksFetcher> getNewWorkflowTasksFetchers() {
+        Map<Long, DelegationBean.NewWorkflowTasksFetcher> wfWrappersByDelegatableTaskIndex = new LinkedHashMap<Long, DelegationBean.NewWorkflowTasksFetcher>();
+        for (long delegatableTaskIndex = 0; delegatableTaskIndex < delegatableTasks.size(); delegatableTaskIndex++) {
+            wfWrappersByDelegatableTaskIndex.put(delegatableTaskIndex, new NewWorkflowTasksFetcher((int) delegatableTaskIndex));
+        }
+        return wfWrappersByDelegatableTaskIndex;
+    }
+
+    public class NewWorkflowTasksFetcher {
+        private final int delegatableTaskIndex;
+
+        public NewWorkflowTasksFetcher(int delegatableTaskIndex) {
+            this.delegatableTaskIndex = delegatableTaskIndex;
+        }
+
+        /**
+         * Used for value binding in {@link DelegationTaskListGenerator#createTaskPropValueBinding()} <br>
+         * (key must be Long, as numeric map keys are converted to Long when resolving ValueBinding)
+         */
+        public Map<String/* delegatableTaskType.name() */, List<Task>> getNonAssignmentTasksByType() {
+            List<Workflow> workflows = getWorkflow().getParent().getWorkflows();
+            HashMap<String, List<Task>> results = new HashMap<String, List<Task>>();
+            results.put(DelegatableTaskType.INFORMATION.name(), getNonAssignmentTasks(DelegatableTaskType.INFORMATION, workflows));
+            results.put(DelegatableTaskType.OPINION.name(), getNonAssignmentTasks(DelegatableTaskType.OPINION, workflows));
+            return results;
+        }
+
+        public Map<String/* delegatableTaskType.name() */, Workflow> getNonAssignmentWorkflowsByType() {
+            List<Workflow> workflows = getWorkflow().getParent().getWorkflows();
+            HashMap<String, Workflow> results = new HashMap<String, Workflow>();
+            for (Workflow otherWorkflow : workflows) {
+                if (isGeneratedByDelegation(otherWorkflow)) {
+                    if (DelegatableTaskType.INFORMATION.getWorkflowTypeQName().equals(otherWorkflow.getType())) {
+                        results.put(DelegatableTaskType.INFORMATION.name(), otherWorkflow);
+                    } else if (DelegatableTaskType.OPINION.getWorkflowTypeQName().equals(otherWorkflow.getType())) {
+                        results.put(DelegatableTaskType.OPINION.name(), otherWorkflow);
+                    }
+                }
+            }
+            return results;
+        }
+
+        /**
+         * Used for value binding in
+         * {@link DelegationTaskListGenerator#createWorkflowPropValueBinding(DelegatableTaskType, int, QName, javax.faces.application.Application)}
+         */
+        private Workflow getWorkflow() {
+            return getWorkflowByOriginalTask(delegatableTaskIndex);
+        }
+    }
+
+    private List<Task> getNonAssignmentTasks(DelegatableTaskType dTaskType, List<Workflow> workflows) {
+        for (Workflow otherWorkflow : workflows) {
+            if (isGeneratedByDelegation(otherWorkflow) && dTaskType.getWorkflowTypeQName().equals(otherWorkflow.getType())) {
+                return otherWorkflow.getTasks();
+            }
+        }
+        return Collections.<Task> emptyList();
+    }
+
+    private void processOwnerSearchResults(ActionEvent event, int filterIndex) {
+        UIGenericPicker picker = (UIGenericPicker) event.getComponent();
+
+        int taskIndex = Integer.parseInt((String) picker.getAttributes().get(Search.OPEN_DIALOG_KEY));
+        String[] results = picker.getSelectedResults();
+        if (results == null) {
+            return;
+        }
+        Workflow workflow = getWorkflowByAction(event);
+        for (String result : results) {
+            // users
+            if (filterIndex == 0) {
+                setPersonPropsToTask(workflow, taskIndex, result);
+            }
+            // user groups
+            else if (filterIndex == 1) {
+                Set<String> children = getAuthorityService().getContainedAuthorities(AuthorityType.USER, result, true);
+                int j = 0;
+                for (String userName : children) {
+                    if (j++ > 0) {
+                        workflow.addTask(++taskIndex);
+                    }
+                    setPersonPropsToTask(workflow, taskIndex, userName);
+                }
+            }
+            // contacts
+            else if (filterIndex == 2) {
+                setContactPropsToTask(workflow, taskIndex, new NodeRef(result));
+            }
+            // contact groups
+            else if (filterIndex == 3) {
+                List<AssociationRef> assocs = getNodeService().getTargetAssocs(new NodeRef(result), RegexQNamePattern.MATCH_ALL);
+                taskIndex = addContactGroupTasks(taskIndex, workflow, assocs);
+            } else {
+                throw new RuntimeException("Unknown filter index value: " + filterIndex);
+            }
+        }
+        updatePanelGroup();
+    }
+
+    private void setPersonPropsToTask(Workflow workflow, int taskIndex, String userName) {
+        NodeRef person = getPersonService().getPerson(userName);
+        Map<QName, Serializable> resultProps = getNodeService().getProperties(person);
+        String name = UserUtil.getPersonFullName1(resultProps);
+        Serializable id = resultProps.get(ContentModel.PROP_USERNAME);
+        Serializable email = resultProps.get(ContentModel.PROP_EMAIL);
+        Serializable orgName = getOrganizationStructureService().getOrganizationStructure((String) resultProps.get(ContentModel.PROP_ORGID));
+        Serializable jobTitle = resultProps.get(ContentModel.PROP_JOBTITLE);
+        setPropsToTask(workflow, taskIndex, name, id, email, orgName, jobTitle);
+    }
+
+    private void setPropsToTask(Workflow workflow, int taskIndex, String name, Serializable id, Serializable email, Serializable orgName,
+            Serializable jobTitle) {
+        Task task = workflow.getTasks().get(taskIndex);
+        task.setOwnerName(name);
+        task.setOwnerId((String) id);
+        task.setOwnerEmail((String) email);
+        Map<String, Object> props = task.getNode().getProperties();
+        props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME.toString(), orgName);
+        props.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE.toString(), jobTitle);
+    }
+
+    private void setContactPropsToTask(Workflow block, int index, NodeRef contact) {
+        Map<QName, Serializable> resultProps = getNodeService().getProperties(contact);
+        QName resultType = getNodeService().getType(contact);
+
+        String name = null;
+        if (resultType.equals(Types.ORGANIZATION)) {
+            name = (String) resultProps.get(AddressbookModel.Props.ORGANIZATION_NAME);
+        } else {
+            name = UserUtil.getPersonFullName((String) resultProps.get(AddressbookModel.Props.PERSON_FIRST_NAME) //
+                    , (String) resultProps.get(AddressbookModel.Props.PERSON_LAST_NAME));
+        }
+        setPropsToTask(block, index, name, null, resultProps.get(AddressbookModel.Props.EMAIL), null, null);
+    }
+
+    public int addContactGroupTasks(int taskIndex, Workflow block, List<AssociationRef> assocs) {
+        int taskCounter = 0;
+        for (int j = 0; j < assocs.size(); j++) {
+            Map<QName, Serializable> contactProps = getNodeService().getProperties(assocs.get(j).getTargetRef());
+            if (getNodeService().hasAspect(assocs.get(j).getTargetRef(), AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)
+                    && Boolean.TRUE.equals(contactProps.get(AddressbookModel.Props.TASK_CAPABLE))) {
+                if (taskCounter > 0) {
+                    block.addTask(++taskIndex);
+                }
+                setContactPropsToTask(block, taskIndex, assocs.get(j).getTargetRef());
+                taskCounter++;
+            }
+        }
+        return taskIndex;
+    }
+
+    private PersonService getPersonService() {
+        if (personService == null) {
+            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
+        }
+        return personService;
+    }
+
+    private NodeService getNodeService() {
+        if (nodeService == null) {
+            nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
+        }
+        return nodeService;
+    }
+
+    private AuthorityService getAuthorityService() {
+        if (authorityService == null) {
+            authorityService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getAuthorityService();
+        }
+        return authorityService;
+    }
+
+    private OrganizationStructureService getOrganizationStructureService() {
+        if (organizationStructureService == null) {
+            organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(OrganizationStructureService.BEAN_NAME);
+        }
+        return organizationStructureService;
+    }
+
+    private WorkflowService getWorkflowService() {
+        if (workflowService == null) {
+            workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(WorkflowService.BEAN_NAME);
+        }
+        return workflowService;
+    }
+
+    public void setWorkflowBlockBean(WorkflowBlockBean workflowBlockBean) {
+        this.workflowBlockBean = workflowBlockBean;
+    }
+
+}

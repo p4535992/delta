@@ -2,12 +2,9 @@ package ee.webmedia.alfresco.postipoiss;
 
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_EMAIL;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_JOB_TITLE;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_NAME;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_PHONE;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -24,25 +21,24 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.Map.Entry;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
-import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.AssociationRef;
@@ -63,12 +59,16 @@ import org.springframework.util.Assert;
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
+import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.service.DocumentService.AssocType;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.ConvertException;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.DocumentValue;
 import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.Mapping;
@@ -78,20 +78,58 @@ import ee.webmedia.alfresco.postipoiss.PostipoissDocumentsMapper.PropertyValue;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
- * Imports documents and files from postipoiss.
+ * Imports documents and files from Postipoiss.
  * 
  * @author Aleksei Lissitsin
+ * @author Alar Kvell
  */
 public class PostipoissDocumentsImporter {
 
+    private static final String IMPORTER_NAME = "Halja Viies";  // TODO remove this
+    private static final String IMPORTER_ID_CODE = "45606086012"; // TODO move to spring conf
+
+    private static final String PP_ELEMENT_DOK_NR = "dok_nr";
+    private static final String PP_ELEMENT_ALUS_DOK_NR = "alus_dok_nr";
+    private static final String PP_ELEMENT_TOIMIK_SARI = "toimik"; // SIM "toimik_sari" 
+    private static final String PP_ELEMENT_REG_NR = "registreerimis_nr"; // SIM "reg_nr"
+    private static final String PP_ELEMENT_PARITOLU = "paritolu"; // SIM "paritolu"
+    private static final String PP_ELEMENT_PARITOLU2 = "parituolu";
+    private static final String PP_VALUE_PARITOLU_ALGATUSDOKUMENT = "Algatusdokument";
+    private static final String PP_VALUE_PARITOLU_VASTUSDOKUMENT = "Vastusdokument";
+    private static final String PP_VALUE_PARITOLU_JARG = "Järg";
+    private static final String PP_VALUE_PARITOLU_JARELEPARIMINE = "Järelepärimine";
+    private static final String PP_ELEMENT_FAIL = "viide"; // SIM "fail"
+    private static final String PP_ELEMENT_SEOSED = "seosed";
+
+    /*
+     * 
+     * TODO lisada kellaaeg csv'sse 
+     * TODO Juhend + tarne
+     * TODO springi konf, parameetrid, failide nimed üle vaadata, korrastada
+     * TODO ETA arvutamist korda?
+     * TODO kirjutada failide mimetype ja encoding csv'sse
+     * 
+     * TODO:
+     * * importija nimi viia isikukoodi kujule ja konfi, siis isikukoodi järgi otsitaks kasutaja
+     * * nõue et enne importi oleks süngitud kasutajad, sest otsitakse nime järgi isikukoodid, muidu ei teki õiguseid - dokumenteerida
+     * * kirjutada completed csv lisatulpa aeg!
+     */
+
+    /*
+     * tulevikus vajadusel viia neid setteri kujule, et springi konfist saaks overrideda
+     */
     protected static final int BATCH_SIZE = 50;
     protected static final String OPEN_VOLUME_YEAR = "10";
     protected static final char CSV_SEPARATOR = ';';
 
+    final private static String CREATOR_MODIFIER = "DELTA";
     final private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
-    final private static DateFormat longDateFormat = new SimpleDateFormat("dd.MM.yyyy:HH:mm:ss");
+    final private static DateFormat dateTimeFormat = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+    static {
+        dateFormat.setLenient(false);
+        dateTimeFormat.setLenient(false);
+    }
 
-    final private static String IMPORTER_NAME = "Liivi Leomar (administraator)";
     private Date openDocsDate;
     {
         try {
@@ -203,7 +241,7 @@ public class PostipoissDocumentsImporter {
             started = false;
         }
     }
-
+/*
     public void runFixDocuments() throws Exception {
         started = true;
         if (!enabled) {
@@ -217,7 +255,7 @@ public class PostipoissDocumentsImporter {
             started = false;
         }
     }
-
+*/
     private void init() {
         inputFolder = new File(inputFolderPath);
     }
@@ -231,13 +269,14 @@ public class PostipoissDocumentsImporter {
             mappings = postipoissDocumentsMapper.loadMetadataMappings(new File(mappingsFileName));
             loadToimiks();
             loadPostponedAssocs();
-//            loadUsers();
+            loadUsers();
             createDocuments();
         } catch (Exception e) {
-            log.info("IMPORT FAILED: DOCUMENTS IMPORT FAILED");
+            log.error("IMPORT FAILED: DOCUMENTS IMPORT FAILED", e);
             throw e;
         } finally {
             writePostponedAssocs();
+            writeUsersFound();
             documentsMap = null;
             toimikud = null;
             normedToimikud = null;
@@ -250,7 +289,7 @@ public class PostipoissDocumentsImporter {
             loadCompletedFiles();
             importFiles();
         } catch (Exception e) {
-            log.info("IMPORT FAILED: FILES IMPORT FAILED");
+            log.error("IMPORT FAILED: FILES IMPORT FAILED", e);
             throw e;
         } finally {
             filesMap = null;
@@ -265,13 +304,13 @@ public class PostipoissDocumentsImporter {
                 indexFiles();
             }
         } catch (Exception e) {
-            log.info("IMPORT FAILED: FILES INDEXING FAILED");
+            log.error("IMPORT FAILED: FILES INDEXING FAILED", e);
             throw e;
         } finally {
             reset();
         }
     }
-
+/*
     private void runFixDocumentsInternal() throws Exception {
         init();
         try {
@@ -289,7 +328,7 @@ public class PostipoissDocumentsImporter {
             reset();
         }
     }
-
+*/
     private void reset() {
         documentsMap = new TreeMap<Integer, File>();
         filesMap = new TreeMap<Integer, List<File>>();
@@ -306,11 +345,23 @@ public class PostipoissDocumentsImporter {
     protected NavigableMap<Integer /* documentId */, File> documentsMap = new TreeMap<Integer, File>();
     protected NavigableMap<Integer /* documentId */, List<File>> filesMap = new TreeMap<Integer, List<File>>();
     protected NavigableMap<Integer /* documentId */, NodeRef> completedDocumentsMap = new TreeMap<Integer, NodeRef>();
+    protected NavigableMap<Integer /* documentId */, List<PostponedAssoc>> postponedAssocs = new TreeMap<Integer, List<PostponedAssoc>>();
+    protected NavigableMap<Integer /* documentId */, List<PostponedAssoc>> postponedAssocsCommited = new TreeMap<Integer, List<PostponedAssoc>>();
+
+    protected Map<String /* ownerNameCleaned */, String /* ownerId */> allUsersByOwnerNameCleaned;
+    protected Map<String /* ownerId */, String /* ownerName */> allUsersByOwnerId;
+    protected Map<String /* ownerName */, Integer /* count */> usersFound;
+    protected Map<String /* ownerName */, Integer /* count */> usersFoundCommited;
+    protected Map<String /* ownerName */, Integer /* count */> usersNotFound;
+    protected Map<String /* ownerName */, Integer /* count */> usersNotFoundCommited;
 
     protected Set<Integer> completedFiles = new HashSet<Integer>();
     protected NavigableSet<Integer> filesToProceed;
     protected File completedDocumentsFile;
     protected File completedFilesFile;
+    protected File postponedAssocsFile;
+    protected File usersFoundFile;
+    protected File usersNotFoundFile;
 
     private Map<String, Mapping> mappings;
 
@@ -340,6 +391,7 @@ public class PostipoissDocumentsImporter {
                     log.debug("Found documentId=" + documentId + " documentType='" + documentType + "'");
                     documentsMap.put(documentId, file);
                 } catch (NumberFormatException e) {
+                    throw new RuntimeException(e);
                 }
             }
         }
@@ -366,7 +418,7 @@ public class PostipoissDocumentsImporter {
             int i = name.lastIndexOf(".");
             if (i == -1)
                 continue;
-            String filename = name.substring(0, i); // TODO file names are probably in wrong encoding. -17-65 -67
+            String filename = name.substring(0, i);
             if (StringUtils.isBlank(filename))
                 continue;
             try {
@@ -379,6 +431,7 @@ public class PostipoissDocumentsImporter {
                 fileList.add(file);
                 count++;
             } catch (NumberFormatException e) {
+                // Ignore because there are CSV files also in this folder
             }
         }
         log.info("Completed parsing directory listing, got " + count + " files");
@@ -486,11 +539,26 @@ public class PostipoissDocumentsImporter {
     protected void createFilesIndexBatch(final List<Integer> batchList) {
         final Set<Integer> batchCompletedFiles = new HashSet<Integer>(BATCH_SIZE);
         for (Integer documentId : batchList) {
-            if (log.isInfoEnabled()) {
-                log.info("Processing files with docId = " + documentId);
+            if (log.isTraceEnabled()) {
+                log.trace("Processing files with docId = " + documentId);
             }
             NodeRef documentRef = completedDocumentsMap.get(documentId);
-            documentService.updateSearchableFiles(documentRef);
+            if (documentRef == null) {
+                continue;
+            }
+            if (!nodeService.exists(documentRef)) {
+                log.error("Skipping indexing files for documentId=" + documentId + ", node does not exist: " + documentRef);
+                continue;
+            }
+            try {
+                Map<QName, Serializable> origProps = nodeService.getProperties(documentRef);
+                Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
+                setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
+                setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));            
+                documentService.updateSearchableFiles(documentRef, setProps);
+            } catch (Exception e) {
+                throw new RuntimeException("Error indexing files for document id=" + documentId + ", nodeRef=" + documentRef + ": " + e.getMessage(), e);
+            }
             batchCompletedFiles.add(documentId);
         }
         bindCsvWriteAfterCommit(indexedFilesFile, new CsvWriterClosure() {
@@ -512,15 +580,11 @@ public class PostipoissDocumentsImporter {
         });
     }
 
-    private File fixedDocumentsFile;
-    private Set<Integer> fixedDocuments;
-    private NavigableSet<Integer> documentsToFix;
-    private Map<String /* ownerNameCleaned */, String /* ownerId */> allUsersByOwnerNameCleaned;
-    private Map<String /* ownerId */, String /* ownerName */> allUsersByOwnerId;
-    private Map<String /* ownerName */, Integer /* count */> usersFound;
-    private Map<String /* ownerName */, Integer /* count */> usersNotFound;
+//    private File fixedDocumentsFile;
+//    private Set<Integer> fixedDocuments;
+//    private NavigableSet<Integer> documentsToFix;
 
-    protected void loadUsers() {
+    protected void loadUsers() throws Exception {
         log.info("Loading all users");
         Set<NodeRef> userRefs = personService.getAllPeople();
         allUsersByOwnerNameCleaned = new HashMap<String, String>(userRefs.size() * 2);
@@ -544,10 +608,43 @@ public class PostipoissDocumentsImporter {
         }
         log.info("Loaded " + allUsersByOwnerId.size() + " users");
 
+        usersFoundFile = new File(inputFolder, "users_found.csv");
         usersFound = new HashMap<String, Integer>();
-        usersNotFound = new HashMap<String, Integer>();
-    }
+        if (usersFoundFile.exists()) {
+            log.info("Loading found users from file " + usersFoundFile);
+            CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(usersFoundFile)), CSV_SEPARATOR, Charset.forName("UTF-8"));
+            try {
+                reader.readHeaders();
+                while (reader.readRecord()) {
+                    usersFound.put(reader.get(0), new Integer(reader.get(1)));
+                }
+            } finally {
+                reader.close();
+            }
+        } else {
+            log.info("Skipping loading found users, file does not exist: " + usersFoundFile);
+        }
+        usersFoundCommited = new HashMap<String, Integer>(usersFound);
 
+        usersNotFoundFile = new File(inputFolder, "users_not_found.csv");
+        usersNotFound = new HashMap<String, Integer>();
+        if (usersNotFoundFile.exists()) {
+            log.info("Loading not-found users from file " + usersNotFoundFile);
+            CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(usersNotFoundFile)), CSV_SEPARATOR, Charset.forName("UTF-8"));
+            try {
+                reader.readHeaders();
+                while (reader.readRecord()) {
+                    usersNotFound.put(reader.get(0), new Integer(reader.get(1)));
+                }
+            } finally {
+                reader.close();
+            }
+        } else {
+            log.info("Skipping loading not-found users, file does not exist: " + usersNotFoundFile);
+        }
+        usersNotFoundCommited = new HashMap<String, Integer>(usersNotFound);
+    }
+/*
     protected void loadFixedDocuments() throws Exception {
         fixedDocumentsFile = new File(inputFolder, "fixed_documents.csv");
         fixedDocuments = new HashSet<Integer>();
@@ -594,36 +691,46 @@ public class PostipoissDocumentsImporter {
             log.info("Document FIXING COMPLETE :)");
         }
     }
-
+*/
     private void writeUsersFound() {
-        File usersFoundFile = new File(inputFolder, "users_found.csv");
-        try {
-            CsvWriter writer = new CsvWriter(new FileWriter(usersFoundFile, true), CSV_SEPARATOR);
+        if (usersFoundFile != null) {
             try {
-                for (Entry<String, Integer> entry : usersFound.entrySet()) {
-                    writer.writeRecord(new String[] { entry.getKey(), entry.getValue().toString() });
+                CsvWriter writer = new CsvWriter(new FileWriter(usersFoundFile, false), CSV_SEPARATOR);
+                writer.writeRecord(new String[] {
+                        "userFullName",
+                        "count"
+                });
+                try {
+                    for (Entry<String, Integer> entry : usersFoundCommited.entrySet()) {
+                        writer.writeRecord(new String[] { entry.getKey(), entry.getValue().toString() });
+                    }
+                } finally {
+                    writer.close();
                 }
-            } finally {
-                writer.close();
+            } catch (IOException e) {
+                throw new RuntimeException("Error writing CSV file '" + usersFoundFile + "': " + e.getMessage(), e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException("Error writing CSV file '" + usersFoundFile + "': " + e.getMessage(), e);
         }
-        File usersNotFoundFile = new File(inputFolder, "users_not_found.csv");
-        try {
-            CsvWriter writer = new CsvWriter(new FileWriter(usersNotFoundFile, true), CSV_SEPARATOR);
+        if (usersNotFoundFile != null) {
             try {
-                for (Entry<String, Integer> entry : usersNotFound.entrySet()) {
-                    writer.writeRecord(new String[] { entry.getKey(), entry.getValue().toString() });
+                CsvWriter writer = new CsvWriter(new FileWriter(usersNotFoundFile, false), CSV_SEPARATOR);
+                writer.writeRecord(new String[] {
+                        "userFullName",
+                        "count"
+                });
+                try {
+                    for (Entry<String, Integer> entry : usersNotFoundCommited.entrySet()) {
+                        writer.writeRecord(new String[] { entry.getKey(), entry.getValue().toString() });
+                    }
+                } finally {
+                    writer.close();
                 }
-            } finally {
-                writer.close();
+            } catch (IOException e) {
+                throw new RuntimeException("Error writing CSV file '" + usersNotFoundFile + "': " + e.getMessage(), e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException("Error writing CSV file '" + usersNotFoundFile + "': " + e.getMessage(), e);
         }
     }
-
+/*
     private class DocumentsFixBatchProgress extends BatchProgress<Integer> {
 
         public DocumentsFixBatchProgress(Set<Integer> origin) {
@@ -718,7 +825,7 @@ public class PostipoissDocumentsImporter {
         }
 
         if (setProps.size() > 0) {
-            setProps.put(ContentModel.PROP_MODIFIER, "DELTA");
+            setProps.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
             nodeService.addProperties(documentRef, setProps);
         }
         
@@ -731,19 +838,62 @@ public class PostipoissDocumentsImporter {
                 ppOwnerName,
                 (String) setProps.get(OWNER_ID), // kõik = Liivi isikukood
                 (String) setProps.get(OWNER_NAME), // kõik täidetud
-                (String) setProps.get(OWNER_JOB_TITLE)/*, // 247 täidetud, võib erineda natuke nime sulgudes olevast ametinimetusest - kumba eelistada?
+                (String) setProps.get(OWNER_JOB_TITLE)*//*, // 247 täidetud, võib erineda natuke nime sulgudes olevast ametinimetusest - kumba eelistada?
                 (String) setProps.get(OWNER_EMAIL), // tühi
                 (String) setProps.get(OWNER_PHONE), // tühi
-                (String) props.get(OWNER_ORG_STRUCT_UNIT) // 85000 täidetud*/
+                (String) props.get(OWNER_ORG_STRUCT_UNIT) // 85000 täidetud*//*
         };
     }
-
-    private void setOwnerProperties(Map<QName, Serializable> getProps, Map<QName, Serializable> setProps) {
-        String ppOwnerName = (String) getProps.get(OWNER_NAME);
+*/
+    private void setOwnerProperties(Map<QName, Serializable> props) {
+        String ownerName = (String) props.get(OWNER_NAME);
         String ownerId = null;
         String ownerJobTitle = null;
 
+        // ownerName = processOwnerNameSim(ownerName); // SIM had extra parsing of ownerName
+
+        ownerName = StringUtils.trim(StringUtils.strip(ownerName));
+        if (StringUtils.isNotBlank(ownerName)) {
+            while (ownerName.indexOf("  ") >= 0) {
+                ownerName = StringUtils.replace(ownerName, "  ", " ");
+            }
+            ownerId = allUsersByOwnerNameCleaned.get(cleanUserFullName(ownerName)); // if not found then null
+            if (StringUtils.isBlank(ownerId)) {
+                Integer count = usersNotFound.get(ownerName);
+                if (count == null) {
+                    count = 0;
+                }
+                count++;
+                usersNotFound.put(ownerName, count);
+            } else {
+                ownerName = allUsersByOwnerId.get(ownerId);
+                Assert.isTrue(StringUtils.isNotBlank(ownerName), ownerId);
+                Integer count = usersFound.get(ownerName);
+                if (count == null) {
+                    count = 0;
+                }
+                count++;
+                usersFound.put(ownerName, count);
+            }
+        } else {
+            ownerName = IMPORTER_NAME;
+            ownerId = IMPORTER_ID_CODE;
+        }
+        props.put(OWNER_ID, ownerId);
+        props.put(OWNER_NAME, ownerName);
+        if (StringUtils.isNotBlank(ownerJobTitle)) {
+            props.put(OWNER_JOB_TITLE, ownerJobTitle); // kirjutab üle kui PP xml'is oli juba olemas
+        }
+        // props.put(OWNER_JOB_TITLE, props.get(OWNER_JOB_TITLE));
+        // props.put(OWNER_ORG_STRUCT_UNIT, props.get(OWNER_ORG_STRUCT_UNIT));
+        // props.put(OWNER_EMAIL, props.get(OWNER_EMAIL));
+        // props.put(OWNER_PHONE, props.get(OWNER_PHONE));
+    }
+/*
+    private org.alfresco.util.Pair<String, String> processOwnerNameSim(String ppOwnerName) {
         String ownerName = StringUtils.strip(ppOwnerName);
+        String ownerJobTitle = null;
+
         ownerName = StringUtils.replace(ownerName, " Upuhkab ", " (puhkab ");
         if (ownerName.endsWith(")")) {
             int i = ownerName.lastIndexOf("(");
@@ -754,7 +904,7 @@ public class PostipoissDocumentsImporter {
             boolean cont = true;
             if (i - 7 >= 2 && ownerName.substring(i - 7, i).equals("puhkab ")) {
                 ownerName = ownerName.substring(0, i - 7);
-                
+
                 if (ownerName.endsWith(")")) {
                     i = ownerName.lastIndexOf("(");
                     Assert.isTrue(i >= 0, ppOwnerName);
@@ -762,7 +912,7 @@ public class PostipoissDocumentsImporter {
                     cont = false;
                 }
             }
-            
+
             if (cont) {
                 ownerJobTitle = StringUtils.trim(StringUtils.strip(ownerName.substring(i + 1, ownerName.length() - 1)));
                 ownerName = StringUtils.trim(StringUtils.strip(ownerName.substring(0, i)));
@@ -782,64 +932,35 @@ public class PostipoissDocumentsImporter {
             int j = ownerName.lastIndexOf("(");
             Assert.isTrue(j < i - 1 && j >= 2, ppOwnerName);
             String removeString = ownerName.substring(j + 1, i).toLowerCase();
-            if (removeString.indexOf("puhkab") >= 0 || removeString.indexOf("puhkusel") >= 0 || removeString.indexOf("asendab") >= 0 || removeString.equals("haiguslehel") || (removeString.indexOf("lapsehooldus") >= 0 && removeString.indexOf("puhkus") >= 0) || removeString.equals("ei aktiveeri seda kontot, teha uus isik") || removeString.startsWith("05.07-")) {
-                ownerName = StringUtils.trim(StringUtils.strip(ownerName.substring(0, j))) + " " + StringUtils.trim(StringUtils.strip(ownerName.substring(i + 1)));
+            if (removeString.indexOf("puhkab") >= 0 || removeString.indexOf("puhkusel") >= 0 || removeString.indexOf("asendab") >= 0
+                    || removeString.equals("haiguslehel") || (removeString.indexOf("lapsehooldus") >= 0 && removeString.indexOf("puhkus") >= 0)
+                    || removeString.equals("ei aktiveeri seda kontot, teha uus isik") || removeString.startsWith("05.07-")) {
+                ownerName = StringUtils.trim(StringUtils.strip(ownerName.substring(0, j))) + " "
+                        + StringUtils.trim(StringUtils.strip(ownerName.substring(i + 1)));
             }
             // else
             // Natalja Zinovjeva (peaspetsialist), Ene Padrik
             // Terje Enula (peaspetsialist), Enel Pungas
             // Peeter Küüts (nõunik), Mart Riisenberg
         }
-        ownerName = StringUtils.trim(StringUtils.strip(ownerName));
-        while (ownerName.indexOf("  ") >= 0) {
-            ownerName = StringUtils.replace(ownerName, "  ", " ");
-        }
         // Assert.isTrue(ownerName.indexOf("(") == -1 && ownerName.indexOf(")") == -1, ppOwnerName); // nende kolme ülemise näite puhul jääb ainult sisse sulud
-        
-        if (StringUtils.isNotBlank(ownerName)) {
-            ownerId = allUsersByOwnerNameCleaned.get(cleanUserFullName(ownerName)); // if not found then null
-            if (StringUtils.isBlank(ownerId)) {
-                Integer count = usersNotFound.get(ownerName);
-                if (count == null) {
-                    count = 0;
-                }
-                count++;
-                usersNotFound.put(ownerName, count);
-            } else {
-                ownerName = allUsersByOwnerId.get(ownerId);
-                Assert.isTrue(StringUtils.isNotBlank(ownerName), ownerId);
-                Integer count = usersFound.get(ownerName);
-                if (count == null) {
-                    count = 0;
-                }
-                count++;
-                usersFound.put(ownerName, count);
-            }
-        }
-        if (StringUtils.isNotBlank(ownerJobTitle)) {
-            getProps.put(OWNER_JOB_TITLE, ownerJobTitle); // kirjutab üle kui PP xml'is oli juba olemas
-        }
-
-        // SET OWNER
-        setProps.put(OWNER_ID, ownerId);
-        setProps.put(OWNER_NAME, ownerName);
-        setProps.put(OWNER_JOB_TITLE, getProps.get(OWNER_JOB_TITLE));
-        setProps.put(OWNER_ORG_STRUCT_UNIT, getProps.get(OWNER_ORG_STRUCT_UNIT));
-        setProps.put(OWNER_EMAIL, getProps.get(OWNER_EMAIL));
-        setProps.put(OWNER_PHONE, getProps.get(OWNER_PHONE));
+        return new org.alfresco.util.Pair<String, String>(ownerName, ownerJobTitle);
     }
-
-    private void setAccessRestriction(Integer documentId, File file, Map<QName, Serializable> setProps, String accessRestriction) {
-        if ("Avalik".equals(accessRestriction) || "AK".equals(accessRestriction) || "Majasisene".equals(accessRestriction)) {
+*/
+    private void setAccessRestriction(Map<QName, Serializable> props) {
+        String accessRestriction = (String) props.get(ACCESS_RESTRICTION);
+        if (AccessRestriction.OPEN.getValueName().equals(accessRestriction) || AccessRestriction.AK.getValueName().equals(accessRestriction) || AccessRestriction.INTERNAL.getValueName().equals(accessRestriction)) {
             // OK
         } else if ("Asutusesiseseks kasutamiseks".equals(accessRestriction)) {
-            setProps.put(ACCESS_RESTRICTION, "AK");
-        } else if ("Juurdepääsupiirang eraelulistele isikuandmetele".equals(accessRestriction) || "JuurdepÃ¤Ã¤supiirang eraelulistele isikuandmetele".equals(accessRestriction)) {
-            setProps.put(ACCESS_RESTRICTION, "AK");
-            setProps.put(ACCESS_RESTRICTION_REASON, "AvTS § 35, lg 1 p 12");
+            props.put(ACCESS_RESTRICTION, AccessRestriction.AK.getValueName());
+        } else if ("Juurdepääsupiirang eraelulistele isikuandmetele".equals(accessRestriction)) {
+            // SIM had also  || "JuurdepÃ¤Ã¤supiirang eraelulistele isikuandmetele".equals(accessRestriction)
+            props.put(ACCESS_RESTRICTION, AccessRestriction.AK.getValueName());
+            props.put(ACCESS_RESTRICTION_REASON, "AvTS § 35, lg 1 p 12");
+        } else if ("Salajane".equals(accessRestriction)) {
+            props.put(ACCESS_RESTRICTION, AccessRestriction.INTERNAL.getValueName());
         } else {
-            // Need to search these messages from logs afterwards and correct the documents manually!
-            log.error("Invalid accessRestriction value '" + accessRestriction + "', documentId=" + documentId + ", file=" + file.getName());
+            throw new RuntimeException("Invalid accessRestriction value '" + accessRestriction + "'");
         }
     }
 
@@ -963,7 +1084,18 @@ public class PostipoissDocumentsImporter {
                 log.trace("Processing files with docId = " + documentId);
             }
             NodeRef documentRef = completedDocumentsMap.get(documentId);
-            addFiles(documentId, documentRef);
+            if (documentRef == null) {
+                continue;
+            }
+            if (!nodeService.exists(documentRef)) {
+                log.error("Skipping creating files for documentId=" + documentId + ", node does not exist: " + documentRef);
+                continue;
+            }
+            try {
+                addFiles(documentId, documentRef);
+            } catch (Exception e) {
+                throw new RuntimeException("Error adding files for document id=" + documentId + ", nodeRef=" + documentRef + ": " + e.getMessage(), e);
+            }
             batchCompletedFiles.add(documentId);
         }
         bindCsvWriteAfterCommit(completedFilesFile, new CsvWriterClosure() {
@@ -1039,7 +1171,8 @@ public class PostipoissDocumentsImporter {
             reader.readHeaders();
             while (reader.readRecord()) {
                 Integer documentId = new Integer(reader.get(0));
-                NodeRef documentRef = new NodeRef(reader.get(1));
+                String nodeRefString = reader.get(1);
+                NodeRef documentRef = StringUtils.isBlank(nodeRefString) ? null : new NodeRef(nodeRefString);
                 completedDocumentsMap.put(documentId, documentRef);
             }
         } finally {
@@ -1149,35 +1282,82 @@ public class PostipoissDocumentsImporter {
     static class ImportedDocument {
         Integer documentId;
         NodeRef nodeRef;
+        String toimik;
+        String registreerimisNr;
+        String regNumber;
+        String regDateTime;
+        String docName;
+        String ownerId;
+        String ownerName;
+        String accessRestriction;
+        String accessRestrictionReason;
 
-        public ImportedDocument(Integer documentId, NodeRef nodeRef) {
+        public ImportedDocument(Integer documentId, NodeRef nodeRef, String toimik, String registreerimisNr, Map<QName, Serializable> props) {
             this.documentId = documentId;
             this.nodeRef = nodeRef;
+            this.toimik = toimik;
+            this.registreerimisNr = registreerimisNr;
+            if (props != null) {
+                regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
+                regDateTime = dateTimeFormat.format((Date) props.get(DocumentCommonModel.Props.REG_DATE_TIME));
+                docName = (String) props.get(DocumentCommonModel.Props.DOC_NAME);
+                ownerId = (String) props.get(DocumentCommonModel.Props.OWNER_ID);
+                ownerName = (String) props.get(DocumentCommonModel.Props.OWNER_NAME);
+                accessRestriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
+                accessRestrictionReason = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON);
+            }
         }
     }
 
     protected void createDocumentsBatch(final List<Entry<Integer, File>> batchList) throws DocumentException, ParseException {
         final Map<Integer, ImportedDocument> batchCompletedDocumentsMap = new TreeMap<Integer, ImportedDocument>();
         // FOR ASSOCS
-        this.batchCompletedDocumentsMap = batchCompletedDocumentsMap;
+//        this.batchCompletedDocumentsMap = batchCompletedDocumentsMap;
         for (Entry<Integer, File> entry : batchList) {
             Integer documentId = entry.getKey();
             if (log.isTraceEnabled()) {
                 log.trace("Processing documentId=" + documentId);
             }
             File file = entry.getValue();
-            ImportedDocument doc = createDocument(documentId, file);
-            if (doc == null)
-                continue;
-            batchCompletedDocumentsMap.put(documentId, doc);
+            try {
+                ImportedDocument doc = createDocument(documentId, file);
+                batchCompletedDocumentsMap.put(documentId, doc);
+                completedDocumentsMap.put(documentId, doc.nodeRef); // Add immediately to completedDocumentsMap, because other code wants to access it 
+            } catch (Exception e) {
+                throw new RuntimeException("Error importing document " + file.getName() + ": " + e.getMessage(), e);
+            }
         }
+        AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
+            @Override
+            public void afterCommit() {
+                postponedAssocsCommited = new TreeMap<Integer, List<PostponedAssoc>>(postponedAssocs);
+                usersFoundCommited = new HashMap<String, Integer>(usersFound);
+                usersNotFoundCommited = new HashMap<String, Integer>(usersNotFound);
+            }
+            @Override
+            public void afterRollback() {
+                postponedAssocs = new TreeMap<Integer, List<PostponedAssoc>>(postponedAssocsCommited);
+                usersFound = new HashMap<String, Integer>(usersFoundCommited);
+                usersNotFound = new HashMap<String, Integer>(usersNotFoundCommited);
+                completedDocumentsMap.keySet().removeAll(batchCompletedDocumentsMap.keySet());
+            }
+        });
         bindCsvWriteAfterCommit(completedDocumentsFile, new CsvWriterClosure() {
 
             @Override
             public String[] getHeaders() {
                 return new String[] {
                         "documentId",
-                        "nodeRef"
+                        "nodeRef",
+                        "ppToimik",
+                        "ppRegistreerimisNr",
+                        "regNumber",
+                        "regDateTime",
+                        "docName",
+                        "ownerId",
+                        "ownerName",
+                        "accessRestriction",
+                        "accessRestrictionReason"
                 };
             }
 
@@ -1187,19 +1367,25 @@ public class PostipoissDocumentsImporter {
                     ImportedDocument doc = entry.getValue();
                     writer.writeRecord(new String[] {
                             doc.documentId.toString(),
-                            doc.nodeRef.toString()
+                            doc.nodeRef == null ? "" : doc.nodeRef.toString(),
+                            doc.toimik == null ? "" : doc.toimik,
+                            doc.registreerimisNr == null ? "" : doc.registreerimisNr,
+                            doc.regNumber== null ? "" : doc.regNumber,
+                            doc.regDateTime== null ? "" : doc.regDateTime,
+                            doc.docName== null ? "" : doc.docName,
+                            doc.ownerId== null ? "" : doc.ownerId,
+                            doc.ownerName== null ? "" : doc.ownerName,
+                            doc.accessRestriction== null ? "" : doc.accessRestriction,
+                            doc.accessRestrictionReason== null ? "" : doc.accessRestrictionReason
                     });
-                    completedDocumentsMap.put(entry.getKey(), doc.nodeRef);
                 }
             }
         });
     }
 
     private ImportedDocument createDocument(Integer documentId, File file) throws DocumentException, ParseException {
-        Node importDoc = importDoc(file, mappings, documentId);
-        if (importDoc == null)
-            return null;
-        return new ImportedDocument(documentId, importDoc.getNodeRef());
+        // Node importDoc = ;
+        return importDoc(file, mappings, documentId); // new ImportedDocument(documentId, importDoc);
     }
 
     private void addFiles(Integer documentId, NodeRef importDocRef) {
@@ -1218,35 +1404,39 @@ public class PostipoissDocumentsImporter {
         DocumentValue docValue = new DocumentValue(mapping.typeInfo);
 
         for (PropMapping pm : mapping.props) {
-            String value = null;
-            if (pm.expression == null) {
-                Element el = root.element(pm.from);
-                if (el != null) {
-                    value = el.getStringValue();
-                }
-            } else {
-                if (pm.expression.equals("xpath")) {
-                    value = PostipoissUtil.findAnyValue(root, pm.from);
-                } else if (pm.expression.equals("const")) {
-                    value = pm.from;
+            try {
+                String value = null;
+                if (pm.expression == null) {
+                    Element el = root.element(pm.from);
+                    if (el != null) {
+                        value = el.getStringValue();
+                    }
                 } else {
-                    throw new RuntimeException("Bad expression type " + pm.expression);
+                    if (pm.expression.equals("xpath")) {
+                        value = PostipoissUtil.findAnyValue(root, pm.from);
+                    } else if (pm.expression.equals("const")) {
+                        value = pm.from;
+                    } else {
+                        throw new RuntimeException("Bad expression type " + pm.expression);
+                    }
                 }
-            }
-            if (value != null) {
-                if (pm.splitter == null) {
-                    docValue.put(value, pm.to, pm.prefix);
-                } else {
-                    try {
-                        Pair pair = pm.splitter.split(value);
-                        docValue.putObject(pair.first, pm.toFirst);
-                        docValue.putObject(pair.second, pm.toSecond);
-                    } catch (ConvertException e) {
-                        if (pm.to != null) {
-                            docValue.put(value, pm.to, pm.prefix);
+                if (value != null) {
+                    if (pm.splitter == null) {
+                        docValue.put(value, pm.to, pm.prefix);
+                    } else {
+                        try {
+                            Pair pair = pm.splitter.split(value);
+                            docValue.putObject(pair.first, pm.toFirst);
+                            docValue.putObject(pair.second, pm.toSecond);
+                        } catch (ConvertException e) {
+                            if (pm.to != null) {
+                                docValue.put(value, pm.to, pm.prefix);
+                            }
                         }
                     }
                 }
+            } catch (RuntimeException e) {
+                throw new RuntimeException("PropMapping" + pm + ": " + e.getMessage(), e);
             }
         }
 
@@ -1273,8 +1463,8 @@ public class PostipoissDocumentsImporter {
 
     private VolumeIndex inferVolumeIndex(Element root, Mapping m) {
         VolumeIndex vi = new VolumeIndex();
-        String toimikSari = root.elementText("toimik_sari");
-        vi.regNumber = root.elementText("reg_nr");
+        String toimikSari = root.elementText(PP_ELEMENT_TOIMIK_SARI);
+        vi.regNumber = root.elementText(PP_ELEMENT_REG_NR);
 
         if (toimikSari != null) {
             toimikSari = toimikSari.trim();
@@ -1306,7 +1496,8 @@ public class PostipoissDocumentsImporter {
                 vi.year = (rest.charAt(rest.length() - 1) - '0');
                 rest = rest.substring(0, rest.length() - 3);
             } else {
-                String regKpv = root.elementText("reg_kpv");
+                String regKpvElementName = m.requirePropMappingTo(DocumentCommonModel.Props.REG_DATE_TIME.getLocalName()).from;
+                String regKpv = root.elementText(regKpvElementName);
                 vi.year = inferYearFromRegKpv(regKpv);
             }
 
@@ -1332,7 +1523,7 @@ public class PostipoissDocumentsImporter {
             return 10;
         }
     }
-
+/*
     private boolean isSissetulevKiriOpen(String regKpv) {
         if (regKpv != null) {
             try {
@@ -1345,8 +1536,8 @@ public class PostipoissDocumentsImporter {
         }
         return false;
     }
-
-    private Node importDoc(File xml, Map<String, Mapping> mappings, Integer documentId) throws DocumentException,
+*/
+    private ImportedDocument importDoc(File xml, Map<String, Mapping> mappings, Integer documentId) throws DocumentException,
             ParseException {
         SAXReader xmlReader = new SAXReader();
 
@@ -1354,6 +1545,9 @@ public class PostipoissDocumentsImporter {
         String type = fileName.substring(0, fileName.lastIndexOf('_'));
         Element root = xmlReader.read(xml).getRootElement();
         boolean open = false;
+
+/*
+ * SIM used suund, but MV does not; ideally this logic should be pushed to mappings.xml
         if ("Kiri".equals(type)) {
             Element el = root.element("suund");
             String suund = null;
@@ -1368,81 +1562,83 @@ public class PostipoissDocumentsImporter {
             }
             type = "Kiri-" + suund;
         }
+*/
 
         Mapping mapping = mappings.get(type);
-        Assert.notNull(mapping, type);
-        // long time = System.currentTimeMillis();
+        Assert.notNull(mapping, "Mapping does not exist from='" + type + "'");
         VolumeIndex volumeIndex = inferVolumeIndex(root, mapping);
-        // long curTime = System.currentTimeMillis();
-        // log.info("infer: " + (curTime - time));
-
         if (volumeIndex == null) {
-            log.info("Could not parse toimik_sari nor infer by exception for doc " + documentId);
-            return null;
+            throw new RuntimeException("Could not parse toimik_sari nor infer by exception for doc " + documentId);
+            // return null;
         }
 
-        // time = System.currentTimeMillis();
         Toimik t = getToimik(volumeIndex.year, volumeIndex.mark, false);
-
         if (t == null) {
-            log.info("Could not load toimik by mark for " + volumeIndex);
+            log.debug("Could not load toimik by mark for " + volumeIndex);
             t = getToimik(volumeIndex.year, volumeIndex.mark, true);
         }
-
         if (t == null) {
-            log.info("Could not load toimik by normed mark for " + volumeIndex);
+            log.debug("Could not load toimik by normed mark for " + volumeIndex);
             volumeIndex.mark = StringUtils.deleteWhitespace(volumeIndex.mark);
-            log.info("Cleaned mark to " + volumeIndex.mark);
+            log.debug("Cleaned mark to " + volumeIndex.mark);
             t = getToimik(volumeIndex.year, volumeIndex.mark, false);
         }
-
         if (t == null) {
-            log.info("Could not load toimik by mark for " + volumeIndex);
+            log.debug("Could not load toimik by mark for " + volumeIndex);
             t = getToimik(volumeIndex.year, volumeIndex.mark, true);
         }
-
         if (t == null) {
-            log.info("Could not load toimik by normed mark for " + volumeIndex);
-            return null;
+            log.debug("Could not load toimik by normed mark for " + volumeIndex);
+            // throw new RuntimeException("Could not load toimik by normed mark for " + volumeIndex);
+            // return null;
+            return new ImportedDocument(documentId, null, root.elementText(PP_ELEMENT_TOIMIK_SARI), root.elementText(PP_ELEMENT_REG_NR), null);
         }
-        String viit = t.normedMark + "/" + volumeIndex.regNumber;
-        // curTime = System.currentTimeMillis();
-        // log.info("getToimik: " + (curTime - time));
-
-        // time = System.currentTimeMillis();
+        try {
+        String regNumber = t.normedMark + "/" + volumeIndex.regNumber;
 
         Map<QName, Serializable> propsMap = mapProperties(root, mapping);
 
         propsMap.put(DocumentCommonModel.Props.DOC_STATUS, open ? DocumentStatus.WORKING.getValueName() : DocumentStatus.FINISHED.getValueName());
-        propsMap.put(DocumentCommonModel.Props.REG_NUMBER, viit);
-        propsMap.put(ContentModel.PROP_CREATOR, "DELTA");
-        propsMap.put(ContentModel.PROP_MODIFIER, "DELTA");
+        propsMap.put(DocumentCommonModel.Props.REG_NUMBER, regNumber /*root.elementText(PP_ELEMENT_TOIMIK_SARI)*/);
+        propsMap.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
+        propsMap.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
 
-//        setAccessRestriction(documentId, xml, propsMap, (String) propsMap.get(ACCESS_RESTRICTION));
+        Assert.notNull(propsMap.get(DocumentCommonModel.Props.REG_DATE_TIME), "regDateTime must not be null");
+        Assert.hasText((String) propsMap.get(DocumentCommonModel.Props.REG_NUMBER), "regNumber must not be empty");
 
-        if (!propsMap.containsKey(DocumentCommonModel.Props.OWNER_NAME)) {
-            String ownerName = PostipoissUtil.findAnyValue(root, "/document/tegevused/tegevus[tegevus_liik=1]/kellelt_tekst");
-            if (StringUtils.isBlank(ownerName)) {
-                ownerName = (String) propsMap.get(DocumentCommonModel.Props.SIGNER_NAME);
-            }
-            if (StringUtils.isBlank(ownerName)) {
-                ownerName = IMPORTER_NAME;
-            }
+        setAccessRestriction(propsMap);
+
+//        log.info("ppOwnerName=" + PostipoissUtil.findAnyValue(root, "/dokument/tegevused/tegevus[tegevus_liik=1]/kes"));
+//        log.info("ownerName=" + (String) propsMap.get(OWNER_NAME));
+//        log.info("ownerId=" + (String) propsMap.get(OWNER_NAME));
+        String ownerName = (String) propsMap.get(DocumentCommonModel.Props.OWNER_NAME);
+        if (StringUtils.isBlank(ownerName)) {
+            ownerName = PostipoissUtil.findAnyValue(root, "/dokument/tegevused/tegevus[tegevus_liik=1]/kes"); // SIM used document and kellelt_tekst
+            // SIM used additional rule:
+            // if (StringUtils.isBlank(ownerName)) {
+            // ownerName = (String) propsMap.get(DocumentCommonModel.Props.SIGNER_NAME);
+            // }
+//            if (StringUtils.isBlank(ownerName)) {
+//                ownerName = IMPORTER_NAME;
+//            }
             propsMap.put(DocumentCommonModel.Props.OWNER_NAME, ownerName);
         }
-
-//        setOwnerProperties(propsMap, propsMap);
+        setOwnerProperties(propsMap);
+//        log.info("ownerName=" + (String) propsMap.get(OWNER_NAME));
+//        log.info("ownerId=" + (String) propsMap.get(OWNER_NAME));
 
         if (!propsMap.containsKey(DocumentCommonModel.Props.DOC_NAME)) {
-            String ownerName = root.elementText("dok_liik");
-            if (StringUtils.isNotBlank(ownerName)) {
-                propsMap.put(DocumentCommonModel.Props.DOC_NAME, ownerName);
+            String docName = root.elementText("dok_liik");
+            if (StringUtils.isNotBlank(docName)) {
+                propsMap.put(DocumentCommonModel.Props.DOC_NAME, docName);
             }
         }
 
-        if (!propsMap.containsKey(DocumentCommonModel.Props.STORAGE_TYPE)) {
-            Element el = root.element("fail");
+        Assert.hasText((String) propsMap.get(DocumentCommonModel.Props.DOC_NAME), "docName cannot be blank");
+
+        if (StringUtils.isBlank((String) propsMap.get(DocumentCommonModel.Props.STORAGE_TYPE))) {
             StorageType storageType = StorageType.PAPER;
+            Element el = root.element(PP_ELEMENT_FAIL);
             if (el != null) {
                 if (StringUtils.isNotBlank(el.getStringValue())) {
                     storageType = StorageType.DIGITAL;
@@ -1451,58 +1647,83 @@ public class PostipoissDocumentsImporter {
             propsMap.put(DocumentCommonModel.Props.STORAGE_TYPE, storageType.getValueName());
         }
 
-        // curTime = System.currentTimeMillis();
-        // log.info("beforeCreate: " + (curTime - time));
-
-        // time = System.currentTimeMillis();
-        Node document = documentService.createPPImportDocument(mapping.to, t.nodeRef, null);
-        // curTime = System.currentTimeMillis();
-        // log.info("create: " + (curTime - time));
-
-        // time = System.currentTimeMillis();
-
-        // curTime = System.currentTimeMillis();
-        // log.info("addprops: " + (curTime - time));
-
-        // time = System.currentTimeMillis();
+        Node document = documentService.createPPImportDocument(mapping.to, t.nodeRef /*new NodeRef("workspace://SpacesStore/056f2a8e-f3d9-44e1-8cfc-3ccb997de93b")*/, propsMap);
 
         // Add sendInfo
         String recipient = getRecipient(type, propsMap);
+        NodeRef documentRef = document.getNodeRef();
         if (recipient != null) {
-            Map<QName, Serializable> properties = mapProperties(root, mappings.get("sendInfo"));
-            properties.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, recipient);
-            String sendMode = (String) properties.get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE);
+            Map<QName, Serializable> sendInfoProps = mapProperties(root, mappings.get("sendInfo"));
+            sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, recipient);
+            String sendMode = (String) sendInfoProps.get(DocumentCommonModel.Props.SEND_INFO_SEND_MODE);
             if (StringUtils.isBlank(sendMode)){
-                properties.put(DocumentCommonModel.Props.SEND_INFO_SEND_MODE, "määramata");
+                sendMode = "määramata";
+            } else if (sendMode.equals("email")) {
+                sendMode = SendMode.EMAIL.getValueName();
+            } else if (sendMode.equals("Elektroonselt (DVK)")) {
+                sendMode = SendMode.DVK.getValueName();
+            } else if (sendMode.equals("kullerpost")) {
+                sendMode = SendMode.REGISTERED_MAIL.getValueName();
             }
-            sendOutService.addSendinfo(document.getNodeRef(), properties);
+            // else: "post", "faks" - left as is
+            sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_SEND_MODE, sendMode);
+            sendInfoProps.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
+            sendInfoProps.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
+            sendOutService.addSendinfo(documentRef, sendInfoProps);
         }
 
+        // XXX Somewhat weird logic?
+        // 1) documentService.createPPImportDocument creates one default child node of each child node type
+        //    for document types that have them (errand, ...), calling callbacks with "docConstruction" phase
+        // 2) fillChild searches that type of child node and calls addProperties on them
         for (Mapping subMapping : mapping.subMappings) {
-            fillChild(root, document.getNodeRef(), subMapping);
+            fillChild(root, documentRef, subMapping);
         }
 
-        // curTime = System.currentTimeMillis();
-        // log.info("subs: " + (curTime - time));
+        addHistoryItems(documentRef, root, (Date) propsMap.get(DocumentCommonModel.Props.REG_DATE_TIME));
 
-        // time = System.currentTimeMillis();
-        addHistoryItems(document.getNodeRef(), root);
+        addAssociations(documentRef, documentId, root);
 
-        // curTime = System.currentTimeMillis();
-        // log.info("history: " + (curTime - time));
+        propsMap = new HashMap<QName, Serializable>();
+        Map<QName, NodeRef> parentRefs = documentService.getDocumentParents(documentRef);
+        propsMap.put(DocumentCommonModel.Props.FUNCTION, parentRefs.get(DocumentCommonModel.Props.FUNCTION));
+        propsMap.put(DocumentCommonModel.Props.SERIES, parentRefs.get(DocumentCommonModel.Props.SERIES));
+        propsMap.put(DocumentCommonModel.Props.VOLUME, parentRefs.get(DocumentCommonModel.Props.VOLUME));
+        propsMap.put(DocumentCommonModel.Props.CASE, parentRefs.get(DocumentCommonModel.Props.CASE));
 
-        // time = System.currentTimeMillis();
-        addAssociations(document.getNodeRef(), documentId, root);
-        // curTime = System.currentTimeMillis();
-        // log.info("assocs: " + (curTime - time));
-        nodeService.addProperties(document.getNodeRef(), propsMap);
-        return document;
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(documentRef);
+        Serializable value;
+        value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.COST_MANAGER);
+        propsMap.put(DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER, value);
+        value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.APPLICANT_NAME, DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME);
+        propsMap.put(DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME, value);
+        value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_BEGIN_DATE);
+        propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE, value);
+        value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_END_DATE);
+        propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE, value);
+        value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_COUNTRY);
+        propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY, value);
+        value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_COUNTY);
+        propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY, value);
+        value = documentService.collectProperties(documentRef, childAssocs, DocumentSpecificModel.Props.ERRAND_CITY);
+        propsMap.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY, value);
+        String childProps = documentService.getChildNodesPropsForIndexing(documentRef, new StringBuilder()).toString();
+        propsMap.put(DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES, childProps);
+        propsMap.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
+        nodeService.addProperties(documentRef, propsMap);
+
+        return new ImportedDocument(documentId, documentRef, root.elementText(PP_ELEMENT_TOIMIK_SARI), root.elementText(PP_ELEMENT_REG_NR), nodeService.getProperties(documentRef));
+        } catch (Exception e) {
+            log.error("Error importing document " + xml.getName() + ", continuing: " + e.getMessage(), e);
+            return new ImportedDocument(documentId, null, "ERROR importing " + xml.getName() + " - " + e.getMessage(), "", null);
+        }
     }
 
     private String getRecipient(String type, Map<QName, Serializable> propsMap) {
         if (propsMap != null) {
-            if ("Kiri-sissetulev".equals(type))
-                return null;
+//            if ("Kiri-sissetulev".equals(type))
+//                return null;
+            // XXX TODO FIXME these should be List<String> ???!?!?!
             String recipientName = (String) propsMap.get(DocumentCommonModel.Props.RECIPIENT_NAME);
             String additionalRecipientName = (String) propsMap.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
             if (StringUtils.isBlank(recipientName) && StringUtils.isBlank(additionalRecipientName))
@@ -1513,17 +1734,22 @@ public class PostipoissDocumentsImporter {
     }
 
     private void fillChild(Element root, NodeRef nodeRef, Mapping mapping) {
-        NodeRef childRef = findChild(nodeRef, mapping.to);
-        if (childRef == null) {
-            Assert.notNull(childRef, "No child of type " + mapping.to + " found!");
-        }
+//        NodeRef childRef = findChild(nodeRef, mapping.to);
+//        if (childRef == null) {
+//            Assert.notNull(childRef, "No child of type " + mapping.to + " found!");
+//        }
         Map<QName, Serializable> properties = mapProperties(root, mapping);
-        nodeService.addProperties(childRef, properties);
+        properties.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
+        properties.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
+//        nodeService.addProperties(childRef, properties);
+        NodeRef childRef = nodeService.createNode(nodeRef, mapping.assoc, mapping.assoc, mapping.to, properties).getChildRef();
         for (Mapping subMapping : mapping.subMappings) {
             fillChild(root, childRef, subMapping);
         }
     }
 
+/*
+ * SIM original findChild
     private NodeRef findChild(NodeRef nodeRef, QName to) {
         List<ChildAssociationRef> assocs = nodeService.getChildAssocs(nodeRef,
                 Collections.singleton(to));
@@ -1532,33 +1758,39 @@ public class PostipoissDocumentsImporter {
         }
         return assocs.get(0).getChildRef();
     }
-
+*/
     private NodeRef findCompletedDoc(Integer id) {
         NodeRef res = completedDocumentsMap.get(id);
-        if (res == null) {
-            ImportedDocument importedDocument = batchCompletedDocumentsMap.get(id);
-            if (importedDocument != null) {
-                res = importedDocument.nodeRef;
-            }
-        }
+        
+//        if (res == null) {
+//            ImportedDocument importedDocument = batchCompletedDocumentsMap.get(id);
+//            if (importedDocument != null) {
+//                res = importedDocument.nodeRef;
+//            }
+//        }
         return res;
     }
 
     private File inputFolder;
-    private Map<Integer, ImportedDocument> batchCompletedDocumentsMap;
+//    private Map<Integer, ImportedDocument> batchCompletedDocumentsMap;
 
-    protected void addHistoryItems(NodeRef documentRef, Element root) throws ParseException {
+    protected void addHistoryItems(NodeRef documentRef, Element root, Date docRegDateTime) throws ParseException {
         Element tegevused = root.element("tegevused");
         if (tegevused != null) {
             for (Object o : root.element("tegevused").elements()) {
                 Element el = (Element) o;
-                String kuupaev = el.elementText("kuupaev");
-                String kellaaeg = el.elementText("kellaaeg");
-                String dateString = String.format("%s:%s", kuupaev, kellaaeg);
                 Date kpv = null;
-                try {
-                    kpv = longDateFormat.parse(dateString);
-                } catch (ParseException e) {
+                String kuupaev = el.elementText("kuupaev");
+                if (StringUtils.isBlank(kuupaev)) {
+                    kpv = docRegDateTime;
+                } else {
+                    String kellaaeg = el.elementText("kellaaeg");
+                    String dateString = String.format("%s %s", kuupaev, kellaaeg);
+                    try {
+                        kpv = dateTimeFormat.parse(dateString);
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
                 String nimetus = el.elementText("nimetus");
                 if (nimetus.startsWith("Dokumendi eksportimine")) {
@@ -1574,6 +1806,8 @@ public class PostipoissDocumentsImporter {
                 props.put(DocumentCommonModel.Props.CREATED_DATETIME, kpv);
                 props.put(DocumentCommonModel.Props.CREATOR_NAME, kes);
                 props.put(DocumentCommonModel.Props.EVENT_DESCRIPTION, PostipoissDocumentsMapper.join("; ", nimetus, kellele_tekst, resolutsioon));
+                props.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
+                props.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
                 nodeService.createNode(documentRef, DocumentCommonModel.Types.DOCUMENT_LOG, DocumentCommonModel.Types.DOCUMENT_LOG,
                             DocumentCommonModel.Types.DOCUMENT_LOG, props);
             }
@@ -1598,32 +1832,39 @@ public class PostipoissDocumentsImporter {
         try {
             reader.readHeaders();
             while (reader.readRecord()) {
-                Integer documentId = new Integer(reader.get(0));
-                NodeRef assocDocumentRef = new NodeRef(reader.get(1));
-                Integer isReply = new Integer(reader.get(2));
-                putPostponedAssoc(documentId, assocDocumentRef, isReply.equals(1));
+                Integer sourceDocId = new Integer(reader.get(0));
+                Integer targetDocId = new Integer(reader.get(1));
+                String assocTypeString = reader.get(2);
+                AssocType assocType;
+                if (AssocType.DEFAULT.getValueName().equals(assocTypeString)) {
+                    assocType = AssocType.DEFAULT;
+                } else if (AssocType.FOLLOWUP.getValueName().equals(assocTypeString)) {
+                        assocType = AssocType.FOLLOWUP;
+                } else if (AssocType.REPLY.getValueName().equals(assocTypeString)) {
+                    assocType = AssocType.REPLY;
+                } else {
+                    throw new RuntimeException("Unknown assocType value: " + assocTypeString);
+                }
+                putPostponedAssoc(sourceDocId, targetDocId, assocType);
             }
         } finally {
             reader.close();
         }
-        log.info("Loaded postponed assocs.");
+        log.info("Loaded " + postponedAssocs.size() + " postponed assocs.");
+        postponedAssocsCommited = new TreeMap<Integer, List<PostponedAssoc>>(postponedAssocs);
     }
 
     static class PostponedAssoc {
-        Integer doc_id;
-        NodeRef assocDocRef;
-        Boolean isReply;
+        Integer sourceDocId;
+        Integer targetDocId;
+        AssocType assocType;
 
-        public PostponedAssoc(Integer docId, NodeRef assocDocRef, Boolean isReply) {
-            doc_id = docId;
-            this.assocDocRef = assocDocRef;
-            this.isReply = isReply;
+        public PostponedAssoc(Integer sourceDocId, Integer targetDocId, AssocType assocType) {
+            this.sourceDocId = sourceDocId;
+            this.targetDocId = targetDocId;
+            this.assocType = assocType;
         }
     }
-
-    protected File postponedAssocsFile;
-
-    protected NavigableMap<Integer, List<PostponedAssoc>> postponedAssocs = new TreeMap<Integer, List<PostponedAssoc>>();
 
     private void writePostponedAssocs() {
         try {
@@ -1639,16 +1880,16 @@ public class PostipoissDocumentsImporter {
             CsvWriter writer = new CsvWriter(new FileWriter(postponedAssocsFile, false), CSV_SEPARATOR);
             try {
                 writer.writeRecord(new String[] {
-                            "documentId",
-                            "assocNodeRef",
-                            "isReply"
+                            "sourceDocumentId",
+                            "targetDocumentId",
+                            "assocType"
                     });
-                for (List<PostponedAssoc> list : postponedAssocs.values()) {
+                for (List<PostponedAssoc> list : postponedAssocsCommited.values()) {
                     for (PostponedAssoc postponedAssoc : list) {
                         writer.writeRecord(new String[] {
-                                postponedAssoc.doc_id.toString(),
-                                postponedAssoc.assocDocRef.toString(),
-                                postponedAssoc.isReply ? "1" : "0"
+                                postponedAssoc.sourceDocId.toString(),
+                                postponedAssoc.targetDocId.toString(),
+                                postponedAssoc.assocType.getValueName()
                         });
                     }
                 }
@@ -1661,71 +1902,150 @@ public class PostipoissDocumentsImporter {
     }
 
     protected void addAssociations(NodeRef documentRef, Integer documentId, Element root) {
-        Element seosed = root.element("seosed");
+        Element seosed = root.element(PP_ELEMENT_SEOSED);
         if (seosed != null) {
             for (Object object : seosed.elements()) {
                 Element element = (Element) object;
-                String elementText = element.elementText("dok_nr");
+                String elementText = element.elementText(PP_ELEMENT_DOK_NR);
                 if (StringUtils.isBlank(elementText)) {
                     continue;
                 }
                 Integer targetDocumentId = new Integer(elementText);
                 NodeRef targetDocumentRef = findCompletedDoc(targetDocumentId);
                 if (targetDocumentRef == null) {
-                    log.warn("Association to non-existent documentId=" + targetDocumentId + " in " + documentId + ".xml");
-                    continue;
+//                    Assert.isTrue(documentsMap.get(targetDocumentId) != null || completedDocumentsMap.get(targetDocumentId) != null, "Association to non-existent documentId=" + targetDocumentId);
+                    if (documentsMap.get(targetDocumentId) != null || completedDocumentsMap.get(targetDocumentId) != null) {
+                        log.warn("Association from documentId=" + documentId + " to non-existent documentId=" + targetDocumentId + " assocType=" + AssocType.DEFAULT.getValueName());
+                    }
+                    putPostponedAssoc(documentId, targetDocumentId, AssocType.DEFAULT);
+                    // log.warn("Association to non-existent documentId=" + targetDocumentId + " in " + documentId + ".xml");
+                    // continue;
+                } else {
+                    // for doc2doc assoc, it doesn't matter which is source and which is target
+                    log.debug("Creating assoc " + documentId + " [" + documentRef + "] -> " + targetDocumentId + " [" + targetDocumentRef + "], type=" + AssocType.DEFAULT);
+                    createAssoc(documentRef, targetDocumentRef, documentId, targetDocumentId, AssocType.DEFAULT);
                 }
-                // for doc2doc assoc, it doesn't matter which is source and which is target
-                nodeService.createAssociation(documentRef, targetDocumentRef, DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT);
             }
         }
 
         // for reply/followup, initial document is source of assoc
-        String elementText = root.elementText("alus_dok_nr");
-
+        String elementText = root.elementText(PP_ELEMENT_ALUS_DOK_NR);
         Integer initialDocumentId = null;
-        if (elementText != null) {
-            initialDocumentId = new Integer(root.elementText("alus_dok_nr"));
+        // if (elementText != null) {
+        initialDocumentId = new Integer(elementText);
+        // }
+        String origin = root.elementText(PP_ELEMENT_PARITOLU);
+        if (StringUtils.isBlank(origin)) {
+            origin = root.elementText(PP_ELEMENT_PARITOLU2);
         }
         if (initialDocumentId != null && !documentId.equals(initialDocumentId)) {
-            String origin = root.elementText("paritolu");
-            boolean isReply = origin.equals("Vastusdokument");
-            if (!isReply && StringUtils.isNotBlank(origin)) {
-                log.warn("Unknown value of paritolu '" + origin + "' in " + documentId + ".xml, ignoring association");
-                return;
+            AssocType assocType;
+            if (PP_VALUE_PARITOLU_VASTUSDOKUMENT.equals(origin)) {
+                assocType = AssocType.REPLY;
+            } else if (PP_VALUE_PARITOLU_JARG.equals(origin) || PP_VALUE_PARITOLU_JARELEPARIMINE.equals(origin)) {
+                // SIM ignored Järg assocs, MV does not ignore
+                assocType = AssocType.FOLLOWUP;
+            } else {
+                throw new RuntimeException("Unknown value of " + PP_ELEMENT_PARITOLU + " '" + origin + "'");
             }
             NodeRef initialDocumentRef = findCompletedDoc(initialDocumentId);
             if (initialDocumentRef == null) {
-                putPostponedAssoc(initialDocumentId, documentRef, isReply);
-                return;
+//                Assert.isTrue(documentsMap.get(initialDocumentId) != null || completedDocumentsMap.get(initialDocumentId) != null, "Association to non-existent documentId=" + initialDocumentId);
+                if (documentsMap.get(initialDocumentId) != null || completedDocumentsMap.get(initialDocumentId) != null) {
+                    log.warn("Association from documentId=" + documentId + " to non-existent documentId=" + initialDocumentId + " assocType=" + assocType.getValueName());
+                }
+                putPostponedAssoc(documentId, initialDocumentId, assocType);
+            } else {
+                log.debug("Creating assoc " + documentId + " [" + documentRef + "] -> " + initialDocumentId + " [" + initialDocumentRef + "], type=" + assocType);
+                createAssoc(documentRef, initialDocumentRef, documentId, initialDocumentId, assocType);
             }
-            addReplyOrFollowUp(initialDocumentRef, documentRef, isReply);
-
+        } else {
+            // Few <paritolu> or <parituolu> values are blank
+            if (StringUtils.isNotBlank(origin) && !PP_VALUE_PARITOLU_ALGATUSDOKUMENT.equals(origin)) {
+                throw new RuntimeException("Unknown value of " + PP_ELEMENT_PARITOLU + " '" + origin + "'");
+            }
         }
         List<PostponedAssoc> list = postponedAssocs.get(documentId);
         if (list != null) {
             for (PostponedAssoc postponedAssoc : list) {
-                addReplyOrFollowUp(documentRef, postponedAssoc.assocDocRef, postponedAssoc.isReply);
+                NodeRef sourceDocRef = findCompletedDoc(postponedAssoc.sourceDocId);
+                log.debug("Creating assoc " + postponedAssoc.sourceDocId + " [" + sourceDocRef + "] -> " + documentId + " [" + documentRef + "], type=" + postponedAssoc.assocType);
+                createAssoc(sourceDocRef, documentRef, postponedAssoc.sourceDocId, documentId, postponedAssoc.assocType);
             }
             postponedAssocs.remove(documentId);
         }
     }
 
-    private void addReplyOrFollowUp(NodeRef initialDocRef, NodeRef docRef, boolean isReply) {
-        QName assoc = isReply ? DocumentCommonModel.Assocs.DOCUMENT_REPLY : DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP;
-        List<AssociationRef> targetAssocs = nodeService.getSourceAssocs(docRef, assoc);
-        if (targetAssocs == null || targetAssocs.isEmpty()) {
-            nodeService.createAssociation(docRef, initialDocRef, assoc);
+    private void createAssoc(NodeRef sourceDocRef, NodeRef targetDocRef, Integer sourceDocId, Integer targetDocId, AssocType assocType) {
+        QName assocTypeQName;
+        switch (assocType) {
+        case REPLY:
+            assocTypeQName = DocumentCommonModel.Assocs.DOCUMENT_REPLY;
+            break;
+        case FOLLOWUP:
+            assocTypeQName = DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP;
+            break;
+        case DEFAULT:
+            assocTypeQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
+            break;
+        default:
+            throw new RuntimeException("Unsupported assocType: " + assocType);
         }
+        if (sourceDocRef == null || !nodeService.exists(sourceDocRef)) {
+            log.error("Skipping creating assoc, source does not exist, sourceDocumentId=" + sourceDocId + " targetDocumentId=" + targetDocId + " assocType=" + assocType.getValueName() + " sourceDocRef=" + sourceDocRef + " targetDocRef=" + targetDocRef);
+            return;
+        }
+        if (targetDocRef == null || !nodeService.exists(targetDocRef)) {
+            log.error("Skipping creating assoc, target does not exist, sourceDocumentId=" + sourceDocId + " targetDocumentId=" + targetDocId + " assocType=" + assocType.getValueName() + " sourceDocRef=" + sourceDocRef + " targetDocRef=" + targetDocRef);
+            return;
+        }
+        boolean skip = false;
+        List<AssociationRef> targetAssocs = nodeService.getSourceAssocs(sourceDocRef, assocTypeQName);
+        for (AssociationRef assocRef : targetAssocs) {
+            Assert.isTrue(assocRef.getTargetRef().equals(sourceDocRef), "targetDocRef=" + targetDocRef + ", sourceDocRef=" + sourceDocRef + ", assocRef=" + assocRef);
+//            if (sourceDocRef.equals(assocRef.getSourceRef())
+            log.debug("Existing target-assoc [" + assocRef.getSourceRef() + "] -> [" + assocRef.getTargetRef() + "], type=" + assocRef.getTypeQName());
+            if ((sourceDocRef.equals(assocRef.getSourceRef()) && targetDocRef.equals(assocRef.getTargetRef())) ||
+                (targetDocRef.equals(assocRef.getSourceRef()) && sourceDocRef.equals(assocRef.getTargetRef()))) {
+                if (assocType == AssocType.DEFAULT) {
+                    log.debug("Skipping this assoc creation");
+                    skip = true;
+                } else {
+                    throw new RuntimeException("Non-default assoc cannot previously exist - existing target-assoc [" + assocRef.getSourceRef() + "] -> [" + assocRef.getTargetRef() + "], type=" + assocRef.getTypeQName());
+                }
+            }
+//            if (assocRef.getSourceRef().equals(targetDocRef)) {
+//                throw new RuntimeException("Assoc already exists: " + assocRef);
+//            }
+        }
+        List<AssociationRef> sourceAssocs = nodeService.getTargetAssocs(targetDocRef, assocTypeQName);
+        for (AssociationRef assocRef : sourceAssocs) {
+            Assert.isTrue(assocRef.getSourceRef().equals(targetDocRef), "targetDocRef=" + targetDocRef + ", sourceDocRef=" + sourceDocRef + ", assocRef=" + assocRef);
+            log.debug("Existing source-assoc [" + assocRef.getSourceRef() + "] -> [" + assocRef.getTargetRef() + "], type=" + assocRef.getTypeQName());
+            if ((sourceDocRef.equals(assocRef.getSourceRef()) && targetDocRef.equals(assocRef.getTargetRef())) ||
+                (targetDocRef.equals(assocRef.getSourceRef()) && sourceDocRef.equals(assocRef.getTargetRef()))) {
+                if (assocType == AssocType.DEFAULT) {
+                    log.debug("Skipping this assoc creation");
+                    skip = true;
+                } else {
+                    throw new RuntimeException("Non-default assoc cannot previously exist - existing source-assoc [" + assocRef.getSourceRef() + "] -> [" + assocRef.getTargetRef() + "], type=" + assocRef.getTypeQName());
+                }
+            }
+        }
+        // if (targetAssocs == null || targetAssocs.isEmpty()) {
+        if (!skip) {
+            nodeService.createAssociation(sourceDocRef, targetDocRef, assocTypeQName);
+        }
+        // }
     }
 
-    private void putPostponedAssoc(Integer initialDocId, NodeRef docRef, boolean isReply) {
-        List<PostponedAssoc> list = postponedAssocs.get(initialDocId);
+    private void putPostponedAssoc(Integer sourceDocId, Integer targetDocId, AssocType assocType) {
+        List<PostponedAssoc> list = postponedAssocs.get(targetDocId);
         if (list == null) {
             list = new ArrayList<PostponedAssoc>();
-            postponedAssocs.put(initialDocId, list);
+            postponedAssocs.put(targetDocId, list);
         }
-        list.add(new PostponedAssoc(initialDocId, docRef, isReply));
+        list.add(new PostponedAssoc(sourceDocId, targetDocId, assocType));
     }
 
     // ASSOCS]
@@ -1735,8 +2055,8 @@ public class PostipoissDocumentsImporter {
         final ContentWriter writer = fileFolderService.getWriter(fileRef);
         generalService.writeFile(writer, file, fileName, mimeType);
         Map<QName, Serializable> propsMap = new HashMap<QName, Serializable>();
-        propsMap.put(ContentModel.PROP_CREATOR, "DELTA");
-        propsMap.put(ContentModel.PROP_MODIFIER, "DELTA");
+        propsMap.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
+        propsMap.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
         nodeService.addProperties(fileRef, propsMap);
         return fileRef;
     }

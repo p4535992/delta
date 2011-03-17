@@ -20,7 +20,6 @@ public class AMRServiceImplTest extends TestCase {
     static final ClassPathXmlApplicationContext appC;
     static String ametnikId;
     static String ametnikFirstName;
-    static BigInteger asutusId = BigInteger.valueOf(1);
     static {
         appC = new ClassPathXmlApplicationContext("ee/webmedia/alfresco/orgstructure/amr/service/amrService-context.xml");
         appC.refresh();
@@ -28,7 +27,7 @@ public class AMRServiceImplTest extends TestCase {
     }
     
     public void testYksusByAsutusId() {
-        Yksus[] yksusArray = amrService.getYksusByAsutusId(asutusId);
+        Yksus[] yksusArray = amrService.getYksusByAsutusId();
         assertTrue(yksusArray.length > 0);
         for (Yksus yksus : yksusArray) {
             BigInteger unitId = yksus.getId();
@@ -41,7 +40,7 @@ public class AMRServiceImplTest extends TestCase {
     }
     
     public void testGetAmetnikByAsutusId() {
-        Ametnik[] ametnikArray = amrService.getAmetnikByAsutusId(asutusId);
+        Ametnik[] ametnikArray = amrService.getAmetnikByAsutusId();
         assertTrue(ametnikArray.length > 0);
         for (Ametnik ametnik : ametnikArray) {
             ametnikId = ametnik.getIsikukood(); // save id for next test

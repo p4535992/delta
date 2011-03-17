@@ -2,8 +2,8 @@ package ee.webmedia.alfresco.mso.service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -18,15 +18,15 @@ import org.apache.cxf.frontend.ClientProxy;
 import org.apache.cxf.transport.http.HTTPConduit;
 import org.springframework.beans.factory.InitializingBean;
 
+import ee.webmedia.alfresco.mso.ws.Formula;
+import ee.webmedia.alfresco.mso.ws.Mso;
+import ee.webmedia.alfresco.mso.ws.MsoDocumentAndFormulasInput;
+import ee.webmedia.alfresco.mso.ws.MsoDocumentAndPdfOutput;
+import ee.webmedia.alfresco.mso.ws.MsoDocumentInput;
+import ee.webmedia.alfresco.mso.ws.MsoDocumentOutput;
+import ee.webmedia.alfresco.mso.ws.MsoPdfOutput;
 import ee.webmedia.alfresco.utils.ContentReaderDataSource;
 import ee.webmedia.alfresco.utils.MimeUtil;
-import ee.webmedia.mso.Formula;
-import ee.webmedia.mso.Mso;
-import ee.webmedia.mso.MsoDocumentAndFormulasInput;
-import ee.webmedia.mso.MsoDocumentAndPdfOutput;
-import ee.webmedia.mso.MsoDocumentInput;
-import ee.webmedia.mso.MsoDocumentOutput;
-import ee.webmedia.mso.MsoPdfOutput;
 
 /*
  * This service doesn't deal with charset information, input and output files are passed to and from MSO Service unmodified.
@@ -49,7 +49,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
         }
 
         log.info("Initializing Mso service port");
-        Mso port = (new ee.webmedia.mso.MsoService()).getMsoPort();
+        Mso port = (new ee.webmedia.alfresco.mso.ws.MsoService()).getMsoPort();
         BindingProvider bp = (BindingProvider) port;
         bp.getRequestContext().put(BindingProvider.ENDPOINT_ADDRESS_PROPERTY, endpointAddress);
 

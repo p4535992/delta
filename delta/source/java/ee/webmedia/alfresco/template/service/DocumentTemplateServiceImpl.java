@@ -37,6 +37,7 @@ import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
@@ -49,6 +50,7 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.ISOLatin1Util;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
@@ -77,7 +79,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     private OpenOfficeService openOfficeService;
     private DictionaryService dictionaryService;
     private MsoService msoService;
-    private ApplicationService applicationService;    
+    private ApplicationService applicationService;
     private ServletContext servletContext;
 
     private static BeanPropertyMapper<DocumentTemplate> templateBeanPropertyMapper;
@@ -93,9 +95,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             // This check ensures, that only proper DOC files are passed to Word
             // Unfortunately DOT files have mimetype application/octet-stream, and therefore MsoService must accept this mimetype also
             // So without this check, every binary file would be passed to word, which would be unnecessary and very time consuming
-            if ((file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.ACTIVE) == null
-                    || Boolean.TRUE.equals(file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.ACTIVE)))
-                    && file.getProperties().get(ee.webmedia.alfresco.document.file.model.File.GENERATED) != null) {
+            if ((file.getProperties().get(ee.webmedia.alfresco.document.file.model.FileModel.Props.ACTIVE) == null
+                    || Boolean.TRUE.equals(file.getProperties().get(ee.webmedia.alfresco.document.file.model.FileModel.Props.ACTIVE)))
+                    && file.getProperties().get(ee.webmedia.alfresco.document.file.model.FileModel.Props.GENERATED) != null) {
                 replaceFormulas(docRef, file.getNodeRef(), file.getNodeRef(), file.getName());
             }
         }
@@ -135,9 +137,12 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         log.debug("Creating a file from template for document: " + documentNodeRef);
         final Map<QName, Serializable> docProp = nodeService.getProperties(documentNodeRef);
 
-        String name = FilenameUtil.buildFileName((String) docProp.get(DocumentCommonModel.Props.DOC_NAME), mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD));
+        String name = FilenameUtil.buildFileName((String) docProp.get(DocumentCommonModel.Props.DOC_NAME),
+                mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD));
+
         String displayName = fileService.getUniqueFileDisplayName(documentNodeRef, name);
-        name = generalService.limitFileNameLength(name, 20, null);
+        name = FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(name));
+        name = generalService.limitFileNameLength(name, 50, null);
         name = generalService.getUniqueFileName(documentNodeRef, name);
         String templName = "";
         if (docProp.get(DocumentSpecificModel.Props.TEMPLATE_NAME) != null) {
@@ -157,9 +162,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
         ee.webmedia.alfresco.document.file.model.File populatedTemplate = new ee.webmedia.alfresco.document.file.model.File(fileFolderService.create(
                 documentNodeRef, name, ContentModel.TYPE_CONTENT));
-        nodeService.setProperty(populatedTemplate.getNodeRef(), ee.webmedia.alfresco.document.file.model.File.GENERATED, true); // Set generated flag so we can
-        // process it during document registration
-        nodeService.setProperty(populatedTemplate.getNodeRef(), ee.webmedia.alfresco.document.file.model.File.DISPLAY_NAME, displayName);
+        nodeService.setProperty(populatedTemplate.getNodeRef(), ee.webmedia.alfresco.document.file.model.FileModel.Props.GENERATED, true); // Set generated flag
+        // so we can process it during document registration
+        nodeService.setProperty(populatedTemplate.getNodeRef(), FileModel.Props.DISPLAY_NAME, displayName);
 
         documentLogService.addDocumentLog(documentNodeRef, I18NUtil.getMessage("document_log_status_fileAdded", displayName));
         log.debug("Created new node: " + populatedTemplate.getNodeRef() + "\nwith name: " + name + "; displayName: " + displayName);
@@ -216,6 +221,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         } while (retry > 0);
     }
 
+    @Override
     public String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template) {
         String templateText = fileFolderService.getReader(template).getContentString();
         StringBuilder sb = new StringBuilder();
@@ -256,7 +262,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                     sb.append(regNr)
                     .append(" (")
                     .append(I18NUtil.getMessage("notification_access_restriction_end"))
-                    .append(": ") 
+                    .append(": ")
                     .append(dateFormat.format(doc.getAccessRestrictionEndDate()))
                     .append(")")
                     .append("<br>\n");
@@ -422,7 +428,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
          * Spetsifikatsioon "Dokumendi ekraanivorm - Tegevused.docx" punkt 7.1.5.2
          * Kui vastav metaandme väli on täitmata, siis asendamist ei toimu.
          */
-        
+
         // Remove formulas with empty values
         for (Iterator<Entry<String, String>> i = formulas.entrySet().iterator(); i.hasNext(); ) {
             Entry<String, String> entry = i.next();
@@ -467,12 +473,12 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             Date endDate = i < endDates.size() ? endDates.get(i) : null;
             StringBuilder sb = new StringBuilder();
             sb.append(names.get(i))
-                    .append(" ")
-                    .append(startDate == null ? "" : dateFormat.format(startDate))
-                    .append(" ")
-                    .append(until)
-                    .append(" ")
-                    .append(endDate == null ? "" : dateFormat.format(endDate));
+            .append(" ")
+            .append(startDate == null ? "" : dateFormat.format(startDate))
+            .append(" ")
+            .append(until)
+            .append(" ")
+            .append(endDate == null ? "" : dateFormat.format(endDate));
             substitutes.add(sb.toString());
         }
         return StringUtils.join(substitutes.iterator(), "\n");
@@ -639,7 +645,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;
     }
-    
+
     // END: getters / setters
 
 

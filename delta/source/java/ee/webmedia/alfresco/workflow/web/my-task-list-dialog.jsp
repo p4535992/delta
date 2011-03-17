@@ -81,6 +81,22 @@
    </a:richList>
 
 </a:panel>
+
+<a:panel id="external-review-tasks-panel" styleClass="panel-100 #{(MyTasksBean.externalReviewPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_external_review_title}" progressive="true" rendered="#{not empty MyTasksBean.externalReviewTasks}">
+
+   <%-- Main List --%>
+   <a:richList id="external-review-task-list" viewMode="details" pageSize="#{MyTasksBean.pageSize}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+      width="100%" value="#{MyTasksBean.externalReviewTasks}"  var="r">
+
+      <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/task-list-dialog-min-columns.jsp" />
+
+      <a:booleanEvaluator value="#{MyTasksBean.externalReviewPagerVisible}">
+         <a:dataPager id="external-review-pager" styleClass="pager" />
+      </a:booleanEvaluator>
+   </a:richList>
+
+</a:panel>
+
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

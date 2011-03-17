@@ -74,7 +74,6 @@
    <bean id="organizationStructureService" class="ee.webmedia.alfresco.orgstructure.service.OrganizationStructureServiceImpl">
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
-      <property name="parametersService" ref="ParametersService" />
       <property name="amrService" ref="AmrService" />
    </bean>
 
@@ -93,6 +92,7 @@
    </bean>
 
    <bean id="updateOrganizationsListTrigger" class="ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean" parent="parameterRescheduledTriggerParent">
+      <property name="enabled" value="${organizationStructure.updateEnabled}" />
       <property name="parameterName" value="employeeRegReceiveStructUnitsTime" />
       <property name="parameterFormat" value="H:mm" />
       <!--      <property name="jobDetail" ref="updateOrganizationsListJobDetails" />-->
@@ -106,6 +106,16 @@
             </property>
          </bean>
       </property>
+   </bean>
+
+   <bean id="deleteEmployeeRegOrganisationIdParameterBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="name" value="deleteEmployeeRegOrganisationIdParameterBootstrap" />
+      <property name="sinceVersion" value="@currentVersion@" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="nodeXPath" value="/param:parameters/param:employeeRegOrganisationId" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
    </bean>
 
 </beans>

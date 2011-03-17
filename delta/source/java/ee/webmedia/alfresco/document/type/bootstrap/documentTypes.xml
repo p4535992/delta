@@ -11,7 +11,7 @@
                   <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
-
+            
             <doctype:documentType view:childName="docsub:outgoingLetter">
                <view:properties>
                   <doctype:name>Väljaminev kiri</doctype:name>
@@ -19,7 +19,7 @@
                   <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
-
+            
             <doctype:documentType view:childName="docsub:errandOrderAbroad">
                <view:properties>
                   <doctype:name>Välislähetuse korraldus</doctype:name>
@@ -27,7 +27,7 @@
                   <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
-
+            
             <doctype:documentType view:childName="docsub:errandApplicationDomestic">
                <view:properties>
                   <doctype:name>Siselähetuse taotlus</doctype:name>
@@ -53,7 +53,7 @@
                   <doctype:comment>SMIT</doctype:comment>
                </view:properties>
             </doctype:documentType>
-
+            
             <doctype:documentType view:childName="docsub:leavingLetter">
                <view:properties>
                   <doctype:name>Lahkumisleht</doctype:name>
@@ -85,7 +85,7 @@
                   <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
-
+            
             <doctype:documentType view:childName="docsub:chancellorsOrder">
                <view:properties>
                   <doctype:name>Kantsleri käskkiri</doctype:name>
@@ -96,7 +96,7 @@
 
             <doctype:documentType view:childName="docsub:ministersOrder">
                <view:properties>
-                  <doctype:name>Põhitegevuse käskkiri</doctype:name>
+                  <doctype:name>Üldkäskkiri</doctype:name>
                   <doctype:used>true</doctype:used>
                   <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
@@ -127,7 +127,7 @@
                   <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
-
+            
             <doctype:documentType view:childName="docsub:decree">
                <view:properties>
                   <doctype:name>Määrus</doctype:name>
@@ -143,7 +143,7 @@
                   <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
-
+            
             <doctype:documentType view:childName="docsub:supervisionReport">
                <view:properties>
                   <doctype:name>Järelevalveakt</doctype:name>
@@ -159,7 +159,7 @@
                   <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
-
+            
             <doctype:documentType view:childName="docsub:licence">
                <view:properties>
                   <doctype:name>Luba</doctype:name>
@@ -201,7 +201,7 @@
                   <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
-
+            
             <doctype:documentType view:childName="docsub:managementsOrder">
                <view:properties>
                   <doctype:name>Juhtkonna korraldus</doctype:name>
@@ -209,7 +209,7 @@
                   <doctype:publicAdr>false</doctype:publicAdr>
                </view:properties>
             </doctype:documentType>
-
+            
          </doctype:documentType>
       </view:associations>
    </doctype:documentTypes>

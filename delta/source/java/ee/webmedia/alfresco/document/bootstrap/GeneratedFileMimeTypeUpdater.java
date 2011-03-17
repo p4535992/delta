@@ -20,7 +20,7 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
@@ -32,7 +32,6 @@ public class GeneratedFileMimeTypeUpdater extends AbstractNodeUpdater {
 
     private BehaviourFilter behaviourFilter;
     private SearchService searchService;
-    private NodeService nodeService;
     private GeneralService generalService;
     private MimetypeService mimetypeService;
 
@@ -43,7 +42,7 @@ public class GeneratedFileMimeTypeUpdater extends AbstractNodeUpdater {
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
-        String query = SearchUtil.generateStringExactQuery("true", File.GENERATED);
+        String query = SearchUtil.generateStringExactQuery("true", FileModel.Props.GENERATED);
         List<ResultSet> result = new ArrayList<ResultSet>(2);
         result.add(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));
         result.add(searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, query));
@@ -52,9 +51,7 @@ public class GeneratedFileMimeTypeUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
-        if (!nodeService.exists(nodeRef)) {
-            return new String[] { nodeRef.toString(), "nodeDoesNotExist" };
-        }
+
         Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);
         String name = (String) origProps.get(ContentModel.PROP_NAME);
         if (StringUtils.isEmpty(name)) {
@@ -96,10 +93,6 @@ public class GeneratedFileMimeTypeUpdater extends AbstractNodeUpdater {
 
     public void setSearchService(SearchService searchService) {
         this.searchService = searchService;
-    }
-
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
     }
 
     public void setGeneralService(GeneralService generalService) {

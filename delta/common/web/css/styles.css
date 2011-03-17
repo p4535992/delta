@@ -873,6 +873,10 @@ hr {
 	vertical-align: middle;
 }
 
+.propertiesLabel + td span {
+	float: left;
+}
+
 #container-content select, #container-content textarea {
 	height: 19px;
 	line-height: 19px;
@@ -1045,6 +1049,11 @@ textarea.inline {
 
 .delete {
 	background: url("../images/icons/delete.gif") no-repeat;
+	line-height: 20px;
+}
+
+.reset {
+	background: url("../images/icons/trashcan.gif") no-repeat;
 	line-height: 20px;
 }
 
@@ -1240,6 +1249,17 @@ table.expand19-200 {
 .table-padding td {
 	padding-top: 3px;
 	padding-bottom: 3px;
+}
+
+.delegationReso {
+	margin-top: -3px;
+	margin-left: 5px;
+}
+
+.delegationWrapper {
+	border-bottom: 1px dotted gray;
+	width: 100%;
+	padding-bottom: 8px;
 }
 
 table.recipient td {

@@ -86,7 +86,11 @@ public class Series implements Serializable, Comparable<Series> {
     }
 
     public int getOrder() {
-        return (Integer) node.getProperties().get(SeriesModel.Props.ORDER.toString());
+        Integer order = (Integer) node.getProperties().get(SeriesModel.Props.ORDER.toString());
+        if (order == null) {
+            return 0;
+        }
+        return order;
     }
 
     public void setOrder(int order) {

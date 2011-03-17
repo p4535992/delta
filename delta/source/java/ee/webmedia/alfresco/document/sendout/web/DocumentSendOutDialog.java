@@ -20,6 +20,7 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.security.AuthorityService;
@@ -233,6 +234,25 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         if (StringUtils.isNotBlank(contractName) || StringUtils.isNotBlank(contractEmail)) {
             names.add(StringUtils.isNotBlank(contractName) ? contractName : "");
             emails.add(StringUtils.isNotBlank(contractEmail) ? contractEmail : "");
+        }
+        if (getNodeService().hasAspect(node.getNodeRef(), DocumentSpecificModel.Aspects.CONTRACT_COMMON_DETAILS)) {
+            List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(node.getNodeRef());
+            ArrayList<Serializable> partyNames = getDocumentService().collectProperties(node.getNodeRef(), childAssocs, DocumentSpecificModel.Props.PARTY_NAME);
+            ArrayList<Serializable> partyEmails = getDocumentService().collectProperties(node.getNodeRef(), childAssocs, DocumentSpecificModel.Props.PARTY_EMAIL);
+            if (partyNames.size() != partyEmails.size()) {
+                throw new RuntimeException("Document has uneven count of docspec:partyName and docspec:partyEmail values! Check code!");
+            }
+            String name, email;
+            for (int i = 0; i < partyNames.size(); i++) {
+                name = (String) partyNames.get(i);
+                email = (String) partyEmails.get(i);
+                if(StringUtils.isBlank(name) && StringUtils.isBlank(email)) {
+                    continue;
+                }
+                
+                names.add(name);
+                emails.add(email);
+            }
         }
 
         if (names.size() == 1 && emails.size() == 1 && StringUtils.isBlank(names.get(0)) && StringUtils.isBlank(emails.get(0))) {

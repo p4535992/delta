@@ -20,6 +20,7 @@ import org.springframework.beans.factory.BeanFactoryAware;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.model.DocumentTypeModel;
 import ee.webmedia.alfresco.menu.service.MenuService;
@@ -101,7 +102,6 @@ public class DocumentTypeServiceImpl implements DocumentTypeService, BeanFactory
             String xPath = DocumentTypeModel.Repo.DOCUMENT_TYPES_SPACE + "/" + documentType.getId().toPrefixString(namespaceService);
             NodeRef nodeRef = generalService.getNodeRef(xPath);
             Map<QName, Serializable> props = documentTypeBeanPropertyMapper.toProperties(documentType);
-            props.remove(DocumentTypeModel.Props.NAME);
             if (log.isDebugEnabled()) {
                 log.debug("Updating documentType xPath=" + xPath + " nodeRef=" + nodeRef + " with properties:\n" + props);
             }
@@ -157,6 +157,31 @@ public class DocumentTypeServiceImpl implements DocumentTypeService, BeanFactory
             throw new RuntimeException("docType '"+qName+"' was not found in document types list");
         }
         return documentType;
+    }
+
+    @Override
+    public QName getIncomingLetterType() {
+        return getUsedDocumentType(DocumentSubtypeModel.Types.INCOMING_LETTER, DocumentSubtypeModel.Types.INCOMING_LETTER_MV);
+    }
+
+    @Override
+    public QName getOutgoingLetterType() {
+        return getUsedDocumentType(DocumentSubtypeModel.Types.OUTGOING_LETTER, DocumentSubtypeModel.Types.OUTGOING_LETTER_MV);
+    }
+
+    private QName getUsedDocumentType(QName primaryTypeQName, QName secondaryTypeQName) {
+        DocumentType primaryType = getDocumentType(primaryTypeQName);
+        DocumentType secondaryType = getDocumentType(secondaryTypeQName);
+        // One case returns secondary type
+        // * if only secondary type is enabled
+        if (secondaryType.isUsed() || !primaryType.isUsed()) {
+            return secondaryType.getId();
+        }
+        // All other cases return primary type
+        // * if only primary type is enabled
+        // * if both types are enabled
+        // * if neither type is enabled
+        return primaryType.getId();
     }
 
     // START: getters / setters

@@ -30,6 +30,7 @@ public class BaseWorkflowType implements WorkflowType, InitializingBean {
         workflowService.registerWorkflowType(this);
     }
 
+    @Override
     public QName getWorkflowType() {
         return workflowType;
     }

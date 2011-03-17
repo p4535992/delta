@@ -55,6 +55,10 @@ public abstract class BaseWorkflowObject {
     protected void setStatus(String status) {
         setProp(WorkflowCommonModel.Props.STATUS, status);
     }
+    
+    public QName getType() {
+        return getNode().getType();
+    }    
 
     public String getCreatorName() {
         return getProp(WorkflowCommonModel.Props.CREATOR_NAME);
@@ -126,6 +130,10 @@ public abstract class BaseWorkflowObject {
     public boolean isStatus(Status... statuses){
         return WorkflowUtil.isStatus(this, statuses);
     }
+    
+    public boolean isType(QName... types){
+        return WorkflowUtil.isType(this, types);
+    }    
 
     protected String additionalToString() {
         return "";

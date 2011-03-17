@@ -37,7 +37,7 @@ public class DvkBean implements Serializable {
     }
 
     public void updateDocSendStatuses(@SuppressWarnings("unused") ActionEvent event) {
-        final int updateDocSendStatuses = getDvkService().updateDocSendStatuses();
+        final int updateDocSendStatuses = getDvkService().updateDocAndTaskSendStatuses();
         MessageUtil.addInfoMessage("dvk_updateDocSendStatuses_success", updateDocSendStatuses);
     }
 

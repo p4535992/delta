@@ -36,7 +36,7 @@ public class DvkReceiveDocSendStatusesJob implements Job {
         final Integer statusesUpdated = AuthenticationUtil.runAs(new RunAsWork<Integer>() {
             @Override
             public Integer doWork() throws Exception {
-                return worker.updateDocSendStatuses();
+                return worker.updateDocAndTaskSendStatuses();
             }
         }, AuthenticationUtil.getSystemUserName());
         // Done

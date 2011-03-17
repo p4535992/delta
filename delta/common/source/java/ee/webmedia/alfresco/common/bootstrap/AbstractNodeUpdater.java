@@ -20,7 +20,9 @@ import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,6 +37,8 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     protected static final char CSV_SEPARATOR = ';';
     protected static Charset CSV_CHARSET = Charset.forName("UTF-8");
     protected static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
+
+    protected NodeService nodeService;
 
     private File inputFolder;
     private Set<NodeRef> nodes = new HashSet<NodeRef>();
@@ -70,7 +74,11 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         log.info("Starting to update " + nodes.size() + " nodes");
         if (nodes.size() > 0) {
             UpdateNodesBatchProgress batchProgress = new UpdateNodesBatchProgress();
-            batchProgress.run();
+            try {
+                batchProgress.run();
+            } finally {
+                log.info("Completed nodes have been written to file " + completedNodesFile.getAbsolutePath());
+            }
         }
         log.info("Completed nodes updater");
     }
@@ -168,20 +176,24 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     }
 
     protected void updateNodesBatch(final List<NodeRef> batchList) throws Exception {
-        final List<String[]> batchInfo = new ArrayList<String[]>(BATCH_SIZE);
+        final List<String[]> batchInfos = new ArrayList<String[]>(BATCH_SIZE);
         for (NodeRef nodeRef : batchList) {
+            if (!nodeService.exists(nodeRef)) {
+                batchInfos.add(new String[] { nodeRef.toString(), "nodeDoesNotExist" });
+                continue;
+            }
             String[] info = updateNode(nodeRef);
             if (info != null) {
-                batchInfo.add(info);
+                String[] batchInfo = (String[]) ArrayUtils.add(info, 0, nodeRef.toString());
+                batchInfos.add(batchInfo);
             }
         }
         bindCsvWriteAfterCommit(completedNodesFile, new CsvWriterClosure() {
 
             @Override
             public void execute(CsvWriter writer) throws IOException {
-                for (String[] info : batchInfo) {
+                for (String[] info : batchInfos) {
                     writer.writeRecord(info);
-                    // fixedDocuments.add(documentId);
                 }
             }
 
@@ -193,10 +205,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     }
 
     /**
-     * @param nodeRef nodeRef to be updated
-     * @return array of strings to be written into the completed nodes file
+     * @param nodeRef nodeRef to be updated; only nodes that currently exist are passed here, this check is performed by {@link AbstractNodeUpdater}.
+     * @return array of strings to be written into the completed nodes csv file, can be {@code null}; nodref is automatically insterted as the first element by
+     *         {@link AbstractNodeUpdater}.
      * @throws Exception
-     *             NB! first check if the node exists
      */
     protected abstract String[] updateNode(NodeRef nodeRef) throws Exception;
 
@@ -249,13 +261,25 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
             thisRunCompletedSize += batchList.size();
             batchList = new ArrayList<E>(batchSize);
             long endTime = System.currentTimeMillis();
-            double completedPercent = completedSize * 100 / ((double) totalSize);
-            double lastDocsPerSec = i * 1000 / ((double) (endTime - startTime));
-            double totalDocsPerSec = thisRunCompletedSize * 1000 / ((double) (endTime - thisRunStartTime));
-            int etaMinutes = (int) (((long) (totalSize - completedSize)) * (endTime - thisRunStartTime) / (long) (thisRunCompletedSize * 60000));
+            double completedPercent = ((long) completedSize) * 100L / ((double) totalSize);
+            double lastDocsPerSec = ((long) i) * 1000L / ((double) (endTime - startTime));
+            long thisRunTotalTime = endTime - thisRunStartTime;
+            double totalDocsPerSec = ((long) thisRunCompletedSize) * 1000L / ((double) thisRunTotalTime);
+            long remainingSize = ((long) totalSize) - ((long) completedSize);
+            long divisor = ((long) thisRunCompletedSize) * 60000L;
+            int etaMinutes = ((int) (remainingSize  *  thisRunTotalTime / divisor)) + 1;
+            int etaHours = 0;
+            if (etaMinutes > 59) {
+                etaHours = etaMinutes / 60;
+                etaMinutes = etaMinutes % 60;
+            }
+            String eta = etaMinutes + "m";
+            if (etaHours > 0) {
+                eta = etaHours + "h " + eta;
+            }
             i = 0;
-            log.info(String.format("%s: %6.2f%% completed - %7d of %7d, %5.1f docs per second (last), %5.1f (total), ETA %d min", processName,
-                    completedPercent, completedSize, totalSize, lastDocsPerSec, totalDocsPerSec, etaMinutes));
+            log.info(String.format("%s: %6.2f%% completed - %7d of %7d, %5.1f docs per second (last), %5.1f (total), ETA %s", processName,
+                    completedPercent, completedSize, totalSize, lastDocsPerSec, totalDocsPerSec, eta));
             startTime = endTime;
         }
 
@@ -326,6 +350,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         helper.setMaxRetries(1);
         helper.setTransactionService(serviceRegistry.getTransactionService());
         return helper;
+    }
+
+    public void setNodeService(NodeService nodeService) {
+        this.nodeService = nodeService;
     }
 
 }

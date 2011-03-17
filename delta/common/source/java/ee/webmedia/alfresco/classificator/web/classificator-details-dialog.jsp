@@ -31,9 +31,18 @@
          </f:facet>
          <h:inputText id="col2-in-txt" value="#{clValue.orderText}" size="1" styleClass="#{(clValue.lastOrderValidationSuccess) ? '' : 'error ' }small" />
       </a:column>
+      
+      <%-- Description column --%>
+      <a:column id="col3">
+         <f:facet name="header">
+            <h:outputText id="col3-sort" value="#{msg.classificator_value_description}" />
+         </f:facet>
+         <h:inputTextarea id="col3-in-txt" value="#{clValue.classificatorDescription}" readonly="#{clValue.readOnly}"
+            styleClass="expand19-200" />
+      </a:column>      
 
       <%-- byDefault column --%>
-      <a:column id="col3">
+      <a:column id="col4">
          <f:facet name="header">
             <h:outputText id="col3-sort" value="#{msg.classificator_value_bydefault}" />
          </f:facet>
@@ -43,7 +52,7 @@
       </a:column>
 
       <%-- Active column --%>
-      <a:column id="col4">
+      <a:column id="col5">
          <f:facet name="header">
             <h:outputText id="col4-sort" value="#{msg.classificator_value_active}" />
          </f:facet>
@@ -53,7 +62,7 @@
       </a:column>
 
       <%-- Remove column --%>
-      <a:column id="col5" rendered="#{DialogManager.bean.addRemoveValuesAllowed}">
+      <a:column id="col6" rendered="#{DialogManager.bean.addRemoveValuesAllowed}">
          <f:facet name="header">
             <h:outputText id="col5-sort" value="#{msg.classificator_value_remove}" />
          </f:facet>

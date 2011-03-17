@@ -85,6 +85,21 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="taskCapablePropertyUpdater" class="ee.webmedia.alfresco.addressbook.bootstrap.TaskCapablePropertyUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="common" />
+      <property name="name" value="taskCapablePropertyUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="generalService" ref="generalService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="searchService" ref="searchService" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="addressbookRootBootstrap"/>
+         </list>
+      </property>
+   </bean>     
 
 
    <!-- START: web beans: -->

@@ -5,14 +5,14 @@
     http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
    <bean id="adrService" class="ee.webmedia.alfresco.adr.service.AdrServiceImpl">
-      <property name="fileFolderService" ref="FileFolderService" />
-      <property name="documentSearchService" ref="DocumentSearchService" />
-      <property name="fileService" ref="FileService" />
-      <property name="documentTypeService" ref="DocumentTypeService" />
-      <property name="documentService" ref="DocumentService" />
-      <property name="nodeService" ref="NodeService" />
-      <property name="generalService" ref="GeneralService" />
-      <property name="namespaceService" ref="NamespaceService" />
+      <property name="fileFolderService" ref="fileFolderService" />
+      <property name="documentSearchService" ref="documentSearchService" />
+      <property name="fileService" ref="fileService" />
+      <property name="documentTypeService" ref="documentTypeService" />
+      <property name="documentService" ref="documentService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="generalService" ref="generalService" />
+      <property name="namespaceService" ref="namespaceService" />
    </bean>
 
 </beans>

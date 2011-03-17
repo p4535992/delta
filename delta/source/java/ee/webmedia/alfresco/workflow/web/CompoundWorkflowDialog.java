@@ -1,5 +1,8 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.TASK_INDEX;
+import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
+
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -33,9 +36,9 @@ import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
+import ee.webmedia.alfresco.workflow.service.Task.Action;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
-import ee.webmedia.alfresco.workflow.service.Task.Action;
 import ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.CommentEvent;
 
 /**
@@ -60,14 +63,14 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             , WorkflowSpecificModel.Types.REVIEW_WORKFLOW
             , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW
             , WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW
-            );
+    );
 
     /**
      * @param propSheet
      * @return true if "{temp}workflowTasks" property should be shown on given propertySheet
      */
     public boolean showAssignmentWorkflowWorkflowTasks(UIPropertySheet propSheet) {
-        final int index = (Integer) propSheet.getAttributes().get("workFlowIndex");
+        final int index = (Integer) propSheet.getAttributes().get(TaskListGenerator.ATTR_WORKFLOW_INDEX);
         final Workflow workflow2 = getWorkflow().getWorkflows().get(index);
         final List<Task> tasks = workflow2.getTasks();
         for (Task task : tasks) {
@@ -264,10 +267,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
      * Action listener for JSP.
      */
     public void cancelWorkflowTask(ActionEvent event) {
-        int index = Integer.parseInt(ActionUtil.getParam(event, "index"));
-        int taskIndex = Integer.parseInt(ActionUtil.getParam(event, "taskIndex"));
-        log.debug("cancelWorkflowTask: " + index + ", " + taskIndex);
-        Workflow block = workflow.getWorkflows().get(index);
+        int wfIndex = ActionUtil.getParam(event, WF_INDEX, Integer.class);
+        int taskIndex = ActionUtil.getParam(event, TASK_INDEX, Integer.class);
+        log.debug("cancelWorkflowTask: " + wfIndex + ", " + taskIndex);
+        Workflow block = workflow.getWorkflows().get(wfIndex);
         Task task = block.getTasks().get(taskIndex);
         task.setAction(Action.UNFINISH);
         updatePanelGroup();
@@ -310,7 +313,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     protected DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentService.BEAN_NAME);
+            .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
     }
@@ -363,7 +366,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                 }
                 if (!responsible && !task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
                     if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(task.getNode().getType())
-                        && StringUtils.equals(task.getOwnerId(), user)) {
+                            && StringUtils.equals(task.getOwnerId(), user)) {
                         return true;
                     }
                 }
@@ -372,7 +375,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         return false;
     }
 
-    private void handleException(Exception e, String failMsg) {
+    public static void handleException(Exception e, String failMsg) {
         if (e instanceof WorkflowChangedException) {
             log.debug("Compound workflow action failed: data changed!", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_compound_save_failed");
@@ -388,7 +391,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         } else if (e instanceof InvalidNodeRefException) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "workflow_task_save_failed_docDeleted");
-            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            context.getApplication().getNavigationHandler().handleNavigation(context, null, AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME);
         } else {
             log.error("Compound workflow action failed!", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), failMsg);
@@ -407,11 +410,12 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             QName blockType = block.getNode().getType();
             // isActiveResponsible check needs to be done only for ASSIGNMENT_WORKFLOW
             boolean activeResponsibleAssigneeNeeded = blockType.equals(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)
-                    && !activeResponsibleAssignedInSomeWorkFlow && !isActiveResponsibleAssignedForDocument(false);
+            && !activeResponsibleAssignedInSomeWorkFlow && !isActiveResponsibleAssignedForDocument(false);
             boolean activeResponsibleAssigneeAssigned = !activeResponsibleAssigneeNeeded;
 
             if (WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW.equals(blockType) ||
                     WorkflowSpecificModel.Types.REVIEW_WORKFLOW.equals(blockType) ||
+                    WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW.equals(blockType) ||
                     WorkflowSpecificModel.Types.OPINION_WORKFLOW.equals(blockType)) {
                 if (WorkflowUtil.isStatus(block, Status.NEW, Status.STOPPED)) {
                     hasForbiddenFlowsForFinished = true;
@@ -424,8 +428,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                 if(allowInactiveResponsibleTask){
                     inactiveResponsible = WorkflowUtil.isInactiveResponsible(task);
                 }
-                if (activeResponsibleAssigneeNeeded 
-                        && StringUtils.isNotBlank(task.getOwnerName()) 
+                if (activeResponsibleAssigneeNeeded
+                        && StringUtils.isNotBlank(task.getOwnerName())
                         && (activeResponsible || inactiveResponsible)) {
                     activeResponsibleAssignedInSomeWorkFlow = true;
                     activeResponsibleAssigneeAssigned = true;
@@ -452,6 +456,14 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                             }
                         } else {
                             missingInformationTasks = false;
+                        }
+                    }
+                    // institutionName and dueDate are required for externalReviewTask
+                    else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
+                        if (StringUtils.isBlank(task.getInstitutionName()) != (task.getDueDate() == null)) {
+                            String taskOwnerMsg = MessageUtil.getMessage(block.getNode().getType().getLocalName() + "_tasks");
+                            MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
+                            break;
                         }
                     }
                     // both fields must be filled

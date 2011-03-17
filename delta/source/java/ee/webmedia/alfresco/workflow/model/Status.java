@@ -5,10 +5,15 @@ package ee.webmedia.alfresco.workflow.model;
  */
 public enum Status {
 
+    /** uus */
     NEW("uus"),
+    /** teostamisel */
     IN_PROGRESS("teostamisel"),
+    /** peatatud */
     STOPPED("peatatud"),
+    /** lõpetatud */
     FINISHED("lõpetatud"),
+    /** teostamata */
     UNFINISHED("teostamata");
 
     private String name;

@@ -39,6 +39,7 @@
       <property name="nodeService" ref="NodeService" />
       <property name="generalService" ref="GeneralService" />
       <property name="logService" ref="DocumentLogService" />
+      <property name="searchService" ref="SearchService" />
       <!--  XXX: property:volumeService - retrieved from applicationContext to avoid circular dependency between VolumeService and SeriesService      -->
    </bean>
 

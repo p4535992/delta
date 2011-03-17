@@ -5,7 +5,7 @@ import java.util.Date;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.dvk.model.AbstractDocument;
+import ee.webmedia.alfresco.dvk.model.AbstractLetterDocument;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
@@ -13,7 +13,7 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
  * @author Ats Uiboupin
  */
 @AlfrescoModelType(uri = DocumentCommonModel.URI)
-abstract public class CommonDocument extends AbstractDocument {
+abstract public class CommonDocument extends AbstractLetterDocument {
 
     @AlfrescoModelProperty(isMappable = false)
     private QName documentTypeId;

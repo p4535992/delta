@@ -225,6 +225,11 @@
             <property name="ab:phone">
                <type>d:text</type>
             </property>
+            <property name="ab:taskCapable">
+               <type>d:boolean</type>
+               <mandatory>true</mandatory>               
+               <default>false</default>
+            </property>            
          </properties>
       </aspect>
 

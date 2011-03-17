@@ -10,7 +10,7 @@
 <h:panelGroup id="assocs-panel-facets">
    <f:facet name="title">
       <r:permissionEvaluator id="assocs-permission-evaluator" value="#{DocumentDialog.node}" allow="DocumentWrite">
-         <a:actionLink image="/images/icons/import.gif" id="col2-text" showLink="false" tooltip="#{msg.document_assocAdd}" value="" 
+         <a:actionLink image="/images/icons/import.gif" id="col3-text" showLink="false" tooltip="#{msg.document_assocAdd}" value="" 
             actionListener="#{DocumentDialog.searchDocsAndCases}" action="#docsearch-panel" rendered="#{MetadataBlockBean.mode eq 'view'}" >
          </a:actionLink>
       </r:permissionEvaluator>
@@ -23,40 +23,57 @@
    <a:richList id="assocsList" viewMode="details" value="#{AssocsBlockBean.docAssocInfos}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true" pageSize="#{BrowseBean.pageSizeContent}" initialSortColumn="type">
 
-      <a:column id="col1" primary="true">
+      <a:column id="col1" >
          <f:facet name="header">
-            <a:sortLink id="col1-header" label="#{msg.document_assocsBlockBean_type}" value="type" styleClass="header" />
+            <a:sortLink id="col1-header" label="#{msg.document_assocsBlockBean_regNumber}" value="regNumber" styleClass="header" />
          </f:facet>
-         <h:outputText id="col1-txt" value="#{r.type}" />
+         <h:outputText id="col1-txt" value="#{r.regNumber}" />
+      </a:column>   
+      
+     <a:column id="col2" >
+         <f:facet name="header">
+            <a:sortLink id="col2-header" label="#{msg.document_assocsBlockBean_regDateTime}" value="regDateTime" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col2-txt" value="#{r.regDateTime}" >
+            <a:convertXMLDate type="both" pattern="dd.MM.yyyy" />
+         </h:outputText>
       </a:column>
 
-      <a:column id="col2">
+      <a:column id="col3" primary="true" >
          <f:facet name="header">
-            <a:sortLink id="col2-header" label="#{msg.document_assocsBlockBean_title}" value="title" styleClass="header" />
+            <a:sortLink id="col3-header" label="#{msg.document_assocsBlockBean_type}" value="type" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col2-text" value="#{r.title}" action="dialog:document" tooltip="#{msg.document_details_info}" showLink="false"
+         <h:outputText id="col3-txt" value="#{r.type}" />
+      </a:column>
+
+
+      <a:column id="col4">
+         <f:facet name="header">
+            <a:sortLink id="col4-header" label="#{msg.document_assocsBlockBean_title}" value="title" styleClass="header" />
+         </f:facet>
+         <a:actionLink id="col4-text" value="#{r.title}" action="dialog:document" tooltip="#{msg.document_details_info}" showLink="false"
             actionListener="#{DocumentDialog.open}" rendered="#{not r.case}">
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
-         <a:actionLink id="col2-link2docList" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{msg.document_assocsBlockBean_documentListInfo}"
+         <a:actionLink id="col4-link2docList" value="#{r.title}" action="dialog:documentListDialog" tooltip="#{msg.document_assocsBlockBean_documentListInfo}"
             showLink="false" actionListener="#{DocumentListDialog.setup}" rendered="#{r.case}">
             <f:param name="caseNodeRef" value="#{r.caseNodeRef}" />
          </a:actionLink>
       </a:column>
 
-      <a:column id="col3">
+      <a:column id="col5">
          <f:facet name="header">
-            <a:sortLink id="col3-header" label="#{msg.document_assocsBlockBean_assoc}" value="assocType" styleClass="header" />
+            <a:sortLink id="col5-header" label="#{msg.document_assocsBlockBean_assoc}" value="assocType" styleClass="header" />
          </f:facet>
-         <h:outputText id="col3-txt" value="#{r.assocType.valueName}" />
+         <h:outputText id="col5-txt" value="#{r.assocType.valueName}" />
       </a:column>
       
-      <a:column id="col4" actions="true">
+      <a:column id="col6" actions="true">
          <f:facet name="header">
-            <h:outputText id="col4-header" value="#{msg.document_assocsBlockBean_actions}" styleClass="header" />
+            <h:outputText id="col6-header" value="#{msg.document_assocsBlockBean_actions}" styleClass="header" />
          </f:facet>
          <r:permissionEvaluator id="assocs-list-permission-evaluator" value="#{DocumentDialog.node}" allow="DocumentWrite">
-            <a:actionLink id="col4-act" rendered="#{r.assocType.valueName == 'tavaline'}" value="#{r.title}" actionListener="#{DeleteAssocDialog.setupAssoc}" action="dialog:deleteAssoc" showLink="false"
+            <a:actionLink id="col6-act" rendered="#{r.assocType.valueName == 'tavaline'}" value="#{r.title}" actionListener="#{DeleteAssocDialog.setupAssoc}" action="dialog:deleteAssoc" showLink="false"
                   image="/images/icons/delete.gif" tooltip="#{msg.document_assocsBlockBean_delete}">
                   <f:param name="nodeRef" value="#{r.nodeRef}"/>
                   <f:param name="caseNodeRef" value="#{r.caseNodeRef}"/>

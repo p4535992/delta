@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://webmedia.ee/ocr" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+   xmlns="http://schemas.xmlsoap.org/wsdl/" targetNamespace="http://webmedia.ee/ocr" name="OcrService">
+   <types>
+      <xs:schema xmlns:tns="http://webmedia.ee/ocr" xmlns:swaRef="http://ws-i.org/profiles/basic/1.1/xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         version="1.0" targetNamespace="http://webmedia.ee/ocr">
+
+         <xs:import namespace="http://ws-i.org/profiles/basic/1.1/xsd" schemaLocation="http://ws-i.org/profiles/basic/1.1/swaref.xsd"></xs:import>
+         <xs:element name="convertToPdf" nillable="true" type="tns:convertToPdf"></xs:element>
+
+         <xs:element name="convertToPdfResponse" nillable="true" type="tns:convertToPdfResponse"></xs:element>
+
+         <xs:complexType name="convertToPdf">
+            <xs:sequence>
+               <xs:element name="ocrInput" type="tns:ocrInput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="ocrInput">
+            <xs:sequence>
+               <xs:element name="content" type="swaRef:swaRef"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="convertToPdfResponse">
+            <xs:sequence>
+               <xs:element name="ocrOutput" type="tns:ocrOutput"></xs:element>
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="ocrOutput">
+            <xs:complexContent>
+               <xs:extension base="tns:ocrInput">
+                  <xs:sequence>
+                     <xs:element name="log" type="xs:string"></xs:element>
+                  </xs:sequence>
+               </xs:extension>
+            </xs:complexContent>
+         </xs:complexType>
+      </xs:schema>
+   </types>
+   <message name="convertToPdf">
+      <part name="parameters" element="tns:convertToPdf"></part>
+   </message>
+   <message name="convertToPdfResponse">
+      <part name="parameters" element="tns:convertToPdfResponse"></part>
+   </message>
+   <portType name="Ocr">
+      <operation name="convertToPdf">
+         <input message="tns:convertToPdf"></input>
+         <output message="tns:convertToPdfResponse"></output>
+      </operation>
+   </portType>
+   <binding name="OcrPortBinding" type="tns:Ocr">
+      <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"></soap:binding>
+      <operation name="convertToPdf">
+         <soap:operation soapAction=""></soap:operation>
+         <input>
+            <soap:body use="literal"></soap:body>
+         </input>
+         <output>
+            <soap:body use="literal"></soap:body>
+         </output>
+      </operation>
+   </binding>
+   <service name="OcrService">
+      <port name="OcrPort" binding="tns:OcrPortBinding">
+         <soap:address location="ENDPOINT_ADDRESS"></soap:address>
+      </port>
+   </service>
+</definitions>

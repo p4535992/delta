@@ -63,6 +63,12 @@
       </property-sheet>
    </config>
 
+   <config evaluator="aspect-name" condition="ab:everyone">
+      <property-sheet>
+         <show-property name="ab:taskCapable" />
+      </property-sheet>
+   </config>
+
    <config evaluator="aspect-name" condition="ab:contactGroupProperties">
       <property-sheet>
          <show-property name="ab:groupName" />

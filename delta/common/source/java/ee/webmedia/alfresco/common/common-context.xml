@@ -20,6 +20,7 @@
             <!-- Add project and common specific configuration files -->
             <value>classpath:ee/webmedia/alfresco/common/common-alfresco-global.properties</value>
             <value>classpath:ee/webmedia/alfresco/common/project-alfresco-global.properties</value>
+            <value>classpath:organization-alfresco-global.properties</value>
             <value>classpath*:alfresco-global.properties</value>
          </list>
       </property>

@@ -92,27 +92,27 @@
       <a:column id="col7" rendered="#{r.activeAndNotDigiDoc}">
          <r:permissionEvaluator value="#{r.node}" allow="WriteProperties">
             <a:actionLink id="col7-act3" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
-               image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive}">
+               image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{!DocumentDialog.notEditable}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
             <a:actionLink id="col7-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false"
-               image="/images/icons/version_history.gif" rendered="#{r.versionable}" tooltip="#{msg.file_version_history}">
+               image="/images/icons/version_history.gif" rendered="#{r.versionable && !DocumentDialog.notEditable}" tooltip="#{msg.file_version_history}">
                <f:param name="fileName" value="#{r.name}" />
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.node}" allow="DeleteNode">
             <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
-               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{UserService.documentManager && !DocumentDialog.inprogressCompoundWorkflows}">
+               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{UserService.documentManager && !DocumentDialog.inprogressCompoundWorkflows && !DocumentDialog.notEditable}">
                <f:param name="id" value="#{r.id}" />
                <f:param name="ref" value="#{r.nodeRef}" />
             </a:actionLink>
          </r:permissionEvaluator>
          <r:permissionEvaluator value="#{r.node}" allow="WriteContent">
             <a:actionLink id="col7-act4" value="#{r.name}" actionListener="#{FileBlockBean.transformToPdf}" showLink="false"
-               image="/images/filetypes/pdf.gif" tooltip="#{msg.file_generate_pdf}" rendered="#{r.transformableToPdf}">
+               image="/images/filetypes/pdf.gif" tooltip="#{msg.file_generate_pdf}" rendered="#{r.transformableToPdf && !DocumentDialog.notEditable}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </r:permissionEvaluator>
@@ -123,12 +123,12 @@
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">
                <h:column id="col1-inner">
                   <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
-                     <a:actionLink id="inner-act1" value="#{v.name}" href="#{v.downloadUrl}" target="_blank" image="#{v.fileType16}" showLink="false" styleClass="inlineAction" />
-                     <a:actionLink id="inner-act2" value="#{v.name}" href="#{v.downloadUrl}" target="_blank" />
+                     <a:actionLink id="inner-act1" value="#{v.displayName}" tooltip="#{v.name}" href="#{v.downloadUrl}" target="_blank" image="#{v.fileType16}" showLink="false" styleClass="inlineAction" />
+                     <a:actionLink id="inner-act2" value="#{v.displayName}" tooltip="#{v.name}" href="#{v.downloadUrl}" target="_blank" />
                   </r:permissionEvaluator>
                   <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
                      <h:graphicImage id="inner-act1-deny" value="#{v.fileType16}" />
-                     <h:outputText id="inner-act2-deny" value="#{v.name}" />
+                     <h:outputText id="inner-act2-deny" value="#{v.displayName}" title="#{v.name}" />
                   </r:permissionEvaluator>
                </h:column>
             </h:dataTable>
@@ -283,12 +283,12 @@
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">
                <h:column id="col21-inner">
                   <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
-                     <a:actionLink id="inner-act1" value="#{v.name}" href="#{v.downloadUrl}" target="_blank" image="#{v.fileType16}" showLink="false" styleClass="inlineAction" />
-                     <a:actionLink id="inner-act2" value="#{v.name}" href="#{v.downloadUrl}" target="_blank" />
+                     <a:actionLink id="inner-act1" value="#{v.displayName}" tooltip="#{v.name}" href="#{v.downloadUrl}" target="_blank" image="#{v.fileType16}" showLink="false" styleClass="inlineAction" />
+                     <a:actionLink id="inner-act2" value="#{v.displayName}" tooltip="#{v.name}" href="#{v.downloadUrl}" target="_blank" />
                   </r:permissionEvaluator>
                   <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
                      <h:graphicImage id="inner-act1-deny" value="#{v.fileType16}" />
-                     <h:outputText id="inner-act2-deny" value="#{v.name}" />
+                     <h:outputText id="inner-act2-deny" value="#{v.displayName}" title="#{v.name}" />
                   </r:permissionEvaluator>
                </h:column>
             </h:dataTable>

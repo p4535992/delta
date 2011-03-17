@@ -1,0 +1,47 @@
+https://jira.springsource.org/browse/SPR-7582
+
+Index: ProxyFactoryBean.java
+===================================================================
+--- ProxyFactoryBean.java	(revision 243275)
++++ ProxyFactoryBean.java	(revision 243276)
+@@ -39,8 +39,10 @@
+ import org.springframework.beans.factory.BeanFactory;
+ import org.springframework.beans.factory.BeanFactoryAware;
+ import org.springframework.beans.factory.BeanFactoryUtils;
++import org.springframework.beans.factory.BeanNameAware;
+ import org.springframework.beans.factory.FactoryBean;
+ import org.springframework.beans.factory.FactoryBeanNotInitializedException;
++import org.springframework.beans.factory.InitializingBean;
+ import org.springframework.beans.factory.ListableBeanFactory;
+ import org.springframework.core.OrderComparator;
+ import org.springframework.util.ClassUtils;
+@@ -87,7 +89,7 @@
+  * @see Advised
+  */
+ public class ProxyFactoryBean extends ProxyCreatorSupport
+-		implements FactoryBean, BeanClassLoaderAware, BeanFactoryAware {
++		implements FactoryBean, BeanClassLoaderAware, BeanFactoryAware, InitializingBean, BeanNameAware {
+ 
+ 	/**
+ 	 * This suffix in a value in an interceptor list indicates to expand globals.
+@@ -611,4 +613,20 @@
+ 		}
+ 	}
+ 
++	private String beanName;
++
++	@Override
++	public void setBeanName(String name) {
++	    this.beanName = name;
++	}
++
++    @Override
++    public void afterPropertiesSet() throws Exception {
++        if (advisorChainInitialized) {
++            logger.warn("Spring bug SPR-7582, bean id=" + beanName + " - getObject() was called before bean " +
++            		"initialization completed. Performing workaround: resetting advisorChainInitialized to false");
++            advisorChainInitialized = false;
++        }
++    }
++
+ }

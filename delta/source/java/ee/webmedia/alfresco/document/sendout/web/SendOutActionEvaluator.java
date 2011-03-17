@@ -1,20 +1,33 @@
 package ee.webmedia.alfresco.document.sendout.web;
 
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.CHANCELLORS_ORDER;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.CONTRACT_MV;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.CONTRACT_SIM;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.CONTRACT_SMIT;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.DECREE;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.INCOMING_LETTER;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD_MV;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.INTERNAL_APPLICATION;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.INTERNAL_APPLICATION_MV;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.LEAVING_LETTER;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.LICENCE;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.MANAGEMENTS_ORDER;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.MEMO;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.MINISTERS_ORDER;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.MINUTES;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ORDER_MV;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.OUTGOING_LETTER;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.PERSONELLE_ORDER_SIM;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.PERSONELLE_ORDER_SMIT;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.PROJECT_APPLICATION;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.REGULATION;
-import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.TENDERING_APPLICATION;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.REPORT;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.RESOLUTION_MV;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.SUPERVISION_REPORT;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.TRAINING_APPLICATION;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.VACATION_APPLICATION;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.VACATION_ORDER;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.VACATION_ORDER_SMIT;
 
@@ -46,23 +59,29 @@ public class SendOutActionEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 2958297435415449179L;
     private static final List<QName> registeredTypes = Arrays.asList(
-            INCOMING_LETTER, CHANCELLORS_ORDER, PERSONELLE_ORDER_SIM, PERSONELLE_ORDER_SMIT, REGULATION, DECREE, CONTRACT_SIM
-            , CONTRACT_SMIT, MANAGEMENTS_ORDER, TRAINING_APPLICATION, LEAVING_LETTER, INTERNAL_APPLICATION, VACATION_ORDER
-            , VACATION_ORDER_SMIT, TENDERING_APPLICATION, ERRAND_APPLICATION_DOMESTIC, ERRAND_ORDER_ABROAD);
+            OUTGOING_LETTER, CHANCELLORS_ORDER, MINISTERS_ORDER, PERSONELLE_ORDER_SIM, PERSONELLE_ORDER_SMIT, REGULATION
+            , VACATION_ORDER, VACATION_ORDER_SMIT, DECREE, CONTRACT_SIM, CONTRACT_SMIT
+            , SUPERVISION_REPORT, MANAGEMENTS_ORDER, INTERNAL_APPLICATION, INSTRUMENT_OF_DELIVERY_AND_RECEIPT
+            , REPORT, LICENCE, MEMO, MINUTES, TRAINING_APPLICATION, LEAVING_LETTER, ERRAND_ORDER_ABROAD, ERRAND_APPLICATION_DOMESTIC
+            , ORDER_MV, CONTRACT_MV, INTERNAL_APPLICATION_MV, VACATION_APPLICATION, ERRAND_ORDER_ABROAD_MV, RESOLUTION_MV, PROJECT_APPLICATION
+    );
 
     @Override
     public boolean evaluate(Node node) {
         ViewStateActionEvaluator viewStateEval = new ViewStateActionEvaluator();
         PermissionService permissionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPermissionService();
         boolean result = viewStateEval.evaluate(node) && new DocumentSavedActionEvaluator().evaluate(node)
-                && permissionService.hasPermission(node.getNodeRef(), Permission.DOCUMENT_WRITE.getValueName()).equals(AccessStatus.ALLOWED)
-                && new HasNoStoppedOrInprogressWorkflowsEvaluator().evaluate(node);
-        if (result && registeredTypes.contains(node.getType())) {
+        && permissionService.hasPermission(node.getNodeRef(), Permission.DOCUMENT_WRITE.getValueName()).equals(AccessStatus.ALLOWED);
+        if (result) {
             final Map<String, Object> props = node.getProperties();
             final String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
-            result = regNumber != null;
+            if (regNumber == null) {
+                result = new HasNoStoppedOrInprogressWorkflowsEvaluator().evaluate(node);
+            }
+            if (result && registeredTypes.contains(node.getType())) {
+                result = regNumber != null;
+            }
         }
-
         return result;
     }
 }

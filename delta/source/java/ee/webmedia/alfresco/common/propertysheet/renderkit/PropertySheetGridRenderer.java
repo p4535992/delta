@@ -46,7 +46,7 @@ public class PropertySheetGridRenderer extends HtmlGridRenderer {
         }
 
         String[] columnClassesArray = (columnClasses == null) ? ArrayUtils.EMPTY_STRING_ARRAY : StringUtils.trim(StringUtils.splitShortString(columnClasses,
-                ','));
+        ','));
         int columnClassesCount = columnClassesArray.length;
 
         String[] rowClassesArray = (rowClasses == null) ? org.apache.myfaces.shared_impl.util.ArrayUtils.EMPTY_STRING_ARRAY : StringUtils.trim(StringUtils
@@ -118,8 +118,8 @@ public class PropertySheetGridRenderer extends HtmlGridRenderer {
                             if (inlineMode) {
                                 writer.endElement(HTML.TR_ELEM);
                                 writer.endElement(HTML.TABLE_ELEM);
+                                inlineMode = false;
                             }
-                            inlineMode = false;
                         }
                     }
 

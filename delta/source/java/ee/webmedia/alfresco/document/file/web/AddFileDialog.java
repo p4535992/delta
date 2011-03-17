@@ -52,6 +52,7 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.ISOLatin1Util;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -176,12 +177,16 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     public String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName) {
         checkPlusInFileName(displayName);
+        displayName = ISOLatin1Util.removeAccents(
+                          FilenameUtil.replaceAmpersand(
+                                  FilenameUtil.stripDotsAndSpaces(
+                                          FilenameUtil.stripForbiddenWindowsCharacters(displayName))));
         String uniqueDisplayName = getFileService().getUniqueFileDisplayName(documentNodeRef, displayName);
         if (!displayName.equals(uniqueDisplayName)) {
             // Take care of "duplicate files"
             throw new FileExistsException(documentNodeRef, displayName);
         }                        
-        String name = getGeneralService().limitFileNameLength(displayName, 20, null);
+        String name = getGeneralService().limitFileNameLength(displayName, 50, null);
         name = getGeneralService().getUniqueFileName(documentNodeRef, name);
         return name;
     }

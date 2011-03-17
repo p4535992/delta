@@ -29,6 +29,7 @@ public class TaskMenuItemProcessor extends CountAddingMenuItemProcessor implemen
         menuService.setCountHandler("informationTasks", this);
         menuService.setCountHandler("opinionTasks", this);
         menuService.setCountHandler("reviewTasks", this);
+        menuService.setCountHandler("externalReviewTasks", this);
         menuService.setCountHandler("signatureTasks", this);
     }
 

@@ -2,9 +2,14 @@ package ee.webmedia.alfresco.document.web;
 
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD_MV;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT_MV;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.INTERNAL_APPLICATION;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.INTERNAL_APPLICATION_MV;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.LEAVING_LETTER;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.REPORT;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.REPORT_MV;
+import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.RESOLUTION_MV;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.TRAINING_APPLICATION;
 
 import java.io.Serializable;
@@ -72,8 +77,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     private static final String ERR_TEMPLATE_NOT_FOUND = "document_errorMsg_template_not_found";
     private static final String ERR_TEMPLATE_PROCESSING_FAILED = "document_errorMsg_template_processsing_failed";
     /** FollowUps is with the same type */
-    private static final List<QName> regularFollowUpTypes = Arrays.asList(ERRAND_APPLICATION_DOMESTIC, ERRAND_ORDER_ABROAD, LEAVING_LETTER,
-            TRAINING_APPLICATION, INTERNAL_APPLICATION, REPORT);
+    private static final List<QName> regularFollowUpTypes = Arrays.asList(ERRAND_APPLICATION_DOMESTIC, ERRAND_ORDER_ABROAD, ERRAND_ORDER_ABROAD_MV, LEAVING_LETTER,
+            TRAINING_APPLICATION, INTERNAL_APPLICATION, INTERNAL_APPLICATION_MV, REPORT, REPORT_MV, INSTRUMENT_OF_DELIVERY_AND_RECEIPT_MV, RESOLUTION_MV);
 
     private static final String PARAM_DOCUMENT_TYPE = "documentType";
     private static final String PARAM_DOCUMENT_NODE_REF = "documentNodeRef";
@@ -172,8 +177,9 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public void copy(@SuppressWarnings("unused") ActionEvent event) {
-        if (node == null)
+        if (node == null) {
             throw new RuntimeException("No current document");
+        }
         try {
             Node newNode = getDocumentService().copyDocument(node.getNodeRef());
             createSnapshot();
@@ -245,20 +251,26 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public void createFollowUp(ActionEvent event) {
-        if (node == null)
+        if (node == null) {
             throw new RuntimeException("No current document");
+        }
 
         createSnapshot();
-        this.skipInit = true;
+        skipInit = true;
         QName followUp = null;
         QName type = node.getType();
         if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(type) ||
+                DocumentSubtypeModel.Types.INCOMING_LETTER_MV.equals(type) ||
                 DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(type) ||
+                DocumentSubtypeModel.Types.OUTGOING_LETTER_MV.equals(type) ||
                 DocumentSubtypeModel.Types.CONTRACT_SIM.equals(type) ||
                 DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(type) ||
+                DocumentSubtypeModel.Types.CONTRACT_MV.equals(type) ||
                 DocumentSubtypeModel.Types.TENDERING_APPLICATION.equals(type)) {
 
             followUp = QName.createQName(DocumentSubtypeModel.URI, ActionUtil.getParam(event, PARAM_DOCUMENT_TYPE));
+        } else if(DocumentSubtypeModel.Types.MINUTES_MV.equals(type)){
+            followUp = DocumentSubtypeModel.Types.RESOLUTION_MV;
         } else if (regularFollowUpTypes.contains(type)) {
             followUp = type;
         } else {
@@ -274,16 +286,21 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public void createReply(@SuppressWarnings("unused") ActionEvent event) {
-        if (node == null)
+        if (node == null) {
             throw new RuntimeException("No current document");
+        }
 
         createSnapshot();
-        this.skipInit = true;
+        skipInit = true;
         QName replyType = null;
         if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(node.getType())) {
             replyType = DocumentSubtypeModel.Types.OUTGOING_LETTER;
+        } else if (DocumentSubtypeModel.Types.INCOMING_LETTER_MV.equals(node.getType())) {
+            replyType = DocumentSubtypeModel.Types.OUTGOING_LETTER_MV;
         } else if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(node.getType())) {
             replyType = DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT;
+        } else if (DocumentSubtypeModel.Types.CONTRACT_MV.equals(node.getType())) {
+            replyType = DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT_MV;
         } else {
             throw new RuntimeException("Reply not possible for document of type " + node.getType());
         }
@@ -304,9 +321,9 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             metadataBlockBean.viewDocument(node);
         }
         fileBlockBean.init(node);
-        sendOutBlockBean.init(node);
         assocsBlockBean.init(node);
-        workflowBlockBean.init(node.getNodeRef());
+        workflowBlockBean.init(node);
+        sendOutBlockBean.init(node, workflowBlockBean.getCompoundWorkflows());
         logBlockBean.init(node);
     }
 
@@ -315,9 +332,12 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         if (!metadataBlockBean.isInEditMode()) {
             if (DocumentSubtypeModel.Types.TENDERING_APPLICATION.equals(node.getType()) ||
                     DocumentSubtypeModel.Types.INCOMING_LETTER.equals(node.getType()) ||
+                    DocumentSubtypeModel.Types.INCOMING_LETTER_MV.equals(node.getType()) ||
                     DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(node.getType()) ||
+                    DocumentSubtypeModel.Types.OUTGOING_LETTER_MV.equals(node.getType()) ||
                     DocumentSubtypeModel.Types.CONTRACT_SIM.equals(node.getType()) ||
-                    DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(node.getType())) {
+                    DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(node.getType()) ||
+                    DocumentSubtypeModel.Types.CONTRACT_MV.equals(node.getType())) {
                 return "document_more_actions";
             }
         }
@@ -337,11 +357,11 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             showDocsAndCasesAssocs = false;
         }
         fileBlockBean.init(node);
-        sendOutBlockBean.init(node);
         typeBlockBean.init();
         assocsBlockBean.init(node);
         searchBlockBean.init(node);
-        workflowBlockBean.init(node.getNodeRef());
+        workflowBlockBean.init(node);
+        sendOutBlockBean.init(node, workflowBlockBean.getCompoundWorkflows());
         logBlockBean.init(node);
 
         ClearStateNotificationHandler clearStateNotificationHandler //
@@ -424,9 +444,10 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     public void saveAndRegister() {
         // search for similar documents if it's an incoming letter
-        if (metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
+        QName docType = metadataBlockBean.getDocumentType().getId();
+        if (docType.equals(DocumentSubtypeModel.Types.INCOMING_LETTER) || docType.equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV)) {
             String senderRegNum = (String) metadataBlockBean.getDocument().getProperties().get(DocumentSpecificModel.Props.SENDER_REG_NUMBER.toString());
-            searchBlockBean.findSimilarDocuments(senderRegNum);
+            searchBlockBean.findSimilarDocuments(senderRegNum, docType);
         }
 
         // just register if not an incoming letter or no similar documents found
@@ -459,8 +480,9 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         RegisterDocumentEvaluator registrationEval = new RegisterDocumentEvaluator();
         if (metadataBlockBean.isInEditMode() &&
                 (metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.LICENCE)
-                || metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER))
-                && registrationEval.evaluateAdditionalButton(metadataBlockBean.getDocument())) {
+                        || metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)
+                        || metadataBlockBean.getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV))
+                        && registrationEval.evaluateAdditionalButton(metadataBlockBean.getDocument())) {
             if (searchBlockBean.isFoundSimilar()) {
                 buttons.add(new DialogButtonConfig("documentRegisterButton", null, "document_registerDoc_continue",
                         "#{DocumentDialog.saveAndRegisterContinue}", "false", null));
@@ -494,6 +516,28 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public boolean isFromDVK() {
         return getDocumentService().isFromDVK(node.getNodeRef());
     }
+    
+    // doccom:docStatus=suletud
+    public boolean isClosedOrNotEditable(){
+        return DocumentStatus.FINISHED.equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS))
+                || isNotEditable();
+    }
+    
+//    doccom:docStatus!=töös
+    public boolean isNotWorkingOrNotEditable(){
+        return !DocumentStatus.WORKING.equals((String)node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS))
+                || isNotEditable();
+    }    
+    
+    public boolean isNotWorkingAndFinishedOrNotEditable(){
+        return !(DocumentStatus.WORKING.equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS))
+                || DocumentStatus.FINISHED.equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS)))
+        || isNotEditable();
+    }
+    
+    public boolean isNotEditable() {
+        return Boolean.TRUE.equals(node.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE));
+    }    
 
     public boolean isFromImap() {
         return getDocumentService().isFromIncoming(node.getNodeRef()) || getDocumentService().isFromSent(node.getNodeRef());
@@ -503,7 +547,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         if ((searchBlockBean.isIncludeCases() && !metadataBlockBean.isInEditMode())) {
             return true;
         }
-        return metadataBlockBean.isInEditMode() && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar() && (isFromDVK() || isFromImap());
+        return metadataBlockBean.isInEditMode() && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar() && ((isFromDVK() || isFromImap()) && !isNotEditable());
     }
 
     public void hideSearchBlock(@SuppressWarnings("unused") ActionEvent event) {
@@ -511,7 +555,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public String getSearchBlockTitle() {
-        if (isFromDVK() || isFromImap()) {
+        if ((isFromDVK() && !isNotEditable()) || isFromImap()) {
             return MessageUtil.getMessage("document_search_base_title");
         }
         return MessageUtil.getMessage("document_search_docOrCase_title");
@@ -522,7 +566,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public boolean isShowTypeBlock() {
-        return metadataBlockBean.isInEditMode() && isFromDVK();
+        return metadataBlockBean.isInEditMode() && isFromDVK() && !isNotEditable();
     }
 
     public void addFollowUpHandler(ActionEvent event) {
@@ -560,9 +604,10 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public void searchDocsAndCases(@SuppressWarnings("unused") ActionEvent event) {
-        this.showDocsAndCasesAssocs = true;
+        showDocsAndCasesAssocs = true;
         searchBlockBean.init(metadataBlockBean.getDocument());
         searchBlockBean.setIncludeCaseTitles(true);
+        searchBlockBean.initDocSearch();
     }
 
     private void addTargetAssoc(NodeRef targetRef, QName targetType) {
@@ -591,7 +636,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     // START: snapshot logic (for supporting multiple concurrent document views)
-    private Stack<Snapshot> snapshots = new Stack<Snapshot>();
+    private final Stack<Snapshot> snapshots = new Stack<Snapshot>();
 
     // creates snapshot of DocumentDialog state (if needed)
     private void createSnapshot() {
@@ -632,10 +677,10 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 log.debug("didn't restore document snapshot recursively");
                 // node exists, just re-init other beans as well
                 fileBlockBean.init(node);
-                sendOutBlockBean.init(node);
                 typeBlockBean.init();
                 assocsBlockBean.init(node);
-                workflowBlockBean.init(node.getNodeRef());
+                workflowBlockBean.init(node);
+                sendOutBlockBean.init(node, workflowBlockBean.getCompoundWorkflows());
                 logBlockBean.init(node);
             } else {
                 log.debug("restored document snapshot recursively");
@@ -653,27 +698,27 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     private static class Snapshot implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        private Node node;
-        private boolean isDraft;
-        private boolean showDocsAndCasesAssocs;
-        private boolean skipInit;
-        private MetadataBlockBean.Snapshot metadataSnapshot;
-        private SearchBlockBean.Snapshot searchSnapshot;
+        private final Node node;
+        private final boolean isDraft;
+        private final boolean showDocsAndCasesAssocs;
+        private final boolean skipInit;
+        private final MetadataBlockBean.Snapshot metadataSnapshot;
+        private final SearchBlockBean.Snapshot searchSnapshot;
 
         private Snapshot(DocumentDialog dialog) {
-            this.node = dialog.node;
-            this.isDraft = dialog.isDraft;
-            this.skipInit = dialog.skipInit;
-            this.showDocsAndCasesAssocs = dialog.showDocsAndCasesAssocs;
+            node = dialog.node;
+            isDraft = dialog.isDraft;
+            skipInit = dialog.skipInit;
+            showDocsAndCasesAssocs = dialog.showDocsAndCasesAssocs;
             metadataSnapshot = dialog.metadataBlockBean.createSnapshot();
             searchSnapshot = dialog.searchBlockBean.createSnapshot();
         }
 
         private void restoreState(DocumentDialog dialog) {
-            dialog.node = this.node;
-            dialog.isDraft = this.isDraft;
-            dialog.skipInit = this.skipInit;
-            dialog.showDocsAndCasesAssocs = this.showDocsAndCasesAssocs;
+            dialog.node = node;
+            dialog.isDraft = isDraft;
+            dialog.skipInit = skipInit;
+            dialog.showDocsAndCasesAssocs = showDocsAndCasesAssocs;
             dialog.metadataBlockBean.restoreSnapshot(metadataSnapshot);
             dialog.searchBlockBean.restoreSnapshot(searchSnapshot);
         }
@@ -697,7 +742,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentService.BEAN_NAME);
+            .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
     }
@@ -717,7 +762,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public DocumentTemplateService getDocumentTemplateService() {
         if (documentTemplateService == null) {
             documentTemplateService = (DocumentTemplateService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentTemplateService.BEAN_NAME);
+            .getBean(DocumentTemplateService.BEAN_NAME);
         }
         return documentTemplateService;
     }

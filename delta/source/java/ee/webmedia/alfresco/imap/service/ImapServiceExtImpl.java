@@ -59,7 +59,7 @@ import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.imap.AppendBehaviour;
 import ee.webmedia.alfresco.imap.AttachmentsFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.ImmutableFolder;
@@ -84,6 +84,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
     private GeneralService generalService;
     private FileService fileService;
     private MimetypeService mimetypeService;
+    private DocumentTypeService documentTypeService;
 
     // todo: make this configurable with spring
     private Set<String> allowedFolders = null;
@@ -97,11 +98,13 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         try {
             String name = AlfrescoImapConst.MESSAGE_PREFIX + GUID.generate();
             FileInfo docInfo = null;
+            QName docType;
             if (incomingEmail) {
-                docInfo = fileFolderService.create(folderNodeRef, name, DocumentSubtypeModel.Types.INCOMING_LETTER);
+                docType = documentTypeService.getIncomingLetterType();
             } else {
-                docInfo = fileFolderService.create(folderNodeRef, name, DocumentSubtypeModel.Types.OUTGOING_LETTER);
+                docType = documentTypeService.getOutgoingLetterType();
             }
+            docInfo = fileFolderService.create(folderNodeRef, name, docType);
 
             Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
             String subject = mimeMessage.getSubject();
@@ -115,6 +118,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
                     properties.put(DocumentSpecificModel.Props.SENDER_DETAILS_NAME, sender.getPersonal());
                     properties.put(DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL, sender.getAddress());
                 }
+                properties.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.EMAIL.getValueName());
             } else {
                 Address[] allRecipients = mimeMessage.getAllRecipients();
 
@@ -130,7 +134,6 @@ public class ImapServiceExtImpl implements ImapServiceExt {
                 properties.put(DocumentCommonModel.Props.RECIPIENT_EMAIL, (Serializable) emails);
 
             }
-            properties.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.EMAIL.getValueName());
             properties.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
             properties.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
 
@@ -410,6 +413,10 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
     public void setMimetypeService(MimetypeService mimetypeService) {
         this.mimetypeService = mimetypeService;
+    }
+
+    public void setDocumentTypeService(DocumentTypeService documentTypeService) {
+        this.documentTypeService = documentTypeService;
     }
 
 }

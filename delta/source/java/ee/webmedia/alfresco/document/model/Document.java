@@ -22,6 +22,7 @@ import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 
 public class Document extends Node implements Comparable<Document>, CssStylable {
@@ -119,7 +120,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable 
     }
 
     public String getSender() {
-        if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
+        if (DocumentTypeHelper.isIncomingLetter(getDocumentType().getId())) {
             return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
         }
         return (String) getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
@@ -166,7 +167,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable 
 
     public Date getDueDate2() {
         lazyInit();
-        if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)) {
+        if (DocumentTypeHelper.isIncomingLetter(getDocumentType().getId())) {
             return (Date) getProperties().get(DocumentSpecificModel.Props.DUE_DATE);
         } else if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.MANAGEMENTS_ORDER)) {
             return (Date) getProperties().get(DocumentSpecificModel.Props.MANAGEMENTS_ORDER_DUE_DATE);
@@ -174,6 +175,8 @@ public class Document extends Node implements Comparable<Document>, CssStylable 
             return (Date) getProperties().get(DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE);
         } else if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.CONTRACT_SMIT)) {
             return (Date) getProperties().get(DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE);
+        } else if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.CONTRACT_MV)) {
+            return (Date) getProperties().get(DocumentSpecificModel.Props.CONTRACT_MV_END_DATE);
         }
         return null;
     }

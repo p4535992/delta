@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.utils;
 
+import java.util.Arrays;
+
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
@@ -9,9 +11,9 @@ import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
  * @author Ats Uiboupin
  */
 public class FeedbackVO {
-    private MessageSeverity severity;
-    private String messageKey;
-    private Object[] messageValuesForHolders;
+    private final MessageSeverity severity;
+    private final String messageKey;
+    private final Object[] messageValuesForHolders;
 
     public FeedbackVO(MessageSeverity severity, String messageKey, Object... messageValuesForHolders) {
         this.severity = severity;
@@ -29,5 +31,10 @@ public class FeedbackVO {
 
     public Object[] getMessageValuesForHolders() {
         return messageValuesForHolders;
+    }
+
+    @Override
+    public String toString() {
+        return severity + ": " + messageKey + ", " + Arrays.asList(messageValuesForHolders);
     }
 }

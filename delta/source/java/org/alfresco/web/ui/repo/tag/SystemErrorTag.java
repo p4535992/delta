@@ -28,7 +28,6 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ResourceBundle;
 
-import javax.faces.context.FacesContext;
 import javax.portlet.PortletSession;
 import javax.portlet.PortletURL;
 import javax.portlet.RenderRequest;
@@ -39,9 +38,9 @@ import javax.servlet.jsp.tagext.TagSupport;
 
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.BaseServlet;
-import org.alfresco.web.app.servlet.ExternalAccessServlet;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.ErrorBean;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * A non-JSF tag library that displays the currently stored system error
@@ -52,6 +51,8 @@ public class SystemErrorTag extends TagSupport
 {
    private static final long serialVersionUID = -7336055169875448199L;
    
+   private static final Log logger = LogFactory.getLog(SystemErrorTag.class);
+
    private static final String MSG_RETURN_TO_APP = "return_to_application";
    private static final String MSG_RETURN_HOME   = "return_home";
    private static final String MSG_HIDE_DETAILS  = "hide_details";
@@ -156,6 +157,8 @@ public class SystemErrorTag extends TagSupport
          errorDetails = errorBean.getStackTrace();
       }
       
+      logger.error("System Error, uri=" + errorBean.getReturnPage(), errorBean.getLastError());
+
       try
       {
          Writer out = pageContext.getOut();

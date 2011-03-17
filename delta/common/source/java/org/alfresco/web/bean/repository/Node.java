@@ -624,6 +624,13 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
         addRemovedChildAssociation(assocTypeQName, associatedNodes.get(assocIndex).getNodeRefAsString());
         associatedNodes.remove(assocIndex);
     }
+    
+    public void removeChildAssociations(QName assocTypeQName, List<Node> removedAssocs) {
+        final Map<String, List<Node>> childAssocsByAssocType = getAllChildAssociationsByAssocType();
+        List<Node> associatedNodes = childAssocsByAssocType.get(assocTypeQName.toString());
+        addRemovedChildAssociations(assocTypeQName, associatedNodes, removedAssocs);
+        associatedNodes.removeAll(removedAssocs);
+    }    
 
     /**
      * @param assocTypeQName
@@ -720,6 +727,22 @@ public class Node implements Serializable, NamespacePrefixResolverProvider
         removedChidAssocsByRef.put(nodeRefAsString, childAssoc);
 
     }
+    
+    private void addRemovedChildAssociations(QName assocTypeQName, List<Node> associatedNodes, List<Node> removedAssocs) {
+        final Map<String/* assocTypeQName */, Map<String/* childRef */, ChildAssociationRef>> removedChildAssociations = getRemovedChildAssociations();
+        Map<String, ChildAssociationRef> removedChidAssocsByRef = removedChildAssociations.get(assocTypeQName.toString());
+        if (removedChidAssocsByRef == null) {
+            removedChidAssocsByRef = new HashMap<String, ChildAssociationRef>(3);
+            removedChildAssociations.put(assocTypeQName.toString(), removedChidAssocsByRef);
+        }    
+        for(Node removedNode : removedAssocs){
+            String nodeRefAsString = removedNode.getNodeRefAsString();
+            ChildAssociationRef childAssoc = new DeleteChildAssociationRef(assocTypeQName,
+                    getNodeRef(), new NodeRef(nodeRefAsString));
+            removedChidAssocsByRef.put(nodeRefAsString, childAssoc);            
+        }
+    }
+        
 
     static class DeleteChildAssociationRef extends ChildAssociationRef {
         private static final long serialVersionUID = 1L;

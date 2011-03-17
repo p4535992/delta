@@ -51,6 +51,7 @@
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="namespaceService" ref="NamespaceService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="copyService" ref="CopyService" />
       <property name="generalService" ref="GeneralService" />
       <property name="documentTypeService" ref="DocumentTypeService" />
       <property name="documentTemplateService" ref="DocumentTemplateService" />
@@ -124,12 +125,33 @@
    <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandApplicantAbroadPropertiesModifierCallback" parent="abstractDocChildCreator">
       <property name="parametersService" ref="ParametersService" />
    </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandAbroadMvApplicantPropertiesModifierCallback" parent="abstractDocChildCreator">
+   </bean>   
 
    <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandDocDomesticPropertiesModifierCallback" parent="abstractDocChildCreator">
       <property name="parametersService" ref="ParametersService" />
    </bean>
    
    <bean class="ee.webmedia.alfresco.document.propmodifiers.TrainingDocChildCreator" parent="abstractDocChildCreator" />
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ContractMvPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ErrandAbroadMvApplicantPropertiesModifierCallback" parent="abstractDocChildCreator" />
+   
+   <bean id="contractDocChildCreator" class="ee.webmedia.alfresco.document.propmodifiers.ContractDocChildCreator" parent="abstractDocChildCreator" />
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.ContractMvDocChildCreator" parent="contractDocChildCreator" />
+   <bean id="contractV1CopyPropertiesModifierCallback" class="ee.webmedia.alfresco.document.propmodifiers.ContractV1CopyPropertiesModifierCallback" parent="abstractDocChildCreator" />
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.OrderMvPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean> 
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.OutgoingLetterMvPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>    
 
    <bean id="documentDraftsSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
@@ -166,6 +188,50 @@
                <prop key="encoding">UTF-8</prop>
                <prop key="path">/param:parameters</prop>
                <prop key="location">ee/webmedia/alfresco/document/bootstrap/document-parameters.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="documentParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="name" value="parametersSpacesBootstrap3" />
+      <property name="sinceVersion" value="2.1.1" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/bootstrap/document-parameters3.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>   
+   
+   <bean id="documentParametersBootstrap4" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="name" value="parametersSpacesBootstrap3" />
+      <property name="sinceVersion" value="2.2.1.15" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/bootstrap/document-parameters4.xml</prop>
             </props>
          </list>
       </property>
@@ -259,7 +325,6 @@ DaoAuthenticationProvider.authenticate()
       <property name="nodeService" ref="nodeService" />
       <property name="searchService" ref="searchService" />
       <property name="documentService" ref="documentService" />
-      <property name="dictionaryService" ref="dictionaryService" />
       <property name="behaviourFilter" ref="policyBehaviourFilter" />
       <property name="enabled" value="${searchablePropertiesUpdater.enabled}" />
    </bean>    
@@ -275,7 +340,7 @@ DaoAuthenticationProvider.authenticate()
       <property name="generalService" ref="generalService" />
       <property name="mimetypeService" ref="mimetypeService" />
       <property name="beginDate" value="${fileMimeTypeUpdater.begin.date}" />
-   </bean>    
+   </bean>
 
    <!-- Used to fix mimeType on files (CL task 122959) -->
    <bean id="generatedFileMimeTypeUpdater" class="ee.webmedia.alfresco.document.bootstrap.GeneratedFileMimeTypeUpdater" parent="module.baseComponent" >
@@ -288,5 +353,38 @@ DaoAuthenticationProvider.authenticate()
       <property name="generalService" ref="generalService" />
       <property name="mimetypeService" ref="mimetypeService" />
    </bean>    
+
+   <!-- Used to update contract party model (CL task 152368) -->
+   <bean id="contractPartyUpdater" class="ee.webmedia.alfresco.document.bootstrap.ContractPartyUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="contractPartyUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="searchService" ref="searchService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="generalService" ref="generalService" />
+   </bean> 
+
+   <!-- Perform document model changes that were introduced in 2.1, on existing data -->
+   <bean id="version21DocumentUpdater" class="ee.webmedia.alfresco.document.bootstrap.Version21DocumentUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="version21DocumentUpdater" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="searchService" ref="searchService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="generalService" ref="generalService" />
+      <property name="enabled" value="${version21DocumentUpdater.enabled}" />
+   </bean>    
+
+   <!-- START: web beans: -->
+
+   <bean id="AssocsBlockBean" class="ee.webmedia.alfresco.document.associations.web.AssocsBlockBean" scope="session" />
+   
+   <bean id="SearchBlockBean" class="ee.webmedia.alfresco.document.search.web.SearchBlockBean" scope="session" >
+      <property name="documentSearchBean" ref="DocumentSearchBean" />
+   </bean>
+
+   <!-- END: web beans: -->
 
 </beans>

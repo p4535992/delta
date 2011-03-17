@@ -43,13 +43,20 @@ public abstract class BaseAdrServiceImpl implements AdrService {
     }
 
     protected static class AdrDocument {
+        protected NodeRef nodeRef;
         protected String regNumber;
         protected Date regDateTime;
-        public AdrDocument(String regNumber, Date regDateTime) {
+        protected boolean compareByNodeRef;
+        public AdrDocument(NodeRef nodeRef, String regNumber, Date regDateTime, boolean compareByNodeRef) {
+            if (compareByNodeRef) {
+                Assert.notNull(nodeRef);
+            }
+            this.nodeRef = nodeRef;
             Assert.notNull(regNumber);
             this.regNumber = regNumber;
             Assert.notNull(regDateTime);
             this.regDateTime = regDateTime;
+            this.compareByNodeRef = compareByNodeRef;
         }
         @Override
         public boolean equals(Object other) {
@@ -60,24 +67,34 @@ public abstract class BaseAdrServiceImpl implements AdrService {
                 return false;
             }
             AdrDocument otherDoc = (AdrDocument) other;
+            if (compareByNodeRef) {
+                return nodeRef.equals(otherDoc.nodeRef);
+            }
             return regNumber.equals(otherDoc.regNumber) && regDateTime.equals(otherDoc.regDateTime);
         }
         @Override
         public int hashCode() {
+            if (compareByNodeRef) {
+                return nodeRef.hashCode();
+            }
             return regNumber.hashCode() + regDateTime.hashCode();
         }
         @Override
         public String toString() {
+            if (compareByNodeRef) {
+                return nodeRef.toString();
+            }
             return regNumber + ", " + regDateTime;
         }
     }
 
-    protected void addDeletedDocument(String regNumber, Date regDateTime) {
-        if (StringUtils.isEmpty(regNumber) || regDateTime == null) {
+    protected void addDeletedDocument(NodeRef nodeRef, String regNumber, Date regDateTime) {
+        if (nodeRef == null || StringUtils.isEmpty(regNumber) || regDateTime == null) {
             return;
         }
         NodeRef root = generalService.getNodeRef(AdrModel.Repo.ADR_DELETED_DOCUMENTS);
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(AdrModel.Props.NODEREF, nodeRef);
         props.put(AdrModel.Props.REG_NUMBER, regNumber);
         props.put(AdrModel.Props.REG_DATE_TIME, regDateTime);
         props.put(AdrModel.Props.DELETED_DATE_TIME, new Date());
@@ -104,6 +121,9 @@ public abstract class BaseAdrServiceImpl implements AdrService {
 
     protected DataHandler getFileDataHandler(NodeRef nodeRef, String filename) {
         ContentReader fileReader = fileFolderService.getReader(nodeRef);
+        if (fileReader == null) {
+            return null;
+        }
         ContentReaderDataSource dataSource = new ContentReaderDataSource(fileReader, filename);
         return new DataHandler(dataSource);
     }
@@ -129,20 +149,6 @@ public abstract class BaseAdrServiceImpl implements AdrService {
             return null;
         }
         return input;
-    }
-
-    protected static String getWithParenthesis(String first, String second) {
-        StringBuilder s = new StringBuilder();
-        if (StringUtils.isNotEmpty(first)) {
-            s.append(first);
-        }
-        if (StringUtils.isNotEmpty(second)) {
-            if (s.length() > 0) {
-                s.append(" ");
-            }
-            s.append("(").append(second).append(")");
-        }
-        return s.toString();
     }
 
     // START: getters / setters

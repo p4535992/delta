@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -84,6 +85,8 @@ public interface DocumentService {
     Node updateDocument(Node node);
 
     void updateSearchableFiles(NodeRef document);
+
+    void updateSearchableFiles(NodeRef document, Map<QName, Serializable> props);
 
     /**
      * Make a copy of document as a draft.
@@ -402,7 +405,11 @@ public interface DocumentService {
     ContentData getSearchableFileContents(NodeRef document);
 
     StringBuilder getChildNodesPropsForIndexing(NodeRef parentRef, StringBuilder sb);
-    
+
+    Map<QName, NodeRef> getDocumentParents(NodeRef documentRef);
+
+    ArrayList<Serializable> collectProperties(NodeRef nodeRef, List<ChildAssociationRef> childAssocs, QName... propNames);
+
     void setDocStatusFinished(final NodeRef docRef);
     
     void setPropertyAsSystemUser(final QName propName, final Serializable value, final NodeRef docRef);

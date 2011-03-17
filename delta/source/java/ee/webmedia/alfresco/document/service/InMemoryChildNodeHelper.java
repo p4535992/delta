@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.document.service;
 
+import java.io.Serializable;
+import java.util.List;
+import java.util.Map;
+
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
@@ -42,10 +46,32 @@ public class InMemoryChildNodeHelper {
         applicantNode.addChildAssociations(getErrandAssocType(applicantNode), newErrand);
     }
 
+    public void addParty(final Node docNode){
+        addParty(docNode, null);
+    }
+    
+    public void addParty(final Node docNode, Map<QName, Serializable> partyProps){
+        final QName partyType = getPartyType(docNode);
+        final WmNode newParty = generalService.createNewUnSaved(partyType, partyProps);
+        docNode.addChildAssociations(getPartyAssoc(docNode), newParty);
+    }
+    
+    public void removeParty(final Node docNode, final int assocIndex){
+        final QName partyAssocs = getPartyAssoc(docNode);
+        docNode.removeChildAssociations(partyAssocs, assocIndex);
+    }
+    
+    public void removeParties(final Node docNode, List<Node> removedAssocs){
+        final QName partyAssocs = getPartyAssoc(docNode);
+        docNode.removeChildAssociations(partyAssocs, removedAssocs);
+    }    
+    
     private QName getApplicantType(Node docNode) {
         final QName applicantType;
         if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(docNode.getType())) {
             applicantType = DocumentSpecificModel.Types.ERRAND_ORDER_APPLICANT_ABROAD;
+        } else if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD_MV.equals(docNode.getType())) {
+                applicantType = DocumentSpecificModel.Types.ERRAND_ORDER_ABROAD_MV_APPLICANT_MV;            
         } else if (DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(docNode.getType())) {
             applicantType = DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE;
         } else if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(docNode.getType())) {
@@ -55,11 +81,26 @@ public class InMemoryChildNodeHelper {
         }
         return applicantType;
     }
+    
+    private QName getPartyType(Node docNode) {
+        final QName partyType;
+        if (DocumentSubtypeModel.Types.CONTRACT_MV.equals(docNode.getType())) {
+            partyType = DocumentSpecificModel.Types.CONTRACT_MV_PARTY_TYPE;
+        } else if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(docNode.getType())
+                || DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(docNode.getType())) {
+            partyType = DocumentSpecificModel.Types.CONTRACT_PARTY_TYPE;
+        } else {
+            throw new RuntimeException("Unimplemented adding party to document with type '" + docNode.getType() + "'");
+        }
+        return partyType;
+    }    
 
     private QName getApplicantAssoc(Node document) {
         final QName applicantAssoc;
         if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType())) {
             applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD;
+        } else if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD_MV.equals(document.getType())) {
+            applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_ABROAD_MV_APPLICANTS;
         } else if (DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(document.getType())) {
             applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS;
         } else if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(document.getType())) {
@@ -69,11 +110,26 @@ public class InMemoryChildNodeHelper {
         }
         return applicantAssoc;
     }
+    
+    private QName getPartyAssoc(Node docNode){
+        final QName partyAssoc;
+        if (DocumentSubtypeModel.Types.CONTRACT_MV.equals(docNode.getType())){
+            partyAssoc = DocumentSpecificModel.Assocs.CONTRACT_MV_PARTIES;
+        } else if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(docNode.getType())
+                || DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(docNode.getType())) {
+            partyAssoc = DocumentSpecificModel.Assocs.CONTRACT_PARTIES;
+        } else {
+            throw new RuntimeException("Unimplemented adding party to document with type '" + docNode.getType() + "'");
+        }
+        return partyAssoc;
+    }
 
     private QName getErrandAssocType(final Node applicantNode) {
         final QName errandAssocType;
         if (DocumentSpecificModel.Types.ERRAND_ORDER_APPLICANT_ABROAD.equals(applicantNode.getType())) {
             errandAssocType = DocumentSpecificModel.Assocs.ERRAND_ABROAD;
+        } else if (DocumentSpecificModel.Types.ERRAND_ORDER_ABROAD_MV_APPLICANT_MV.equals(applicantNode.getType())) {
+                errandAssocType = DocumentSpecificModel.Assocs.ERRAND_ABROAD_MV;            
         } else if (DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE.equals(applicantNode.getType())) {
             errandAssocType = DocumentSpecificModel.Assocs.ERRAND_DOMESTIC;
         } else {
@@ -86,6 +142,8 @@ public class InMemoryChildNodeHelper {
         final QName errandType;
         if (DocumentSpecificModel.Types.ERRAND_ORDER_APPLICANT_ABROAD.equals(applicantNode.getType())) {
             errandType = DocumentSpecificModel.Types.ERRAND_ABROAD_TYPE;
+        }else if (DocumentSpecificModel.Types.ERRAND_ORDER_ABROAD_MV_APPLICANT_MV.equals(applicantNode.getType())) {
+                errandType = DocumentSpecificModel.Types.ERRAND_ABROAD_MV_TYPE;            
         } else if (DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE.equals(applicantNode.getType())) {
             errandType = DocumentSpecificModel.Types.ERRANDS_DOMESTIC_TYPE;
         } else if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(document.getType())) {

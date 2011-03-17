@@ -15,4 +15,8 @@ public interface ClassificatorModel {
     interface Associations {
         QName CLASSIFICATOR_VALUE = QName.createQName(URI, "classificatorValue");
     }
+    
+    interface Props {
+        QName DESCRIPTION = QName.createQName(URI, "classificatorDescription");
+    }    
 }

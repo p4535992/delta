@@ -1,16 +1,20 @@
 package ee.webmedia.alfresco.workflow.service;
 
+import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.utils.FeedbackWrapper;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
-import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
-import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
@@ -50,6 +54,20 @@ public interface WorkflowService {
 
     CompoundWorkflow saveCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
+    /**
+     * @param originalAssignmentTask - task that will be delegated(originalTask.parent contains information about new tasks and originalTask.parent.parent contains
+     *            information about new workflows)
+     */
+    Pair<FeedbackWrapper, CompoundWorkflow> delegate(Task originalAssignmentTask);
+
+    List<Node> getDelegationHistoryNodes(NodeRef taskRef);
+
+    /**
+     * @param delegatableTaskNode
+     * @return map with properties representing "virtual" history entry when delegating given delegatableTaskNode
+     */
+    Map<QName, Serializable> getTempDelegationHistoryProps(Node delegatableTaskNode);
+
     void deleteCompoundWorkflow(NodeRef compoundWorkflow);
 
     CompoundWorkflow saveAndStartCompoundWorkflow(CompoundWorkflow compoundWorkflow);
@@ -71,10 +89,17 @@ public interface WorkflowService {
     void continueAllCompoundWorkflows(NodeRef parent);
 
     CompoundWorkflow saveAndCopyCompoundWorkflow(CompoundWorkflow compoundWorkflow);
-    
+
     int getActiveResponsibleAssignmentTasks(NodeRef document);
 
-    void addNewWorkflow(CompoundWorkflow compoundWorkflow, QName workflowTypeQName, int index);
+    /**
+     * @param compoundWorkflow
+     * @param workflowTypeQName
+     * @param index - position where new workflow is added in the compoundWorkflow workflows list
+     * @param validateCompoundWorkflowIsNew
+     * @return workflow added under <code>compoundWorkflow</code> with given type, to given position
+     */
+    Workflow addNewWorkflow(CompoundWorkflow compoundWorkflow, QName workflowTypeQName, int index, boolean validateCompoundWorkflowIsNew);
 
     /**
      * Save task properties.
@@ -125,8 +150,22 @@ public interface WorkflowService {
 
     boolean hasInprogressCompoundWorkflows(NodeRef parent);
 
+    boolean hasCompoundWorkflows(NodeRef docRef);
+
     boolean hasNoStoppedOrInprogressCompoundWorkflows(NodeRef parent);
 
     void finishCompoundWorkflowsOnRegisterDoc(NodeRef docRef, String comment);
-    
+
+    boolean isSendableExternalWorkflowDoc(NodeRef docNodeRef);
+
+    void finishInProgressExternalReviewTask(Task taskOriginal, String comment, String outcome, Date dateCompleted, String dvkId) throws WorkflowChangedException;
+
+    boolean isInternalTesting();
+
+    WmNode getTaskTemplateByType(QName taskType);
+
+    boolean isRecievedExternalReviewTask(Task task);
+
+    boolean externalReviewWorkflowEnabled();
+
 }

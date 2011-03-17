@@ -13,8 +13,8 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper;
 import ee.webmedia.alfresco.document.service.DocumentService.PropertiesModifierCallback;
+import ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper;
 
 /**
  * Callback that creates childAssociations to document
@@ -22,7 +22,7 @@ import ee.webmedia.alfresco.document.service.DocumentService.PropertiesModifierC
  * @author Ats Uiboupin
  */
 public abstract class AbstractDocChildCreator extends PropertiesModifierCallback {
-    private NodeService nodeService;
+    protected NodeService nodeService;
     protected InMemoryChildNodeHelper inMemoryChildNodeHelper;
 
     @Override
@@ -36,18 +36,22 @@ public abstract class AbstractDocChildCreator extends PropertiesModifierCallback
             NodeRef parentRef = docNode.getNodeRef();
             final List<Pair<QName, QName>> assocTypesAndAssocTargetTypes = getAssocTypesAndAssocTargetTypes();
             for (Pair<QName, QName> assocTypeAndAssocTargetType : assocTypesAndAssocTargetTypes) {
-                final QName assoc = assocTypeAndAssocTargetType.getFirst();
-                final QName childType = assocTypeAndAssocTargetType.getSecond();
-                parentRef = nodeService.createNode(parentRef, assoc, assoc, childType, null).getChildRef();
+                parentRef = createNode(parentRef, assocTypeAndAssocTargetType, null);
             }
         } else if (StringUtils.equals(phase, "docTypeChangeing")) {
             createChildNodes(docNode);
         }
     }
 
+    protected NodeRef createNode(NodeRef parentRef, Pair<QName, QName> assocTypeAndAssocTargetType, Map<QName, Serializable> properties) {
+        final QName assoc = assocTypeAndAssocTargetType.getFirst();
+        final QName childType = assocTypeAndAssocTargetType.getSecond();
+        return nodeService.createNode(parentRef, assoc, assoc, childType, properties).getChildRef();
+    }
+
     protected abstract List<Pair<QName, QName>> getAssocTypesAndAssocTargetTypes();
 
-    private void createChildNodes(Node docNode) {
+    protected void createChildNodes(Node docNode) {
         inMemoryChildNodeHelper.addApplicant(docNode);
     }
 

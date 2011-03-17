@@ -5,13 +5,16 @@ import java.util.List;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.notification.model.GeneralNotification;
+import ee.webmedia.alfresco.notification.model.NotificationModel.NotificationType;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.Workflow;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ReceivedDocumentsWrapper.ReceivedDocument;
 
 /**
  * @author Kaarel Jõgeva
@@ -57,5 +60,11 @@ public interface NotificationService {
     public int getUpdateCount();
     
     public void notifyTaskUnfinishedEvent(Task task);
+
+    String generateTemplateContent(QName notificationType, Task task);
+    
+    void notifyExternalReviewError(Task task);    
+
+    void notifyExternalReviewError(String notificationContent);
 
 }

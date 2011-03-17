@@ -111,4 +111,10 @@
       <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
 
+   <!-- START: web beans: -->
+
+   <bean id="DocumentSearchBean" class="ee.webmedia.alfresco.document.search.web.DocumentSearchBean" scope="session" />
+
+   <!-- END: web beans: -->
+
 </beans>

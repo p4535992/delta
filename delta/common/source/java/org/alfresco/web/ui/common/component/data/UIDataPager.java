@@ -57,7 +57,7 @@ public class UIDataPager extends UICommand
    private static final String FIRST_PAGE = "first_page";
    private static final String MSG_PAGEINFO = "page_info";
    
-   private static final int VISIBLE_PAGE_RANGE = 2;
+   private static final int VISIBLE_PAGE_RANGE = 9;
    private static final int AMOUNT_FIRST_PAGES = 2;
   
    // ------------------------------------------------------------------------------

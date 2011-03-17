@@ -38,9 +38,6 @@
       <property name="personService" ref="PersonService" />
       <property name="nodeService" ref="NodeService" />
       <property name="amrService" ref="AmrService" />
-      <property name="parametersService" ref="ParametersService" />
-      <property name="applicationService" ref="ApplicationService" />
-      <property name="testEmail" value="${mail.from.default}" />
    </bean>
 
 </beans>

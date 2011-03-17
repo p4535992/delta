@@ -36,7 +36,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         UNFINISH
     }
 
-    private static String PROP_RESOLUTION = "{temp}resolution";
+    public static String PROP_RESOLUTION = "{temp}resolution";
 
     private final Workflow parent;
     private final int outcomes;
@@ -150,6 +150,66 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         this.outcomeIndex = outcomeIndex;
     }
 
+    public String getInstitutionName() {
+        return getProp(WorkflowSpecificModel.Props.INSTITUTION_NAME);
+    }
+
+    public void setInstitutionName(String institutionName) {
+        setProp(WorkflowSpecificModel.Props.INSTITUTION_NAME, institutionName);
+    }    
+
+    public String getInstitutionCode() {
+        return getProp(WorkflowSpecificModel.Props.INSTITUTION_CODE);
+    }
+
+    public void setInstitutionCode(String institutionCode) {
+        setProp(WorkflowSpecificModel.Props.INSTITUTION_CODE, institutionCode);
+    }  
+
+    public String getCreatorInstitutionCode() {
+        return getProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_CODE);
+    }
+
+    public void setCreatorInstitutionCode(String creatorInstitutionCode) {
+        setProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_CODE, creatorInstitutionCode);
+    }    
+
+    public String getOriginalDvkId() {
+        return getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID);
+    }
+
+    public void setOriginalDvkId(String originalDvkId) {
+        setProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID, originalDvkId);
+    }    
+
+    public String getSendStatus() {
+        return getProp(WorkflowSpecificModel.Props.SEND_STATUS);
+    }
+
+    public void setSendStatus(String status) {
+        setProp(WorkflowSpecificModel.Props.SEND_STATUS, status);
+    }
+
+    public void setParallel(boolean parallel) {
+        setProp(WorkflowCommonModel.Props.PARALLEL_TASKS, parallel);
+    }
+
+    public void setActive(boolean active) {
+        setProp(WorkflowSpecificModel.Props.ACTIVE, active);
+    }
+
+    public boolean isResponsible() {
+        return getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE);
+    }
+
+    public void setResponsible(boolean responsible) {
+        if (responsible) {
+            getNode().getAspects().add(WorkflowSpecificModel.Aspects.RESPONSIBLE);
+        } else {
+            getNode().getAspects().remove(WorkflowSpecificModel.Aspects.RESPONSIBLE);
+        }
+    }
+
     /**
      * Not stored in repository, only provided during finishTaskInProgress service call.
      */
@@ -173,10 +233,22 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         return getDueDate() != null ? dateFormat.format(getDueDate()) : "";
     }
 
+    /**
+     * @return resolution of the task or workflow
+     */
     public String getResolution() {
         // Cannot use getProp(QName) because we need to use resolutionPropertyResolver
         Object resolution = getNode().getProperties().get(PROP_RESOLUTION);
         return (resolution != null) ? resolution.toString() : "";
+    }
+
+    /**
+     * Unlike {@link #getResolution()} method it doesn't search resolution from workflow if task doesn't have resolution.
+     * 
+     * @return value of task property WorkflowSpecificModel.Props.RESOLUTION
+     */
+    public String getResolutionOfTask() {
+        return getProp(WorkflowSpecificModel.Props.RESOLUTION);
     }
 
     public void setComment(String comment) {

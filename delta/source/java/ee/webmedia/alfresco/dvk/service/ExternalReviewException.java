@@ -1,0 +1,80 @@
+package ee.webmedia.alfresco.dvk.service;
+
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.Task;
+
+public class ExternalReviewException extends RuntimeException {
+
+    private static final long serialVersionUID = 1L;
+    
+    Task task; // conflicting task
+    String dvkId = null; // dvkId from incoming dvk call
+    ExceptionType type;
+    String attemptedStatus = null;
+    
+    public static enum ExceptionType{
+        VERSION_CONFLICT,
+        PARSING_EXCEPTION,
+        ORIGINAL_TASK_NOT_FOUND,
+        TASK_OVERWRITE_WRONG_STATUS,
+        DVK_CAPABILITY_ERROR
+    }
+    
+    public ExternalReviewException(ExceptionType type) {
+        this.type = type;
+    }
+
+    public ExternalReviewException(ExceptionType type, Task task, String dvkId) {
+        this.task = task;
+        this.dvkId = dvkId;
+        this.type = type;
+    }
+    
+    public ExternalReviewException(ExceptionType type, Task task, String dvkId, String attemptedStatus) {
+        this.task = task;
+        this.dvkId = dvkId;
+        this.type = type;
+        this.attemptedStatus = attemptedStatus;
+    }    
+    
+    public ExternalReviewException(ExceptionType type, String message) {
+        super(message);
+        this.type = type;
+    }
+
+    public ExternalReviewException(ExceptionType exceptionType, RuntimeException e) {
+        super(e);
+        this.type = exceptionType;
+    }
+
+    public Task getTask(){
+        return task;
+    }
+    
+    public String getDvkId(){
+        return dvkId;
+    }
+    
+    public ExceptionType getExceptionType(){
+        return type;
+    }
+    
+    boolean isType(ExceptionType type){
+        return this.type.equals(type);
+    }
+    
+    @Override
+    public String getMessage(){
+        if (this.isType(ExceptionType.VERSION_CONFLICT)) {
+            return "Recieved dvkId=" + dvkId + " <= existing tasks's recievedDvkId="
+                    + task.getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID) + "; task=" + task;
+        } else if (this.isType(ExceptionType.TASK_OVERWRITE_WRONG_STATUS)) {
+            return "Recieved task or local task is in wrong status for finishing, originalDvkId = " + dvkId + ", attemptedStatus=" + attemptedStatus +", local task = " + task;
+        } else if (this.isType(ExceptionType.ORIGINAL_TASK_NOT_FOUND)){
+            return "Recieved task has no corresponding task with originalDvkId=" + dvkId;
+        } else {
+            return super.getMessage();
+        }
+    }
+
+}

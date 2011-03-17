@@ -22,6 +22,10 @@
          <property-name>documentSearchResultsDialog</property-name>
          <value>#{DocumentSearchResultsDialog}</value>
       </managed-property>
+      <managed-property>
+         <property-name>documentSearchBean</property-name>
+         <value>#{DocumentSearchBean}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>
@@ -158,6 +162,10 @@
          <property-name>parametersService</property-name>
          <value>#{ParametersService}</value>
       </managed-property>
+      <managed-property>
+         <property-name>userListDialog</property-name>
+         <value>#{UserListDialog}</value>
+      </managed-property>      
    </managed-bean>
 
    <managed-bean>
@@ -178,16 +186,6 @@
       <managed-bean-name>TypeBlockBean</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.document.type.web.TypeBlockBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
-   </managed-bean>
-
-   <managed-bean>
-      <managed-bean-name>SearchBlockBean</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.document.search.web.SearchBlockBean</managed-bean-class>
-      <managed-bean-scope>session</managed-bean-scope>
-      <managed-property>
-         <property-name>documentSearchService</property-name>
-         <value>#{DocumentSearchService}</value>
-      </managed-property>
    </managed-bean>
 
    <managed-bean>
@@ -268,12 +266,6 @@
          <property-name>addressbookDialog</property-name>
          <value>#{AddressbookDialog}</value>
       </managed-property>
-   </managed-bean>
-   
-   <managed-bean>
-      <managed-bean-name>AssocsBlockBean</managed-bean-name>
-      <managed-bean-class>ee.webmedia.alfresco.document.associations.web.AssocsBlockBean</managed-bean-class>
-      <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
 
    <managed-bean>

@@ -15,6 +15,8 @@ public class ReplyNodeTypeEvaluator extends NodeTypeEvaluator {
         nodeTypes = new ArrayList<QName>(2);
         nodeTypes.add(DocumentSubtypeModel.Types.INCOMING_LETTER);
         nodeTypes.add(DocumentSubtypeModel.Types.CONTRACT_SIM);
+        nodeTypes.add(DocumentSubtypeModel.Types.INCOMING_LETTER_MV);
+        nodeTypes.add(DocumentSubtypeModel.Types.CONTRACT_MV);
     }
 
     @Override

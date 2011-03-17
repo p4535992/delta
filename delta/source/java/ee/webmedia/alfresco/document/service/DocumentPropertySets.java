@@ -37,10 +37,24 @@ public class DocumentPropertySets {
         incomingAndOutgoingLetterProperties.add(DocumentSpecificModel.Props.SENDER_REG_DATE.toString());
     }
 
+    /*package*/ static Set<String> contractDetailsV1 = new HashSet<String>();
+    static {
+        contractDetailsV1.add(DocumentSpecificModel.Props.SECOND_PARTY_NAME.toString());
+        contractDetailsV1.add(DocumentSpecificModel.Props.SECOND_PARTY_EMAIL.toString());
+        contractDetailsV1.add(DocumentSpecificModel.Props.SECOND_PARTY_SIGNER.toString());
+        contractDetailsV1.add(DocumentSpecificModel.Props.SECOND_PARTY_CONTACT_PERSON.toString());
+        contractDetailsV1.add(DocumentSpecificModel.Props.THIRD_PARTY_NAME.toString());
+        contractDetailsV1.add(DocumentSpecificModel.Props.THIRD_PARTY_EMAIL.toString());
+        contractDetailsV1.add(DocumentSpecificModel.Props.THIRD_PARTY_SIGNER.toString());
+        contractDetailsV1.add(DocumentSpecificModel.Props.THIRD_PARTY_CONTACT_PERSON.toString());
+    }
+    
     /*package*/ static Set<String> ignoredPropertiesWhenMakingCopy = new HashSet<String>();
     static {
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.REG_NUMBER.toString());
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.REG_DATE_TIME.toString());
         ignoredPropertiesWhenMakingCopy.addAll(ownerProperties);
+        ignoredPropertiesWhenMakingCopy.addAll(contractDetailsV1);
+        ignoredPropertiesWhenMakingCopy.add(DocumentSpecificModel.Props.NOT_EDITABLE.toString());
     }
 }

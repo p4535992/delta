@@ -24,6 +24,19 @@
             <aspect>docspec:complience</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="docsub:incomingLetterMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:senderDetails</aspect>
+            <aspect>docspec:sender</aspect>
+            <aspect>docspec:transmittalMode</aspect>
+            <aspect>docspec:complience</aspect>
+            <aspect>docspec:senderDetailsMv</aspect>
+            <aspect>docspec:annex</aspect>
+            <aspect>docspec:content</aspect>
+         </mandatory-aspects>
+      </type>      
 
       <type name="docsub:outgoingLetter">
          <parent>doccom:document</parent>
@@ -36,6 +49,21 @@
             <aspect>docspec:template</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="docsub:outgoingLetterMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:sender</aspect>
+            <aspect>docspec:template</aspect>
+            <aspect>docspec:content</aspect>
+            <aspect>docspec:annex</aspect>
+            <aspect>docspec:outgoingLetterMv</aspect>
+         </mandatory-aspects>
+      </type>      
 
       <!-- Välislähetuse dokumenndi tüüp -->
       <type name="docsub:errandOrderAbroad">
@@ -45,6 +73,14 @@
             <aspect>docspec:errandOrderAbroad</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="docsub:errandOrderAbroadMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandDocCommon</aspect>
+            <aspect>docspec:errandOrderAbroadMv</aspect>
+         </mandatory-aspects>
+      </type>      
       
       <!-- Siselähetuse dokumenndi tüüp -->
       <type name="docsub:errandApplicationDomestic">
@@ -146,6 +182,58 @@
             <aspect>docspec:report</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="docsub:reportMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:signerName</aspect>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:report</aspect>
+            <aspect>docspec:content</aspect>
+         </mandatory-aspects>
+      </type>    
+      
+      <type name="docsub:invoice">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:invoice</aspect>
+         </mandatory-aspects>
+      </type> 
+      
+      <type name="docsub:personalVehicleUsageCompensationMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:personalVehicleUsageCompensationMv</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:resolutionMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:sendDesc</aspect>           
+            <aspect>doccom:signer</aspect>         
+            <aspect>docspec:content</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:projectApplication">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:sendDesc</aspect>       
+            <aspect>docspec:projectApplication</aspect>
+            <aspect>docspec:content</aspect>
+         </mandatory-aspects>
+      </type>      
 
       <type name="docsub:personelleOrderSim">
          <parent>doccom:document</parent>
@@ -158,6 +246,19 @@
             <aspect>docspec:template</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="docsub:orderMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:signer</aspect>
+            <aspect>docspec:template</aspect>
+            <aspect>docspec:content</aspect>
+            <aspect>docspec:orderType</aspect>
+         </mandatory-aspects>
+      </type>      
       
       <type name="docsub:decree">
          <parent>doccom:document</parent>
@@ -195,6 +296,20 @@
          </mandatory-aspects>
       </type>
       
+      <type name="docsub:instrumentOfDeliveryAndReceiptMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:recipient</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:deliverer</aspect>
+            <aspect>docspec:receiver</aspect>
+            <aspect>docspec:secondPartyReg</aspect>
+            <aspect>docspec:content</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>      
+      
       <type name="docsub:licence">
          <parent>doccom:document</parent>
          <mandatory-aspects>
@@ -228,9 +343,18 @@
             <aspect>doccom:signer</aspect>
             <aspect>docspec:applicationContent</aspect>
             <aspect>docspec:template</aspect>
-            <aspect>docspec:applicationRecipient</aspect>
+            <aspect>docspec:applicationRecipient</aspect>            
          </mandatory-aspects>
       </type>
+      
+      <type name="docsub:internalApplicationMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:applicationContent</aspect>
+            <aspect>docspec:template</aspect>
+            <aspect>doccom:signer</aspect>
+         </mandatory-aspects>
+      </type>      
       
       <type name="docsub:contractSim">
          <parent>doccom:document</parent>
@@ -239,7 +363,7 @@
             <aspect>doccom:additionalRecipient</aspect>
             <aspect>doccom:signer</aspect>
             <aspect>docspec:firstParty</aspect>
-            <aspect>docspec:contractDetails</aspect>
+            <aspect>docspec:contractDetailsV2</aspect>
             <aspect>docspec:contractSimDetails</aspect>
             <aspect>docspec:template</aspect>
          </mandatory-aspects>
@@ -253,11 +377,24 @@
             <aspect>doccom:signer</aspect>
             <aspect>docspec:contractType</aspect>
             <aspect>docspec:firstParty</aspect>
-            <aspect>docspec:contractDetails</aspect>
+            <aspect>docspec:contractDetailsV2</aspect>
             <aspect>docspec:contractSmitDetails</aspect>
             <aspect>docspec:template</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="docsub:contractMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:signerName</aspect>
+            <aspect>docspec:firstParty</aspect>
+            <aspect>docspec:contractMvDetails</aspect>
+            <aspect>docspec:content</aspect>
+            <aspect>doccom:sendDesc</aspect>
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>
+      </type>      
 
       <type name="docsub:vacationOrder">
          <parent>doccom:document</parent>
@@ -268,6 +405,13 @@
             <aspect>docspec:template</aspect>
          </mandatory-aspects>
       </type>
+      
+      <type name="docsub:vacationApplication">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:vacationOrderCommon</aspect>
+         </mandatory-aspects>
+      </type>
 
       <type name="docsub:vacationOrderSmit">
          <parent>doccom:document</parent>
@@ -276,6 +420,28 @@
             <aspect>doccom:legalBasis</aspect>
             <aspect>docspec:template</aspect>
          </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:minutesMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>docspec:minutesMv</aspect>
+            <aspect>docspec:content</aspect>            
+            <aspect>docspec:template</aspect>
+            <aspect>doccom:recipient</aspect>            
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:sendDesc</aspect>         
+         </mandatory-aspects>
+      </type>
+      
+      <type name="docsub:otherDocumentMv">
+         <parent>doccom:document</parent>
+         <mandatory-aspects>
+            <aspect>doccom:recipient</aspect>            
+            <aspect>doccom:additionalRecipient</aspect>
+            <aspect>doccom:sendDesc</aspect>          
+            <aspect>docspec:template</aspect>
+         </mandatory-aspects>      
       </type>
 
    </types>

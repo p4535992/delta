@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.functions.service;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -60,6 +61,7 @@ public class FunctionsServiceImpl implements FunctionsService {
         return getFunctions(getFunctionsRoot());
     }
 
+    @Override
     public List<Function> getFunctions(NodeRef functionsRoot) {
         List<ChildAssociationRef> childRefs = getFunctionAssocs(functionsRoot);
         List<Function> functions = new ArrayList<Function>(childRefs.size());
@@ -121,6 +123,49 @@ public class FunctionsServiceImpl implements FunctionsService {
         if (log.isDebugEnabled()) {
             log.debug("Function updated: \n" + function);
         }
+
+        reorderFunctions(function);
+       
+    }
+    
+    private void reorderFunctions(Function function) {
+        final int order = getFunctionOrder(function);
+        final List<Function> allFunctions = getAllFunctions();
+        Collections.sort(allFunctions, new Comparator<Function>() {
+
+            @Override
+            public int compare(Function f1, Function f2) {
+                final int order1 = getFunctionOrder(f1);
+                final int order2 = getFunctionOrder(f2);                
+                if (order1 == order2) {
+                    return 0;
+                }
+                return order1 < order2 ? -1 : 1;
+            }
+
+        });
+
+        for (Function otherFunction : allFunctions) {
+            if (function.getNode().getNodeRef().equals(otherFunction.getNode().getNodeRef())) {
+                continue;
+            }
+            final int order2 = getFunctionOrder(otherFunction);
+            if (order2 == order) {
+                // since collection is ordered, no need to check if(order2 >= order)
+                otherFunction.getNode().getProperties().put(FunctionsModel.Props.ORDER.toString(), order2 + 1);
+              //reorderFunctions is recursively called on all following functions in the list by saveOrUpdate
+                saveOrUpdate(otherFunction);
+                break;
+            }
+        }
+    }  
+    
+    private Integer getFunctionOrder(Function function){
+        Integer order = (Integer) function.getNode().getProperties().get(FunctionsModel.Props.ORDER.toString());
+        if (order == null){
+            order = Integer.MIN_VALUE;
+        }
+        return order;
     }
 
     @Override

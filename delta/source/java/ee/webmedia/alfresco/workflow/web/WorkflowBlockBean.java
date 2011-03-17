@@ -1,5 +1,9 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
+import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
+import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -8,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.application.Application;
-import javax.faces.application.NavigationHandler;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
 import javax.faces.component.UIParameter;
@@ -32,7 +35,6 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
-import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.ConstantMethodBinding;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
@@ -49,8 +51,10 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
+import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
@@ -85,20 +89,24 @@ public class WorkflowBlockBean implements Serializable {
     private static final String DROPDOWN_MENU_ITEM_ICON = "/images/icons/versioned_properties.gif";
     private static final String MSG_WORKFLOW_ACTION_GROUP = "workflow_compound_start_workflow";
     private static final String ATTRIB_OUTCOME_INDEX = "outcomeIndex";
+    /** task index attribute name */
     private static final String ATTRIB_INDEX = "index";
     private static final String PARAM_NODEREF = "nodeRef";
     private FileBlockBean fileBlockBean;
     private MetadataBlockBean metadataBlockBean;
+    private DelegationBean delegationBean;
 
     private transient DocumentService documentService;
     private transient WorkflowService workflowService;
     private transient UserService userService;
     private transient FileService fileService;
     private transient SignatureService signatureService;
+    private transient DvkService dvkService;
 
     private transient HtmlPanelGroup dataTableGroup;
 
-    private NodeRef document;
+    private NodeRef docRef;
+    private Node document;
     private NodeRef workflowPanelControlDocument;
     private NodeRef taskPanelControlDocument;
     private List<CompoundWorkflow> compoundWorkflows;
@@ -109,8 +117,11 @@ public class WorkflowBlockBean implements Serializable {
     private List<Task> finishedOpinionTasks;
     private SignatureTask signatureTask;
 
-    public void init(NodeRef document) {
+
+    public void init(Node document) {
         this.document = document;
+        docRef = document.getNodeRef();
+        delegationBean.setWorkflowBlockBean(this);
         restore();
     }
 
@@ -124,18 +135,17 @@ public class WorkflowBlockBean implements Serializable {
         dataTableGroup = null;
         workflowSummaryItems = null;
         wfPanelGroup = null;
+        delegationBean.reset();
     }
 
     public void restore() {
-        compoundWorkflows = getWorkflowService().getCompoundWorkflows(document);
-        // if (log.isDebugEnabled()) {
-        // log.debug("Document has workflows " + WmNode.toString(compoundWorkflows));
-        // }
+        compoundWorkflows = getWorkflowService().getCompoundWorkflows(docRef);
         myTasks = getWorkflowService().getMyTasksInProgress(compoundWorkflows);
         finishedReviewTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.REVIEW_TASK);
         finishedOpinionTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.OPINION_TASK);
         signatureTask = null;
         workflowSummaryItems = null;
+        delegationBean.reset();
         // rebuild the whole task panel
         constructTaskPanelGroup();
         // refresh workflow panel
@@ -151,17 +161,28 @@ public class WorkflowBlockBean implements Serializable {
         List<CompoundWorkflowDefinition> workflowDefs = getWorkflowService().getCompoundWorkflowDefinitions(documentType, documentStatus);
         List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
         for (CompoundWorkflowDefinition compoundWorkflowDefinition : workflowDefs) {
-            ActionDefinition actionDefinition = new ActionDefinition("compoundWorkflowDefinitionAction");
-            actionDefinition.Image = DROPDOWN_MENU_ITEM_ICON;
-            actionDefinition.Label = compoundWorkflowDefinition.getName();
-            actionDefinition.Action = "#{DocumentDialog.workflow.getCompoundWorkflowDialog}";
-            actionDefinition.ActionListener = "#{CompoundWorkflowDialog.setupNewWorkflow}";
-            actionDefinition.addParam("compoundWorkflowDefinitionNodeRef", compoundWorkflowDefinition.getNode().getNodeRef().toString());
+            if (workflowService.externalReviewWorkflowEnabled() || !containsExternalReviewWorkflows(compoundWorkflowDefinition)) {
+                ActionDefinition actionDefinition = new ActionDefinition("compoundWorkflowDefinitionAction");
+                actionDefinition.Image = DROPDOWN_MENU_ITEM_ICON;
+                actionDefinition.Label = compoundWorkflowDefinition.getName();
+                actionDefinition.Action = "#{DocumentDialog.workflow.getCompoundWorkflowDialog}";
+                actionDefinition.ActionListener = "#{CompoundWorkflowDialog.setupNewWorkflow}";
+                actionDefinition.addParam("compoundWorkflowDefinitionNodeRef", compoundWorkflowDefinition.getNode().getNodeRef().toString());
 
-            actionDefinitions.add(actionDefinition);
+                actionDefinitions.add(actionDefinition);
+            }
         }
 
         return actionDefinitions;
+    }
+
+    private boolean containsExternalReviewWorkflows(CompoundWorkflowDefinition compoundWorkflowDefinition) {
+        for (Workflow workflow : compoundWorkflowDefinition.getWorkflows()){
+            if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)){
+                return true;
+            }
+        }
+        return false;
     }
 
     public String getCompoundWorkflowDialog() {
@@ -181,7 +202,7 @@ public class WorkflowBlockBean implements Serializable {
         // or user's id is document 'ownerId'
         // or user's id is 'taskOwnerId' and 'taskStatus' = IN_PROGRESS of some document's task
 
-        if (getUserService().isDocumentManager() || getDocumentService().isDocumentOwner(document, AuthenticationUtil.getRunAsUser())
+        if (getUserService().isDocumentManager() || getDocumentService().isDocumentOwner(docRef, AuthenticationUtil.getRunAsUser())
                 || getMyTasks().size() > 0) {
             return WORKFLOW_METHOD_BINDING_NAME;
         }
@@ -206,14 +227,15 @@ public class WorkflowBlockBean implements Serializable {
         Task task = getMyTasks().get(index);
         QName taskType = task.getNode().getType();
 
-        if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)) {
+        if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)
+                || WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
             outcomeIndex = (Integer) task.getNode().getProperties().get(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString());
         } else if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
             if (outcomeIndex == 1) {
 
                 // signing requires that at least 1 active file exists within this document
                 long step0 = System.currentTimeMillis();
-                List<File> activeFiles = getFileService().getAllActiveFiles(document);
+                List<File> activeFiles = getFileService().getAllActiveFiles(docRef);
                 if (activeFiles == null || activeFiles.isEmpty()) {
                     MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "task_files_required");
                     return;
@@ -222,7 +244,7 @@ public class WorkflowBlockBean implements Serializable {
                 signatureTask = (SignatureTask) task;
                 try {
                     long step1 = System.currentTimeMillis();
-                    getDocumentService().prepareDocumentSigning(document);
+                    getDocumentService().prepareDocumentSigning(docRef);
                     long step2 = System.currentTimeMillis();
                     fileBlockBean.restore();
                     showModal();
@@ -272,6 +294,10 @@ public class WorkflowBlockBean implements Serializable {
             if ((outcomeIndex == 1 || outcomeIndex == 2) && StringUtils.isBlank(task.getComment())) {
                 return "task_validation_reviewTask_comment";
             }
+        } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
+            if (outcomeIndex == 1 && StringUtils.isBlank(task.getComment())) {
+                return "task_validation_externalReviewTask_comment";
+            }            
         } else if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(taskType)) {
             if (StringUtils.isBlank(task.getComment())) {
                 return "task_validation_assignmentTask_comment";
@@ -331,7 +357,7 @@ public class WorkflowBlockBean implements Serializable {
         String certId = requestParameterMap.get("certId");
         try {
             long step0 = System.currentTimeMillis();
-            SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(document, certHex);
+            SignatureDigest signatureDigest = getDocumentService().prepareDocumentDigest(docRef, certHex);
             long step1 = System.currentTimeMillis();
             showModal(signatureDigest.getDigestHex(), certId);
             signatureTask.setSignatureDigest(signatureDigest);
@@ -372,7 +398,7 @@ public class WorkflowBlockBean implements Serializable {
             SignatureBlockBean.addSignatureError(e);
         } catch (FileExistsException e) {
             if (log.isDebugEnabled()) {
-                log.debug("Failed to create ddoc, file with same name already exists, parentRef = " + document, e);
+                log.debug("Failed to create ddoc, file with same name already exists, parentRef = " + docRef, e);
             }
             Utils.addErrorMessage(MessageUtil.getMessage("ddoc_file_exists"));
         } finally {
@@ -400,8 +426,19 @@ public class WorkflowBlockBean implements Serializable {
         }
         return selectItems;
     }
-    
-    private void constructTaskPanelGroup() {
+
+    public List<SelectItem> getExternalReviewTaskOutcomes(FacesContext context, UIInput selectComponent) {
+        int outcomes = getWorkflowService().getWorkflowTypes().get(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW).getTaskOutcomes();
+        List<SelectItem> selectItems = new ArrayList<SelectItem>(outcomes);
+
+        for (int i = 0; i < outcomes; i++) {
+            String label = MessageUtil.getMessage("task_outcome_externalReviewTask" + i);
+            selectItems.add(new SelectItem(i, label));
+        }
+        return selectItems;
+    }
+
+    public void constructTaskPanelGroup() {
         constructTaskPanelGroup(getDataTableGroupInner());
     }
 
@@ -449,7 +486,8 @@ public class WorkflowBlockBean implements Serializable {
 
             // save button used only for some task types
             if (WorkflowSpecificModel.Types.OPINION_TASK.equals(taskType) ||
-                    WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)) {
+                    WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType) ||
+                    WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
 
                 // the save button
                 HtmlCommandButton saveButton = new HtmlCommandButton();
@@ -473,8 +511,9 @@ public class WorkflowBlockBean implements Serializable {
                 outcomeButton.getAttributes().put(ATTRIB_OUTCOME_INDEX, outcomeIndex);
                 panelGrid.getChildren().add(outcomeButton);
 
-                // the review task has only 1 button and the outcomes come from TEMP_OUTCOME property
-                if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)) {
+                // the review and external review task has only 1 button and the outcomes come from TEMP_OUTCOME property
+                if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)
+                        || WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
                     // node.getProperties().put(WorkflowSpecificModel.Props.TEMP_OUTCOME.toString(), 0);
                     outcomeButton.setValue(MessageUtil.getMessage(label));
                     break;
@@ -483,18 +522,18 @@ public class WorkflowBlockBean implements Serializable {
 
             // delegate button for assignment task only
             if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(taskType)) {
+                int delegatableTaskIndex = delegationBean.initDelegatableTask(myTask);
+                putAttribute(sheet, DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, delegatableTaskIndex);
                 // the delegate button
                 HtmlCommandButton delegateButton = new HtmlCommandButton();
                 delegateButton.setId("delegate-id-" + node.getId());
-                delegateButton.setAction(app.createMethodBinding("#{" + BEAN_NAME + ".showCompoundWorkflowDialog}", new Class[] {}));
-                delegateButton.setActionListener(app.createMethodBinding("#{CompoundWorkflowDialog.setupWorkflow}", new Class[] { ActionEvent.class }));
-                delegateButton.setValue(MessageUtil.getMessage("task_delegate_" + taskType.getLocalName()));
+                delegateButton.setActionListener(app.createMethodBinding("#{" + DelegationBean.BEAN_NAME + ".delegate}", new Class[] { ActionEvent.class }));
+                delegateButton.setValue(MessageUtil.getMessage("task_delegate_assignmentTask"));
 
-                UIParameter param = (UIParameter) app.createComponent(ComponentConstants.JAVAX_FACES_PARAMETER);
-                param.setId("delegate-param-" + node.getId());
-                param.setName(PARAM_NODEREF);
-                param.setValue(myTask.getParent().getParent().getNode().getNodeRef().toString());
-                delegateButton.getChildren().add(param);
+                addChildren(delegateButton,
+                        createUIParam(PARAM_NODEREF, myTask.getParent().getParent().getNode().getNodeRef().toString(), app)
+                        , createUIParam(DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, delegatableTaskIndex, app)
+                );
 
                 panelGrid.getChildren().add(delegateButton);
             }
@@ -502,12 +541,6 @@ public class WorkflowBlockBean implements Serializable {
             panel.getChildren().add(panelGrid);
             panelGroup.getChildren().add(panel);
         }
-    }
-    
-    public void showCompoundWorkflowDialog() {
-        FacesContext fc = FacesContext.getCurrentInstance();
-        NavigationHandler navigationHandler = fc.getApplication().getNavigationHandler();
-        navigationHandler.handleNavigation(fc, null, "dialog:compoundWorkflowDialog");
     }
 
     private HtmlCommandLink generateLinkWithParam(Application app, String linkId, String methodBinding, String paramName) {
@@ -565,10 +598,27 @@ public class WorkflowBlockBean implements Serializable {
     }
 
     private boolean checkRights(Workflow workflow) {
-        return getUserService().isDocumentManager()
-                || getDocumentService().isDocumentOwner(document, AuthenticationUtil.getRunAsUser())
-                || getWorkflowService().isOwner(workflow.getParent())
-                || getWorkflowService().isOwnerOfInProgressAssignmentTask(workflow.getParent());
+        boolean localRights = getUserService().isDocumentManager()
+        || getDocumentService().isDocumentOwner(docRef, AuthenticationUtil.getRunAsUser())
+        || getWorkflowService().isOwner(workflow.getParent())
+        || getWorkflowService().isOwnerOfInProgressAssignmentTask(workflow.getParent());
+        boolean externalReviewRights = !workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)
+        || !Boolean.TRUE.equals(document.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE))
+        || !hasCurrentInstitutionTask(workflow);
+        return localRights && externalReviewRights;
+    }
+
+    private boolean hasCurrentInstitutionTask(Workflow wrkflw) {
+        for (Workflow workflow : wrkflw.getParent().getWorkflows()) {
+            if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
+                for (Task task : workflow.getTasks()) {
+                    if (task.getInstitutionCode().equals(getDvkService().getInstitutionCode())) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 
     public void setWorkflowSummaryItems(List<WorkflowSummaryItem> workflowSummaryItems) {
@@ -593,27 +643,32 @@ public class WorkflowBlockBean implements Serializable {
         this.metadataBlockBean = metadataBlockBean;
     }
 
-    //NB! Don't call this method from java code; this is meant ONLY for workflow-block.jsp binding    
+    public void setDelegationBean(DelegationBean delegationBean) {
+        this.delegationBean = delegationBean;
+    }
+
+
+    //NB! Don't call this method from java code; this is meant ONLY for workflow-block.jsp binding
     public HtmlPanelGroup getDataTableGroup() {
         if (dataTableGroup == null) {
             dataTableGroup = new HtmlPanelGroup();
         }
-        taskPanelControlDocument = this.document;        
+        taskPanelControlDocument = docRef;
         return dataTableGroup;
     }
-    
-    public HtmlPanelGroup getDataTableGroupInner() {
+
+    private HtmlPanelGroup getDataTableGroupInner() {
         // This will be called once in the first RESTORE VIEW phase.
         if (dataTableGroup == null) {
             dataTableGroup = new HtmlPanelGroup();
         }
         return dataTableGroup;
-    }    
+    }
 
     public void setDataTableGroup(HtmlPanelGroup dataTableGroup) {
-        if(taskPanelControlDocument != null && !taskPanelControlDocument.equals(this.document)){        
+        if(taskPanelControlDocument != null && !taskPanelControlDocument.equals(docRef)){
             constructTaskPanelGroup(dataTableGroup);
-            taskPanelControlDocument = this.document;
+            taskPanelControlDocument = docRef;
         }
         this.dataTableGroup = dataTableGroup;
     }
@@ -621,7 +676,7 @@ public class WorkflowBlockBean implements Serializable {
     protected UserService getUserService() {
         if (userService == null) {
             userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(UserService.BEAN_NAME);
+            .getBean(UserService.BEAN_NAME);
         }
         return userService;
     }
@@ -629,7 +684,7 @@ public class WorkflowBlockBean implements Serializable {
     protected DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentService.BEAN_NAME);
+            .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
     }
@@ -645,7 +700,7 @@ public class WorkflowBlockBean implements Serializable {
     protected FileService getFileService() {
         if (fileService == null) {
             fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(FileService.BEAN_NAME);
+            .getBean(FileService.BEAN_NAME);
         }
         return fileService;
     }
@@ -658,12 +713,20 @@ public class WorkflowBlockBean implements Serializable {
         return signatureService;
     }
 
+    protected DvkService getDvkService() {
+        if (dvkService == null) {
+            dvkService = (DvkService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
+                    DvkService.BEAN_NAME);
+        }
+        return dvkService;
+    }
+
     // END: getters / setters
 
     private void renderWorkflowPanel(){
         renderWorkflowPanel(getWfPanelGroupInner());
     }
-    
+
     @SuppressWarnings("unchecked")
     private void renderWorkflowPanel(HtmlPanelGroup wfPanel) {
         Application app = FacesContext.getCurrentInstance().getApplication();
@@ -716,8 +779,11 @@ public class WorkflowBlockBean implements Serializable {
         HtmlPanelGroup workflowWrapper = (HtmlPanelGroup) app.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
 
         for (Workflow workflow : compound.getWorkflows()) {
-            if (WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW.equals(workflow.getNode().getType())) {
+            if (WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW.equals(workflow.getNode().getType())
+                    || WorkflowUtil.isGeneratedByDelegation(workflow)) {
                 continue; // Don't display registration workflows
+                // nor workflows that have been temporarily created when assignment task is shown that can potentially be delegated
+                // using those workflows for information,opinion tasks
             }
 
             WorkflowSummaryItem summaryItem = new WorkflowSummaryItem(workflow);
@@ -869,23 +935,23 @@ public class WorkflowBlockBean implements Serializable {
         if (wfPanelGroup == null) {
             wfPanelGroup = new HtmlPanelGroup();
         }
-        workflowPanelControlDocument = this.document;
+        workflowPanelControlDocument = docRef;
         return wfPanelGroup;
     }
-    
+
     public HtmlPanelGroup getWfPanelGroupInner() {
         if (wfPanelGroup == null) {
             wfPanelGroup = new HtmlPanelGroup();
         }
         return wfPanelGroup;
-    }    
-    
-    //always force refresh; jsf is not refreshed correctly 
-    //(getWfPanelGroup is not called because of binding attribute used in workflow-summary-block.jsp)    
+    }
+
+    //always force refresh; jsf is not refreshed correctly
+    //(getWfPanelGroup is not called because of binding attribute used in workflow-summary-block.jsp)
     public void setWfPanelGroup(HtmlPanelGroup wfPanelGroup) {
-        if(workflowPanelControlDocument != null && !workflowPanelControlDocument.equals(this.document)){
+        if(workflowPanelControlDocument != null && !workflowPanelControlDocument.equals(docRef)){
             renderWorkflowPanel(wfPanelGroup);
-            workflowPanelControlDocument = this.document;
+            workflowPanelControlDocument = docRef;
         }
         this.wfPanelGroup = wfPanelGroup;
     }

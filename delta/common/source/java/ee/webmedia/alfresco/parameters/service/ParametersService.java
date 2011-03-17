@@ -45,7 +45,7 @@ public interface ParametersService {
     /**
      * @param parameters - parameters to be updated to the repository
      */
-    void updateParameters(Collection<Parameter<?>> parameters);
+    void updateParameters(Collection<Parameter<? extends Serializable>> parameters);
 
     void setParameterNextFireTime(Parameter<? extends Serializable> parameter);
 

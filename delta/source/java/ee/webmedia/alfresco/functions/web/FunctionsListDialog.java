@@ -221,7 +221,7 @@ public class FunctionsListDialog extends BaseDialogBean {
             throw new RuntimeException(e);
         }
     }
-
+/*
     public void startPostipoissDocumentsFix(javax.faces.event.ActionEvent ev) {
         PostipoissDocumentsImporter importer = (PostipoissDocumentsImporter) 
             FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
@@ -236,7 +236,7 @@ public class FunctionsListDialog extends BaseDialogBean {
             throw new RuntimeException(e);
         }
     }
-
+*/
     // START: private methods
     protected void loadFunctions() {
         functions = getFunctionsService().getAllFunctions();

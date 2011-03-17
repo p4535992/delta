@@ -17,9 +17,9 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 public class Workflow extends BaseWorkflowObject implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private CompoundWorkflow parent;
-    private List<Task> tasks = new ArrayList<Task>();
-    private List<Task> removedTasks = new ArrayList<Task>();
+    private final CompoundWorkflow parent;
+    private final List<Task> tasks = new ArrayList<Task>();
+    private final List<Task> removedTasks = new ArrayList<Task>();
     protected WmNode newTaskTemplate;
     protected Class<? extends Task> newTaskClass;
     protected int newTaskOutcomes;
@@ -125,7 +125,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     public boolean isStopOnFinish() {
         Boolean stopOnFinish = getProp(WorkflowCommonModel.Props.STOP_ON_FINISH);
-        return stopOnFinish;
+        return stopOnFinish != null && stopOnFinish;
     }
 
     public void setStopOnFinish(boolean stopOnFinish) {
@@ -135,7 +135,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
     @Override
     protected String additionalToString() {
         return "\n  parent=" + WmNode.toString(getParent()) + "\n  tasks=" + WmNode.toString(getTasks()) + "\n  removedTasks="
-                + WmNode.toString(getRemovedTasks());
+        + WmNode.toString(getRemovedTasks());
     }
 
     @Override

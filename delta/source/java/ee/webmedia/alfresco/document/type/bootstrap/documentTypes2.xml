@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:doctype="http://alfresco.webmedia.ee/model/documenttype/1.0">
+         
+            <doctype:documentType view:childName="docsub:incomingLetterMv">
+               <view:properties>
+                  <doctype:name>Sissetulev kiri</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType> 
+            
+            <doctype:documentType view:childName="docsub:outgoingLetterMv">
+               <view:properties>
+                  <doctype:name>Väljaminev kiri</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType>                     
+         
+            <doctype:documentType view:childName="docsub:errandOrderAbroadMv">
+               <view:properties>
+                  <doctype:name>Välislähetuse taotlus</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType> 
+            
+            <doctype:documentType view:childName="docsub:vacationApplication">
+               <view:properties>
+                  <doctype:name>Puhkuse avaldus</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType> 
+            
+            <doctype:documentType view:childName="docsub:internalApplicationMv">
+               <view:properties>
+                  <doctype:name>Muu majasisene taotlus</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType>  
+            
+            <doctype:documentType view:childName="docsub:orderMv">
+               <view:properties>
+                  <doctype:name>Korraldus</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType> 
+            
+            <doctype:documentType view:childName="docsub:instrumentOfDeliveryAndReceiptMv">
+               <view:properties>
+                  <doctype:name>Akt</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType> 
+            
+            <doctype:documentType view:childName="docsub:reportMv">
+               <view:properties>
+                  <doctype:name>Aruanne</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType>  
+            
+            <doctype:documentType view:childName="docsub:invoice">
+               <view:properties>
+                  <doctype:name>Arve</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType> 
+            
+            <doctype:documentType view:childName="docsub:personalVehicleUsageCompensationMv">
+               <view:properties>
+                  <doctype:name>Isikliku sõiduauto kasutamise hüvitamise taotlus</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType>   
+            
+           <doctype:documentType view:childName="docsub:resolutionMv">
+               <view:properties>
+                  <doctype:name>Otsus</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType> 
+            
+           <doctype:documentType view:childName="docsub:projectApplication">
+               <view:properties>
+                  <doctype:name>Projekti taotlus</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType>            
+            
+            <doctype:documentType view:childName="docsub:contractMv">
+               <view:properties>
+                  <doctype:name>Leping</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>                  
+               </view:properties>
+            </doctype:documentType>            
+
+            <doctype:documentType view:childName="docsub:minutesMv">
+               <view:properties>
+                  <doctype:name>Protokoll</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType>
+            
+            <doctype:documentType view:childName="docsub:otherDocumentMv">
+               <view:properties>
+                  <doctype:name>Muu dokument</doctype:name>
+                  <doctype:used>true</doctype:used>
+                  <doctype:publicAdr>false</doctype:publicAdr>
+                  <doctype:comment>MV</doctype:comment>
+               </view:properties>
+            </doctype:documentType>                
+         
+</view:view>         

@@ -33,6 +33,7 @@ public interface DocumentCommonModel {
         QName OWNER = QName.createQName(URI, "owner");
         QName ACCESS_RIGHTS = QName.createQName(URI, "accessRights");
         QName SIGNER = QName.createQName(URI, "signer");
+        QName SIGNER_NAME = QName.createQName(URI, "signerName");
         QName RECIPIENT = QName.createQName(URI, "recipient");
         QName ADDITIONAL_RECIPIENT = QName.createQName(URI, "additionalRecipient");
         QName FAVORITE_CONTAINER = QName.createQName(URI, "favoriteContainer");
@@ -63,6 +64,7 @@ public interface DocumentCommonModel {
         QName SEARCHABLE_ERRAND_COUNTRY = QName.createQName(URI, "searchableErrandCountry");
         QName SEARCHABLE_ERRAND_COUNTY = QName.createQName(URI, "searchableErrandCounty");
         QName SEARCHABLE_ERRAND_CITY = QName.createQName(URI, "searchableErrandCity");
+        QName SEARCHABLE_PARTY_NAME = QName.createQName(URI, "searchablePartyName");
 
         QName DOC_NAME = QName.createQName(URI, "docName");
         QName DOC_STATUS = QName.createQName(URI, "docStatus");

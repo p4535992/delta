@@ -12,7 +12,6 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
@@ -36,7 +35,6 @@ public class SearchableSendModeUpdater extends AbstractNodeUpdater {
 
     private BehaviourFilter behaviourFilter;
     private SearchService searchService;
-    private NodeService nodeService;
     private GeneralService generalService;
     private SendOutService sendOutService;
     private String searchableSendModeUpdateBeginDate;
@@ -89,8 +87,7 @@ public class SearchableSendModeUpdater extends AbstractNodeUpdater {
             }
         }
 
-        return new String[] { nodeRef.toString(),
-                            String.valueOf(sendModeUpdated),
+        return new String[] { String.valueOf(sendModeUpdated),
                             searchableSendMode == null ? "0" : String.valueOf(searchableSendMode.size()),
                             sendInfos == null ? "0" : String.valueOf(sendInfos.size()) };
     }
@@ -105,10 +102,6 @@ public class SearchableSendModeUpdater extends AbstractNodeUpdater {
 
     public void setSendOutService(SendOutService sendOutService) {
         this.sendOutService = sendOutService;
-    }
-
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
     }
 
     public void setGeneralService(GeneralService generalService) {

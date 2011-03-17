@@ -1,0 +1,34 @@
+r17423 | janv | 2009-11-10 18:05:34 +0200 (T, 10 nov   2009) | 1 line
+
+Follow-on for ETHREEOH-3088
+
+Index: alfresco/BRANCHES/V3.2/root/projects/repository/source/java/org/alfresco/repo/node/db/hibernate/HibernateNodeDaoServiceImpl.java
+===================================================================
+--- alfresco/BRANCHES/V3.2/root/projects/repository/source/java/org/alfresco/repo/node/db/hibernate/HibernateNodeDaoServiceImpl.java	(revision 17422)
++++ alfresco/BRANCHES/V3.2/root/projects/repository/source/java/org/alfresco/repo/node/db/hibernate/HibernateNodeDaoServiceImpl.java	(revision 17423)
+@@ -2345,6 +2345,9 @@
+         }
+         if (!processedNodes.add(nodeId))
+         {
++            logger.error(
++                    "Cyclic parent-child relationship detected: \n" +
++                    "   current node: " + nodeId);
+             throw new CyclicChildRelationshipException("Node has been pasted into its own tree.", null);
+         }
+         
+@@ -3672,12 +3675,12 @@
+             if (assocIdStack.contains(assocId))
+             {
+                 // the association was present already
+-                throw new CyclicChildRelationshipException(
++                logger.error(
+                         "Cyclic parent-child relationship detected: \n" +
+                         "   current node: " + currentNodeId + "\n" +
+                         "   current path: " + currentPath + "\n" +
+-                        "   next assoc: " + assocId,
+-                        assocRef);
++                        "   next assoc: " + assocId);
++                throw new CyclicChildRelationshipException("Node has been pasted into its own tree.", assocRef);
+             }
+             
+             // push the assoc stack, recurse and pop

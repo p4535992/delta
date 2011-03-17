@@ -12,11 +12,11 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -41,7 +41,7 @@ public class DeleteFileDialog extends DeleteContentDialog {
 
             String fileName = file != null ? file.getName() : "";
             if (document != null && getDictionaryService().isSubClass(getNodeService().getType(document), DocumentCommonModel.Types.DOCUMENT)) {
-                String displayName = (String) file.getProperties().get(File.DISPLAY_NAME);
+                String displayName = (String) file.getProperties().get(FileModel.Props.DISPLAY_NAME);
                 if (StringUtils.isNotBlank(displayName)) {
                     fileName = displayName;
                 }
@@ -49,7 +49,7 @@ public class DeleteFileDialog extends DeleteContentDialog {
                 getDocumentService().updateSearchableFiles(document);
             }
 
-            if (file != null && (file.getType().equals(DocumentSubtypeModel.Types.OUTGOING_LETTER) || file.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER) || file.getType().equals(ContentModel.TYPE_CONTENT))) {
+            if (file != null && (file.getType().equals(ContentModel.TYPE_CONTENT) || DocumentTypeHelper.isIncomingOrOutgoingLetter(file.getType()))) {
                 ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItems();
             }
             MessageUtil.addInfoMessage("file_delete_success", fileName);
@@ -68,7 +68,7 @@ public class DeleteFileDialog extends DeleteContentDialog {
     protected DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentService.BEAN_NAME);
+            .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
     }

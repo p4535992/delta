@@ -58,10 +58,10 @@ cas.casServerUrl=https://localhost:8181/cas/
 #external.authentication.defaultAdministratorUserNames=
 
 # URL on AmetnikeRegister webservice
-amr.service.url=http://gfna1-dto.dwl.smit:38081/amr-sim/services/AmrRequest
+amr.service.url=http://gfna1-dto.dwl.smit:38082/amr-services-dwl/services/AmrRequest
 
-# Atribute what defines AMR organisatsion id
-amr.org.id=1
+# ID of current organization inside AMR
+amr.org.id=2
 
 # Enable session serialization filter in development
 #serializingfilter.enabled=false

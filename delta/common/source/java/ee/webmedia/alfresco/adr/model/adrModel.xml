@@ -36,6 +36,13 @@
       <type name="adr:adrDeletedDocument">
          <parent>sys:base</parent>
          <properties>
+            <property name="adr:nodeRef">
+               <type>d:noderef</type>
+<!--
+               Property added in 2.1 and is mandatory for new nodes created in >= 2.1
+               Older nodes created in 1.x don't have this property, this is taken into consideration in code
+-->
+            </property>
             <property name="adr:regNumber">
                <type>d:text</type>
                <mandatory enforced="true">true</mandatory>

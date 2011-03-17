@@ -82,6 +82,9 @@
                <type>d:boolean</type>
                <mandatory>true</mandatory>
             </property>
+            <property name="cl:classificatorDescription">
+               <type>d:text</type>
+            </property>            
          </properties>
       </type>
    </types>

@@ -1,0 +1,491 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tns="http://alfresco/avalikdokumendiregister" xmlns="http://schemas.xmlsoap.org/wsdl/"
+   targetNamespace="http://alfresco/avalikdokumendiregister" name="AvalikDokumendiRegisterService">
+   <types>
+      <xs:schema xmlns:tns="http://alfresco/avalikdokumendiregister" xmlns:swaRef="http://ws-i.org/profiles/basic/1.1/xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema"
+         version="1.0" targetNamespace="http://alfresco/avalikdokumendiregister">
+
+         <xs:import namespace="http://ws-i.org/profiles/basic/1.1/xsd" schemaLocation="http://ws-i.org/profiles/basic/1.1/swaref.xsd" />
+         <xs:element name="koikDokumendidKustutatud" nillable="true" type="tns:koikDokumendidKustutatud" />
+
+         <xs:element name="koikDokumendidKustutatudResponse" nillable="true" type="tns:koikDokumendidKustutatudResponse" />
+
+         <xs:element name="koikDokumendidKustutatudV2" nillable="true" type="tns:koikDokumendidKustutatudV2" />
+
+         <xs:element name="koikDokumendidKustutatudV2Response" nillable="true" type="tns:koikDokumendidKustutatudV2Response" />
+
+         <xs:element name="koikDokumendidLisatudMuudetud" nillable="true" type="tns:koikDokumendidLisatudMuudetud" />
+
+         <xs:element name="koikDokumendidLisatudMuudetudResponse" nillable="true" type="tns:koikDokumendidLisatudMuudetudResponse" />
+
+         <xs:element name="koikDokumendidLisatudMuudetudV2" nillable="true" type="tns:koikDokumendidLisatudMuudetudV2" />
+
+         <xs:element name="koikDokumendidLisatudMuudetudV2Response" nillable="true" type="tns:koikDokumendidLisatudMuudetudV2Response" />
+
+         <xs:element name="otsiDokumendid" nillable="true" type="tns:otsiDokumendid" />
+
+         <xs:element name="otsiDokumendidResponse" nillable="true" type="tns:otsiDokumendidResponse" />
+
+         <xs:element name="otsiDokumendiliigid" nillable="true" type="tns:otsiDokumendiliigid" />
+
+         <xs:element name="otsiDokumendiliigidResponse" nillable="true" type="tns:otsiDokumendiliigidResponse" />
+
+         <xs:element name="otsiDokumentDetailidega" nillable="true" type="tns:otsiDokumentDetailidega" />
+
+         <xs:element name="otsiDokumentDetailidegaResponse" nillable="true" type="tns:dokumentDetailidegaResponse" />
+
+         <xs:element name="otsiFailSisuga" nillable="true" type="tns:otsiFailSisuga" />
+
+         <xs:element name="otsiFailSisugaResponse" nillable="true" type="tns:otsiFailSisugaResponse" />
+
+         <xs:element name="otsiFailSisugaV2" nillable="true" type="tns:otsiFailSisugaV2" />
+
+         <xs:element name="otsiFailSisugaV2Response" nillable="true" type="tns:otsiFailSisugaV2Response" />
+
+         <xs:complexType name="otsiFailSisuga">
+            <xs:sequence>
+               <xs:element name="viit" type="xs:string" />
+               <xs:element name="registreerimiseAeg" type="xs:dateTime" />
+               <xs:element name="failinimi" type="xs:string" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="otsiFailSisugaResponse">
+            <xs:sequence>
+               <xs:element name="fail" type="tns:fail" minOccurs="0" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="otsiFailSisugaV2">
+            <xs:sequence>
+               <xs:element name="dokumentId" type="xs:string" />
+               <xs:element name="failinimi" type="xs:string" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="otsiFailSisugaV2Response">
+            <xs:sequence>
+               <xs:element name="fail" type="tns:failV2" minOccurs="0" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="fail">
+            <xs:sequence>
+               <xs:element name="failinimi" type="xs:string" />
+               <xs:element name="suurus" type="xs:int" />
+               <xs:element name="mimeType" type="xs:string" />
+               <xs:element name="encoding" type="xs:string" />
+               <xs:element name="sisu" type="swaRef:swaRef" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="failV2">
+            <xs:complexContent>
+               <xs:extension base="tns:fail">
+                  <xs:sequence>
+                     <xs:element name="pealkiri" type="xs:string" />
+                     <xs:element name="muutmiseAeg" type="xs:dateTime" />
+                  </xs:sequence>
+               </xs:extension>
+            </xs:complexContent>
+         </xs:complexType>
+
+         <xs:complexType name="koikDokumendidLisatudMuudetudV2">
+            <xs:sequence>
+               <xs:element name="perioodiAlgusKuupaev" type="xs:date" />
+               <xs:element name="perioodiLoppKuupaev" type="xs:date" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="koikDokumendidLisatudMuudetudV2Response">
+            <xs:sequence>
+               <xs:element name="dokumentDetailidega" type="tns:dokumentDetailidegaV2" nillable="true" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="dokumentDetailidega">
+            <xs:complexContent>
+               <xs:extension base="tns:dokument">
+                  <xs:sequence>
+                     <xs:element name="juurdepaasuPiirang" type="xs:string" />
+                     <xs:element name="juurdepaasuPiiranguAlus" type="xs:string" minOccurs="0" />
+                     <xs:element name="juurdepaasuPiiranguKehtivuseAlgusKuupaev" type="xs:date" minOccurs="0" />
+                     <xs:element name="juurdepaasuPiiranguKehtivuseLoppKuupaev" type="xs:date" minOccurs="0" />
+                     <xs:element name="juurdepaasuPiiranguLopp" type="xs:string" minOccurs="0" />
+                     <xs:element name="tahtaeg" type="xs:date" minOccurs="0" />
+                     <xs:element name="vastamiseKuupaev" type="xs:date" minOccurs="0" />
+                     <xs:element name="koostaja" type="xs:string" minOccurs="0" />
+                     <xs:element name="allkirjastaja" type="xs:string" minOccurs="0" />
+                     <xs:element name="fail" type="tns:fail" nillable="true" minOccurs="0" maxOccurs="unbounded" />
+                     <xs:element name="seotudDokument" type="tns:dokument" nillable="true" minOccurs="0" maxOccurs="unbounded" />
+                  </xs:sequence>
+               </xs:extension>
+            </xs:complexContent>
+         </xs:complexType>
+
+         <xs:complexType name="dokumentDetailidegaV2">
+            <xs:complexContent>
+               <xs:extension base="tns:dokumentId">
+                  <xs:sequence>
+                     <xs:element name="viit" type="xs:string" />
+                     <xs:element name="registreerimiseAeg" type="xs:dateTime" />
+                     <xs:element name="funktsioon" type="tns:funktsioon" />
+                     <xs:element name="sari" type="tns:sari" />
+                     <xs:element name="toimik" type="tns:toimik" />
+                     <xs:element name="dokumendiLiik" type="tns:dokumendiliikV2" />
+                     <xs:element name="saatja" type="xs:string" minOccurs="0" />
+                     <xs:element name="saaja" type="xs:string" minOccurs="0" />
+                     <xs:element name="pealkiri" type="xs:string" minOccurs="0" />
+                     <xs:element name="juurdepaasuPiirang" type="xs:string" />
+                     <xs:element name="juurdepaasuPiiranguAlus" type="xs:string" minOccurs="0" />
+                     <xs:element name="juurdepaasuPiiranguKehtivuseAlgusKuupaev" type="xs:date" minOccurs="0" />
+                     <xs:element name="juurdepaasuPiiranguKehtivuseLoppKuupaev" type="xs:date" minOccurs="0" />
+                     <xs:element name="juurdepaasuPiiranguLopp" type="xs:string" minOccurs="0" />
+                     <xs:element name="tahtaeg" type="xs:date" minOccurs="0" />
+                     <xs:element name="tahtaegKirjeldus" type="xs:string" minOccurs="0" />
+                     <xs:element name="vastamiseKuupaev" type="xs:date" minOccurs="0" />
+                     <xs:element name="koostaja" type="xs:string" minOccurs="0" />
+                     <xs:element name="allkirjastaja" type="xs:string" minOccurs="0" />
+                     <xs:element name="lisad" type="xs:string" minOccurs="0" />
+                     <xs:element name="saatjaViit" type="xs:string" minOccurs="0" />
+                     <xs:element name="saatmisviis" type="xs:string" minOccurs="0" />
+                     <xs:element name="osapool" type="xs:string" minOccurs="0" />
+                     <xs:element name="fail" type="tns:failV2" nillable="true" minOccurs="0" maxOccurs="unbounded" />
+                     <xs:element name="seotudDokument" type="tns:seotudDokument" nillable="true" minOccurs="0" maxOccurs="unbounded" />
+                  </xs:sequence>
+               </xs:extension>
+            </xs:complexContent>
+         </xs:complexType>
+
+         <xs:complexType name="dokument">
+            <xs:sequence>
+               <xs:element name="viit" type="xs:string" />
+               <xs:element name="registreerimiseAeg" type="xs:dateTime" />
+               <xs:element name="dokumendiLiik" type="xs:string" />
+               <xs:element name="saatja" type="xs:string" minOccurs="0" />
+               <xs:element name="saaja" type="xs:string" minOccurs="0" />
+               <xs:element name="pealkiri" type="xs:string" minOccurs="0" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="dokumentId">
+            <xs:sequence>
+               <xs:element name="id" type="xs:string" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="seotudDokument">
+            <xs:complexContent>
+               <xs:extension base="tns:dokumentId">
+                  <xs:sequence>
+                     <xs:element name="seosLiik" type="xs:string" />
+                  </xs:sequence>
+               </xs:extension>
+            </xs:complexContent>
+         </xs:complexType>
+
+         <xs:complexType name="otsiDokumendid">
+            <xs:sequence>
+               <xs:element name="perioodiAlgusKuupaev" type="xs:date" minOccurs="0" />
+               <xs:element name="perioodiLoppKuupaev" type="xs:date" minOccurs="0" />
+               <xs:element name="dokumendiLiik" type="xs:string" minOccurs="0" />
+               <xs:element name="otsingusona" type="xs:string" minOccurs="0" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="otsiDokumendidResponse">
+            <xs:sequence>
+               <xs:element name="dokument" type="tns:dokument" nillable="true" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="otsiDokumendiliigid">
+            <xs:all />
+         </xs:complexType>
+
+         <xs:complexType name="otsiDokumendiliigidResponse">
+            <xs:sequence>
+               <xs:element name="dokumendiliik" type="tns:dokumendiliik" nillable="true" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="dokumendiliik">
+            <xs:sequence>
+               <xs:element name="nimi" type="xs:string" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="dokumendiliikV2">
+            <xs:complexContent>
+               <xs:extension base="tns:dokumendiliik">
+                  <xs:sequence>
+                     <xs:element name="id" type="xs:string" />
+                  </xs:sequence>
+               </xs:extension>
+            </xs:complexContent>
+         </xs:complexType>
+
+         <xs:complexType name="otsiDokumentDetailidega">
+            <xs:sequence>
+               <xs:element name="viit" type="xs:string" />
+               <xs:element name="registreerimiseAeg" type="xs:dateTime" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="dokumentDetailidegaResponse">
+            <xs:sequence>
+               <xs:element name="dokumentDetailidega" type="tns:dokumentDetailidega" minOccurs="0" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="koikDokumendidLisatudMuudetud">
+            <xs:sequence>
+               <xs:element name="perioodiAlgusKuupaev" type="xs:date" />
+               <xs:element name="perioodiLoppKuupaev" type="xs:date" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="koikDokumendidLisatudMuudetudResponse">
+            <xs:sequence>
+               <xs:element name="dokumentDetailidegaFailSisuga" type="tns:dokumentDetailidega" nillable="true" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="koikDokumendidKustutatud">
+            <xs:sequence>
+               <xs:element name="perioodiAlgusKuupaev" type="xs:date" />
+               <xs:element name="perioodiLoppKuupaev" type="xs:date" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="koikDokumendidKustutatudResponse">
+            <xs:sequence>
+               <xs:element name="dokumentKustutatud" type="tns:dokument" nillable="true" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="koikDokumendidKustutatudV2">
+            <xs:sequence>
+               <xs:element name="perioodiAlgusKuupaev" type="xs:date" />
+               <xs:element name="perioodiLoppKuupaev" type="xs:date" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="koikDokumendidKustutatudV2Response">
+            <xs:sequence>
+               <xs:element name="dokumentKustutatud" type="tns:dokumentId" nillable="true" minOccurs="0" maxOccurs="unbounded" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="funktsioon">
+            <xs:sequence>
+               <xs:element name="id" type="xs:string" />
+               <xs:element name="viit" type="xs:string" />
+               <xs:element name="pealkiri" type="xs:string" />
+               <xs:element name="jarjekorraNumber" type="xs:int" minOccurs="0" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="sari">
+            <xs:sequence>
+               <xs:element name="id" type="xs:string" />
+               <xs:element name="viit" type="xs:string" />
+               <xs:element name="pealkiri" type="xs:string" />
+               <xs:element name="jarjekorraNumber" type="xs:int" minOccurs="0" />
+            </xs:sequence>
+         </xs:complexType>
+
+         <xs:complexType name="toimik">
+            <xs:sequence>
+               <xs:element name="id" type="xs:string" />
+               <xs:element name="viit" type="xs:string" />
+               <xs:element name="pealkiri" type="xs:string" />
+               <xs:element name="kehtivAlatesKuupaev" type="xs:date" />
+               <xs:element name="kehtivKuniKuupaev" type="xs:date" minOccurs="0" />
+            </xs:sequence>
+         </xs:complexType>
+
+      </xs:schema>
+   </types>
+   <message name="otsiDokumendid">
+      <part name="parameters" element="tns:otsiDokumendid" />
+   </message>
+   <message name="otsiDokumendidResponse">
+      <part name="parameters" element="tns:otsiDokumendidResponse" />
+   </message>
+   <message name="dokumentDetailidega">
+      <part name="parameters" element="tns:otsiDokumentDetailidega" />
+   </message>
+   <message name="dokumentDetailidegaResponse">
+      <part name="parameters" element="tns:otsiDokumentDetailidegaResponse" />
+   </message>
+   <message name="failSisuga">
+      <part name="parameters" element="tns:otsiFailSisuga" />
+   </message>
+   <message name="failSisugaResponse">
+      <part name="parameters" element="tns:otsiFailSisugaResponse" />
+   </message>
+   <message name="failSisugaV2">
+      <part name="parameters" element="tns:otsiFailSisugaV2" />
+   </message>
+   <message name="failSisugaV2Response">
+      <part name="parameters" element="tns:otsiFailSisugaV2Response" />
+   </message>
+   <message name="dokumendiliigid">
+      <part name="parameters" element="tns:otsiDokumendiliigid" />
+   </message>
+   <message name="dokumendiliigidResponse">
+      <part name="parameters" element="tns:otsiDokumendiliigidResponse" />
+   </message>
+   <message name="koikDokumendidLisatudMuudetud">
+      <part name="parameters" element="tns:koikDokumendidLisatudMuudetud" />
+   </message>
+   <message name="koikDokumendidLisatudMuudetudResponse">
+      <part name="parameters" element="tns:koikDokumendidLisatudMuudetudResponse" />
+   </message>
+   <message name="koikDokumendidLisatudMuudetudV2">
+      <part name="parameters" element="tns:koikDokumendidLisatudMuudetudV2" />
+   </message>
+   <message name="koikDokumendidLisatudMuudetudV2Response">
+      <part name="parameters" element="tns:koikDokumendidLisatudMuudetudV2Response" />
+   </message>
+   <message name="koikDokumendidKustutatud">
+      <part name="parameters" element="tns:koikDokumendidKustutatud" />
+   </message>
+   <message name="koikDokumendidKustutatudResponse">
+      <part name="parameters" element="tns:koikDokumendidKustutatudResponse" />
+   </message>
+   <message name="koikDokumendidKustutatudV2">
+      <part name="parameters" element="tns:koikDokumendidKustutatudV2" />
+   </message>
+   <message name="koikDokumendidKustutatudV2Response">
+      <part name="parameters" element="tns:koikDokumendidKustutatudV2Response" />
+   </message>
+   <portType name="AvalikDokumendiRegister">
+      <operation name="otsiDokumendid">
+         <input message="tns:otsiDokumendid" />
+         <output message="tns:otsiDokumendidResponse" />
+      </operation>
+      <operation name="dokumentDetailidega">
+         <input message="tns:dokumentDetailidega" />
+         <output message="tns:dokumentDetailidegaResponse" />
+      </operation>
+      <operation name="failSisuga">
+         <input message="tns:failSisuga" />
+         <output message="tns:failSisugaResponse" />
+      </operation>
+      <operation name="failSisugaV2">
+         <input message="tns:failSisugaV2" />
+         <output message="tns:failSisugaV2Response" />
+      </operation>
+      <operation name="dokumendiliigid">
+         <input message="tns:dokumendiliigid" />
+         <output message="tns:dokumendiliigidResponse" />
+      </operation>
+      <operation name="koikDokumendidLisatudMuudetud">
+         <input message="tns:koikDokumendidLisatudMuudetud" />
+         <output message="tns:koikDokumendidLisatudMuudetudResponse" />
+      </operation>
+      <operation name="koikDokumendidLisatudMuudetudV2">
+         <input message="tns:koikDokumendidLisatudMuudetudV2" />
+         <output message="tns:koikDokumendidLisatudMuudetudV2Response" />
+      </operation>
+      <operation name="koikDokumendidKustutatud">
+         <input message="tns:koikDokumendidKustutatud" />
+         <output message="tns:koikDokumendidKustutatudResponse" />
+      </operation>
+      <operation name="koikDokumendidKustutatudV2">
+         <input message="tns:koikDokumendidKustutatudV2" />
+         <output message="tns:koikDokumendidKustutatudV2Response" />
+      </operation>
+   </portType>
+   <binding name="AvalikDokumendiRegisterPortBinding" type="tns:AvalikDokumendiRegister">
+      <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document" />
+      <operation name="otsiDokumendid">
+         <soap:operation soapAction="" />
+         <input>
+            <soap:body use="literal" />
+         </input>
+         <output>
+            <soap:body use="literal" />
+         </output>
+      </operation>
+      <operation name="dokumentDetailidega">
+         <soap:operation soapAction="" />
+         <input>
+            <soap:body use="literal" />
+         </input>
+         <output>
+            <soap:body use="literal" />
+         </output>
+      </operation>
+      <operation name="failSisuga">
+         <soap:operation soapAction="" />
+         <input>
+            <soap:body use="literal" />
+         </input>
+         <output>
+            <soap:body use="literal" />
+         </output>
+      </operation>
+      <operation name="failSisugaV2">
+         <soap:operation soapAction="" />
+         <input>
+            <soap:body use="literal" />
+         </input>
+         <output>
+            <soap:body use="literal" />
+         </output>
+      </operation>
+      <operation name="dokumendiliigid">
+         <soap:operation soapAction="" />
+         <input>
+            <soap:body use="literal" />
+         </input>
+         <output>
+            <soap:body use="literal" />
+         </output>
+      </operation>
+      <operation name="koikDokumendidLisatudMuudetud">
+         <soap:operation soapAction="" />
+         <input>
+            <soap:body use="literal" />
+         </input>
+         <output>
+            <soap:body use="literal" />
+         </output>
+      </operation>
+      <operation name="koikDokumendidLisatudMuudetudV2">
+         <soap:operation soapAction="" />
+         <input>
+            <soap:body use="literal" />
+         </input>
+         <output>
+            <soap:body use="literal" />
+         </output>
+      </operation>
+      <operation name="koikDokumendidKustutatud">
+         <soap:operation soapAction="" />
+         <input>
+            <soap:body use="literal" />
+         </input>
+         <output>
+            <soap:body use="literal" />
+         </output>
+      </operation>
+      <operation name="koikDokumendidKustutatudV2">
+         <soap:operation soapAction="" />
+         <input>
+            <soap:body use="literal" />
+         </input>
+         <output>
+            <soap:body use="literal" />
+         </output>
+      </operation>
+   </binding>
+   <service name="AvalikDokumendiRegisterService">
+      <port name="AvalikDokumendiRegisterPort" binding="tns:AvalikDokumendiRegisterPortBinding">
+         <soap:address location="ENDPOINT_ADDRESS" />
+      </port>
+   </service>
+</definitions>
