@@ -20,7 +20,6 @@ import org.xmlpull.v1.XmlPullParserException;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
-import ee.webmedia.alfresco.functions.service.ImporterMissingRefException;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 
@@ -104,7 +103,7 @@ public class DocListImportViewParser extends ViewParser {
     private void setContainingDocsCount(NodeContext node) {
         final QName nodeQName = node.getTypeDefinition().getName();
         if (dictionaryService.isSubClass(nodeQName, DocumentCommonModel.Types.DOCUMENT)) {
-            this.docsCount++;
+            docsCount++;
         } else if (nodeQName.equals(CaseModel.Types.CASE)) {
             docsCountOverCases += docsCount;
             setDocsCount(node, docsCount, CaseModel.Props.CONTAINING_DOCS_COUNT);
@@ -139,7 +138,7 @@ public class DocListImportViewParser extends ViewParser {
             }
         }
         if (node.getNodeRef() == null) {
-            // not jet saved, can just set node property
+            // not yet saved, can just set node property
             properties.put(containingDocsCountQName, docsCount);
         } else {
             // already saved, must set property using nodeservice

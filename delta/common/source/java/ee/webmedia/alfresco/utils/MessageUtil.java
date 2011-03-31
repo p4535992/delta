@@ -72,38 +72,40 @@ public class MessageUtil {
     public static void addInfoMessage(String msgKey, Object... messageValuesForHolders) {
         addStatusMessage(FacesContext.getCurrentInstance(), msgKey, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
     }
+
     public static void addInfoMessage(FacesContext currentInstance, String msgKey, Object... messageValuesForHolders) {
         addStatusMessage(currentInstance, msgKey, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
     }
 
-    public static boolean addStatusMessages(FacesContext facesContext, FeedbackWrapper feedbackWrapper) {
+    public static boolean addStatusMessages(FacesContext facesContext, MessageDataWrapper feedbackWrapper) {
         boolean isErrorAdded = false;
-        for (FeedbackVO feedbackVO : feedbackWrapper) {
-            isErrorAdded |= addStatusMessage(facesContext, feedbackVO);
+        for (MessageData messageData : feedbackWrapper) {
+            isErrorAdded |= addStatusMessage(facesContext, messageData);
         }
         return isErrorAdded;
     }
 
     /**
      * @param facesContext
-     * @param feedbackVO
+     * @param messageData
      * @return true if added message with error or fatal severity
      */
-    private static boolean addStatusMessage(FacesContext facesContext, FeedbackVO feedbackVO) {
-        final MessageSeverity severity = feedbackVO.getSeverity();
-        addStatusMessage(facesContext, severity, feedbackVO.getMessageKey(), feedbackVO.getMessageValuesForHolders());
+    public static boolean addStatusMessage(FacesContext facesContext, MessageData messageData) {
+        final MessageSeverity severity = messageData.getSeverity();
+        addStatusMessage(facesContext, severity, messageData.getMessageKey(), messageData.getMessageValuesForHolders());
         return severity == MessageSeverity.ERROR || severity == MessageSeverity.FATAL;
     }
 
     /**
-     * Add statusMessage to the faces context(to be shown to the user). Message text is retrieved from message bundle based on key <code>e.getMessage()</code>
-     * and possible valuces could be set using <code>e.getMessageValuesForHolders()</code>. Severity of message is determined by <code>e.getSeverity()</code>
+     * Add statusMessage to the faces context(to be shown to the user). Message text is retrieved from message bundle based on key <code>messageData.getMessageKey()</code> and
+     * possible valuces
+     * could be set using <code>messageData.getMessageValuesForHolders()</code>. Severity of message is determined by <code>messageData.getSeverity()</code>
      * 
      * @param facesContext
-     * @param e - exception object used to create message
+     * @param messageData - messageData object used to create message
      */
-    public static void addStatusMessage(FacesContext facesContext, UnableToPerformException e) {
-        addStatusMessage(facesContext, e.getSeverity(), e.getMessageKey(), e.getMessageValuesForHolders());
+    public static void addStatusMessage(MessageData messageData) {
+        addStatusMessage(FacesContext.getCurrentInstance(), messageData);
     }
 
     private static void addStatusMessage(FacesContext facesContext, final MessageSeverity severity, final String message,
@@ -123,8 +125,8 @@ public class MessageUtil {
         Object[] translatedMessageValuesForHolders = new Object[maybeUntransaltedMessageValuesForHolders.length];
         for (int i = 0; i < maybeUntransaltedMessageValuesForHolders.length; i++) {
             Object maybeUntranslated = maybeUntransaltedMessageValuesForHolders[i];
-            if(maybeUntranslated instanceof UnableToPerformException.UntransaltedMessageValueHolder) {
-                final String messageKey = ((UnableToPerformException.UntransaltedMessageValueHolder)maybeUntranslated).getMessageKey();
+            if (maybeUntranslated instanceof UnableToPerformException.UntransaltedMessageValueHolder) {
+                final String messageKey = ((UnableToPerformException.UntransaltedMessageValueHolder) maybeUntranslated).getMessageKey();
                 translatedMessageValuesForHolders[i] = getMessage(messageKey);
             } else {
                 translatedMessageValuesForHolders[i] = maybeUntranslated;

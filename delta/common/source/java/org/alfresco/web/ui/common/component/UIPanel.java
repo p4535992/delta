@@ -87,6 +87,31 @@ public class UIPanel extends UICommand
 
       return titleComponent;
    }
+   
+   /**
+    * Return the UI Component to be displayed in the bottom panel area
+    *
+    * @return UIComponent
+    */
+   public UIComponent getFooterComponent()
+   {
+      UIComponent footerComponent = null;
+      // attempt to find a component with the specified ID
+      String facetsId = getFacetsId();
+      if (facetsId != null)
+      {
+         UIForm parent = Utils.getParentForm(FacesContext.getCurrentInstance(), this);
+         UIComponent facetsComponent = parent.findComponent(facetsId);
+         if (facetsComponent != null)
+         {
+            // get the 'footer' facet from the component
+            footerComponent = facetsComponent.getFacet("footer");
+         }
+      } else {
+          footerComponent = getFacet("footer");
+      }
+      return footerComponent;
+   }
 
    /**
     * @see javax.faces.component.UIComponentBase#encodeBegin(javax.faces.context.FacesContext)
@@ -282,6 +307,15 @@ public class UIPanel extends UICommand
       }
 
       ResponseWriter out = context.getResponseWriter();
+
+      // render the footer component if supplied
+      UIComponent footerComponent = getFooterComponent();
+      if (footerComponent != null)
+      {
+         out.write("<span class='footer-component'>");
+         Utils.encodeRecursive(context, footerComponent);
+         out.write("</span>");
+      }
 
       // output final part of border table
 

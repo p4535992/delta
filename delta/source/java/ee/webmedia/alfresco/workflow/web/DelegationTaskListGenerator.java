@@ -118,7 +118,7 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
                 putAttribute(resoLable, "styleClass", "bold");
                 ValueBinding wfVB = createWorkflowPropValueBinding(dTaskType, delegatableTaskIndex, WorkflowSpecificModel.Props.RESOLUTION, application);
                 UIComponent resolutionInput = createResolutionInput(context, listId, null, wfVB);
-                putAttribute(resolutionInput, "styleClass", "delegationReso");
+                putAttribute(resolutionInput, "styleClass", "delegationReso expand19-200");
                 addChildren(result, resoLable, resolutionInput);
             }
 

@@ -130,6 +130,12 @@
    </managed-bean>
 
    <managed-bean>
+      <managed-bean-name>DelegateButtonGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.workflow.web.DelegateButtonGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
       <managed-bean-name>DelegationTaskListGenerator</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.workflow.web.DelegationTaskListGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>

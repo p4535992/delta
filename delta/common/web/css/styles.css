@@ -868,13 +868,9 @@ hr {
 
 .propertiesLabel + td {
 	line-height: 15px;
-	padding: 3px 10px;
+	padding: 3px 0 3px 10px;
 	/*vertical-align: bottom;*/
 	vertical-align: middle;
-}
-
-.propertiesLabel + td span {
-	float: left;
 }
 
 #container-content select, #container-content textarea {
@@ -1142,6 +1138,10 @@ table.recipient th {
 	width: 100%;
 }
 
+#metadata-panel-panel-border > div > table {
+	table-layout: fixed;
+}
+
 #container-content table.recipient {
 	width: auto;
 }
@@ -1154,6 +1154,20 @@ table.recipient th {
 
 .subPropertySheetTR > td {
 	padding-top: 15px;
+}
+
+.subPropSheet input[type="text"],
+.subPropSheet .propertiesLabel + td > span {
+	vertical-align: top;
+}
+
+.footer-component {
+	display: block;
+    margin: 5px 0 5px 180px;
+}
+
+.subPropertySheetTR.borderless > td {
+	padding-top: 0px;
 }
 
 #container-content td td input[type="text"] {
@@ -1258,8 +1272,8 @@ table.expand19-200 {
 
 .delegationWrapper {
 	border-bottom: 1px dotted gray;
-	width: 100%;
 	padding-bottom: 8px;
+	display: block;
 }
 
 table.recipient td {

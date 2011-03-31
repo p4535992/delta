@@ -178,7 +178,7 @@ public class CSVExporter {
     @SuppressWarnings("unchecked")
     protected static class BundleMap implements Map {
         private ResourceBundle _bundle;
-        private List _values;
+        private List<String> _values;
 
         public BundleMap(ResourceBundle bundle) {
             _bundle = bundle;
@@ -204,11 +204,11 @@ public class CSVExporter {
             }
         }
 
-        public Collection values() {
+        public Collection<String> values() {
             if (_values == null) {
-                _values = new ArrayList();
-                for (Enumeration enumer = _bundle.getKeys(); enumer.hasMoreElements();) {
-                    String v = _bundle.getString((String) enumer.nextElement());
+                _values = new ArrayList<String>();
+                for (Enumeration<String> enumer = _bundle.getKeys(); enumer.hasMoreElements();) {
+                    String v = _bundle.getString(enumer.nextElement());
                     _values.add(v);
                 }
             }
@@ -223,8 +223,8 @@ public class CSVExporter {
             return values().contains(value);
         }
 
-        public Set entrySet() {
-            Set set = new HashSet();
+        public Set<Entry> entrySet() {
+            Set<Entry> set = new HashSet<Entry>();
             for (Enumeration enumer = _bundle.getKeys(); enumer.hasMoreElements();) {
                 final String k = (String) enumer.nextElement();
                 set.add(new Map.Entry() {

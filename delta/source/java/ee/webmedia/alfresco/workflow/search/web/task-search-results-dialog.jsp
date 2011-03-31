@@ -10,7 +10,7 @@
    <a:panel id="task-panel-search-results" styleClass="overflow-wrapper">   
 
    <a:richList id="taskList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      value="#{TaskSearchResultsDialog.tasks}" var="r" initialSortColumn="ownerName">
+      value="#{TaskSearchResultsDialog.tasks}" var="r" >
 
       <a:column id="col1" primary="true" styleClass="#{r.cssStyleClass}" >
          <f:facet name="header">

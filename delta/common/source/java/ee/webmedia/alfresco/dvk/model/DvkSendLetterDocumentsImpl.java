@@ -43,8 +43,7 @@ public class DvkSendLetterDocumentsImpl extends AbstractLetterDocument implement
         } catch (AssertionFailedError e) {
             log.debug("Object that was validated: '" + ToStringBuilder.reflectionToString(this, ToStringStyle.MULTI_LINE_STYLE) + "'");
             final UnableToPerformException unableToPerformException = new UnableToPerformException(MessageSeverity.ERROR, "dvk_send_error_missingData", e);
-            final UnableToPerformException.UntransaltedMessageValueHolder untransalted = new UnableToPerformException.UntransaltedMessageValueHolder(e
-                    .getMessage());
+            final UnableToPerformException.UntransaltedMessageValueHolder untransalted = new UnableToPerformException.UntransaltedMessageValueHolder(e.getMessage());
             unableToPerformException.setMessageValuesForHolders(untransalted);
             throw unableToPerformException;
         }

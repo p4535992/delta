@@ -20,8 +20,6 @@ public interface WorkflowCommonModel {
         QName COMPOUND_WORKFLOW = QName.createQName(URI, "compoundWorkflow");
         QName WORKFLOW = QName.createQName(URI, "workflow");
         QName TASK = QName.createQName(URI, "task");
-
-        QName DELEGATION_HISTORY = QName.createQName(URI, "delegationHistory");
     }
 
     interface Assocs {
@@ -29,7 +27,6 @@ public interface WorkflowCommonModel {
         QName COMPOUND_WORKFLOW = QName.createQName(URI, "compoundWorkflow");
         QName WORKFLOW = QName.createQName(URI, "workflow");
         QName TASK = QName.createQName(URI, "task");
-        QName DELEGATION_HISTORY = QName.createQName(URI, "delegationHistory");
     }
 
     interface Props {
@@ -47,6 +44,8 @@ public interface WorkflowCommonModel {
         // Compound workflow definition
         QName NAME = QName.createQName(URI, "name");
         QName DOCUMENT_TYPES = QName.createQName(URI, "documentTypes");
+        /** userId whom this compoundWorkflowDefinition is visible (if null, then visible for all users) */
+        QName USER_ID = QName.createQName(URI, "userId");
 
         // Workflow
         QName PARALLEL_TASKS = QName.createQName(URI, "parallelTasks");
@@ -59,11 +58,6 @@ public interface WorkflowCommonModel {
         QName OWNER_ORGANIZATION_NAME = QName.createQName(URI, "ownerOrganizationName");
         QName OWNER_JOB_TITLE = QName.createQName(URI, "ownerJobTitle");
 
-        QName DELEG_HIST_CREATOR_NAME = QName.createQName(URI, "delegHistCreatorName");
-        QName DELEG_HIST_OWNER_NAME = QName.createQName(URI, "delegHistOwnerName");
-        QName DELEG_HIST_RESOLUTION = QName.createQName(URI, "delegHistResolution");
-        QName DELEG_HIST_CO_ASSIGNMENT_TASKS = QName.createQName(URI, "delegHistCoAssignmentTasks");
-        QName DELEG_HIST_DUE_DATE = QName.createQName(URI, "delegHistDueDate");
     }
 
 }

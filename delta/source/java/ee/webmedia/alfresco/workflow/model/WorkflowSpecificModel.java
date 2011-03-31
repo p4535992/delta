@@ -9,6 +9,10 @@ public interface WorkflowSpecificModel {
     String URI = "http://alfresco.webmedia.ee/model/workflow/specific/1.0";
     String PREFIX = "wfs:";
 
+    /** Workflows that can be started in parallel when they are consecutively in the compoundWorkflow (workflow status can be {@link Status#IN_PROGRESS}) */
+    public QName[] canStartParallel = new QName[] { WorkflowSpecificModel.Types.OPINION_WORKFLOW
+            , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW };
+
     interface Types {
         /** Täitmiseks */
         QName ASSIGNMENT_WORKFLOW = QName.createQName(URI, "assignmentWorkflow");

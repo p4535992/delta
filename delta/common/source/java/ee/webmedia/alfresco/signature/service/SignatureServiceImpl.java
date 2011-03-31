@@ -1,8 +1,8 @@
 package ee.webmedia.alfresco.signature.service;
 
 import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -45,12 +45,15 @@ import ee.sk.digidoc.SignedProperties;
 import ee.sk.digidoc.factory.SAXDigiDocFactory;
 import ee.sk.utils.ConfigManager;
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
+import ee.webmedia.alfresco.utils.FilenameUtil;
+import ee.webmedia.alfresco.utils.ISOLatin1Util;
 import ee.webmedia.alfresco.utils.Timer;
 
 public class SignatureServiceImpl implements SignatureService, InitializingBean {
@@ -518,7 +521,13 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
 
     protected String getFileName(NodeRef nodeRef) {
-        return fileFolderService.getFileInfo(nodeRef).getName();
+        FileInfo fileInfo = fileFolderService.getFileInfo(nodeRef);
+        String displayName = (String) fileInfo.getProperties().get(FileModel.Props.DISPLAY_NAME);
+        if (org.apache.commons.lang.StringUtils.isBlank(displayName)) {
+            return fileInfo.getName();
+        }
+        
+        return FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(displayName));
     }
 
     public void setTest(boolean test) {

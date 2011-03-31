@@ -401,7 +401,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String getUniqueFileDisplayName(NodeRef folder, String displayName) {
-        String baseName = FilenameUtils.getBaseName(displayName);
+        String baseName = displayName.substring(0, FilenameUtils.indexOfExtension(displayName));
         String extension = FilenameUtils.getExtension(displayName);
         if (StringUtils.isBlank(extension)) {
             extension = MimetypeMap.EXTENSION_BINARY;

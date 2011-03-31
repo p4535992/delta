@@ -26,7 +26,9 @@ package ee.webmedia.alfresco.webdav;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.util.Enumeration;
 
 import javax.servlet.http.HttpServletResponse;
 
@@ -85,7 +87,7 @@ public class PutMethod extends WebDAVMethod {
     @Override
     protected void executeImpl() throws WebDAVServerException, Exception {
         FileFolderService fileFolderService = getFileFolderService();
-
+        
         // Get the status for the request path
         FileInfo contentNodeInfo = null;
         boolean created = false;
@@ -98,6 +100,32 @@ public class PutMethod extends WebDAVMethod {
         } catch (FileNotFoundException e) {
             // create not allowed
             throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
+        }
+
+        if (m_request.getContentLength() <= 0) {
+            StringBuilder s = new StringBuilder("Client is trying to save zero-length content, ignoring and returning success; request headers:");
+            for (Enumeration<?> e = m_request.getHeaderNames(); e.hasMoreElements(); ) {
+                String headerName = (String) e.nextElement();
+                s.append("\n  ").append(headerName).append(": ").append(m_request.getHeader(headerName));
+            }
+            log.warn(s.toString());
+            // Set the response status, depending if the node existed or not
+            m_response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_OK);
+
+            m_response.setContentType("text/plain");
+            m_response.setCharacterEncoding("UTF-8");
+            PrintWriter writer = m_response.getWriter();
+            try {
+                writer.println("You are trying to save zero-length content, we are ignoring it and returning a successful result.");
+                writer.println("This is probably a weird behaviour of the WebDAV client [described here http://java.net/jira/browse/JERSEY-154]:");
+                writer.print("Some HTTP clients are sending empty bodies in PUTs. e. g. Microsoft's 'WebDAV-Mini-Redirector' does this: It first sends a PUT with Content-Length=0 ");
+                writer.print("and an empty (zero bytes) body, and if that returns 200 OK it sends another PUT with 'correct' concent-length and full body; seems to be somekind of ");
+                writer.println("safety or performance optimization.");
+                writer.flush();
+            } finally {
+                writer.close();
+            }
+            return;
         }
 
         // Update the version if the node is unlocked
@@ -137,7 +165,7 @@ public class PutMethod extends WebDAVMethod {
         // Write the new data to the content node
         writer.putContent(is);
 
-        if (writer.getSize() == 0) {
+        if (writer.getSize() <= 0) {
             throw new RuntimeException("Saving zero-length content is not allowed");
         }
 

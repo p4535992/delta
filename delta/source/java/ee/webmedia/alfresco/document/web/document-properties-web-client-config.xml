@@ -842,7 +842,7 @@
    <config evaluator="node-type" condition="docsub:contractMv" >
       <property-sheet>
          <show-property name="{temp}signer" show-in-edit-mode="false" display-label-id="document_signer" labelStyleClass="secondary" styleClass="medium" />
-         <show-property name="doccom:signerName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setSigner}" dialogTitleId="users_search_title" styleClass="expand19-200" ajaxParentLevel="1" display="inline" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isNotEditable}" />
+         <show-property name="doccom:signerName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setSigner}" dialogTitleId="users_search_title" styleClass="expand19-200 medium" ajaxParentLevel="1" display="inline" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isNotEditable}"/>
       </property-sheet>
    </config>   
    
@@ -919,7 +919,7 @@
 
    <config evaluator="aspect-name" condition="docspec:contractDetailsV2">
       <property-sheet>
-         <subPropertySheet name="partiesSection" assocBrand="children" assocName="docspec:contractParties" actionsGroupId="document_contractMvParty" titleLabelId="document_contractMv_partyBlock_title" />
+         <subPropertySheet name="partiesSection" assocBrand="children" assocName="docspec:contractParties" actionsGroupId="document_contractMvParty" borderless="true" />
       </property-sheet>
    </config>
    
@@ -958,18 +958,18 @@
    
    <config evaluator="node-type" condition="docspec:contractPartyType">
       <property-sheet>
-         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" suggestChars="3" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="parent.doccom:docStatus!=töös" display="inline" />
+         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" suggestChars="3" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="parent.doccom:docStatus!=töös" display="inline" styleClass="medium" />
          <show-property name="docspec:partySigner" readOnlyIf="parent.doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
-         <show-property name="docspec:partyEmail" readOnlyIf="parent.doccom:docStatus!=töös" styleClass="expand19-200 medium" display="inline" />
-         <show-property name="docspec:partyContactPerson" readOnlyIf="parent.doccom:docStatus!=töös" styleClass="expand19-200 medium" labelStyleClass="secondary" />         
+         <show-property name="docspec:partyContactPerson" readOnlyIf="parent.doccom:docStatus!=töös" styleClass="expand19-200 medium" labelStyleClass="secondary" display="inline" />
+         <show-property name="docspec:partyEmail" readOnlyIf="parent.doccom:docStatus!=töös" styleClass="expand19-200 medium" labelStyleClass="secondary"/>
       </property-sheet>   
    </config>
    
    <config evaluator="node-type" condition="docspec:contractMvPartyType">
       <property-sheet>
-         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display="inline" />
+         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display="inline" styleClass="medium" />
          <show-property name="docspec:partyContactPerson" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary" />         
-         <show-property name="docspec:partySigner" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:partySigner" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" display="inline" />
          <show-property name="docspec:partyEmail" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary" />
       </property-sheet>   
    </config>
@@ -977,7 +977,7 @@
    <config evaluator="aspect-name" condition="docspec:contractMvDetails">
       <property-sheet>
          <show-property name="docspec:secondPartyContractDate" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="DatePickerGenerator" display="inline"/>
-         <show-property name="docspec:secondPartyContractNumber" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="left99" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:secondPartyContractNumber" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
          <show-property name="docspec:price" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" styleClass="expand19-200 medium" labelStyleClass="wrap" readOnlyIf="#{DocumentDialog.isNotEditable}" />
          <show-property name="docspec:contractMvEndDate" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="DatePickerGenerator" />         
          <show-property name="docspec:finalTermOfDeliveryAndReceipt" readOnlyIf="#{DocumentDialog.isNotWorkingAndFinishedOrNotEditable}" component-generator="DatePickerGenerator" display-label-id="document_contractMv_finalTermOfDeliveryAndReceipt_title"/>

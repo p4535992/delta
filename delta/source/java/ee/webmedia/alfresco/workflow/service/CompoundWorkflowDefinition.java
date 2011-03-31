@@ -39,6 +39,10 @@ public class CompoundWorkflowDefinition extends CompoundWorkflow {
         setPropList(WorkflowCommonModel.Props.DOCUMENT_TYPES, documentTypes);
     }
 
+    public String getUserId() {
+        return getProp(WorkflowCommonModel.Props.USER_ID);
+    }
+
     @Override
     protected String additionalToString() {
         return super.additionalToString() + "\n  name=" + getName() + "\n  documentTypes=" + WmNode.toString(getDocumentTypes());

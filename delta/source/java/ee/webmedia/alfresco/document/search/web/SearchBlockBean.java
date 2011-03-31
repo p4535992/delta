@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.search.web;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +22,8 @@ import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 public class SearchBlockBean implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -39,7 +42,7 @@ public class SearchBlockBean implements Serializable {
     private List<Document> documents;
     private boolean show;
     private boolean foundSimilar;
-    private boolean includeCaseTitles;
+    private boolean expanded;
 
     public void init(Node node) {
         reset();
@@ -51,14 +54,18 @@ public class SearchBlockBean implements Serializable {
         documents = null;
         show = true;
         foundSimilar = false;
-        includeCaseTitles = false;
+        expanded = false;
         documentSearchBean.reset();
     }
 
     /** @param event from JSP */
     public void setup(ActionEvent event) {
-        documents = getDocumentSearchService()
-        .searchDocumentsAndOrCases(searchValue, regDateTimeBegin, regDateTimeEnd, selectedDocumentTypes, isIncludeCases());
+        try {
+            documents = getDocumentSearchService().searchDocumentsAndOrCases(searchValue, regDateTimeBegin, regDateTimeEnd, selectedDocumentTypes);
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
+            documents = Collections.<Document> emptyList();
+        }
     }
 
     public DocAssocInfo addTargetAssoc(NodeRef targetRef, QName assocType) {
@@ -91,7 +98,7 @@ public class SearchBlockBean implements Serializable {
         private final List<Document> documents;
         private final boolean show;
         private final boolean foundSimilar;
-        private final boolean includeCaseTitles;
+        private final boolean expanded;
 
         private Snapshot(SearchBlockBean bean) {
             node = bean.node;
@@ -99,7 +106,7 @@ public class SearchBlockBean implements Serializable {
             documents = bean.documents;
             show = bean.show;
             foundSimilar = bean.foundSimilar;
-            includeCaseTitles = bean.includeCaseTitles;
+            expanded = bean.expanded;
         }
 
         private void restoreState(SearchBlockBean bean) {
@@ -108,7 +115,7 @@ public class SearchBlockBean implements Serializable {
             bean.documents = documents;
             bean.show = show;
             bean.foundSimilar = foundSimilar;
-            bean.includeCaseTitles = includeCaseTitles;
+            bean.expanded = expanded;
         }
     }
 
@@ -124,17 +131,17 @@ public class SearchBlockBean implements Serializable {
     private DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(DocumentService.BEAN_NAME);
+                    .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
     }
 
-    public boolean isIncludeCases() {
-        return includeCaseTitles;
+    public boolean isExpanded() {
+        return expanded;
     }
 
-    public void setIncludeCaseTitles(boolean includeCaseTitles) {
-        this.includeCaseTitles = includeCaseTitles;
+    public void setExpanded(boolean expanded) {
+        this.expanded = expanded;
     }
 
     public void initDocSearch() {

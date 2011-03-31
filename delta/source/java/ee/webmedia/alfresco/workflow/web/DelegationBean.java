@@ -24,7 +24,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
-import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.Pair;
@@ -40,9 +39,10 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
-import ee.webmedia.alfresco.utils.FeedbackWrapper;
+import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -79,9 +79,9 @@ public class DelegationBean implements Serializable {
 
     private transient NodeService nodeService;
     private transient AuthorityService authorityService;
-    private transient PersonService personService;
     private transient OrganizationStructureService organizationStructureService;
     private transient WorkflowService workflowService;
+    private transient UserService userService;
     private WorkflowBlockBean workflowBlockBean;
     private final List<Task> delegatableTasks = new ArrayList<Task>();
 
@@ -128,10 +128,19 @@ public class DelegationBean implements Serializable {
         props.put(WorkflowSpecificModel.Props.DUE_DATE.toString(), null);
     }
 
-    public int initDelegatableTask(Task assignmentTask) {
-        int delegatableTaskIndex = delegatableTasks.indexOf(assignmentTask);
-        if (delegatableTaskIndex >= 0) {
-            return delegatableTaskIndex; // this method is called also after update, but logic shouldn't execute
+    /**
+     * @param assignmentTask
+     * @return pair(delegatableTaskIndex, delegatableTask). delegatableTask == assignmentTask when task with the same noderef hasn't been added yet
+     */
+    public Pair<Integer, Task> initDelegatableTask(Task assignmentTask) {
+        NodeRef delegatableTaskRef = assignmentTask.getNode().getNodeRef();
+        int delegatableTaskIndex = 0;
+        for (Task t : delegatableTasks) {
+            if (delegatableTaskRef.equals(t.getNode().getNodeRef())) {
+                // don't add new delegatable task if this is yet another clone of existing task or this method was called after update.
+                return new Pair<Integer, Task>(delegatableTaskIndex, t);
+            }
+            delegatableTaskIndex++;
         }
         delegatableTasks.add(assignmentTask);
         delegatableTaskIndex = delegatableTasks.size() - 1;
@@ -154,7 +163,7 @@ public class DelegationBean implements Serializable {
             getOrCreateWorkflow(workflow, DelegatableTaskType.OPINION);
         }
         getOrCreateWorkflow(workflow, DelegatableTaskType.INFORMATION);
-        return delegatableTaskIndex;
+        return new Pair<Integer, Task>(delegatableTaskIndex, assignmentTask);
     }
 
     public void reset() {
@@ -243,8 +252,8 @@ public class DelegationBean implements Serializable {
         originalTask.setAction(Action.FINISH);
         FacesContext context = FacesContext.getCurrentInstance();
         try {
-            Pair<FeedbackWrapper, CompoundWorkflow> result = getWorkflowService().delegate(originalTask);
-            FeedbackWrapper feedback = result.getFirst();
+            Pair<MessageDataWrapper, CompoundWorkflow> result = getWorkflowService().delegate(originalTask);
+            MessageDataWrapper feedback = result.getFirst();
             MessageUtil.addStatusMessages(context, feedback);
             if (!feedback.hasErrors()) {
                 workflowBlockBean.restore();
@@ -331,8 +340,7 @@ public class DelegationBean implements Serializable {
         }
 
         /**
-         * Used for value binding in
-         * {@link DelegationTaskListGenerator#createWorkflowPropValueBinding(DelegatableTaskType, int, QName, javax.faces.application.Application)}
+         * Used for value binding in {@link DelegationTaskListGenerator#createWorkflowPropValueBinding(DelegatableTaskType, int, QName, javax.faces.application.Application)}
          */
         private Workflow getWorkflow() {
             return getWorkflowByOriginalTask(delegatableTaskIndex);
@@ -389,8 +397,7 @@ public class DelegationBean implements Serializable {
     }
 
     private void setPersonPropsToTask(Workflow workflow, int taskIndex, String userName) {
-        NodeRef person = getPersonService().getPerson(userName);
-        Map<QName, Serializable> resultProps = getNodeService().getProperties(person);
+        Map<QName, Serializable> resultProps = getUserService().getUserProperties(userName);
         String name = UserUtil.getPersonFullName1(resultProps);
         Serializable id = resultProps.get(ContentModel.PROP_USERNAME);
         Serializable email = resultProps.get(ContentModel.PROP_EMAIL);
@@ -440,13 +447,6 @@ public class DelegationBean implements Serializable {
         return taskIndex;
     }
 
-    private PersonService getPersonService() {
-        if (personService == null) {
-            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
-        }
-        return personService;
-    }
-
     private NodeService getNodeService() {
         if (nodeService == null) {
             nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
@@ -475,6 +475,14 @@ public class DelegationBean implements Serializable {
                     FacesContext.getCurrentInstance()).getBean(WorkflowService.BEAN_NAME);
         }
         return workflowService;
+    }
+
+    private UserService getUserService() {
+        if (userService == null) {
+            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(UserService.BEAN_NAME);
+        }
+        return userService;
     }
 
     public void setWorkflowBlockBean(WorkflowBlockBean workflowBlockBean) {

@@ -1,8 +1,11 @@
 package ee.webmedia.alfresco.classificator.enums;
 
 public enum DocumentStatus {
+    /** töös */
     WORKING("töös"),
+    /** peatatud */
     STOPPED("peatatud"),
+    /** lõpetatud */
     FINISHED("lõpetatud");
     
     private String valueName;

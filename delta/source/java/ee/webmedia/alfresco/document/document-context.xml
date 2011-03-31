@@ -312,8 +312,18 @@ DaoAuthenticationProvider.authenticate()
       <property name="searchService" ref="searchService" />
       <property name="behaviourFilter" ref="policyBehaviourFilter" />
       <property name="searchableSendModeUpdateBeginDate" value="${searchableSendModeUpdate.begin.date}" />
-   </bean>    
-      
+   </bean>
+
+   <bean id="SearchableHasStartedCompoundWorkflowsUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableHasStartedCompoundWorkflowsUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="searchableHasStartedCompoundWorkflowsUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="generalService" ref="generalService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="searchService" ref="searchService" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+   </bean>
+
    <!-- Used to add searchable properties to imported document (CL task 143388) -->
    <!-- Normally should be run only once, execution depends on searchablePropertiesUpdater.enabled value -->
    <bean id="searchablePropertiesUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchablePropertiesUpdater" parent="module.baseComponent" >
@@ -377,6 +387,11 @@ DaoAuthenticationProvider.authenticate()
       <property name="enabled" value="${version21DocumentUpdater.enabled}" />
    </bean>    
 
+   <bean id="documentWorkflowStatusEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener">
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="nodeService" ref="NodeService" />
+   </bean>
+   
    <!-- START: web beans: -->
 
    <bean id="AssocsBlockBean" class="ee.webmedia.alfresco.document.associations.web.AssocsBlockBean" scope="session" />

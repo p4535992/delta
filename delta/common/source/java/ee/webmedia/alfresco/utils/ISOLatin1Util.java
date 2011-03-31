@@ -12,11 +12,13 @@ public class ISOLatin1Util {
         final int maxSizeNeeded = 2 * string.length();
 
         int size = string.length();
-        while (size < maxSizeNeeded)
+        while (size < maxSizeNeeded) {
             size *= 2;
+        }
 
-        if (size != output.length)
+        if (size != output.length) {
             output = new char[size];
+        }
 
         int outputPos = 0;
 
@@ -27,9 +29,9 @@ public class ISOLatin1Util {
 
             // Quick test: if it's not in range then just keep
             // current character
-            if (c < '\u00c0' || c > '\uFB06')
+            if (c < '\u00c0' || c > '\uFB06') {
                 output[outputPos++] = c;
-            else {
+            } else {
                 switch (c) {
                 case '\u00C0': // À
                 case '\u00C1': // Á
@@ -142,6 +144,18 @@ public class ISOLatin1Util {
                 case '\u0153': // œ
                     output[outputPos++] = 'o';
                     output[outputPos++] = 'e';
+                    break;
+                case '\u0160': // Š
+                    output[outputPos++] = 'S';
+                    break;
+                case '\u0161': // š
+                    output[outputPos++] = 's';
+                    break;
+                case '\u017D': // Ž
+                    output[outputPos++] = 'Z';
+                    break;
+                case '\u017E': // ž
+                    output[outputPos++] = 'z';
                     break;
                 case '\u00DF': // ß
                     output[outputPos++] = 's';

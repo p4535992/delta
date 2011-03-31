@@ -22,7 +22,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.model.Document;
-import ee.webmedia.alfresco.document.model.DocumentCreateOrRegistrateDateComparator;
+import ee.webmedia.alfresco.document.model.CreatedOrRegistratedDateComparator;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.model.DocumentSendInfo;
@@ -84,7 +84,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
             dialog = "documentSearchExtendedResultsDialog";
             documents = getDocumentService().processExtendedSearchResults(documents, searchFilter);
         }
-        Collections.sort(documents, DocumentCreateOrRegistrateDateComparator.getComparator());        
+        Collections.sort(documents, CreatedOrRegistratedDateComparator.getComparator());        
         dialogOutcome = dialog;
         super.restored();
     }

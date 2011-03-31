@@ -152,10 +152,6 @@ th {
 	margin-left: 0;
 }
 
-.propertiesLabel {
-	width: auto;
-}
-
 .propertiesLabel + td {
 	width: 100%;
 }
@@ -178,7 +174,15 @@ hr {
 }
 
 .recipient.cells2 input[type="text"] {
-	width: 146px !important; 
+	width: 146px !important;
+}
+
+.subPropertySheetTR.borderless > td {
+	padding-left: 98px;
+}
+
+.footer-component {
+	margin-left: 84px;
 }
 
 /*

@@ -23,9 +23,7 @@ public class UserWorkingDocumentsMenuItemProcessor extends CountAddingMenuItemPr
 
     @Override
     public int getCount(MenuItem menuItem) {
-        return documentSearchService.searchUserWorkingDocumentsCount();
-        // CL_TASK 152338
-        // return documentSearchService.searchInProcessUserDocumentsCount();
+        return documentSearchService.searchInProcessUserDocumentsCount();
     }
 
     // START: getters / setters

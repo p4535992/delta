@@ -39,6 +39,14 @@
       </property>
    </bean>
 
+   <bean id="docSearchResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.document.search.service.document-search-messages</value>
+         </list>
+      </property>
+   </bean>
+
    <bean id="documentSearchService" class="ee.webmedia.alfresco.document.search.service.DocumentSearchServiceImpl">
       <property name="documentService" ref="DocumentService" />
       <property name="generalService" ref="GeneralService" />

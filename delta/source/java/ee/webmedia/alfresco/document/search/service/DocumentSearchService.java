@@ -44,7 +44,7 @@ public interface DocumentSearchService {
      */
     List<Document> searchDocumentsQuick(String searchString);
 
-    List<Document> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<QName> documentTypes, boolean includeCaseTitles);
+    List<Document> searchDocumentsAndOrCases(String searchValue, Date regDateTimeBegin, Date regDateTimeEnd, List<QName> documentTypes);
 
     /**
      * Searches for documents using a search filter.
@@ -78,25 +78,12 @@ public interface DocumentSearchService {
      * 
      * @return list of Document objects
      */
-    // CL_TASK 152338 new version of searchUserWorkingDocuments()
-    // List<Document> searchInProcessUserDocuments();
+    List<Document> searchInProcessUserDocuments();
 
     /**
-     * @see #searchInProcessUserDocuments()
+     * @return count of {@link #searchInProcessUserDocuments()} without fetching documents
      */
-    // CL_TASK 152338 new version of searchUserWorkingDocumentsCount()
-    // int searchInProcessUserDocumentsCount();
-
-    /**
-     * Fetches list of documents where ownerId = logged in userId and docStatus is working
-     * 
-     * @return list of Document objects
-     */
-    // CL_TASK 152338 old version of searchInProcessUserDocuments()
-    List<Document> searchUserWorkingDocuments();
-
-    // CL_TASK 152338 old version of searchInProcessUserDocumentsCount()
-    int searchUserWorkingDocumentsCount();
+    int searchInProcessUserDocumentsCount();
 
     /**
      * Fetches list of documents where date in regDateTime property is current date
@@ -224,7 +211,7 @@ public interface DocumentSearchService {
     /**
      * Searches for groups by name. If {@code input} is empty, all groups are returned if {@code returnAllGroups} is {@code true}, otherwise an empty list is
      * returned.
-     */    
+     */
     List<Authority> searchAuthorityGroups(String groupName, boolean returnAllGroups);
 
 }

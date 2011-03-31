@@ -58,11 +58,13 @@ import org.alfresco.web.config.ActionsConfigElement;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.alfresco.web.config.ActionsConfigElement.ActionGroup;
 import org.alfresco.web.ui.common.ComponentConstants;
+import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 import org.springframework.web.jsf.FacesContextUtils;
@@ -97,6 +99,7 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
     private final static String ATTR_ASSOC_NAME = "assocName";
     private final static String ATTR_ACTIONS_GROUP_ID = "actionsGroupId";
     private final static String ATTR_TITLE_LABEL_ID = "titleLabelId";
+    private final static String BORDERLESS = "borderless";
 
     private Map<String, String> customAttributes;
     private QName assocTypeQName;
@@ -114,7 +117,7 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
     protected String getIncorrectParentMsg() {
         return "The property component must be nested within a property sheet component";
     }
-    
+
     @Override
     protected void generateItem(FacesContext context, UIPropertySheet outerPropSheet) throws IOException {
         parentPropSheetNode = outerPropSheet.getNode();
@@ -158,6 +161,16 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
     }
 
     @Override
+    public void decode(FacesContext context) {
+        super.decode(context);
+
+        String action = (String) context.getExternalContext().getRequestParameterMap().get("dialog:act");
+        if (StringUtils.isNotBlank(action) && action.endsWith(ACTION_ADD_SUFFIX)) {
+            Utils.setRequestValidationDisabled(context);
+        }
+    }
+
+    @Override
     public Map<String, String> getCustomAttributes() {
         if (customAttributes == null) {
             customAttributes = new HashMap<String, String>(0);
@@ -167,7 +180,7 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
 
     @Override
     public void setCustomAttributes(Map<String, String> propertySheetItemAttributes) {
-        this.customAttributes = propertySheetItemAttributes;
+        customAttributes = propertySheetItemAttributes;
     }
 
     @Override
@@ -181,9 +194,13 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
         super.encodeBegin(context);
         ResponseWriter writer = context.getResponseWriter();
         writer.startElement(HTML.TR_ELEM, this);
-        writer.writeAttribute("class", "subPropertySheetTR", null);
+        String styleClass = "subPropertySheetTR";
+        if (Boolean.valueOf(getCustomAttributes().get(BORDERLESS))) {
+            styleClass += " borderless";
+        }
+        writer.writeAttribute(HTML.CLASS_ATTR, styleClass, null);
         writer.startElement(HTML.TD_ELEM, this);
-        writer.writeAttribute("colspan", 3, null);
+        writer.writeAttribute(HTML.COLSPAN_ATTR, 2, null);
     }
 
     @Override
@@ -334,12 +351,15 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
 
         @SuppressWarnings("unchecked")
         final List<UIComponent> namingContainerChildren = uiNamingContainer.getChildren();
+        boolean borderless = Boolean.valueOf(getCustomAttributes().get(BORDERLESS));
 
         UIPanel subPropSheetWrapper = new UIPanel();
         namingContainerChildren.add(subPropSheetWrapper);
         FacesHelper.setupComponentId(context, subPropSheetWrapper, "subPropSheetWrapper");
-        subPropSheetWrapper.setLabel(MessageUtil.getMessage(context, titleLabelId, parentUIPanelLabel //
-                , subPropSheetCounter != null ? subPropSheetCounter + 1 : null));
+        if (!borderless) {
+            subPropSheetWrapper.setLabel(MessageUtil.getMessage(context, titleLabelId, parentUIPanelLabel //
+                    , subPropSheetCounter != null ? subPropSheetCounter + 1 : null));
+        }
 
         final String actionGroupId = getCustomAttributes().get(ATTR_ACTIONS_GROUP_ID);
         @SuppressWarnings("unchecked")
@@ -349,7 +369,8 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
             final UIComponent subPropSheetActionsWrapper = buildActionGroup(context, actionGroupId, subPropSheetNode);
             @SuppressWarnings("unchecked")
             final Map<String, UIComponent> facets = subPropSheetWrapper.getFacets();
-            facets.put("title", subPropSheetActionsWrapper);
+            String facetTitle = borderless ? "footer" : "title";
+            facets.put(facetTitle, subPropSheetActionsWrapper);
         }
 
         if (subPropSheetNode != null) {

@@ -17,8 +17,8 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
-import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
@@ -72,7 +72,7 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
         } else if (event.getType() == WorkflowEventType.STATUS_CHANGED) {
             Boolean isRegisterDocQueue = queue.getParameter(WorkflowQueueParameter.TRIGGERED_BY_DOC_REGISTRATION);
             // If task is changed to IN_PROGRESS
-            if(task.isStatus(Status.IN_PROGRESS)) {
+            if (task.isStatus(Status.IN_PROGRESS)) {
 
                 // Change document owner
                 if (task.getOwnerId() != null) {
@@ -84,17 +84,14 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
             } else if (task.isStatus(Status.FINISHED) && !isDelegated(task) && (isRegisterDocQueue == null || !isRegisterDocQueue)) { // if task status is changed to FINISHED
                 NodeRef docRef = cWorkflow.getParent();
                 Node document = documentService.getDocument(docRef);
-                boolean isIncomingLetter = DocumentSubtypeModel.Types.INCOMING_LETTER.equals(document.getType())
-                || DocumentSubtypeModel.Types.INCOMING_LETTER_MV.equals(document.getType());
+                boolean isIncomingLetter = DocumentTypeHelper.isIncomingLetter(document.getType());
                 if (isIncomingLetter) {
-                    if(nodeService.getProperty(docRef, DocumentSpecificModel.Props.COMPLIENCE_DATE) == null){
+                    if (nodeService.getProperty(docRef, DocumentSpecificModel.Props.COMPLIENCE_DATE) == null) {
                         documentService.setPropertyAsSystemUser(DocumentSpecificModel.Props.COMPLIENCE_DATE, queue.getNow(), docRef);
                     }
                     documentService.setDocStatusFinished(docRef);
                 }
-                if (isIncomingLetter
-                        || DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(document.getType())
-                        || DocumentSubtypeModel.Types.OUTGOING_LETTER_MV.equals(document.getType())) {
+                if (isIncomingLetter || DocumentTypeHelper.isOutgoingLetter(document.getType())) {
                     workflowService.setWorkflowsAndTasksFinished(queue, cWorkflow, Status.UNFINISHED,
                             "task_outcome_unfinished_by_finishing_responsible_task", null, false, getExcludedNodeRefsOnFinishWorkflows(cWorkflow));
                     workflowService.addOtherCompundWorkflows(cWorkflow);
@@ -110,15 +107,14 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                                     "task_outcome_unfinished_by_finishing_responsible_task", null, false, excludedNodeRefs);
                         }
                     }
-                }                
+                }
             }
         }
 
     }
 
     private boolean isDelegated(Task task) {
-        Boolean delegated = (Boolean) task.getNode().getProperties().get(TEMP_DELEGATED);
-        return delegated != null && delegated;
+        return Boolean.TRUE.equals(task.getNode().getProperties().get(TEMP_DELEGATED));
     }
 
     private void setDocumentOwnerFromTask(final Task task) {

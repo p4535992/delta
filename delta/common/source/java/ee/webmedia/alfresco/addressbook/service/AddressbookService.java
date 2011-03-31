@@ -7,7 +7,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
-import ee.webmedia.alfresco.utils.FeedbackWrapper;
+import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
@@ -82,7 +82,7 @@ public interface AddressbookService {
      * @param usersForGroup
      * @return feedback about items that already existed in the group
      */
-    FeedbackWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup);
+    MessageDataWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup);
 
     /**
      * Remove a member from the group by deleting the association from groupNodeRef to memberNodeRef.

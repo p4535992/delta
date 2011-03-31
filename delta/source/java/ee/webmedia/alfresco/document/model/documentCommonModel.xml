@@ -257,6 +257,9 @@
             <property name="doccom:searchableSubNodeProperties">
                <type>d:text</type>
             </property>
+            <property name="doccom:searchableHasStartedCompoundWorkflows">
+               <type>d:boolean</type>
+            </property>
          </properties>
       </aspect>
 

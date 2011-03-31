@@ -45,8 +45,7 @@ public class PropertySheetGridRenderer extends HtmlGridRenderer {
             rowClasses = (String) component.getAttributes().get(JSFAttr.ROW_CLASSES_ATTR);
         }
 
-        String[] columnClassesArray = (columnClasses == null) ? ArrayUtils.EMPTY_STRING_ARRAY : StringUtils.trim(StringUtils.splitShortString(columnClasses,
-        ','));
+        String[] columnClassesArray = (columnClasses == null) ? ArrayUtils.EMPTY_STRING_ARRAY : StringUtils.trim(StringUtils.splitShortString(columnClasses, ','));
         int columnClassesCount = columnClassesArray.length;
 
         String[] rowClassesArray = (rowClasses == null) ? org.apache.myfaces.shared_impl.util.ArrayUtils.EMPTY_STRING_ARRAY : StringUtils.trim(StringUtils
@@ -87,14 +86,14 @@ public class PropertySheetGridRenderer extends HtmlGridRenderer {
                         writer.writeAttribute(HTML.CLASS_ATTR, columnClassesArray[columnIndex] + " " + labelStyleClass, null);
                     } else if (child instanceof UISeparator) {
                         writer.writeAttribute(HTML.CLASS_ATTR, "separator", null);
-                        writer.writeAttribute(HTML.COLSPAN_ATTR, 3, null);
+                        writer.writeAttribute(HTML.COLSPAN_ATTR, 2, null);
                     } else {
                         writer.writeAttribute(HTML.CLASS_ATTR, labelStyleClass, null);
                     }
 
                     columnIndex = childAttributes(context, writer, child, columnIndex);
                     String styleClass = (String) child.getAttributes().get("styleClass");
-                    if(org.apache.commons.lang.StringUtils.isNotBlank(styleClass)) {
+                    if (org.apache.commons.lang.StringUtils.isNotBlank(styleClass)) {
                         styleClass += " inline";
                     } else {
                         styleClass = "inline";

@@ -20,7 +20,7 @@ import org.alfresco.web.ui.common.component.UIGenericPicker;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.FeedbackWrapper;
+import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -47,7 +47,7 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // add each selected user to the current group in turn
         try {
-            final FeedbackWrapper feedback = getAddressbookService().addToGroup(getCurrentNode().getNodeRef(), usersForGroup);
+            final MessageDataWrapper feedback = getAddressbookService().addToGroup(getCurrentNode().getNodeRef(), usersForGroup);
             final boolean isErrorAdded = MessageUtil.addStatusMessages(context, feedback);
             if(!isErrorAdded) {
                 MessageUtil.addInfoMessage("save_success");

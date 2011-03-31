@@ -89,7 +89,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     /**
      * Used by scanned and attachment lists
-     *
+     * 
      * @see javax.faces.validator.Validator#validate(javax.faces.context.FacesContext, javax.faces.component.UIComponent, java.lang.Object)
      */
     @Override
@@ -99,8 +99,8 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
             NodeRef nodeRef = new NodeRef(val);
             NodeRef parentRef = getNodeService().getPrimaryParent(nodeRef).getParentRef();
             boolean hasAspect = getNodeService().hasAspect(parentRef, DocumentCommonModel.Aspects.COMMON);
-            if(parentRef != null && hasAspect) {
-                String msg = MessageUtil.getMessage("file_file_already_added_to_document", getFileService().getFile(nodeRef).getName()); 
+            if (parentRef != null && hasAspect) {
+                String msg = MessageUtil.getMessage("file_file_already_added_to_document", getFileService().getFile(nodeRef).getName());
                 throw new ValidatorException(new FacesMessage(msg));
             }
         }
@@ -180,12 +180,13 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         displayName = ISOLatin1Util.removeAccents(
                           FilenameUtil.replaceAmpersand(
                                   FilenameUtil.stripDotsAndSpaces(
-                                          FilenameUtil.stripForbiddenWindowsCharacters(displayName))));
+                                          FilenameUtil.stripForbiddenWindowsCharacters(
+                                                  FilenameUtil.replaceNonAsciiCharacters(displayName, "_")))));
         String uniqueDisplayName = getFileService().getUniqueFileDisplayName(documentNodeRef, displayName);
         if (!displayName.equals(uniqueDisplayName)) {
             // Take care of "duplicate files"
             throw new FileExistsException(documentNodeRef, displayName);
-        }                        
+        }
         String name = getGeneralService().limitFileNameLength(displayName, 50, null);
         name = getGeneralService().getUniqueFileName(documentNodeRef, name);
         return name;
@@ -275,11 +276,11 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     }
 
     public void setUploadedFilesPanelGroup(HtmlPanelGroup panelGroup) {
-        if (this.uploadedFilesPanelGroup == null) {
-            this.uploadedFilesPanelGroup = panelGroup;
+        if (uploadedFilesPanelGroup == null) {
+            uploadedFilesPanelGroup = panelGroup;
             refreshUploadedFilesPanelGroup();
         } else {
-            this.uploadedFilesPanelGroup = panelGroup;
+            uploadedFilesPanelGroup = panelGroup;
         }
     }
 
@@ -422,14 +423,17 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
         String[] selected = (String[]) ArrayUtils.addAll(attachments, scanned);
 
-        if (selectedFileNodeRef == null)
+        if (selectedFileNodeRef == null) {
             selectedFileNodeRef = new ArrayList<NodeRef>(selected.length);
+        }
 
-        if (selectedFileName == null)
+        if (selectedFileName == null) {
             selectedFileName = new ArrayList<String>(selected.length);
+        }
 
-        if (selectedFileNameWithoutExtension == null)
+        if (selectedFileNameWithoutExtension == null) {
             selectedFileNameWithoutExtension = new ArrayList<String>(selected.length);
+        }
 
         for (String nodeRefStr : selected) {
             NodeRef nodeRef = new NodeRef(nodeRefStr);

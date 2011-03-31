@@ -137,11 +137,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         log.debug("Creating a file from template for document: " + documentNodeRef);
         final Map<QName, Serializable> docProp = nodeService.getProperties(documentNodeRef);
 
-        String name = FilenameUtil.buildFileName((String) docProp.get(DocumentCommonModel.Props.DOC_NAME),
-                mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD));
-
+        String name = ((String) docProp.get(DocumentCommonModel.Props.DOC_NAME)) + "." + mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD);
         String displayName = fileService.getUniqueFileDisplayName(documentNodeRef, name);
-        name = FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(name));
+        name = FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(FilenameUtil.buildFileName(name,
+                mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD))));
+        name = FilenameUtil.replaceNonAsciiCharacters(name, "_");
         name = generalService.limitFileNameLength(name, 50, null);
         name = generalService.getUniqueFileName(documentNodeRef, name);
         String templName = "";
@@ -225,19 +225,19 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     public String getProcessedVolumeDispositionTemplate(List<Volume> volumes, NodeRef template) {
         String templateText = fileFolderService.getReader(template).getContentString();
         StringBuilder sb = new StringBuilder();
-        if(templateText.indexOf("{volumeDispositionDateNotificationData}") > -1) {
+        if (templateText.indexOf("{volumeDispositionDateNotificationData}") > -1) {
             for (Volume vol : volumes) {
                 sb.append(vol.getVolumeMark())
-                .append(" ")
-                .append(vol.getTitle())
-                .append(" (")
-                .append(I18NUtil.getMessage("notification_dispostition_date"))
-                .append(": ")
-                .append(dateFormat.format(vol.getDispositionDate()))
-                .append(")")
-                .append("<br>\n");
+                        .append(" ")
+                        .append(vol.getTitle())
+                        .append(" (")
+                        .append(I18NUtil.getMessage("notification_dispostition_date"))
+                        .append(": ")
+                        .append(dateFormat.format(vol.getDispositionDate()))
+                        .append(")")
+                        .append("<br>\n");
             }
-            if(sb.length() > 0) {
+            if (sb.length() > 0) {
                 templateText = templateText.replaceAll("\\{volumeDispositionDateNotificationData\\}", sb.toString());
             }
         }
@@ -253,22 +253,22 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             for (Document doc : documents) {
                 if (doc.getAccessRestrictionEndDate() != null) {
                     String regNr = "";
-                    if(doc.getRegNumber() != null) {
+                    if (doc.getRegNumber() != null) {
                         regNr = doc.getRegNumber();
                     } else {
                         regNr = I18NUtil.getMessage("notification_document_not_registered", doc.getDocName());
                     }
 
                     sb.append(regNr)
-                    .append(" (")
-                    .append(I18NUtil.getMessage("notification_access_restriction_end"))
-                    .append(": ")
-                    .append(dateFormat.format(doc.getAccessRestrictionEndDate()))
-                    .append(")")
-                    .append("<br>\n");
+                            .append(" (")
+                            .append(I18NUtil.getMessage("notification_access_restriction_end"))
+                            .append(": ")
+                            .append(dateFormat.format(doc.getAccessRestrictionEndDate()))
+                            .append(")")
+                            .append("<br>\n");
                 }
             }
-            if(sb.length() > 0) {
+            if (sb.length() > 0) {
                 templateText = templateText.replaceAll("\\{accessRestrEndDateNotificationData\\}", sb.toString());
             }
         }
@@ -279,15 +279,15 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             for (Document doc : documents) {
                 if (doc.getAccessRestrictionEndDate() == null) {
                     sb.append(doc.getRegNumber())
-                    .append(" (")
-                    .append(I18NUtil.getMessage("notification_access_restriction_end"))
-                    .append(": ")
-                    .append(doc.getAccessRestrictionEndDesc())
-                    .append(")")
-                    .append("<br>\n");
+                            .append(" (")
+                            .append(I18NUtil.getMessage("notification_access_restriction_end"))
+                            .append(": ")
+                            .append(doc.getAccessRestrictionEndDesc())
+                            .append(")")
+                            .append("<br>\n");
                 }
             }
-            if(sb.length() > 0) {
+            if (sb.length() > 0) {
                 templateText = templateText.replaceAll("\\{accessRestrNoEndDateNotificationData\\}", sb.toString());
             }
 
@@ -430,7 +430,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
          */
 
         // Remove formulas with empty values
-        for (Iterator<Entry<String, String>> i = formulas.entrySet().iterator(); i.hasNext(); ) {
+        for (Iterator<Entry<String, String>> i = formulas.entrySet().iterator(); i.hasNext();) {
             Entry<String, String> entry = i.next();
             if (StringUtils.isBlank(entry.getValue())) {
                 i.remove();
@@ -473,12 +473,12 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             Date endDate = i < endDates.size() ? endDates.get(i) : null;
             StringBuilder sb = new StringBuilder();
             sb.append(names.get(i))
-            .append(" ")
-            .append(startDate == null ? "" : dateFormat.format(startDate))
-            .append(" ")
-            .append(until)
-            .append(" ")
-            .append(endDate == null ? "" : dateFormat.format(endDate));
+                    .append(" ")
+                    .append(startDate == null ? "" : dateFormat.format(startDate))
+                    .append(" ")
+                    .append(until)
+                    .append(" ")
+                    .append(endDate == null ? "" : dateFormat.format(endDate));
             substitutes.add(sb.toString());
         }
         return StringUtils.join(substitutes.iterator(), "\n");
@@ -647,6 +647,5 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     // END: getters / setters
-
 
 }

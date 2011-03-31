@@ -73,7 +73,7 @@ public interface DocumentService {
      * @return created document
      */
     Node createDocument(QName documentTypeId, NodeRef parentFolderRef, Map<QName, Serializable> props);
-    
+
     Node createPPImportDocument(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties);
 
     /**
@@ -183,7 +183,7 @@ public interface DocumentService {
         private DocumentService documentService;
 
         /**
-         * @param properties - initial properties for the node that is not jet constructed
+         * @param properties - initial properties for the node that is not yet constructed
          */
         public void doWithProperties(Map<QName, Serializable> properties) {
             // set default properties for document with type defined by getAspectName() before creation
@@ -212,7 +212,7 @@ public interface DocumentService {
          * @return QName of the aspect that the document must have for executing callbacks defined in this class
          */
         public abstract QName getAspectName();
-        
+
     }
 
     /**
@@ -399,9 +399,9 @@ public interface DocumentService {
      * @return number of documents under given volume or case
      */
     int getDocumentsCountByVolumeOrCase(NodeRef parentRef);
-    
+
     List<String> getSearchableFileNames(NodeRef document);
-    
+
     ContentData getSearchableFileContents(NodeRef document);
 
     StringBuilder getChildNodesPropsForIndexing(NodeRef parentRef, StringBuilder sb);
@@ -411,7 +411,7 @@ public interface DocumentService {
     ArrayList<Serializable> collectProperties(NodeRef nodeRef, List<ChildAssociationRef> childAssocs, QName... propNames);
 
     void setDocStatusFinished(final NodeRef docRef);
-    
+
     void setPropertyAsSystemUser(final QName propName, final Serializable value, final NodeRef docRef);
-    
+
 }

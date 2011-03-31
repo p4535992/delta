@@ -86,6 +86,7 @@
 
     do {
       // find the location of the next potential break-point.
+      //var loc = opts.condensedLength - 1;
       var loc = findDelimiterLocation(fullbody, opts.delim, (opts.condensedLength + delta));
       //set the html of the clone to the substring html of the original
       clone.html(jQuery.trim(fullbody.substring(0,(loc+1))));

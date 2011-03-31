@@ -5,6 +5,7 @@ import org.alfresco.service.namespace.QName;
 public interface DocumentSubtypeModel {
     String URI = "http://alfresco.webmedia.ee/model/document/subtype/1.0";
     String PREFIX = "docsub:";
+    QName MODEL_NAME = QName.createQName(URI, "documentSubtypeModel");
 
     public interface Types {
         QName INCOMING_LETTER = QName.createQName(URI, "incomingLetter");

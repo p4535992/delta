@@ -17,8 +17,8 @@ import java.util.Set;
 import org.alfresco.repo.module.AbstractModuleComponent;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
-import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -47,7 +47,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     private File completedNodesFile;
 
     public void setInputFolderPath(String inputFolderPath) {
-        this.inputFolder = new File(inputFolderPath);
+        inputFolder = new File(inputFolderPath);
     }
 
     @Override
@@ -164,8 +164,8 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     private class UpdateNodesBatchProgress extends BatchProgress<NodeRef> {
 
         public UpdateNodesBatchProgress() {
-            this.origin = nodes;
-            this.completedSize = completedNodes.size();
+            origin = nodes;
+            completedSize = completedNodes.size();
             processName = "Nodes updating";
         }
 
@@ -199,7 +199,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
 
             @Override
             public String[] getHeaders() {
-                return new String[] { "nodeRef" };
+                return AbstractNodeUpdater.this.getCsvFileHeaders();
             }
         });
     }
@@ -211,6 +211,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
      * @throws Exception
      */
     protected abstract String[] updateNode(NodeRef nodeRef) throws Exception;
+
+    protected String[] getCsvFileHeaders() {
+        return new String[] { "nodeRef" };
+    }
 
     private abstract class BatchProgress<E> {
         Collection<E> origin;
@@ -285,15 +289,17 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
 
         public void run() {
             init();
-            if (isStopRequested())
+            if (isStopRequested()) {
                 return;
+            }
             for (E e : origin) {
                 batchList.add(e);
                 i++;
                 if (i >= batchSize) {
                     step();
-                    if (isStopRequested())
+                    if (isStopRequested()) {
                         return;
+                    }
                 }
             }
             step();

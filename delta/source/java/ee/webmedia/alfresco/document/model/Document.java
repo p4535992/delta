@@ -25,7 +25,7 @@ import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 
-public class Document extends Node implements Comparable<Document>, CssStylable {
+public class Document extends Node implements Comparable<Document>, CssStylable, CreatedAndRegistered {
     private static final long serialVersionUID = 1L;
 
     public static final String LIST_SEPARATOR = ", ";
@@ -47,12 +47,12 @@ public class Document extends Node implements Comparable<Document>, CssStylable 
      */
     public Document(Document source) {
         super(source.nodeRef);
-        this.nodeRef = source.nodeRef;
+        nodeRef = source.nodeRef;
         Assert.notNull(source, "Source document is mandatory");
-        this.files = source.getFiles();
-        this.searchableProperties = new HashMap<QName, Serializable>(source.getSearchableProperties());
-        this.initialized = source.initialized;
-        this._documentType = source.getDocumentType();
+        files = source.getFiles();
+        searchableProperties = new HashMap<QName, Serializable>(source.getSearchableProperties());
+        initialized = source.initialized;
+        _documentType = source.getDocumentType();
     }
 
     public Document(NodeRef nodeRef) {
@@ -86,7 +86,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable 
     public DocumentType getDocumentType() {
         lazyInit();
         if (_documentType == null) {
-            this._documentType = getDocumentTypeService().getDocumentType(getType());
+            _documentType = getDocumentTypeService().getDocumentType(getType());
         }
         return _documentType;
     }
@@ -111,6 +111,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable 
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.REG_NUMBER);
     }
 
+    @Override
     public Date getRegDateTime() {
         return (Date) getNode().getProperties().get(DocumentCommonModel.Props.REG_DATE_TIME);
     }
@@ -127,7 +128,8 @@ public class Document extends Node implements Comparable<Document>, CssStylable 
     }
 
     public String getAllRecipients() {
-        return join(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+        return join(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
+                DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME, DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME);
     }
 
     public String getDocName() {
@@ -287,6 +289,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable 
         return (String) getNode().getProperties().get(DocumentSpecificModel.Props.PROCUREMENT_TYPE);
     }
 
+    @Override
     public Date getCreated() {
         return (Date) getNode().getProperties().get(ContentModel.PROP_CREATED);
     }
@@ -413,4 +416,5 @@ public class Document extends Node implements Comparable<Document>, CssStylable 
         }
         return documentTypeService;
     }
+
 }

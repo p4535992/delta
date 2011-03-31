@@ -55,13 +55,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
 
     // private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(TaskListGenerator.class);
 
+    /** Workflow index - same meaning as {@link #WF_INDEX}, but used in different places */
     public static final String ATTR_WORKFLOW_INDEX = "workflow_index";
-    /**
-     * workflow index attribute.
-     * (seda ilmselt kasutatakse teistes olukordades, kui ATTR_WORKFLOW_INDEX attribuuti
-     * XXX: Alar: kas võiks attribuudi nimed ühtlustada
-     * või pigem meelega hoida erineva olukorra jaoks erinevaid väärtuseid, et okeks paremini võimalik eristada kus ühte konkreetset parameetrit kasutatakse?)
-     */
+    /** Workflow index - same meaning as {@link #ATTR_WORKFLOW_INDEX}, but used in different places */
     public static final String WF_INDEX = "index";
 
     protected DialogManager dialogManager;

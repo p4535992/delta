@@ -7,8 +7,8 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 public class DocumentPropertySets {
-    
-    /*package*/ static Set<String> commonProperties = new HashSet<String>();
+
+    /* package */static Set<String> commonProperties = new HashSet<String>();
     static {
         commonProperties.add(DocumentCommonModel.Props.ACCESS_RESTRICTION.toString());
         commonProperties.add(DocumentCommonModel.Props.ACCESS_RESTRICTION_REASON.toString());
@@ -19,8 +19,8 @@ public class DocumentPropertySets {
         commonProperties.add(DocumentCommonModel.Props.KEYWORDS.toString());
         commonProperties.add(DocumentCommonModel.Props.STORAGE_TYPE.toString());
     }
-    
-    /*package*/ static Set<String> ownerProperties = new HashSet<String>();
+
+    /* package */static Set<String> ownerProperties = new HashSet<String>();
     static {
         ownerProperties.add(DocumentCommonModel.Props.OWNER_EMAIL.toString());
         ownerProperties.add(DocumentCommonModel.Props.OWNER_ID.toString());
@@ -30,14 +30,14 @@ public class DocumentPropertySets {
         ownerProperties.add(DocumentCommonModel.Props.OWNER_PHONE.toString());
     }
 
-    /*package*/ static Set<String> incomingAndOutgoingLetterProperties = new HashSet<String>();
+    /* package */static Set<String> incomingAndOutgoingLetterProperties = new HashSet<String>();
     static {
         incomingAndOutgoingLetterProperties.addAll(commonProperties);
         incomingAndOutgoingLetterProperties.add(DocumentSpecificModel.Props.SENDER_REG_NUMBER.toString());
         incomingAndOutgoingLetterProperties.add(DocumentSpecificModel.Props.SENDER_REG_DATE.toString());
     }
 
-    /*package*/ static Set<String> contractDetailsV1 = new HashSet<String>();
+    /* package */static Set<String> contractDetailsV1 = new HashSet<String>();
     static {
         contractDetailsV1.add(DocumentSpecificModel.Props.SECOND_PARTY_NAME.toString());
         contractDetailsV1.add(DocumentSpecificModel.Props.SECOND_PARTY_EMAIL.toString());
@@ -48,13 +48,15 @@ public class DocumentPropertySets {
         contractDetailsV1.add(DocumentSpecificModel.Props.THIRD_PARTY_SIGNER.toString());
         contractDetailsV1.add(DocumentSpecificModel.Props.THIRD_PARTY_CONTACT_PERSON.toString());
     }
-    
-    /*package*/ static Set<String> ignoredPropertiesWhenMakingCopy = new HashSet<String>();
+
+    /* package */static Set<String> ignoredPropertiesWhenMakingCopy = new HashSet<String>();
     static {
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.REG_NUMBER.toString());
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.REG_DATE_TIME.toString());
+        ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS.toString());
         ignoredPropertiesWhenMakingCopy.addAll(ownerProperties);
         ignoredPropertiesWhenMakingCopy.addAll(contractDetailsV1);
         ignoredPropertiesWhenMakingCopy.add(DocumentSpecificModel.Props.NOT_EDITABLE.toString());
     }
+
 }

@@ -117,6 +117,8 @@ public interface DocumentCommonModel {
 
         /** holds non-system properties of childnodes (childNodes, that are defined in DocumentSubTypeModel) for searching */
         QName SEARCHABLE_SUB_NODE_PROPERTIES = QName.createQName(URI, "searchableSubNodeProperties");
+        /** shows if the document contains at least one compoundWorkflow, that has startedDateTime set */
+        QName SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS = QName.createQName(URI, "searchableHasStartedCompoundWorkflows");
 
         QName LEGAL_BASIS_NAME = QName.createQName(URI, "legalBasisName");
     }

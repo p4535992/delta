@@ -3,10 +3,12 @@ package ee.webmedia.alfresco.workflow.search.model;
 import java.io.Serializable;
 import java.util.Date;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.CssStylable;
+import ee.webmedia.alfresco.document.model.CreatedAndRegistered;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.type.web.DocumentTypeConverter;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -17,15 +19,15 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 /**
  * @author Erko Hansar
  */
-public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable {
+public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable, CreatedAndRegistered {
 
     private static final long serialVersionUID = 1L;
-    
+
     private Node task;
     private Node workflow;
     private Node document;
     private String cssStyleClass;
-    
+
     public TaskInfo() {
     }
 
@@ -60,12 +62,12 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     }
 
     // LIST FIELD GETTERS:
-    
+
     public Object getDocType() {
         DocumentTypeConverter docTypeConverter = new DocumentTypeConverter();
         return docTypeConverter.convertSelectedValueToString(document.getType());
     }
-    
+
     public Object getRegNum() {
         return document.getProperties().get(DocumentCommonModel.Props.REG_NUMBER);
     }
@@ -101,7 +103,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     public String getTaskTypeText() {
         return MessageUtil.getMessage(workflow.getType().getLocalName());
     }
-    
+
     public Object getDueDate() {
         return task.getProperties().get(WorkflowSpecificModel.Props.DUE_DATE);
     }
@@ -110,11 +112,20 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
         return task.getProperties().get(WorkflowCommonModel.Props.COMPLETED_DATE_TIME);
     }
 
+    @Override
+    public Date getRegDateTime() {
+        return (Date) getRegDate();
+    }
+
+    @Override
+    public Date getCreated() {
+        return (Date) document.getProperties().get(ContentModel.PROP_CREATED);
+    }
+
     public Object getComment() {
         if (task.getType().equals(WorkflowSpecificModel.Types.REVIEW_TASK) || task.getType().equals(WorkflowSpecificModel.Types.OPINION_TASK)) {
             return task.getProperties().get(WorkflowCommonModel.Props.OUTCOME);
-        }
-        else {
+        } else {
             String outcome = (String) task.getProperties().get(WorkflowCommonModel.Props.OUTCOME);
             if (StringUtils.isBlank(outcome)) {
                 outcome = "";
@@ -137,16 +148,15 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
     public Object getStoppedDate() {
         return task.getProperties().get(WorkflowCommonModel.Props.STOPPED_DATE_TIME);
     }
-    
+
     public Object getResolution() {
         if (task.getType().equals(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
             return task.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
-        }
-        else {
+        } else {
             return workflow.getProperties().get(WorkflowSpecificModel.Props.RESOLUTION);
         }
     }
-    
+
     public String getOverdue() {
         Object completedDate = getCompletedDate();
         Object dueDate = getDueDate();
@@ -155,7 +165,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
         }
         return MessageUtil.getMessage("no");
     }
-    
+
     public Object getStatus() {
         return task.getProperties().get(WorkflowCommonModel.Props.STATUS);
     }
@@ -174,7 +184,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
 
     @Override
     public String getCssStyleClass() {
-        if(cssStyleClass == null) {
+        if (cssStyleClass == null) {
             final Date dueDate = (Date) task.getProperties().get(WorkflowSpecificModel.Props.DUE_DATE);
             final Date completedDate = (Date) task.getProperties().get(WorkflowCommonModel.Props.COMPLETED_DATE_TIME);
             final String docStyleClass = document.getType().getLocalName();
@@ -182,5 +192,5 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
         }
         return cssStyleClass;
     }
-    
+
 }

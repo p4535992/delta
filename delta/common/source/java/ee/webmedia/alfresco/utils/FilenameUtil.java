@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.utils;
 
+import java.util.regex.Pattern;
+
 import org.alfresco.repo.content.MimetypeMap;
 import org.apache.commons.lang.StringUtils;
 
@@ -9,6 +11,8 @@ import org.apache.commons.lang.StringUtils;
  * @author Kaarel Jõgeva
  */
 public class FilenameUtil {
+
+    private static final Pattern NON_ASCII = Pattern.compile("[^\\x00-\\x7f]");
 
     public static String buildFileName(String title, String extension) {
         return buildFileName(title, extension, true);
@@ -34,12 +38,13 @@ public class FilenameUtil {
         // Windows kernel forbids the use of characters in range 1-31 (i.e., 0x01-0x1F) and
         // characters " * : < > ? \ / |
         String name = filename.replaceAll("\\p{Cntrl}", "");
-        // On some server environments(concrete case with GlassFish on Linux server - on other Linux/Windows machine there were no such problem) when using encoded "+" ("%2B") in url's request.getRequestURI() returns unEncoded value of "+" (instead of "%2B") and
+        // On some server environments(concrete case with GlassFish on Linux server - on other Linux/Windows machine there were no such problem) when using
+        // encoded "+" ("%2B") in url's request.getRequestURI() returns unEncoded value of "+" (instead of "%2B") and
         // further decoding will replace + with space. Hence when looking for file by name there is " " instead of "+" and file will not be found.
         name = name.replace('+', '-');
         name = name.replace(':', '_');
-        name = name.replace('"', '\'');
-        name = name.replace('/', '-');
+        name = name.replace("\"", "");
+        name = name.replace("/", "");
         // [\"\*\<\>?\|]
         name = name.replaceAll("[\\*\\\\\\>\\<\\?\\|]", "").replaceAll("\\s+", " ");
         return name;
@@ -51,9 +56,13 @@ public class FilenameUtil {
         // remove dots and spaces from beginning and end of string
         return filename.replaceAll("^([ \\.])+", "").replaceAll("([ \\.])+$", "");
     }
-    
+
     public static String replaceAmpersand(String filename) {
         return filename.replaceAll(" & ", " ja ").replaceAll("&", " ja ");
+    }
+
+    public static String replaceNonAsciiCharacters(String filename, String replace) {
+        return NON_ASCII.matcher(filename).replaceAll(replace);
     }
 
 }

@@ -9,14 +9,6 @@
             <action-listener>#{CompoundWorkflowDefinitionDialog.setupNewWorkflow}</action-listener>
          </action>
 
-         <action id="compound_workflow_start">
-            <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowNewEvaluator</evaluator>
-            <label-id>workflow_compound_start</label-id>
-            <image>/images/icons/workflow.gif</image>
-            <action-listener>#{CompoundWorkflowDialog.startWorkflow}</action-listener>
-            <style-class>compoundWorkflowStart</style-class>
-         </action>
-
          <action id="compound_workflow_stop">
             <evaluator>ee.webmedia.alfresco.workflow.web.evaluator.WorkflowInprogressEvaluator</evaluator>
             <label-id>workflow_compound_stop</label-id>
@@ -57,7 +49,6 @@
          </action-group>
 
          <action-group id="compound_workflow_actions">
-            <action idref="compound_workflow_start" />
             <action idref="compound_workflow_stop" />
             <action idref="compound_workflow_continue" />
             <action idref="compound_workflow_finish" />
@@ -90,6 +81,7 @@
          <show-property name="{temp}delegateAsAssignmentTask" component-generator="DelegationTaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks_co" taskType="ASSIGNMENT_NOT_RESPONSIBLE" />
          <show-property name="{temp}delegateAsInformationTask" component-generator="DelegationTaskListGenerator" ignore-if-missing="false" display-label-id="informationWorkflow" taskType="INFORMATION" />
          <show-property name="{temp}delegateAsOpinionTask" component-generator="DelegationTaskListGenerator" display-label-id="opinionWorkflow" taskType="OPINION" />
+         <show-property name="{temp}delegateButton" ignore-if-missing="false" component-generator="DelegateButtonGenerator" display-label-id="whiteSpace" />
       </property-sheet>
    </config>
 

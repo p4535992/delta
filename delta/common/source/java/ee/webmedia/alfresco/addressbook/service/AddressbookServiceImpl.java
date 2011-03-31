@@ -8,9 +8,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.StringTokenizer;
-import java.util.Map.Entry;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
@@ -38,8 +38,8 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Assocs;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
-import ee.webmedia.alfresco.utils.FeedbackVO;
-import ee.webmedia.alfresco.utils.FeedbackWrapper;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
+import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
@@ -147,16 +147,16 @@ public class AddressbookServiceImpl implements AddressbookService {
     }
 
     @Override
-    public FeedbackWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup) {
+    public MessageDataWrapper addToGroup(NodeRef groupNodeRef, List<UserDetails> usersForGroup) {
         List<AssociationRef> assocRefs = nodeService.getTargetAssocs(groupNodeRef, RegexQNamePattern.MATCH_ALL);
         final HashSet<String> existingRefs = new HashSet<String>();
         for (AssociationRef assocRef : assocRefs) {
             existingRefs.add(assocRef.getTargetRef().toString());
         }
-        FeedbackWrapper feedBack = new FeedbackWrapper();
+        MessageDataWrapper feedBack = new MessageDataWrapper();
         for (UserDetails wrapper : usersForGroup) {
             if (existingRefs.contains(wrapper.getNodeRef())) {
-                feedBack.addFeedbackItem(new FeedbackVO(MessageSeverity.INFO, "addressbook_contactgroup_add_contactExisted", wrapper.getName()));
+                feedBack.addFeedbackItem(new MessageDataImpl(MessageSeverity.INFO, "addressbook_contactgroup_add_contactExisted", wrapper.getName()));
             } else {
                 addToGroup(groupNodeRef, new NodeRef(wrapper.getNodeRef()));
             }
@@ -222,12 +222,12 @@ public class AddressbookServiceImpl implements AddressbookService {
     @Override
     public List<Node> searchContactGroups(String searchCriteria) {
         return executeSearch(searchCriteria, contactGroupSearchFields, false, false, null);
-    }    
-    
+    }
+
     @Override
     public List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, String institutionToRemove) {
         return executeSearch(searchCriteria, searchFields, true, orgOnly, institutionToRemove);
-    }    
+    }
 
     @Override
     public List<Node> searchTaskCapableContactGroups(String searchCriteria, boolean orgOnly, String institutionToRemove) {
@@ -235,12 +235,14 @@ public class AddressbookServiceImpl implements AddressbookService {
     }
 
     private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean orgOnly, String institutionToRemove) {
+        // FIXME: remove this after taskCapable functionality is fully implemented
+        taskCapableOnly = false;
         List<NodeRef> nodeRefs = null;
         final ResultSet searchResult;
         if (StringUtils.isNotBlank(searchCriteria) || ((taskCapableOnly || orgOnly) && fields == searchFields)) {
 
             StringBuilder query = new StringBuilder();
-            if(searchCriteria != null){
+            if (searchCriteria != null) {
                 for (StringTokenizer t = new StringTokenizer(searchCriteria.trim(), " "); t.hasMoreTokens(); /**/) {
                     String term = QueryParser.escape(t.nextToken());
                     for (QName field : fields) {
@@ -250,13 +252,13 @@ public class AddressbookServiceImpl implements AddressbookService {
                     }
                 }
             }
-            if(taskCapableOnly && fields == searchFields){
+            if (taskCapableOnly && fields == searchFields) {
                 addTaskCapableCondition(query);
             }
             String queryString = query.toString();
-            if(orgOnly && fields == searchFields){
+            if (orgOnly && fields == searchFields) {
                 queryString = SearchUtil.joinQueryPartsAnd(Arrays.asList(queryString, SearchUtil.generateAspectQuery(AddressbookModel.Aspects.ORGANIZATION_PROPERTIES)));
-            }            
+            }
             searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, queryString);
         } else {
             if (fields == contactGroupSearchFields) {
@@ -296,12 +298,12 @@ public class AddressbookServiceImpl implements AddressbookService {
     }
 
     public void addTaskCapableCondition(StringBuilder query) {
-        if(query.length() > 0){
+        if (query.length() > 0) {
             query.insert(0, "(");
-            query.append(") AND "); 
+            query.append(") AND ");
         }
         String fieldPrefixed = AddressbookModel.Props.TASK_CAPABLE.toPrefixString(namespaceService);
-        String fieldEscaped = StringUtils.replace(fieldPrefixed, "" + QName.NAMESPACE_PREFIX, "\\" + QName.NAMESPACE_PREFIX);                
+        String fieldEscaped = StringUtils.replace(fieldPrefixed, "" + QName.NAMESPACE_PREFIX, "\\" + QName.NAMESPACE_PREFIX);
         query.append("@").append(fieldEscaped).append(":true");
     }
 
@@ -310,10 +312,10 @@ public class AddressbookServiceImpl implements AddressbookService {
             for (NodeRef nodeRef : nodeRefs) {
                 for (Node contact : getContacts(nodeRef)) {
                     if (Boolean.TRUE.equals(contact.getProperties().get(AddressbookModel.Props.TASK_CAPABLE))) {
-                        if((!orgOnly || contact.getType().equals(AddressbookModel.Types.ORGANIZATION))
-                                && !isInstitution(institutionToRemove, contact)){
+                        if ((!orgOnly || contact.getType().equals(AddressbookModel.Types.ORGANIZATION))
+                                && !isInstitution(institutionToRemove, contact)) {
                             result.add(getNode(nodeRef));
-                            break;                            
+                            break;
                         }
                     }
                 }
@@ -321,19 +323,19 @@ public class AddressbookServiceImpl implements AddressbookService {
         } else {
             for (NodeRef nodeRef : nodeRefs) {
                 Node contact = getNode(nodeRef);
-                if((!orgOnly || contact.getType().equals(AddressbookModel.Types.ORGANIZATION))
-                        && !isInstitution(institutionToRemove, contact)){
-                    result.add(getNode(nodeRef));                    
+                if ((!orgOnly || contact.getType().equals(AddressbookModel.Types.ORGANIZATION))
+                        && !isInstitution(institutionToRemove, contact)) {
+                    result.add(getNode(nodeRef));
                 }
             }
         }
     }
 
     private boolean isInstitution(String institutionToRemove, Node contact) {
-        if(institutionToRemove == null){
+        if (institutionToRemove == null) {
             return false;
         }
-        if(!contact.getType().equals(AddressbookModel.Types.ORGANIZATION)){
+        if (!contact.getType().equals(AddressbookModel.Types.ORGANIZATION)) {
             return false;
         }
         return institutionToRemove.equalsIgnoreCase((String) nodeService.getProperty(contact.getNodeRef(), AddressbookModel.Props.ORGANIZATION_CODE));
@@ -416,7 +418,7 @@ public class AddressbookServiceImpl implements AddressbookService {
         return nodeService.getChildAssocs(getRootNodeRef(), RegexQNamePattern.MATCH_ALL, Assocs.ADDRESSBOOK)
                 .get(0).getChildRef();
     }
-    
+
     @Override
     public List<Node> getDvkCapableOrgs() {
         List<Node> dvkCapableOrgs = new ArrayList<Node>();
@@ -427,7 +429,7 @@ public class AddressbookServiceImpl implements AddressbookService {
             }
         }
         return dvkCapableOrgs;
-    }    
+    }
 
     private List<Node> listNodeChildren(QName type, NodeRef parent) {
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(parent);

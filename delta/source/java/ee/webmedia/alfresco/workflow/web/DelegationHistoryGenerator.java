@@ -3,8 +3,11 @@ package ee.webmedia.alfresco.workflow.web;
 import static ee.webmedia.alfresco.utils.ComponentUtil.addChildren;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
-import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +16,6 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.html.HtmlOutputText;
 import javax.faces.context.FacesContext;
 
-import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
@@ -23,12 +25,16 @@ import org.alfresco.web.ui.common.component.data.UISortLink;
 import org.alfresco.web.ui.common.converter.XMLDateConverter;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
@@ -37,6 +43,29 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  * @author Ats Uiboupin
  */
 public class DelegationHistoryGenerator extends BaseComponentGenerator {
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DelegationHistoryGenerator.class);
+    private static final QName TMP_MAIN_OWNER = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "mainOwner");
+    private static final QName TMP_CO_OWNER = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "coOwner");
+    private static final QName TMP_STYLE_CLASS = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "styleClass");
+    /** expects that both tasks have startedDateTime set */
+    private static final Comparator<Task> delegationHistoryComparator = new Comparator<Task>() {
+        @Override
+        public int compare(Task t1, Task t2) {
+            Date t1Started = t1.getStartedDateTime();
+            Date t2Started = t2.getStartedDateTime();
+            if (t1Started == null && t2Started == null) {
+                return 0;
+            }
+            if (t1Started == null) {
+                return -1;
+            }
+            if (t2Started == null) {
+                return 1;
+            }
+            return t1Started.compareTo(t2Started);
+        }
+    };
+
     @Override
     protected UIComponent createComponent(FacesContext context, UIPropertySheet propertySheet, final PropertySheetItem item) {
 
@@ -57,11 +86,11 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
         putAttribute(richList, "width", "100%");
         putAttribute(richList, "styleClass", "delegationWrapper");
         addChildren(richList
-                , createColumn(WorkflowCommonModel.Props.DELEG_HIST_CREATOR_NAME, context)
-                , createColumn(WorkflowCommonModel.Props.DELEG_HIST_OWNER_NAME, context)
-                , createColumn(WorkflowCommonModel.Props.DELEG_HIST_CO_ASSIGNMENT_TASKS, context)
-                , createColumn(WorkflowCommonModel.Props.DELEG_HIST_RESOLUTION, context)
-                , createColumn(WorkflowCommonModel.Props.DELEG_HIST_DUE_DATE, context, MessageUtil.getMessage("date_pattern")) //
+                , createColumn(WorkflowCommonModel.Props.CREATOR_NAME, context)
+                , createColumn(TMP_MAIN_OWNER, context)
+                , createColumn(TMP_CO_OWNER, context)
+                , createColumn(WorkflowSpecificModel.Props.RESOLUTION, context)
+                , createColumn(WorkflowSpecificModel.Props.DUE_DATE, context, MessageUtil.getMessage("date_pattern")) //
         );
         return richList;
     }
@@ -75,13 +104,13 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
         UIColumn column = (UIColumn) application.createComponent("org.alfresco.faces.RichListColumn");
 
         UISortLink sortLink = (UISortLink) application.createComponent("org.alfresco.faces.SortLink");
-        sortLink.setLabel(MessageUtil.getMessage(property.getLocalName()));
+        sortLink.setLabel(MessageUtil.getMessage("delegHist" + StringUtils.capitalize(property.getLocalName())));
         sortLink.setValue(property.toString());
         @SuppressWarnings("unchecked")
         final Map<String, UIComponent> facets = column.getFacets();
         facets.put("header", sortLink);
-
         HtmlOutputText outputText = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
+        outputText.setValueBinding("styleClass", context.getApplication().createValueBinding("#{r.properties['" + TMP_STYLE_CLASS + "']}"));
         UIComponentTagUtils.setValueProperty(context, outputText, "#{r.properties['" + property + "']}");
         if (dateFormat != null) {
             XMLDateConverter dateConverter = (XMLDateConverter) application.createConverter(XMLDateConverter.CONVERTER_ID);
@@ -96,11 +125,33 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
     private List<Node> getRows(FacesContext context, Node delegatableTask) {
         WorkflowService wfService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(//
                 context).getBean(WorkflowService.BEAN_NAME);
-        NodeRef taskRef = delegatableTask.getNodeRef();
-        List<Node> delegationHistories = wfService.getDelegationHistoryNodes(taskRef);
-        // create virtual history row based on delegatableTask
-        Map<QName, Serializable> tempDelegationHistoryProps = wfService.getTempDelegationHistoryProps(delegatableTask);
-        delegationHistories.add(new WmNode(null, WorkflowCommonModel.Types.DELEGATION_HISTORY, Collections.<QName> emptySet(), tempDelegationHistoryProps));
+        List<Task> tasks4History = wfService.getTasks4DelegationHistory(delegatableTask);
+        {// see on ainult CL_TASK 158082 workaround
+            for (Iterator<Task> it = tasks4History.iterator(); it.hasNext();) {
+                Task task = it.next();
+                if (task.getStartedDateTime() == null) {
+                    LOG.warn("task with status=" + task.getStatus() + " has no startedDateTime. TaskRef=" + task.getNode().getNodeRef());
+                    it.remove();
+                }
+            }
+        }
+        Collections.sort(tasks4History, delegationHistoryComparator);
+        List<Node> delegationHistories = new ArrayList<Node>(tasks4History.size());
+        for (Task task : tasks4History) {
+            WmNode taskNode = task.getNode();
+            final QName mainOrCoOwner;
+            if (task.isResponsible()) {
+                mainOrCoOwner = TMP_MAIN_OWNER;
+            } else {
+                mainOrCoOwner = TMP_CO_OWNER;
+            }
+            Map<String, Object> props = taskNode.getProperties();
+            props.put(mainOrCoOwner.toString(), task.getOwnerName());
+            if (delegatableTask.getNodeRef().equals(task.getNode().getNodeRef())) {
+                props.put(TMP_STYLE_CLASS.toString(), "bold");
+            }
+            delegationHistories.add(taskNode);
+        }
         return delegationHistories;
     }
 

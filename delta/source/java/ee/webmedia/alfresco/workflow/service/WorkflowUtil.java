@@ -14,7 +14,6 @@ import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
-import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 
 /**
  * @author Alar Kvell
@@ -26,10 +25,6 @@ public class WorkflowUtil {
      * but generated for delegating original assignment task to other people
      */
     private static final QName TMP_ADDED_BY_DELEGATION = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "addedByDelegation");
-
-    public static WorkflowEventQueue getNewEventQueue() {
-        return new WorkflowEventQueue();
-    }
 
     // -------------
     // Checks that are required only on memory object
@@ -53,17 +48,13 @@ public class WorkflowUtil {
     }
 
     public static boolean isStatus(BaseWorkflowObject object, Status... statuses) {
-        for (Status status : statuses) {
-            if (status.equals(object.getStatus())) {
-                return true;
-            }
-        }
-        return false;
+        return isStatusAndType(object, (QName[]) null, statuses);
     }
 
-    public static boolean isType(BaseWorkflowObject object, QName... types) {
-        for (QName type : types) {
-            if (type.equals(object.getType())) {
+    public static boolean isStatusAndType(BaseWorkflowObject object, QName[] types, Status... statuses) {
+        String realStatus = object.getStatus();
+        for (Status status : statuses) {
+            if (status.equals(realStatus) && (types == null || object.isType(types))) {
                 return true;
             }
         }
@@ -78,41 +69,119 @@ public class WorkflowUtil {
         private final List<? extends BaseWorkflowObject> objects;
         private boolean result = true;
         private int index = 0;
+        private final StringBuilder sb = new StringBuilder();
 
         StatusOrderChecker(List<? extends BaseWorkflowObject> objects) {
+            if (LOG.isDebugEnabled()) {
+                sb.append("Checking " + objects.size() + " objects: [");
+                for (BaseWorkflowObject object : objects) {
+                    sb.append(object.getStatus()).append(" ").append(object.getType().getLocalName()).append(", ");
+                }
+                sb.append("]: ");
+            }
             this.objects = objects;
         }
 
         /**
-         * @param statuses
-         * @return
+         * Allows/consumes objects(increments index for each consecutive object) that have status one of given <code>statuses</code>
+         * 
+         * @param statuses - acceptable statuses
+         * @return this for method chaining
          */
         public StatusOrderChecker requireAny(Status... statuses) {
+            return requireAny((QName[]) null, statuses);
+        }
+
+        /**
+         * Allows/consumes objects(increments index for each consecutive object) that have status one of given <code>statuses</code> and if <code>types</code> are given, then
+         * object type is one of <code>types</code>
+         * 
+         * @param types if not null, then object type must match one of these
+         * @param statuses - acceptable statuses
+         * @return this for method chaining
+         */
+        public StatusOrderChecker requireAny(QName[] types, Status... statuses) {
+            addTypesAndStatusesInfo("requireAny", types, statuses);
             if (!result) {
                 return this;
             }
-            while (index < objects.size() && isStatus(objects.get(index), statuses)) {
+            while (index < objects.size() && isStatusAndType(objects.get(index), types, statuses)) {
                 index++;
             }
             return this;
         }
 
         public StatusOrderChecker requireOne(Status... statuses) {
+            return requireOne((QName[]) null, statuses);
+        }
+
+        private StatusOrderChecker requireOne(QName[] types, Status... statuses) {
+            addTypesAndStatusesInfo("requireOne", types, statuses);
             if (!result) {
                 return this;
             }
-            result = index < objects.size() && isStatus(objects.get(index), statuses);
+            result = index < objects.size() && isStatusAndType(objects.get(index), types, statuses);
+            if (!result) {
+                addFailureInfo();
+            }
             index++;
             return this;
+        }
+
+        private void addFailureInfo() {
+            sb.append("<-FAILURE! ");
         }
 
         public StatusOrderChecker requireAtLeastOne(Status... statuses) {
             return requireOne(statuses).requireAny(statuses);
         }
 
+        public StatusOrderChecker requireAtLeastOne(QName[] types, Status... statuses) {
+            return requireOne(types, statuses).requireAny(types, statuses);
+        }
+
         public boolean check() {
             return result && index == objects.size();
         }
+
+        // METHODs for creating info about validation
+        private void addTypesAndStatusesInfo(String constraint, QName[] types, Status... statuses) {
+            if (LOG.isDebugEnabled()) {
+                sb.append(constraint).append("{");
+                if (types != null) {
+                    sb.append("types(");
+                    List<String> typesStr = new ArrayList<String>(statuses.length);
+                    for (QName type : types) {
+                        typesStr.add(type.getLocalName());
+                    }
+                    sb.append(StringUtils.join(typesStr, "|")).append(") ");
+                }
+                sb.append("statuses(");
+                addStatusesInfo(statuses);
+                sb.append("} ");
+            }
+        }
+
+        private void addStatusesInfo(Status... statuses) {
+            if (LOG.isDebugEnabled()) {
+                List<String> parts = new ArrayList<String>(statuses.length);
+                for (Status status : statuses) {
+                    parts.add(status.getName());
+                }
+                sb.append(StringUtils.join(parts, "|"));
+            }
+        }
+
+        @Override
+        public String toString() {
+            String result = sb.toString();
+            if (check()) {
+                return result;
+            }
+            int unConsumed = objects.size() - index;
+            return "INVALID ORDER (" + (unConsumed != 0 ? unConsumed + " elements unconsumed" : "") + ") " + result;
+        }
+
     }
 
     // -------------
@@ -125,9 +194,9 @@ public class WorkflowUtil {
     public static Status checkTask(Task task, boolean skipPropChecks, Status... requiredStatuses) {
         if (!skipPropChecks) {
             // ERKO: Specification and existing code act in a different way. When a user is chosen, both the id and email are stored and used.
-            //if (StringUtils.isBlank(task.getOwnerId()) == StringUtils.isBlank(task.getOwnerEmail())) {
-            //    throw new RuntimeException("Exactly one of task's ownerId or ownerEmail must be filled\n" + task);
-            //}
+            // if (StringUtils.isBlank(task.getOwnerId()) == StringUtils.isBlank(task.getOwnerEmail())) {
+            // throw new RuntimeException("Exactly one of task's ownerId or ownerEmail must be filled\n" + task);
+            // }
         }
         Status status = Status.of(task.getStatus());
         if (requiredStatuses.length > 0 && !isStatus(task, requiredStatuses)) {
@@ -160,13 +229,13 @@ public class WorkflowUtil {
                 if (!isStatusAny(tasks, Status.IN_PROGRESS) || !isStatusAll(tasks, Status.IN_PROGRESS, Status.FINISHED, Status.UNFINISHED)) {
                     throw new WorkflowChangedException(
                             "If workflow status is IN_PROGRESS, then at least one task must have status IN_PROGRESS and other must have status FINISHED or UNFINISHED\n"
-                            + workflow);
+                                    + workflow);
                 }
             } else {
                 if (!isStatusOrder(tasks).requireAny(Status.FINISHED, Status.UNFINISHED).requireOne(Status.IN_PROGRESS).requireAny(Status.NEW).check()) {
                     throw new WorkflowChangedException(
                             "If workflow status is IN_PROGRESS, then tasks must have the following statuses, in order: 0..* FINISHED or UNFINISHED, 1 IN_PROGRESS, 0..* NEW\n"
-                            + workflow);
+                                    + workflow);
                 }
             }
             break;
@@ -180,7 +249,7 @@ public class WorkflowUtil {
                         && !isStatusOrder(tasks).requireAtLeastOne(Status.FINISHED, Status.UNFINISHED).requireAny(Status.NEW).check()) {
                     throw new WorkflowChangedException(
                             "If workflow status is STOPPED, then tasks must have the following statuses, in order: (0..* FINISHED or UNFINISHED, 1 STOPPED, 0..* NEW) or (1..* FINISHED or UNFINISHED, 0..* NEW)\n"
-                            + workflow);
+                                    + workflow);
                 }
             }
             break;
@@ -203,37 +272,30 @@ public class WorkflowUtil {
     }
 
     public static Status checkCompoundWorkflow(CompoundWorkflow compoundWorkflow, boolean skipPropChecks, Status... requiredStatuses) {
-        Status status = Status.of(compoundWorkflow.getStatus());
+        Status cWfStatus = Status.of(compoundWorkflow.getStatus());
         List<Workflow> workflows = compoundWorkflow.getWorkflows();
-        if (workflows.size() == 0 && status != Status.NEW && status != Status.FINISHED) {
+        if (workflows.size() == 0 && cWfStatus != Status.NEW && cWfStatus != Status.FINISHED) {
             throw new WorkflowChangedException("CompoundWorkflow must have at least one workflow if status is not NEW nor FINISHED\n" + compoundWorkflow);
         }
         for (Workflow workflow : workflows) {
             checkWorkflow(workflow, skipPropChecks);
         }
-        switch (status) {
+        switch (cWfStatus) {
         case NEW:
             if (!isStatusAll(workflows, Status.NEW)) {
                 throw new WorkflowChangedException("If compoundWorkflow status is NEW, then all workflows must have status NEW\n" + compoundWorkflow);
             }
             break;
         case IN_PROGRESS:
-
-            if (!isStatusOrder(workflows).requireAny(Status.FINISHED).requireAtLeastOne(Status.IN_PROGRESS).requireAny(Status.NEW, Status.FINISHED).check()) {
-                throw new WorkflowChangedException(
-                        "If compoundWorkflow status is IN_PROGRESS, then workflows must have the following statuses, in order: 0..* FINISHED, 1 IN_PROGRESS, 0..* NEW or FINISHED\n"
-                        + compoundWorkflow);
-            } else if (!isStatusOrder(workflows).requireAny(Status.FINISHED).requireOne(Status.IN_PROGRESS).requireAny(Status.NEW, Status.FINISHED).check()) {
-                // CL_TASK 152350 - add more strict checks than just requireAtLeastOne(Status.IN_PROGRESS)
-                LOG.warn("according to old rules here should be error, as only one workflow was supposed to be IN_PROGRESS, but at the moment there are more (task 152350 will add more strict checks)");
+            if (!isValidInProgressOrStopped(workflows, cWfStatus)) {
+                throw new WorkflowChangedException(getNotValidInProgressOrStoppedMsg(compoundWorkflow, cWfStatus));
             }
             break;
         case STOPPED:
-            if (!isStatusOrder(workflows).requireAny(Status.FINISHED).requireOne(Status.STOPPED).requireAny(Status.NEW, Status.FINISHED).check()
+            if (!isValidInProgressOrStopped(workflows, cWfStatus)
                     && !isStatusOrder(workflows).requireAtLeastOne(Status.FINISHED).requireAny(Status.NEW, Status.FINISHED).check()) {
-                throw new WorkflowChangedException(
-                        "If compoundWorkflow status is STOPPED, then workflows must have the following statuses, in order: (0..* FINISHED, 1 STOPPED, 0..* NEW or FINISHED) or (1..* FINISHED, 0..* NEW or FINISHED)\n"
-                        + compoundWorkflow);
+                throw new WorkflowChangedException(getNotValidInProgressOrStoppedMsg(compoundWorkflow, cWfStatus)
+                        + "\nOR as an alternative following order: 1..* FINISHED, 0..* NEW or FINISHED\n" + compoundWorkflow);
             }
             break;
         case FINISHED:
@@ -247,7 +309,22 @@ public class WorkflowUtil {
         if (requiredStatuses.length > 0 && !isStatus(compoundWorkflow, requiredStatuses)) {
             throw new WorkflowChangedException("CompoundWorkflow status must be one of [" + StringUtils.join(requiredStatuses, ", ") + "]\n" + compoundWorkflow);
         }
-        return status;
+        return cWfStatus;
+    }
+
+    private static String getNotValidInProgressOrStoppedMsg(CompoundWorkflow compoundWorkflow, Status cWfStatus) {
+        return "If compoundWorkflow status is " + cWfStatus.name() + ", then workflows must have the following statuses, in order:" +
+                " 0..* FINISHED, (1 " + cWfStatus.name() + " OR 1..* parallely startable workflows " + cWfStatus.name() + "), 0..* NEW or FINISHED\n" + compoundWorkflow;
+    }
+
+    private static boolean isValidInProgressOrStopped(List<Workflow> workflows, Status cWfStatus) {
+        boolean isValidWithoutParallel = isStatusOrder(workflows).requireAny(Status.FINISHED).requireOne(cWfStatus).requireAny(Status.NEW, Status.FINISHED).check();
+        return isValidWithoutParallel || isValidParallel(workflows, cWfStatus);
+    }
+
+    private static boolean isValidParallel(List<Workflow> workflows, Status cWfStatus) {
+        return isStatusOrder(workflows).requireAny(Status.FINISHED).requireAtLeastOne(WorkflowSpecificModel.canStartParallel, cWfStatus)
+                .requireAny(Status.NEW, Status.FINISHED).check();
     }
 
     public static boolean isStatusChanged(BaseWorkflowObject object) {
@@ -350,8 +427,8 @@ public class WorkflowUtil {
 
     public static List<NodeRef> getExcludedNodeRefsOnFinishWorkflows(CompoundWorkflow compoundWorkflow) {
         List<NodeRef> excludedNodeRefs = new ArrayList<NodeRef>();
-        for (Workflow workflow : compoundWorkflow.getWorkflows()){
-            if(WorkflowSpecificModel.Types.INFORMATION_WORKFLOW.equals(workflow.getNode().getType())){
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            if (WorkflowSpecificModel.Types.INFORMATION_WORKFLOW.equals(workflow.getNode().getType())) {
                 excludedNodeRefs.add(workflow.getNode().getNodeRef());
             }
         }
@@ -360,12 +437,12 @@ public class WorkflowUtil {
 
     public static boolean isActiveResponsible(Task task) {
         return task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)
-        && Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
+                && Boolean.TRUE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
     }
 
     public static boolean isInactiveResponsible(Task task) {
         return task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)
-        && Boolean.FALSE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
+                && Boolean.FALSE.equals(task.getNode().getProperties().get(WorkflowSpecificModel.Props.ACTIVE));
     }
 
     public static void removeEmptyTasks(CompoundWorkflow cWorkflow) {
@@ -403,4 +480,19 @@ public class WorkflowUtil {
         workflowObject.getNode().getProperties().put(TMP_ADDED_BY_DELEGATION.toString(), Boolean.TRUE);
     }
 
+    public static Task createTaskCopy(Task myTask) {
+        Workflow workflow = myTask.getParent();
+        CompoundWorkflow cWorkflowCopy = workflow.getParent().copy();
+        NodeRef myTaskRef = myTask.getNode().getNodeRef();
+        for (Workflow wf : cWorkflowCopy.getWorkflows()) {
+            if (wf.getNode().getNodeRef().equals(workflow.getNode().getNodeRef())) {
+                for (Task task : wf.getTasks()) {
+                    if (myTaskRef.equals(task.getNode().getNodeRef())) {
+                        return task;
+                    }
+                }
+            }
+        }
+        throw new RuntimeException("This never happens");
+    }
 }

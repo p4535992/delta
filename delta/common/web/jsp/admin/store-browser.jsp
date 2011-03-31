@@ -26,6 +26,7 @@
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
+<%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8" %>
 <%@ page isELIgnored="false" %>
@@ -60,6 +61,15 @@
               </h:commandLink>
           </h:column>
       </h:dataTable>
+
+      <hr/>
+      <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/><br/>
+
+         <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" >
+              <f:param name="testP" value="11" />
+         </a:actionLink>
+
+      <hr/>
    </h:form>
 </f:view>
 

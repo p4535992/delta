@@ -178,4 +178,9 @@
       </property>
    </bean>
 
+   <!-- START: web beans: -->
+
+   <bean id="TestingForDeveloperBean" class="ee.webmedia.alfresco.common.web.TestingForDeveloperBean" scope="session" />
+
+   <!-- END: web beans: -->
 </beans>

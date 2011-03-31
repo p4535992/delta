@@ -132,7 +132,12 @@ public abstract class BaseWorkflowObject {
     }
     
     public boolean isType(QName... types){
-        return WorkflowUtil.isType(this, types);
+        for (QName type : types) {
+            if (type.equals(this.getType())) {
+                return true;
+            }
+        }
+        return false;
     }    
 
     protected String additionalToString() {
@@ -141,7 +146,7 @@ public abstract class BaseWorkflowObject {
 
     @Override
     public String toString() {
-        return WmNode.toString(this) + "[\n  node=" + StringUtils.replace(getNode().toString(), "\n", "\n  ") + additionalToString() + "\n]";
+        return WmNode.toString(this) + " status=" + getStatus() + " [\n  node=" + StringUtils.replace(getNode().toString(), "\n", "\n  ") + additionalToString() + "\n]";
     }
 
     public <T extends Serializable> T getProp(QName propName) {

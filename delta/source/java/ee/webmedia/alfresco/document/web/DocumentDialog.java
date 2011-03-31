@@ -544,14 +544,14 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public boolean isShowSearchBlock() {
-        if ((searchBlockBean.isIncludeCases() && !metadataBlockBean.isInEditMode())) {
+        if ((searchBlockBean.isExpanded() && !metadataBlockBean.isInEditMode())) {
             return true;
         }
         return metadataBlockBean.isInEditMode() && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar() && ((isFromDVK() || isFromImap()) && !isNotEditable());
     }
 
     public void hideSearchBlock(@SuppressWarnings("unused") ActionEvent event) {
-        searchBlockBean.setIncludeCaseTitles(false);
+        searchBlockBean.setExpanded(false);
     }
 
     public String getSearchBlockTitle() {
@@ -606,7 +606,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public void searchDocsAndCases(@SuppressWarnings("unused") ActionEvent event) {
         showDocsAndCasesAssocs = true;
         searchBlockBean.init(metadataBlockBean.getDocument());
-        searchBlockBean.setIncludeCaseTitles(true);
+        searchBlockBean.setExpanded(true);
         searchBlockBean.initDocSearch();
     }
 

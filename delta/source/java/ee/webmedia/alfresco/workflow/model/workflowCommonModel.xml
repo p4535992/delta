@@ -63,6 +63,9 @@
                <mandatory enforced="true">true</mandatory>
                <multiple>true</multiple>
             </property>
+            <property name="wfc:userId"><!-- if null, then visible for all users -->
+               <type>d:text</type>
+            </property>
          </properties>
       </type>
 
@@ -141,19 +144,6 @@
                <type>d:text</type>
             </property>
          </properties>
-         <associations>
-            <child-association name="wfc:delegationHistory">
-               <source>
-                  <mandatory>true</mandatory>
-                  <many>false</many>
-               </source>
-               <target>
-                  <class>wfc:delegationHistory</class>
-                  <mandatory>false</mandatory>
-                  <many>true</many>
-               </target>
-            </child-association>
-         </associations>
          <mandatory-aspects>
             <aspect>wfc:common</aspect>
             <aspect>wfc:owner</aspect>
