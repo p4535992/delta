@@ -347,6 +347,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     @Override
     public void init(Map<String, String> params) {
         if (skipInit) {
+            searchBlockBean.init(node);
             skipInit = false;
             return;
         }
@@ -607,13 +608,12 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         showDocsAndCasesAssocs = true;
         searchBlockBean.init(metadataBlockBean.getDocument());
         searchBlockBean.setExpanded(true);
-        searchBlockBean.initDocSearch();
     }
 
     private void addTargetAssoc(NodeRef targetRef, QName targetType) {
         final DocAssocInfo docAssocInfo = searchBlockBean.addTargetAssoc(targetRef, targetType);
         assocsBlockBean.getDocAssocInfos().add(docAssocInfo);
-        setupAction(true); // FIXME: dmitri, miks seda meetodit välja kutsusid? kui ainult lisatud seose kuvamiseks enne salvestamist, siis
+        assocsBlockBean.init(node);
         metadataBlockBean.updateFollowUpOrReplyProperties(targetRef);
         MessageUtil.addInfoMessage("document_assocAdd_success");
     }

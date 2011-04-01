@@ -26,16 +26,6 @@ public class DocumentSearchBean implements Serializable {
     private List<SelectItem> documentTypes;
     private transient DocumentTypeService documentTypeService;
 
-    public void init() {
-        // Document types
-        List<DocumentType> types = getDocumentTypeService().getAllDocumentTypes(true);
-        documentTypes = new ArrayList<SelectItem>(types.size());
-        for (DocumentType documentType : types) {
-            documentTypes.add(new SelectItem(documentType.getId(), documentType.getName()));
-        }
-        WebUtil.sort(documentTypes);
-    }
-
     public void reset() {
         documentTypes = null;
     }
@@ -47,12 +37,20 @@ public class DocumentSearchBean implements Serializable {
      */
     public List<SelectItem> getDocumentTypes(FacesContext context, UIInput selectComponent) {
         ((HtmlSelectManyListbox) selectComponent).setSize(5);
-        return documentTypes;
+        return getDocumentTypes();
     }
 
     // START: getters / setters
 
     public List<SelectItem> getDocumentTypes() {
+        if (documentTypes == null) {
+            List<DocumentType> types = getDocumentTypeService().getAllDocumentTypes(true);
+            documentTypes = new ArrayList<SelectItem>(types.size());
+            for (DocumentType documentType : types) {
+                documentTypes.add(new SelectItem(documentType.getId(), documentType.getName()));
+            }
+            WebUtil.sort(documentTypes);
+        }
         return documentTypes;
     }
 

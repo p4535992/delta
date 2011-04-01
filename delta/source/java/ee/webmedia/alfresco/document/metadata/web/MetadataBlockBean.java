@@ -1142,7 +1142,10 @@ public class MetadataBlockBean implements Serializable {
     }    
 
     public boolean isShowCase() {
-        return document.getProperties().get(TransientProps.CASE_NODEREF) != null;
+        if (document != null){
+            return document.getProperties().get(TransientProps.CASE_NODEREF) != null;
+        }
+        return false;
     }
 
     protected String generateNameAndEmailTable(List<String> names, List<String> emails) {
@@ -1697,6 +1700,9 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public boolean isShowStorageType() {
+        if(document == null){
+            return false;
+        }
         if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType()) //
                 || DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(document.getType()) //
                 || DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(document.getType())

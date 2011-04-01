@@ -73,7 +73,6 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
-        documentSearchBean.init();
 
         // Search output types
         if (searchOutput == null) {

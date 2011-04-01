@@ -144,10 +144,6 @@ public class SearchBlockBean implements Serializable {
         this.expanded = expanded;
     }
 
-    public void initDocSearch() {
-        documentSearchBean.init();
-    }
-
     // START: getters / setters
 
     public boolean isShow() {
