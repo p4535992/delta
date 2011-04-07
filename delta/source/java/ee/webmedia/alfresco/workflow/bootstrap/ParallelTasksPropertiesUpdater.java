@@ -9,6 +9,7 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.ArrayUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -55,6 +56,11 @@ public class ParallelTasksPropertiesUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef workflowRef) throws Exception {
+        Boolean origParallel = (Boolean) nodeService.getProperty(workflowRef, WorkflowCommonModel.Props.PARALLEL_TASKS);
+        if (origParallel != null) {
+            return new String[] { origParallel.toString() };
+        }
+
         boolean parallel = true;
         QName workflowType = nodeService.getType(workflowRef);
         if (workflowType.equals(WorkflowSpecificModel.Types.SIGNATURE_WORKFLOW)) {
@@ -71,7 +77,8 @@ public class ParallelTasksPropertiesUpdater extends AbstractNodeUpdater {
             nodeService.setProperties(taskRef, nodeService.getProperties(taskRef));
         }
 
-        return updatedRefs.toArray(new String[updatedRefs.size()]);
+        String[] info = new String[] { "null", Boolean.toString(parallel) };
+        return (String[]) ArrayUtils.addAll(info, updatedRefs.toArray(new String[updatedRefs.size()]));
     }
 
     public void setSearchService(SearchService searchService) {

@@ -24,6 +24,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
 
+import org.alfresco.config.Config;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -34,6 +35,9 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.config.ActionsConfigElement;
+import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
+import org.alfresco.web.config.ActionsConfigElement.ActionGroup;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
@@ -338,7 +342,16 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                     DocumentSubtypeModel.Types.CONTRACT_SIM.equals(node.getType()) ||
                     DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(node.getType()) ||
                     DocumentSubtypeModel.Types.CONTRACT_MV.equals(node.getType())) {
-                return "document_more_actions";
+
+                Config config = org.alfresco.web.app.Application.getConfigService(FacesContext.getCurrentInstance()).getGlobalConfig();
+                final ActionsConfigElement actionsConfig = (ActionsConfigElement) config.getConfigElement(ActionsConfigElement.CONFIG_ELEMENT_ID);
+                final ActionGroup actionGroup = actionsConfig.getActionGroup("document_more_actions");
+                for (String actionId : actionGroup) {
+                    ActionDefinition action = actionsConfig.getActionDefinition(actionId);
+                    if (action.Evaluator == null || action.Evaluator.evaluate(node)) {
+                        return "document_more_actions";
+                    }
+                }
             }
         }
         return "";
@@ -614,6 +627,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         final DocAssocInfo docAssocInfo = searchBlockBean.addTargetAssoc(targetRef, targetType);
         assocsBlockBean.getDocAssocInfos().add(docAssocInfo);
         assocsBlockBean.init(node);
+        metadataBlockBean.editNewDocument(node);
         metadataBlockBean.updateFollowUpOrReplyProperties(targetRef);
         MessageUtil.addInfoMessage("document_assocAdd_success");
     }

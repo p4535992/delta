@@ -26,6 +26,7 @@ import javax.faces.event.ActionListener;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.IDialogBean;
 import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
@@ -529,35 +530,51 @@ public class MenuBean implements Serializable {
     private void generateShortcutLinks() {
         shortcutsPanelGroup.getChildren().clear();
         for (Iterator<String> i = getShortcuts().iterator(); i.hasNext();) {
-            String shortcut = i.next();
-            if (!generateAndAddShortcut(shortcut)) {
+            String menuItemId = i.next();
+            if (!generateAndAddShortcut(menuItemId)) {
                 i.remove();
             }
         }
     }
 
-    private boolean generateAndAddShortcut(String shortcut) {
-        FacesContext context = FacesContext.getCurrentInstance();
+    public static MenuItem getMenuItemFromShortcut(String shortcut, Menu menu) {
+        if (shortcut == null) {
+            return null;
+        }
         String[] path = getPathFromShortcut(shortcut);
 
         List<MenuItem> subItems = menu.getSubItems();
         MenuItem item = null;
         int index;
         for (int i = 0; i < path.length; i++) {
+            if (subItems == null) {
+                return null;
+            }
             index = Integer.parseInt(path[i]);
             if (index >= subItems.size()) {
-                return false;
+                return null;
             }
             item = subItems.get(index);
+            if (item == null) {
+                return null;
+            }
             subItems = item.getSubItems();
         }
-        if (item == null) {
+        return item;
+    }
+
+    private boolean generateAndAddShortcut(String menuItemId) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        Pair<MenuItem, String[]> menuItemAndPath = getMenuItemAndPathFromMenuItemId(menuItemId);
+        if (menuItemAndPath == null) {
             return false;
         }
+        MenuItem item = menuItemAndPath.getFirst();
         MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, "shortcut-" + shortcutsPanelGroup.getChildCount(), getUserService(), getWorkflowService(), false);
         wrapper.setPlain(true);
 
         UIActionLink link = (UIActionLink) wrapper.getChildren().get(0);
+        String shortcut = getShortcutFromPath(menuItemAndPath.getSecond());
         link.addActionListener(new ShortcutClickedActionListener(shortcut));
 
         String title = (String) link.getValue();
@@ -569,6 +586,38 @@ public class MenuBean implements Serializable {
         List<UIComponent> children = shortcutsPanelGroup.getChildren();
         children.add(wrapper);
         return true;
+    }
+
+    private Pair<MenuItem, String[]> getMenuItemAndPathFromMenuItemId(String menuItemId) {
+        List<String> path = new ArrayList<String>();
+        MenuItem menuItem = getMenuItemById(menuItemId, menu.getSubItems(), path);
+        if (menuItem == null) {
+            return null;
+        }
+        Collections.reverse(path);
+        return new Pair<MenuItem, String[]>(menuItem, path.toArray(new String[path.size()]));
+    }
+
+    private static MenuItem getMenuItemById(String menuItemId, List<MenuItem> subItems, List<String> path) {
+        if (subItems == null) {
+            return null;
+        }
+        for (int i = 0; i < subItems.size(); i++) {
+            MenuItem item = subItems.get(i);
+            if (item == null) {
+                continue;
+            }
+            if (menuItemId.equals(item.getId())) {
+                path.add(Integer.toString(i));
+                return item;
+            }
+            item = getMenuItemById(menuItemId, item.getSubItems(), path);
+            if (item != null) {
+                path.add(Integer.toString(i));
+                return item;
+            }
+        }
+        return null;
     }
 
     @SuppressWarnings("unchecked")
@@ -585,7 +634,11 @@ public class MenuBean implements Serializable {
 
         String[] path = getPathFromClickedId();
         String shortcut = getShortcutFromPath(path);
-        if (shortcuts.contains(shortcut)) {
+        String menuItemId = getMenuItemIdFromShortcut(shortcut);
+        if (menuItemId == null) {
+            return 0;
+        }
+        if (shortcuts.contains(menuItemId)) {
             return -1;
         }
 
@@ -612,24 +665,38 @@ public class MenuBean implements Serializable {
         return 1;
     }
 
+    private String getMenuItemIdFromShortcut(String shortcut) {
+        return getMenuItemIdFromShortcut(shortcut, menu);
+    }
+
+    public static String getMenuItemIdFromShortcut(String shortcut, Menu menu) {
+        MenuItem menuItem = getMenuItemFromShortcut(shortcut, menu);
+        if (menuItem == null) {
+            return null;
+        }
+        return menuItem.getId();
+    }
+
     public void addShortcut(@SuppressWarnings("unused") ActionEvent event) {
         String shortcut = getShortcutFromClickedId();
-        if (shortcut == null || shortcuts.contains(shortcut)) {
+        String menuItemId = getMenuItemIdFromShortcut(shortcut);
+        if (menuItemId == null || shortcuts.contains(menuItemId)) {
             return;
         }
-        if (generateAndAddShortcut(shortcut)) {
-            getMenuService().addShortcut(shortcut);
-            shortcuts.add(shortcut);
+        if (generateAndAddShortcut(menuItemId)) {
+            getMenuService().addShortcut(menuItemId);
+            shortcuts.add(menuItemId);
         }
     }
 
     public void removeShortcut(@SuppressWarnings("unused") ActionEvent event) {
         String shortcut = getShortcutFromClickedId();
-        if (shortcut == null || !shortcuts.contains(shortcut)) {
+        String menuItemId = getMenuItemIdFromShortcut(shortcut);
+        if (menuItemId == null || !shortcuts.contains(menuItemId)) {
             return;
         }
-        getMenuService().removeShortcut(shortcut);
-        shortcuts.remove(shortcut);
+        getMenuService().removeShortcut(menuItemId);
+        shortcuts.remove(menuItemId);
         generateShortcutLinks();
     }
 
@@ -637,7 +704,7 @@ public class MenuBean implements Serializable {
         return StringUtils.join(getPathFromClickedId(), UIMenuComponent.VALUE_SEPARATOR);
     }
 
-    private static String getShortcutFromPath(String[] path) {
+    public static String getShortcutFromPath(String[] path) {
         return StringUtils.join(path, UIMenuComponent.VALUE_SEPARATOR);
     }
 
@@ -653,7 +720,7 @@ public class MenuBean implements Serializable {
         return path.toArray(new String[path.size()]);
     }
 
-    private static String[] getPathFromShortcut(String shortcut) {
+    public static String[] getPathFromShortcut(String shortcut) {
         return shortcut.replaceAll("^[^0-9]*", "").split(UIMenuComponent.VALUE_SEPARATOR);
     }
 

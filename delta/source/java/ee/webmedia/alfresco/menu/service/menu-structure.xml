@@ -96,10 +96,10 @@
          <dropdown title-id="menu_search" expanded="true">
             <submenu-id>queries-submenu</submenu-id>
             <subitems>
-               <item title-id="menu_documents">
+               <item id="documentSearch" title-id="menu_documents">
                   <outcome>dialog:documentSearchDialog</outcome>
                </item>
-               <item title-id="menu_tasks">
+               <item id="taskSearch" title-id="menu_tasks">
                   <outcome>dialog:taskSearchDialog</outcome>
                </item>
             </subitems>
@@ -139,10 +139,10 @@
    <item title-id="menu_contact">
       <outcome>dialog:addressbookManage</outcome>
       <subitems>
-         <item title-id="menu_contact_management">
+         <item id="contactManagement" title-id="menu_contact_management">
             <outcome>dialog:addressbookManage</outcome>
          </item>
-         <item title-id="menu_contact_group_management">
+         <item id="contactGroupManagement" title-id="menu_contact_group_management">
             <outcome>dialog:addressbookManageContactGroups</outcome>
          </item>
       </subitems>
@@ -153,20 +153,20 @@
       <outcome>dialog:userConsole</outcome>
       <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
       <subitems>
-         <item title-id="menu_my_profile">
+         <item id="myProfile" title-id="menu_my_profile">
             <outcome>dialog:userConsole</outcome>
             <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
          </item>
-         <item title-id="menu_my_favourites">
+         <item id="myFavourites" title-id="menu_my_favourites">
             <outcome>dialog:favoritesDocumentListDialog</outcome>
          </item>
          <dropdown title-id="menu_settings" expanded="true">
             <submenu-id>settings-submenu</submenu-id>
             <subitems>
-               <item title-id="menu_notifications_to_email">
+               <item id="notificationSettings" title-id="menu_notifications_to_email">
                   <outcome>dialog:notificationDialog</outcome>
                </item>
-               <item title-id="menu_leave_configuration">
+               <item id="substitutionSettings" title-id="menu_leave_configuration">
                   <outcome>dialog:substituteListDialog</outcome>
                </item>
             </subitems>
@@ -178,38 +178,38 @@
    <item title-id="menu_administrator" admin="true">
       <outcome>dialog:userListDialog</outcome>
       <subitems>
-         <item title-id="menu_user_management">
+         <item id="userManagement" title-id="menu_user_management">
             <outcome>dialog:userListDialog</outcome>
          </item>
-         <item title-id="menu_user_group_management">
+         <item id="userGroupManagement" title-id="menu_user_group_management">
             <outcome>dialog:manageGroups</outcome>
             <action-listener>#{GroupsDialog.reset}</action-listener>
          </item>
-         <item title-id="menu_classificators">
+         <item id="classificators" title-id="menu_classificators">
             <outcome>dialog:classificatorListDialog</outcome>
          </item>
-         <item title-id="menu_parameters">
+         <item id="parameters" title-id="menu_parameters">
             <outcome>dialog:parametersListDialog</outcome>
          </item>
-         <item title-id="menu_registers">
+         <item id="registers" title-id="menu_registers">
             <outcome>dialog:registerListDialog</outcome>
          </item>
-         <item title-id="menu_compoundworkflows">
+         <item id="compoundWorkflows" title-id="menu_compoundworkflows">
             <outcome>dialog:compoundWorkflowDefinitionListDialog</outcome>
          </item>
-         <item title-id="menu_templates">
+         <item id="templates" title-id="menu_templates">
             <outcome>dialog:documentTemplateListDialog</outcome>
          </item>
-         <item title-id="menu_document_types">
+         <item id="documentTypeManagement" title-id="menu_document_types">
             <outcome>dialog:documentTypeDialog</outcome>
          </item>
-         <item title-id="menu_organization_structure">
+         <item id="organizationStructure" title-id="menu_organization_structure">
             <outcome>dialog:orgstructureListDialog</outcome>
          </item>
-         <item title-id="menu_important_notifications">
+         <item id="importantNotifications" title-id="menu_important_notifications">
             <outcome>dialog:notificationListDialog</outcome>
          </item>
-         <item title-id="menu_system_information">
+         <item id="systemInformation" title-id="menu_system_information">
             <outcome>dialog:showSystemInfo</outcome>
          </item>
          <item title-id="menu_node_browser">

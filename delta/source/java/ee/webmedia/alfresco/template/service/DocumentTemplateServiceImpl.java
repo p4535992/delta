@@ -233,7 +233,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                         .append(" (")
                         .append(I18NUtil.getMessage("notification_dispostition_date"))
                         .append(": ")
-                        .append(dateFormat.format(vol.getDispositionDate()))
+                        .append(vol.getDispositionDate() == null ? "" : dateFormat.format(vol.getDispositionDate()))
                         .append(")")
                         .append("<br>\n");
             }
@@ -464,15 +464,24 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         List<Date> endDates = (List<Date>) properties.get(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE);
         String until = MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_until"); // FIXME - peaksin kasutama I18NUtilit
 
-        if (names == null) {
-            return null;
+        int size = 0;
+        if (names != null) {
+            size = names.size();
+        } else if (startDates != null) {
+            size = startDates.size();
+        } else if (endDates != null) {
+            size = endDates.size();
         }
-        List<String> substitutes = new ArrayList<String>(names.size());
-        for (int i = 0; i < names.size(); i++) {
-            Date startDate = i < startDates.size() ? startDates.get(i) : null;
-            Date endDate = i < endDates.size() ? endDates.get(i) : null;
+        List<String> substitutes = new ArrayList<String>(size);
+        for (int i = 0; i < size; i++) {
+            String name = names != null && i < names.size() ? names.get(i) : "";
+            Date startDate = startDates != null && i < startDates.size() ? startDates.get(i) : null;
+            Date endDate = endDates != null && i < endDates.size() ? endDates.get(i) : null;
+            if (StringUtils.isEmpty(name) && startDate == null && endDate == null) {
+                continue;
+            }
             StringBuilder sb = new StringBuilder();
-            sb.append(names.get(i))
+            sb.append(name)
                     .append(" ")
                     .append(startDate == null ? "" : dateFormat.format(startDate))
                     .append(" ")

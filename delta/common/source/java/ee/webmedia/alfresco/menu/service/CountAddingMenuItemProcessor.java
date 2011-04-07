@@ -19,13 +19,19 @@ public abstract class CountAddingMenuItemProcessor implements MenuService.MenuIt
     
     @Override
     final public void doWithMenuItem(MenuItem menuItem) {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            // If this is called from MenuService.reload which is called from an updater script which runs at deploy time,
+            // then FacesContext is not initialized
+            return;
+        }
 
         if(menuItem.getTitle() == null) {
             menuItem.setTitle(I18NUtil.getMessage(menuItem.getTitleId()));
             menuItem.getStyleClass().add("menuItemCount");
         }
 
-        MenuItemCountBean menuItemCountBean = (MenuItemCountBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuItemCountBean.BEAN_NAME);
+        MenuItemCountBean menuItemCountBean = (MenuItemCountBean) FacesHelper.getManagedBean(facesContext, MenuItemCountBean.BEAN_NAME);
         Integer count = menuItemCountBean.getCount(menuItem.getId());
 
         int countValue = count == null ? 0 : count.intValue();

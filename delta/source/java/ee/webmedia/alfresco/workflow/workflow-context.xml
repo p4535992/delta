@@ -106,7 +106,7 @@
    <!-- Used to fix invalid parallelTasks property and update lucene index (CL task 155454) -->
    <bean id="ParallelTasksPropertiesUpdater" class="ee.webmedia.alfresco.workflow.bootstrap.ParallelTasksPropertiesUpdater" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="parallelTasksPropertiesUpdater" />
+      <property name="name" value="ParallelTasksPropertiesUpdater" />
       <property name="executeOnceOnly" value="false" />
       <property name="generalService" ref="generalService" />
       <property name="nodeService" ref="nodeService" />
@@ -221,6 +221,11 @@
       <property name="moduleId" value="simdhs" />
       <property name="name" value="Version22ReviewWorkflowTempOutcomeUpdater" />
       <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="ParallelTasksPropertiesUpdater" />
+         </list>
+      </property>
       <property name="generalService" ref="generalService" />
       <property name="nodeService" ref="NodeService" />
       <property name="searchService" ref="searchService" />

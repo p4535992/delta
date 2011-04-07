@@ -84,4 +84,15 @@
       <property name="menuService" ref="MenuService" />
    </bean>
 
+   <!-- Changes shortcut to menuItemId (CL task 158558) -->
+   <bean id="shortcutToMenuItemIdUpdater" class="ee.webmedia.alfresco.menu.bootstrap.ShortcutToMenuItemIdUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="common" />
+      <property name="name" value="shortcutToMenuItemIdUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="searchService" ref="searchService" />
+      <property name="generalService" ref="generalService" />
+      <property name="menuService" ref="menuService" />
+   </bean> 
+
 </beans>

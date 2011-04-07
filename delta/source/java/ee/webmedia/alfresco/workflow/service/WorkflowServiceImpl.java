@@ -21,8 +21,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
+import java.util.Map.Entry;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
@@ -31,7 +31,6 @@ import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
-import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
@@ -56,8 +55,8 @@ import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.UserUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.workflow.exception.WorkflowActiveResponsibleTaskException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -68,9 +67,9 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
-import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowModifications;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 import ee.webmedia.alfresco.workflow.service.type.AssignmentWorkflowType;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
@@ -101,7 +100,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private NodeService nodeService;
     private DictionaryService dictionaryService;
-    private CopyService copyService;
     private GeneralService generalService;
     private UserService userService;
     private NamespaceService namespaceService;
@@ -112,6 +110,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private final Map<QName, WorkflowType> workflowTypesByWorkflow = new HashMap<QName, WorkflowType>();
     private final Map<QName, WorkflowType> workflowTypesByTask = new HashMap<QName, WorkflowType>();
     private final List<WorkflowEventListener> eventListeners = new ArrayList<WorkflowEventListener>();
+    private final List<WorkflowEventListenerWithModifications> immediateEventListeners = new ArrayList<WorkflowEventListenerWithModifications>();
+
     /**
      * Seoses asutuseülese töövoo testimisega meie testis, kus asutus peab saama saata ülesandeid ka endale:
      * dokumendi vastuvõtmisel ja olemasoleva dokumendi otsimisele kontrollitakse
@@ -1374,6 +1374,15 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
     }
 
+    @Override
+    public void registerImmediateEventListener(WorkflowEventListenerWithModifications listener) {
+        Assert.notNull(listener);
+        immediateEventListeners.add(listener);
+        if (log.isDebugEnabled()) {
+            log.debug("Registered immediate event listener: " + listener);
+        }
+    }
+
     private void handleEvents(WorkflowEventQueue queue) {
         for (WorkflowEvent event : queue.getEvents()) {
             if (log.isDebugEnabled()) {
@@ -1409,9 +1418,17 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
     }
 
+    private void handleEventImmediately(WorkflowEventQueue queue, WorkflowEvent event) {
+        handleEventForWorkflowType(queue, event);
+
+        for (WorkflowEventListenerWithModifications listener : immediateEventListeners) {
+            listener.handle(event, this, queue);
+        }
+    }
+
     private void queueEvent(WorkflowEventQueue queue, WorkflowEventType type, BaseWorkflowObject object, Object... extras) {
         WorkflowEvent event = new BaseWorkflowEvent(type, object, extras);
-        handleEventForWorkflowType(queue, event);
+        handleEventImmediately(queue, event);
 
         List<WorkflowEvent> events = queue.getEvents();
         for (WorkflowEvent existingEvent : events) {
@@ -1868,10 +1885,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     public void setDictionaryService(DictionaryService dictionaryService) {
         this.dictionaryService = dictionaryService;
-    }
-
-    public void setCopyService(CopyService copyService) {
-        this.copyService = copyService;
     }
 
     public void setGeneralService(GeneralService generalService) {

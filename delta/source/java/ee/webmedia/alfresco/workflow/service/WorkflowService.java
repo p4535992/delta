@@ -14,6 +14,7 @@ import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
 /**
@@ -22,10 +23,22 @@ import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 public interface WorkflowService {
     String BEAN_NAME = "WmWorkflowService";
 
+    /**
+     * Register listener to receive workflow events. Listener is called at the end of each service call, not immediately.
+     */
     void registerEventListener(WorkflowEventListener listener);
+
+    /**
+     * Register listener to receive workflow events immediately.
+     */
+    void registerImmediateEventListener(WorkflowEventListenerWithModifications listener);
 
     // Workflow types
 
+    /**
+     * Register workflow type. If {@code workflowType} implements {@link WorkflowEventListener} and/or {@link WorkflowEventListenerWithModifications}, it
+     * receives events immediately for both interfaces.
+     */
     void registerWorkflowType(WorkflowType workflowType);
 
     Map<QName, WorkflowType> getWorkflowTypes();

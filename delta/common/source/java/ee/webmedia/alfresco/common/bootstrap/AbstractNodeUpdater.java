@@ -54,7 +54,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     protected void executeInternal() throws Throwable {
         log.info("Starting node updater");
         nodesFile = new File(inputFolder, getNodesCsvFileName());
-        nodes = loadNodesFromFile(nodesFile);
+        nodes = loadNodesFromFile(nodesFile, false);
         if (nodes == null) {
             nodes = loadNodesFromRepo();
             if (nodes == null) {
@@ -64,7 +64,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
             writeNodesToFile(nodesFile, nodes);
         }
         completedNodesFile = new File(inputFolder, getCompletedNodesCsvFileName());
-        completedNodes = loadNodesFromFile(completedNodesFile);
+        completedNodes = loadNodesFromFile(completedNodesFile, true);
         if (completedNodes != null) {
             nodes.removeAll(completedNodes);
             log.info("Removed " + completedNodes.size() + " completed nodes from nodes list, " + nodes.size() + " nodes remained");
@@ -91,7 +91,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         return getClass().getSimpleName() + "Completed.csv";
     }
 
-    protected Set<NodeRef> loadNodesFromFile(File file) throws Exception {
+    protected Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
         if (!file.exists()) {
             log.info("Skipping loading nodes, file does not exist: " + file.getAbsolutePath());
             return null;
@@ -102,7 +102,9 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         Set<NodeRef> loadedNodes = new HashSet<NodeRef>();
         CsvReader reader = new CsvReader(new BufferedInputStream(new FileInputStream(file)), CSV_SEPARATOR, CSV_CHARSET);
         try {
-            reader.readHeaders();
+            if (readHeaders) {
+                reader.readHeaders();
+            }
             while (reader.readRecord()) {
                 NodeRef nodeRef = new NodeRef(reader.get(0));
                 loadedNodes.add(nodeRef);

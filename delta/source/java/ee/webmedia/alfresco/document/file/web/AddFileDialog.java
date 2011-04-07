@@ -177,11 +177,12 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     public String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName) {
         checkPlusInFileName(displayName);
-        displayName = ISOLatin1Util.removeAccents(
-                          FilenameUtil.replaceAmpersand(
-                                  FilenameUtil.stripDotsAndSpaces(
-                                          FilenameUtil.stripForbiddenWindowsCharacters(
-                                                  FilenameUtil.replaceNonAsciiCharacters(displayName, "_")))));
+        displayName = FilenameUtil.replaceNonAsciiCharacters(
+                        ISOLatin1Util.removeAccents(
+                                FilenameUtil.replaceAmpersand(
+                                        FilenameUtil.stripDotsAndSpaces(
+                                                FilenameUtil.stripForbiddenWindowsCharacters(
+                                                        displayName)))), "_");
         String uniqueDisplayName = getFileService().getUniqueFileDisplayName(documentNodeRef, displayName);
         if (!displayName.equals(uniqueDisplayName)) {
             // Take care of "duplicate files"

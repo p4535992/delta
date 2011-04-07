@@ -12,27 +12,28 @@ import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
-import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowModifications;
 
 /**
  * Performs operations on documents based on events related to workflow status changes
  * 
  * @author Ats Uiboupin
  */
-public class DocumentWorkflowStatusEventListener implements WorkflowEventListener, InitializingBean {
+public class DocumentWorkflowStatusEventListener implements WorkflowEventListenerWithModifications, InitializingBean {
 
     private WorkflowService workflowService;
     private NodeService nodeService;
 
     @Override
     public void afterPropertiesSet() throws Exception {
-        workflowService.registerEventListener(this);
+        workflowService.registerImmediateEventListener(this);
     }
 
     @Override
-    public void handle(WorkflowEvent event, WorkflowEventQueue queue) {
+    public void handle(WorkflowEvent event, WorkflowModifications workflowModifications, WorkflowEventQueue queue) {
         final BaseWorkflowObject object = event.getObject();
 
         if (object instanceof CompoundWorkflow) {

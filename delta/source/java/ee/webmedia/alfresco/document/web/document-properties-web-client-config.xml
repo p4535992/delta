@@ -289,19 +289,19 @@
          <show-property name="docspec:procurementType" component-generator="ClassificatorSelectorGenerator" classificatorName="procurementType" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
          <show-property name="docspec:procurementLegalBasis" component-generator="ParameterTextAreaGenerator" parameterName="procurementLegalBasis" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
          <show-property name="docspec:procurementDesc" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
-				 <show-property name="docspec:procurementSumEstimated" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" />
+	     <show-property name="docspec:procurementSumEstimated" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" labelStyleClass="wrap" />
          <show-property name="docspec:procurementBudgetClassification" component-generator="ClassificatorSelectorGenerator" classificatorName="procurementBudgetClassification" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
          <show-property name="docspec:procurementObjectClassCode" component-generator="ParameterTextAreaGenerator" parameterName="procurementObjectClassCode" styleClass="expand19-200" labelStyleClass="wrap" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
          <show-property name="docspec:procurementTenderData" component-generator="ParameterTextAreaGenerator" parameterName="procurementTenderData" styleClass="expand19-200" labelStyleClass="wrap" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
 
-         <show-property name="docspec:procurementContractDateEstimated" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+         <show-property name="docspec:procurementContractDateEstimated" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="wrap" />
 
          <show-property name="docspec:procurementOfficialResponsible" show-in-view-mode="true" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setProcurementOfficialResponsible}" dialogTitleId="users_search_title" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="wrap" />
 
          <show-property name="docspec:linkedToEuProject" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="wrap" />
          <show-property name="docspec:euProjectDesc" component-generator="TextAreaGenerator" styleClass="expand19-200" labelStyleClass="wrap" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" mandatoryIf="linkedToEuProject" />
          <show-property name="docspec:structuralAidIdOutsideProject" component-generator="TextAreaGenerator" styleClass="expand19-200" labelStyleClass="wrap" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
-         <show-property name="docspec:objectTechnicalDesc" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+         <show-property name="docspec:objectTechnicalDesc" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="wrap" />
          <show-property name="docspec:evaluationCriteria" component-generator="ParameterTextAreaGenerator" parameterName="procurementEvaluationCriteria" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
          <show-property name="docspec:offeringEndDate" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="wrap" />
          <show-property name="docspec:qualificationTermsForTenders" component-generator="ParameterTextAreaGenerator" parameterName="procurementQualificationTermsForTenders" styleClass="expand19-200" labelStyleClass="wrap" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />

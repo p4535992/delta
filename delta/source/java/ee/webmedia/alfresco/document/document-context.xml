@@ -316,8 +316,13 @@ DaoAuthenticationProvider.authenticate()
 
    <bean id="SearchableHasStartedCompoundWorkflowsUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableHasStartedCompoundWorkflowsUpdater" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="searchableHasStartedCompoundWorkflowsUpdater" />
+      <property name="name" value="SearchableHasStartedCompoundWorkflowsUpdater" />
       <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="contractPartyUpdater" />
+         </list>
+      </property>
       <property name="generalService" ref="generalService" />
       <property name="nodeService" ref="nodeService" />
       <property name="searchService" ref="searchService" />
@@ -369,6 +374,11 @@ DaoAuthenticationProvider.authenticate()
       <property name="moduleId" value="simdhs" />
       <property name="name" value="contractPartyUpdater" />
       <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="version21DocumentUpdater" />
+         </list>
+      </property>
       <property name="behaviourFilter" ref="policyBehaviourFilter" />
       <property name="searchService" ref="searchService" />
       <property name="nodeService" ref="nodeService" />
@@ -386,6 +396,38 @@ DaoAuthenticationProvider.authenticate()
       <property name="generalService" ref="generalService" />
       <property name="enabled" value="${version21DocumentUpdater.enabled}" />
    </bean>    
+
+   <!-- Used to add sendinfos to contracts (CL task 156770) -->
+   <bean id="contractSendInfoUpdater" class="ee.webmedia.alfresco.document.bootstrap.ContractSendInfoUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="contractSendInfoUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="contractPartyUpdater" />
+         </list>
+      </property>
+      <property name="nodeService" ref="nodeService" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="searchService" ref="searchService" />
+      <property name="generalService" ref="generalService" />
+   </bean> 
+
+   <!-- Used to add dummy workflow to old incoming letters to prevent them from appearing in "Menetluses" menu (CL task 158704) -->
+   <bean id="incomingLetterDummyWorkflowUpdater" class="ee.webmedia.alfresco.document.bootstrap.IncomingLetterDummyWorkflowUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="incomingLetterDummyWorkflowUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
+         </list>
+      </property>
+      <property name="nodeService" ref="nodeService" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="searchService" ref="searchService" />
+      <property name="generalService" ref="generalService" />
+   </bean> 
 
    <bean id="documentWorkflowStatusEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener">
       <property name="workflowService" ref="WmWorkflowService" />
