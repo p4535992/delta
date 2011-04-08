@@ -550,7 +550,11 @@ public class MenuBean implements Serializable {
             if (subItems == null) {
                 return null;
             }
-            index = Integer.parseInt(path[i]);
+            try {
+                index = Integer.parseInt(path[i]);
+            } catch (NumberFormatException e) {
+                return null;
+            }
             if (index >= subItems.size()) {
                 return null;
             }
@@ -646,20 +650,27 @@ public class MenuBean implements Serializable {
         MenuItem item = null;
         int index;
         for (int i = 0; i < path.length; i++) {
-            index = Integer.parseInt(path[i]);
+            if (subItems == null) {
+                return 0;
+            }
+            try {
+                index = Integer.parseInt(path[i]);
+            } catch (NumberFormatException e) {
+                return 0;
+            }
             if (index >= subItems.size()) {
                 return 0;
             }
             item = subItems.get(index);
+            if (item == null) {
+                return 0;
+            }
             if (item instanceof DropdownMenuItem) {
                 if (StringUtils.isNotBlank(((DropdownMenuItem) item).getXPath())) {
                     return 0;
                 }
             }
             subItems = item.getSubItems();
-        }
-        if (item == null) {
-            return 0;
         }
 
         return 1;
