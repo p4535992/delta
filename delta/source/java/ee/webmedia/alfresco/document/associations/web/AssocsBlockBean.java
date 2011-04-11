@@ -26,7 +26,7 @@ public class AssocsBlockBean implements Serializable {
 
     public void init(Node node) {
         reset();
-        this.document = node;
+        document = node;
         restore();
     }
 

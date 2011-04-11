@@ -16,10 +16,10 @@ import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
 public class WebDAVCustomHelper extends WebDAVHelper {
-    
+
     // Custom services
-    private VersionsService m_versionsService;
-    private DocumentService documentService;
+    private final VersionsService m_versionsService;
+    private final DocumentService documentService;
 
     protected WebDAVCustomHelper(ServiceRegistry serviceRegistry, AuthenticationService authService, VersionsService versionsService, DocumentService documentService) {
         super(serviceRegistry, authService);
@@ -67,12 +67,11 @@ public class WebDAVCustomHelper extends WebDAVHelper {
             throw new FileNotFoundException(path);
         }
     }
-    
+
     /**
-     * @return          Return custom versions service
+     * @return Return custom versions service
      */
-    public VersionsService getVersionsService() 
-    {
+    public VersionsService getVersionsService() {
         return m_versionsService;
     }
 

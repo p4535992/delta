@@ -17,6 +17,7 @@ import org.alfresco.web.bean.repository.Node;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
+
 /**
  * @author Dmitri Melnikov
  */

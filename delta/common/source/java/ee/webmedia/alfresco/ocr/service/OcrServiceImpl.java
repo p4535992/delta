@@ -151,9 +151,9 @@ public class OcrServiceImpl implements OcrService, InitializingBean {
             return null;
         }
         if (nodeService.hasAspect(nodeRef, OcrModel.Aspects.OCR_COMPLETED)) {
-//            if (log.isDebugEnabled()) {
-//                log.debug("File already has completed OCR, ignoring: " + nodeRef);
-//            }
+            // if (log.isDebugEnabled()) {
+            // log.debug("File already has completed OCR, ignoring: " + nodeRef);
+            // }
             // File already has completed OCR, ignore
             return null;
         }

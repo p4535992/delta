@@ -18,7 +18,7 @@ public class OrganizationStructureServiceImplTest extends BaseAlfrescoSpringTest
     @Override
     protected void onSetUpInTransaction() throws Exception {
         super.onSetUpInTransaction();
-        organizationStructureService = (OrganizationStructureService) this.applicationContext.getBean(OrganizationStructureService.BEAN_NAME);
+        organizationStructureService = (OrganizationStructureService) applicationContext.getBean(OrganizationStructureService.BEAN_NAME);
     }
 
     public void testWarmUp() {

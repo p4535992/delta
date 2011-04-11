@@ -22,6 +22,7 @@ import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 public class UpdateOrganizationsListJob implements StatefulJob {
     private static Log log = LogFactory.getLog(UpdateOrganizationsListJob.class);
 
+    @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         log.debug("Starting UpdateOrganizationsListJob");
         JobDataMap jobData = context.getJobDetail().getJobDataMap();

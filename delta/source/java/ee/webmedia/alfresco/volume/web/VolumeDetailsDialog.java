@@ -51,7 +51,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "volume_contains_docs_or_cases");
             super.isFinished = false;
             return null;
-        }       
+        }
         resetFields();
         MessageUtil.addInfoMessage("save_success");
         return outcome;
@@ -91,8 +91,7 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         if (!isClosed()) {
             try {
                 getVolumeService().closeVolume(currentEntry);
-            }
-            catch (VolumeContainsCasesException e){
+            } catch (VolumeContainsCasesException e) {
                 MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "volume_contains_docs_or_cases");
                 super.isFinished = false;
                 return null;
@@ -125,14 +124,13 @@ public class VolumeDetailsDialog extends BaseDialogBean {
     public Object getActionsContext() {
         return currentEntry;
     }
-    
+
     public Boolean disableContainsCases() {
         return !isNew() && (DocListUnitStatus.CLOSED.equals(currentEntry.getStatus())
                             || DocListUnitStatus.DESTROYED.equals(currentEntry.getStatus())
                             || getCaseService().getCasesCountByVolume(currentEntry.getNode().getNodeRef()) > 0
                             || getDocumentService().getDocumentsCountByVolumeOrCase(currentEntry.getNode().getNodeRef()) > 0);
     }
-    
 
     // END: jsf actions/accessors
 
@@ -157,22 +155,22 @@ public class VolumeDetailsDialog extends BaseDialogBean {
         }
         return archivalsService;
     }
-    
+
     protected CaseService getCaseService() {
         if (caseService == null) {
             caseService = (CaseService) FacesContextUtils.getRequiredWebApplicationContext(
                     FacesContext.getCurrentInstance()).getBean(CaseService.BEAN_NAME);
         }
         return caseService;
-    } 
-    
+    }
+
     protected DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(
                     FacesContext.getCurrentInstance()).getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
-    }    
+    }
 
     public void setVolumeService(VolumeService volumeService) {
         this.volumeService = volumeService;

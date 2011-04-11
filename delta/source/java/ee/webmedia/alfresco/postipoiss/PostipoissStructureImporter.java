@@ -93,8 +93,8 @@ public class PostipoissStructureImporter {
     private static final char OUTPUT_SEPARATOR = ';';
     private static final String CREATOR_MODIFIER = "DELTA";
 
-    private Map<String, NodeRef> contactCache = new LinkedHashMap<String, NodeRef>();
-    private Map<String, NodeRef> contactGroupCache = new LinkedHashMap<String, NodeRef>();
+    private final Map<String, NodeRef> contactCache = new LinkedHashMap<String, NodeRef>();
+    private final Map<String, NodeRef> contactGroupCache = new LinkedHashMap<String, NodeRef>();
 
     private static DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
@@ -120,8 +120,9 @@ public class PostipoissStructureImporter {
     }
 
     private static boolean isArchived(int year, Date validTo) {
-        if (year < 2009)
+        if (year < 2009) {
             return true;
+        }
         if (year == 2009) {
             if (validTo != null && validTo.before(endOfArchive)) {
                 return true;
@@ -163,12 +164,11 @@ public class PostipoissStructureImporter {
                 return;
             }
 
-
-//            List<DocumentType> dts = documentTypeService.getAllDocumentTypes();
-//            allDocumentTypes = new ArrayList<QName>();
-//            for (DocumentType dt : dts) {
-//                allDocumentTypes.add(dt.getId());
-//            }
+            // List<DocumentType> dts = documentTypeService.getAllDocumentTypes();
+            // allDocumentTypes = new ArrayList<QName>();
+            // for (DocumentType dt : dts) {
+            // allDocumentTypes.add(dt.getId());
+            // }
 
             log.info("Structure import is starting to run");
 
@@ -422,39 +422,39 @@ public class PostipoissStructureImporter {
         // preenteredVolumes = new HashMap<String, Volume>();
     }
 
-//    private Date year2010;
-//    {
-//        try {
-//            year2010 = dateFormat.parse("01.01.2010");
-//        } catch (ParseException e) {
-//            throw new RuntimeException(e);
-//        }
-//    }
+    // private Date year2010;
+    // {
+    // try {
+    // year2010 = dateFormat.parse("01.01.2010");
+    // } catch (ParseException e) {
+    // throw new RuntimeException(e);
+    // }
+    // }
 
-//    private void loadPreenteredVolumes() {
-//        List<Function> allFunctions = functionsService.getAllFunctions();
-//        for (Function f : allFunctions) {
-//            List<Series> allSeries = seriesService.getAllSeriesByFunction(f.getNodeRef());
-//            for (Series s : allSeries) {
-//                List<Volume> vols = volumeService.getAllVolumesBySeries(s.getNode().getNodeRef());
-//                for (Volume v : vols) {
-//                    if (StringUtils.isNotEmpty(v.getVolumeMark()) && v.getValidFrom() != null && !v.getValidFrom().before(year2010)) {
-//                        if (v.isContainsCases()) {
-//                            List<Case> casesByVolume = caseService.getAllCasesByVolume(v.getNode().getNodeRef());
-//                            for (Case asi : casesByVolume) {
-//                                String title = asi.getTitle();
-//                                if (StringUtils.isNotBlank(title)) {
-//                                    title = title.trim();
-//                                    preenteredCases.put(title, asi);
-//                                }
-//                            }
-//                        }
-//                        preenteredVolumes.put(v.getVolumeMark(), v);
-//                    }
-//                }
-//            }
-//        }
-//    }
+    // private void loadPreenteredVolumes() {
+    // List<Function> allFunctions = functionsService.getAllFunctions();
+    // for (Function f : allFunctions) {
+    // List<Series> allSeries = seriesService.getAllSeriesByFunction(f.getNodeRef());
+    // for (Series s : allSeries) {
+    // List<Volume> vols = volumeService.getAllVolumesBySeries(s.getNode().getNodeRef());
+    // for (Volume v : vols) {
+    // if (StringUtils.isNotEmpty(v.getVolumeMark()) && v.getValidFrom() != null && !v.getValidFrom().before(year2010)) {
+    // if (v.isContainsCases()) {
+    // List<Case> casesByVolume = caseService.getAllCasesByVolume(v.getNode().getNodeRef());
+    // for (Case asi : casesByVolume) {
+    // String title = asi.getTitle();
+    // if (StringUtils.isNotBlank(title)) {
+    // title = title.trim();
+    // preenteredCases.put(title, asi);
+    // }
+    // }
+    // }
+    // preenteredVolumes.put(v.getVolumeMark(), v);
+    // }
+    // }
+    // }
+    // }
+    // }
 
     private Map<String, Funk> funks = new HashMap<String, Funk>();
 
@@ -566,60 +566,60 @@ public class PostipoissStructureImporter {
     // SERIES/VOLUMES
     // /////////////////////////////////////////////////////////////////////////
 
-//    private NodeRef createNewCase(Volume v) {
-//        Case asi = caseService.createCase(v.getNode().getNodeRef());
-//        asi.setTitle(v.getTitle());
-//        caseService.saveOrUpdate(asi, false);
-//        return asi.getNode().getNodeRef();
-//    }
+    // private NodeRef createNewCase(Volume v) {
+    // Case asi = caseService.createCase(v.getNode().getNodeRef());
+    // asi.setTitle(v.getTitle());
+    // caseService.saveOrUpdate(asi, false);
+    // return asi.getNode().getNodeRef();
+    // }
 
-//    private Toimik create2010Toimik(Toimik t) {
-//        Volume v = preenteredVolumes.get(t.volumeMarkNormed);
-//        if (v != null) {
-//            NodeRef nodeRef = v.getNode().getNodeRef();
-//            if (v.isContainsCases()) {
-//                nodeRef = createNewCase(v);
-//            }
-//            t.nodeRef = nodeRef;
-//            putToimik(t);
-//            return t;
-//        } else {
-//            for (Entry<String, Case> entry : preenteredCases.entrySet()) {
-//                if (entry.getKey().startsWith(t.volumeMarkNormed)) {
-//                    t.nodeRef = entry.getValue().getNode().getNodeRef();
-//                    putToimik(t);
-//                    return t;
-//                }
-//            }
-//        }
-//        return null;
-//    }
+    // private Toimik create2010Toimik(Toimik t) {
+    // Volume v = preenteredVolumes.get(t.volumeMarkNormed);
+    // if (v != null) {
+    // NodeRef nodeRef = v.getNode().getNodeRef();
+    // if (v.isContainsCases()) {
+    // nodeRef = createNewCase(v);
+    // }
+    // t.nodeRef = nodeRef;
+    // putToimik(t);
+    // return t;
+    // } else {
+    // for (Entry<String, Case> entry : preenteredCases.entrySet()) {
+    // if (entry.getKey().startsWith(t.volumeMarkNormed)) {
+    // t.nodeRef = entry.getValue().getNode().getNodeRef();
+    // putToimik(t);
+    // return t;
+    // }
+    // }
+    // }
+    // return null;
+    // }
 
-//    private Toimik getToimik(Toimik t) {
-//        Toimik r = findToimik(t);
-//        if (r == null && isSeriesOpen(t)) {
-//            r = create2010Toimik(t);
-//        }
-//        return r;
-//    }
+    // private Toimik getToimik(Toimik t) {
+    // Toimik r = findToimik(t);
+    // if (r == null && isSeriesOpen(t)) {
+    // r = create2010Toimik(t);
+    // }
+    // return r;
+    // }
 
-//    private Toimik findToimik(Toimik t) {
-//        Map<String, Toimik> map = toimikMap.get(t.year());
-//        if (map == null) {
-//            return null;
-//        }
-//
-//        return map.get(t.volumeMarkNormed);
-//    }
+    // private Toimik findToimik(Toimik t) {
+    // Map<String, Toimik> map = toimikMap.get(t.year());
+    // if (map == null) {
+    // return null;
+    // }
+    //
+    // return map.get(t.volumeMarkNormed);
+    // }
 
-//    private void putToimik(Toimik t) {
-//        Map<String, Toimik> map = toimikMap.get(t.year());
-//        if (map == null) {
-//            map = new HashMap<String, Toimik>();
-//            toimikMap.put(t.year(), map);
-//        }
-//        map.put(t.volumeMarkNormed, t);
-//    }
+    // private void putToimik(Toimik t) {
+    // Map<String, Toimik> map = toimikMap.get(t.year());
+    // if (map == null) {
+    // map = new HashMap<String, Toimik>();
+    // toimikMap.put(t.year(), map);
+    // }
+    // map.put(t.volumeMarkNormed, t);
+    // }
 
     static class Toimik implements Comparable<Toimik> {
         String rowId;
@@ -707,10 +707,10 @@ public class PostipoissStructureImporter {
 
         @Override
         public int compareTo(Toimik o) {
-            if (this.orderArray.length > o.orderArray.length) {
-                return compare(this.orderArray, o.orderArray);
+            if (orderArray.length > o.orderArray.length) {
+                return compare(orderArray, o.orderArray);
             } else {
-                return -compare(o.orderArray, this.orderArray);
+                return -compare(o.orderArray, orderArray);
             }
         }
 
@@ -721,8 +721,9 @@ public class PostipoissStructureImporter {
                     return longArray[i] > shortArray[i] ? 1 : -1;
                 }
             }
-            if (longArray.length > length)
+            if (longArray.length > length) {
                 return 1;
+            }
             return 0;
         }
     }
@@ -746,8 +747,9 @@ public class PostipoissStructureImporter {
 
     private static Date parseDate(String s) {
         Date date = null;
-        if (s == null)
+        if (s == null) {
             return null;
+        }
         try {
             date = dateFormat.parse(s);
         } catch (ParseException e) {
@@ -779,14 +781,14 @@ public class PostipoissStructureImporter {
         map.put(t.seriesIndex, series);
     }
 
-    private List<Toimik> toimikud = new ArrayList<Toimik>(6000);
+    private final List<Toimik> toimikud = new ArrayList<Toimik>(6000);
 
     private void importToimik(Toimik t) {
-//        Toimik theOtherOne = getToimik(t);
-//        if (theOtherOne != null) {
-//            theOtherOne.add(t.volumeMark);
-//            return;
-//        }
+        // Toimik theOtherOne = getToimik(t);
+        // if (theOtherOne != null) {
+        // theOtherOne.add(t.volumeMark);
+        // return;
+        // }
 
         NodeRef series = getSeries(t);
 
@@ -857,7 +859,7 @@ public class PostipoissStructureImporter {
         }
         Series series = seriesService.createSeries(fRef);
         Map<String, Object> props = series.getNode().getProperties();
-        props.put(SeriesModel.Props.TYPE.toString(), SeriesType.SERIES.getValueName() /*toSeriesType(t)*/);
+        props.put(SeriesModel.Props.TYPE.toString(), SeriesType.SERIES.getValueName() /* toSeriesType(t) */);
         props.put(SeriesModel.Props.SERIES_IDENTIFIER.toString(), t.seriesIndex);
         props.put(SeriesModel.Props.TITLE.toString(), t.seriesTitle);
         props.put(SeriesModel.Props.STATUS.toString(), isSeriesOpen(t) ? DocListUnitStatus.OPEN.getValueName() : DocListUnitStatus.CLOSED.getValueName());
@@ -891,7 +893,7 @@ public class PostipoissStructureImporter {
 
         // We check order ourselves above
         seriesService.saveOrUpdateWithoutReorder(series);
-        
+
         NodeRef seriesRef = series.getNode().getNodeRef();
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(seriesRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES_LOG);
         for (ChildAssociationRef childRef : childAssocs) {
@@ -901,7 +903,7 @@ public class PostipoissStructureImporter {
             childProps.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
             nodeService.addProperties(childRef.getChildRef(), childProps);
         }
-        
+
         return seriesRef;
     }
 
@@ -1031,28 +1033,29 @@ public class PostipoissStructureImporter {
     private static String getPostipoissMark(String trimmedTitle) {
         if (!trimmedTitle.isEmpty() && CharUtils.isAsciiNumeric(trimmedTitle.charAt(0))) {
             int i = 1;
-            for (; trimmedTitle.charAt(i) == '.' || CharUtils.isAsciiNumeric(trimmedTitle.charAt(i)); i++)
+            for (; trimmedTitle.charAt(i) == '.' || CharUtils.isAsciiNumeric(trimmedTitle.charAt(i)); i++) {
                 ;
+            }
             return trimmedTitle.substring(0, i);
         }
         return "";
     }
 
     // A specific logic for SIM
-//    private static String trimPostipoissFunctionName(String name) {
-//        String result = name;
-//        String validityPrefix = "Kehtib kuni 01.01.2010";
-//        String endedPartialPrefix = "PETATUD";
-//        if (name.startsWith(validityPrefix)) { // is PP 'function' that was open until 2010
-//            result = name.substring(validityPrefix.length());
-//            result = result.trim();
-//        }
-//        if (name.substring(2).startsWith(endedPartialPrefix)) { // if is ended PP 'function'
-//            result = name.substring(endedPartialPrefix.length() + 2);
-//            result = result.trim();
-//        }
-//        return result;
-//    }
+    // private static String trimPostipoissFunctionName(String name) {
+    // String result = name;
+    // String validityPrefix = "Kehtib kuni 01.01.2010";
+    // String endedPartialPrefix = "PETATUD";
+    // if (name.startsWith(validityPrefix)) { // is PP 'function' that was open until 2010
+    // result = name.substring(validityPrefix.length());
+    // result = result.trim();
+    // }
+    // if (name.substring(2).startsWith(endedPartialPrefix)) { // if is ended PP 'function'
+    // result = name.substring(endedPartialPrefix.length() + 2);
+    // result = result.trim();
+    // }
+    // return result;
+    // }
 
     private static void logAllCreation(String s, NodeRef node) {
         if (node == null) {

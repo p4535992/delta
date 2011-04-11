@@ -12,7 +12,6 @@ import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
@@ -82,7 +81,7 @@ public class GeneratedFileMimeTypeUpdater extends AbstractNodeUpdater {
         setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
         setProps.put(ContentModel.PROP_MODIFIED, new Date());
         nodeService.addProperties(documentRef, setProps);
-        
+
         return new String[] { nodeRef.toString(), "mimetypeUpdated", name, oldContent.getMimetype(), newContent.getMimetype(), newContent.getEncoding(),
                 Long.toString(newContent.getSize()), newContent.getContentUrl() };
     }

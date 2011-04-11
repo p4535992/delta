@@ -51,11 +51,11 @@ public class Case implements Serializable, Comparable<Case> {
     public int getContainingDocsCount() {
         return containingDocsCount;
     }
-    
+
     public void setContainingDocsCount(int containingDocsCount) {
         this.containingDocsCount = containingDocsCount;
     }
-    
+
     public NodeRef getVolumeNodeRef() {
         return volumeNodeRef;
     }
@@ -71,12 +71,14 @@ public class Case implements Serializable, Comparable<Case> {
     public void setNode(Node node) {
         this.node = node;
     }
+
     // END: methods that operate VO properties
 
     // START: methods that operate on node, not on VO properties
     public boolean isClosed() {
         return RepoUtil.isExistingPropertyValueEqualTo(node, CaseModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName());
     }
+
     // END: methods that operate on node, not on VO properties
 
     @Override
@@ -90,7 +92,7 @@ public class Case implements Serializable, Comparable<Case> {
         }
         return getTitle().compareTo(other.getTitle());
     }
-    
+
     @Override
     public String toString() {
         return new StringBuilder("Case:").append("\n\ttitle = " + title).append("\n\tstatus = " + status).toString();

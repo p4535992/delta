@@ -15,9 +15,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.Map.Entry;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -121,6 +121,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
      * This implementation is much more complex just because we can't expect that all documents that must be created under the same case
      * would be passed into the method at once.
      */
+    @Override
     public <IDoc extends ImportDocument> long importDocuments(List<IDoc> documents) {
         long nrOfDocsProcessed = 0;
         if (processRunning) {
@@ -208,7 +209,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
                             // Series where letters are saved, must all contain cases...
                             // ..and case of type CaseImportVO must have been created while importing if case regNumber is not blank
                             CaseImportVO importedCase = (CaseImportVO) caseOfPreviousDocumentInSameTargetLocation;
-                            // 
+                            //
                             Node initialDocNode = importedCase.getInitialDocNode();
                             if (initialDocNode == null) {
                                 importedCase.setInitialDocNode(createdDocNode);
@@ -632,7 +633,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
 
         public AssocVO(Node initialDoc, Date docRegistrationDate) {
             this.initialDoc = initialDoc;
-            this.dateOfEarliestDocRegistration = docRegistrationDate;
+            dateOfEarliestDocRegistration = docRegistrationDate;
         }
 
         @Override
@@ -666,7 +667,7 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
     }
 
     class ExtendedDocumentParentNodesVO extends DocumentParentNodesVO {
-        private Volume volume;
+        private final Volume volume;
 
         public ExtendedDocumentParentNodesVO(Node functionNode, Node seriesNode, Node volumeNode, Node caseNode, Volume volume) {
             super(functionNode, seriesNode, volumeNode, caseNode);
@@ -700,8 +701,8 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         @Override
         public CasesByVolumeHolder clone() {
             final CasesByVolumeHolder clone = new CasesByVolumeHolder();
-            clone.casesByTitle = cloneMap(this.casesByTitle.entrySet());
-            clone.casesByRegNumber = cloneMap(this.casesByRegNumber.entrySet());
+            clone.casesByTitle = cloneMap(casesByTitle.entrySet());
+            clone.casesByRegNumber = cloneMap(casesByRegNumber.entrySet());
             return clone;
         }
 

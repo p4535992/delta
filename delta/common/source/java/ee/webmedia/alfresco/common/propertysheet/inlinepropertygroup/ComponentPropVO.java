@@ -84,7 +84,7 @@ public class ComponentPropVO implements Serializable, CustomAttributes {
 
     @Override
     public void setCustomAttributes(Map<String, String> propertySheetItemAttributes) {
-        this.customAttributes = propertySheetItemAttributes;
+        customAttributes = propertySheetItemAttributes;
     }
 
     @Override

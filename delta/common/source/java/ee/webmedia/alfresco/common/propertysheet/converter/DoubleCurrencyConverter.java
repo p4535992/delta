@@ -10,7 +10,7 @@ import javax.faces.convert.ConverterException;
 import javax.faces.convert.DoubleConverter;
 
 public class DoubleCurrencyConverter extends DoubleConverter {
-    
+
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object value) {
         return getAsString(value);
@@ -26,12 +26,12 @@ public class DoubleCurrencyConverter extends DoubleConverter {
         try {
             double number = ((Number) value).doubleValue();
             number = Math.round(number * 100) / 100.0;
-						DecimalFormat format = (DecimalFormat)NumberFormat.getInstance(Locale.US);
-						format.applyPattern("0.00");
+            DecimalFormat format = (DecimalFormat) NumberFormat.getInstance(Locale.US);
+            format.applyPattern("0.00");
             return format.format(number);
         } catch (Exception e) {
             throw new ConverterException(e);
         }
     }
-    
+
 }

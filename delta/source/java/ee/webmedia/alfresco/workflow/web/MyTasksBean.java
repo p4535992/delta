@@ -29,7 +29,7 @@ public class MyTasksBean extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MyTasksBean.class);
     private static final int PAGE_SIZE = 10;
-    
+
     public static final String BEAN_NAME = "MyTasksBean";
     public static final String LIST_ASSIGNMENT = "assignment";
     public static final String LIST_INFORMATION = "information";
@@ -37,7 +37,7 @@ public class MyTasksBean extends BaseDialogBean {
     public static final String LIST_REVIEW = "review";
     public static final String LIST_SIGNATURE = "signature";
     public static final String LIST_EXTERNAL_REVIEW = "externalReview";
-    
+
     private String dialogTitle;
     private String listTitle;
     private boolean lessColumns = true;
@@ -77,9 +77,9 @@ public class MyTasksBean extends BaseDialogBean {
     // END: dialog overrides
 
     // START: dialog setup
-    
+
     public String getSetupMyTasks() {
-        //see Erko's comment in /web/jsp/dashboards/container.jsp before <h:outputText value="#{MyTasksBean.setupMyTasks}" /> (line 72)
+        // see Erko's comment in /web/jsp/dashboards/container.jsp before <h:outputText value="#{MyTasksBean.setupMyTasks}" /> (line 72)
         boolean forceReload = getSubstitutionBean().getForceSubstituteTaskReload();
         if (forceReload || (System.currentTimeMillis() - lastLoadMillis) > 30000) { // 30 seconds
             reset();
@@ -87,7 +87,7 @@ public class MyTasksBean extends BaseDialogBean {
             loadTasks();
             lastLoadMillis = System.currentTimeMillis();
         }
-        if(forceReload){
+        if (forceReload) {
             getSubstitutionBean().setForceSubstituteTaskReload(false);
         }
         return null;
@@ -137,7 +137,7 @@ public class MyTasksBean extends BaseDialogBean {
         specificList = LIST_SIGNATURE;
         loadTasks();
     }
-    
+
     public void setupExternalReviewTasks(ActionEvent event) {
         reset();
         dialogTitle = MessageUtil.getMessage("externalReviewWorkflow");
@@ -145,8 +145,8 @@ public class MyTasksBean extends BaseDialogBean {
         lessColumns = true;
         specificList = LIST_EXTERNAL_REVIEW;
         loadTasks();
-    }    
-    
+    }
+
     // END: dialog setup
 
     public List<TaskAndDocument> getTasks() {
@@ -163,7 +163,7 @@ public class MyTasksBean extends BaseDialogBean {
             result = signatureTasks;
         } else if (LIST_EXTERNAL_REVIEW.equals(specificList)) {
             result = externalReviewTasks;
-        }       
+        }
         return result;
     }
 
@@ -186,39 +186,39 @@ public class MyTasksBean extends BaseDialogBean {
     public List<TaskAndDocument> getSignatureTasks() {
         return filterTasksByDate(signatureTasks);
     }
-    
+
     public List<TaskAndDocument> getExternalReviewTasks() {
         return filterTasksByDate(externalReviewTasks);
-    }    
+    }
 
     public boolean isAssignmentPagerVisible() {
-        return getAssignmentTasks().size() > PAGE_SIZE; 
+        return getAssignmentTasks().size() > PAGE_SIZE;
     }
-    
+
     public boolean isInformationPagerVisible() {
         return getInformationTasks().size() > PAGE_SIZE;
     }
-    
+
     public boolean isSignaturePagerVisible() {
         return getSignatureTasks().size() > PAGE_SIZE;
     }
-    
+
     public boolean isReviewPagerVisible() {
         return getReviewTasks().size() > PAGE_SIZE;
     }
-    
+
     public boolean isOpinionPagerVisible() {
         return getOpinionTasks().size() > PAGE_SIZE;
     }
-    
+
     public boolean isExternalReviewPagerVisible() {
         return getExternalReviewTasks().size() > PAGE_SIZE;
-    }    
+    }
 
     public boolean isTitlebarRendered() {
         return getContainerTitle().length() > 0;
     }
-    
+
     public String getDialogTitle() {
         return dialogTitle;
     }
@@ -233,7 +233,7 @@ public class MyTasksBean extends BaseDialogBean {
 
     public String getListTitle() {
         return listTitle;
-    }    
+    }
 
     // START: getters/setters
 
@@ -272,17 +272,17 @@ public class MyTasksBean extends BaseDialogBean {
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
     }
-    
+
     protected SubstitutionBean getSubstitutionBean() {
         if (substitutionBean == null) {
             substitutionBean = (SubstitutionBean) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(SubstitutionBean.BEAN_NAME);
         }
         return substitutionBean;
-    }     
-        
+    }
+
     // END: getters/setters
-    
+
     // START: PRIVATE METHODS
 
     private void reset() {
@@ -327,21 +327,21 @@ public class MyTasksBean extends BaseDialogBean {
             long startC = System.currentTimeMillis();
             informationTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
             log.debug("loadTasks - informationTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
-        } 
+        }
         if (specificList == null || LIST_OPINION.equals(specificList)) {
             long startB = System.currentTimeMillis();
             List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.OPINION_TASK);
             long startC = System.currentTimeMillis();
             opinionTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
             log.debug("loadTasks - opinionTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
-        } 
+        }
         if (specificList == null || LIST_REVIEW.equals(specificList)) {
             long startB = System.currentTimeMillis();
             List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.REVIEW_TASK);
             long startC = System.currentTimeMillis();
             reviewTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
             log.debug("loadTasks - reviewTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
-        } 
+        }
         if (specificList == null || LIST_SIGNATURE.equals(specificList)) {
             long startB = System.currentTimeMillis();
             List<Task> tmpTasks = getDocumentSearchService().searchCurrentUsersTasksInProgress(WorkflowSpecificModel.Types.SIGNATURE_TASK);
@@ -355,10 +355,10 @@ public class MyTasksBean extends BaseDialogBean {
             long startC = System.currentTimeMillis();
             externalReviewTasks = getDocumentService().getTasksWithDocuments(tmpTasks);
             log.debug("loadTasks - externalReviewTasks: " + (startC - startB) + "ms + " + (System.currentTimeMillis() - startC) + "ms");
-        }         
+        }
         log.debug("loadTasks - END: " + (System.currentTimeMillis() - startA) + "ms");
     }
 
     // END: PRIVATE METHODS
-    
+
 }

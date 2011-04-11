@@ -84,7 +84,8 @@ public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
     }
 
     private void addErrorMessage(String messageText) {
-        //FIXME: kunagi hiljem võiks teha MessageUtil'i peale MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "nodeBrowser_custom_noSuchAssocTypeQName", assocTypeQName);
+        // FIXME: kunagi hiljem võiks teha MessageUtil'i peale MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "nodeBrowser_custom_noSuchAssocTypeQName",
+        // assocTypeQName);
         FacesContext context = FacesContext.getCurrentInstance();
         FacesMessage message = new FacesMessage();
         message.setSeverity(FacesMessage.SEVERITY_ERROR);

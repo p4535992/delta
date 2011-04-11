@@ -56,7 +56,7 @@ public enum Parameters {
     ERRAND_ORDER_LEGAL_BASIS_FOR_OFFICIALS("errandOrderLegalBasisForOfficials"),
     ERRAND_ORDER_LEGAL_BASIS_FOR_SUPPORT_STAFF("errandOrderLegalBasisForSupportStaff"),
     // END: errandOrderAbroad (välisLähetuse taotlus)
-    VACATION_ORDER_LEGAL_BASIS("vacationOrderLegalBasis"), 
+    VACATION_ORDER_LEGAL_BASIS("vacationOrderLegalBasis"),
     WELCOME_TEXT("welcomeText"),
     VOLUME_DESTRUCTION_PERIOD("volumeDestructionPeriod"),
     EMAIL_FOR_SUBSTITUTE_SUBJECT("emailForSubstituteSubject"),
@@ -70,7 +70,7 @@ public enum Parameters {
     DOC_PROP_TENDERING_APPLICATION_DOC_NAME("docPropTenderingApplicationDocName"),
     DOC_PROP_ERRAND_ORDER_ABROAD_DOC_NAME("docPropErrandOrderAbroadDocName"),
     DOC_PROP_ERRAND_APPLICATION_DOMESTIC_DOC_NAME("docPropErrandApplicationDomesticDocName"),
-    DOC_PROP_MANAGEMENTS_ORDER_DOC_NAME("docPropManagementsOrderDocName"), 
+    DOC_PROP_MANAGEMENTS_ORDER_DOC_NAME("docPropManagementsOrderDocName"),
     DOC_PROP_VACATION_ORDER_DOC_NAME("docPropVacationOrderDocName"),
     DOC_PROP_VACATION_ORDER_LEGAL_BASIS_NAME("docPropVacationOrderLegalBasisName"),
     DOC_PROP_CHANCELLORS_ORDER_SIGNER_NAME("docPropChancellorsOrderSignerName"),
@@ -82,13 +82,15 @@ public enum Parameters {
     CONTRACT_FIRST_PARTY_NAME("contractFirstPartyName"),
     EXTERNAL_REVIEW_WORKFLOW_ENABLED("externalReviewWorkflowEnabled"),
 
-    COST_MANAGER_FIELD_NAME("costManagerFieldName");
+    COST_MANAGER_FIELD_NAME("costManagerFieldName"),
+    TRAINING_APPLICATION_DAILY_ALLOWANCE_SUM("trainingApplicationDailyAllowanceSum"),
+    ERRAND_ORDER_ABROAD_DAILY_ALLOWANCE_SUM("errandOrderAbroadDailyAllowanceSum");
 
     private String xPath;
     private String parameterName;
 
     Parameters(String parameterName) {
-        this.xPath = Repo.PARAMETERS_SPACE + "/" + ParametersModel.PREFIX + parameterName;
+        xPath = Repo.PARAMETERS_SPACE + "/" + ParametersModel.PREFIX + parameterName;
         this.parameterName = parameterName;
     }
 
@@ -99,7 +101,7 @@ public enum Parameters {
                 return parameter;
             }
         }
-        throw new IllegalArgumentException("Unknown parameterName: " + parameterName+". Known values: "+StringUtils.join(values, ", "));
+        throw new IllegalArgumentException("Unknown parameterName: " + parameterName + ". Known values: " + StringUtils.join(values, ", "));
     }
 
     public static Parameters get(Parameter<?> parameter) {

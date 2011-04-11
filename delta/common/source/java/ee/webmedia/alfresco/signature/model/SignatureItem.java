@@ -10,18 +10,17 @@ public class SignatureItem implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String name;
-    private String legalCode;
-    private Date signingTime;
-    private List<String> claimedRoles;
+    private final String name;
+    private final String legalCode;
+    private final Date signingTime;
+    private final List<String> claimedRoles;
 
     /**
      * SignatureProductionPlace string representation.
      */
-    private String address;
-    private boolean valid;
+    private final String address;
+    private final boolean valid;
 
-    
     public SignatureItem(String name, String legalCode, Date signingTime, List<String> claimedRoles, String address, boolean valid) {
         this.name = name;
         this.legalCode = legalCode;

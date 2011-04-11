@@ -35,7 +35,7 @@ public class SerializingFilter implements DependencyInjectedFilter, Initializing
     static Logger log = Logger.getLogger(SerializingFilter.class);
 
     private boolean enabled = false;
-    private NumberFormat decimalFormat = new DecimalFormat();
+    private final NumberFormat decimalFormat = new DecimalFormat();
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;

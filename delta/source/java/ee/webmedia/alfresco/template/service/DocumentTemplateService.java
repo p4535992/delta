@@ -93,5 +93,5 @@ public interface DocumentTemplateService {
      * @return template template NodeRef or {@code null} if template not found
      */
     NodeRef getSystemTemplateByName(String templateName);
-    
+
 }

@@ -8,7 +8,6 @@ import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Map;
 
-import javax.faces.context.ExternalContext;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.servlet.http.HttpServletResponse;
@@ -71,7 +70,7 @@ public class ClassificatorListDialog extends BaseDialogBean {
             IOUtils.closeQuietly(outputStream);
             IOUtils.closeQuietly(writer);
             FacesContext.getCurrentInstance().responseComplete();
-            
+
             // Erko hack for incorrect view id in the next request
             JspStateManagerImpl.ignoreCurrentViewSequenceHack();
         }

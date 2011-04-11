@@ -139,9 +139,9 @@ public class NotificationServiceImpl implements NotificationService {
     private NodeRef getGeneralNotificationsRoot() {
         return generalService.getNodeRef(NotificationModel.Repo.NOTIFICATIONS_SPACE);
     }
-    
+
     @Override
-    public void notifyExternalReviewError(Task task){
+    public void notifyExternalReviewError(Task task) {
         Notification notification = new Notification();
         setupNotification(notification, NotificationModel.NotificationType.EXTERNAL_REVIEW_WORKFLOW_RECIEVING_ERROR);
         addAdminGroupRecipients(notification);
@@ -150,11 +150,11 @@ public class NotificationServiceImpl implements NotificationService {
             sendNotification(notification, null, templateDataNodeRefs);
         } catch (EmailException e) {
             log.error("Failed to send email notification " + notification, e);
-        }        
+        }
     }
-    
+
     @Override
-    public void notifyExternalReviewError(String notificationContent){
+    public void notifyExternalReviewError(String notificationContent) {
         Notification notification = new Notification();
         setupNotification(notification, NotificationModel.NotificationType.EXTERNAL_REVIEW_WORKFLOW_RECIEVING_ERROR);
         addAdminGroupRecipients(notification);
@@ -162,18 +162,18 @@ public class NotificationServiceImpl implements NotificationService {
             sendFilesAndContent(notification, null, notificationContent);
         } catch (EmailException e) {
             log.error("Failed to send email notification " + notification, e);
-        }        
+        }
     }
-    
+
     private void addAdminGroupRecipients(Notification notification) {
         Set<String> adminAuthorities = authorityService.getContainedAuthorities(AuthorityType.USER, UserService.ADMINISTRATORS_GROUP, true);
         for (String admin : adminAuthorities) {
             String email = userService.getUserEmail(admin);
-            if (StringUtils.isNotBlank(email)){
+            if (StringUtils.isNotBlank(email)) {
                 notification.addRecipient(userService.getUserFullName(admin), email);
             }
         }
-    }    
+    }
 
     @Override
     public void notifyCompoundWorkflowEvent(CompoundWorkflow compoundWorkflowEvent) {
@@ -210,17 +210,17 @@ public class NotificationServiceImpl implements NotificationService {
         Notification notification = processNotification(task, new Notification());
         NodeRef docRef = task.getParent().getParent().getParent();
         try {
-            if(substitutionNotification != null){
+            if (substitutionNotification != null) {
                 sendNotification(substitutionNotification, docRef, setupTemplateData(task));
             }
-            if (notification != null){
+            if (notification != null) {
                 sendNotification(notification, docRef, setupTemplateData(task));
             }
         } catch (EmailException e) {
             log.error("Workflow task event notification e-mail sending failed, ignoring and continuing", e);
         }
     }
-    
+
     @Override
     public void notifyTaskUnfinishedEvent(Task task) {
         Notification notification = processTaskUnfinishedNotification(task, new Notification());
@@ -233,7 +233,7 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
     }
-    
+
     private Notification processTaskUnfinishedNotification(Task task, Notification notification) {
         if (StringUtils.isNotEmpty(task.getOwnerId())) {
             notification = setupNotification(notification, NotificationModel.NotificationType.TASK_ASSIGNMENT_TASK_COMPLETED_BY_RESPONSIBLE);
@@ -261,9 +261,9 @@ public class NotificationServiceImpl implements NotificationService {
         }
         return true;
     }
-    
+
     @Override
-    public String generateTemplateContent(QName notificationType, Task task){
+    public String generateTemplateContent(QName notificationType, Task task) {
         String templateName = getTemplate(notificationType, -1);
         NodeRef systemTemplateByName = templateService.getSystemTemplateByName(templateName);
         if (systemTemplateByName == null) {
@@ -295,7 +295,7 @@ public class NotificationServiceImpl implements NotificationService {
         if (notification.isAttachFiles()) {
             long maxSize = parametersService.getLongParameter(Parameters.MAX_ATTACHED_FILE_SIZE) * 1024 * 1024; // Parameter is MB
             long zipSize = 0;
-            
+
             List<File> files = fileService.getAllActiveFiles(docRef);
             List<String> fileRefs = new ArrayList<String>(files.size());
 
@@ -351,7 +351,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         return notification;
     }
-    
+
     private Notification processNotification(Task task, Notification notification) {
 
         if (task.isStatus(Status.IN_PROGRESS)) {
@@ -376,10 +376,10 @@ public class NotificationServiceImpl implements NotificationService {
             else if (taskType.equals(WorkflowSpecificModel.Types.REVIEW_TASK)) {
                 notification = processReviewTask(task, notification);
             }
-            
+
             else if (taskType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
                 notification = processExternalReviewTask(task, notification);
-            }            
+            }
 
             else if (taskType.equals(WorkflowSpecificModel.Types.INFORMATION_TASK)) {
                 notification = processInformationTask(task, notification);
@@ -447,10 +447,9 @@ public class NotificationServiceImpl implements NotificationService {
                             notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
                         }
                     }
-                    if(notification.getToNames() != null && notification.getToNames().size() > 0){
+                    if (notification.getToNames() != null && notification.getToNames().size() > 0) {
                         notification = setupNotification(notification, NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION, 2);
-                    }
-                    else{
+                    } else {
                         return null;
                     }
                 }
@@ -551,7 +550,7 @@ public class NotificationServiceImpl implements NotificationService {
 
         return null;
     }
-    
+
     private Notification processExternalReviewTask(Task task, Notification notification) {
         final Workflow workflow = task.getParent();
         final CompoundWorkflow compoundWorkflow = workflow.getParent();
@@ -562,7 +561,7 @@ public class NotificationServiceImpl implements NotificationService {
             }
             notification = setupNotification(notification, NotificationModel.NotificationType.TASK_EXTERNAL_REVIEW_TASK_COMPLETED);
             notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(compoundWorkflow.getOwnerId()));
-            return notification;            
+            return notification;
         } else if (WorkflowSpecificModel.ExternalReviewTaskOutcome.NOT_CONFIRMED.equals(task.getOutcomeIndex())) {
             notification = setupNotification(notification, NotificationModel.NotificationType.TASK_EXTERNAL_REVIEW_TASK_COMPLETED_NOT_ACCEPTED);
             notification.addRecipient(compoundWorkflow.getOwnerName(), userService.getUserEmail(compoundWorkflow.getOwnerId()));
@@ -578,7 +577,7 @@ public class NotificationServiceImpl implements NotificationService {
     private Notification processAssignmentTask(Task task, Notification notification) {
         Workflow workflow = task.getParent();
 
-        //co-responsible finished task
+        // co-responsible finished task
         if (StringUtils.isNotEmpty(task.getOwnerId()) && !task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
             for (Task workflowTask : workflow.getTasks()) {
                 final Serializable active = nodeService.getProperty(workflowTask.getNode().getNodeRef(), WorkflowSpecificModel.Props.ACTIVE); // responsible
@@ -660,7 +659,7 @@ public class NotificationServiceImpl implements NotificationService {
         notificationProps.add(NotificationModel.NotificationType.TASK_ASSIGNMENT_TASK_COMPLETED_BY_CO_RESPONSIBLE);
         notificationProps.add(NotificationModel.NotificationType.TASK_CANCELLED_TASK_NOTIFICATION);
         notificationProps.add(NotificationModel.NotificationType.TASK_EXTERNAL_REVIEW_TASK_COMPLETED);
-        notificationProps.add(NotificationModel.NotificationType.TASK_EXTERNAL_REVIEW_TASK_COMPLETED_NOT_ACCEPTED);        
+        notificationProps.add(NotificationModel.NotificationType.TASK_EXTERNAL_REVIEW_TASK_COMPLETED_NOT_ACCEPTED);
         notificationProps.add(NotificationModel.NotificationType.TASK_INFORMATION_TASK_COMPLETED);
         notificationProps.add(NotificationModel.NotificationType.TASK_NEW_TASK_NOTIFICATION);
         notificationProps.add(NotificationModel.NotificationType.TASK_OPINION_TASK_COMPLETED);
@@ -1002,14 +1001,17 @@ public class NotificationServiceImpl implements NotificationService {
 
         @Override
         public int compare(Document doc1, Document doc2) {
-            if (doc1.getRegNumber() != null && doc2.getRegNumber() != null)
+            if (doc1.getRegNumber() != null && doc2.getRegNumber() != null) {
                 return doc1.getRegNumber().compareTo(doc2.getRegNumber());
+            }
 
-            if (doc1.getRegNumber() != null && doc2.getRegNumber() == null)
+            if (doc1.getRegNumber() != null && doc2.getRegNumber() == null) {
                 return -1;
+            }
 
-            if (doc1.getRegNumber() == null && doc2.getRegNumber() != null)
+            if (doc1.getRegNumber() == null && doc2.getRegNumber() != null) {
                 return 1;
+            }
 
             return 0;
         }

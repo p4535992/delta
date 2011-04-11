@@ -10,7 +10,6 @@ import java.util.TreeMap;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import ee.webmedia.alfresco.utils.MessageUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.GUID;
 import org.alfresco.web.app.Application;
@@ -29,6 +28,7 @@ import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class ClassificatorDetailsDialog extends BaseDialogBean implements IContextListener {
 
@@ -217,14 +217,17 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
         addedClassificators.add(addedClassificatorValue);
     }
 
+    @Override
     public void contextUpdated() {
         clearRichList();
     }
 
+    @Override
     public void areaChanged() {
         clearRichList();
     }
 
+    @Override
     public void spaceChanged() {
         clearRichList();
     }

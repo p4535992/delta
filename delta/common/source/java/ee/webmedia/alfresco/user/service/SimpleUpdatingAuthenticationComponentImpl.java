@@ -36,51 +36,41 @@ public class SimpleUpdatingAuthenticationComponentImpl extends AbstractAuthentic
     // Identical to parent class method
     @Override
     public Authentication setCurrentUser(String idCodeOrUsername) throws AuthenticationException {
-        if (isSystemUserName(idCodeOrUsername))
-        {
+        if (isSystemUserName(idCodeOrUsername)) {
             throw new AuthenticationException("System user not allowed");
-        }
-        else
-        {
+        } else {
             SetCurrentUserCallback callback = new SetCurrentUserCallback(idCodeOrUsername);
             Authentication auth;
             // If the repository is read only, we have to settle for a read only transaction. Auto user creation will
             // not be possible.
-            if (getTransactionService().isReadOnly())
-            {
+            if (getTransactionService().isReadOnly()) {
                 auth = getTransactionService().getRetryingTransactionHelper().doInTransaction(callback, true, false);
             }
             // Otherwise, we want a writeable transaction, so if the current transaction is read only we set the
             // requiresNew flag to true
-            else
-            {
+            else {
                 auth = getTransactionService().getRetryingTransactionHelper().doInTransaction(callback, false,
                         AlfrescoTransactionSupport.getTransactionReadState() == TxnReadState.TXN_READ_ONLY);
             }
-            if ((auth == null) || (callback.ae != null))
-            {
+            if ((auth == null) || (callback.ae != null)) {
                 throw callback.ae;
             }
             return auth;
         }
     }
 
-    class SetCurrentUserCallback implements RetryingTransactionHelper.RetryingTransactionCallback<Authentication>
-    {
+    class SetCurrentUserCallback implements RetryingTransactionHelper.RetryingTransactionCallback<Authentication> {
         AuthenticationException ae = null;
 
         String idCodeOrUsername;
 
-        SetCurrentUserCallback(String idCodeOrUsername)
-        {
+        SetCurrentUserCallback(String idCodeOrUsername) {
             this.idCodeOrUsername = idCodeOrUsername;
         }
 
         @Override
-        public Authentication execute() throws Throwable
-        {
-            try
-            {
+        public Authentication execute() throws Throwable {
+            try {
                 String name = AuthenticationUtil.runAs(new RunAsWork<String>()
                 {
                     @Override
@@ -89,7 +79,7 @@ public class SimpleUpdatingAuthenticationComponentImpl extends AbstractAuthentic
                         log.debug("Trying to synchronize user with " + (queryByIdCode ? "idCode" : "username") + " '" + idCodeOrUsername + "'");
                         String userId;
                         if (queryByIdCode) {
-                             userId = getUserRegistrySynchronizer().createOrUpdatePersonByIdCode(idCodeOrUsername);
+                            userId = getUserRegistrySynchronizer().createOrUpdatePersonByIdCode(idCodeOrUsername);
                         } else {
                             userId = getUserRegistrySynchronizer().createOrUpdatePersonByUsername(idCodeOrUsername);
                         }
@@ -119,9 +109,7 @@ public class SimpleUpdatingAuthenticationComponentImpl extends AbstractAuthentic
                 }, getSystemUserName(getUserDomain(idCodeOrUsername)));
 
                 return setCurrentUser(name, UserNameValidationMode.NONE);
-            }
-            catch (AuthenticationException ae)
-            {
+            } catch (AuthenticationException ae) {
                 this.ae = ae;
                 return null;
             }

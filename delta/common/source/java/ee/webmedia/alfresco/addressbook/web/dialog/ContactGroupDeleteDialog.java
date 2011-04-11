@@ -10,7 +10,7 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class ContactGroupDeleteDialog extends ContactGroupBaseDialog {
-    
+
     private static final long serialVersionUID = 1L;
     public static final String PARAM_GROUP_NODEREF = "nodeRef";
     public static final String PARAM_GROUP_NAME = "groupName";
@@ -18,7 +18,7 @@ public class ContactGroupDeleteDialog extends ContactGroupBaseDialog {
     public static final String MSG_DELETE_GROUP = "addressbook_contactgroup_delete_title";
 
     private String groupName;
-    
+
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         getAddressbookService().deleteNode(getCurrentNode().getNodeRef());
@@ -26,12 +26,12 @@ public class ContactGroupDeleteDialog extends ContactGroupBaseDialog {
         MessageUtil.addInfoMessage("addressbook_contactgroup_delete_success");
         return outcome;
     }
-    
+
     @Override
     public boolean getFinishButtonDisabled() {
         return false;
     }
-    
+
     @Override
     public String getContainerTitle() {
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), MSG_DELETE_GROUP, groupName);
@@ -41,13 +41,13 @@ public class ContactGroupDeleteDialog extends ContactGroupBaseDialog {
     public String getFinishButtonLabel() {
         return Application.getMessage(FacesContext.getCurrentInstance(), MSG_DELETE);
     }
-    
+
     public void setupDeleteGroup(ActionEvent event) {
         String groupNodeRef = ActionUtil.getParam(event, PARAM_GROUP_NODEREF);
         groupName = ActionUtil.getParam(event, PARAM_GROUP_NAME);
         setCurrentNode(getAddressbookService().getNode(new NodeRef(groupNodeRef)));
     }
-    
+
     public int getNumItemsInGroup() {
         return getAddressbookService().getContacts(getCurrentNode().getNodeRef()).size();
     }
@@ -62,4 +62,3 @@ public class ContactGroupDeleteDialog extends ContactGroupBaseDialog {
     }
     // END: setters/getters
 }
-

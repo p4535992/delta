@@ -16,6 +16,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
@@ -47,9 +48,18 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // add each selected user to the current group in turn
         try {
+            if (!validateGroupMembers()) {
+                isFinished = false;
+                return null;
+            }
+            if (Boolean.TRUE.equals(getCurrentNode().getProperties().get(AddressbookModel.Props.TASK_CAPABLE))) {
+                for (UserDetails userDetails : usersForGroup) {
+                    getNodeService().setProperty(new NodeRef(userDetails.getNodeRef()), AddressbookModel.Props.TASK_CAPABLE, Boolean.TRUE);
+                }
+            }
             final MessageDataWrapper feedback = getAddressbookService().addToGroup(getCurrentNode().getNodeRef(), usersForGroup);
             final boolean isErrorAdded = MessageUtil.addStatusMessages(context, feedback);
-            if(!isErrorAdded) {
+            if (!isErrorAdded) {
                 MessageUtil.addInfoMessage("save_success");
             }
         } catch (RuntimeException e) {
@@ -58,6 +68,22 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
         }
         reset();
         return outcome;
+    }
+
+    public boolean validateGroupMembers() {
+        boolean validUsers = true;
+        if (Boolean.TRUE.equals(getCurrentNode().getProperties().get(AddressbookModel.Props.TASK_CAPABLE)) && usersForGroup != null) {
+            for (UserDetails userDetails : usersForGroup) {
+                Node contact = getAddressbookService().getNode(new NodeRef(userDetails.getNodeRef()));
+                if (contact != null) {
+                    if (StringUtils.isBlank((String) contact.getProperties().get(AddressbookModel.Props.EMAIL))) {
+                        MessageUtil.addInfoMessage("addressbook_contactgroup_add_contact_empty_email_error", userDetails.getName());
+                        validUsers = false;
+                    }
+                }
+            }
+        }
+        return validUsers;
     }
 
     @Override
@@ -114,16 +140,16 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
                     }
                     // add a wrapper object with the details to the results list for display
                     UserDetails userDetails = new UserDetails(label.toString(), nodeRefStr);
-                    this.usersForGroup.add(userDetails);
+                    usersForGroup.add(userDetails);
                 }
             }
         }
     }
 
     public void removeUserSelection(@SuppressWarnings("unused") ActionEvent event) {
-        UserDetails wrapper = (UserDetails) this.usersDataModel.getRowData();
+        UserDetails wrapper = (UserDetails) usersDataModel.getRowData();
         if (wrapper != null) {
-            this.usersForGroup.remove(wrapper);
+            usersForGroup.remove(wrapper);
         }
     }
 
@@ -147,8 +173,8 @@ public class ContactGroupAddDialog extends ContactGroupBaseDialog {
     public static class UserDetails implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        private String name;
-        private String nodeRef;
+        private final String name;
+        private final String nodeRef;
 
         public UserDetails(String name, String nodeRef) {
             this.name = name;

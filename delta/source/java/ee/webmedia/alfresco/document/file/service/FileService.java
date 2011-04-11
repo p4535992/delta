@@ -79,8 +79,8 @@ public interface FileService {
 
     /**
      * Gets list of scanned files.
-     * @param folderRef
      * 
+     * @param folderRef
      * @return list of scanned files
      */
     List<File> getScannedFiles(NodeRef folderRef);
@@ -98,6 +98,7 @@ public interface FileService {
 
     /**
      * Transform a source file to PDF. Original source file is preserved and a new PDF file is created.
+     * 
      * @param parent folder where PDF file is created
      * @param reader source file that is converted to PDF
      * @param filename the name that the created PDF file will have

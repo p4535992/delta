@@ -14,7 +14,6 @@ import javax.faces.event.ActionEvent;
 import javax.faces.event.FacesEvent;
 import javax.faces.event.PhaseId;
 
-import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
@@ -77,7 +76,7 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
         Map<String, Object> attributes = getAttributes();
         setOnchange(getOnChangeJS(context));
         if ((Boolean) attributes.get(FIRST_DECODE) == null) { //
-            if(!hasSelectionItems()) {
+            if (!hasSelectionItems()) {
                 initializeItemsBasedOnPreviousRelatedDropdown(context);
             }
             doAfterSelect(context, getSubmittedValue());
@@ -154,15 +153,15 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
 
     void clearValues() {
         @SuppressWarnings("unchecked")
-        List<UIComponent> selectOptions = this.getChildren();
+        List<UIComponent> selectOptions = getChildren();
         selectOptions.clear();
-        this.setSubmittedValue("");
-        this.setDisabled(true);
+        setSubmittedValue("");
+        setDisabled(true);
         UISelectItem selectItem = (UISelectItem) FacesContext.getCurrentInstance().getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
         selectItem.setItemLabel("");
         selectItem.setItemValue("");
         @SuppressWarnings("unchecked")
-        final List<UIComponent> children = this.getChildren();
+        final List<UIComponent> children = getChildren();
         children.add(selectItem);
 
     }
@@ -190,7 +189,7 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
 
     private void addSelectionItems(FacesContext context, Object submittedValue) {
         if (submittedValue instanceof String) {
-            this.setDisabled(false);
+            setDisabled(false);
             MethodBinding mb = context.getApplication().createMethodBinding(selectionItems,
                     new Class[] { FacesContext.class, HtmlSelectOneMenu.class, Object.class });
             try {
@@ -247,7 +246,7 @@ public class RelatedDropdown extends HtmlSelectOneMenu {
             this.submittedValue = submittedValue;
             this.doAfterSelect = doAfterSelect;
             if (doAfterSelect) {
-                this.setPhaseId(PhaseId.INVOKE_APPLICATION);
+                setPhaseId(PhaseId.INVOKE_APPLICATION);
             }
         }
 

@@ -29,7 +29,6 @@ public class LogBlockBean implements Serializable {
 
     private QName parentNodeType;
 
-
     public void init(Node node) {
         reset();
         parentRef = node.getNodeRef();
@@ -43,7 +42,7 @@ public class LogBlockBean implements Serializable {
         } else if (getDictionaryService().isSubClass(parentNodeType, DocumentCommonModel.Types.DOCUMENT)) {
             logs = getDocumentLogService().getDocumentLogs(parentRef);
         } else {
-            throw new IllegalArgumentException("Unexpected type of parent node for loging block. type='"+parentNodeType+"'");
+            throw new IllegalArgumentException("Unexpected type of parent node for loging block. type='" + parentNodeType + "'");
         }
     }
 
@@ -72,10 +71,10 @@ public class LogBlockBean implements Serializable {
     }
 
     protected DictionaryService getDictionaryService() {
-        if (this.dictionaryService == null) {
-            this.dictionaryService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getDictionaryService();
+        if (dictionaryService == null) {
+            dictionaryService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getDictionaryService();
         }
-        return this.dictionaryService;
+        return dictionaryService;
     }
 
     // END: getters / setters

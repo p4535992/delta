@@ -67,7 +67,7 @@ public class PostipoissDocumentsMapper {
         public Mapping(String from, TypeInfo typeInfo) {
             this.from = from;
             this.typeInfo = typeInfo;
-            this.to = typeInfo.qname;
+            to = typeInfo.qname;
         }
 
         public Mapping(Mapping m, String from, TypeInfo typeInfo) {
@@ -78,7 +78,7 @@ public class PostipoissDocumentsMapper {
             }
             this.from = from;
             this.typeInfo = typeInfo;
-            this.to = typeInfo.qname;
+            to = typeInfo.qname;
         }
 
         public void add(PropMapping pm) {
@@ -90,13 +90,13 @@ public class PostipoissDocumentsMapper {
             for (PropMapping propMapping : props) {
                 if (to.equals(propMapping.to)) {
                     if (result != null) {
-                        throw new RuntimeException("Multiple <prop> elements with same to='" + to + "' found under <mapping from='" + this.from + "' to='" + this.to + "'>");
+                        throw new RuntimeException("Multiple <prop> elements with same to='" + to + "' found under <mapping from='" + from + "' to='" + this.to + "'>");
                     }
                     result = propMapping;
                 }
             }
             if (result == null) {
-                throw new RuntimeException("No <prop> elements with to='" + to + "' found under <mapping from='" + this.from + "' to='" + this.to + "'>");
+                throw new RuntimeException("No <prop> elements with to='" + to + "' found under <mapping from='" + from + "' to='" + this.to + "'>");
             }
             return result;
         }
@@ -386,10 +386,12 @@ public class PostipoissDocumentsMapper {
     static class StringPropertyValue extends PropertyValue {
         StringValueAppender value = new StringValueAppender();
 
+        @Override
         public void put(String s) {
             value.add(s);
         }
 
+        @Override
         public Serializable get() {
             return value.get();
         }
@@ -457,8 +459,9 @@ public class PostipoissDocumentsMapper {
 
         @Override
         public void putObject(Object o) {
-            if (o == null)
+            if (o == null) {
                 return;
+            }
             Assert.isInstanceOf(Date.class, o);
             value = (Date) o;
         }
@@ -541,10 +544,10 @@ public class PostipoissDocumentsMapper {
         return new StringPropertyValueProvider();
     }
 
-    private Map<String, Splitter> splitters = new HashMap<String, Splitter>();
+    private final Map<String, Splitter> splitters = new HashMap<String, Splitter>();
     Map<String, TypeInfo> typeInfos = new HashMap<String, TypeInfo>();
 
-    private SAXReader xmlReader = new SAXReader();
+    private final SAXReader xmlReader = new SAXReader();
 
     protected PropMapping createPropMapping(Element el, TypeInfo typeInfo) {
         String from = el.attributeValue("from");
@@ -589,7 +592,7 @@ public class PostipoissDocumentsMapper {
         String defaultVolume = el.attributeValue("defaultVolume");
 
         if (to == null) {
-            to = "memo"; // doesn't matter which doctype, generalType just has to have a base mapping 
+            to = "memo"; // doesn't matter which doctype, generalType just has to have a base mapping
         }
         TypeInfo typeInfo = typeInfos.get(to);
         if (typeInfo == null) {
@@ -599,7 +602,7 @@ public class PostipoissDocumentsMapper {
 
         Mapping m = new Mapping(base, from, typeInfo);
         m.defaultVolume = defaultVolume;
-        
+
         if (StringUtils.isNotEmpty(assoc)) {
             m.assoc = QName.createQName(prefix, assoc, namespaceService);
         }
@@ -631,11 +634,11 @@ public class PostipoissDocumentsMapper {
         Element generalType = root.element("generalType");
 
         Mapping base = createMapping(null, generalType);
-        
+
         Element sendInfoType = root.element("sendInfoType");
-        
+
         Mapping sendInfo = createMapping(null, sendInfoType, "doccom");
-        
+
         mappings.put("sendInfo", sendInfo);
 
         for (Object o : root.elements("documentType")) {

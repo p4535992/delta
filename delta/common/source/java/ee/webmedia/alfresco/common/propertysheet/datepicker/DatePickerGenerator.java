@@ -84,7 +84,7 @@ public class DatePickerGenerator extends BaseComponentGenerator {
         // add the validation case to the property sheet
         propertySheet.addClientValidation(new ClientValidation("validateDate",
                 params, true));
-        
+
         // add event handler to kick off real time checks
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();

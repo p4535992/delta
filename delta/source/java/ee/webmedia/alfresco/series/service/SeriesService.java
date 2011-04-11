@@ -19,7 +19,7 @@ public interface SeriesService {
     String BEAN_NAME = "SeriesService";
 
     void saveOrUpdate(Series series);
-    
+
     /**
      * For PP import only. Assumes the order was checked beforehand.
      */
@@ -50,7 +50,7 @@ public interface SeriesService {
     boolean closeSeries(Series series);
 
     boolean isClosed(Node currentNode);
-    
+
     void updateContainingDocsCountByVolume(NodeRef seriesNodeRef, NodeRef volumeNodeRef, boolean volumeAdded);
 
     List<ChildAssociationRef> getAllSeriesAssocsByFunction(NodeRef functionRef);

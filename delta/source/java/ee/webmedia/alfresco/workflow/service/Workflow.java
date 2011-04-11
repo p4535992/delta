@@ -135,7 +135,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
     @Override
     protected String additionalToString() {
         return "\n  parent=" + WmNode.toString(getParent()) + "\n  tasks=" + WmNode.toString(getTasks()) + "\n  removedTasks="
-        + WmNode.toString(getRemovedTasks());
+                + WmNode.toString(getRemovedTasks());
     }
 
     @Override

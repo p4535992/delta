@@ -8,6 +8,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Bean that can be used to search owners(users, -groups, contacts, -groups)
+ * 
  * @author Ats Uiboupin
  */
 public class OwnerSearchBean implements Serializable {

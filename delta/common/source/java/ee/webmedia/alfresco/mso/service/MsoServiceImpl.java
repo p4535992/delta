@@ -2,8 +2,8 @@ package ee.webmedia.alfresco.mso.service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
@@ -75,7 +75,7 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
     @Override
     public boolean isFormulasReplaceable(String sourceMimetype) {
         // XXX DOT files have mimetype application/octet-stream
-        // Ideally both DOC and DOT should have mimetype application/msword 
+        // Ideally both DOC and DOT should have mimetype application/msword
         // Fortunately, DocumentTemplateService passes only DOC or DOT files to us, not every binary file
         // So without the check in DocumentTemplateService, every binary file would be passed to word, which would be unnecessary and very time consuming
         return MimetypeMap.MIMETYPE_WORD.equalsIgnoreCase(sourceMimetype) || MimetypeMap.MIMETYPE_BINARY.equalsIgnoreCase(sourceMimetype);
@@ -149,7 +149,8 @@ public class MsoServiceImpl implements MsoService, InitializingBean {
     }
 
     @Override
-    public void replaceFormulasAndTransformToPdf(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, ContentWriter pdfWriter) throws Exception {
+    public void replaceFormulasAndTransformToPdf(Map<String, String> formulas, ContentReader documentReader, ContentWriter documentWriter, ContentWriter pdfWriter)
+            throws Exception {
         try {
             MsoDocumentAndFormulasInput input = replaceFormulasPrepare(formulas, documentReader);
             if (input == null) {

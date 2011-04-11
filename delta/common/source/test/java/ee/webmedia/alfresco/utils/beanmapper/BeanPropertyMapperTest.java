@@ -96,6 +96,7 @@ public class BeanPropertyMapperTest extends TestCase {
 @AlfrescoModelType(uri = BeanPropertyMapperTest.OtherInterface_URI)
 interface OtherInterface {
     public static String someStaticField = "someStaticField value, that should not be serialized";
+
     public String getOtherInterfaceField();
 
     public void setOtherInterfaceField(String a);
@@ -107,8 +108,8 @@ class TestableModel extends DvkReceivedDocumentImpl implements OtherInterface, S
     @AlfrescoModelProperty(isMappable = false)
     private String notMappable;
     @SuppressWarnings("unused")
-    @AlfrescoModelProperty(isMappable=false)
-    private String notMappableField = "this doesn't even have a getter/setter";
+    @AlfrescoModelProperty(isMappable = false)
+    private final String notMappableField = "this doesn't even have a getter/setter";
     private String simpleMappable;
     private String otherInterfaceField;
     private String dvkId;

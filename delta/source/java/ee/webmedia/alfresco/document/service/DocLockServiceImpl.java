@@ -11,7 +11,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 public class DocLockServiceImpl extends LockServiceImpl implements DocLockService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocLockServiceImpl.class);
     /** timeOut in seconds how long lock is kept after creation(refreshing) before expiring */
-    private int lockTimeout = 180;
+    private final int lockTimeout = 180;
 
     /**
      * Gets the lock statuc for a node and a user name. <br>
@@ -28,12 +28,12 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
     @Override
     public LockStatus getLockStatus(NodeRef nodeRef, String userName) {
         LockStatus result = LockStatus.NO_LOCK;
-        if (this.nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE)) {
+        if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE)) {
             // Get the current lock owner
-            String currentLockOwner = (String) this.nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
+            String currentLockOwner = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
             String nodeOwner = ownableService.getOwner(nodeRef);
             if (currentLockOwner != null) {
-                Date expiryDate = (Date) this.nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
+                Date expiryDate = (Date) nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
                 if (expiryDate != null && expiryDate.before(new Date())) {
                     // Indicate that the lock has expired
                     result = LockStatus.LOCK_EXPIRED;
@@ -51,7 +51,7 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
         }
         return result;
     }
-    
+
     @Override
     public void unlockIfOwner(NodeRef nodeRef) {
         if (nodeService.exists(nodeRef)) {
@@ -92,7 +92,7 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
             String msg = msgPrefix + ": existing lock: status=" + lockSts;
             if (lockSts != LockStatus.NO_LOCK) {
                 String lockOwnerUserName = (String) nodeService.getProperty(lockNode, ContentModel.PROP_LOCK_OWNER);
-                Date locExpireDate = (Date) this.nodeService.getProperty(lockNode, ContentModel.PROP_EXPIRY_DATE);
+                Date locExpireDate = (Date) nodeService.getProperty(lockNode, ContentModel.PROP_EXPIRY_DATE);
                 msg += "; owner '" + lockOwnerUserName + "'";
                 msg += "; lockType=" + super.getLockType(lockNode);
                 msg += "; expires=" + locExpireDate;
@@ -108,10 +108,10 @@ public class DocLockServiceImpl extends LockServiceImpl implements DocLockServic
 
     private boolean isLockByOther(NodeRef nodeRef, String userName) {
         boolean isLockOwnedByOther = true;
-        if (this.nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE)) {
-            String currentLockOwner = (String) this.nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
+        if (nodeService.hasAspect(nodeRef, ContentModel.ASPECT_LOCKABLE)) {
+            String currentLockOwner = (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
             if (currentLockOwner != null) {
-                Date expiryDate = (Date) this.nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
+                Date expiryDate = (Date) nodeService.getProperty(nodeRef, ContentModel.PROP_EXPIRY_DATE);
                 if (expiryDate != null && expiryDate.before(new Date())) {
                     isLockOwnedByOther = false; // LockStatus.LOCK_EXPIRED;
                     log.debug("existing lock has expired");

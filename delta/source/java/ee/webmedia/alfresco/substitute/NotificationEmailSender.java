@@ -27,7 +27,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Notification send that send notification as email.
- *
+ * 
  * @author Romet Aidla
  */
 public class NotificationEmailSender implements SubstituteListDialog.NotificationSender {
@@ -44,7 +44,9 @@ public class NotificationEmailSender implements SubstituteListDialog.Notificatio
     @Override
     public void sendNotification(Substitute substitute) {
         String substituteId = substitute.getSubstituteId();
-        if (log.isDebugEnabled()) log.debug("Sending notification email to substitute: " + substituteId);
+        if (log.isDebugEnabled()) {
+            log.debug("Sending notification email to substitute: " + substituteId);
+        }
         NodeRef templateNodeRef = getDocumentTemplateService().getSystemTemplateByName(EMAIL_TEMPLATE_NAME);
         if (templateNodeRef == null) {
             if (log.isDebugEnabled()) {
@@ -59,14 +61,18 @@ public class NotificationEmailSender implements SubstituteListDialog.Notificatio
 
         NodeRef personRef = getPersonService().getPerson(substituteId);
         if (personRef == null) {
-            if (log.isDebugEnabled()) log.debug("Person '" + substituteId + "' not found, no notification email is sent");
+            if (log.isDebugEnabled()) {
+                log.debug("Person '" + substituteId + "' not found, no notification email is sent");
+            }
             return;
         }
 
         String toEmailAddress = (String) getNodeService().getProperty(personRef, ContentModel.PROP_EMAIL);
 
         if (StringUtils.isEmpty(toEmailAddress)) {
-            if (log.isDebugEnabled()) log.debug("Person '" + substituteId + "' doesn't have email address defined, no notification email is sent");
+            if (log.isDebugEnabled()) {
+                log.debug("Person '" + substituteId + "' doesn't have email address defined, no notification email is sent");
+            }
             return;
         }
 
@@ -75,23 +81,26 @@ public class NotificationEmailSender implements SubstituteListDialog.Notificatio
         Assert.hasLength(fromEmailAddress, "Sender email address not found");
         try {
             getEmailService().sendEmail(
-                Arrays.asList(toEmailAddress),
-                Arrays.asList(substitute.getSubstituteName()),
-                fromEmailAddress,
-                MessageUtil.getMessage("substitute_notification_subject"),
-                emailBody,
-                true,
-                null,
-                null,
-                false,
-                null);
+                    Arrays.asList(toEmailAddress),
+                    Arrays.asList(substitute.getSubstituteName()),
+                    fromEmailAddress,
+                    MessageUtil.getMessage("substitute_notification_subject"),
+                    emailBody,
+                    true,
+                    null,
+                    null,
+                    false,
+                    null);
         } catch (EmailException ee) {
-            if (log.isDebugEnabled()) log.debug("Cannot send notification email", ee);
+            if (log.isDebugEnabled()) {
+                log.debug("Cannot send notification email", ee);
+            }
             return;
         }
-        if (log.isDebugEnabled()) log.debug("Notification email sent to person '" + substituteId + "' with email address '" + toEmailAddress + "'");
+        if (log.isDebugEnabled()) {
+            log.debug("Notification email sent to person '" + substituteId + "' with email address '" + toEmailAddress + "'");
+        }
     }
-
 
     protected DocumentTemplateService getDocumentTemplateService() {
         if (documentTemplateService == null) {

@@ -48,7 +48,7 @@ public class RegisterDetailsDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        this.register = null;
+        register = null;
         return super.cancel();
     }
 
@@ -56,7 +56,7 @@ public class RegisterDetailsDialog extends BaseDialogBean {
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // set updated values
         getRegisterService().updateProperties(register);
-        this.register = null;
+        register = null;
         MessageUtil.addInfoMessage("save_success");
         return outcome;
     }

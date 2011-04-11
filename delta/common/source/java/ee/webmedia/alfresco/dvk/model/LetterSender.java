@@ -1,13 +1,11 @@
 package ee.webmedia.alfresco.dvk.model;
 
-import java.util.Collection;
 import java.util.Date;
 
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 /**
  * @author Ats Uiboupin
- *
  */
 @AlfrescoModelType(uri = DvkModel.URI)
 public interface LetterSender {

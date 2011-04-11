@@ -68,7 +68,7 @@
 
 	  });
   };
-
+  
   function cloneCondensed(elem, opts){
     // Try to clone and condense the element.  if not possible because of the length/minTrail options, return false.
     // also, dont count tag declarations as part of the text length.
@@ -84,18 +84,22 @@
     var clone = elem.clone();
     var delta = 0;
 
-    do {
-      // find the location of the next potential break-point.
-      //var loc = opts.condensedLength - 1;
-      var loc = findDelimiterLocation(fullbody, opts.delim, (opts.condensedLength + delta));
-      //set the html of the clone to the substring html of the original
-      clone.html(jQuery.trim(fullbody.substring(0,(loc+1))));
-      var cloneTextLength = clone.text().length;
-      var cloneHtmlLength = clone.html().length;
-      delta = clone.html().length - cloneTextLength; 
-      debug ("condensing... [html-length:"+cloneHtmlLength+" text-length:"+cloneTextLength+" delta: "+delta+" break-point: "+loc+"]");
-    //is the length of the clone text long enough?
-    }while(clone.text().length < opts.condensedLength )
+    if(opts.strictTrim){
+       clone.text(jQuery.trim(fulltext.substring(0,(opts.condensedLength))));
+       var cloneTextLength = clone.text().length;
+    } else {
+       do {
+          // find the location of the next potential break-point.
+          var loc = findDelimiterLocation(fullbody, opts.delim, (opts.condensedLength + delta));
+          //set the html of the clone to the substring html of the original
+          clone.html(jQuery.trim(fullbody.substring(0,(loc+1))));
+          var cloneTextLength = clone.text().length;
+          var cloneHtmlLength = clone.html().length;
+          delta = clone.html().length - cloneTextLength; 
+          debug ("condensing... [html-length:"+cloneHtmlLength+" text-length:"+cloneTextLength+" delta: "+delta+" break-point: "+loc+"]");
+          //is the length of the clone text long enough?
+       }while(clone.text().length < opts.condensedLength )
+    }
 
     //  after skipping ahead to the delimiter, do we still have enough trailing text?
     if ((fulltext.length - cloneTextLength) < opts.minTrail){

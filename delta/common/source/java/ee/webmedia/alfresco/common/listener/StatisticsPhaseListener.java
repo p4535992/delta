@@ -20,7 +20,7 @@ public class StatisticsPhaseListener implements PhaseListener {
     private static ThreadLocal<Long> phaseStartTime = new ThreadLocal<Long>();
     private static ThreadLocal<Map<StatisticsPhaseListenerLogColumn, String>> stats = new ThreadLocal<Map<StatisticsPhaseListenerLogColumn, String>>() {
         @Override
-        protected Map<StatisticsPhaseListenerLogColumn,String> initialValue() {
+        protected Map<StatisticsPhaseListenerLogColumn, String> initialValue() {
             return new HashMap<StatisticsPhaseListenerLogColumn, String>();
         }
     };

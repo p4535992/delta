@@ -25,7 +25,7 @@ public class DvkDocumentListDialog extends BaseDocumentListDialog {
     public String getListTitle() {
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_dvk_documents");
     }
-    
+
     @Override
     public String getColumnsFile() {
         return "/WEB-INF/classes/ee/webmedia/alfresco/document/web/dvk-document-list-dialog-columns.jsp";

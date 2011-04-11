@@ -26,6 +26,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class CombinedPropReader {
     private static Log missingPropsLogger = LogFactory.getLog("alfresco.missingProperties");
+
     public interface AttributeNames {
         String OPTIONS_SEPARATOR = "optionsSeparator";
         String PROPS_GENERATION = "propsGeneration";
@@ -35,6 +36,7 @@ public class CombinedPropReader {
     /**
      * Create list of ComponentPropVO that describe how each component should be generated.<br>
      * If componentGenerator is not encoded in <code>propertyDescriptions</code>, then TextFieldGenerator is set as default.
+     * 
      * @param propertyDescriptionsEncoded
      * @param propertiesSeparator
      * @param optionsSeparator
@@ -112,11 +114,11 @@ public class CombinedPropReader {
                                     + dataTypeName + ", property name '" + propName + "'");
                         }
                     } else {
-                        missingPropsLogger.warn("CombinedPropReader failed to find Property '" + propName 
-							+ "'. propertiesSeparator='" + propertiesSeparator
-							+ "'; optionsSeparator='" + optionsSeparator
-							+ "' when parsing string:\n\t" + propertyDescriptionsEncoded
-							+ "\nNode\n:"+node);
+                        missingPropsLogger.warn("CombinedPropReader failed to find Property '" + propName
+                                + "'. propertiesSeparator='" + propertiesSeparator
+                                + "'; optionsSeparator='" + optionsSeparator
+                                + "' when parsing string:\n\t" + propertyDescriptionsEncoded
+                                + "\nNode\n:" + node);
                     }
                 }
             }
@@ -134,12 +136,13 @@ public class CombinedPropReader {
         Map<String, String> customAttributes = new HashMap<String, String>();
         if (fields.length >= 3) {
             for (int i = 2; i < fields.length; i++) { // first is propertyName, second is componentGenerator name
-                if (fields[i] == null || fields[i].indexOf("=") < 0) {
+                String fieldValue = fields[i];
+                if (fieldValue == null || (fieldValue.indexOf("=") < 0 && fieldValue.indexOf("#{") < 0)) {
                     throw new RuntimeException((i + 1) + ". field of property description '" + propDesc + "' does not contain custom attribute.");
                 }
-                final int attrNameIndex = fields[i].indexOf("=");
-                final String attrName = fields[i].substring(0, attrNameIndex).trim();
-                final String attrValue = fields[i].substring(attrNameIndex + 1).trim();
+                final int attrNameIndex = fieldValue.indexOf("=");
+                final String attrName = fieldValue.substring(0, attrNameIndex).trim();
+                final String attrValue = fieldValue.substring(attrNameIndex + 1).trim();
                 customAttributes.put(attrName, attrValue);
             }
         }

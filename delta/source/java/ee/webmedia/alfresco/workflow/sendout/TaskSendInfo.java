@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.workflow.sendout;
 
-
 import java.io.Serializable;
 import java.util.Date;
 
@@ -8,7 +7,6 @@ import org.alfresco.web.bean.repository.Node;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.classificator.enums.SendMode;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
@@ -19,7 +17,7 @@ public class TaskSendInfo implements Serializable, SendInfo {
 
     private static final long serialVersionUID = 1L;
 
-    private Node node;
+    private final Node node;
 
     public TaskSendInfo(Node node) {
         Assert.notNull(node);

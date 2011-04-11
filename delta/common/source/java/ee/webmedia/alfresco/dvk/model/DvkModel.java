@@ -4,7 +4,6 @@ import org.alfresco.service.namespace.QName;
 
 /**
  * @author Ats Uiboupin
- *
  */
 public interface DvkModel {
     String URI = "http://alfresco.webmedia.ee/model/dvk/1.0";

@@ -12,8 +12,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.faces.context.FacesContext;
 
@@ -138,7 +138,7 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
             } else {
                 log.debug("values of classificator '" + entry.getKey() + "' are different");
             }
-            this.changedClassificators = new ArrayList<ClassificatorExportVO>(classificatorsToUpdate.values()); // make HashMap$Values serializable
+            changedClassificators = new ArrayList<ClassificatorExportVO>(classificatorsToUpdate.values()); // make HashMap$Values serializable
         }
         Collections.sort(classificatorsOverview, new Comparator<ClassificatorExportVO>() {
 

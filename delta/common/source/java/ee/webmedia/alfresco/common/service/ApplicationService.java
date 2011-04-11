@@ -6,7 +6,7 @@ package ee.webmedia.alfresco.common.service;
  * @author Alar Kvell (alar.kvell@webmedia.ee)
  */
 public interface ApplicationService {
-    
+
     String BEAN_NAME = "ApplicationService";
 
     /**
@@ -35,7 +35,7 @@ public interface ApplicationService {
     boolean isTest();
 
     String getLogoutRedirectUrl();
-    
+
     String getServerUrl();
 
     /**

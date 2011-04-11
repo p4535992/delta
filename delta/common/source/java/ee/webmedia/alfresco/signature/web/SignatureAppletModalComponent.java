@@ -14,8 +14,8 @@ public class SignatureAppletModalComponent extends UIOutputText {
 
     private String operation = "";
     private String digestHex = "";
-    private String certId = ""; 
-    
+    private String certId = "";
+
     public void showModal() {
         operation = "PREPARE";
         digestHex = "";
@@ -37,7 +37,7 @@ public class SignatureAppletModalComponent extends UIOutputText {
     public String getOperation() {
         return operation;
     }
-    
+
     public String getDigestHex() {
         return digestHex;
     }
@@ -47,32 +47,33 @@ public class SignatureAppletModalComponent extends UIOutputText {
     }
 
     @Override
-    public void encodeEnd(FacesContext context) throws IOException
-    {
-       if (!isRendered() || StringUtils.isBlank(getOperation())) return;
-       ResponseWriter out = context.getResponseWriter();
+    public void encodeEnd(FacesContext context) throws IOException {
+        if (!isRendered() || StringUtils.isBlank(getOperation())) {
+            return;
+        }
+        ResponseWriter out = context.getResponseWriter();
 
-       out.write("<div id=\"overlay\" style=\"display: block;\"></div>");
-       out.write("<div id=\"");
-       out.write(getDialogId(context));
-       out.write("\" class=\"modalpopup modalwrap\" style=\"display: block; height: 143px;\">");
-       out.write("<div class=\"modalpopup-header clear\"><h1>");
-       out.write(org.alfresco.web.app.Application.getMessage(context, "task_title_signatureTask"));
-       out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"return cancelSign();\">");
-       out.write(org.alfresco.web.app.Application.getMessage(context, SearchRenderer.CLOSE_WINDOW_MSG));
-       out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner\">");
+        out.write("<div id=\"overlay\" style=\"display: block;\"></div>");
+        out.write("<div id=\"");
+        out.write(getDialogId(context));
+        out.write("\" class=\"modalpopup modalwrap\" style=\"display: block; height: 143px;\">");
+        out.write("<div class=\"modalpopup-header clear\"><h1>");
+        out.write(org.alfresco.web.app.Application.getMessage(context, "task_title_signatureTask"));
+        out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"return cancelSign();\">");
+        out.write(org.alfresco.web.app.Application.getMessage(context, SearchRenderer.CLOSE_WINDOW_MSG));
+        out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner\">");
 
-       out.write(generateApplet(context));
+        out.write(generateApplet(context));
 
-       out.write("</div></div></div>");
+        out.write("</div></div></div>");
 
-       out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
-       out.write("showModal('");
-       out.write(getDialogId(context));
-       out.write("');");
-       out.write("});</script>");
+        out.write("<script type=\"text/javascript\">$jQ(document).ready(function(){");
+        out.write("showModal('");
+        out.write(getDialogId(context));
+        out.write("');");
+        out.write("});</script>");
     }
-    
+
     private String generateApplet(FacesContext context) {
         StringBuilder sb = new StringBuilder();
         String path = context.getExternalContext().getRequestContextPath();
@@ -97,26 +98,26 @@ public class SignatureAppletModalComponent extends UIOutputText {
         return sb.toString();
     }
 
-    public Object saveState(FacesContext context)
-    {
-       Object[] values = new Object[4];
-       values[0] = super.saveState(context);
-       values[1] = operation;
-       values[2] = digestHex;
-       values[3] = certId;
-       return values;
+    @Override
+    public Object saveState(FacesContext context) {
+        Object[] values = new Object[4];
+        values[0] = super.saveState(context);
+        values[1] = operation;
+        values[2] = digestHex;
+        values[3] = certId;
+        return values;
     }
 
-    public void restoreState(FacesContext context, Object state)
-    {
-       Object[] values = (Object[]) state;
-       super.restoreState(context, values[0]);
-       operation = (String) values[1];
-       digestHex = (String) values[2];
-       certId = (String) values[3];
+    @Override
+    public void restoreState(FacesContext context, Object state) {
+        Object[] values = (Object[]) state;
+        super.restoreState(context, values[0]);
+        operation = (String) values[1];
+        digestHex = (String) values[2];
+        certId = (String) values[3];
     }
-    
+
     private String getDialogId(FacesContext context) {
-        return getClientId(context) + "_popup";       
+        return getClientId(context) + "_popup";
     }
 }

@@ -11,12 +11,13 @@ import java.lang.annotation.Target;
 /**
  * @author ats.uiboupin
  */
-@Target(value=ElementType.TYPE)
+@Target(value = ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AlfrescoModelType {
     /**
      * namespaceURI of QName<br>
-     * Must not be empty when annotating interface, but can be empty for classes( see comments on {@link BeanPropertyMapper}) 
+     * Must not be empty when annotating interface, but can be empty for classes( see comments on {@link BeanPropertyMapper})
+     * 
      * @return URI that is used for mapping fields to Map&lt;org.alfresco.service.namespace.QName, Serializable&gt;
      */
     String uri();

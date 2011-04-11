@@ -103,7 +103,6 @@ public class SearchUtil {
 
     /**
      * Replace a custom set of characters that have special meaning in Lucene query, others need to be replaced outside of this method.
-     * 
      * Compared to default set we don't replace +, -, &
      * 
      * @see QueryParser#escape(String) for default set
@@ -138,11 +137,10 @@ public class SearchUtil {
     }
 
     /**
-     * Not so beautiful workaround for the problem where special symbols like +, -, _, / etc cause a problem with 
-     * Alfresco lucene query parser and break the query. 
-     * 
-     * For example *11-21/344* will find the correct results, *11-21* will also find the correct results 
-     * but *11-21/* will be replaced with *11-21 (missing the end wildcard) and will not find the correct results.   
+     * Not so beautiful workaround for the problem where special symbols like +, -, _, / etc cause a problem with
+     * Alfresco lucene query parser and break the query.
+     * For example *11-21/344* will find the correct results, *11-21* will also find the correct results
+     * but *11-21/* will be replaced with *11-21 (missing the end wildcard) and will not find the correct results.
      */
     public static String stripCustom(String s) {
         int firstChar = 0;
@@ -176,23 +174,23 @@ public class SearchUtil {
         }
         return "@" + Repository.escapeQName(documentPropName) + ":\"" + value + "\"";
     }
-    
+
     private static String generatePropertyNotEmptyQuery(QName documentPropName) {
         return "@" + Repository.escapeQName(documentPropName) + ":*";
     }
-    
+
     public static String generatePropertyBooleanQuery(QName documentPropName, boolean value) {
         return "@" + Repository.escapeQName(documentPropName) + ":" + Boolean.toString(value);
     }
-    
+
     public static String generatePropertyNullQuery(QName documentPropName) {
         return "ISNULL:" + Repository.escapeQName(documentPropName);
     }
-    
+
     public static String generatePropertyNotNullQuery(QName documentPropName) {
         return "ISNOTNULL:" + Repository.escapeQName(documentPropName);
-    }    
-    
+    }
+
     public static String generatePropertyUnsetQuery(QName documentPropName) {
         return "ISUNSET:" + Repository.escapeQName(documentPropName);
     }
@@ -221,7 +219,7 @@ public class SearchUtil {
 
     // High-level generation
 
-    public static String generateTypeQuery(QName ... documentTypes) {
+    public static String generateTypeQuery(QName... documentTypes) {
         return generateTypeQuery(Arrays.asList(documentTypes));
     }
 
@@ -236,7 +234,7 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
-    public static String generateAspectQuery(QName ... documentTypes) {
+    public static String generateAspectQuery(QName... documentTypes) {
         if (documentTypes == null || documentTypes.length == 0) {
             return null;
         }
@@ -247,7 +245,7 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
-    public static String generateStringWordsWildcardQuery(List<String> words, QName ... documentPropNames) {
+    public static String generateStringWordsWildcardQuery(List<String> words, QName... documentPropNames) {
         if (words.isEmpty()) {
             return null;
         }
@@ -262,7 +260,7 @@ public class SearchUtil {
         return joinQueryPartsAnd(wordQueryParts);
     }
 
-    public static String generateNodeRefQuery(NodeRef value, QName ... documentPropNames) {
+    public static String generateNodeRefQuery(NodeRef value, QName... documentPropNames) {
         if (value == null) {
             return null;
         }
@@ -273,7 +271,7 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
-    public static String generateMultiNodeRefQuery(List<NodeRef> values, QName ... documentPropNames) {
+    public static String generateMultiNodeRefQuery(List<NodeRef> values, QName... documentPropNames) {
         if (values == null || values.isEmpty()) {
             return null;
         }
@@ -286,7 +284,7 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
-    public static String generateStringExactQuery(String value, QName ... documentPropNames) {
+    public static String generateStringExactQuery(String value, QName... documentPropNames) {
         if (StringUtils.isBlank(value)) {
             return null;
         }
@@ -296,24 +294,24 @@ public class SearchUtil {
         }
         return joinQueryPartsOr(queryParts, false);
     }
-    
-    public static String generateStringNullQuery(QName ... documentPropNames) {
+
+    public static String generateStringNullQuery(QName... documentPropNames) {
         List<String> queryParts = new ArrayList<String>(documentPropNames.length);
         for (QName documentPropName : documentPropNames) {
             queryParts.add(generatePropertyNullQuery(documentPropName));
         }
-        return joinQueryPartsOr(queryParts, false); 
+        return joinQueryPartsOr(queryParts, false);
     }
-    
-    public static String generateStringNotEmptyQuery(QName ... documentPropNames) {
+
+    public static String generateStringNotEmptyQuery(QName... documentPropNames) {
         List<String> queryParts = new ArrayList<String>(documentPropNames.length);
         for (QName documentPropName : documentPropNames) {
             queryParts.add(generatePropertyNotEmptyQuery(documentPropName));
         }
-        return joinQueryPartsOr(queryParts, false); 
+        return joinQueryPartsOr(queryParts, false);
     }
 
-    public static String generateMultiStringExactQuery(List<String> values, QName ... documentPropNames) {
+    public static String generateMultiStringExactQuery(List<String> values, QName... documentPropNames) {
         if (values == null || values.isEmpty()) {
             return null;
         }
@@ -326,7 +324,7 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
-    public static String generateDatePropertyRangeQuery(Date beginDate, Date endDate, QName ... documentPropNames) {
+    public static String generateDatePropertyRangeQuery(Date beginDate, Date endDate, QName... documentPropNames) {
         if (beginDate == null && endDate == null) {
             return null;
         }

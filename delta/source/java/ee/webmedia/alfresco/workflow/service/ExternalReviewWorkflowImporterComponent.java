@@ -64,14 +64,15 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
     private PersonService personService;
 
     @Override
-    public NodeRef importWorkflowDocument(Reader viewReader, Location location, NodeRef existingDocumentRef, List<DataFileType> dataFiles, String dvkId, Map<QName, Task> notifications) {
+    public NodeRef importWorkflowDocument(Reader viewReader, Location location, NodeRef existingDocumentRef
+            , List<DataFileType> dataFiles, String dvkId, Map<QName, Task> notifications) {
         NodeRef nodeRef = getNodeRef(location, null);
 
-        List<Task> originalExternalReviewTasks = getOriginalExternalReviewTasks(existingDocumentRef); 
-        if(existingDocumentRef != null){
+        List<Task> originalExternalReviewTasks = getOriginalExternalReviewTasks(existingDocumentRef);
+        if (existingDocumentRef != null) {
             processExistingDocument(existingDocumentRef);
         }
-        
+
         DocImporter nodeImporter = new DocNodeImporter(nodeRef, location.getChildAssocType(), null, new DefaultStreamHandler(), null, existingDocumentRef,
                 dataFiles);
         try {
@@ -96,10 +97,10 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
 
     private List<Task> getOriginalExternalReviewTasks(NodeRef existingDocumentRef) {
         List<Task> externalReviewTasks = new ArrayList<Task>();
-        if(existingDocumentRef != null){
-            for (CompoundWorkflow compoundWorkflow : workflowService.getCompoundWorkflows(existingDocumentRef)){
-                for(Workflow workflow : compoundWorkflow.getWorkflows()){
-                    if(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW.equals(workflow.getType())){
+        if (existingDocumentRef != null) {
+            for (CompoundWorkflow compoundWorkflow : workflowService.getCompoundWorkflows(existingDocumentRef)) {
+                for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                    if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW.equals(workflow.getType())) {
                         externalReviewTasks.addAll(workflow.getTasks());
                     }
                 }
@@ -109,7 +110,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
     }
 
     private void processExistingDocument(NodeRef existingDocumentRef) {
-//         remove workflows created not by current institution
+        // remove workflows created not by current institution
         List<CompoundWorkflow> compoundWorkflows = workflowService.getCompoundWorkflows(existingDocumentRef);
         List<NodeRef> compoundWorkflowsToRemove = new ArrayList<NodeRef>(compoundWorkflows.size());
         String currentInstitutionCode = dvkService.getInstitutionCode();
@@ -130,7 +131,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                 nodeService.deleteNode(compoundWorkflowRef);
             }
         }
-//         remove all files
+        // remove all files
         List<File> files = fileService.getAllFiles(existingDocumentRef);
         for (File file : files) {
             if (nodeService.exists(file.getNodeRef())) {
@@ -152,14 +153,14 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                         }
                         if (!taskOriginalProps.containsKey(WorkflowSpecificModel.Props.RECIEVED_DVK_ID)) {
                             taskNewProps.put(WorkflowSpecificModel.Props.RECIEVED_DVK_ID, null);
-                        }                        
+                        }
                         if (!taskOriginalProps.containsKey(WorkflowSpecificModel.Props.SEND_DATE_TIME)) {
                             taskNewProps.put(WorkflowSpecificModel.Props.SEND_DATE_TIME, null);
                         }
                         if (!taskOriginalProps.containsKey(WorkflowSpecificModel.Props.SEND_STATUS)) {
                             taskNewProps.put(WorkflowSpecificModel.Props.SENT_DVK_ID, null);
                         }
-                        if (dvkService.getInstitutionCode().equalsIgnoreCase(task.getInstitutionCode())){
+                        if (dvkService.getInstitutionCode().equalsIgnoreCase(task.getInstitutionCode())) {
                             taskNewProps.put(WorkflowSpecificModel.Props.RECIEVED_DVK_ID, dvkId);
                         }
                         if (task.isStatus(Status.IN_PROGRESS) && taskOriginalProps.get(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID) == null) {
@@ -176,7 +177,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                                 }
                             }
                         }
-                        if (isCancelledTask(dvkId, task, originalExternalReviewTasks)){
+                        if (isCancelledTask(dvkId, task, originalExternalReviewTasks)) {
                             notifications.put(NotificationModel.NotificationType.TASK_CANCELLED_TASK_NOTIFICATION, task);
                         }
                         if (taskNewProps.size() > 0) {
@@ -189,34 +190,34 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
     }
 
     private boolean isCancelledTask(String dvkId, Task task, List<Task> originalExternalReviewTasks) {
-        if (dvkId.equalsIgnoreCase((String) task.getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID))){
+        if (dvkId.equalsIgnoreCase((String) task.getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID))) {
             return false;
         }
         Task originalTask = getOriginalTask(task, originalExternalReviewTasks);
-        if (originalTask == null){
+        if (originalTask == null) {
             return false;
         }
-        if (task.isStatus(Status.STOPPED) && !originalTask.getStatus().equals(task.getStatus())){
+        if (task.isStatus(Status.STOPPED) && !originalTask.getStatus().equals(task.getStatus())) {
             return true;
         }
-        return false;        
+        return false;
     }
 
     public boolean isNewTask(String dvkId, Task task, List<Task> originalExternalReviewTasks) {
-        if (dvkId.equalsIgnoreCase((String) task.getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID))){
+        if (dvkId.equalsIgnoreCase((String) task.getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID))) {
             return true;
         }
         Task originalTask = getOriginalTask(task, originalExternalReviewTasks);
         if (originalTask == null
-                || (task.isStatus(Status.IN_PROGRESS) && !originalTask.getStatus().equals(task.getStatus()))){
+                || (task.isStatus(Status.IN_PROGRESS) && !originalTask.getStatus().equals(task.getStatus()))) {
             return true;
         }
         return false;
     }
 
     private Task getOriginalTask(Task task, List<Task> originalExternalReviewTasks) {
-        for (Task originalTask : originalExternalReviewTasks){
-            if(task.getOriginalDvkId() != null && task.getOriginalDvkId().equals(originalTask.getOriginalDvkId())){
+        for (Task originalTask : originalExternalReviewTasks) {
+            if (task.getOriginalDvkId() != null && task.getOriginalDvkId().equals(originalTask.getOriginalDvkId())) {
                 return originalTask;
             }
         }
@@ -266,7 +267,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                                 NodeRef existingDocumentRef, List<DataFileType> dataFiles) {
             super(rootRef, rootAssocType, binding, streamHandler, progress);
             this.existingDocumentRef = existingDocumentRef;
-            this.importedRootNodeRef = existingDocumentRef;
+            importedRootNodeRef = existingDocumentRef;
             this.dataFiles = dataFiles;
         }
 
@@ -285,8 +286,9 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
         protected NodeImporterStrategy createNodeImporterStrategy(ImporterBinding.UUID_BINDING uuidBinding) {
             if (uuidBinding == null) {
                 return new UpdateExternalReviewWorkflowDocImporterStrategy();
-            } else
+            } else {
                 return super.createNodeImporterStrategy(uuidBinding);
+            }
         }
 
         @Override
@@ -366,7 +368,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
             @Override
             public NodeRef importNode(ImportNode node) {
                 NodeRef existingNodeRef = super.importNode(node);
-                if(importedRootNodeRef == null){
+                if (importedRootNodeRef == null) {
                     importedRootNodeRef = existingNodeRef;
                 }
                 // use existingDocumentRef only for importig root node
@@ -390,7 +392,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
             @Override
             public NodeRef importNode(ImportNode node) {
                 NodeRef nodeRef = super.importNode(node);
-                if(importedRootNodeRef == null){
+                if (importedRootNodeRef == null) {
                     importedRootNodeRef = nodeRef;
                 }
                 return nodeRef;
@@ -426,17 +428,17 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
     public void setFileService(FileService fileService) {
         this.fileService = fileService;
     }
-    
+
     public void setPersonService(PersonService personService) {
         this.personService = personService;
-    }    
-    
+    }
+
     public interface DocImporter extends Importer {
-        
+
         List<NodeRef> getImportedNodeRefs();
-        
+
         NodeRef getImportedRootNodeRef();
-        
-    }    
+
+    }
 
 }

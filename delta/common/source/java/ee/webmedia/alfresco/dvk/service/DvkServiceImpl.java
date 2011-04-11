@@ -13,6 +13,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.model.FileFolderService;
@@ -33,13 +34,14 @@ import org.apache.xmlbeans.XmlCursor;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 import org.springframework.util.Assert;
+
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
-import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedDocumentImpl;
+import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
 import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
 import ee.webmedia.alfresco.dvk.service.ExternalReviewException.ExceptionType;
@@ -95,7 +97,7 @@ public abstract class DvkServiceImpl implements DvkService {
     protected ParametersService parametersService;
     protected AddressbookService addressbookService;
     protected ApplicationService applicationService;
-    private String institutionCode;    
+    private String institutionCode;
 
     private XTeeProviderPropertiesResolver propertiesResolver;
 
@@ -168,13 +170,13 @@ public abstract class DvkServiceImpl implements DvkService {
      */
     private Pair<Collection<String>, Collection<String>> receiveDocumentsServiceCall(final int maxReceiveDocumentsNr
             , NodeRef dvkIncomingFolder, Collection<String> previouslyFailedDvkIds) {
-        System.gc();// perform GC to free max memory for receiving documents 
+        System.gc();// perform GC to free max memory for receiving documents
         final ReceivedDocumentsWrapper receiveDocuments = dhlXTeeService.receiveDocuments(maxReceiveDocumentsNr);
         final Set<String> receivedDocumentIds = new HashSet<String>();
         final List<String> receiveFaileddDocumentIds = new ArrayList<String>();
         log.debug("received " + receiveDocuments.size() + " documents from DVK");
         List<String> sortedKeys = new ArrayList<String>(receiveDocuments.keySet());
-        // sort descending to avoid unnecessary version overwrite 
+        // sort descending to avoid unnecessary version overwrite
         // when recieving for example external review workflow documents
         Collections.sort(sortedKeys, new Comparator<String>() {
             @Override
@@ -254,13 +256,13 @@ public abstract class DvkServiceImpl implements DvkService {
             rd.setSenderOrgName(metaInfoHelper.getDhlSaatjaAsutuseNimi());
             rd.setSenderEmail(metaInfoHelper.getDhlSaatjaEpost());
             NodeRef docNode = importWorkflowData(rd, dhlDokument, dvkIncomingFolder, dataFileList, dhlId);
-            if(docNode != null){
+            if (docNode != null) {
                 return docNode;
             }
             NodeRef taskNode = importTaskData(rd, dhlDokument, dhlId);
-            if(taskNode != null){
+            if (taskNode != null) {
                 return taskNode;
-            }            
+            }
             fillLetterData(rd, dhlDokument);
             String documentFolderName;
             if (StringUtils.isNotBlank(rd.getLetterSenderTitle())) {
@@ -291,7 +293,7 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     /**
-     *  Overridden in TK
+     * Overridden in TK
      */
     protected String getSignedDocOutput(SignedDocType signedDoc) {
         return signedDoc.toString();
@@ -413,9 +415,10 @@ public abstract class DvkServiceImpl implements DvkService {
         return true;
     }
 
-    protected abstract NodeRef importWorkflowData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, NodeRef dvkDefaultIncomingFolder, List<DataFileType> dataFileList, String dvkId);
-    
-    abstract protected NodeRef importTaskData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dvkId);    
+    protected abstract NodeRef importWorkflowData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument
+            , NodeRef dvkDefaultIncomingFolder, List<DataFileType> dataFileList, String dvkId);
+
+    abstract protected NodeRef importTaskData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dvkId);
 
     abstract protected Pair<Location, Boolean> getDvkWorkflowDocLocation(String senderName, NodeRef dvkDefaultIncomingFolder);
 
@@ -426,24 +429,24 @@ public abstract class DvkServiceImpl implements DvkService {
         final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
                 new SimDhsSendDocumentsCallback(sd), new SendDocumentsRequestCallback() {
 
-            @Override
-            public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
-                final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
-                final Calendar retainCal = Calendar.getInstance();
-                retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
-                dokumentDocument.setSailitustahtaeg(retainCal);
-            }
-        });
+                    @Override
+                    public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
+                        final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
+                        final Calendar retainCal = Calendar.getInstance();
+                        retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
+                        dokumentDocument.setSailitustahtaeg(retainCal);
+                    }
+                });
         Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
         return sendDocuments.iterator().next();
     }
-    
+
     @Override
     public abstract void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowNodeRef, Map<NodeRef, List<String>> additionalRecipients);
-    
+
     @Override
     public abstract void sendDvkTask(Task task);
-    
+
     public String sendExternalReviewWorkflowData(Collection<ContentToSend> contentsToSend, final DvkSendWorkflowDocuments sd) {
         final Collection<String> recipientsRegNrs = new ArrayList<String>();
         recipientsRegNrs.add(sd.getRecipientsRegNr());
@@ -457,15 +460,15 @@ public abstract class DvkServiceImpl implements DvkService {
     public SendDocumentsRequestCallback getSendDocumentRequestCallback() {
         return new SendDocumentsRequestCallback() {
 
-         @Override
-         public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
-        final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
-        final Calendar retainCal = Calendar.getInstance();
-        retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
-        dokumentDocument.setSailitustahtaeg(retainCal);
-         }
-      };
-    }    
+            @Override
+            public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
+                final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
+                final Calendar retainCal = Calendar.getInstance();
+                retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
+                dokumentDocument.setSailitustahtaeg(retainCal);
+            }
+        };
+    }
 
     public void verifyEnoughData(Collection<ContentToSend> contentsToSend, final Collection<String> recipientsRegNrs, boolean requireFiles) {
         if ((requireFiles && contentsToSend.size() == 0) || recipientsRegNrs.size() == 0) {
@@ -502,7 +505,7 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     private class SimDhsSendDocumentsCallback implements SendDocumentsDokumentCallback {
-        private DvkSendLetterDocuments dvkSendDocuments;
+        private final DvkSendLetterDocuments dvkSendDocuments;
 
         public SimDhsSendDocumentsCallback(DvkSendLetterDocuments dvkSendDocuments) {
             dvkSendDocuments.validateOutGoing();
@@ -513,7 +516,7 @@ public abstract class DvkServiceImpl implements DvkService {
         public void doWithDocument(DokumentDocument dokumentDocument) {
             log.debug("altering dokument");
             final Letter letter = Letter.Factory.newInstance();
-            
+
             final Addressee letterAddressees = letter.addNewAddressees();
             final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
             final Transport transport = dhlDokument.getTransport();
@@ -531,7 +534,7 @@ public abstract class DvkServiceImpl implements DvkService {
             // Maiga: paneme senderOrgName nimi elementi (nagu postipoisis) ja dubleerime asutuseNimes
             transportSaatja.setNimi(senderOrgName);
             transportSaatja.setEpost(dvkSendDocuments.getSenderEmail());
-            // 
+            //
             final LetterType letterMeta = letter.addNewLetterMetaData();
 
             final Calendar calSignDate = Calendar.getInstance();
@@ -584,20 +587,20 @@ public abstract class DvkServiceImpl implements DvkService {
             return composeMetaxml(letter, null);
         }
     }
-    
+
     private class DhsSendWorkflowCallback implements SendDocumentsDokumentCallback {
-        private DvkSendWorkflowDocuments dvkSendDocuments;
+        private final DvkSendWorkflowDocuments dvkSendDocuments;
 
         public DhsSendWorkflowCallback(DvkSendWorkflowDocuments dvkSendDocuments) {
-            //TODO: validate?
-//            dvkSendDocuments.validateOutGoing();
+            // TODO: validate?
+            // dvkSendDocuments.validateOutGoing();
             this.dvkSendDocuments = dvkSendDocuments;
         }
 
         @Override
         public void doWithDocument(DokumentDocument dokumentDocument) {
             log.debug("altering dokument");
-            
+
             final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
             final Transport transport = dhlDokument.getTransport();
             // add senders information
@@ -617,7 +620,7 @@ public abstract class DvkServiceImpl implements DvkService {
 
             Metaxml metaxml = null;
             try {
-                if(dvkSendDocuments.isDocumentNode()){
+                if (dvkSendDocuments.isDocumentNode()) {
                     metaxml = composeWorkflowMetaxml(dvkSendDocuments.getRecipientDocNode(), EXTERNAL_REVIEW_DOCUMENT_QNAME);
                 } else {
                     metaxml = composeWorkflowMetaxml(dvkSendDocuments.getRecipientDocNode(), EXTERNAL_REVIEW_TASK_COMPLETED_QNAME);
@@ -630,7 +633,7 @@ public abstract class DvkServiceImpl implements DvkService {
 
             dhlDokument.setTransport(transport);
         }
-        
+
         private Metaxml composeWorkflowMetaxml(org.w3c.dom.Node domNode, javax.xml.namespace.QName... wrappers) throws XmlException {
             final XmlObject documentXml = XmlObject.Factory.parse(domNode);
             final Metaxml metaXml = Metaxml.Factory.newInstance();
@@ -650,18 +653,18 @@ public abstract class DvkServiceImpl implements DvkService {
             return metaXml;
         }
     }
-    
+
     private Metaxml composeMetaxml(final XmlObject documentXml, List<javax.xml.namespace.QName> wrappers) {
-        final Metaxml metaXml = Metaxml.Factory.newInstance();            
+        final Metaxml metaXml = Metaxml.Factory.newInstance();
         final XmlCursor cursorL = documentXml.newCursor();
         final XmlCursor cursorM = metaXml.newCursor();
 
-        cursorM.toNextToken();            
+        cursorM.toNextToken();
         if (wrappers != null) {
-            for (javax.xml.namespace.QName wrapper : wrappers){
+            for (javax.xml.namespace.QName wrapper : wrappers) {
                 cursorM.beginElement(wrapper);
             }
-          }
+        }
         cursorL.copyXmlContents(cursorM);
         if (log.isDebugEnabled()) {
             log.debug("metaXml composed based on document node:\n" + metaXml + "\n\n");
@@ -669,7 +672,7 @@ public abstract class DvkServiceImpl implements DvkService {
         cursorL.dispose();
         cursorM.dispose();
         return metaXml;
-    }    
+    }
 
     // START: getters / setters
     public void setNodeService(NodeService nodeService) {
@@ -681,7 +684,7 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     public void setCorruptDvkDocumentsPath(String receivedDvkDocumentsPath) {
-        this.corruptDvkDocumentsPath = receivedDvkDocumentsPath;
+        corruptDvkDocumentsPath = receivedDvkDocumentsPath;
     }
 
     @Override
@@ -720,21 +723,21 @@ public abstract class DvkServiceImpl implements DvkService {
     public void setAddressbookService(AddressbookService addressbookService) {
         this.addressbookService = addressbookService;
     }
-    
+
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;
-    }   
-    
-    //TODO: move to Application or somewhere else?
+    }
+
+    // TODO: move to Application or somewhere else?
     @Override
     public String getInstitutionCode() {
         return institutionCode;
-    } 
-    
+    }
+
     public void setInstitutionCode(String institutionCode) {
         this.institutionCode = institutionCode;
     }
-    
+
     // END: getters / setters
 
 }

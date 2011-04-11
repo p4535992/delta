@@ -67,7 +67,8 @@ public interface WorkflowService {
     CompoundWorkflow saveCompoundWorkflow(CompoundWorkflow compoundWorkflow);
 
     /**
-     * @param originalAssignmentTask - task that will be delegated(originalAssignmentTask.parent contains information about new tasks and originalAssignmentTask.parent.parent
+     * @param originalAssignmentTask - task that will be delegated(originalAssignmentTask.parent contains information about new tasks and
+     *            originalAssignmentTask.parent.parent
      *            contains information about new workflows)
      */
     Pair<MessageDataWrapper, CompoundWorkflow> delegate(Task originalAssignmentTask);

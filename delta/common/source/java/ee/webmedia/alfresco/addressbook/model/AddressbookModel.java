@@ -48,9 +48,10 @@ public interface AddressbookModel {
         QName CITY = QName.createQName(AddressbookModel.URI, "city");
         QName COUNTRY = QName.createQName(AddressbookModel.URI, "country");
     }
-    
+
     interface Aspects {
         QName ORGANIZATION_PROPERTIES = QName.createQName(AddressbookModel.URI, "organizationProperties");
         QName EVERYONE = QName.createQName(AddressbookModel.URI, "everyone");
+        QName TASK_CAPABLE = QName.createQName(AddressbookModel.URI, "taskCapable");
     }
 }

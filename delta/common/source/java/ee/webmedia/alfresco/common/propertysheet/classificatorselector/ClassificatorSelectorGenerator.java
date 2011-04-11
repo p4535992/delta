@@ -13,6 +13,7 @@ import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
+import org.apache.myfaces.shared_impl.renderkit.RendererUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
@@ -65,11 +66,12 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
         if (!multiValued && existingValue == null) {
             existingValue = getGeneralService().getExistingRepoValue4ComponentGenerator();
         }
-        boolean isSingleValued = isSingleValued(context, multiValued); // 
+        boolean isSingleValued = isSingleValued(context, multiValued); //
         for (ClassificatorValue classificator : classificators) {
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
             selectItem.setItemLabel(classificator.getValueName());
-            selectItem.setItemValue(classificator.getValueName()); // must not be null or emtpy (even if using only label)
+            // Convert value so validation doesn't fail
+            selectItem.setItemValue(RendererUtils.getConvertedUIOutputValue(context, component, classificator.getValueName())); // must not be null or empty
             if (isSingleValued && ((existingValue != null && StringUtils.equals(existingValue, classificator.getValueName())) // prefer existing value..
                     || (existingValue == null && classificator.isByDefault()))) { // .. to default value
                 component.setValue(selectItem.getItemValue()); // make the selection

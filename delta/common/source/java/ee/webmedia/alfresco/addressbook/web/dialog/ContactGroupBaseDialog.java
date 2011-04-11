@@ -9,7 +9,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 
 public class ContactGroupBaseDialog extends BaseDialogBean {
-    
+
     private static final long serialVersionUID = 1L;
 
     private transient AddressbookService addressbookService;
@@ -20,11 +20,11 @@ public class ContactGroupBaseDialog extends BaseDialogBean {
         // save button not used here
         return null;
     }
-    
+
     protected void reset() {
         currentNode = null;
     }
-    
+
     // START: setters/getters
     public Node getCurrentNode() {
         return currentNode;
@@ -33,7 +33,7 @@ public class ContactGroupBaseDialog extends BaseDialogBean {
     public void setCurrentNode(Node currentNode) {
         this.currentNode = currentNode;
     }
-    
+
     public void setAddressbookService(AddressbookService addressbookService) {
         this.addressbookService = addressbookService;
     }

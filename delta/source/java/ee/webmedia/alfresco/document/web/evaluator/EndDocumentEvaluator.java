@@ -1,18 +1,19 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
-import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.user.service.UserService;
+import javax.faces.context.FacesContext;
+
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
-import javax.faces.context.FacesContext;
+import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * UI action evaluator for validating whether user can end current document.
- *
+ * 
  * @author Romet Aidla
  */
 public class EndDocumentEvaluator extends BaseActionEvaluator {

@@ -25,7 +25,7 @@ public interface WorkflowSpecificModel {
         /** Kooskõlastamiseks */
         QName REVIEW_WORKFLOW = QName.createQName(URI, "reviewWorkflow");
         /** Asutuseüleseks kooskõlastamiseks */
-        QName EXTERNAL_REVIEW_WORKFLOW = QName.createQName(URI, "externalReviewWorkflow");        
+        QName EXTERNAL_REVIEW_WORKFLOW = QName.createQName(URI, "externalReviewWorkflow");
         /** Allkirjastamiseks */
         QName SIGNATURE_WORKFLOW = QName.createQName(URI, "signatureWorkflow");
 
@@ -98,7 +98,7 @@ public interface WorkflowSpecificModel {
             return this == of(index);
         }
     }
-    
+
     enum ExternalReviewTaskOutcome {
         CONFIRMED,
         NOT_CONFIRMED;
@@ -113,6 +113,6 @@ public interface WorkflowSpecificModel {
         public boolean equals(int index) {
             return this == of(index);
         }
-    }    
+    }
 
 }

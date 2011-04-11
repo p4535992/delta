@@ -63,6 +63,7 @@ public class DocumentType implements Serializable, Comparable<DocumentType> {
     public void setComment(String comment) {
         this.comment = comment;
     }
+
     // END: getters / setters
 
     @Override

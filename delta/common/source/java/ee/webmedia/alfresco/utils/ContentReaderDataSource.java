@@ -10,9 +10,9 @@ import org.alfresco.service.cmr.repository.ContentReader;
 
 public class ContentReaderDataSource implements DataSource {
 
-    private ContentReader contentReader;
-    private String fileName;
-    private String contentType;
+    private final ContentReader contentReader;
+    private final String fileName;
+    private final String contentType;
 
     public ContentReaderDataSource(ContentReader contentReader, String fileName) {
         this.contentReader = contentReader;

@@ -41,21 +41,21 @@ public class UIMenuComponent extends UIComponentBase {
             Object isPrimary = attr.get(UIMenuComponent.PRIMARY_ATTRIBUTE_KEY);
             if (isPrimary != null && Boolean.parseBoolean(isPrimary.toString())) {
                 menuBean.setActiveItemId(activeId);
-                if(Integer.parseInt(activeId) == MenuBean.DOCUMENT_REGISTER_ID) {
+                if (Integer.parseInt(activeId) == MenuBean.DOCUMENT_REGISTER_ID) {
                     menuBean.collapseMenuItems(null);
                 }
             }
 
-            if(Integer.parseInt(menuBean.getActiveItemId()) == MenuBean.MY_TASKS_AND_DOCUMENTS_ID) {
+            if (Integer.parseInt(menuBean.getActiveItemId()) == MenuBean.MY_TASKS_AND_DOCUMENTS_ID) {
                 menuBean.processTaskItems(); // When user registers a doc, changes must reflect in admin session.
             }
-            
+
             // Links defined in menu-structure.xml have XPath
             boolean forceReset = link.getAttributes().get(DropdownMenuItem.ATTRIBUTE_XPATH) != null;
-            
+
             // When creating new document, don't reset
             boolean createNewDocument = false;
-            if(activeId.startsWith(MenuBean.CREATE_NEW_DOCUMENT + VALUE_SEPARATOR)) {
+            if (activeId.startsWith(MenuBean.CREATE_NEW_DOCUMENT + VALUE_SEPARATOR)) {
                 createNewDocument = true;
             }
 
@@ -77,7 +77,7 @@ public class UIMenuComponent extends UIComponentBase {
     public Object saveState(FacesContext context) {
         Object[] values = new Object[2];
         values[0] = super.saveState(context);
-        values[1] = this.getAttributes().get(UIMenuComponent.PRIMARY_ATTRIBUTE_KEY);
+        values[1] = getAttributes().get(UIMenuComponent.PRIMARY_ATTRIBUTE_KEY);
         return values;
     }
 

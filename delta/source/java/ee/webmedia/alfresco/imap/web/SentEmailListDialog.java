@@ -5,7 +5,7 @@ import javax.faces.event.ActionEvent;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
-public class SentEmailListDialog  extends BaseDocumentListDialog {
+public class SentEmailListDialog extends BaseDocumentListDialog {
 
     private static final long serialVersionUID = 1L;
 

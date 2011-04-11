@@ -46,8 +46,8 @@ public class MenuServiceImpl implements MenuService {
 
     private Menu menu;
     // doesn't need to be synchronized, because it is not modified after spring initialization
-    private List<ProcessorWrapper> processors = new ArrayList<ProcessorWrapper>();
-    private Map<String, MenuItemCountHandler> countHandlers = new HashMap<String, MenuItemCountHandler>();
+    private final List<ProcessorWrapper> processors = new ArrayList<ProcessorWrapper>();
+    private final Map<String, MenuItemCountHandler> countHandlers = new HashMap<String, MenuItemCountHandler>();
     private TreeItemProcessor treeItemProcessor;
     private Map<String, MenuItemFilter> menuItemFilters;
 
@@ -62,7 +62,7 @@ public class MenuServiceImpl implements MenuService {
             this.menuItemId = menuItemId;
             this.processor = processor;
             this.runOnce = runOnce;
-            this.isExecutable = true;
+            isExecutable = true;
 
         }
     }
@@ -87,7 +87,7 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     public void menuUpdated() {
-        this.updateCount++;
+        updateCount++;
     }
 
     @Override

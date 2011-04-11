@@ -15,7 +15,7 @@ public class TaskSearchFilterServiceImpl extends AbstractFilterServiceImpl imple
     public QName getFilterNameProperty() {
         return TaskSearchModel.Props.NAME;
     }
-    
+
     @Override
     protected QName getFilterNodeType() {
         return TaskSearchModel.Types.FILTER;

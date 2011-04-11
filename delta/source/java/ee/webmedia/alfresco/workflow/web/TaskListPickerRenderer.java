@@ -19,7 +19,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * This custom renderer must be set to an HtmlPanelGroup that wraps a UIGenericPicker as the only child.
- * 
  * It writes the HTML to open the picker component in a modal dialog which is hidden by default.
  * 
  * @author Erko Hansar
@@ -30,7 +29,7 @@ public class TaskListPickerRenderer extends BaseRenderer {
     @Override
     public void decode(FacesContext context, UIComponent component) {
         assertParmeters(context, component);
-        UIGenericPicker picker = (UIGenericPicker)component.getChildren().get(0);
+        UIGenericPicker picker = (UIGenericPicker) component.getChildren().get(0);
 
         Map<String, String> requestMap = context.getExternalContext().getRequestParameterMap();
         String value = requestMap.get(TaskListGenerator.getActionId(context, picker));
@@ -52,7 +51,7 @@ public class TaskListPickerRenderer extends BaseRenderer {
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
         assertParmeters(context, component);
-        UIGenericPicker picker = (UIGenericPicker)component.getChildren().get(0);
+        UIGenericPicker picker = (UIGenericPicker) component.getChildren().get(0);
 
         ResponseWriter out = context.getResponseWriter();
         String openDialog = (String) picker.getAttributes().get(Search.OPEN_DIALOG_KEY);
@@ -81,7 +80,7 @@ public class TaskListPickerRenderer extends BaseRenderer {
         ResponseWriter out = context.getResponseWriter();
         out.write("</div></div></div>");
 
-        UIGenericPicker picker = (UIGenericPicker)component.getChildren().get(0);
+        UIGenericPicker picker = (UIGenericPicker) component.getChildren().get(0);
         String openDialog = (String) picker.getAttributes().get(Search.OPEN_DIALOG_KEY);
         if (openDialog != null) {
             picker.getAttributes().remove(Search.OPEN_DIALOG_KEY); // Used when full submit is done, but AJAX deprecates it

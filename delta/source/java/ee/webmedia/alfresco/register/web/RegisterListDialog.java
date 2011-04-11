@@ -21,7 +21,7 @@ public class RegisterListDialog extends BaseDialogBean {
 
     private transient RegisterService registerService;
     private List<Register> registers;
-    
+
     @Override
     public Object getActionsContext() {
         return null;

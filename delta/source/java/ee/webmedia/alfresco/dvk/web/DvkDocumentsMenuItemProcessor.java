@@ -31,6 +31,6 @@ public class DvkDocumentsMenuItemProcessor extends CountAddingMenuItemProcessor 
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
     }
-    
+
     // END: getters / setters
 }

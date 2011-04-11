@@ -13,7 +13,8 @@ import ee.webmedia.alfresco.user.service.UserService;
 public class IsDocumentsImportEnabledEvaluator extends BaseActionEvaluator {
 
     private static final long serialVersionUID = 0L;
-    
+
+    @Override
     public boolean evaluate(Object obj) {
         UserService userService = (UserService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserService.BEAN_NAME);
         if (!userService.isAdministrator()) {
@@ -22,11 +23,12 @@ public class IsDocumentsImportEnabledEvaluator extends BaseActionEvaluator {
 
         PostipoissDocumentsImporter importer = (PostipoissDocumentsImporter)
                 FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                .getBean("postipoissDocumentsImporter");
+                        .getBean("postipoissDocumentsImporter");
         return importer.isEnabled() && !importer.isStarted();
     }
-    
+
+    @Override
     public boolean evaluate(Node node) {
-        return evaluate((Object)node);
+        return evaluate((Object) node);
     }
 }

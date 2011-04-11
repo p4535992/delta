@@ -70,7 +70,7 @@ public class Series implements Serializable, Comparable<Series> {
     }
 
     public void setFunctionNodeRef(NodeRef function) {
-        this.functionNodeRef = function;
+        functionNodeRef = function;
     }
 
     public NodeRef getFunctionNodeRef() {

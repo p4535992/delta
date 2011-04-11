@@ -19,7 +19,6 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
 /**
  * @author Kaarel Jõgeva
- *
  */
 public class SpaceLinkGenerator extends BaseComponentGenerator {
 
@@ -28,23 +27,23 @@ public class SpaceLinkGenerator extends BaseComponentGenerator {
         UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
         link.setRendererType(UIActions.RENDERER_ACTIONLINK);
         FacesHelper.setupComponentId(context, link, item.getName());
-        
+
         Node node = propertySheet.getNode();
         QName qName = QName.resolveToQName(node.getNamespacePrefixResolver(), item.getAttributes().get("name").toString());
         NodeRef spaceRef = new NodeRef(node.getProperties().get(qName).toString());
-        
+
         link.setValue(spaceRef.toString());
         link.setActionListener(application.createMethodBinding("#{BrowseBean.clickSpace}", new Class[] { javax.faces.event.ActionEvent.class }));
-        
+
         UIParameter param = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
         param.setName("id");
         param.setValue(new Node(spaceRef).getId());
-        
+
         @SuppressWarnings("unchecked")
         List<UIComponent> children = link.getChildren();
-        children.add(param);        
+        children.add(param);
         link.setTooltip(item.getDisplayLabel());
-                
+
         return link;
     }
 
@@ -53,9 +52,8 @@ public class SpaceLinkGenerator extends BaseComponentGenerator {
         return generateLink(context, propertySheet, item);
     }
 
-    /* 
+    /*
      * We override createCommponent, so there is no need to add a body.
-     * 
      * (non-Javadoc)
      * @see org.alfresco.web.bean.generator.IComponentGenerator#generate(javax.faces.context.FacesContext, java.lang.String)
      */

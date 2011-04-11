@@ -5,10 +5,10 @@ import org.alfresco.web.bean.repository.Node;
 
 /**
  * UI action evaluator for validating whether document can be copied.
- *
+ * 
  * @author Romet Aidla
  */
-public class CopyDocumentActionEvaluator  extends BaseActionEvaluator {
+public class CopyDocumentActionEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 1L;
 
     @Override

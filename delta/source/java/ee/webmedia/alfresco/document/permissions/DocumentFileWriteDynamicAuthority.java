@@ -37,7 +37,7 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
     public boolean hasAuthority(final NodeRef nodeRef, final String userName) {
         QName type = nodeService.getType(nodeRef);
         if (!dictionaryService.isSubClass(type, ContentModel.TYPE_CONTENT)) {
-//            log.trace("Node is not of type 'cm:content', type=" + type + ", refusing authority " + getAuthority());
+            // log.trace("Node is not of type 'cm:content', type=" + type + ", refusing authority " + getAuthority());
             return false;
         }
         NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();

@@ -77,7 +77,8 @@ public class TaskListCommentComponent extends UICommand {
         out.write("<tr><td>" + MessageUtil.getMessage("task_finish_comment") + ":</td></tr>");
         out.write("<tr><td>");
         out.write("<textarea id=\"" + getClientId(context) + "_comment\" name=\"" + getClientId(context) + "_comment\" style=\"height:100px; width:100%;\" onkeyup=\"");
-        out.write("document.getElementById('" + getClientId(context) + "_btn').disabled = (document.getElementById('" + getClientId(context) + "_comment').value == null || document.getElementById('" + getClientId(context) + "_comment').value.replace(/^\\s+|\\s+$/g, '').length == 0);");
+        out.write("document.getElementById('" + getClientId(context) + "_btn').disabled = (document.getElementById('" + getClientId(context)
+                + "_comment').value == null || document.getElementById('" + getClientId(context) + "_comment').value.replace(/^\\s+|\\s+$/g, '').length == 0);");
         out.write("\" ></textarea>");
         out.write("</td></tr>");
         out.write("<tr><td>");

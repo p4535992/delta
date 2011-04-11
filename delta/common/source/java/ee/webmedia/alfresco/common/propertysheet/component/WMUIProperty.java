@@ -50,7 +50,7 @@ public class WMUIProperty extends UIProperty implements CustomAttributes {
         // The same as UIProperty#encodeBegin
         if (getChildCount() == 0) {
             // get the variable being used from the parent
-            UIComponent parent = this.getParent();
+            UIComponent parent = getParent();
             if ((parent instanceof UIPropertySheet) == false) {
                 throw new IllegalStateException(getIncorrectParentMsg());
             }
@@ -87,23 +87,23 @@ public class WMUIProperty extends UIProperty implements CustomAttributes {
     public void setCustomAttributes(Map<String, String> propertySheetItemAttributes) {
         this.propertySheetItemAttributes = propertySheetItemAttributes;
     }
-    
+
     @Override
     protected void generateLabel(FacesContext context, UIPropertySheet propSheet, String displayLabel) {
         HtmlOutputText label = (HtmlOutputText) context.getApplication().createComponent("javax.faces.HtmlOutputText");
         label.setRendererType(ComponentConstants.JAVAX_FACES_TEXT);
         FacesHelper.setupComponentId(context, label, "label_" + getName());
         getChildren().add(label);
-        
+
         // Check if config has overriden the label with parameter
-        if(getCustomAttributes().containsKey(DISPLAY_LABEL_PARAMETER)) {
+        if (getCustomAttributes().containsKey(DISPLAY_LABEL_PARAMETER)) {
             String parameterName = getCustomAttributes().get(DISPLAY_LABEL_PARAMETER);
             ParametersService parametersService = (ParametersService) FacesHelper.getManagedBean(context, ParametersService.BEAN_NAME);
             displayLabel = parametersService.getStringParameter(Parameters.get(parameterName));
         }
 
         // remember the display label used (without the : separator)
-        this.resolvedDisplayLabel = displayLabel;
+        resolvedDisplayLabel = displayLabel;
 
         label.getAttributes().put("value", displayLabel);
         label.setStyleClass(getCustomAttributes().get(LABEL_STYLE_CLASS));
@@ -116,14 +116,14 @@ public class WMUIProperty extends UIProperty implements CustomAttributes {
     public void restoreState(FacesContext context, Object state) {
         Object values[] = (Object[]) state;
         super.restoreState(context, values[0]);
-        this.propertySheetItemAttributes = (Map<String, String>) values[1];
+        propertySheetItemAttributes = (Map<String, String>) values[1];
     }
 
     @Override
     public Object saveState(FacesContext context) {
         Object values[] = new Object[] {
-            super.saveState(context),
-            this.propertySheetItemAttributes
+                super.saveState(context),
+                propertySheetItemAttributes
         };
         return values;
     }

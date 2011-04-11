@@ -10,8 +10,9 @@ import org.alfresco.web.bean.search.SearchContext;
  */
 public class SearchExtensionServiceImpl implements SearchExtensionService {
 
-    private List<SearchQueryBuilderFactory> extensionFactorys = new ArrayList<SearchQueryBuilderFactory>();
+    private final List<SearchQueryBuilderFactory> extensionFactorys = new ArrayList<SearchQueryBuilderFactory>();
 
+    @Override
     public void registerSearchQueryBuilder(SearchQueryBuilderFactory searchQueryBuilderFactory) {
         extensionFactorys.add(searchQueryBuilderFactory);
     }

@@ -2,6 +2,27 @@ package ee.webmedia.alfresco.adr.service;
 
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithParentheses;
 
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import javax.xml.datatype.XMLGregorianCalendar;
+
+import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.NamespaceService;
+import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.RegexQNamePattern;
+import org.apache.commons.lang.StringUtils;
+
 import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.adr.ws.Dokumendiliik;
 import ee.webmedia.alfresco.adr.ws.DokumendiliikV2;
@@ -35,24 +56,6 @@ import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import javax.xml.datatype.XMLGregorianCalendar;
-import org.alfresco.service.cmr.repository.AssociationRef;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.NamespaceService;
-import org.alfresco.service.namespace.QName;
-import org.alfresco.service.namespace.RegexQNamePattern;
-import org.apache.commons.lang.StringUtils;
 
 /**
  * @author Dmitri Melnikov
@@ -247,7 +250,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         }
 
         List<File> files = fileService.getAllActiveFiles(doc.getNodeRef());
-        for (Iterator<File> i = files.iterator(); i.hasNext(); ) {
+        for (Iterator<File> i = files.iterator(); i.hasNext();) {
             File file = i.next();
             // 5.1.2.5. faili pealkiri = failRequest.failinimi
             if (!file.getName().equals(filename)) { // this should be the real file name, because ADR interface requires it to be unique under document
@@ -315,10 +318,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             dokument.setSaaja(getNullIfEmpty(joinStringAndStringWithParentheses(doc.getOwnerName(), doc.getOwnerOrgStructUnit())));
         }
         dokument.setPealkiri(getNullIfEmpty(doc.getDocName()));
-        
+
         // =======================================================
         // Copied from setDokumentDetailidegaProperties
-        
+
         dokument.setJuurdepaasuPiirang(getNullIfEmpty(doc.getAccessRestriction()));
         dokument.setJuurdepaasuPiiranguAlus(getNullIfEmpty(doc.getAccessRestrictionReason()));
         dokument.setJuurdepaasuPiiranguKehtivuseAlgusKuupaev(convertToXMLGergorianCalendar(doc.getAccessRestrictionBeginDate()));
@@ -360,7 +363,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         dokument.setLisad(getNullIfEmpty((String) doc.getProperties().get(DocumentSpecificModel.Props.ANNEX)));
 
         dokument.setSaatjaViit(getNullIfEmpty(doc.getSenderRegNumber()));
-        
+
         String transmittalMode;
         if (isIncomingLetter) {
             transmittalMode = (String) doc.getProperties().get(DocumentSpecificModel.Props.TRANSMITTAL_MODE);
@@ -375,11 +378,11 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         if (DocumentTypeHelper.isOutgoingLetter(doc.getType())) {
             // recipientName ja additionalRecipientName
             party = doc.getAllRecipients();
-        } else  if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(doc.getType()) || DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(doc.getType())) {
+        } else if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(doc.getType()) || DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(doc.getType())) {
             String secondPartyName = (String) doc.getProperties().get(DocumentSpecificModel.Props.SECOND_PARTY_NAME);
             String thirdPartyName = (String) doc.getProperties().get(DocumentSpecificModel.Props.THIRD_PARTY_NAME);
             party = TextUtil.joinStringAndStringWithComma(secondPartyName, thirdPartyName);
-        } else  if (DocumentSubtypeModel.Types.CONTRACT_MV.equals(doc.getType())) {
+        } else if (DocumentSubtypeModel.Types.CONTRACT_MV.equals(doc.getType())) {
             List<ChildAssociationRef> partyAssocs = nodeService.getChildAssocs(doc.getNodeRef(), DocumentSpecificModel.Assocs.CONTRACT_MV_PARTIES, RegexQNamePattern.MATCH_ALL);
             List<String> partyNames = new ArrayList<String>(partyAssocs.size());
             for (ChildAssociationRef partyRef : partyAssocs) {
@@ -479,7 +482,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         return dokumentDetailidega;
     }
 
-    private void setDokumentDetailidegaProperties(DokumentDetailidega dokumentDetailidega, Document doc, boolean includeSeotudDokumentAdditionalProperties, boolean includeFileContent, Set<QName> documentTypes) {
+    private void setDokumentDetailidegaProperties(DokumentDetailidega dokumentDetailidega, Document doc
+            , boolean includeSeotudDokumentAdditionalProperties, boolean includeFileContent, Set<QName> documentTypes) {
         setDokumentProperties(dokumentDetailidega, doc, true);
         boolean isIncomingLetter = DocumentTypeHelper.isIncomingLetter(doc.getDocumentType().getId());
 
@@ -534,7 +538,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             if (DocumentStatus.FINISHED.equals(doc.getDocStatus())
                     && (AccessRestriction.OPEN.equals(doc.getAccessRestriction()) || AccessRestriction.AK.equals(doc.getAccessRestriction()))
                     && StringUtils.isNotEmpty(doc.getRegNumber()) && doc.getRegDateTime() != null && documentTypes.contains(doc.getType())) {
-                
+
                 Dokument dokument = new Dokument();
                 setDokumentProperties(dokument, doc, includeAdditionalProperties);
                 list.add(dokument);
@@ -598,7 +602,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         if (DocumentStatus.FINISHED.equals(docStatus)
                 && (AccessRestriction.OPEN.equals(accessRestriction) || AccessRestriction.AK.equals(accessRestriction))
                 && StringUtils.isNotEmpty(regNumber) && regDateTime != null) {
-            
+
             seotudDokument.setId(otherDocument.toString());
             return seotudDokument;
         }
@@ -612,6 +616,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
     @Override
     public List<DokumentDetailidega> koikDokumendidLisatudMuudetud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev) {
         return koikDokumendidLisatudMuudetud(perioodiAlgusKuupaev, perioodiLoppKuupaev, new BuildDocumentCallback<DokumentDetailidega>() {
+            @Override
             public DokumentDetailidega buildDocument(Document doc, Set<QName> documentTypes) {
                 return buildDokumentDetailidega(doc, false, true, documentTypes);
             }
@@ -620,11 +625,12 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     @Override
     public List<DokumentDetailidegaV2> koikDokumendidLisatudMuudetudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev) {
-        final Map<NodeRef, Map<QName, Serializable>> functionsCache = new HashMap<NodeRef, Map<QName,Serializable>>();
-        final Map<NodeRef, Map<QName, Serializable>> seriesCache = new HashMap<NodeRef, Map<QName,Serializable>>();
-        final Map<NodeRef, Map<QName, Serializable>> volumesCache = new HashMap<NodeRef, Map<QName,Serializable>>();
+        final Map<NodeRef, Map<QName, Serializable>> functionsCache = new HashMap<NodeRef, Map<QName, Serializable>>();
+        final Map<NodeRef, Map<QName, Serializable>> seriesCache = new HashMap<NodeRef, Map<QName, Serializable>>();
+        final Map<NodeRef, Map<QName, Serializable>> volumesCache = new HashMap<NodeRef, Map<QName, Serializable>>();
 
         return koikDokumendidLisatudMuudetud(perioodiAlgusKuupaev, perioodiLoppKuupaev, new BuildDocumentCallback<DokumentDetailidegaV2>() {
+            @Override
             public DokumentDetailidegaV2 buildDocument(Document doc, Set<QName> documentTypes) {
                 return buildDokumentDetailidegaV2(doc, false, documentTypes, functionsCache, seriesCache, volumesCache);
             }
@@ -635,7 +641,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         T buildDocument(Document doc, Set<QName> documentTypes);
     }
 
-    private <T> List<T> koikDokumendidLisatudMuudetud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev, BuildDocumentCallback<T> buildDocumentCallback, boolean compareByNodeRef) {
+    private <T> List<T> koikDokumendidLisatudMuudetud(XMLGregorianCalendar perioodiAlgusKuupaev
+            , XMLGregorianCalendar perioodiLoppKuupaev, BuildDocumentCallback<T> buildDocumentCallback, boolean compareByNodeRef) {
         long startTime = System.currentTimeMillis();
 
         Date modifiedDateBegin = getDate(perioodiAlgusKuupaev);
@@ -789,7 +796,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             // ============= and add ALL documents that belong to these types to results
 
             Set<QName> deletedDocumentTypes = new HashSet<QName>(documentSearchService.searchAdrDeletedDocumentTypes(deletedDateBegin, deletedDateEnd));
-            deletedDocumentTypes.removeAll(documentTypeService.getPublicAdrDocumentTypeQNames()); // Result: docTypes that were deleted during this period AND are not currently allowed
+            // Result: docTypes that were deleted during this period AND are not currently allowed
+            deletedDocumentTypes.removeAll(documentTypeService.getPublicAdrDocumentTypeQNames());
 
             List<Document> docs = documentSearchService.searchAdrDocuments((Date) null, (Date) null, deletedDocumentTypes);
             if (log.isDebugEnabled()) {

@@ -17,29 +17,23 @@ import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.namespace.QName;
 
 public class UnlockMethod extends org.alfresco.repo.webdav.UnlockMethod {
-    
+
     @Override
-    protected void executeImpl() throws WebDAVServerException
-    {
-        if (logger.isDebugEnabled())
-        {
+    protected void executeImpl() throws WebDAVServerException {
+        if (logger.isDebugEnabled()) {
             logger.debug("Lock node; path=" + getPath() + ", token=" + getLockToken());
         }
 
         FileInfo lockNodeInfo = null;
-        try
-        {
+        try {
             lockNodeInfo = getDAVHelper().getNodeForPath(getRootNodeRef(), getPath(), getServletPath());
-        }
-        catch (FileNotFoundException e)
-        {
+        } catch (FileNotFoundException e) {
             throw new WebDAVServerException(HttpServletResponse.SC_NOT_FOUND);
         }
 
         // Parse the lock token
         String[] lockInfo = WebDAV.parseLockToken(getLockToken());
-        if (lockInfo == null)
-        {
+        if (lockInfo == null) {
             // Bad lock token
             throw new WebDAVServerException(HttpServletResponse.SC_PRECONDITION_FAILED);
         }
@@ -52,8 +46,7 @@ public class UnlockMethod extends org.alfresco.repo.webdav.UnlockMethod {
         // String userName = lockInfo[1];
 
         LockStatus lockSts = lockService.getLockStatus(lockNodeInfo.getNodeRef());
-        if (lockSts == LockStatus.LOCK_OWNER)
-        {
+        if (lockSts == LockStatus.LOCK_OWNER) {
             // Unlock the node
             lockService.unlock(lockNodeInfo.getNodeRef());
 
@@ -61,12 +54,11 @@ public class UnlockMethod extends org.alfresco.repo.webdav.UnlockMethod {
             m_response.setStatus(HttpServletResponse.SC_NO_CONTENT);
 
             // DEBUG
-            if (logger.isDebugEnabled())
-            {
+            if (logger.isDebugEnabled()) {
                 logger.debug("Unlock token=" + getLockToken() + " Successful");
             }
-            
-            ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().setVersionLockableAspect(lockNodeInfo.getNodeRef(), false);
+
+            ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().setVersionLockableAspect(lockNodeInfo.getNodeRef(), false);
 
             // Set modifier and modified properties to original, so that locking doesn't appear to change the file
             Map<QName, Serializable> props = new HashMap<QName, Serializable>();
@@ -74,30 +66,27 @@ public class UnlockMethod extends org.alfresco.repo.webdav.UnlockMethod {
             props.put(ContentModel.PROP_MODIFIED, originalProps.get(ContentModel.PROP_MODIFIED));
             getBehaviourFilter().disableBehaviour(ContentModel.ASPECT_AUDITABLE);
             getNodeService().addProperties(lockNodeInfo.getNodeRef(), props);
-        }
-        else if (lockSts == LockStatus.NO_LOCK)
-        {
+        } else if (lockSts == LockStatus.NO_LOCK) {
             // DEBUG
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Unlock token=" + getLockToken() + " Not locked");
+            }
 
             // Node is not locked
             throw new WebDAVServerException(HttpServletResponse.SC_PRECONDITION_FAILED);
-        }
-        else if (lockSts == LockStatus.LOCKED)
-        {
+        } else if (lockSts == LockStatus.LOCKED) {
             // DEBUG
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Unlock token=" + getLockToken() + " Not lock owner");
+            }
 
             // Node is locked but not by this user
             throw new WebDAVServerException(HttpServletResponse.SC_PRECONDITION_FAILED);
-        }
-        else if (lockSts == LockStatus.LOCK_EXPIRED)
-        {
+        } else if (lockSts == LockStatus.LOCK_EXPIRED) {
             // DEBUG
-            if (logger.isDebugEnabled())
+            if (logger.isDebugEnabled()) {
                 logger.debug("Unlock token=" + getLockToken() + " Lock expired");
+            }
 
             // Return a success status
             m_response.setStatus(HttpServletResponse.SC_NO_CONTENT);

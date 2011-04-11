@@ -7,7 +7,7 @@ import java.util.Collection;
  */
 public class CompositeSearchQueryBuilder implements SearchQueryBuilder {
 
-    private Collection<SearchQueryBuilder> builders;
+    private final Collection<SearchQueryBuilder> builders;
 
     public CompositeSearchQueryBuilder(Collection<SearchQueryBuilder> builders) {
         this.builders = builders;

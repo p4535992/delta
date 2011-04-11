@@ -30,10 +30,12 @@ public class ManageDiscussionEvaluator extends BaseActionEvaluator {
     private transient WorkflowService workflowService;
     private transient NodeService nodeService;
     private transient GeneralService generalService;
-@Override
-public boolean evaluate(Object obj) {
-    throw new RuntimeException("test");
-}
+
+    @Override
+    public boolean evaluate(Object obj) {
+        throw new RuntimeException("test");
+    }
+
     @Override
     public boolean evaluate(Node _notUsed) {
         FacesContext context = FacesContext.getCurrentInstance();
@@ -58,10 +60,11 @@ public boolean evaluate(Object obj) {
             return true;
         }
         final List<CompoundWorkflow> compoundWorkflows = getWorkflowService().getCompoundWorkflows(node.getNodeRef());
-        // Check if owner is compoundWorkflow owner 
+        // Check if owner is compoundWorkflow owner
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
-            if(AuthenticationUtil.getRunAsUser().equals(compoundWorkflow.getOwnerName()))
+            if (AuthenticationUtil.getRunAsUser().equals(compoundWorkflow.getOwnerName())) {
                 return true;
+            }
         }
         // Check if user has any tasks in workflows
         final List<Task> myTasks = getWorkflowService().getMyTasksInProgress(compoundWorkflows);

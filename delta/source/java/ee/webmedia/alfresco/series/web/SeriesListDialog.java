@@ -109,8 +109,9 @@ public class SeriesListDialog extends BaseDialogBean {
     }
 
     public String getListTitle() {
-        if (disableActions)
+        if (disableActions) {
             return MessageUtil.getMessage("series_my_documents_list");
+        }
 
         return getFunction().getMark() + " " + getFunction().getTitle();
     }
@@ -159,7 +160,7 @@ public class SeriesListDialog extends BaseDialogBean {
 
     protected FunctionsService getFunctionsService() {
         if (functionsService == null) {
-            functionsService = (FunctionsService) FacesContextUtils.getRequiredWebApplicationContext( // 
+            functionsService = (FunctionsService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(FunctionsService.BEAN_NAME);
         }
         return functionsService;

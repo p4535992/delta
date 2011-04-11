@@ -45,8 +45,8 @@ public class ActionUtil {
             throw new RuntimeException("UIActionLink parameterMap does not contain key: " + key);
         }
         final String paramValue;
-        if(params != null) {
-            if(params.containsKey(key)) {
+        if (params != null) {
+            if (params.containsKey(key)) {
                 paramValue = params.get(key);
             } else {
                 paramValue = defaultValue;

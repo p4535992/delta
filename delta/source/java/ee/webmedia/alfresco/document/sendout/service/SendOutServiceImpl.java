@@ -27,8 +27,8 @@ import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.model.DocumentSendInfo;
+import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
@@ -74,15 +74,15 @@ public class SendOutServiceImpl implements SendOutService {
         }
         return result;
     }
-    
+
     @Override
     public List<SendInfo> getDocumentAndTaskSendInfos(NodeRef document, List<CompoundWorkflow> compoundWorkflows) {
         List<SendInfo> result = getDocumentSendInfos(document);
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-                if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)){
+                if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
                     for (Task task : workflow.getTasks()) {
-                        if (task.getProp(WorkflowSpecificModel.Props.SEND_STATUS) != null){
+                        if (task.getProp(WorkflowSpecificModel.Props.SEND_STATUS) != null) {
                             result.add(new TaskSendInfo(task.getNode()));
                         }
                     }
@@ -90,7 +90,7 @@ public class SendOutServiceImpl implements SendOutService {
             }
         }
         return result;
-    }    
+    }
 
     @Override
     public boolean sendOut(NodeRef document, List<String> names, List<String> emails, List<String> modes, String fromEmail, String subject, String content,
@@ -273,7 +273,7 @@ public class SendOutServiceImpl implements SendOutService {
         List<SendInfo> sendInfos = getDocumentSendInfos(document);
         ArrayList<String> sendModes = new ArrayList<String>(sendInfos.size());
         for (SendInfo sendInfo : sendInfos) {
-            sendModes.add((String) sendInfo.getSendMode());
+            sendModes.add(sendInfo.getSendMode());
         }
         return sendModes;
     }

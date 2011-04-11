@@ -23,6 +23,7 @@ import ee.webmedia.alfresco.dvk.service.DvkService;
 public class DvkReceiveOrganizationsJob implements Job {
     private static Log log = LogFactory.getLog(DvkReceiveOrganizationsJob.class);
 
+    @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         log.debug("Starting DvkReceiveOrganizationsJob");
         JobDataMap jobData = context.getJobDetail().getJobDataMap();

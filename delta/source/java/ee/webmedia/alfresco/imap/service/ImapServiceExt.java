@@ -15,7 +15,7 @@ import com.icegreen.greenmail.store.MailFolder;
 
 /**
  * Extended imap service.
- *
+ * 
  * @author Romet Aidla
  */
 public interface ImapServiceExt {
@@ -24,7 +24,7 @@ public interface ImapServiceExt {
 
     /**
      * Gets IMAP folder.
-     *
+     * 
      * @param user Imap user
      * @param folderName Folder name.
      * @return folder
@@ -33,7 +33,7 @@ public interface ImapServiceExt {
 
     /**
      * Saves mail to given folder.
-     *
+     * 
      * @param folderNodeRef Reference to folder
      * @param mimeMessage Mail message
      * @param incomingEmail true if incoming mail (otherwise it is assumed to be outgoing mail)
@@ -44,7 +44,7 @@ public interface ImapServiceExt {
 
     /**
      * Lists folders used for IMAP.
-     *
+     * 
      * @param user Imap user
      * @param mailboxPattern Mailbox pattern
      * @return Collection of IMAP folders.
@@ -53,7 +53,7 @@ public interface ImapServiceExt {
 
     /**
      * Saves attachments from mail message to given folder.
-     *
+     * 
      * @param folderNodeRef Reference to folder
      * @param originalMessage Mail message
      * @throws IOException
@@ -64,6 +64,7 @@ public interface ImapServiceExt {
 
     /**
      * Get node reference to attachments folder
+     * 
      * @return node reference
      */
     NodeRef getAttachmentRoot();

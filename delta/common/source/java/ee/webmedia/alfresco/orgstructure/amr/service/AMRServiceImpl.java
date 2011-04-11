@@ -6,17 +6,17 @@ import org.springframework.ws.client.core.WebServiceTemplate;
 
 import smit.ametnik.services.Ametnik;
 import smit.ametnik.services.AmetnikByAsutusIdRequestDocument;
+import smit.ametnik.services.AmetnikByAsutusIdRequestDocument.AmetnikByAsutusIdRequest;
 import smit.ametnik.services.AmetnikByAsutusIdResponseDocument;
+import smit.ametnik.services.AmetnikByAsutusIdResponseDocument.AmetnikByAsutusIdResponse;
 import smit.ametnik.services.AmetnikByIsikukoodRequestDocument;
+import smit.ametnik.services.AmetnikByIsikukoodRequestDocument.AmetnikByIsikukoodRequest;
 import smit.ametnik.services.AmetnikByIsikukoodResponseDocument;
+import smit.ametnik.services.AmetnikByIsikukoodResponseDocument.AmetnikByIsikukoodResponse;
 import smit.ametnik.services.Yksus;
 import smit.ametnik.services.YksusByAsutusIdRequestDocument;
-import smit.ametnik.services.YksusByAsutusIdResponseDocument;
-import smit.ametnik.services.AmetnikByAsutusIdRequestDocument.AmetnikByAsutusIdRequest;
-import smit.ametnik.services.AmetnikByAsutusIdResponseDocument.AmetnikByAsutusIdResponse;
-import smit.ametnik.services.AmetnikByIsikukoodRequestDocument.AmetnikByIsikukoodRequest;
-import smit.ametnik.services.AmetnikByIsikukoodResponseDocument.AmetnikByIsikukoodResponse;
 import smit.ametnik.services.YksusByAsutusIdRequestDocument.YksusByAsutusIdRequest;
+import smit.ametnik.services.YksusByAsutusIdResponseDocument;
 import smit.ametnik.services.YksusByAsutusIdResponseDocument.YksusByAsutusIdResponse;
 
 /**

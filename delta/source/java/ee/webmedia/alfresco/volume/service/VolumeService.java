@@ -19,17 +19,19 @@ public interface VolumeService {
 
     /**
      * Save or update volume - new values taken from node properties
+     * 
      * @param volume
      */
     void saveOrUpdate(Volume volume);
 
     /**
      * Save or update volume - new values taken from node properties or from volume fields
+     * 
      * @param volume
      * @param fromNodeProps
      */
     void saveOrUpdate(Volume volume, boolean fromNodeProps);
-    
+
     List<ChildAssociationRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef);
 
     List<Volume> getAllVolumesBySeries(NodeRef seriesNodeRef);

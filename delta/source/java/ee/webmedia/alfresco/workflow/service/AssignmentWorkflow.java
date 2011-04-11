@@ -5,15 +5,14 @@ import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isActiveRespons
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.model.Status;
-import static ee.webmedia.alfresco.workflow.service.WorkflowUtil.isStatus;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 /**
  * @author Erko Hansar
  */
 public class AssignmentWorkflow extends Workflow {
-    
+
     private static final long serialVersionUID = 1L;
 
     protected AssignmentWorkflow(WmNode node, CompoundWorkflow parent, WmNode newTaskTemplate, Class<? extends Task> newTaskClass, Integer newTaskOutcomes) {
@@ -30,8 +29,8 @@ public class AssignmentWorkflow extends Workflow {
     protected void preSave() {
         super.preSave();
         for (Task task : getTasks()) {
-            if (task.isStatus(Status.NEW, Status.IN_PROGRESS) 
-                 && StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))) {
+            if (task.isStatus(Status.NEW, Status.IN_PROGRESS)
+                    && StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))) {
                 task.setProp(WorkflowSpecificModel.Props.RESOLUTION, getProp(WorkflowSpecificModel.Props.RESOLUTION));
             }
         }

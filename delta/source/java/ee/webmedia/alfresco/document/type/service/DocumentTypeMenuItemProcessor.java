@@ -12,13 +12,12 @@ import org.apache.log4j.Logger;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.document.type.model.DocumentType;
-import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.service.MenuService.MenuItemProcessor;
 
 public class DocumentTypeMenuItemProcessor implements MenuItemProcessor, InitializingBean {
-    
+
     private static Logger log = Logger.getLogger(DocumentTypeMenuItemProcessor.class);
 
     private MenuService menuService;
@@ -48,8 +47,8 @@ public class DocumentTypeMenuItemProcessor implements MenuItemProcessor, Initial
                 i.remove();
             } else {
                 traverse(item, allDocumentTypes);
-                //if submenu is emty, remove menu item
-                if(StringUtils.isEmpty(item.getOutcome()) && (item.getSubItems() == null || item.getSubItems().size() == 0)){
+                // if submenu is emty, remove menu item
+                if (StringUtils.isEmpty(item.getOutcome()) && (item.getSubItems() == null || item.getSubItems().size() == 0)) {
                     emptyItems.add(item);
                 }
             }
@@ -58,7 +57,7 @@ public class DocumentTypeMenuItemProcessor implements MenuItemProcessor, Initial
     }
 
     private boolean process(MenuItem item, List<DocumentType> allDocumentTypes) {
-        DocumentType docType = null; 
+        DocumentType docType = null;
         for (DocumentType tmpType : allDocumentTypes) {
             if (tmpType.getId().toPrefixString(namespaceService).equalsIgnoreCase(item.getOutcome())) {
                 docType = tmpType;
@@ -93,7 +92,7 @@ public class DocumentTypeMenuItemProcessor implements MenuItemProcessor, Initial
     public void setDocumentTypeService(DocumentTypeService documentTypeService) {
         this.documentTypeService = documentTypeService;
     }
-    
+
     public void setNamespaceService(NamespaceService namespaceService) {
         this.namespaceService = namespaceService;
     }

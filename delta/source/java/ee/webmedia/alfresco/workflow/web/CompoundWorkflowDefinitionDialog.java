@@ -290,9 +290,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         int newIndex = (filterIndex == 0) ? 2 : 3;
         if (getWorkflowService().isInternalTesting()) {
             return executeOwnerSearch(newIndex, contains, true, true, null);
-        } else {
-            return executeOwnerSearch(newIndex, contains, true, true, getDvkService().getInstitutionCode());
         }
+        return executeOwnerSearch(newIndex, contains, true, true, getDvkService().getInstitutionCode());
     }
 
     /**

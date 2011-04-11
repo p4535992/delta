@@ -6,12 +6,15 @@ import static org.alfresco.web.ui.common.StringUtils.encode;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
@@ -50,6 +53,8 @@ import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
+import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
@@ -82,6 +87,7 @@ import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -115,10 +121,11 @@ public class MetadataBlockBean implements Serializable {
     private transient UserService userService;
     private transient WorkflowService workflowService;
     private transient DvkService dvkService;
-    private UserListDialog userListDialog; 
+    private transient ClassificatorService classificatorService;
+    private UserListDialog userListDialog;
     private transient UIPropertySheet propertySheet;
     private transient InMemoryChildNodeHelper inMemoryChildNodeHelper;
-    private SelectItem[] contactOrUserSearchFilters;    
+    private SelectItem[] contactOrUserSearchFilters;
 
     private Node document;
     private Node propertySheetControlDocument;
@@ -145,21 +152,53 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public void setApplicantName(String userName, Node applicantNode) {
-        Map<QName, Serializable> personProps = getPersonProps(userName);
-
-        Map<String, Object> props = applicantNode.getProperties();
-        props.put(DocumentSpecificModel.Props.APPLICANT_NAME.toString(), UserUtil.getPersonFullName1(personProps));
-        props.put(DocumentSpecificModel.Props.APPLICANT_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
-        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        props.put(DocumentSpecificModel.Props.APPLICANT_STRUCT_UNIT_NAME.toString(), orgstructName);
+        setApplicantName(userName, applicantNode.getProperties(), applicantNode.getAspects());
     }
-    
+
+    public Map<QName, Serializable> setApplicantName(String userName, Map<String, Object> targetProps, Set<QName> docAspects) {
+        Map<QName, Serializable> personProps = getPersonProps(userName);
+        targetProps.put(DocumentSpecificModel.Props.APPLICANT_NAME.toString(), UserUtil.getPersonFullName1(personProps));
+        targetProps.put(DocumentSpecificModel.Props.APPLICANT_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
+        String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
+        targetProps.put(DocumentSpecificModel.Props.APPLICANT_STRUCT_UNIT_NAME.toString(), orgstructName);
+
+        // Set properties related to certain aspects if needed
+        if (docAspects == null || docAspects.isEmpty()) {
+            return RepoUtil.toQNameProperties(targetProps);
+        }
+
+        if (StringUtils.isNotBlank(orgstructName) && docAspects.contains(DocumentSpecificModel.Aspects.ERRAND_ORDER_APPLICANT_ABROAD_V2)) {
+            targetProps.put(DocumentSpecificModel.Props.COST_MANAGER.toString(), getActiveClassificatorValue("errandOrderAbroadCostManager", orgstructName));
+            targetProps.put(DocumentSpecificModel.Props.EXPENDITURE_ITEM.toString(), getActiveClassificatorValue("errandOrderExpenditureItem", orgstructName));
+        }
+
+        if (StringUtils.isNotBlank(orgstructName) && docAspects.contains(DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE_V2)) {
+            targetProps.put(DocumentSpecificModel.Props.COST_MANAGER.toString(),
+                    getActiveClassificatorValue("errandApplicationDomesticCostManager", orgstructName));
+            targetProps.put(DocumentSpecificModel.Props.COST_ELEMENT.toString(),
+                    getActiveClassificatorValue("errandApplicationDomesticCostElement", orgstructName));
+        }
+
+        return RepoUtil.toQNameProperties(targetProps);
+    }
+
+    private String getActiveClassificatorValue(String classificatorName, String classificatorComment) {
+        final List<ClassificatorValue> activeClassificatorValues = getClassificatorService().getActiveClassificatorValues(
+                getClassificatorService().getClassificatorByName(classificatorName));
+        for (ClassificatorValue classificatorValue : activeClassificatorValues) {
+            if (StringUtils.equalsIgnoreCase(classificatorValue.getClassificatorDescription(), classificatorComment)) {
+                return classificatorValue.getValueName();
+            }
+        }
+        return "";
+    }
+
     public void setPartyName(String nodeRefStr, Node partyNode) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
         Map<String, Object> partyProps = partyNode.getProperties();
         partyProps.put(DocumentSpecificModel.Props.PARTY_NAME.toString(), getAddressbookOrgOrName(nodeRef));
-        partyProps.put(DocumentSpecificModel.Props.PARTY_EMAIL.toString(), getNodeService().getProperty(nodeRef, AddressbookModel.Props.EMAIL));        
-    }    
+        partyProps.put(DocumentSpecificModel.Props.PARTY_EMAIL.toString(), getNodeService().getProperty(nodeRef, AddressbookModel.Props.EMAIL));
+    }
 
     public void setErrandSubstituteName(String userName, Node applicantNode) {
         Map<QName, Serializable> personProps = getPersonProps(userName);
@@ -199,30 +238,30 @@ public class MetadataBlockBean implements Serializable {
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.FIRST_PARTY_NAME.toString(), getAddressbookOrgOrName(new NodeRef(nodeRefStr)));
     }
-    
+
     public void setMinutesDirector(String userName) {
         Map<String, Object> docProps = document.getProperties();
         Map<QName, Serializable> personProps = getPersonProps(userName);
-        docProps.put(DocumentSpecificModel.Props.MINUTES_DIRECTOR.toString(), UserUtil.getPersonFullName1(personProps));        
-    }    
-    
+        docProps.put(DocumentSpecificModel.Props.MINUTES_DIRECTOR.toString(), UserUtil.getPersonFullName1(personProps));
+    }
+
     public void setMinutesRecorder(String userName) {
         Map<String, Object> docProps = document.getProperties();
         Map<QName, Serializable> personProps = getPersonProps(userName);
-        docProps.put(DocumentSpecificModel.Props.MINUTES_RECORDER.toString(), UserUtil.getPersonFullName1(personProps));        
-    }     
-    
+        docProps.put(DocumentSpecificModel.Props.MINUTES_RECORDER.toString(), UserUtil.getPersonFullName1(personProps));
+    }
+
     public void setSenderSigner(String nodeRefStr) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.SENDER_SIGNER.toString(), getAddressbookOrgOrName(nodeRef));
     }
-    
+
     public void setSenderWriter(String nodeRefStr) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
         Map<String, Object> docProps = document.getProperties();
         docProps.put(DocumentSpecificModel.Props.SENDER_WRITER.toString(), getAddressbookOrgOrName(nodeRef));
-    }    
+    }
 
     public void setResponsible(String userName) {
         Map<QName, Serializable> personProps = getPersonProps(userName);
@@ -287,11 +326,11 @@ public class MetadataBlockBean implements Serializable {
         docProps.put(DocumentCommonModel.Props.SIGNER_NAME.toString(), UserUtil.getPersonFullName1(personProps));
         docProps.put(DocumentCommonModel.Props.SIGNER_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
     }
-    
+
     public void setReportMvRapporteur(String userName) {
         Map<QName, Serializable> personProps = getPersonProps(userName);
         Map<String, Object> docProps = document.getProperties();
-        docProps.put(DocumentSpecificModel.Props.RAPPORTEUR_NAME.toString(), UserUtil.getPersonFullName1(personProps));        
+        docProps.put(DocumentSpecificModel.Props.RAPPORTEUR_NAME.toString(), UserUtil.getPersonFullName1(personProps));
     }
 
     public void setDeliverer(String userName) {
@@ -303,7 +342,7 @@ public class MetadataBlockBean implements Serializable {
         String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
         docProps.put(DocumentSpecificModel.Props.DELIVERER_STRUCT_UNIT.toString(), orgstructName);
     }
-    
+
     public void setCompensationApplicantName(String userName) {
         Map<QName, Serializable> personProps = getPersonProps(userName);
 
@@ -312,7 +351,7 @@ public class MetadataBlockBean implements Serializable {
         docProps.put(DocumentSpecificModel.Props.COMPENSATION_APPLICANT_JOB_TITLE.toString(), personProps.get(ContentModel.PROP_JOBTITLE));
         String orgstructName = getOrganizationStructureService().getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
         docProps.put(DocumentSpecificModel.Props.COMPENSATION_APPLICANT_STRUCT_UNIT_NAME.toString(), orgstructName);
-    }   
+    }
 
     public void setReceiver(String userName) {
         Map<QName, Serializable> personProps = getPersonProps(userName);
@@ -341,19 +380,19 @@ public class MetadataBlockBean implements Serializable {
         }
         return name;
     }
-    
-    public void setApplicantInstitution(String nodeRefStr){
+
+    public void setApplicantInstitution(String nodeRefStr) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
         document.getProperties().put(DocumentSpecificModel.Props.APPLICANT_INSTITUTION.toString(), getOrgOrPersonName(nodeRef));
-    }  
-    
-    public void setApplicantPerson(String searchResult){
+    }
+
+    public void setApplicantPerson(String searchResult) {
         String name = getUserOrContactName(searchResult);
         document.getProperties().put(DocumentSpecificModel.Props.APPLICANT_PERSON.toString(), name);
     }
 
     public String getUserOrContactName(String searchResult) {
-        String name = null;        
+        String name = null;
         if (StringUtils.isBlank(searchResult)) {
             return name;
         }
@@ -372,17 +411,17 @@ public class MetadataBlockBean implements Serializable {
             name = UserUtil.getPersonFullName1(personProps);
         }
         return name;
-    } 
-    
-    public void setCoApplicantInstitution(String nodeRefStr){
+    }
+
+    public void setCoApplicantInstitution(String nodeRefStr) {
         NodeRef nodeRef = new NodeRef(nodeRefStr);
         document.getProperties().put(DocumentSpecificModel.Props.CO_APPLICANT_INSTITUTION.toString(), getOrgOrPersonName(nodeRef));
-    }   
-    
-    public void setCoApplicantPerson(String searchResult){
+    }
+
+    public void setCoApplicantPerson(String searchResult) {
         String name = getUserOrContactName(searchResult);
         document.getProperties().put(DocumentSpecificModel.Props.CO_APPLICANT_PERSON.toString(), name);
-    }     
+    }
 
     public List<String> setVacationSubstitute(String userName) {
         Map<QName, Serializable> personProps = getPersonProps(userName);
@@ -443,7 +482,7 @@ public class MetadataBlockBean implements Serializable {
                 comment = StringUtils.replace(encode(comment), "\n", "<br/>");
             }
             props.put("{temp}comment", comment);
-            
+
             if (document.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_SIM_DETAILS)) {
                 props.put("{temp}secondPartyContractDate", props.get(DocumentSpecificModel.Props.SECOND_PARTY_CONTRACT_DATE));
             }
@@ -512,29 +551,30 @@ public class MetadataBlockBean implements Serializable {
                 String receiverStructUnit = (String) props.get(DocumentSpecificModel.Props.RECEIVER_STRUCT_UNIT);
                 props.put("receiver", joinStringAndStringWithParentheses(receiverName, joinStringAndStringWithComma(receiverJobTitle, receiverStructUnit)));
             }
-            
+
             if (document.hasAspect(DocumentSpecificModel.Aspects.PERSONAL_VEHICLE_USAGE_COMPENSATION_MV)) {
                 String applicantName = (String) props.get(DocumentSpecificModel.Props.COMPENSATION_APPLICANT_NAME);
                 String applicantJobTitle = (String) props.get(DocumentSpecificModel.Props.COMPENSATION_APPLICANT_JOB_TITLE);
                 String applicantStructUnit = (String) props.get(DocumentSpecificModel.Props.COMPENSATION_APPLICANT_STRUCT_UNIT_NAME);
-                props.put("{temp}compensationApplicant", joinStringAndStringWithParentheses(applicantName, joinStringAndStringWithComma(applicantJobTitle, applicantStructUnit)));
-            }   
-            
-            if(document.hasAspect(DocumentSpecificModel.Aspects.PROJECT_APPLICATION)){
+                props.put("{temp}compensationApplicant",
+                        joinStringAndStringWithParentheses(applicantName, joinStringAndStringWithComma(applicantJobTitle, applicantStructUnit)));
+            }
+
+            if (document.hasAspect(DocumentSpecificModel.Aspects.PROJECT_APPLICATION)) {
                 String applicantName = (String) props.get(DocumentSpecificModel.Props.APPLICANT_PERSON);
                 String applicantInstitution = (String) props.get(DocumentSpecificModel.Props.APPLICANT_INSTITUTION);
                 String coApplicantName = (String) props.get(DocumentSpecificModel.Props.APPLICANT_PERSON);
-                String coApplicantInstitution = (String) props.get(DocumentSpecificModel.Props.APPLICANT_INSTITUTION);                
+                String coApplicantInstitution = (String) props.get(DocumentSpecificModel.Props.APPLICANT_INSTITUTION);
                 props.put("{temp}applicantInstitutionPerson", joinStringAndStringWithComma(applicantInstitution, applicantName));
                 props.put("{temp}coApplicantInstitutionPerson", joinStringAndStringWithComma(coApplicantInstitution, coApplicantName));
-                
+
                 @SuppressWarnings("unchecked")
                 List<String> financerInstitutions = (List<String>) props.get(DocumentSpecificModel.Props.CO_FINANCER_INSTITUTION);
                 @SuppressWarnings("unchecked")
                 List<String> financerPersons = (List<String>) props.get(DocumentSpecificModel.Props.CO_FINANCER_PERSONA);
                 @SuppressWarnings("unchecked")
                 List<Double> financerSums = (List<Double>) props.get(DocumentSpecificModel.Props.CO_FINANCER_SUM);
-                props.put("{temp}coFinancers", generateCoFinancerTable(financerInstitutions, financerPersons, financerSums));                
+                props.put("{temp}coFinancers", generateCoFinancerTable(financerInstitutions, financerPersons, financerSums));
             }
 
             if (document.hasAspect(DocumentSpecificModel.Aspects.SECOND_PARTY_REG)) {
@@ -549,29 +589,28 @@ public class MetadataBlockBean implements Serializable {
                 props.put("senderRegNumberDate", joinStringAndDateWithComma(senderRegNumber, senderRegDateTime));
             }
 
-
             if (document.hasAspect(DocumentSpecificModel.Aspects.SENDER_DETAILS)) {
                 String senderName = (String) props.get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
-                if(!document.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV)){
+                if (!document.getType().equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV)) {
                     String senderEmail = (String) props.get(DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL);
-                    props.put("senderNameEmail", joinStringAndStringWithComma(senderName, senderEmail));                    
-                }
-                else{
-                    props.put("senderNameEmail", senderName); 
+                    props.put("senderNameEmail", joinStringAndStringWithComma(senderName, senderEmail));
+                } else {
+                    props.put("senderNameEmail", senderName);
                 }
 
             }
-            
-            if (document.hasAspect(DocumentSpecificModel.Aspects.SENDER_DETAILS_MV)){
+
+            if (document.hasAspect(DocumentSpecificModel.Aspects.SENDER_DETAILS_MV)) {
                 String senderAddress1 = (String) props.get(DocumentSpecificModel.Props.SENDER_ADDRESS1);
                 String senderAddress2 = (String) props.get(DocumentSpecificModel.Props.SENDER_ADDRESS2);
                 String senderPostalCode = (String) props.get(DocumentSpecificModel.Props.SENDER_POSTAL_CODE);
                 String senderName = (String) props.get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
                 String senderEmail = (String) props.get(DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL);
                 String senderPhone = (String) props.get(DocumentSpecificModel.Props.SENDER_PHONE);
-                props.put("{temp}senderAddressPostalCode", joinStringAndStringWithComma(joinStringAndStringWithComma(senderAddress1, senderAddress2), senderPostalCode));
+                props.put("{temp}senderAddressPostalCode",
+                        joinStringAndStringWithComma(joinStringAndStringWithComma(senderAddress1, senderAddress2), senderPostalCode));
                 props.put("{temp}senderWriterEmailPhone", joinStringAndStringWithComma(joinStringAndStringWithComma(senderName, senderEmail), senderPhone));
-            }            
+            }
 
             if (document.hasAspect(DocumentSpecificModel.Aspects.WHOM)) {
                 String whomName = (String) props.get(DocumentSpecificModel.Props.WHOM_NAME);
@@ -584,7 +623,7 @@ public class MetadataBlockBean implements Serializable {
                 String signerJobTitle = (String) props.get(DocumentCommonModel.Props.SIGNER_JOB_TITLE);
                 props.put("{temp}signer", joinStringAndStringWithParentheses(signer, signerJobTitle));
             } else if (document.hasAspect(DocumentCommonModel.Aspects.SIGNER_NAME)) {
-                props.put("{temp}signer", props.get(DocumentCommonModel.Props.SIGNER_NAME));                
+                props.put("{temp}signer", props.get(DocumentCommonModel.Props.SIGNER_NAME));
             }
 
             if (document.hasAspect(DocumentCommonModel.Aspects.RECIPIENT)) {
@@ -602,7 +641,7 @@ public class MetadataBlockBean implements Serializable {
                 List<String> recipientEmails = (List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL);
                 props.put("additionalRecipients", generateNameAndEmailTable(recipientNames, recipientEmails));
             }
-            
+
             if (document.hasAspect(DocumentSpecificModel.Aspects.MANAGEMENTS_ORDER_DETAILS)) {
                 String responsible = encode((String) props.get(DocumentSpecificModel.Props.RESPONSIBLE_NAME));
                 String responsibleStructUnit = (String) props.get(DocumentSpecificModel.Props.RESPONSIBLE_STRUCT_UNIT);
@@ -622,13 +661,12 @@ public class MetadataBlockBean implements Serializable {
                 if (BooleanUtils.isTrue(leaveAnnual)) {
                     String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL_BEGIN_DATE));
                     String to = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL_END_DATE));
-                    if(!isMvVacationApp){
+                    if (!isMvVacationApp) {
                         String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL_DAYS));
                         String msg = document.getType().equals(DocumentSubtypeModel.Types.VACATION_ORDER_SMIT) //
-                        ? "document_leaveAnnualSmit" : "document_leaveAnnual";
+                                ? "document_leaveAnnualSmit" : "document_leaveAnnual";
                         sb.append(encode(MessageUtil.getMessage(context, msg, from, to, days)));
-                    }
-                    else{
+                    } else {
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveAnnualMv", from, to)));
                     }
                 }
@@ -638,11 +676,10 @@ public class MetadataBlockBean implements Serializable {
                     if (StringUtils.isNotBlank(sb.toString())) {
                         sb.append("<br/>");
                     }
-                    if(!isMvVacationApp){
-                        String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY_DAYS));                        
+                    if (!isMvVacationApp) {
+                        String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY_DAYS));
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveWithoutPay", from, to, days)));
-                    }
-                    else{
+                    } else {
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveWithoutPayMv", from, to)));
                     }
                 }
@@ -652,11 +689,10 @@ public class MetadataBlockBean implements Serializable {
                     if (StringUtils.isNotBlank(sb.toString())) {
                         sb.append("<br/>");
                     }
-                    if(!isMvVacationApp){
+                    if (!isMvVacationApp) {
                         String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_CHILD_DAYS));
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveChild", from, to, days)));
-                    }
-                    else{
+                    } else {
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveChildMv", from, to)));
                     }
                 }
@@ -666,11 +702,10 @@ public class MetadataBlockBean implements Serializable {
                     if (StringUtils.isNotBlank(sb.toString())) {
                         sb.append("<br/>");
                     }
-                    if(!isMvVacationApp){
+                    if (!isMvVacationApp) {
                         String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_STUDY_DAYS));
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveStudy", from, to, days)));
-                    }
-                    else{
+                    } else {
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveStudyMv", from, to)));
                     }
                 }
@@ -684,7 +719,7 @@ public class MetadataBlockBean implements Serializable {
                 if (BooleanUtils.isTrue(leaveChange)) {
                     if (!isSmitVacationOrder) {
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveChange1")));
-                    } else{
+                    } else {
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveChangeSmit1")));
                     }
                     sb.append("<br/>");
@@ -694,11 +729,10 @@ public class MetadataBlockBean implements Serializable {
                     sb.append("<br/>");
                     String newFrom = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE));
                     String newTo = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_NEW_END_DATE));
-                    if(!isMvVacationApp){
+                    if (!isMvVacationApp) {
                         String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_NEW_DAYS));
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveChange3", newFrom, newTo, days)));
-                    }
-                    else{
+                    } else {
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveChangeMv3", newFrom, newTo)));
                     }
                 }
@@ -708,17 +742,16 @@ public class MetadataBlockBean implements Serializable {
                     }
                     if (!isSmitVacationOrder) {
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveCancel1")));
-                    } else{
+                    } else {
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveCancelSmit1")));
                     }
                     sb.append("<br/>");
                     String from = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE));
                     String to = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE));
-                    if(!isMvVacationApp){
+                    if (!isMvVacationApp) {
                         String days = formatIntegerOrEmpty((Integer) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_DAYS));
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveCancel2", from, to, days)));
-                    }
-                    else{
+                    } else {
                         sb.append(encode(MessageUtil.getMessage(context, "document_leaveCancelMv2", from, to)));
                     }
                 }
@@ -778,7 +811,7 @@ public class MetadataBlockBean implements Serializable {
             NodeRef volumeRef = (NodeRef) props.get(DocumentService.TransientProps.VOLUME_NODEREF);
             String caseLabel = (String) props.get(DocumentService.TransientProps.CASE_LABEL_EDITABLE);
             updateFnSerVol(functionRef, seriesRef, volumeRef, caseLabel, true);
-            
+
             if (DocumentSubtypeModel.Types.LEAVING_LETTER.equals(document.getType())) {
                 /** Document name must be filled for this type. */
                 props.put(DocumentCommonModel.Props.DOC_NAME.toString(), documentTypeName);
@@ -872,19 +905,19 @@ public class MetadataBlockBean implements Serializable {
         final Node applicantNode = getParentNode(event);
         getInMemoryChildNodeHelper().addErrand(applicantNode, document);
     }
-    
-    public void addParty(ActionEvent event){
+
+    public void addParty(ActionEvent event) {
         final Node docNode = getParentNode(event);
         getInMemoryChildNodeHelper().addParty(docNode);
     }
 
-    public void removeParty(ActionEvent event){
+    public void removeParty(ActionEvent event) {
         final Node docNode = getParentNode(event);
         final String assocIndexParam = ActionUtil.getParam(event, SubPropertySheetItem.PARAM_ASSOC_INDEX);
         final int assocIndex = Integer.parseInt(assocIndexParam);
         getInMemoryChildNodeHelper().removeParty(docNode, assocIndex);
     }
-    
+
     private Node getParentNode(ActionEvent event) {
         final SubPropertySheetItem propSheet = ComponentUtil.getAncestorComponent(event.getComponent(), SubPropertySheetItem.class);
         return propSheet.getParentPropSheetNode();
@@ -1122,11 +1155,11 @@ public class MetadataBlockBean implements Serializable {
         document.getProperties().put(DocumentService.TransientProps.VOLUME_NODEREF, volumeRef);
         document.getProperties().put(DocumentService.TransientProps.CASE_LABEL_EDITABLE, caseLabel);
     }
-    
-    public SelectItem[] getUserOrContactSearchFilters(){
+
+    public SelectItem[] getUserOrContactSearchFilters() {
         return contactOrUserSearchFilters;
     }
-    
+
     public SelectItem[] searchUsersOrContacts(int filterIndex, String contains) {
         log.debug("executeOwnerSearch: " + filterIndex + ", " + contains);
         if (filterIndex == 0) { // users
@@ -1139,10 +1172,10 @@ public class MetadataBlockBean implements Serializable {
         } else {
             throw new RuntimeException("Unknown filter index value: " + filterIndex);
         }
-    }    
+    }
 
     public boolean isShowCase() {
-        if (document != null){
+        if (document != null) {
             return document.getProperties().get(TransientProps.CASE_NODEREF) != null;
         }
         return false;
@@ -1172,7 +1205,7 @@ public class MetadataBlockBean implements Serializable {
         }
         return StringUtils.join(rows.iterator(), "<br/>");
     }
-    
+
     protected String generateCoFinancerTable(List<String> institutions, List<String> persons, List<Double> sums) {
         DoubleCurrencyConverter converter = new DoubleCurrencyConverter();
         int size = 0;
@@ -1195,12 +1228,12 @@ public class MetadataBlockBean implements Serializable {
             }
             String sum = "";
             if (sums != null && i < sums.size()) {
-                if(sums.get(i) != null){
+                if (sums.get(i) != null) {
                     sum = converter.getAsString(sums.get(i));
                 }
-            }            
+            }
             String row = joinStringAndStringWithComma(encode(institution), encode(person));
-            if(StringUtils.isNotBlank(row) || StringUtils.isNotBlank(sum)){
+            if (StringUtils.isNotBlank(row) || StringUtils.isNotBlank(sum)) {
                 row += " summas " + sum;
                 if (!StringUtils.isBlank(row)) {
                     rows.add(row);
@@ -1208,7 +1241,7 @@ public class MetadataBlockBean implements Serializable {
             }
         }
         return StringUtils.join(rows.iterator(), "<br/>");
-    }    
+    }
 
     protected String generateEmailLink(String email) {
         if (StringUtils.isBlank(email)) {
@@ -1227,8 +1260,8 @@ public class MetadataBlockBean implements Serializable {
 
     public void init(NodeRef nodeRef, boolean created) {
         this.nodeRef = nodeRef;
-        this.inEditMode = created;
-        this.isDraft = created;
+        inEditMode = created;
+        isDraft = created;
         propertySheet = null;
         reloadDoc();
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
@@ -1236,7 +1269,7 @@ public class MetadataBlockBean implements Serializable {
         contactOrUserSearchFilters = new SelectItem[] {
                 new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
                 new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")),
-        };        
+        };
     }
 
     public void reloadDoc() {
@@ -1275,8 +1308,8 @@ public class MetadataBlockBean implements Serializable {
         }
         editDocument(getDocumentService().getDocument(document.getNodeRef()));
     }
-    
-    public void editNewDocument(Node docNode){
+
+    public void editNewDocument(Node docNode) {
         isDraft = true;
         editDocument(docNode);
     }
@@ -1313,8 +1346,8 @@ public class MetadataBlockBean implements Serializable {
                 log.debug("save: doc NodeRef=" + document.getNodeRefAsString());
                 document.getProperties().put(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT, isDraft);
                 document = getDocumentService().updateDocument(document);
-                if(!isDraft && getWorkflowService().isSendableExternalWorkflowDoc(document.getNodeRef())){
-                   getDvkService().sendDvkTasksWithDocument(document.getNodeRef(), null, null);
+                if (!isDraft && getWorkflowService().isSendableExternalWorkflowDoc(document.getNodeRef())) {
+                    getDvkService().sendDvkTasksWithDocument(document.getNodeRef(), null, null);
                 }
                 inEditMode = false;
             } catch (UnableToPerformException e) {
@@ -1323,10 +1356,10 @@ public class MetadataBlockBean implements Serializable {
                 }
                 MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
                 return false;
-            } catch (ExternalReviewException e){
+            } catch (ExternalReviewException e) {
                 MessageUtil.addInfoMessage("dvk_sending_failed");
                 return true;
-                
+
             } finally {
                 lockOrUnlockIfNeeded(inEditMode);
                 reloadTransientProperties();
@@ -1341,20 +1374,20 @@ public class MetadataBlockBean implements Serializable {
     }
 
     private void removeEmptyParties() {
-        if(document.getType().equals(DocumentSubtypeModel.Types.CONTRACT_MV)){
+        if (document.getType().equals(DocumentSubtypeModel.Types.CONTRACT_MV)) {
             List<Node> parties = document.getAllChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_MV_PARTIES);
             ArrayList<Node> emptyParties = new ArrayList<Node>();
-            for(Node party : parties){
+            for (Node party : parties) {
                 @SuppressWarnings("rawtypes")
                 Map partyProps = party.getProperties();
-                if(StringUtils.isBlank((String)partyProps.get(DocumentSpecificModel.Props.PARTY_NAME))
-                        && StringUtils.isBlank((String)partyProps.get(DocumentSpecificModel.Props.PARTY_EMAIL))
-                        && StringUtils.isBlank((String)partyProps.get(DocumentSpecificModel.Props.PARTY_SIGNER))
-                        && StringUtils.isBlank((String)partyProps.get(DocumentSpecificModel.Props.PARTY_CONTACT_PERSON))){
+                if (StringUtils.isBlank((String) partyProps.get(DocumentSpecificModel.Props.PARTY_NAME))
+                        && StringUtils.isBlank((String) partyProps.get(DocumentSpecificModel.Props.PARTY_EMAIL))
+                        && StringUtils.isBlank((String) partyProps.get(DocumentSpecificModel.Props.PARTY_SIGNER))
+                        && StringUtils.isBlank((String) partyProps.get(DocumentSpecificModel.Props.PARTY_CONTACT_PERSON))) {
                     emptyParties.add(party);
                 }
             }
-            if(emptyParties.size() > 0){
+            if (emptyParties.size() > 0) {
                 inMemoryChildNodeHelper.removeParties(document, emptyParties);
             }
         }
@@ -1404,9 +1437,9 @@ public class MetadataBlockBean implements Serializable {
             }
             props.put(TransientProps.CASE_NODEREF, caseRef);
         }
-        
+
         boolean isClosedUnitCheckNeeded = isClosedUnitCheckNeeded(getDocumentService().getAncestorNodesByDocument(nodeRef), volumeRef, docCase);
-        
+
         if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(getFunctionsService().getFunctionByNodeRef(functionRef).getStatus())) {
             messages.add("document_validationMsg_closed_function");
         }
@@ -1415,33 +1448,34 @@ public class MetadataBlockBean implements Serializable {
         }
         if (isClosedUnitCheckNeeded && DocListUnitStatus.CLOSED.equals(volume.getStatus())) {
             messages.add("document_validationMsg_closed_volume");
-        } 
+        }
         if (isClosedUnitCheckNeeded && docCase != null && docCase.isClosed()) {
             if (log.isDebugEnabled()) {
                 log.warn("validation failed: document_validationMsg_closed_case");
             }
             messages.add("document_validationMsg_closed_case");
-        }        
-        
-        
+        }
+
         props.put(TransientProps.CASE_LABEL_EDITABLE, caseLabel);
-        
-        if(document.getType().equals(DocumentSubtypeModel.Types.CONTRACT_MV)){
+
+        if (document.getType().equals(DocumentSubtypeModel.Types.CONTRACT_MV)) {
             List<Node> parties = document.getAllChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_MV_PARTIES);
             boolean hasValidPart = false;
-            for(Node party : parties){
-                if(StringUtils.isNotBlank(((String)party.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME)))){
+            for (Node party : parties) {
+                if (StringUtils.isNotBlank(((String) party.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME)))) {
                     hasValidPart = true;
                     break;
                 }
             }
-            if(!hasValidPart){
+            if (!hasValidPart) {
                 messages.add("document_validationMsg_mandatory_party");
             }
         }
 
         validateErrandAbroadDailyCatering(messages);
-        
+        validateDailyAllowanceV2(messages);
+        validateExpensesV2TotalSum(messages);
+
         if (messages.size() > 0) {
             for (String message : messages) {
                 if (log.isDebugEnabled()) {
@@ -1456,34 +1490,174 @@ public class MetadataBlockBean implements Serializable {
 
     public boolean isClosedUnitCheckNeeded(DocumentParentNodesVO parents, NodeRef volumeRef, Case docCase) {
         return isDraft
-               || !(volumeRef.equals(parents.getVolumeNode().getNodeRef())
+                || !(volumeRef.equals(parents.getVolumeNode().getNodeRef())
                      && (parents.getCaseNode() == null ? docCase == null
-                            : (docCase == null ? false
-                                 : parents.getCaseNode().getNodeRef().equals(docCase.getNode().getNodeRef())
+                             : (docCase == null ? false
+                                     : parents.getCaseNode().getNodeRef().equals(docCase.getNode().getNodeRef())
                               )
                          )
                      );
     }
-    
-    private void validateErrandAbroadDailyCatering(List<String> messages) { 
-        if(DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType())){ 
-            QName applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD; 
-            QName errandAssocType = DocumentSpecificModel.Assocs.ERRAND_ABROAD; 
-            final List<Node> applicantNodes = document.getAllChildAssociations(applicantAssoc); 
-            for (Node applicant : applicantNodes){ 
-                final List<Node> errandNodes = errandAssocType == null ? null : applicant.getAllChildAssociations(errandAssocType); 
-                for (Node errand : errandNodes){ 
-                    @SuppressWarnings("unchecked") 
-                    List<String> cateringCounts = (List<String>) errand.getProperties().get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_CATERING_COUNT); 
-                    if(cateringCounts == null || cateringCounts.size() == 0){ 
-                        messages.add("document_errandOrderAbroad_applicant_errand_validation_mandatory_cateringExists"); 
-                        return; 
-                    } 
-                } 
-            } 
-        } 
-    } 
 
+    private void validateExpensesV2TotalSum(List<String> messages) {
+        List<Node> expensesV2Nodes = new ArrayList<Node>();
+        if (document.hasAspect(DocumentSpecificModel.Aspects.TRAINING_APPLICATION)) {
+            expensesV2Nodes = document.getAllChildAssociations(DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS);
+        } else if (document.hasAspect(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD_V2)) {
+            List<Node> applicants = document.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD_V2);
+            for (Node applicant : applicants) {
+                expensesV2Nodes.addAll(applicant.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_ABROAD_V2));
+            }
+        } else if (document.hasAspect(DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC_V2)) {
+            List<Node> applicants = document.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2);
+            for (Node applicant : applicants) {
+                expensesV2Nodes.addAll(applicant.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_DOMESTIC_V2));
+            }
+        } else {
+            return;
+        }
+
+        for (Node expensesV2Node : expensesV2Nodes) {
+            if (!expensesV2Node.hasAspect(DocumentSpecificModel.Aspects.EXPENSES_V2)) {
+                continue;
+            }
+
+            @SuppressWarnings("unchecked")
+            final List<Serializable> sums = (List<Serializable>) expensesV2Node.getProperties().get(DocumentSpecificModel.Props.EXPECTED_EXPENSE_SUM);
+            BigDecimal totalSum = new BigDecimal("0.0");
+            if (sums == null) {
+                expensesV2Node.getProperties().put(DocumentSpecificModel.Props.EXPENSES_TOTAL_SUM.toString(), totalSum.doubleValue());
+                return;
+            }
+
+            for (Iterator<Serializable> iterator = sums.iterator(); iterator.hasNext();) {
+                Serializable sum = iterator.next();
+                if (sum instanceof String) {
+                    if (StringUtils.isNotBlank((String) sum)) {
+                        totalSum = totalSum.add(new BigDecimal((String) sum));
+                        continue;
+                    }
+                    // Remove only when there are no errors and thus user cannot edit this row any more
+                    if (messages.isEmpty()) {
+                        iterator.remove();
+                    }
+                } else if (sum instanceof Double) {
+                    totalSum = totalSum.add(new BigDecimal((Double) sum));
+                }
+            }
+            expensesV2Node.getProperties().put(DocumentSpecificModel.Props.EXPENSES_TOTAL_SUM.toString(), totalSum.doubleValue());
+        }
+    }
+
+    private void validateDailyAllowanceV2(List<String> messages) {
+        if (!document.hasAspect(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD_V2)
+                && !document.hasAspect(DocumentSpecificModel.Aspects.TRAINING_APPLICATION_V2)) {
+            return;
+        }
+
+        Parameters parameter;
+        QName applicantAssoc;
+        QName errandAssoc;
+        final QName docType = document.getType();
+        if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(docType)) {
+            applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD_V2;
+            errandAssoc = DocumentSpecificModel.Assocs.ERRAND_ABROAD_V2;
+            parameter = Parameters.ERRAND_ORDER_ABROAD_DAILY_ALLOWANCE_SUM;
+        } else if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(docType)) {
+            applicantAssoc = DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS_V2;
+            errandAssoc = null;
+            parameter = Parameters.TRAINING_APPLICATION_DAILY_ALLOWANCE_SUM;
+        } else {
+            throw new RuntimeException("Unimplemented dailyAllowanceV2 validation on document with type '" + document.getType() + "'");
+        }
+
+        final BigDecimal dailyAllowanceSum = new BigDecimal(parametersService.getDoubleParameter(parameter).toString());
+        final List<Node> applicantNodes = document.getAllChildAssociations(applicantAssoc);
+        for (Node applicant : applicantNodes) {
+            // Training application applicant has dailyAllowanceV2
+            if (applicant.hasAspect(DocumentSpecificModel.Aspects.DAILY_ALLOWANCE_V2)) {
+                validateDailyAllowanceV2Internal(messages, dailyAllowanceSum, applicant.getProperties());
+                continue;
+            }
+
+            // Abroad errand order applicant has child errands that have dailyAllowanceV2
+            for (Node errandNode : applicant.getAllChildAssociations(errandAssoc)) {
+                validateDailyAllowanceV2Internal(messages, dailyAllowanceSum, errandNode.getProperties());
+            }
+        }
+    }
+
+    // Verify that daily allowance periods sum equals total errand duration
+    private void validateDailyAllowanceV2Internal(List<String> messages, final BigDecimal dailyAllowanceSum, final Map<String, Object> props) {
+        Date errandBegin = (Date) props.get(DocumentSpecificModel.Props.ERRAND_BEGIN_DATE.toString());
+        Date errandEnd = (Date) props.get(DocumentSpecificModel.Props.ERRAND_END_DATE.toString());
+        int errandDurationInDays = (int) ((errandEnd.getTime() - errandBegin.getTime()) / (1000 * 60 * 60 * 24) + 1);
+        @SuppressWarnings("unchecked")
+        List<Integer> allowanceDays = getIntegerList((List<Serializable>) props.get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_DAYS));
+        if (allowanceDays == null || allowanceDays.isEmpty()) {
+            messages.add("document_errandOrderAbroad_applicant_errand_validation_mandatory_cateringExists");
+            return;
+        }
+
+        int totalAllowanceDays = 0;
+        for (Integer days : allowanceDays) {
+            totalAllowanceDays += days;
+        }
+
+        if (errandDurationInDays != totalAllowanceDays) {
+            messages.add("document_errand_dailyAllowance_days_sum_match_totalDays");
+            return;
+        }
+
+        // Calculate daily allowance sums and total daily allowance sum (don't trust JS)
+        final int size = allowanceDays.size();
+        List<Double> dailySums = new ArrayList<Double>(size);
+        BigDecimal totalDailySum = new BigDecimal(0.0);
+        @SuppressWarnings("unchecked")
+        final List<Integer> rates = getIntegerList((List<Serializable>) props.get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_RATE));
+
+        for (int i = 0; i < size; i++) {
+            // Multiply days by parameter value and the multiply by rate percent
+            final BigDecimal dailySum = dailyAllowanceSum.multiply(new BigDecimal(allowanceDays.get(i))).multiply(new BigDecimal(rates.get(i) / 100.0))
+                    .setScale(2, BigDecimal.ROUND_HALF_UP);
+            totalDailySum = totalDailySum.add(dailySum);
+            dailySums.add(dailySum.doubleValue());
+        }
+        props.put(DocumentSpecificModel.Props.DAILY_ALLOWANCE_SUM.toString(), dailySums);
+        props.put(DocumentSpecificModel.Props.DAILY_ALLOWANCE_TOTAL_SUM.toString(), totalDailySum.doubleValue());
+    }
+
+    private void validateErrandAbroadDailyCatering(List<String> messages) {
+        if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType()) && document.hasAspect(DocumentSpecificModel.Aspects.DAILY_ALLOWANCE)) {
+            QName applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD;
+            QName errandAssocType = DocumentSpecificModel.Assocs.ERRAND_ABROAD;
+            final List<Node> applicantNodes = document.getAllChildAssociations(applicantAssoc);
+            for (Node applicant : applicantNodes) {
+                final List<Node> errandNodes = errandAssocType == null ? null : applicant.getAllChildAssociations(errandAssocType);
+                for (Node errand : errandNodes) {
+                    @SuppressWarnings("unchecked")
+                    List<String> cateringCounts = (List<String>) errand.getProperties().get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_CATERING_COUNT);
+                    if (cateringCounts == null || cateringCounts.size() == 0) {
+                        messages.add("document_errandOrderAbroad_applicant_errand_validation_mandatory_cateringExists");
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    private List<Integer> getIntegerList(List<Serializable> list) {
+        List<Integer> intList = new ArrayList<Integer>(list.size());
+        for (Serializable item : list) {
+            if (item instanceof Integer) {
+                intList.add((Integer) item);
+            } else if (item instanceof String && StringUtils.isNotBlank((String) item)) {
+                intList.add(Integer.parseInt((String) item));
+            }
+        }
+
+        return intList;
+    }
 
     public void cancel() {
         if (!inEditMode) {
@@ -1644,26 +1818,26 @@ public class MetadataBlockBean implements Serializable {
     public static class Snapshot implements Serializable {
         private static final long serialVersionUID = 1L;
 
-        private Node document;
-        private boolean inEditMode;
-        private boolean isDraft;
-        private DateFormat dateFormat;
-        private String documentTypeName;
+        private final Node document;
+        private final boolean inEditMode;
+        private final boolean isDraft;
+        private final DateFormat dateFormat;
+        private final String documentTypeName;
 
         private Snapshot(MetadataBlockBean bean) {
-            this.document = bean.document;
-            this.inEditMode = bean.inEditMode;
-            this.isDraft = bean.isDraft;
-            this.dateFormat = bean.dateFormat;
-            this.documentTypeName = bean.documentTypeName;
+            document = bean.document;
+            inEditMode = bean.inEditMode;
+            isDraft = bean.isDraft;
+            dateFormat = bean.dateFormat;
+            documentTypeName = bean.documentTypeName;
         }
 
         private void restoreState(MetadataBlockBean bean) {
-            bean.document = this.document;
-            bean.inEditMode = this.inEditMode;
-            bean.isDraft = this.isDraft;
-            bean.dateFormat = this.dateFormat;
-            bean.documentTypeName = this.documentTypeName;
+            bean.document = document;
+            bean.inEditMode = inEditMode;
+            bean.isDraft = isDraft;
+            bean.dateFormat = dateFormat;
+            bean.documentTypeName = documentTypeName;
         }
     }
 
@@ -1700,7 +1874,7 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public boolean isShowStorageType() {
-        if(document == null){
+        if (document == null) {
             return false;
         }
         if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(document.getType()) //
@@ -1717,20 +1891,20 @@ public class MetadataBlockBean implements Serializable {
     /**
      * NB! Don't call this method from java code; this is meant ONLY for metadata-block.jsp binding.
      * For code use getPropertySheetInner() instead
-     */    
+     */
     public UIPropertySheet getPropertySheet() {
-        propertySheetControlDocument = this.document;
+        propertySheetControlDocument = document;
         return propertySheet;
     }
-    
+
     public UIPropertySheet getPropertySheetInner() {
         return propertySheet;
-    }    
+    }
 
     public void setPropertySheet(UIPropertySheet propertySheet) throws IOException {
-        if(propertySheetControlDocument != null && !propertySheetControlDocument.equals(this.document)){
+        if (propertySheetControlDocument != null && !propertySheetControlDocument.equals(document)) {
             propertySheet.getChildren().clear();
-            propertySheetControlDocument = this.document;
+            propertySheetControlDocument = document;
         }
         this.propertySheet = propertySheet;
         propertySheet.setMode(getMode());
@@ -1849,41 +2023,49 @@ public class MetadataBlockBean implements Serializable {
         }
         return caseService;
     }
-    
+
     protected WorkflowService getWorkflowService() {
         if (workflowService == null) {
             workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(WorkflowService.BEAN_NAME);
         }
         return workflowService;
-    }    
-    
+    }
+
     protected AddressbookService getAddressbookService() {
         if (addressbookService == null) {
             addressbookService = (AddressbookService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
                     AddressbookService.BEAN_NAME);
         }
         return addressbookService;
-    } 
-    
+    }
+
     protected DvkService getDvkService() {
         if (dvkService == null) {
             dvkService = (DvkService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
                     DvkService.BEAN_NAME);
         }
         return dvkService;
-    }     
-    
+    }
+
+    protected ClassificatorService getClassificatorService() {
+        if (classificatorService == null) {
+            classificatorService = (ClassificatorService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
+                    ClassificatorService.BEAN_NAME);
+        }
+        return classificatorService;
+    }
+
     public void setUserListDialog(UserListDialog userListDialog) {
         this.userListDialog = userListDialog;
-    }   
-    
+    }
+
     protected UserService getUserService() {
         if (userService == null) {
-            this.userService = (UserService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserService.BEAN_NAME);
+            userService = (UserService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserService.BEAN_NAME);
         }
         return userService;
-    }    
+    }
 
     protected InMemoryChildNodeHelper getInMemoryChildNodeHelper() {
         if (inMemoryChildNodeHelper == null) {

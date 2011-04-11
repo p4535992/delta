@@ -36,7 +36,7 @@ public class SuggesterRenderer extends HtmlTextareaRenderer {
         out.startElement(HTML.SPAN_ELEM, component);// Add wrapper to fix IE bug related to input with background image and text shadowing
         out.writeAttribute(HTML.CLASS_ATTR, "suggest-wrapper", null);
     }
-    
+
     @Override
     public void encodeEnd(FacesContext context, UIComponent component) throws IOException {
         super.encodeEnd(context, component);

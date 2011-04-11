@@ -30,7 +30,7 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
     private String serverUrl;
 
     // Cache parameter values here, because these are accessed very frequently
-    // (Although they always hit Hibernate cache, 8 calls to ParametersService add a total of 50 ms to each page render) 
+    // (Although they always hit Hibernate cache, 8 calls to ParametersService add a total of 50 ms to each page render)
     private String headerText;
     private String footerText;
 
@@ -107,14 +107,15 @@ public class ApplicationServiceImpl implements ApplicationService, InitializingB
     public String getLogoutRedirectUrl() {
         return logoutRedirectUrl;
     }
-    
+
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
     }
-    
-    public String getServerUrl(){
+
+    @Override
+    public String getServerUrl() {
         return serverUrl;
-    }    
+    }
 
     @Override
     public String getHeaderText() {

@@ -604,8 +604,9 @@ public class GeneralServiceImpl implements GeneralService {
     // TODO: current implementation doesn't worry about situation where more than one transaction tries to update documents count on same object
     // (but maybe alfresco prevents it?)
     public void updateParentContainingDocsCount(final NodeRef parentNodeRef, final QName propertyName, boolean added, Integer count) {
-        if (parentNodeRef == null)
+        if (parentNodeRef == null) {
             return;
+        }
 
         Serializable valueProperty = nodeService.getProperty(parentNodeRef, propertyName);
         if (valueProperty == null) { // first time, assign default value

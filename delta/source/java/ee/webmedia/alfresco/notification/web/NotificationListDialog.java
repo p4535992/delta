@@ -20,7 +20,7 @@ public class NotificationListDialog extends BaseDialogBean {
 
     private transient NotificationService notificationService;
     private List<GeneralNotification> notifications;
-    
+
     @Override
     public void init(Map<String, String> parameters) {
         notifications = notificationService.getGeneralNotifications();
@@ -32,35 +32,35 @@ public class NotificationListDialog extends BaseDialogBean {
         // nothing to do, finish button is not shown
         return null;
     }
-    
+
     @Override
     public String cancel() {
         notifications = null;
         return super.cancel();
     }
-    
+
     @Override
     public void restored() {
         notifications = notificationService.getGeneralNotifications();
         super.restored();
     }
-    
+
     @Override
     public Object getActionsContext() {
         return null;
     }
-    
+
     public void setupNotificationAction(ActionEvent event) {
         browseBean
-        .setupContentAction(
-                (new NodeRef(
-                        ActionUtil.getParam(
-                                event, "nodeRef"))
-                .getId()), true);
+                .setupContentAction(
+                        (new NodeRef(
+                                ActionUtil.getParam(
+                                        event, "nodeRef"))
+                                .getId()), true);
     }
 
     // START: getters/setters
-    
+
     protected NotificationService getNotificationService() {
         if (notificationService == null) {
             notificationService = (NotificationService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())

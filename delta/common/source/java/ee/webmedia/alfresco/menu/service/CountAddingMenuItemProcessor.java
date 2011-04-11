@@ -11,12 +11,12 @@ import ee.webmedia.alfresco.menu.web.MenuItemCountBean;
 /**
  * Menu item processor that can be used as a base class for menu items which need count after title.
  * Just subclass this class and implement {@link CountAddingMenuItemProcessor#getCount()}.
- *
+ * 
  * @author Romet Aidla
  * @author Alar Kvell
  */
 public abstract class CountAddingMenuItemProcessor implements MenuService.MenuItemProcessor {
-    
+
     @Override
     final public void doWithMenuItem(MenuItem menuItem) {
         FacesContext facesContext = FacesContext.getCurrentInstance();
@@ -26,7 +26,7 @@ public abstract class CountAddingMenuItemProcessor implements MenuService.MenuIt
             return;
         }
 
-        if(menuItem.getTitle() == null) {
+        if (menuItem.getTitle() == null) {
             menuItem.setTitle(I18NUtil.getMessage(menuItem.getTitleId()));
             menuItem.getStyleClass().add("menuItemCount");
         }

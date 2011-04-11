@@ -7,7 +7,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * UI action evaluator for validating whether user can delete current document.
- *
+ * 
  * @author Romet Aidla
  */
 public class DeleteDocumentEvaluator extends BaseActionEvaluator {
@@ -21,7 +21,7 @@ public class DeleteDocumentEvaluator extends BaseActionEvaluator {
         boolean hasRegNumber = node.getProperties().get(DocumentCommonModel.Props.REG_NUMBER.toString()) != null;
 
         IsOwnerEvaluator isOwnerEval = new IsOwnerEvaluator();
-        boolean isOwner = isOwnerEval.evaluate(node); 
+        boolean isOwner = isOwnerEval.evaluate(node);
 
         IsAdminOrDocManagerEvaluator isAdminOrDocManEval = new IsAdminOrDocManagerEvaluator();
         boolean isAdminOrDocManager = isAdminOrDocManEval.evaluate(node);

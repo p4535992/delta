@@ -13,7 +13,7 @@ public interface CaseModel {
     interface Types {
         QName CASE = QName.createQName(URI, "case");
     }
-    
+
     interface Associations {
         QName CASE = QName.createQName(URI, "case");
         /** n:m relation (case:case -> doccom:document) */

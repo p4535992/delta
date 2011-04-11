@@ -8,7 +8,7 @@ import org.alfresco.repo.web.scripts.FileTypeImageUtils;
 public class Version implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     private String version;
     private String author;
     private Date modified;
@@ -37,7 +37,7 @@ public class Version implements Serializable {
     public void setModified(Date modified) {
         this.modified = modified;
     }
-    
+
     public String getDownloadUrl() {
         return downloadUrl;
     }
@@ -45,7 +45,7 @@ public class Version implements Serializable {
     public void setDownloadUrl(String downloadUrl) {
         this.downloadUrl = downloadUrl;
     }
-    
+
     /**
      * Used to specify icon.
      */

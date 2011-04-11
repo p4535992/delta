@@ -64,7 +64,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         }
         return orgStructures.size();
     }
-    
+
     @Override
     public OrganizationStructure getOrganizationStructure(int unitId) {
         String xPath = OrganizationStructureModel.Repo.SPACE + "/" + OrganizationStructureModel.NAMESPACE_PREFFIX + unitId;
@@ -156,9 +156,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         return users;
     }
 
-//    public String getOrganizationStructureByUser(Map<QName, Serializable> userProps) {
-//        return getOrganizationStructure((String) userProps.get(ContentModel.PROP_ORGID));
-//    }
+    // public String getOrganizationStructureByUser(Map<QName, Serializable> userProps) {
+    // return getOrganizationStructure((String) userProps.get(ContentModel.PROP_ORGID));
+    // }
 
     // START: private methods
     private List<OrganizationStructure> sortByName(List<OrganizationStructure> structs) {

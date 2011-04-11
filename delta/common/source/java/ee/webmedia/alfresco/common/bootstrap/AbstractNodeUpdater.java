@@ -267,13 +267,13 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
             thisRunCompletedSize += batchList.size();
             batchList = new ArrayList<E>(batchSize);
             long endTime = System.currentTimeMillis();
-            double completedPercent = ((long) completedSize) * 100L / ((double) totalSize);
-            double lastDocsPerSec = ((long) i) * 1000L / ((double) (endTime - startTime));
+            double completedPercent = (completedSize) * 100L / ((double) totalSize);
+            double lastDocsPerSec = (i) * 1000L / ((double) (endTime - startTime));
             long thisRunTotalTime = endTime - thisRunStartTime;
-            double totalDocsPerSec = ((long) thisRunCompletedSize) * 1000L / ((double) thisRunTotalTime);
+            double totalDocsPerSec = (thisRunCompletedSize) * 1000L / ((double) thisRunTotalTime);
             long remainingSize = ((long) totalSize) - ((long) completedSize);
-            long divisor = ((long) thisRunCompletedSize) * 60000L;
-            int etaMinutes = ((int) (remainingSize  *  thisRunTotalTime / divisor)) + 1;
+            long divisor = (thisRunCompletedSize) * 60000L;
+            int etaMinutes = ((int) (remainingSize * thisRunTotalTime / divisor)) + 1;
             int etaHours = 0;
             if (etaMinutes > 59) {
                 etaHours = etaMinutes / 60;

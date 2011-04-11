@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -169,8 +168,9 @@ public class VolumeServiceImpl implements VolumeService {
                     generalService.setPropertiesIgnoringSystem(volume.getNode().getNodeRef(), RepoUtil.toStringProperties(volumeBeanPropertyMapper
                             .toProperties(volume)));
                 }
-            } else
+            } else {
                 throw new VolumeContainsCasesException();
+            }
 
         }
     }
@@ -355,10 +355,10 @@ public class VolumeServiceImpl implements VolumeService {
     public void setCaseService(CaseService caseService) {
         this.caseService = caseService;
     }
-    
+
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
-    }    
+    }
 
     // END: getters / setters
 

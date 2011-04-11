@@ -47,18 +47,19 @@ public abstract class BaseDocumentListDialog extends BaseDialogBean {
     }
 
     public abstract String getListTitle();
-    
+
     public String getInfoMessage() {
         return ""; // Subclasses can override if necessary
     }
-    
+
     public boolean isInfoMessageVisible() {
         return getInfoMessage().length() > 0;
     }
-    
+
     /**
      * Returns the file name to import as document list columns
      * Subclasses can override if necessary.
+     * 
      * @return String path to JSP file
      */
     public String getColumnsFile() {
@@ -73,7 +74,7 @@ public abstract class BaseDocumentListDialog extends BaseDialogBean {
 
     protected DocumentService getDocumentService() {
         if (documentService == null) {
-            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext( // 
+            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
@@ -81,7 +82,7 @@ public abstract class BaseDocumentListDialog extends BaseDialogBean {
 
     protected DocumentSearchService getDocumentSearchService() {
         if (documentSearchService == null) {
-            documentSearchService = (DocumentSearchService) FacesContextUtils.getRequiredWebApplicationContext( // 
+            documentSearchService = (DocumentSearchService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(DocumentSearchService.BEAN_NAME);
         }
         return documentSearchService;

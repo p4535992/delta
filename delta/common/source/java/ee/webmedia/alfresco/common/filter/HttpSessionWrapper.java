@@ -9,7 +9,7 @@ import javax.servlet.http.HttpSessionContext;
 @SuppressWarnings("deprecation")
 public class HttpSessionWrapper implements HttpSession {
 
-    private HttpSession sess;
+    private final HttpSession sess;
 
     public HttpSessionWrapper(HttpSession sess) {
         this.sess = sess;

@@ -82,7 +82,7 @@ public class CaseListDialog extends BaseDialogBean {
 
     protected VolumeService getVolumeService() {
         if (volumeService == null) {
-            volumeService = (VolumeService) FacesContextUtils.getRequiredWebApplicationContext( // 
+            volumeService = (VolumeService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(VolumeService.BEAN_NAME);
         }
         return volumeService;

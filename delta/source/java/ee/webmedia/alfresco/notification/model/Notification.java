@@ -17,17 +17,19 @@ public class Notification implements Serializable {
     private String subject;
     private boolean attachFiles;
     private boolean failOnError;
-    
+
     public void clearRecipients() {
         setToEmails(null);
         setToNames(null);
     }
 
     public void addRecipient(String name, String email) {
-        if (toNames == null)
+        if (toNames == null) {
             toNames = new ArrayList<String>();
-        if (toEmails == null)
+        }
+        if (toEmails == null) {
             toEmails = new ArrayList<String>();
+        }
         toNames.add(name);
         toEmails.add(email);
     }

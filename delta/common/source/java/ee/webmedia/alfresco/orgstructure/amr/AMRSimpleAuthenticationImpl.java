@@ -36,7 +36,7 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
     private AuthorityService authorityService;
     private AMRUserRegistry userRegistry;
 
-public AMRSimpleAuthenticationImpl() {
+    public AMRSimpleAuthenticationImpl() {
         super();
     }
 
@@ -68,9 +68,9 @@ public AMRSimpleAuthenticationImpl() {
             getPersonService().setPersonProperties(userName, personProperties);
             addToAuthorityZone(person, userName, "AUTH.EXT.amr1");
         } catch (WebServiceTransportException e) {
-            if(StringUtils.equals(e.getMessage(), "Not Found [404]")) {
+            if (StringUtils.equals(e.getMessage(), "Not Found [404]")) {
                 log.warn("AMRService is not responding", e);
-            } else if(StringUtils.equals(e.getMessage(), "Service Unavailable [503]")) {
+            } else if (StringUtils.equals(e.getMessage(), "Service Unavailable [503]")) {
                 log.warn("AMRService is not available", e);
             } else {
                 throw e;

@@ -234,7 +234,7 @@ public class TaskSearchDialog extends AbstractSearchFilterBlockBean<TaskSearchFi
     @Override
     protected TaskSearchFilterService getFilterService() {
         if (filterService == null) {
-            filterService = (TaskSearchFilterService) FacesContextUtils.getRequiredWebApplicationContext( // 
+            filterService = (TaskSearchFilterService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(TaskSearchFilterService.BEAN_NAME);
         }
         return filterService;

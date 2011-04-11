@@ -235,11 +235,9 @@ public class AddressbookServiceImpl implements AddressbookService {
     }
 
     private List<Node> executeSearch(String searchCriteria, Set<QName> fields, boolean taskCapableOnly, boolean orgOnly, String institutionToRemove) {
-        // FIXME: remove this after taskCapable functionality is fully implemented
-        taskCapableOnly = false;
         List<NodeRef> nodeRefs = null;
         final ResultSet searchResult;
-        if (StringUtils.isNotBlank(searchCriteria) || ((taskCapableOnly || orgOnly) && fields == searchFields)) {
+        if (StringUtils.isNotBlank(searchCriteria) || taskCapableOnly || (orgOnly && fields == searchFields)) {
 
             StringBuilder query = new StringBuilder();
             if (searchCriteria != null) {
@@ -252,8 +250,8 @@ public class AddressbookServiceImpl implements AddressbookService {
                     }
                 }
             }
-            if (taskCapableOnly && fields == searchFields) {
-                addTaskCapableCondition(query);
+            if (taskCapableOnly) {
+                addTaskCapableCondition(query, fields);
             }
             String queryString = query.toString();
             if (orgOnly && fields == searchFields) {
@@ -292,15 +290,21 @@ public class AddressbookServiceImpl implements AddressbookService {
         // nodeRefs shouldn't be null here as it is initialized based on searchResult when searching
         // or directly set in when getting all contact groups under addressBook
         List<Node> result = new ArrayList<Node>(nodeRefs.size());
-        boolean filterContactGroups = (taskCapableOnly || orgOnly) && fields == contactGroupSearchFields;
+        boolean filterContactGroups = orgOnly && fields == contactGroupSearchFields;
         filterAndAddResults(nodeRefs, result, filterContactGroups, orgOnly, institutionToRemove);
         return result;
     }
 
-    public void addTaskCapableCondition(StringBuilder query) {
+    public void addTaskCapableCondition(StringBuilder query, Set<QName> fields) {
         if (query.length() > 0) {
             query.insert(0, "(");
             query.append(") AND ");
+        } else {
+            // add type condition if field condition is not specified
+            if (fields == searchFields) {
+                query.append("NOT ");
+            }
+            query.append(SearchUtil.generateTypeQuery(AddressbookModel.Types.CONTACT_GROUP)).append(" AND ");
         }
         String fieldPrefixed = AddressbookModel.Props.TASK_CAPABLE.toPrefixString(namespaceService);
         String fieldEscaped = StringUtils.replace(fieldPrefixed, "" + QName.NAMESPACE_PREFIX, "\\" + QName.NAMESPACE_PREFIX);
@@ -311,12 +315,10 @@ public class AddressbookServiceImpl implements AddressbookService {
         if (filterContactGroups) {
             for (NodeRef nodeRef : nodeRefs) {
                 for (Node contact : getContacts(nodeRef)) {
-                    if (Boolean.TRUE.equals(contact.getProperties().get(AddressbookModel.Props.TASK_CAPABLE))) {
-                        if ((!orgOnly || contact.getType().equals(AddressbookModel.Types.ORGANIZATION))
+                    if ((!orgOnly || contact.getType().equals(AddressbookModel.Types.ORGANIZATION))
                                 && !isInstitution(institutionToRemove, contact)) {
-                            result.add(getNode(nodeRef));
-                            break;
-                        }
+                        result.add(getNode(nodeRef));
+                        break;
                     }
                 }
             }
@@ -371,6 +373,20 @@ public class AddressbookServiceImpl implements AddressbookService {
     @Override
     public Node getRoot() {
         return new Node(getRootNodeRef());
+    }
+
+    @Override
+    public boolean isTaskCapableGroupMember(NodeRef contactRef) {
+        List<AssociationRef> assocs = nodeService.getSourceAssocs(contactRef, RegexQNamePattern.MATCH_ALL);
+        for (AssociationRef assocRef : assocs) {
+            NodeRef sourceRef = assocRef.getSourceRef();
+            if (AddressbookModel.Types.CONTACT_GROUP.equals(nodeService.getType(sourceRef))) {
+                if (Boolean.TRUE.equals(nodeService.getProperty(sourceRef, AddressbookModel.Props.TASK_CAPABLE))) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // ---------- utility methods

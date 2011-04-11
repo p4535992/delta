@@ -18,7 +18,7 @@ public class MinutesDocumentMapper extends AbstractSmitExcelMapper<ImportDocumen
     /** G: Dokumendi link */
     @ExcelColumn('G')
     Integer Link;
-//
+    //
     /** H: Märkused (comment) */
     @ExcelColumn('H')
     Integer Comment;

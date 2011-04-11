@@ -26,10 +26,10 @@ public class Register implements Serializable {
     @Override
     public String toString() {
         return new StringBuilder()
-        .append("\nName (id) = " + name + "(" + id + ")\n")
-        .append("counter = " + counter + "\n")
-        .append("prefix | suffix = " + prefix + " | " + suffix + "\n")
-        .append("Active = " + active + "\n").toString();
+                .append("\nName (id) = " + name + "(" + id + ")\n")
+                .append("counter = " + counter + "\n")
+                .append("prefix | suffix = " + prefix + " | " + suffix + "\n")
+                .append("Active = " + active + "\n").toString();
     }
 
     public int getId() {

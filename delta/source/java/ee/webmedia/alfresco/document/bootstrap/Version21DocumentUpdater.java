@@ -23,6 +23,7 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Perform document model changes that were introduced in 2.1, on existing data.
+ * 
  * @author Alar Kvell
  */
 public class Version21DocumentUpdater extends AbstractNodeUpdater {

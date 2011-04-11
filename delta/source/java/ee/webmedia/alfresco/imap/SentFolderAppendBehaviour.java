@@ -11,7 +11,7 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 public class SentFolderAppendBehaviour implements AppendBehaviour {
     public static final String BEHAVIOUR_NAME = "sentBehaviour";
-    private ImapServiceExt imapService;
+    private final ImapServiceExt imapService;
 
     public SentFolderAppendBehaviour(ImapServiceExt imapService) {
         this.imapService = imapService;

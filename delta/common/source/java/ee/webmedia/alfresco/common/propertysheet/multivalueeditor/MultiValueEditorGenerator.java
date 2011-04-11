@@ -23,19 +23,18 @@ import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPro
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
-import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
  * Generate {@link MultiValueEditor} component, if property sheet is in edit mode.<br>
  * Property columns can be specified using {@code props} attribute in {@code show-property} element in property sheet configuration. It must contain
  * comma-separated list of property names. For example: {@code props="xx:prop1,xx:prop2"}<br>
- * If {@code props} attribute is omitted, only one column is used, it is taken from {@code name} attribute. If {@code props} attribute is specified, then
- * {@code name} attribute is ignored. All properties specified must be multi-valued.
+ * If {@code props} attribute is omitted, only one column is used, it is taken from {@code name} attribute. If {@code props} attribute is specified, then {@code name} attribute is
+ * ignored. All properties specified must be multi-valued.
  * 
  * @author Alar Kvell
  */
-public class MultiValueEditorGenerator extends BaseComponentGenerator implements GeneratorsWrapper{
+public class MultiValueEditorGenerator extends BaseComponentGenerator implements GeneratorsWrapper {
 
     @Override
     public UIComponent generate(FacesContext context, String id) {
@@ -52,7 +51,7 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator implements
             UIComponent component) {
         String propsAttribute = getCustomAttributes().get(PROPS_GENERATION);
         String optionsSeparator = getCustomAttributes().get(OPTIONS_SEPARATOR);
-        if(StringUtils.isBlank(optionsSeparator)) {
+        if (StringUtils.isBlank(optionsSeparator)) {
             optionsSeparator = "¤";
         }
         final List<ComponentPropVO> propVOs = CombinedPropReader.readProperties(propsAttribute, null, optionsSeparator, propertySheet.getNode(), context);
@@ -68,9 +67,10 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator implements
         addValueFromCustomAttributes(MultiValueEditor.ADD_LABEL_ID, attributes);
         addValueFromCustomAttributes(MultiValueEditor.SHOW_HEADERS, attributes);
         addValueFromCustomAttributes(Search.AJAX_PARENT_LEVEL_KEY, attributes, Integer.class);
+        addValueFromCustomAttributes(MultiValueEditor.INITIAL_ROWS, attributes, Integer.class);
 
         if (!propertySheet.inEditMode() || item.isReadOnly()) {
-           ComponentUtil.setDisabledAttributeRecursively(component);
+            ComponentUtil.setDisabledAttributeRecursively(component);
         }
     }
 

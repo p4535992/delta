@@ -35,25 +35,23 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * Export JSF lists as CSV file. Data is read using {@link ee.webmedia.alfresco.simdhs.DataReader}.
  * Generally {@link ee.webmedia.alfresco.simdhs.RichListDataReader} can be used to export data directly from rich list.
  * <p/>
- * Only {@link org.alfresco.web.ui.common.component.data.UIRichList} is supported for now,
- * additional support must be added as necessity arises.
+ * Only {@link org.alfresco.web.ui.common.component.data.UIRichList} is supported for now, additional support must be added as necessity arises.
  * <p/>
- * If custom ordering must be done with data, then {@link CSVExporter#setOrderInfo(int, boolean)} must be used. 
- * By default no ordering of data is done.
+ * If custom ordering must be done with data, then {@link CSVExporter#setOrderInfo(int, boolean)} must be used. By default no ordering of data is done.
  * <p/>
  * File is written in UTF-8 encoding with BOM, ; is used as separator.-
- *
+ * 
  * @author Romet Aidla
  */
 public class CSVExporter {
     private static Logger log = Logger.getLogger(CSVExporter.class);
 
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
-    
+
     private static final char CSV_QUOTE = '"';
     protected static final String CHARSET = AppConstants.CHARSET;
     protected static final char SEPARATOR = ';';
-    private static final char[] CSV_SEARCH_CHARS = new char[] {SEPARATOR, CSV_QUOTE, CharUtils.CR, CharUtils.LF};
+    private static final char[] CSV_SEARCH_CHARS = new char[] { SEPARATOR, CSV_QUOTE, CharUtils.CR, CharUtils.LF };
 
     protected DataReader dataReader;
 
@@ -61,9 +59,8 @@ public class CSVExporter {
     private int sortColumnNr = 0;
     private boolean isDescending = false;
 
-
     public CSVExporter(DataReader dataReader) {
-        this.dataReader = dataReader; 
+        this.dataReader = dataReader;
     }
 
     public void export(String tableName) {
@@ -117,7 +114,9 @@ public class CSVExporter {
         } catch (IOException e) {
             throw new RuntimeException("CSV export failed", e);
         }
-        if (log.isDebugEnabled()) log.debug("CSV export successfully completed");
+        if (log.isDebugEnabled()) {
+            log.debug("CSV export successfully completed");
+        }
     }
 
     public void setOrderInfo(int sortColumnNr, boolean isDescending) {
@@ -147,8 +146,9 @@ public class CSVExporter {
         for (Iterator<String> iterator = row.iterator(); iterator.hasNext();) {
             String val = iterator.next();
             writer.write(escape(val));
-            if (iterator.hasNext())
+            if (iterator.hasNext()) {
                 writer.write(SEPARATOR);
+            }
         }
     }
 
@@ -177,13 +177,14 @@ public class CSVExporter {
      */
     @SuppressWarnings("unchecked")
     protected static class BundleMap implements Map {
-        private ResourceBundle _bundle;
+        private final ResourceBundle _bundle;
         private List<String> _values;
 
         public BundleMap(ResourceBundle bundle) {
             _bundle = bundle;
         }
 
+        @Override
         public Object get(Object key) {
             try {
                 return _bundle.getObject(key.toString());
@@ -192,10 +193,12 @@ public class CSVExporter {
             }
         }
 
+        @Override
         public boolean isEmpty() {
             return !_bundle.getKeys().hasMoreElements();
         }
 
+        @Override
         public boolean containsKey(Object key) {
             try {
                 return _bundle.getObject(key.toString()) != null;
@@ -204,6 +207,7 @@ public class CSVExporter {
             }
         }
 
+        @Override
         public Collection<String> values() {
             if (_values == null) {
                 _values = new ArrayList<String>();
@@ -215,27 +219,33 @@ public class CSVExporter {
             return _values;
         }
 
+        @Override
         public int size() {
             return values().size();
         }
 
+        @Override
         public boolean containsValue(Object value) {
             return values().contains(value);
         }
 
+        @Override
         public Set<Entry> entrySet() {
             Set<Entry> set = new HashSet<Entry>();
             for (Enumeration enumer = _bundle.getKeys(); enumer.hasMoreElements();) {
                 final String k = (String) enumer.nextElement();
                 set.add(new Map.Entry() {
+                    @Override
                     public Object getKey() {
                         return k;
                     }
 
+                    @Override
                     public Object getValue() {
                         return _bundle.getObject(k);
                     }
 
+                    @Override
                     public Object setValue(Object value) {
                         throw new UnsupportedOperationException(this.getClass().getName() + " UnsupportedOperationException");
                     }
@@ -244,6 +254,7 @@ public class CSVExporter {
             return set;
         }
 
+        @Override
         public Set keySet() {
             Set set = new HashSet();
             for (Enumeration enumer = _bundle.getKeys(); enumer.hasMoreElements();) {
@@ -252,18 +263,22 @@ public class CSVExporter {
             return set;
         }
 
+        @Override
         public Object remove(Object key) {
             throw new UnsupportedOperationException(this.getClass().getName() + " UnsupportedOperationException");
         }
 
+        @Override
         public void putAll(Map t) {
             throw new UnsupportedOperationException(this.getClass().getName() + " UnsupportedOperationException");
         }
 
+        @Override
         public Object put(Object key, Object value) {
             throw new UnsupportedOperationException(this.getClass().getName() + " UnsupportedOperationException");
         }
 
+        @Override
         public void clear() {
             throw new UnsupportedOperationException(this.getClass().getName() + " UnsupportedOperationException");
         }

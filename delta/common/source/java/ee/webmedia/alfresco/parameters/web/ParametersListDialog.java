@@ -85,7 +85,7 @@ public class ParametersListDialog extends BaseDialogBean {
         CSVExporter exporter = new EscapingCSVExporter(dataReader);
         exporter.export("parametersList");
         // Erko hack for incorrect view id in the next request
-        JspStateManagerImpl.ignoreCurrentViewSequenceHack();        
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack();
     }
 
     @Override

@@ -17,19 +17,19 @@ import org.springframework.core.io.ClassPathResource;
 import ee.webmedia.alfresco.app.AppConstants;
 
 public class ContentCreatorHelper {
-    
-    private ApplicationContext applicationContext;
-    
-    private FileFolderService fileFolderService;
-    private SearchService searchService;
-    
-    private NodeRef companyHome;
-    
+
+    private final ApplicationContext applicationContext;
+
+    private final FileFolderService fileFolderService;
+    private final SearchService searchService;
+
+    private final NodeRef companyHome;
+
     public ContentCreatorHelper(ApplicationContext ctx) {
         applicationContext = ctx;
         fileFolderService = (FileFolderService) applicationContext.getBean("fileFolderService");
         searchService = (SearchService) applicationContext.getBean("searchService");
-        
+
         // Get a reference to the company home node
         ResultSet results1 = searchService.query(
                 new StoreRef(StoreRef.PROTOCOL_WORKSPACE, "SpacesStore"),
@@ -38,30 +38,30 @@ public class ContentCreatorHelper {
         companyHome = results1.getNodeRefs().get(0);
         results1.close();
     }
-    
+
     public NodeRef createTestFolder(String name) {
         return fileFolderService.create(companyHome, name, ContentModel.TYPE_FOLDER).getNodeRef();
     }
-    
+
     public NodeRef createTestFile(NodeRef parent, String name) {
         return fileFolderService.create(parent, name, ContentModel.TYPE_CONTENT).getNodeRef();
     }
-    
+
     public ContentWriter getContentWriter(NodeRef nodeRef, String encoding, String mimeType) {
         ContentWriter contentWriter = fileFolderService.getWriter(nodeRef);
         contentWriter.setMimetype(mimeType);
         contentWriter.setEncoding(encoding);
-        return contentWriter; 
+        return contentWriter;
     }
-    
+
     public void writeTestContent(NodeRef nodeRef, String encoding, String mimeType, String content) {
         getContentWriter(nodeRef, encoding, mimeType).putContent(content);
     }
-    
+
     public static InputStream getClassPathResourceInputStream(String resource) throws IOException {
         return new ClassPathResource(resource).getInputStream();
     }
-    
+
     public static String getClassPathResource(String resource) throws IOException {
         InputStream is = getClassPathResourceInputStream(resource);
         StringBuilder sb = new StringBuilder();

@@ -37,7 +37,7 @@ public interface SignatureService {
      * @return
      */
     boolean isDigiDocContainer(FileInfo fileInfo);
-    
+
     /**
      * Returns the signature digest made from the cert and data pointed to by nodeRef.
      * Used for signing existing .ddoc files.
@@ -45,7 +45,7 @@ public interface SignatureService {
      * @param nodeRef
      * @param certHex
      * @return
-     * @throws SignatureException 
+     * @throws SignatureException
      */
     SignatureDigest getSignatureDigest(NodeRef nodeRef, String certHex) throws SignatureException;
 
@@ -56,7 +56,7 @@ public interface SignatureService {
      * @param selectedNodeRefs
      * @param certHex
      * @return
-     * @throws SignatureException 
+     * @throws SignatureException
      */
     SignatureDigest getSignatureDigest(List<NodeRef> selectedNodeRefs, String certHex) throws SignatureException;
 
@@ -78,7 +78,7 @@ public interface SignatureService {
      * @param inputStream
      * @param includeData include file contents or not
      * @return
-     * @throws SignatureException 
+     * @throws SignatureException
      */
     SignatureItemsAndDataItems getDataItemsAndSignatureItems(InputStream inputStream, boolean includeData) throws SignatureException;
 
@@ -88,7 +88,7 @@ public interface SignatureService {
      * @param nodeRef
      * @param signatureDigest
      * @param signatureHex
-     * @throws SignatureRuntimeException 
+     * @throws SignatureRuntimeException
      */
     void addSignature(NodeRef nodeRef, SignatureDigest signatureDigest, String signatureHex);
 
@@ -103,17 +103,18 @@ public interface SignatureService {
      * @param signatureDigest
      * @param signatureHex
      * @return
-     * @throws SignatureRuntimeException 
+     * @throws SignatureRuntimeException
      */
     NodeRef createContainer(NodeRef parent, List<NodeRef> contents, String filename, SignatureDigest signatureDigest, String signatureHex);
 
     /**
      * Changes an existing document to ddoc and signs it
+     * 
      * @param nodeRef - nodeRef of existing document
      * @param contents - the contents
      * @param signatureDigest
      * @param signatureHex
-     * @throws SignatureRuntimeException 
+     * @throws SignatureRuntimeException
      */
     void writeContainer(NodeRef nodeRef, List<NodeRef> contents, SignatureDigest signatureDigest, String signatureHex);
 

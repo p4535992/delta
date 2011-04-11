@@ -8,7 +8,7 @@ public interface VolumeModel {
     interface Types {
         QName VOLUME = QName.createQName(URI, "volume");
     }
-    
+
     interface Associations {
         QName VOLUME = QName.createQName(URI, "volume");
     }

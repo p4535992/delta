@@ -25,7 +25,7 @@ public enum DocListUnitStatus {
         }
         throw new IllegalArgumentException("Unknown valueName: '" + valueName + "'");
     }
-    
+
     public String getValueName() {
         return valueName;
     }

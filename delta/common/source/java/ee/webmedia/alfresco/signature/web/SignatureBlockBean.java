@@ -82,14 +82,14 @@ public class SignatureBlockBean implements Serializable {
      * Used in JSP pages.
      */
     public List<DataItem> getDataItems() {
-        return dataItems == null ? Collections.<DataItem>emptyList() : dataItems;
+        return dataItems == null ? Collections.<DataItem> emptyList() : dataItems;
     }
 
     /**
      * Used in JSP pages.
      */
     public List<SignatureItem> getSignatureItems() {
-        return signatureItems == null ? Collections.<SignatureItem>emptyList() : signatureItems;
+        return signatureItems == null ? Collections.<SignatureItem> emptyList() : signatureItems;
     }
 
     /**

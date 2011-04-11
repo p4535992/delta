@@ -152,6 +152,16 @@
          <value>#{ParametersService}</value>
       </managed-property>
    </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>ParameterInputAttributeGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.parameter.ParameterInputAttributeGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+         <property-name>parametersService</property-name>
+         <value>#{ParametersService}</value>
+      </managed-property>
+   </managed-bean>
 
    <managed-bean>
       <managed-bean-name>UploadFileGenerator</managed-bean-name>
@@ -207,6 +217,13 @@
          <renderer-type>ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterRenderer</renderer-type>
          <renderer-class>ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterRenderer</renderer-class>
       </renderer>
+      
+      <renderer>
+         <component-family>javax.faces.Input</component-family>
+         <renderer-type>ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterRenderer</renderer-type>
+         <renderer-class>ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterRenderer</renderer-class>
+      </renderer>
+      
       <renderer>
          <component-family>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor</component-family>
          <renderer-type>ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditorRenderer</renderer-type>

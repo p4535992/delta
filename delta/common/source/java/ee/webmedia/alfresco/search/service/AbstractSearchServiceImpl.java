@@ -37,18 +37,18 @@ public abstract class AbstractSearchServiceImpl {
 
     protected DictionaryService dictionaryService;
     protected LuceneConfig config;
-    
+
     protected LuceneAnalyser luceneAnalyser;
 
-    public String generateStringWordsWildcardQuery(String value, QName ... documentPropNames) {
+    public String generateStringWordsWildcardQuery(String value, QName... documentPropNames) {
         return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value), documentPropNames);
     }
 
-    public String generateMultiStringWordsWildcardQuery(List<String> values, QName ... documentPropNames) {
+    public String generateMultiStringWordsWildcardQuery(List<String> values, QName... documentPropNames) {
         if (values == null || values.isEmpty()) {
             return null;
         }
-        
+
         List<String> queryParts = new ArrayList<String>(values.size());
         for (String value : values) {
             queryParts.add(generateStringWordsWildcardQuery(value, documentPropNames));
@@ -82,14 +82,14 @@ public abstract class AbstractSearchServiceImpl {
                 try {
                     date = userDateFormat.parse(searchWord);
                     // if not date, then ParseException is thrown and processing continues below as regular word
-    
+
                     if (searchWords.size() + searchDates.size() >= 10) {
                         continue;
                     }
                     if (log.isDebugEnabled()) {
                         log.debug("getDocumentsQuickSearch - found date match: " + searchWord + " -> " + formatLuceneDate(date));
                     }
-    
+
                     boolean exists = false;
                     for (Date tmpDate : searchDates) {
                         exists |= tmpDate.equals(date);
@@ -146,7 +146,7 @@ public abstract class AbstractSearchServiceImpl {
 
         // Following copied from LuceneQueryParser#getFieldQueryImpl
         // ---------------------------------------------------------
-        
+
         TokenStream source = getAnalyzer().tokenStream(field, new StringReader(queryText), analysisMode);
 
         ArrayList<org.apache.lucene.analysis.Token> list = new ArrayList<org.apache.lucene.analysis.Token>();
@@ -155,160 +155,125 @@ public abstract class AbstractSearchServiceImpl {
         int positionCount = 0;
         boolean severalTokensAtSamePosition = false;
 
-        while (true)
-        {
-            try
-            {
+        while (true) {
+            try {
                 nextToken = source.next(reusableToken);
-            }
-            catch (IOException e)
-            {
+            } catch (IOException e) {
                 nextToken = null;
             }
-            if (nextToken == null)
+            if (nextToken == null) {
                 break;
+            }
             list.add((org.apache.lucene.analysis.Token) nextToken.clone());
-            if (nextToken.getPositionIncrement() != 0)
+            if (nextToken.getPositionIncrement() != 0) {
                 positionCount += nextToken.getPositionIncrement();
-            else
+            } else {
                 severalTokensAtSamePosition = true;
+            }
         }
-        try
-        {
+        try {
             source.close();
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             // ignore
         }
 
         // add any alpha numeric wildcards that have been missed
         // Fixes most stop word and wild card issues
 
-        for (int index = 0; index < testText.length(); index++)
-        {
+        for (int index = 0; index < testText.length(); index++) {
             char current = testText.charAt(index);
-            if ((current == '*') || (current == '?'))
-            {
+            if ((current == '*') || (current == '?')) {
                 StringBuilder pre = new StringBuilder(10);
-                if (index > 0)
-                {
-                    for (int i = index - 1; i >= 0; i--)
-                    {
+                if (index > 0) {
+                    for (int i = index - 1; i >= 0; i--) {
                         char c = testText.charAt(i);
-                        if (Character.isLetterOrDigit(c))
-                        {
+                        if (Character.isLetterOrDigit(c)) {
                             boolean found = false;
-                            for (int j = 0; j < list.size(); j++)
-                            {
+                            for (int j = 0; j < list.size(); j++) {
                                 org.apache.lucene.analysis.Token test = list.get(j);
-                                if ((test.startOffset() <= i) && (i <= test.endOffset()))
-                                {
+                                if ((test.startOffset() <= i) && (i <= test.endOffset())) {
                                     found = true;
                                     break;
                                 }
                             }
-                            if (found)
-                            {
+                            if (found) {
                                 break;
-                            }
-                            else
-                            {
+                            } else {
                                 pre.insert(0, c);
                             }
                         }
                     }
-                    if (pre.length() > 0)
-                    {
+                    if (pre.length() > 0) {
                         // Add new token followed by * not given by the tokeniser
                         org.apache.lucene.analysis.Token newToken = new org.apache.lucene.analysis.Token(index - pre.length(), index);
                         newToken.setTermBuffer(pre.toString());
                         newToken.setType("ALPHANUM");
-                        if (requiresMLTokenDuplication)
-                        {
+                        if (requiresMLTokenDuplication) {
                             Locale locale = I18NUtil.parseLocale(localeString);
                             MLAnalysisMode mlAnalysisMode = config.getDefaultMLSearchAnalysisMode();
                             MLTokenDuplicator duplicator = new MLTokenDuplicator(locale, mlAnalysisMode);
                             Iterator<org.apache.lucene.analysis.Token> it = duplicator.buildIterator(newToken);
-                            if (it != null)
-                            {
+                            if (it != null) {
                                 int count = 0;
-                                while (it.hasNext())
-                                {
+                                while (it.hasNext()) {
                                     list.add(it.next());
                                     count++;
-                                    if (count > 1)
-                                    {
+                                    if (count > 1) {
                                         severalTokensAtSamePosition = true;
                                     }
                                 }
                             }
                         }
                         // content
-                        else
-                        {
+                        else {
                             list.add(newToken);
                         }
                     }
                 }
 
                 StringBuilder post = new StringBuilder(10);
-                if (index > 0)
-                {
-                    for (int i = index + 1; i < testText.length(); i++)
-                    {
+                if (index > 0) {
+                    for (int i = index + 1; i < testText.length(); i++) {
                         char c = testText.charAt(i);
-                        if (Character.isLetterOrDigit(c))
-                        {
+                        if (Character.isLetterOrDigit(c)) {
                             boolean found = false;
-                            for (int j = 0; j < list.size(); j++)
-                            {
+                            for (int j = 0; j < list.size(); j++) {
                                 org.apache.lucene.analysis.Token test = list.get(j);
-                                if ((test.startOffset() <= i) && (i <= test.endOffset()))
-                                {
+                                if ((test.startOffset() <= i) && (i <= test.endOffset())) {
                                     found = true;
                                     break;
                                 }
                             }
-                            if (found)
-                            {
+                            if (found) {
                                 break;
-                            }
-                            else
-                            {
+                            } else {
                                 post.append(c);
                             }
                         }
                     }
-                    if (post.length() > 0)
-                    {
+                    if (post.length() > 0) {
                         // Add new token followed by * not given by the tokeniser
                         org.apache.lucene.analysis.Token newToken = new org.apache.lucene.analysis.Token(index + 1, index + 1 + post.length());
                         newToken.setTermBuffer(post.toString());
                         newToken.setType("ALPHANUM");
-                        if (requiresMLTokenDuplication)
-                        {
+                        if (requiresMLTokenDuplication) {
                             Locale locale = I18NUtil.parseLocale(localeString);
                             MLAnalysisMode mlAnalysisMode = config.getDefaultMLSearchAnalysisMode();
                             MLTokenDuplicator duplicator = new MLTokenDuplicator(locale, mlAnalysisMode);
                             Iterator<org.apache.lucene.analysis.Token> it = duplicator.buildIterator(newToken);
-                            if (it != null)
-                            {
+                            if (it != null) {
                                 int count = 0;
-                                while (it.hasNext())
-                                {
+                                while (it.hasNext()) {
                                     list.add(it.next());
                                     count++;
-                                    if (count > 1)
-                                    {
+                                    if (count > 1) {
                                         severalTokensAtSamePosition = true;
                                     }
                                 }
                             }
                         }
                         // content
-                        else
-                        {
+                        else {
                             list.add(newToken);
                         }
                     }
@@ -320,6 +285,7 @@ public abstract class AbstractSearchServiceImpl {
         Collections.sort(list, new Comparator<org.apache.lucene.analysis.Token>()
         {
 
+            @Override
             public int compare(Token o1, Token o2)
             {
                 int dif = o1.startOffset() - o2.startOffset();
@@ -340,63 +306,45 @@ public abstract class AbstractSearchServiceImpl {
 
         int max = 0;
         int current = 0;
-        for (org.apache.lucene.analysis.Token c : list)
-        {
-            if (c.getPositionIncrement() == 0)
-            {
+        for (org.apache.lucene.analysis.Token c : list) {
+            if (c.getPositionIncrement() == 0) {
                 current++;
-            }
-            else
-            {
-                if (current > max)
-                {
+            } else {
+                if (current > max) {
                     max = current;
                 }
                 current = 0;
             }
         }
-        if (current > max)
-        {
+        if (current > max) {
             max = current;
         }
 
         ArrayList<org.apache.lucene.analysis.Token> fixed = new ArrayList<org.apache.lucene.analysis.Token>();
-        for (int repeat = 0; repeat <= max; repeat++)
-        {
+        for (int repeat = 0; repeat <= max; repeat++) {
             org.apache.lucene.analysis.Token replace = null;
             current = 0;
-            for (org.apache.lucene.analysis.Token c : list)
-            {
-                if (c.getPositionIncrement() == 0)
-                {
+            for (org.apache.lucene.analysis.Token c : list) {
+                if (c.getPositionIncrement() == 0) {
                     current++;
-                }
-                else
-                {
+                } else {
                     current = 0;
                 }
 
-                if (current == repeat)
-                {
+                if (current == repeat) {
 
-                    if (replace == null)
-                    {
+                    if (replace == null) {
                         StringBuilder prefix = new StringBuilder();
-                        for (int i = c.startOffset() - 1; i >= 0; i--)
-                        {
+                        for (int i = c.startOffset() - 1; i >= 0; i--) {
                             char test = testText.charAt(i);
-                            if ((test == '*') || (test == '?'))
-                            {
+                            if ((test == '*') || (test == '?')) {
                                 prefix.insert(0, test);
-                            }
-                            else
-                            {
+                            } else {
                                 break;
                             }
                         }
                         String pre = prefix.toString();
-                        if (requiresMLTokenDuplication)
-                        {
+                        if (requiresMLTokenDuplication) {
                             String termText = new String(c.termBuffer(), 0, c.termLength());
                             int position = termText.indexOf("}");
                             String language = termText.substring(0, position + 1);
@@ -405,30 +353,22 @@ public abstract class AbstractSearchServiceImpl {
                             replace.setTermBuffer(language + pre + token);
                             replace.setType(c.type());
                             replace.setPositionIncrement(c.getPositionIncrement());
-                        }
-                        else
-                        {
+                        } else {
                             String termText = new String(c.termBuffer(), 0, c.termLength());
                             replace = new org.apache.lucene.analysis.Token(c.startOffset() - pre.length(), c.endOffset());
                             replace.setTermBuffer(pre + termText);
                             replace.setType(c.type());
                             replace.setPositionIncrement(c.getPositionIncrement());
                         }
-                    }
-                    else
-                    {
+                    } else {
                         StringBuilder prefix = new StringBuilder();
                         StringBuilder postfix = new StringBuilder();
                         StringBuilder builder = prefix;
-                        for (int i = c.startOffset() - 1; i >= replace.endOffset(); i--)
-                        {
+                        for (int i = c.startOffset() - 1; i >= replace.endOffset(); i--) {
                             char test = testText.charAt(i);
-                            if ((test == '*') || (test == '?'))
-                            {
+                            if ((test == '*') || (test == '?')) {
                                 builder.insert(0, test);
-                            }
-                            else
-                            {
+                            } else {
                                 builder = postfix;
                                 postfix.setLength(0);
                             }
@@ -437,11 +377,9 @@ public abstract class AbstractSearchServiceImpl {
                         String post = postfix.toString();
 
                         // Does it bridge?
-                        if ((pre.length() > 0) && (replace.endOffset() + pre.length()) == c.startOffset())
-                        {
+                        if ((pre.length() > 0) && (replace.endOffset() + pre.length()) == c.startOffset()) {
                             String termText = new String(c.termBuffer(), 0, c.termLength());
-                            if (requiresMLTokenDuplication)
-                            {
+                            if (requiresMLTokenDuplication) {
                                 int position = termText.indexOf("}");
                                 @SuppressWarnings("unused")
                                 String language = termText.substring(0, position + 1);
@@ -452,9 +390,7 @@ public abstract class AbstractSearchServiceImpl {
                                 replace.setTermBuffer(replaceTermText + pre + token);
                                 replace.setType(replace.type());
                                 replace.setPositionIncrement(oldPositionIncrement);
-                            }
-                            else
-                            {
+                            } else {
                                 int oldPositionIncrement = replace.getPositionIncrement();
                                 String replaceTermText = new String(replace.termBuffer(), 0, replace.termLength());
                                 replace = new org.apache.lucene.analysis.Token(replace.startOffset(), c.endOffset());
@@ -462,12 +398,9 @@ public abstract class AbstractSearchServiceImpl {
                                 replace.setType(replace.type());
                                 replace.setPositionIncrement(oldPositionIncrement);
                             }
-                        }
-                        else
-                        {
+                        } else {
                             String termText = new String(c.termBuffer(), 0, c.termLength());
-                            if (requiresMLTokenDuplication)
-                            {
+                            if (requiresMLTokenDuplication) {
                                 int position = termText.indexOf("}");
                                 String language = termText.substring(0, position + 1);
                                 String token = termText.substring(position + 1);
@@ -481,9 +414,7 @@ public abstract class AbstractSearchServiceImpl {
                                 replace.setTermBuffer(language + pre + token);
                                 replace.setType(c.type());
                                 replace.setPositionIncrement(c.getPositionIncrement());
-                            }
-                            else
-                            {
+                            } else {
                                 String replaceTermText = new String(replace.termBuffer(), 0, replace.termLength());
                                 org.apache.lucene.analysis.Token last = new org.apache.lucene.analysis.Token(replace.startOffset(), replace.endOffset() + post.length());
                                 last.setTermBuffer(replaceTermText + post);
@@ -500,18 +431,13 @@ public abstract class AbstractSearchServiceImpl {
                 }
             }
             // finish last
-            if (replace != null)
-            {
+            if (replace != null) {
                 StringBuilder postfix = new StringBuilder();
-                for (int i = replace.endOffset(); i < testText.length(); i++)
-                {
+                for (int i = replace.endOffset(); i < testText.length(); i++) {
                     char test = testText.charAt(i);
-                    if ((test == '*') || (test == '?'))
-                    {
+                    if ((test == '*') || (test == '?')) {
                         postfix.append(test);
-                    }
-                    else
-                    {
+                    } else {
                         break;
                     }
                 }
@@ -534,6 +460,7 @@ public abstract class AbstractSearchServiceImpl {
         Collections.sort(fixed, new Comparator<org.apache.lucene.analysis.Token>()
         {
 
+            @Override
             public int compare(Token o1, Token o2)
             {
                 int dif = o1.startOffset() - o2.startOffset();

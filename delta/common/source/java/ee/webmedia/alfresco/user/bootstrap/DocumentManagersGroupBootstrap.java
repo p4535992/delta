@@ -15,9 +15,11 @@ public class DocumentManagersGroupBootstrap extends AbstractModuleComponent {
     protected void executeInternal() throws Throwable {
         AuthorityService authorityService = serviceRegistry.getAuthorityService();
         // Create document managers group
-        authorityService.createAuthority(AuthorityType.GROUP, UserService.DOCUMENT_MANAGERS_GROUP, I18NUtil.getMessage(UserService.DOCUMENT_MANAGERS_DISPLAY_NAME), authorityService.getDefaultZones());
+        authorityService.createAuthority(AuthorityType.GROUP, UserService.DOCUMENT_MANAGERS_GROUP, I18NUtil.getMessage(UserService.DOCUMENT_MANAGERS_DISPLAY_NAME),
+                authorityService.getDefaultZones());
         // Change the display name of administrator and email contributors group
-        authorityService.setAuthorityDisplayName(authorityService.getName(AuthorityType.GROUP, UserService.ADMINISTRATORS_GROUP), I18NUtil.getMessage(UserService.ALFRESCO_ADMINISTRATORS_DISPLAY_NAME));
+        authorityService.setAuthorityDisplayName(authorityService.getName(AuthorityType.GROUP, UserService.ADMINISTRATORS_GROUP),
+                I18NUtil.getMessage(UserService.ALFRESCO_ADMINISTRATORS_DISPLAY_NAME));
     }
 
 }

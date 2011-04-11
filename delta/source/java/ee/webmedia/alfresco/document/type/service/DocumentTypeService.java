@@ -12,7 +12,7 @@ import ee.webmedia.alfresco.document.type.model.DocumentType;
  * @author Alar Kvell
  */
 public interface DocumentTypeService {
-	
+
     String BEAN_NAME = "DocumentTypeService";
 
     /**
@@ -38,20 +38,23 @@ public interface DocumentTypeService {
 
     /**
      * Update properties for document types. All properties except {@code id} and {@code name} are written.
+     * 
      * @param parameters - document types to be updated to the repository
      */
     void updateDocumentTypes(Collection<DocumentType> documentTypes);
 
     /**
      * Returns DocumentType from repository
-     * @param documentTypeId - childName of the node 
+     * 
+     * @param documentTypeId - childName of the node
      * @return documentType
      */
     DocumentType getDocumentType(QName documentTypeId);
 
     /**
      * Returns DocumentType from repository
-     * @param documentTypeId - childName of the node 
+     * 
+     * @param documentTypeId - childName of the node
      * @return documentType
      */
     DocumentType getDocumentType(String documentTypeId);

@@ -37,9 +37,9 @@ public class SearchablePropertiesUpdater extends AbstractNodeUpdater {
     private DocumentService documentService;
     private SendOutService sendOutService;
     private boolean enabled = false;
-    
+
     @Override
-    protected void executeInternal() throws Throwable{
+    protected void executeInternal() throws Throwable {
         if (!enabled) {
             log.debug("Skipping searchable properties update, execution parameter (searchablePropertiesUpdater.enabled) set to false.");
             return;
@@ -67,93 +67,93 @@ public class SearchablePropertiesUpdater extends AbstractNodeUpdater {
         Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);
         Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
         String[] resultLog = new String[15];
-        
-        if(!hasAllLocationProperties(origProps)){
+
+        if (!hasAllLocationProperties(origProps)) {
 
             Map<QName, NodeRef> parentRefs = documentService.getDocumentParents(nodeRef);
-            if(!origProps.containsKey(DocumentCommonModel.Props.FUNCTION)){
+            if (!origProps.containsKey(DocumentCommonModel.Props.FUNCTION)) {
                 setProps.put(DocumentCommonModel.Props.FUNCTION, parentRefs.get(DocumentCommonModel.Props.FUNCTION));
                 resultLog[0] = emptyIfNullStr(parentRefs.get(DocumentCommonModel.Props.FUNCTION));
             }
-            if(!origProps.containsKey(DocumentCommonModel.Props.SERIES)){
+            if (!origProps.containsKey(DocumentCommonModel.Props.SERIES)) {
                 setProps.put(DocumentCommonModel.Props.SERIES, parentRefs.get(DocumentCommonModel.Props.SERIES));
                 resultLog[1] = emptyIfNullStr(parentRefs.get(DocumentCommonModel.Props.SERIES));
             }
-            if(!origProps.containsKey(DocumentCommonModel.Props.VOLUME)){
+            if (!origProps.containsKey(DocumentCommonModel.Props.VOLUME)) {
                 setProps.put(DocumentCommonModel.Props.VOLUME, parentRefs.get(DocumentCommonModel.Props.VOLUME));
                 resultLog[2] = emptyIfNullStr(parentRefs.get(DocumentCommonModel.Props.VOLUME));
             }
-            if(!origProps.containsKey(DocumentCommonModel.Props.CASE)){
+            if (!origProps.containsKey(DocumentCommonModel.Props.CASE)) {
                 setProps.put(DocumentCommonModel.Props.CASE, parentRefs.get(DocumentCommonModel.Props.CASE));
                 resultLog[3] = emptyIfNullStr(parentRefs.get(DocumentCommonModel.Props.CASE));
             }
         }
-      //this property was actually created and updated during import, so this should never be called
-        if(!origProps.containsKey(DocumentCommonModel.Props.FILE_NAMES)){
-            Serializable fileNames = (Serializable)documentService.getSearchableFileNames(nodeRef);
+        // this property was actually created and updated during import, so this should never be called
+        if (!origProps.containsKey(DocumentCommonModel.Props.FILE_NAMES)) {
+            Serializable fileNames = (Serializable) documentService.getSearchableFileNames(nodeRef);
             setProps.put(DocumentCommonModel.Props.FILE_NAMES, fileNames);
             resultLog[4] = fileNames.toString();
         }
-      //this property was actually created and updated during import, so this should never be called
-        if(!origProps.containsKey(DocumentCommonModel.Props.FILE_CONTENTS)){
-            Serializable fileContents = (Serializable) documentService.getSearchableFileContents(nodeRef);
+        // this property was actually created and updated during import, so this should never be called
+        if (!origProps.containsKey(DocumentCommonModel.Props.FILE_CONTENTS)) {
+            Serializable fileContents = documentService.getSearchableFileContents(nodeRef);
             setProps.put(DocumentCommonModel.Props.FILE_CONTENTS, fileContents);
-            resultLog[5] = emptyIfNullStr(fileContents);            
+            resultLog[5] = emptyIfNullStr(fileContents);
         }
-        //this property was actually created and updated during import, so this should never be called
-        if(!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE)){
+        // this property was actually created and updated during import, so this should never be called
+        if (!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE)) {
             Serializable sendMode = sendOutService.buildSearchableSendMode(nodeRef);
             setProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendMode);
             resultLog[6] = emptyIfNullStr(sendMode);
         }
-        
+
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(nodeRef);
-        
-        if(!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER)){
+
+        if (!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER)) {
             Serializable value = documentService.collectProperties(nodeRef, childAssocs, DocumentSpecificModel.Props.COST_MANAGER);
             setProps.put(DocumentCommonModel.Props.SEARCHABLE_COST_MANAGER, value);
             resultLog[7] = emptyIfNullStr(value);
-        }        
-        if(!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME)){
+        }
+        if (!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME)) {
             Serializable value = documentService.collectProperties(nodeRef, childAssocs, DocumentSpecificModel.Props.APPLICANT_NAME,
-                    DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME);  
+                    DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME);
             setProps.put(DocumentCommonModel.Props.SEARCHABLE_APPLICANT_NAME, value);
             resultLog[8] = emptyIfNullStr(value);
-        }  
-        if(!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE)){
+        }
+        if (!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE)) {
             Serializable value = documentService.collectProperties(nodeRef, childAssocs, DocumentSpecificModel.Props.ERRAND_BEGIN_DATE);
             setProps.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_BEGIN_DATE, value);
             resultLog[9] = emptyIfNullStr(value);
         }
-        if(!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE)){
+        if (!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE)) {
             Serializable value = documentService.collectProperties(nodeRef, childAssocs, DocumentSpecificModel.Props.ERRAND_END_DATE);
             setProps.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_END_DATE, value);
             resultLog[10] = emptyIfNullStr(value);
-        } 
-        if(!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY)){
+        }
+        if (!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY)) {
             Serializable value = documentService.collectProperties(nodeRef, childAssocs, DocumentSpecificModel.Props.ERRAND_COUNTRY);
             setProps.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTRY, value);
             resultLog[11] = emptyIfNullStr(value);
-        }         
-        if(!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY)){
+        }
+        if (!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY)) {
             Serializable value = documentService.collectProperties(nodeRef, childAssocs, DocumentSpecificModel.Props.ERRAND_COUNTY);
             setProps.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_COUNTY, value);
             resultLog[12] = emptyIfNullStr(value);
-        }         
-        if(!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY)){
+        }
+        if (!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY)) {
             Serializable value = documentService.collectProperties(nodeRef, childAssocs, DocumentSpecificModel.Props.ERRAND_CITY);
             setProps.put(DocumentCommonModel.Props.SEARCHABLE_ERRAND_CITY, value);
             resultLog[13] = emptyIfNullStr(value);
-        }         
-        if(!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES)){
+        }
+        if (!origProps.containsKey(DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES)) {
             String childProps = documentService.getChildNodesPropsForIndexing(nodeRef, new StringBuilder()).toString();
-            setProps.put(DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES, childProps); 
+            setProps.put(DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES, childProps);
             resultLog[14] = childProps;
-        }  
-        
-        if(setProps.size() > 0){
+        }
+
+        if (setProps.size() > 0) {
             setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
-            setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));            
+            setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
             nodeService.addProperties(nodeRef, setProps);
         }
 
@@ -161,7 +161,7 @@ public class SearchablePropertiesUpdater extends AbstractNodeUpdater {
     }
 
     private String emptyIfNullStr(Object object) {
-        if(object == null){
+        if (object == null) {
             return "";
         }
         return object.toString();
@@ -193,7 +193,7 @@ public class SearchablePropertiesUpdater extends AbstractNodeUpdater {
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
     }
-    
+
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
     }

@@ -310,7 +310,7 @@ public class DelegationTaskListGenerator extends TaskListGenerator {
             selectedSearchProcessingB = "#{DelegationBean.processResponsibleOwnerSearchResults}";
         } else {
             getOwnerSearchFiltersB = "#{OwnerSearchBean.ownerSearchFilters}";
-            executeSearchCallbackB = "#{CompoundWorkflowDefinitionDialog.executeOwnerSearch}";
+            executeSearchCallbackB = "#{CompoundWorkflowDefinitionDialog.executeTaskOwnerSearch}";
             selectedSearchProcessingB = "#{DelegationBean.processOwnerSearchResults}";
         }
         picker.setValueBinding("filters", application.createValueBinding(getOwnerSearchFiltersB));

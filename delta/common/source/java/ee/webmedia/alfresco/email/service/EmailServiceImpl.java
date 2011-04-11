@@ -186,9 +186,10 @@ public class EmailServiceImpl implements EmailService {
         protected NodeRef nodeRef;
 
         public AlfrescoContentSource(NodeRef file) {
-            this.nodeRef = file;
+            nodeRef = file;
         }
 
+        @Override
         @SuppressWarnings("synthetic-access")
         public InputStream getInputStream() throws IOException {
             return fileFolderService.getReader(nodeRef).getContentInputStream();
@@ -204,6 +205,7 @@ public class EmailServiceImpl implements EmailService {
             this.bytes = bytes;
         }
 
+        @Override
         public InputStream getInputStream() throws IOException {
             return new ByteArrayInputStream(bytes);
         }

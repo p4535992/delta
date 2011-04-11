@@ -23,30 +23,30 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
     private boolean byDefault;
     private boolean readOnly;
     private boolean active;
-    
+
     @AlfrescoModelProperty(isMappable = false)
     @XStreamOmitField
     private NodeRef nodeRef;
-    
+
     @AlfrescoModelProperty(isMappable = false)
     @XStreamOmitField
     private String lastOrderValidationMsg;
-    
+
     @AlfrescoModelProperty(isMappable = false)
     @XStreamOmitField
     private String lastNameValidationMsg;
-    
+
     public ClassificatorValue() {
         // default
     }
-    
+
     public ClassificatorValue(ClassificatorValue classificatorValue) {
-        this.valueName = classificatorValue.getValueName();
-        this.order = classificatorValue.getOrder();
-        this.byDefault = classificatorValue.isByDefault();
-        this.readOnly = classificatorValue.isReadOnly();
-        this.active = classificatorValue.isActive();
-        this.nodeRef = classificatorValue.getNodeRef();
+        valueName = classificatorValue.getValueName();
+        order = classificatorValue.getOrder();
+        byDefault = classificatorValue.isByDefault();
+        readOnly = classificatorValue.isReadOnly();
+        active = classificatorValue.isActive();
+        nodeRef = classificatorValue.getNodeRef();
     }
 
     public String getValueName() {
@@ -61,11 +61,11 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
             this.valueName = valueName;
         }
     }
-    
+
     public String getOrderText() {
         return getOrder() + "";
     }
-    
+
     public void setOrderText(String orderText) {
         if (StringUtils.isBlank(orderText)) {
             lastOrderValidationMsg = "classificator_value_validation_order_null";
@@ -126,7 +126,7 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
     public boolean isLastNameValidationSuccess() {
         return lastNameValidationMsg == null;
     }
-    
+
     public boolean isLastOrderValidationSuccess() {
         return lastOrderValidationMsg == null;
     }
@@ -140,7 +140,7 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
         }
         return null;
     }
-    
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -159,6 +159,7 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
         int result = 1;
         result = prime * result + (active ? 1231 : 1237);
         result = prime * result + (byDefault ? 1231 : 1237);
+        result = prime * result + ((classificatorDescription == null) ? 0 : classificatorDescription.hashCode());
         result = prime * result + ((nodeRef == null) ? 0 : nodeRef.hashCode());
         result = prime * result + order;
         result = prime * result + (readOnly ? 1231 : 1237);
@@ -204,15 +205,22 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
         } else if (!valueName.equals(other.valueName)) {
             return false;
         }
+        if (classificatorDescription == null) {
+            if (other.classificatorDescription != null) {
+                return false;
+            }
+        } else if (!classificatorDescription.equals(other.classificatorDescription)) {
+            return false;
+        }
         return true;
     }
 
     @Override
     // Default comparing is according to value order
     public int compareTo(ClassificatorValue o) {
-        if(this.getOrder() < o.getOrder()) {
+        if (getOrder() < o.getOrder()) {
             return -1;
-        } else if(this.getOrder() > o.getOrder()) {
+        } else if (getOrder() > o.getOrder()) {
             return 1;
         }
         return 0;

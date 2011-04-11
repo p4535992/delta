@@ -94,7 +94,7 @@ public class SearchRenderer extends BaseRenderer {
 
         HtmlPanelGroup list = null;
         UIGenericPicker picker = null;
-        
+
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
         for (int i = 0; i < children.size(); i++) {
@@ -132,7 +132,7 @@ public class SearchRenderer extends BaseRenderer {
     public void encodeEnd(FacesContext context, UIComponent component) throws IOException {
         ResponseWriter out = context.getResponseWriter();
         Search search = (Search) component;
-        
+
         // Mandatory validation
         out.write("<input id=\"");
         out.write(component.getClientId(context));
@@ -187,7 +187,7 @@ public class SearchRenderer extends BaseRenderer {
             Utils.encodeRecursive(context, child);
             renderSuggestScript(context, child, search, out);
             out.write("</td>");
-            if(isRemoveLinkRendered(search)) {
+            if (isRemoveLinkRendered(search)) {
                 out.write("<td>");
                 renderRemoveLink(context, out, search, i);
                 out.write("</td>");
@@ -201,38 +201,38 @@ public class SearchRenderer extends BaseRenderer {
     private void setInputStyleClass(UIComponent child, Search search) {
         @SuppressWarnings("unchecked")
         Map<String, Object> searchAttributes = search.getAttributes();
-        if(child instanceof UIInput && searchAttributes.containsKey(Search.STYLE_CLASS_KEY)) {
+        if (child instanceof UIInput && searchAttributes.containsKey(Search.STYLE_CLASS_KEY)) {
             @SuppressWarnings("unchecked")
             Map<String, Object> childAttributes = child.getAttributes();
             childAttributes.put(Search.STYLE_CLASS_KEY, searchAttributes.get(Search.STYLE_CLASS_KEY));
         }
     }
-    
+
     /**
      * NB! Before calling this, check if given child is rendered!
      * 
      * @param child
      * @param search
      * @param out
-     * @throws IOException 
+     * @throws IOException
      */
     private void renderSuggestScript(FacesContext context, UIComponent child, Search search, ResponseWriter out) throws IOException {
         Integer suggestChars = search.getSuggestChars();
-        if(!(child instanceof UIInput) || suggestChars == null) { 
+        if (!(child instanceof UIInput) || suggestChars == null) {
             return;
         }
-        
+
         String clientId = child.getClientId(context);
         String callback = (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY);
         // Strip method binding delimiters for javascript
-        if(callback.contains("#{")) {
-            callback = callback.substring("#{".length(), callback.length()-1);
+        if (callback.contains("#{")) {
+            callback = callback.substring("#{".length(), callback.length() - 1);
         }
         out.write("<script type=\"text/javascript\">");
         out.write("addSearchSuggest('" + clientId + "', " + suggestChars + ", '" + callback + "');");
         out.write("</script>");
     }
-    
+
     /**
      * Before calling this method, verify that remove link is needed/allowed with SearchRenderer.isRemoveLinkRendered()
      */
@@ -255,12 +255,12 @@ public class SearchRenderer extends BaseRenderer {
         if (!search.isMultiValued()) {
             return false;
         }
-        
+
         return true;
     }
 
     private void renderPicker(FacesContext context, ResponseWriter out, Search search, UIGenericPicker picker) throws IOException {
-        if(search.isDisabled()) {
+        if (search.isDisabled()) {
             return;
         }
         out.write("<a class=\"icon-link margin-left-4 search\" onclick=\"");

@@ -63,7 +63,7 @@ public class FileBlockBean implements Serializable {
     }
 
     public void init(Node node) {
-        this.nodeRef = node.getNodeRef();
+        nodeRef = node.getNodeRef();
         Assert.notNull(nodeRef, "nodeRef is null - node: " + node);
         restore();
         // Alfresco's AddContentDialog.saveContent uses

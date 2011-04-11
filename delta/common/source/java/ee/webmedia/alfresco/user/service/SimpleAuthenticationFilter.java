@@ -17,7 +17,6 @@ import org.alfresco.web.app.servlet.AuthenticationHelper;
 import org.alfresco.web.app.servlet.AuthenticationStatus;
 import org.alfresco.web.app.servlet.BaseServlet;
 
-
 /**
  * AuthenticationFilter that uses AMRService for authentication.
  * 

@@ -9,17 +9,17 @@ import ee.webmedia.alfresco.register.model.Register;
 
 /**
  * @author Kaarel Jõgeva
- *
  */
 public interface RegisterService {
     public static final String BEAN_NAME = "RegisterService";
-    
+
     /**
      * Gets all registers
+     * 
      * @return list with available registers
      */
     List<Register> getRegisters();
-    
+
     /**
      * Gets the register node with provided id
      * 
@@ -27,28 +27,31 @@ public interface RegisterService {
      * @return register node with specified ID
      */
     Node getRegisterNode(int id);
-    
+
     /**
      * @param registerId
      * @return instance of Register based on registerId
      * @see #getRegisterNode(int);
      */
     Register getRegister(Integer registerId);
-    
+
     /**
      * Returns the registers root space NodeRef
+     * 
      * @return Root NodeRef
      */
     NodeRef getRoot();
-    
+
     /**
      * Returns the maximum id property from all registers
+     * 
      * @return int maximum id
      */
     int getMaxRegisterId();
-    
+
     /**
-     * Creates new temporary Register node 
+     * Creates new temporary Register node
+     * 
      * @param prop
      * @return
      */
@@ -56,6 +59,7 @@ public interface RegisterService {
 
     /**
      * Updates registers properties in repository
+     * 
      * @param register node to update
      */
     void updateProperties(Node register);
@@ -70,6 +74,7 @@ public interface RegisterService {
 
     /**
      * reset register counter
+     * 
      * @param register
      */
     void resetCounter(Node register);

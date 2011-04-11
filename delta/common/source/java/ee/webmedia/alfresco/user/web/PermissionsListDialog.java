@@ -45,26 +45,26 @@ public class PermissionsListDialog extends BaseDialogBean {
     public void setup(ActionEvent event) {
         nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         permission = ActionUtil.getParam(event, "permission");
-        if(ActionUtil.hasParam(event, "alternateConfigId")) {
+        if (ActionUtil.hasParam(event, "alternateConfigId")) {
             alternateConfigId = ActionUtil.getParam(event, "alternateConfigId");
         }
-        if(ActionUtil.hasParam(event, "alternateDialogTitleId")) {
+        if (ActionUtil.hasParam(event, "alternateDialogTitleId")) {
             alternateDialogTitleId = ActionUtil.getParam(event, "alternateDialogTitleId");
         }
         restored();
     }
-    
+
     @Override
     public String getContainerTitle() {
-        if(alternateDialogTitleId != null) {
+        if (alternateDialogTitleId != null) {
             return MessageUtil.getMessage(alternateDialogTitleId);
         }
         return null;
     }
-    
+
     @Override
     public String getActionsConfigId() {
-        if(alternateConfigId != null) {
+        if (alternateConfigId != null) {
             return alternateConfigId;
         }
         return "browse_actions_permissions";

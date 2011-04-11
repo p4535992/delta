@@ -7,14 +7,14 @@ import org.alfresco.web.ui.repo.WebResources;
 public class Authority implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String authority;
-    private boolean group;
-    private String name;
+    private final String authority;
+    private final boolean group;
+    private final String name;
 
     public Authority(String authority, boolean group, String name) {
-      this.authority = authority;
-      this.group = group;
-      this.name = name;
+        this.authority = authority;
+        this.group = group;
+        this.name = name;
     }
 
     public String getAuthority() {

@@ -26,9 +26,9 @@ public interface AdrService {
     // sisendparameetrites olev periood jääb reg.kuup järgi
     // kuupäevade vahemikus on nii algus- kui lõppkuupäeva kaasaarvatud (ehk aaaa-kk-ppT00:00:00 kuni aaaa-kk-ppT23:59:59)
     // kõik parameetrid on mittekohustuslikud ehk võib ära jätta
-    //   implementatsioonis on ainult üks erikäitumine tehtud: kui ühtegi parameetrit antud pole, siis tagastatakse mitte midagi (mitte KÕIK dokumendid)
+    // implementatsioonis on ainult üks erikäitumine tehtud: kui ühtegi parameetrit antud pole, siis tagastatakse mitte midagi (mitte KÕIK dokumendid)
     // aga sellest hoolimata on võimalik väga lihtsalt saada KÕIK või väga suure hulga dokumente vastusena (sest vastuste arvu piirangut ei ole),
-    //   näiteks kui panna väga lai kuupäeva vahemik
+    // näiteks kui panna väga lai kuupäeva vahemik
     // seepärast peab kasutajale piiranguid seadma väljakutsuv süsteem!
     List<Dokument> otsiDokumendid(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev, String dokumendiLiik, String otsingusona);
 
@@ -41,6 +41,7 @@ public interface AdrService {
     // kõik parameetrid on kohustuslikud, otsitakse täpset vastet!
     // kui JPP != Avalik, siis tagastatakse tühi vastus (mitte faili info ilma sisuta)
     Fail failSisuga(String viit, XMLGregorianCalendar registreerimiseAeg, String filename);
+
     // sama mis eelmine
     // aga dokumendi identifitseerimine käib nodeRef järgi
     // + lisaväljad
@@ -57,6 +58,7 @@ public interface AdrService {
     // kuupäevade vahemikus on nii algus- kui lõppkuupäeva kaasaarvatud (ehk aaaa-kk-ppT00:00:00 kuni aaaa-kk-ppT23:59:59)
     // kõik parameetrid on kohustuslikud
     List<DokumentDetailidega> koikDokumendidLisatudMuudetud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
+
     // sama mis eelmine
     // aga dokumendi identifitseerimine käib nodeRef järgi
     // + lisaväljad
@@ -66,17 +68,16 @@ public interface AdrService {
     // XXX kui dokumenti on muudetud pärast perioodiLoppKuupaev'a, siis ta ei ole näha siin vastuses, olenemata sellest et registreeriti ta näiteks selles vahemikus
     // Aga ei tohiks olla oluline, sest ADR võtab samal öösel eelmise kuupäeva kohta, ehk vahemik on ainult paar tundi ja keegi siis enam ei muuda
 
-
     // tagastab nimekirja dokumentidest (ainult viidad)
     // vastuste arvu piirangut ei ole
     // sisendparameetrites olev periood tähendab kustutamise aega
     // kuupäevade vahemikus on nii algus- kui lõppkuupäeva kaasaarvatud (ehk aaaa-kk-ppT00:00:00 kuni aaaa-kk-ppT23:59:59)
     // kõik parameetrid on kohustuslikud
     List<Dokument> koikDokumendidKustutatud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
+
     // sama mis eelmine
     // aga dokumendi identifitseerimine käib nodeRef järgi
     List<DokumentId> koikDokumendidKustutatudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
-
 
     // ---------- Internal use -----------
 

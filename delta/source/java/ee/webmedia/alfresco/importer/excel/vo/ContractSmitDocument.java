@@ -19,7 +19,7 @@ public class ContractSmitDocument extends ImportDocument {
     //
     private String warranty;
     private String contractChange;
-    // 
+    //
     private String volumeTitle;
 
     @Override

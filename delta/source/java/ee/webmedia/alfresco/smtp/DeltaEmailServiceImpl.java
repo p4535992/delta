@@ -43,6 +43,7 @@ public class DeltaEmailServiceImpl extends EmailServiceImpl {
         try {
             // Process the message using the username's account
             final RetryingTransactionCallback<Object> processMessageCallback = new RetryingTransactionCallback<Object>() {
+                @Override
                 public Object execute() throws Throwable {
                     final NodeRef targetNodeRef;
                     if (nodeRef == null) {
@@ -61,6 +62,7 @@ public class DeltaEmailServiceImpl extends EmailServiceImpl {
                 }
             };
             RunAsWork<Object> processMessageRunAsWork = new RunAsWork<Object>() {
+                @Override
                 public Object doWork() throws Exception {
                     return retryingTransactionHelper.doInTransaction(processMessageCallback, false);
                 }

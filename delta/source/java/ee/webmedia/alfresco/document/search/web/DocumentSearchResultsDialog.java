@@ -25,7 +25,6 @@ import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.CreatedOrRegistratedDateComparator;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
-import ee.webmedia.alfresco.document.sendout.model.DocumentSendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.simdhs.CSVExporter;
@@ -49,7 +48,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
     private String dialogOutcome;
 
     public String setup(Node filter) {
-        this.searchFilter = filter;
+        searchFilter = filter;
         restored();
         return dialogOutcome;
     }
@@ -99,9 +98,9 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         DataReader dataReader = new RichListDataReader();
         CSVExporter exporter = new CSVExporter(dataReader);
         exporter.export("documentList");
-        
+
         // Erko hack for incorrect view id in the next request
-        JspStateManagerImpl.ignoreCurrentViewSequenceHack();        
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack();
     }
 
     /** @param event */
@@ -109,9 +108,9 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
         CSVExporter exporter = new CSVExporter(new EstonianPostExportDataReader());
         exporter.setOrderInfo(0, false);
         exporter.export("documentList");
-        
+
         // Erko hack for incorrect view id in the next request
-        JspStateManagerImpl.ignoreCurrentViewSequenceHack();        
+        JspStateManagerImpl.ignoreCurrentViewSequenceHack();
     }
 
     private class EstonianPostExportDataReader implements DataReader {

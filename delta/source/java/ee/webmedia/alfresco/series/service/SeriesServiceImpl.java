@@ -15,8 +15,6 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.search.ResultSet;
-import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
@@ -56,12 +54,12 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     private FunctionsService _functionsService;
     private SearchService searchService;
 
-    
+    @Override
     public List<ChildAssociationRef> getAllSeriesAssocsByFunction(NodeRef functionRef) {
         return nodeService.getChildAssocs(functionRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
     }
 
-    
+    @Override
     public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef) {
         List<ChildAssociationRef> seriesAssocs = getAllSeriesAssocsByFunction(functionNodeRef);
         List<Series> seriesOfFunction = new ArrayList<Series>(seriesAssocs.size());
@@ -73,7 +71,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         return seriesOfFunction;
     }
 
-    
+    @Override
     public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, QName docTypeId) {
         List<Series> series = getAllSeriesByFunction(functionNodeRef);
         for (Iterator<Series> i = series.iterator(); i.hasNext();) {
@@ -85,7 +83,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         return series;
     }
 
-    
+    @Override
     public List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, Integer structUnitId) {
         List<ChildAssociationRef> seriesAssocs = nodeService.getChildAssocs(functionNodeRef, RegexQNamePattern.MATCH_ALL, SeriesModel.Associations.SERIES);
         List<Series> seriesOfFunction = new ArrayList<Series>(seriesAssocs.size());
@@ -101,20 +99,23 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         return seriesOfFunction;
     }
 
+    @Override
     public Series getSeriesByNodeRef(String seriesNodeRef) {
         return getSeriesByNoderef(new NodeRef(seriesNodeRef), null);
     }
 
-    
+    @Override
     public Series getSeriesByNodeRef(NodeRef nodeRef) {
         return getSeriesByNoderef(nodeRef, null);
     }
-    
+
+    @Override
     public void saveOrUpdate(Series series) {
         saveOrUpdate(series, true);
     }
-    
-    public void saveOrUpdateWithoutReorder(Series series){
+
+    @Override
+    public void saveOrUpdateWithoutReorder(Series series) {
         saveOrUpdate(series, false);
     }
 
@@ -146,6 +147,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         final List<Series> allSeriesByFunction = getAllSeriesByFunction(series.getFunctionNodeRef());
         Collections.sort(allSeriesByFunction, new Comparator<Series>() {
 
+            @Override
             public int compare(Series s1, Series s2) {
                 final int order1 = getSeriesOrder(s1);
                 final int order2 = getSeriesOrder(s2);
@@ -164,17 +166,18 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
             final int order2 = (Integer) otherSeries.getNode().getProperties().get(SeriesModel.Props.ORDER.toString());
             if (order2 == order) {
                 otherSeries.getNode().getProperties().put(SeriesModel.Props.ORDER.toString(), order2 + 1);
-                //reorderSeries is recursively called on all following series in the list by saveOrUpdate
+                // reorderSeries is recursively called on all following series in the list by saveOrUpdate
                 saveOrUpdate(otherSeries);
                 break;
             }
         }
     }
-    
-    private Integer getSeriesOrder(Series series){
+
+    private Integer getSeriesOrder(Series series) {
         return (Integer) series.getNode().getProperties().get(SeriesModel.Props.ORDER.toString());
-    }    
-    
+    }
+
+    @Override
     public Series createSeries(NodeRef functionNodeRef) {
         Map<QName, Serializable> props = new HashMap<QName, Serializable>(1);
         int order = getNextSeriesOrderNrByFunction(functionNodeRef);
@@ -190,12 +193,13 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         series.setInitialSeriesIdentifier(initialSeriesIdentifier);
         return series;
     }
-    
+
+    @Override
     public boolean isClosed(Node node) {
         return RepoUtil.isExistingPropertyValueEqualTo(node, SeriesModel.Props.STATUS, DocListUnitStatus.CLOSED.getValueName());
     }
 
-    
+    @Override
     public boolean closeSeries(Series series) {
         final Node seriesNode = series.getNode();
         if (isClosed(seriesNode)) {
@@ -223,7 +227,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         return true;
     }
 
-    
+    @Override
     public Node getSeriesNodeByRef(NodeRef seriesNodeRef) {
         return generalService.fetchNode(seriesNodeRef);
     }
@@ -265,7 +269,6 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         return maxOrder + 1;
     }
 
-    
     @Override
     public void updateContainingDocsCountByVolume(NodeRef seriesNodeRef, NodeRef volumeNodeRef, boolean volumeAdded) {
         Integer count = (Integer) nodeService.getProperty(volumeNodeRef, VolumeModel.Props.CONTAINING_DOCS_COUNT);
@@ -288,12 +291,12 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     public void setLogService(DocumentLogService logService) {
         this.logService = logService;
     }
-    
+
     public void setSearchService(SearchService searchService) {
         this.searchService = searchService;
-    }    
+    }
 
-    
+    @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         this.beanFactory = beanFactory;
     }

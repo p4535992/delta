@@ -28,12 +28,12 @@ public class AddressbookDeleteDialog extends AddressbookBaseDialog {
     public void setupDelete(ActionEvent event) {
         setCurrentNode(getAddressbookService().getNode(new NodeRef(ActionUtil.getParam(event, "nodeRef"))));
     }
-    
+
     @Override
     public String getFinishButtonLabel() {
         return Application.getMessage(FacesContext.getCurrentInstance(), "delete");
     }
-    
+
     @Override
     public String getCancelButtonLabel() {
         return Application.getMessage(FacesContext.getCurrentInstance(), "back_button");

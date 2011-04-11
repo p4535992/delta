@@ -245,14 +245,17 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         this.peopleRichList = peopleRichList;
     }
 
+    @Override
     public void contextUpdated() {
         clearRichLists();
     }
 
+    @Override
     public void areaChanged() {
         clearRichLists();
     }
 
+    @Override
     public void spaceChanged() {
         clearRichLists();
     }

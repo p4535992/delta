@@ -67,7 +67,7 @@ public class DocumentTypeServiceImpl implements DocumentTypeService, BeanFactory
     @Override
     public List<DocumentType> getPublicAdrDocumentTypes() {
         List<DocumentType> documentTypes = getAllDocumentTypes();
-        for (Iterator<DocumentType> i = documentTypes.iterator(); i.hasNext(); ) {
+        for (Iterator<DocumentType> i = documentTypes.iterator(); i.hasNext();) {
             DocumentType documentType = i.next();
             if (!documentType.isPublicAdr()) {
                 i.remove();
@@ -86,7 +86,7 @@ public class DocumentTypeServiceImpl implements DocumentTypeService, BeanFactory
         List<ChildAssociationRef> childAssocs = getAllDocumentTypeChildAssocs();
         List<DocumentType> documentTypes = new ArrayList<DocumentType>(childAssocs.size());
         for (ChildAssociationRef childAssoc : childAssocs) {
-            DocumentType documentType =  documentTypeBeanPropertyMapper.toObject(nodeService.getProperties(childAssoc.getChildRef()));
+            DocumentType documentType = documentTypeBeanPropertyMapper.toObject(nodeService.getProperties(childAssoc.getChildRef()));
             if (used != null && documentType.isUsed() != used) {
                 continue;
             }
@@ -149,12 +149,12 @@ public class DocumentTypeServiceImpl implements DocumentTypeService, BeanFactory
     @Override
     public DocumentType getDocumentType(String docTypeId) {
         final QName qName = QName.resolveToQName(namespaceService, docTypeId);
-        if(qName==null) {
-            throw new RuntimeException("docTypeId '"+docTypeId+"' was not resolved to QName");
+        if (qName == null) {
+            throw new RuntimeException("docTypeId '" + docTypeId + "' was not resolved to QName");
         }
         final DocumentType documentType = getDocumentType(qName);
-        if(documentType==null) {
-            throw new RuntimeException("docType '"+qName+"' was not found in document types list");
+        if (documentType == null) {
+            throw new RuntimeException("docType '" + qName + "' was not found in document types list");
         }
         return documentType;
     }

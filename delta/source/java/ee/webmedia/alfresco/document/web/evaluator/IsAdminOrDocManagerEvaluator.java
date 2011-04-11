@@ -10,7 +10,7 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * UI action evaluator for validating whether current user is in Administrators or Document Managers user group.
- *
+ * 
  * @author Romet Aidla
  */
 public class IsAdminOrDocManagerEvaluator extends BaseActionEvaluator {
@@ -21,9 +21,9 @@ public class IsAdminOrDocManagerEvaluator extends BaseActionEvaluator {
         UserService userService = (UserService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserService.BEAN_NAME);
         return userService.isAdministrator() || userService.isDocumentManager();
     }
-    
+
     @Override
     public boolean evaluate(Node node) {
-        return evaluate((Object)node);
+        return evaluate((Object) node);
     }
 }

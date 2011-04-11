@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.classificator.enums;
 
-
 /**
  * Enum constants for KNOWN "transmittalMode" classificator values
  */
@@ -12,18 +11,18 @@ public enum TransmittalMode {
     private static String classificatorName = "transmittalMode";
 
     TransmittalMode(String value) {
-        this.valueName = value;
+        valueName = value;
     }
 
     public String getValueName() {
         return valueName;
     }
-    
+
     public static String getClassificatorName() {
         return classificatorName;
     }
 
     public boolean equals(String value) {
-        return this.valueName.equalsIgnoreCase(value);
+        return valueName.equalsIgnoreCase(value);
     }
 }

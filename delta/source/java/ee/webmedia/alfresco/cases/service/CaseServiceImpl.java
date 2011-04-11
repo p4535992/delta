@@ -51,16 +51,16 @@ public class CaseServiceImpl implements CaseService {
         Collections.sort(caseOfVolume);
         return caseOfVolume;
     }
-    
+
     @Override
     public int getCasesCountByVolume(NodeRef volumeRef) {
-        //TODO: getCaseRefsByVolume never returns null
+        // TODO: getCaseRefsByVolume never returns null
         List<ChildAssociationRef> caseAssocs = getCaseRefsByVolume(volumeRef);
-        if(caseAssocs != null){
+        if (caseAssocs != null) {
             return caseAssocs.size();
         }
         return 0;
-    }    
+    }
 
     @Override
     public List<ChildAssociationRef> getCaseRefsByVolume(NodeRef volumeRef) {

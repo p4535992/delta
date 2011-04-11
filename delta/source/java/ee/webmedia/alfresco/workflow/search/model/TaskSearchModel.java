@@ -8,7 +8,7 @@ import org.alfresco.service.namespace.QName;
  * @author Erko Hansar
  */
 public interface TaskSearchModel {
-    
+
     String URI = "http://alfresco.webmedia.ee/model/task/search/1.0";
     String PREFIX = "tasksearch:";
 

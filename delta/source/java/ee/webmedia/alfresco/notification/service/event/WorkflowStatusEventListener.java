@@ -17,14 +17,14 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
-import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 
 public class WorkflowStatusEventListener implements WorkflowEventListener, InitializingBean {
 
     private NotificationService notificationService;
     private WorkflowService workflowService;
-    
+
     @Override
     public void afterPropertiesSet() throws Exception {
         workflowService.registerEventListener(this);
@@ -57,10 +57,10 @@ public class WorkflowStatusEventListener implements WorkflowEventListener, Initi
     }
 
     private void refreshMenuTaskCount(WorkflowEvent event) {
-        if(((Task)event.getObject()).getOwnerId() != null && ((Task)event.getObject()).getOwnerId().equals(AuthenticationUtil.getRunAsUser())) {
+        if (((Task) event.getObject()).getOwnerId() != null && ((Task) event.getObject()).getOwnerId().equals(AuthenticationUtil.getRunAsUser())) {
             // Let's assume that this never gets called from a job, and there is an existing context :)
             FacesContext context = FacesContext.getCurrentInstance();
-            if(context != null) {
+            if (context != null) {
                 MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
                 menuBean.processTaskItems();
             }
@@ -77,21 +77,21 @@ public class WorkflowStatusEventListener implements WorkflowEventListener, Initi
                 notificationService.notifyTaskUnfinishedEvent(task);
             }
         }
-        
+
     }
 
     private void handleWorkflowNotifications(WorkflowEvent event) {
         Workflow workflow = (Workflow) event.getObject();
-        if(event.getType().equals(WorkflowEventType.STATUS_CHANGED)) {
+        if (event.getType().equals(WorkflowEventType.STATUS_CHANGED)) {
             notificationService.notifyWorkflowEvent(workflow, event.getType());
-        } else if(event.getType().equals(WorkflowEventType.WORKFLOW_STARTED_AUTOMATICALLY)) {
+        } else if (event.getType().equals(WorkflowEventType.WORKFLOW_STARTED_AUTOMATICALLY)) {
             notificationService.notifyWorkflowEvent(workflow, event.getType());
         }
-        
+
     }
 
     private void handleCompoundWorkflowNotifications(WorkflowEvent event) {
-        
+
     }
 
     // START: getters/setters

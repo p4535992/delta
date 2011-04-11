@@ -10,7 +10,7 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 public interface DocumentCommonModel {
     String URI = "http://alfresco.webmedia.ee/model/document/common/1.0";
     String PREFIX = "doccom:";
-    
+
     QName MODEL = QName.createQName(URI, "documentCommonModel");
 
     interface Repo {
@@ -70,7 +70,7 @@ public interface DocumentCommonModel {
         QName DOC_STATUS = QName.createQName(URI, "docStatus");
         QName STORAGE_TYPE = QName.createQName(URI, "storageType");
         QName KEYWORDS = QName.createQName(URI, "keywords");
-        
+
         QName OWNER_NAME = QName.createQName(URI, "ownerName");
         QName OWNER_ID = QName.createQName(URI, "ownerId");
         QName OWNER_JOB_TITLE = QName.createQName(URI, "ownerJobTitle");
@@ -89,7 +89,7 @@ public interface DocumentCommonModel {
 
         QName REG_NUMBER = QName.createQName(URI, "regNumber");
         QName REG_DATE_TIME = QName.createQName(URI, "regDateTime");
-        
+
         QName COMMENT = QName.createQName(URI, "comment");
 
         QName RECIPIENT_NAME = QName.createQName(URI, "recipientName");
@@ -99,18 +99,18 @@ public interface DocumentCommonModel {
         QName ADDITIONAL_RECIPIENT_EMAIL = QName.createQName(URI, "additionalRecipientEmail");
 
         QName SEND_DESC_VALUE = QName.createQName(URI, "sendDescValue");
-        
+
         QName SEND_INFO_RECIPIENT = QName.createQName(URI, "recipient");
         QName SEND_INFO_RECIPIENT_REG_NR = QName.createQName(URI, "recipientRegNr");
         QName SEND_INFO_SEND_DATE_TIME = QName.createQName(URI, "sendDateTime");
         QName SEND_INFO_SEND_MODE = QName.createQName(URI, "sendMode");
         QName SEND_INFO_RESOLUTION = QName.createQName(URI, "resolution");
         /**
-         * all values for this property are defined in Enum {@link SendStatus} 
+         * all values for this property are defined in Enum {@link SendStatus}
          */
         QName SEND_INFO_SEND_STATUS = QName.createQName(URI, "sendStatus");
         QName SEND_INFO_DVK_ID = QName.createQName(URI, "dvkId");
-        
+
         QName CREATED_DATETIME = QName.createQName(URI, "createdDateTime");
         QName CREATOR_NAME = QName.createQName(URI, "creatorName");
         QName EVENT_DESCRIPTION = QName.createQName(URI, "eventDescription");

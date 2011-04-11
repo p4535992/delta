@@ -13,8 +13,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.faces.context.FacesContext;
 
@@ -27,8 +27,8 @@ import de.schlichtherle.io.FileInputStream;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.AbstractImportDialog;
 import ee.webmedia.alfresco.parameters.model.Parameter;
-import ee.webmedia.alfresco.parameters.model.StringParameter;
 import ee.webmedia.alfresco.parameters.model.Parameter.ImportStatus;
+import ee.webmedia.alfresco.parameters.model.StringParameter;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -88,7 +88,7 @@ public class ParametersImportDialog extends AbstractImportDialog {
             final String rawRecord = csvReader.getRawRecord();
             if (log.isDebugEnabled()) {
                 log.error( //
-                        "During importing parameters expected " + expectedColumnsCount + " columns, but got " + lineColumnCount + " from line:\n" + rawRecord);
+                "During importing parameters expected " + expectedColumnsCount + " columns, but got " + lineColumnCount + " from line:\n" + rawRecord);
             }
             final UnableToPerformException unableToPerformException = new UnableToPerformException( //
                     MessageSeverity.ERROR, "parameter_import_csv_error_wrongNumOfColumns");
@@ -154,7 +154,7 @@ public class ParametersImportDialog extends AbstractImportDialog {
             } else {
                 iterator.remove();
             }
-            this.changedParams = new ArrayList<Parameter<? extends Serializable>>(paramsToUpdate.values()); // make HashMap$Values serializable
+            changedParams = new ArrayList<Parameter<? extends Serializable>>(paramsToUpdate.values()); // make HashMap$Values serializable
         }
         Collections.sort(paramsOverview, new Comparator<Parameter<?>>() {
 
@@ -226,7 +226,7 @@ public class ParametersImportDialog extends AbstractImportDialog {
             this.value = value;
         }
 
-        private String comment;
-        private String value;
+        private final String comment;
+        private final String value;
     }
 }

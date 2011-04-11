@@ -69,7 +69,7 @@ public interface CaseService {
     Case getCaseByTitle(final String newCaseTitle, NodeRef volumeRef, NodeRef caseRef);
 
     List<ChildAssociationRef> getCaseRefsByVolume(NodeRef volumeRef);
-    
+
     int getCasesCountByVolume(NodeRef volumeRef);
 
 }

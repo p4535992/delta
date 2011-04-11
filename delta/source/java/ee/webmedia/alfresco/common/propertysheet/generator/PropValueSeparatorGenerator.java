@@ -18,17 +18,16 @@ public class PropValueSeparatorGenerator extends BaseComponentGenerator {
     public UIComponent generate(FacesContext context, String id) {
         throw new RuntimeException("This is never called!");
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     protected UIComponent createComponent(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item) {
-        UIComponent component = this.createOutputTextComponent(context, item.getName());      
+        UIComponent component = createOutputTextComponent(context, item.getName());
         Object propValue = propertySheet.getNode().getProperties().get(item.getName());
         if (propValue != null && propValue.toString().length() > 0) {
             component.getAttributes().put("escape", Boolean.FALSE);
             component.getAttributes().put("value", "<div class=\"message\">" + propValue + "</div>");
-        }
-        else {
+        } else {
             component.setRendered(false);
         }
         return component;

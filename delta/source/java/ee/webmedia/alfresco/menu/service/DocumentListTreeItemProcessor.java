@@ -42,7 +42,7 @@ public class DocumentListTreeItemProcessor implements TreeItemProcessor {
         QName type = nodeService.getType(nodeRef);
         if (filter != null) {
             String result = filter.openItemActionsForType(dd, nodeRef, type);
-            if(result == null) {
+            if (result == null) {
                 return null;
             }
         } else {
@@ -58,8 +58,9 @@ public class DocumentListTreeItemProcessor implements TreeItemProcessor {
         List<NodeRef> children = new ArrayList<NodeRef>(childAssocs.size());
         for (ChildAssociationRef caRef : childAssocs) {
             if (filter != null) {
-                if (!filter.passesFilter(dd, caRef.getChildRef()))
+                if (!filter.passesFilter(dd, caRef.getChildRef())) {
                     continue; // Skip this item if it doesn't pass the filter
+                }
 
                 children.add(caRef.getChildRef());
                 continue;
@@ -78,7 +79,7 @@ public class DocumentListTreeItemProcessor implements TreeItemProcessor {
         if (type.equals(FunctionsModel.Types.FUNCTION)) {
             title = nodeService.getProperty(nodeRef, FunctionsModel.Props.MARK) + " " + nodeService.getProperty(nodeRef, FunctionsModel.Props.TITLE);
             dd.setOutcome("dialog:seriesListDialog");
-            
+
             Integer order = (Integer) nodeService.getProperty(nodeRef, FunctionsModel.Props.ORDER);
             if (order == null) {
                 order = 0;
@@ -88,13 +89,13 @@ public class DocumentListTreeItemProcessor implements TreeItemProcessor {
             orderString += " " + nodeService.getProperty(nodeRef, FunctionsModel.Props.TITLE);
         } else if (type.equals(SeriesModel.Types.SERIES)) {
             String containingDocsCount = DefaultTypeConverter.INSTANCE.convert(String.class, nodeService.getProperty(nodeRef, SeriesModel.Props.CONTAINING_DOCS_COUNT));
-            if(containingDocsCount == null) {
+            if (containingDocsCount == null) {
                 containingDocsCount = "?";
             }
             title = nodeService.getProperty(nodeRef, SeriesModel.Props.SERIES_IDENTIFIER) + " " + nodeService.getProperty(nodeRef, SeriesModel.Props.TITLE)
-                    + " (" + containingDocsCount+ ")";
+                    + " (" + containingDocsCount + ")";
             dd.setOutcome("dialog:volumeListDialog");
-            
+
             Integer order = (Integer) nodeService.getProperty(nodeRef, SeriesModel.Props.ORDER);
             if (order == null) {
                 order = 0;

@@ -39,7 +39,8 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Edit multiple multi-valued properties as a table. A {@code javax.faces.Input} component is generated for each cell. Supports deleting any row and appending
  * an empty row at the end (a {@code null} element is added to each {@link List}). When cells are first generated, it is ensured that each column's {@link List}
- * contains the same amount of elements as the list with greatest amount of elements. Again, {@code null} elements are appended, where necessary.
+ * contains the same
+ * amount of elements as the list with greatest amount of elements. Again, {@code null} elements are appended, where necessary.
  * 
  * @author Alar Kvell
  */
@@ -54,6 +55,7 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
     public static final String MULTI_VALUE_EDITOR_FAMILY = MultiValueEditor.class.getCanonicalName();
     public static final String ADD_LABEL_ID = "addLabelId";
     public static final String SHOW_HEADERS = "showHeaders";
+    public static final String INITIAL_ROWS = "initialRows";
 
     @Override
     public String getFamily() {
@@ -71,6 +73,13 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
             UIPropertySheet propertySheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
             createExistingComponents(context, propertySheet);
             if (!isDisabled()) {
+                // If requested create a single empty row when there are no existing rows
+                Integer initialRows = (Integer) getAttributes().get(MultiValueEditor.INITIAL_ROWS);
+                if (initialRows != null && getChildCount() == 0) {
+                    for (int i = 0; i < initialRows; i++) {
+                        appendRow(context);
+                    }
+                }
                 createPicker(context);
             }
         }
@@ -170,13 +179,13 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
                 int columnIndex = 0;
                 for (List<Object> columnList : columnLists) {
                     if (rowList.size() > columnIndex) {
-                        if(insertInMiddle){
+                        if (insertInMiddle) {
                             columnList.add(rowIndex + i, rowList.get(columnIndex));
                         } else {
                             columnList.add(rowList.get(columnIndex));
                         }
                     } else {
-                        if(insertInMiddle){
+                        if (insertInMiddle) {
                             columnList.add(rowIndex + i, null);
                         } else {
                             columnList.add(null);

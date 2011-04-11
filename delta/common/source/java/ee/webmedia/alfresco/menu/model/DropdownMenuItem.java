@@ -50,7 +50,7 @@ public class DropdownMenuItem extends MenuItem {
     private String submenuId;
     @XStreamAlias("xpath")
     private String xPath;
-    private String store;    
+    private String store;
     @XStreamOmitField
     private NodeRef nodeRef;
     @XStreamAlias("child-filter")
@@ -65,7 +65,7 @@ public class DropdownMenuItem extends MenuItem {
     public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService) {
         return createComponent(context, id, userService, workflowService, true);
     }
-    
+
     @Override
     public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, boolean createChildren) {
         if (isRestricted() && !hasPermissions(userService)) {
@@ -83,37 +83,37 @@ public class DropdownMenuItem extends MenuItem {
         link.setRendererType(UIActions.RENDERER_ACTIONLINK);
         FacesHelper.setupComponentId(context, link, id);
 
-        if(getTitle() == null) {
+        if (getTitle() == null) {
             setTitle(I18NUtil.getMessage(getTitleId()));
         }
         link.setValue(getTitle());
-        
+
         link.setTooltip(getTitle());
         link.setAction(new ConstantMethodBinding(getOutcome()));
         if (StringUtils.isNotBlank(getActionListener())) {
             link.setActionListener(application.createMethodBinding(getActionListener(), new Class[] { javax.faces.event.ActionEvent.class }));
         }
-        
+
         if (getParams() != null) {
             for (Entry<String, String> entry : getParams().entrySet()) {
                 addParameter(context, link, entry.getKey(), entry.getValue());
             }
         }
-        
+
         @SuppressWarnings("unchecked")
         Map<String, Object> attr = link.getAttributes();
         attr.put(DropdownMenuItem.DROPDOWN, Boolean.TRUE);
-        if(getXPath() != null) {
+        if (getXPath() != null) {
             attr.put(ATTRIBUTE_XPATH, getXPath());
         }
         if (getStore() != null) {
             attr.put(ATTRIBUTE_STORE, getStore());
         }
-        if(getNodeRef() != null) {
+        if (getNodeRef() != null) {
             attr.put(ATTRIBUTE_NODEREF, getNodeRef());
         }
-        
-        if(isBrowse()) {
+
+        if (isBrowse()) {
             // avoid setting on-click
         } else if (isTemporary()) {
             link.setOnclick("_toggleTempMenu(event, '" + getSubmenuId() + "'); return false;");
@@ -128,7 +128,7 @@ public class DropdownMenuItem extends MenuItem {
         List<UIComponent> children = wrapper.getChildren();
         children.add(link);
 
-        if(createChildren) {
+        if (createChildren) {
             MenuItemWrapper childrenWrapper = (MenuItemWrapper) createChildrenComponents(context, id, userService, workflowService);
             if (childrenWrapper != null) {
                 childrenWrapper.setDropdownWrapper(false);
@@ -151,15 +151,15 @@ public class DropdownMenuItem extends MenuItem {
         String id = parentId + UIMenuComponent.VALUE_SEPARATOR;
         @SuppressWarnings("unchecked")
         List<UIComponent> children = wrapper.getChildren();
-        if(getSubItems() != null) {
+        if (getSubItems() != null) {
             for (MenuItem item : getSubItems()) {
                 if (isRestricted() && !hasPermissions(userService)) {
                     continue;
                 }
-    
+
                 UIComponent childItem;
                 childItem = item.createComponent(context, id + i, userService, workflowService);
-    
+
                 if (childItem != null) {
                     children.add(childItem);
                 }
@@ -257,5 +257,5 @@ public class DropdownMenuItem extends MenuItem {
     public void setTransientOrderString(String transientOrderString) {
         this.transientOrderString = transientOrderString;
     }
-    
+
 }

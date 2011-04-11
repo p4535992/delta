@@ -64,14 +64,14 @@ public class SendOutActionEvaluator extends BaseActionEvaluator {
             , SUPERVISION_REPORT, MANAGEMENTS_ORDER, INTERNAL_APPLICATION, INSTRUMENT_OF_DELIVERY_AND_RECEIPT
             , REPORT, LICENCE, MEMO, MINUTES, TRAINING_APPLICATION, LEAVING_LETTER, ERRAND_ORDER_ABROAD, ERRAND_APPLICATION_DOMESTIC
             , ORDER_MV, CONTRACT_MV, INTERNAL_APPLICATION_MV, VACATION_APPLICATION, ERRAND_ORDER_ABROAD_MV, RESOLUTION_MV, PROJECT_APPLICATION
-    );
+            );
 
     @Override
     public boolean evaluate(Node node) {
         ViewStateActionEvaluator viewStateEval = new ViewStateActionEvaluator();
         PermissionService permissionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPermissionService();
         boolean result = viewStateEval.evaluate(node) && new DocumentSavedActionEvaluator().evaluate(node)
-        && permissionService.hasPermission(node.getNodeRef(), Permission.DOCUMENT_WRITE.getValueName()).equals(AccessStatus.ALLOWED);
+                && permissionService.hasPermission(node.getNodeRef(), Permission.DOCUMENT_WRITE.getValueName()).equals(AccessStatus.ALLOWED);
         if (result) {
             final Map<String, Object> props = node.getProperties();
             final String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);

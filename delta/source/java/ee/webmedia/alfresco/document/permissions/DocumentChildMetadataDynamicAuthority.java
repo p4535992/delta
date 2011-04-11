@@ -18,21 +18,21 @@ public class DocumentChildMetadataDynamicAuthority extends BaseDynamicAuthority 
     public boolean hasAuthority(final NodeRef nodeRef, final String userName) {
         QName type = nodeService.getType(nodeRef);
         if (!dictionaryService.isSubClass(type, DocumentCommonModel.Types.METADATA_CONTAINER)) {
-            log.trace("Node is not a document metadata child node, nodeRef="+nodeRef+"(" + type + "), refusing authority " + getAuthority());
+            log.trace("Node is not a document metadata child node, nodeRef=" + nodeRef + "(" + type + "), refusing authority " + getAuthority());
             return false;
         }
         final NodeRef parentRef = nodeService.getPrimaryParent(nodeRef).getParentRef();
         final QName parentType = nodeService.getType(parentRef);
         if (dictionaryService.isSubClass(parentType, DocumentCommonModel.Types.DOCUMENT)) {
             final boolean hasAuth = permissionServiceImpl.hasPermission(parentRef, "DocumentWrite").equals(AccessStatus.ALLOWED);
-            if(!hasAuth && log.isTraceEnabled()) {
-                log.trace("nodeRef="+nodeRef+"("+type+") hasAuth?"+hasAuth+" through parent parentRef="+parentRef+"("+parentType+")");
+            if (!hasAuth && log.isTraceEnabled()) {
+                log.trace("nodeRef=" + nodeRef + "(" + type + ") hasAuth?" + hasAuth + " through parent parentRef=" + parentRef + "(" + parentType + ")");
             }
             return hasAuth;
         } else if (dictionaryService.isSubClass(parentType, DocumentCommonModel.Types.METADATA_CONTAINER)) {
             final boolean hasAuth = permissionServiceImpl.hasPermission(parentRef, "DocumentChildMetadata").equals(AccessStatus.ALLOWED);
-            if(!hasAuth && log.isTraceEnabled()) {
-                log.trace("nodeRef="+nodeRef+"("+type+") hasAuth?"+hasAuth+" through parent parentRef="+parentRef+"("+parentType+")");
+            if (!hasAuth && log.isTraceEnabled()) {
+                log.trace("nodeRef=" + nodeRef + "(" + type + ") hasAuth?" + hasAuth + " through parent parentRef=" + parentRef + "(" + parentType + ")");
             }
             return hasAuth;
         }

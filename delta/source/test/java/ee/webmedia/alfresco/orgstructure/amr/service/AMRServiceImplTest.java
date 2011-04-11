@@ -25,7 +25,7 @@ public class AMRServiceImplTest extends TestCase {
         appC.refresh();
         amrService = (AMRService) appC.getBean(AMRService.BEAN_NAME);
     }
-    
+
     public void testYksusByAsutusId() {
         Yksus[] yksusArray = amrService.getYksusByAsutusId();
         assertTrue(yksusArray.length > 0);
@@ -38,7 +38,7 @@ public class AMRServiceImplTest extends TestCase {
             log.debug("unitId=" + unitId + "; name=" + name + "; superUnitId=" + superUnitId);
         }
     }
-    
+
     public void testGetAmetnikByAsutusId() {
         Ametnik[] ametnikArray = amrService.getAmetnikByAsutusId();
         assertTrue(ametnikArray.length > 0);
@@ -50,17 +50,18 @@ public class AMRServiceImplTest extends TestCase {
             String jobTitle = ametnik.getAmetikoht();
             String phone = ametnik.getKontakttelefon();
             String email = ametnik.getEmail();
-            log.debug("firstName="+ametnikFirstName+"; lastName="+lastName+"; id="+ametnikId+"; unitId="+unitId+"; jobTitle="+jobTitle+"; phone="+phone+"; email="+email);
+            log.debug("firstName=" + ametnikFirstName + "; lastName=" + lastName + "; id=" + ametnikId
+                    + "; unitId=" + unitId + "; jobTitle=" + jobTitle + "; phone=" + phone + "; email=" + email);
         }
     }
-    
+
     public void testGetAmetnikByIsikukood() {
         Ametnik ametnik = amrService.getAmetnikByIsikukood(ametnikId);
-        if(ametnik!=null) {
+        if (ametnik != null) {
             String eesnimi = ametnik.getEesnimi();
             assertEquals(ametnik.getIsikukood(), ametnikId);
             assertEquals(ametnik.getEesnimi(), ametnikFirstName);
-            log.debug("Id:"+ametnikId+"; firstName:"+eesnimi);
+            log.debug("Id:" + ametnikId + "; firstName:" + eesnimi);
         }
         assertNull(amrService.getAmetnikByIsikukood("1"));
     }

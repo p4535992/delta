@@ -47,6 +47,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         protected String regNumber;
         protected Date regDateTime;
         protected boolean compareByNodeRef;
+
         public AdrDocument(NodeRef nodeRef, String regNumber, Date regDateTime, boolean compareByNodeRef) {
             if (compareByNodeRef) {
                 Assert.notNull(nodeRef);
@@ -58,6 +59,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
             this.regDateTime = regDateTime;
             this.compareByNodeRef = compareByNodeRef;
         }
+
         @Override
         public boolean equals(Object other) {
             if (other == this) {
@@ -72,6 +74,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
             }
             return regNumber.equals(otherDoc.regNumber) && regDateTime.equals(otherDoc.regDateTime);
         }
+
         @Override
         public int hashCode() {
             if (compareByNodeRef) {
@@ -79,6 +82,7 @@ public abstract class BaseAdrServiceImpl implements AdrService {
             }
             return regNumber.hashCode() + regDateTime.hashCode();
         }
+
         @Override
         public String toString() {
             if (compareByNodeRef) {

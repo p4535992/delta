@@ -62,7 +62,8 @@ public class SearchableHasStartedCompoundWorkflowsUpdater extends AbstractNodeUp
         NodeRef docRef = primaryParent.getParentRef();
         if (docsWithStartedCompoundWorkflows.contains(docRef)) {
             LOG.debug("found document by another compound workflow that is started. Document=" + docRef + "; compoundWorkflow=" + cWorkflowRef);
-            return new String[] { docRef.toString(), "Property already set" }; // already set SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS to true based on another workflow
+            return new String[] { docRef.toString(), "Property already set" }; // already set SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS to true based on another
+                                                                               // workflow
         }
         Map<QName, Serializable> origDocProps = nodeService.getProperties(docRef);
         Map<QName, Serializable> docProps = new HashMap<QName, Serializable>();

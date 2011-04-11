@@ -165,7 +165,7 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
         super.decode(context);
 
         String action = (String) context.getExternalContext().getRequestParameterMap().get("dialog:act");
-        if (StringUtils.isNotBlank(action) && action.endsWith(ACTION_ADD_SUFFIX)) {
+        if (StringUtils.isNotBlank(action) && (action.endsWith(ACTION_ADD_SUFFIX) || action.endsWith(ACTION_REMOVE_SUFFIX))) {
             Utils.setRequestValidationDisabled(context);
         }
     }

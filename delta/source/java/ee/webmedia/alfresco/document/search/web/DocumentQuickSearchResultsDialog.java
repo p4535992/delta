@@ -58,10 +58,10 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
     public String getListTitle() {
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_quick_search_results");
     }
-    
+
     @Override
     public String getInfoMessage() {
-        if(getSearchValue().length() < 3) {
+        if (getSearchValue().length() < 3) {
             return MessageUtil.getMessage("document_quick_search_query_3_char_min");
         }
         return super.getInfoMessage();

@@ -47,6 +47,7 @@ public abstract class BaseDynamicAuthority implements DynamicAuthority, Initiali
         log.debug("Built requiredFor permission set for " + getAuthority() + ": " + whenRequired);
 
         AuthenticationUtil.runAs(new RunAsWork<Object>() {
+            @Override
             public Boolean doWork() throws Exception {
                 documentManagersGroup = userService.getDocumentManagersGroup();
                 return null;

@@ -21,7 +21,7 @@ public class OwnerPropertiesModifierCallback extends PropertiesModifierCallback 
     private AuthenticationService authenticationService;
     private NodeService nodeService;
     private OrganizationStructureService organizationStructureService;
-    
+
     @Override
     public QName getAspectName() {
         return DocumentCommonModel.Aspects.OWNER;

@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.document.search.service;
 
 import ee.webmedia.alfresco.filter.service.FilterService;
 
-
 /**
  * @author Alar Kvell
  */

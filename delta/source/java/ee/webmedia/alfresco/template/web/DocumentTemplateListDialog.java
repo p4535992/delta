@@ -18,11 +18,11 @@ public class DocumentTemplateListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
     private transient DocumentTemplateService documentTemplateService;
-    
+
     public List<DocumentTemplate> getTemplates() {
         return getDocumentTemplateService().getTemplates();
     }
-    
+
     /*
      * This is a read-only dialog, so we have nothing to do here (Save/OK button isn't displayed)
      */
@@ -31,7 +31,7 @@ public class DocumentTemplateListDialog extends BaseDialogBean {
         // not used
         return null;
     }
-    
+
     @Override
     public Object getActionsContext() {
         return null;

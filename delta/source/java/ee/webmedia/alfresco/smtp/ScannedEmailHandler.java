@@ -38,6 +38,7 @@ public class ScannedEmailHandler extends AbstractForumEmailMessageHandler {
     private GeneralService generalService;
     private OcrService ocrService;
 
+    @Override
     public void processMessage(NodeRef contentNodeRef, EmailMessage message) {
         if (log.isDebugEnabled()) {
             log.info("Processing message '" + message.getSubject() + "' from '" + message.getFrom() + "' sent at '" + message.getSentDate() + "' to '"

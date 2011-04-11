@@ -1,20 +1,22 @@
 package ee.webmedia.alfresco.imap;
 
+import java.util.Collection;
+import java.util.List;
+
+import org.alfresco.repo.imap.AlfrescoImapConst;
+import org.alfresco.repo.imap.AlfrescoImapUser;
+
 import com.icegreen.greenmail.imap.AuthorizationException;
 import com.icegreen.greenmail.imap.ImapHostManager;
 import com.icegreen.greenmail.store.FolderException;
 import com.icegreen.greenmail.store.MailFolder;
 import com.icegreen.greenmail.user.GreenMailUser;
-import ee.webmedia.alfresco.imap.service.ImapServiceExt;
-import org.alfresco.repo.imap.AlfrescoImapConst;
-import org.alfresco.repo.imap.AlfrescoImapUser;
 
-import java.util.Collection;
-import java.util.List;
+import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * TODO: add comment
- *
+ * 
  * @author Romet Aidla
  */
 public class ImmutableImapHostManager implements ImapHostManager {

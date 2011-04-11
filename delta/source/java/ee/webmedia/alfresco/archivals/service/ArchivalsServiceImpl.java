@@ -1,19 +1,14 @@
 package ee.webmedia.alfresco.archivals.service;
 
-import ee.webmedia.alfresco.adr.service.AdrService;
-import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
-import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.functions.model.Function;
-import ee.webmedia.alfresco.functions.model.FunctionsModel;
-import ee.webmedia.alfresco.functions.service.FunctionsService;
-import ee.webmedia.alfresco.series.model.Series;
-import ee.webmedia.alfresco.series.model.SeriesModel;
-import ee.webmedia.alfresco.series.service.SeriesService;
-import ee.webmedia.alfresco.volume.model.Volume;
-import ee.webmedia.alfresco.volume.model.VolumeModel;
-import ee.webmedia.alfresco.volume.service.VolumeService;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
+
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -29,14 +24,11 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.springframework.util.Assert;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.archivals.model.ArchivalsModel;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
@@ -47,9 +39,6 @@ import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 
-import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 /**
  * @author Romet Aidla
  */
@@ -85,12 +74,11 @@ public class ArchivalsServiceImpl implements ArchivalsService {
         NodeRef archivedFunRef = getArchivedFunctionByMark(functionMark);
         NodeRef archivedSeriesRef = null;
         if (archivedFunRef == null) { // function isn't archived before, let's do this now
-            archivedFunRef  = nodeService.moveNode(copiedFunNodeRef, getArchivalRoot(),
+            archivedFunRef = nodeService.moveNode(copiedFunNodeRef, getArchivalRoot(),
                     FunctionsModel.Associations.FUNCTION, FunctionsModel.Associations.FUNCTION).getChildRef();
             // with previous call, also series will be moved, find the series node ref
             archivedSeriesRef = getArchivedSeriesByIdentifies(archivedFunRef, seriesIdentifier);
-        }
-        else { // function is archived, let's check whether we need to archive series
+        } else { // function is archived, let's check whether we need to archive series
             archivedSeriesRef = getArchivedSeriesByIdentifies(archivedFunRef, seriesIdentifier);
             if (archivedSeriesRef == null) { // series isn't archived before, let's do this now
                 nodeService.setProperty(copiedSeriesNodeRef, SeriesModel.Props.CONTAINING_DOCS_COUNT, 0); // reset value if it' first time
@@ -102,7 +90,7 @@ public class ArchivalsServiceImpl implements ArchivalsService {
             nodeService.deleteNode(copiedFunNodeRef);
         }
         Assert.notNull(archivedSeriesRef, "Series was not archived");
-        
+
         seriesService.updateContainingDocsCountByVolume(series.getNode().getNodeRef(), volumeNodeRef, false);
         // now move volume with all children
         NodeRef archivedVolumeNodeRef = nodeService.moveNode(volumeNodeRef, archivedSeriesRef,
@@ -137,7 +125,6 @@ public class ArchivalsServiceImpl implements ArchivalsService {
 
         return volumesForDestruction.size();
     }
-
 
     private List<NodeRef> searchVolumesForDestruction() {
         List<String> queryParts = new ArrayList<String>();

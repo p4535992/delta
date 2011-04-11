@@ -2,10 +2,8 @@ package ee.webmedia.alfresco.user.service;
 
 import org.alfresco.repo.security.authentication.AuthenticationException;
 
-
-
 /**
- * Used to notify {@link SimpleAuthenticationFilter} that user does not exist, even after synchronizing from userRegistry. 
+ * Used to notify {@link SimpleAuthenticationFilter} that user does not exist, even after synchronizing from userRegistry.
  * 
  * @author Ats Uiboupin
  */

@@ -6,7 +6,6 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 /**
  * @author Ats Uiboupin
- *
  */
 // use URIs defined by the interfaces
 @AlfrescoModelType(uri = "")
@@ -18,7 +17,6 @@ public class DvkReceivedDocumentImpl extends AbstractLetterDocument implements D
     private String dvkId;
     private Date letterDeadLine;
 
-
     @Override
     public String getDvkId() {
         return dvkId;
@@ -28,7 +26,6 @@ public class DvkReceivedDocumentImpl extends AbstractLetterDocument implements D
     public void setDvkId(String dvkId) {
         this.dvkId = dvkId;
     }
-
 
     @Override
     public Date getLetterDeadLine() {

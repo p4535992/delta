@@ -5,8 +5,8 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.repository.AssociationRef;
@@ -52,7 +52,7 @@ public class WmNode extends TransientNode {
             for (Entry<QName, Serializable> entry : props.entrySet()) {
                 properties.put(entry.getKey(), entry.getValue());
             }
-            this.propsRetrieved = true;
+            propsRetrieved = true;
         }
     }
 
@@ -66,7 +66,7 @@ public class WmNode extends TransientNode {
             for (Entry<String, Object> entry : props.entrySet()) {
                 properties.put(entry.getKey(), entry.getValue());
             }
-            this.propsRetrieved = true;
+            propsRetrieved = true;
         }
     }
 
@@ -75,22 +75,22 @@ public class WmNode extends TransientNode {
         Assert.notNull(type);
 
         this.nodeRef = nodeRef;// super constructor initializes nodeRef if one is not given(must reset)
-        this.id = nodeRef == null ? null : nodeRef.getId();
+        id = nodeRef == null ? null : nodeRef.getId();
 
-        this.associations = new QNameNodeMap<String, List<AssociationRef>>(this, this);
-        this.childAssociations = new QNameNodeMap<String, List<ChildAssociationRef>>(this, this);
+        associations = new QNameNodeMap<String, List<AssociationRef>>(this, this);
+        childAssociations = new QNameNodeMap<String, List<ChildAssociationRef>>(this, this);
 
         // show that the maps have been initialised
         if (isUnsaved(nodeRef)) {
-            this.propsRetrieved = true;
-            this.assocsRetrieved = true;
-            this.childAssocsRetrieved = true;
+            propsRetrieved = true;
+            assocsRetrieved = true;
+            childAssocsRetrieved = true;
         }
 
         // setup remaining variables
-        this.path = null;
-        this.locked = Boolean.FALSE;
-        this.workingCopyOwner = Boolean.FALSE;
+        path = null;
+        locked = Boolean.FALSE;
+        workingCopyOwner = Boolean.FALSE;
 
         if (aspects == null) {
             this.aspects = new HashSet<QName>();
@@ -105,7 +105,7 @@ public class WmNode extends TransientNode {
 
     public void updateNodeRef(NodeRef nodeRef) {
         this.nodeRef = nodeRef;
-        this.id = nodeRef == null ? null : nodeRef.getId();
+        id = nodeRef == null ? null : nodeRef.getId();
     }
 
     @Override

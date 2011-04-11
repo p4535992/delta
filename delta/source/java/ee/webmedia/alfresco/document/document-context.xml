@@ -217,7 +217,7 @@
    
    <bean id="documentParametersBootstrap4" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="parametersSpacesBootstrap3" />
+      <property name="name" value="parametersSpacesBootstrap4" />
       <property name="sinceVersion" value="2.2.1.15" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
@@ -232,6 +232,28 @@
                <prop key="encoding">UTF-8</prop>
                <prop key="path">/param:parameters</prop>
                <prop key="location">ee/webmedia/alfresco/document/bootstrap/document-parameters4.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+   
+   <bean id="documentParametersBootstrap5" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="name" value="parametersSpacesBootstrap5" />
+      <property name="sinceVersion" value="2.3.1.12" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/bootstrap/document-parameters5.xml</prop>
             </props>
          </list>
       </property>
@@ -321,6 +343,8 @@ DaoAuthenticationProvider.authenticate()
       <property name="dependsOn">
          <list>
             <ref bean="contractPartyUpdater" />
+            <ref bean="vacationOrderTemplateAspectUpdater" />
+            <ref bean="errandAspectUpdater" />
          </list>
       </property>
       <property name="generalService" ref="generalService" />
@@ -413,6 +437,37 @@ DaoAuthenticationProvider.authenticate()
       <property name="generalService" ref="generalService" />
    </bean> 
 
+   <!-- Removes docspec:template aspect from docsub:vacationOrder documents -->
+   <bean id="vacationOrderTemplateAspectUpdater" class="ee.webmedia.alfresco.document.bootstrap.VacationOrderTemplateAspectUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="vacationOrderTemplateAspectUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="version21DocumentUpdater" />
+         </list>
+      </property>
+      <property name="searchService" ref="searchService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="generalService" ref="generalService" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+   </bean>
+   
+   <bean id="errandAspectUpdater" class="ee.webmedia.alfresco.document.bootstrap.ErrandAspectUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="errandAspectUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="version21DocumentUpdater" />
+         </list>
+      </property>
+      <property name="searchService" ref="searchService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="generalService" ref="generalService" />
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+   </bean>
+
    <!-- Used to add dummy workflow to old incoming letters to prevent them from appearing in "Menetluses" menu (CL task 158704) -->
    <bean id="incomingLetterDummyWorkflowUpdater" class="ee.webmedia.alfresco.document.bootstrap.IncomingLetterDummyWorkflowUpdater" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
@@ -433,7 +488,7 @@ DaoAuthenticationProvider.authenticate()
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="nodeService" ref="NodeService" />
    </bean>
-   
+
    <!-- START: web beans: -->
 
    <bean id="AssocsBlockBean" class="ee.webmedia.alfresco.document.associations.web.AssocsBlockBean" scope="session" />

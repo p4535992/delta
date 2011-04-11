@@ -35,16 +35,15 @@ public class ParametersServiceImpl implements ParametersService {
 
     private Boolean applicationStarted = false;
     /**
-     * Might happen that after most of the jobs have registered themselves to this service using
-     * {@link #addParameterRescheduledJob(ParameterRescheduledTriggerBean)} <br>
+     * Might happen that after most of the jobs have registered themselves to this service using {@link #addParameterRescheduledJob(ParameterRescheduledTriggerBean)} <br>
      * and {@link #applicationStarted()} is being processed <br>
      * some job get's lazily initialized (i.e lazy=true or using childAppContext, that gets loaded later), job will register itself to this service and
      * resolvePropertyValueAndSchedule would not ever be called for that job
      */
-    private Object syncLock = new Object();
+    private final Object syncLock = new Object();
 
     private final Map<String /* parameterName */, List<ParameterChangedCallback>> parameterChangeListeners = new HashMap<String, List<ParameterChangedCallback>>();
-    private List<ParameterRescheduledTriggerBean> reschedulableJobs = new ArrayList<ParameterRescheduledTriggerBean>();
+    private final List<ParameterRescheduledTriggerBean> reschedulableJobs = new ArrayList<ParameterRescheduledTriggerBean>();
 
     @Override
     public void addParameterChangeListener(String paramName, ParameterChangedCallback callback) {
@@ -68,6 +67,7 @@ public class ParametersServiceImpl implements ParametersService {
         }
     }
 
+    @Override
     public Parameter<?> getParameter(Parameters parameter) {
         String xPath = parameter.toString();
         final NodeRef nodeRef = generalService.getNodeRef(xPath);

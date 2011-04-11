@@ -44,13 +44,13 @@ public class DocumentOwnerDynamicAuthority extends BaseDynamicAuthority {
         if (!hasAuthority) {
             log.trace("No conditions met, refusing authority " + getAuthority());
         }
-        
+
         // there are some differences between file-write permissions and document-metadata-edit (this) permissions:
         // * document-owner and document-manager can edit metadata when any workflow is in progress
-        //   document-owner and document-manager can edit files when he is reviewer or first signer
+        // document-owner and document-manager can edit files when he is reviewer or first signer
         // * document-owner and document-manager can't edit files when status=finished and docType=PERSONELLE_ORDER_SIM, REGULATION, DECREE
-        //   document-owner and document-manager can edit metadata even if the above is true
-        
+        // document-owner and document-manager can edit metadata even if the above is true
+
         return hasAuthority;
     }
 

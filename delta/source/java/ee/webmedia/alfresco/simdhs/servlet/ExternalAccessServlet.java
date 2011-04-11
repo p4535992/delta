@@ -31,9 +31,8 @@ import ee.webmedia.alfresco.menu.ui.MenuBean;
 
 /**
  * Servlet allowing external URL access to various global JSF views in the Web Client.
- * Available URL-s:
- * <li><code>http://&lt;server&gt;/simdhs/&lt;servlet name&gt;/document/&lt;document node ref&gt;</code> - for viewing document</li>
- *
+ * Available URL-s: <li><code>http://&lt;server&gt;/simdhs/&lt;servlet name&gt;/document/&lt;document node ref&gt;</code> - for viewing document</li>
+ * 
  * @author Romet Aidla
  */
 public class ExternalAccessServlet extends BaseServlet {
@@ -57,10 +56,10 @@ public class ExternalAccessServlet extends BaseServlet {
     public void init() throws ServletException {
         super.init();
         String storeName = getServletContext().getInitParameter(STORE_PARAMETER_LABEL);
-        Assert.hasText(storeName, "At least one store name must be provided");        
+        Assert.hasText(storeName, "At least one store name must be provided");
         StringTokenizer tokenizer = new StringTokenizer(storeName, ",");
         storeNames = new ArrayList<String>();
-        while(tokenizer.hasMoreTokens()){
+        while (tokenizer.hasMoreTokens()) {
             storeNames.add(StringUtils.trimToEmpty(tokenizer.nextToken()));
         }
     }
@@ -70,10 +69,13 @@ public class ExternalAccessServlet extends BaseServlet {
     protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         String uri = req.getRequestURI();
 
-        if (logger.isDebugEnabled())
+        if (logger.isDebugEnabled()) {
             logger.debug("Processing URL: " + uri + (req.getQueryString() != null ? ("?" + req.getQueryString()) : ""));
+        }
 
-        if (AuthenticationStatus.Failure == servletAuthenticate(req, res)) return;
+        if (AuthenticationStatus.Failure == servletAuthenticate(req, res)) {
+            return;
+        }
         setNoCacheHeaders(res);
 
         uri = uri.substring(req.getContextPath().length());
@@ -90,8 +92,9 @@ public class ExternalAccessServlet extends BaseServlet {
         // 3. rest of the tokens arguments
         String[] args = extractArguments(t, tokenCount);
 
-        if (logger.isDebugEnabled())
+        if (logger.isDebugEnabled()) {
             logger.debug("External outcome found: " + outcome);
+        }
 
         FacesContext fc = FacesHelper.getFacesContext(req, res, getServletContext());
         ServiceRegistry serviceRegistry = getServiceRegistry(getServletContext());
@@ -105,16 +108,18 @@ public class ExternalAccessServlet extends BaseServlet {
             String currentNodeId = args[0];
             Assert.notNull(currentNodeId);
 
-            if (logger.isDebugEnabled()) logger.debug("currentNodeId: " + currentNodeId);
+            if (logger.isDebugEnabled()) {
+                logger.debug("currentNodeId: " + currentNodeId);
+            }
 
             boolean nodeExists = false;
             String nodeRefsStr = null;
             NodeRef nodeRef = null;
-            for(String storeName : storeNames){
+            for (String storeName : storeNames) {
                 StoreRef storeRef = new StoreRef(storeName);
                 nodeRef = new NodeRef(storeRef, currentNodeId);
                 nodeRefsStr += (nodeRefsStr == null) ? nodeRef : (";" + nodeRef);
-                if(serviceRegistry.getNodeService().exists(nodeRef)){
+                if (serviceRegistry.getNodeService().exists(nodeRef)) {
                     nodeExists = true;
                     break;
                 }
@@ -127,7 +132,7 @@ public class ExternalAccessServlet extends BaseServlet {
             // select correct menu
             MenuBean.clearViewStack(String.valueOf(MenuBean.DOCUMENT_REGISTER_ID), null);
 
-            // open document dialog            
+            // open document dialog
             DocumentDialog dialog = (DocumentDialog) FacesHelper.getManagedBean(fc, DocumentDialog.BEAN_NAME);
             dialog.open(nodeRef);
 

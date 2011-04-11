@@ -28,49 +28,50 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class InviteUsersDialog extends PermissionsAddDialog {
     private static final long serialVersionUID = 1L;
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(InviteUsersDialog.class);
-    
+
     private transient EmailService emailService;
     private transient DocumentTemplateService templateService;
     private transient ParametersService parametersService;
-    
+
     private String templateName;
-    
+
     @Override
     public void setup(ActionEvent event) {
         templateName = ActionUtil.getParam(event, "templateName");
         super.setup(event);
     }
-    
+
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
     }
-    
+
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        if(templateName != null) {
+        if (templateName != null) {
             notifySelectedUsers();
         } else {
             MessageUtil.addErrorMessage(context, "forum_template_not_specified");
         }
         return super.finishImpl(context, outcome);
     }
-    
+
     private void notifySelectedUsers() {
         @SuppressWarnings("unchecked")
         List<Authority> auth = (List<Authority>) getAuthorities().getWrappedData();
         List<String> toEmails = new ArrayList<String>(auth.size());
         List<String> toNames = new ArrayList<String>(auth.size());
         String fromEmail = getParametersService().getStringParameter(Parameters.TASK_SENDER_EMAIL);
-        if(StringUtils.isEmpty(fromEmail)) {
+        if (StringUtils.isEmpty(fromEmail)) {
             log.debug("Sending invitation to discussion failed, task sender email is not configured!");
             return;
         }
-        
+
         final List<ChildAssociationRef> parentAssocs = getNodeService().getParentAssocs(getNodeRef()); // Get the parent document
         NodeRef documentNodeRef = parentAssocs.get(0).getParentRef();
-        String subject = MessageUtil.getMessage(FacesContext.getCurrentInstance(), "forum_invited_to_subject", getNodeService().getProperty(documentNodeRef, DocumentCommonModel.Props.DOC_NAME));
-        if(templateName == null) {
+        String subject = MessageUtil.getMessage(FacesContext.getCurrentInstance(), "forum_invited_to_subject",
+                getNodeService().getProperty(documentNodeRef, DocumentCommonModel.Props.DOC_NAME));
+        if (templateName == null) {
             log.debug("Sending invitation to discussion failed, template to be used is not specified!");
             return;
         }
@@ -83,15 +84,15 @@ public class InviteUsersDialog extends PermissionsAddDialog {
         LinkedHashMap<String, NodeRef> nodeRefs = new LinkedHashMap<String, NodeRef>();
         nodeRefs.put(null, documentNodeRef);
         String content = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, templateNodeRef);
-        
-        for(Authority a : auth) {
+
+        for (Authority a : auth) {
             final Map<String, Object> props = getUserService().getUser(a.getAuthority()).getProperties();
-            if(props.get(ContentModel.PROP_EMAIL) != null) {
+            if (props.get(ContentModel.PROP_EMAIL) != null) {
                 toEmails.add(props.get(ContentModel.PROP_EMAIL).toString());
                 toNames.add(getUserService().getUserFullName(a.getAuthority()));
             }
         }
-        
+
         try {
             emailService.sendEmail(toEmails, toNames, fromEmail, subject, content, true, null, null, false, null);
         } catch (EmailException e) {
@@ -99,8 +100,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
             return;
         }
     }
-    
-    
+
     protected EmailService getEmailService() {
         if (emailService == null) {
             emailService = (EmailService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
@@ -116,7 +116,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
     public void setTemplateService(DocumentTemplateService templateService) {
         this.templateService = templateService;
     }
-    
+
     protected DocumentTemplateService getDocumentTemplateService() {
         if (templateService == null) {
             templateService = (DocumentTemplateService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
@@ -128,7 +128,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
     public void setParametersService(ParametersService parametersService) {
         this.parametersService = parametersService;
     }
-    
+
     protected ParametersService getParametersService() {
         if (parametersService == null) {
             parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())

@@ -173,8 +173,9 @@ public class MenuRenderer extends BaseRenderer {
      */
     private void renderSecondary(FacesContext context, String activeItemId, Menu menu, UIComponent component) throws IOException {
 
-        if (activeItemId == null)
+        if (activeItemId == null) {
             return;
+        }
 
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
@@ -222,8 +223,9 @@ public class MenuRenderer extends BaseRenderer {
         for (MenuItem item : menuItems) {
             if (activeItemid.equals(Integer.toString(i))) {
                 UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), getWorkflowService(), false);
-                if (menuItem != null)
+                if (menuItem != null) {
                     children.add(menuItem);
+                }
             } else if (item instanceof DropdownMenuItem) { // Only the drop-down item in primary menu needs the DocumentTypeService
                 if (((DropdownMenuItem) item).getChildFilter() != null && menuItemFilters != null
                         && menuItemFilters.containsKey(((DropdownMenuItem) item).getChildFilter())) {
@@ -237,12 +239,14 @@ public class MenuRenderer extends BaseRenderer {
                 }
 
                 UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService());
-                if (menuItem != null)
+                if (menuItem != null) {
                     children.add(removeTooltipRecursive(menuItem));
+                }
             } else {
                 UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService());
-                if (menuItem != null)
+                if (menuItem != null) {
                     children.add(menuItem);
+                }
             }
             i++;
         }
@@ -263,7 +267,7 @@ public class MenuRenderer extends BaseRenderer {
         UIActionLink al;
 
         if (menuItem instanceof MenuItemWrapper) {
-            if(menuItem.getChildCount() > 0){
+            if (menuItem.getChildCount() > 0) {
                 @SuppressWarnings("unchecked")
                 final List<UIComponent> childList = menuItem.getChildren();
                 if (childList.get(0) instanceof UIActionLink) {
@@ -292,14 +296,14 @@ public class MenuRenderer extends BaseRenderer {
         }
         return userService;
     }
-    
+
     protected WorkflowService getWorkflowService() {
         if (workflowService == null) {
             workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
                     .getBean(WorkflowService.BEAN_NAME);
         }
         return workflowService;
-    }    
+    }
 
     protected MenuService getMenuService() {
         if (menuService == null) {

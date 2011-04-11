@@ -12,16 +12,14 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class BooleanToLabelConverter implements Converter {
 
     public static final String CONVERTER_LABEL_PREFIX = "converterLabelPrefix";
-    
+
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) throws ConverterException {
         if (StringUtils.isBlank(value)) {
             return null;
-        }
-        else if (value.equals(getLabel(component, true))) {
+        } else if (value.equals(getLabel(component, true))) {
             return Boolean.TRUE;
-        }
-        else if (value.equals(getLabel(component, false))) {
+        } else if (value.equals(getLabel(component, false))) {
             return Boolean.FALSE;
         }
         throw new RuntimeException("Invalid value: " + value);
@@ -32,7 +30,7 @@ public class BooleanToLabelConverter implements Converter {
         if (value == null || !(value instanceof Boolean)) {
             return "";
         }
-        return getLabel(component, (Boolean)value);
+        return getLabel(component, (Boolean) value);
     }
 
     private String getLabel(UIComponent component, boolean value) {
@@ -43,5 +41,5 @@ public class BooleanToLabelConverter implements Converter {
         }
         return result;
     }
-    
+
 }

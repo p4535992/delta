@@ -80,6 +80,7 @@ public class DigiDocContentTransformer extends AbstractContentTransformer2 {
         }
     }
 
+    @Override
     public boolean isTransformable(String sourceMimetype, String targetMimetype, TransformationOptions options) {
         // DDOC -> TEXT
         if (!SignatureService.DIGIDOC_MIMETYPE.equals(sourceMimetype) ||

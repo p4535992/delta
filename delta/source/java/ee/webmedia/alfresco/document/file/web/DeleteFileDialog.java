@@ -68,7 +68,7 @@ public class DeleteFileDialog extends DeleteContentDialog {
     protected DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(DocumentService.BEAN_NAME);
+                    .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
     }

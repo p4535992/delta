@@ -44,16 +44,16 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
         try {
             log.debug("Copying file from contentstore to temporary file: " + tempFromFile + "\n  " + reader);
             reader.getContent(tempFromFile);
-    
+
             synchronized (openOfficeConnection) {
                 String tempFromFileurl = toUrl(tempFromFile);
                 log.debug("Loading file into OpenOffice from URL: " + tempFromFileurl);
                 XComponent xComponent = loadComponent(tempFromFileurl);
-        
+
                 XTextDocument xTextDocument = queryInterface(XTextDocument.class, xComponent);
                 XSearchDescriptor xSearchDescriptor;
                 XSearchable xSearchable = queryInterface(XSearchable.class, xTextDocument);
-                
+
                 // You need a descriptor to set properies for Replace
                 xSearchDescriptor = xSearchable.createSearchDescriptor();
                 xSearchDescriptor.setPropertyValue("SearchRegularExpression", Boolean.TRUE);
@@ -84,7 +84,7 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
                 if (refreshable != null) {
                     refreshable.refresh();
                 }
-        
+
                 tempToFile = TempFileProvider.createTempFile("DTSP-" + java.util.Calendar.getInstance().getTimeInMillis(), "."
                         + mimetypeService.getExtension(reader.getMimetype()));
                 String tempToFileUrl = toUrl(tempToFile);
@@ -96,9 +96,10 @@ public class OpenOfficeServiceImpl implements OpenOfficeService {
                 XStorable storable = queryInterface(XStorable.class, xComponent);
                 storable.storeToURL(tempToFileUrl, storeProps); // Second replacing run requires new URL
             }
-    
+
             writer.putContent(tempToFile);
-            log.debug("Copied file back to contentstore from temporary file: " + tempToFile + "\n  " + writer + "\nEntire replacement took " + (System.currentTimeMillis() - startTime) + " ms");
+            log.debug("Copied file back to contentstore from temporary file: " + tempToFile + "\n  "
+                    + writer + "\nEntire replacement took " + (System.currentTimeMillis() - startTime) + " ms");
         } finally {
             if (tempFromFile != null && tempFromFile.exists()) {
                 tempFromFile.delete();

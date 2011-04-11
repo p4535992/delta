@@ -14,7 +14,7 @@ import ee.webmedia.alfresco.functions.model.Function;
 
 /**
  * Dialog bean for archived functions
- *
+ * 
  * @author Romet Aidla
  */
 public class ArchivedFunctionsListDialog extends BaseDialogBean {

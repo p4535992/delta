@@ -22,7 +22,7 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
     private String fileName;
     private final String acceptedFileExtension;
     private final String wrongExtensionMsg;
-    
+
     protected AbstractImportDialog(String acceptedFileExtension, String wrongExtensionMsg) {
         this.acceptedFileExtension = acceptedFileExtension;
         this.wrongExtensionMsg = wrongExtensionMsg;
@@ -53,17 +53,17 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
     }
 
     protected void clearUpload() {
-        if (this.file != null) {
-            this.file.delete();
+        if (file != null) {
+            file.delete();
         }
-        this.file = null;
+        file = null;
         // remove the file upload bean from the session
         FacesContext ctx = FacesContext.getCurrentInstance();
         ctx.getExternalContext().getSessionMap().remove(FileUploadBean.FILE_UPLOAD_BEAN_NAME);
     }
 
     public abstract String getFileUploadSuccessMsg();
-    
+
     // START: getters / setters
 
     /**
@@ -74,13 +74,13 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
         // representing the file we previously uploaded.
         FileUploadBean fileBean = getFileUploadBean();
         if (fileBean != null) {
-            this.file = fileBean.getFile();
+            file = fileBean.getFile();
             final String fileName = fileBean.getFileName();
-            if(isCorrectExtension(fileName)) {
+            if (isCorrectExtension(fileName)) {
                 this.fileName = fileName;
             }
         }
-        return this.fileName;
+        return fileName;
     }
 
     public void setFileName(String fileName) {

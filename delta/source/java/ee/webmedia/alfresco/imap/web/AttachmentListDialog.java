@@ -18,7 +18,7 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 
 /**
  * Email attachments list dialog.
- *
+ * 
  * @author Romet Aidla
  */
 public class AttachmentListDialog extends BaseDialogBean {
@@ -44,8 +44,8 @@ public class AttachmentListDialog extends BaseDialogBean {
         Assert.notNull(node, "Attachment root not found");
         List<File> temp = getFileService().getAllFilesExcludingDigidocSubitems(node.getNodeRef());
         files = new ArrayList<File>();
-        for(int i = temp.size(); i > 0; i--) {
-            files.add(temp.get(i-1));
+        for (int i = temp.size(); i > 0; i--) {
+            files.add(temp.get(i - 1));
         }
     }
 

@@ -32,13 +32,13 @@ public class UploadFileInput extends UIInput implements NamingContainer {
             this.contentType = contentType;
             this.fileName = fileName;
         }
-        
+
         @Override
         public FileWithContentType clone() {
             return new FileWithContentType(file, contentType, fileName);
         }
     }
-    
+
     private static final String EVENT_UPLOADED = "uploaded";
     private static final String EVENT_REMOVE = "remove";
 
@@ -63,7 +63,7 @@ public class UploadFileInput extends UIInput implements NamingContainer {
             // FIXME: Kaarel - see pole küll õige koht töövoo spetsiifiliste teadete jaoks(pealegi seda teadet common'i projektis pole)
             writer.write(Application.getMessage(context, "opinion_file_uploaded"));
         } else {
-            //Javascript functions with unique names
+            // Javascript functions with unique names
             writer.write("<script type='text/javascript' src='");
             writer.write(path);
             writer.write("/scripts/upload_helper.js'></script>\n");
@@ -85,7 +85,7 @@ public class UploadFileInput extends UIInput implements NamingContainer {
                     jsSuffix + "(this)'/>");
         }
     }
-    
+
     @Override
     public void encodeEnd(FacesContext context) throws IOException {
         // Do nothing
@@ -99,7 +99,7 @@ public class UploadFileInput extends UIInput implements NamingContainer {
         if (StringUtils.isBlank(event)) {
             return;
         }
-        
+
         ValueBinding value = getValueBinding("value");
         if (event.equals(EVENT_UPLOADED)) {
             FileUploadBean fileBean = (FileUploadBean) context.getExternalContext().getSessionMap().
@@ -111,8 +111,7 @@ public class UploadFileInput extends UIInput implements NamingContainer {
 
                 value.setValue(context, new FileWithContentType(fileBean.getFile(), fileBean.getContentType(), fileBean.getFileName()));
             }
-        }
-        else if (event.equals(EVENT_REMOVE)) {
+        } else if (event.equals(EVENT_REMOVE)) {
             value.setValue(context, null);
         }
     }

@@ -69,8 +69,7 @@
       <type name="docsub:errandOrderAbroad">
          <parent>doccom:document</parent>
          <mandatory-aspects>
-            <aspect>docspec:errandDoc</aspect>
-            <aspect>docspec:errandOrderAbroad</aspect>
+            <aspect>docspec:errandOrderAbroadV2</aspect>
          </mandatory-aspects>
       </type>
       
@@ -82,12 +81,11 @@
          </mandatory-aspects>
       </type>      
       
-      <!-- Siselähetuse dokumenndi tüüp -->
+      <!-- Siselähetuse dokumendi tüüp -->
       <type name="docsub:errandApplicationDomestic">
          <parent>doccom:document</parent>
          <mandatory-aspects>
-            <aspect>docspec:errandDoc</aspect>
-            <aspect>docspec:errandApplicationDomestic</aspect>
+            <aspect>docspec:errandApplicationDomesticV2</aspect>
          </mandatory-aspects>
       </type>
 
@@ -95,11 +93,11 @@
       <type name="docsub:trainingApplication">
          <parent>doccom:document</parent>
          <mandatory-aspects>
-            <aspect>docspec:trainingApplication</aspect>
+            <aspect>docspec:trainingApplicationV2</aspect>
          </mandatory-aspects>
       </type>
 
-      <!-- Riigihanke läbiviimise taotluse dokumenndi tüüp -->
+      <!-- Riigihanke läbiviimise taotluse dokumendi tüüp -->
       <type name="docsub:tenderingApplication">
          <parent>doccom:document</parent>
          <mandatory-aspects>
@@ -402,7 +400,6 @@
             <aspect>docspec:whose</aspect>
             <aspect>docspec:vacationOrder</aspect>
             <aspect>doccom:legalBasis</aspect>
-            <aspect>docspec:template</aspect>
          </mandatory-aspects>
       </type>
       

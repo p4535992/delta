@@ -14,7 +14,7 @@ import ee.webmedia.alfresco.menu.service.MenuItemCountHandler;
 import ee.webmedia.alfresco.menu.service.MenuService;
 
 public class DvkCorruptMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
-    
+
     private MenuService menuService;
     private GeneralService generalService;
     private FileFolderService fileFolderService;
@@ -27,7 +27,7 @@ public class DvkCorruptMenuItemProcessor extends CountAddingMenuItemProcessor im
 
     @Override
     public int getCount(MenuItem menuItem) {
-        List<FileInfo> fileInfos = fileFolderService.listFiles(generalService.getNodeRef(dvkService.getCorruptDvkDocumentsPath())); 
+        List<FileInfo> fileInfos = fileFolderService.listFiles(generalService.getNodeRef(dvkService.getCorruptDvkDocumentsPath()));
         return fileInfos != null ? fileInfos.size() : 0;
     }
 

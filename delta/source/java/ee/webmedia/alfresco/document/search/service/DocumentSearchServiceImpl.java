@@ -428,7 +428,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             @Override
             public String addResult(ResultSetRow row) {
                 final NodeRef sendInfoRef = row.getNodeRef();
-                Pair<String, String> dvkIdAndRecipient = new Pair<String, String>((String) nodeService.getProperty(sendInfoRef, WorkflowSpecificModel.Props.SENT_DVK_ID),
+                Pair<String, String> dvkIdAndRecipient = new Pair<String, String>((String) nodeService.getProperty(sendInfoRef,
+                        WorkflowSpecificModel.Props.SENT_DVK_ID),
                         (String) nodeService.getProperty(sendInfoRef, WorkflowSpecificModel.Props.INSTITUTION_CODE));
                 nodeRefAndDvkIds.put(sendInfoRef, dvkIdAndRecipient);
                 return null;
@@ -849,7 +850,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return joinQueryPartsAnd(queryParts, false);
     }
 
-    private Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr */>> searchDhlIdsBySendInfoImpl(String query, boolean limited, String queryName) {
+    private Map<NodeRef /* sendInfo */, Pair<String /* dvkId */, String /* recipientRegNr */>> searchDhlIdsBySendInfoImpl(String query, boolean limited,
+            String queryName) {
         final HashMap<NodeRef, Pair<String, String>> refsAndDvkIds = new HashMap<NodeRef, Pair<String, String>>();
         searchGeneralImpl(query, limited, queryName, new SearchCallback<String>() {
             @Override
@@ -922,7 +924,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         @SuppressWarnings("unchecked")
         List<String> recipientNames = (List<String>) props.get(DocumentSearchModel.Props.RECIPIENT_NAME);
         queryParts.add(generateMultiStringWordsWildcardQuery(recipientNames, DocumentCommonModel.Props.RECIPIENT_NAME,
-                DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME, DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME, DocumentSpecificModel.Props.SECOND_PARTY_NAME,
+                DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME, DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME,
+                DocumentSpecificModel.Props.SECOND_PARTY_NAME,
                 DocumentSpecificModel.Props.THIRD_PARTY_NAME));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.DOC_NAME), DocumentCommonModel.Props.DOC_NAME));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SENDER_REG_NUMBER),

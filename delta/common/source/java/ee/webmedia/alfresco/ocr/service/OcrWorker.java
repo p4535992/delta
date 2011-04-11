@@ -10,7 +10,7 @@ public class OcrWorker implements Runnable {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(OcrWorker.class);
 
     private OcrService ocrService;
-    private BlockingQueue<NodeRef> queue = new LinkedBlockingQueue<NodeRef>();
+    private final BlockingQueue<NodeRef> queue = new LinkedBlockingQueue<NodeRef>();
 
     public void queue(NodeRef nodeRef) {
         queue.add(nodeRef);
@@ -31,7 +31,7 @@ public class OcrWorker implements Runnable {
             }
         }
     }
-    
+
     public void setOcrService(OcrService ocrService) {
         this.ocrService = ocrService;
     }

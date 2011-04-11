@@ -46,6 +46,7 @@ public class DocumentLogServiceImpl implements DocumentLogService {
         addLogEntry(document, event, creator, DocumentCommonModel.Assocs.DOCUMENT_LOG);
     }
 
+    @Override
     public void addSeriesLog(NodeRef document, String event) {
         String currentUserFullName = userService.getUserFullName();
         addLogEntry(document, event, currentUserFullName, SeriesModel.Associations.SERIES_LOG);

@@ -36,7 +36,7 @@ public class DataItem implements Serializable {
         this.size = size;
         this.dataFile = dataFile;
         if (nodeRef != null && name != null) {
-            this.downloadUrl = DownloadDigiDocContentServlet.generateUrl(nodeRef, id, name);
+            downloadUrl = DownloadDigiDocContentServlet.generateUrl(nodeRef, id, name);
         }
     }
 
@@ -51,12 +51,12 @@ public class DataItem implements Serializable {
     public String getName() {
         return name;
     }
-    
+
     public String getDisplayName() {
-        if(FilenameUtils.getBaseName(name).length() < 51) {
+        if (FilenameUtils.getBaseName(name).length() < 51) {
             return name;
         }
-        
+
         return FilenameUtils.getBaseName(name).substring(0, 50) + "...." + FilenameUtils.getExtension(name);
     }
 
@@ -97,7 +97,7 @@ public class DataItem implements Serializable {
     }
 
     /**
-     * Used in JSP to determine the file icon. 
+     * Used in JSP to determine the file icon.
      */
     public String getFileType16() {
         return FileTypeImageUtils.getFileTypeImage(getName(), true);

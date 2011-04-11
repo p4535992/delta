@@ -5,7 +5,6 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -15,8 +14,6 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandButton;
 import javax.faces.component.html.HtmlCommandLink;
-import javax.faces.component.html.HtmlOutputText;
-import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -34,14 +31,10 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
-import org.alfresco.web.ui.common.ConstantMethodBinding;
 import org.alfresco.web.ui.common.Utils;
-import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
-import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.DateFormatUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
@@ -61,14 +54,12 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
 import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
+import ee.webmedia.alfresco.workflow.model.WorkflowBlockItem;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
-import ee.webmedia.alfresco.workflow.model.WorkflowSummaryItem;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
 import ee.webmedia.alfresco.workflow.service.SignatureTask;
@@ -106,11 +97,8 @@ public class WorkflowBlockBean implements Serializable {
 
     private NodeRef docRef;
     private Node document;
-    private NodeRef workflowPanelControlDocument;
     private NodeRef taskPanelControlDocument;
     private List<CompoundWorkflow> compoundWorkflows;
-    private List<WorkflowSummaryItem> workflowSummaryItems;
-    private transient HtmlPanelGroup wfPanelGroup;
     private List<Task> myTasks;
     private List<Task> finishedReviewTasks;
     private List<Task> finishedOpinionTasks;
@@ -131,8 +119,6 @@ public class WorkflowBlockBean implements Serializable {
         finishedOpinionTasks = null;
         signatureTask = null;
         dataTableGroup = null;
-        workflowSummaryItems = null;
-        wfPanelGroup = null;
         delegationBean.reset();
     }
 
@@ -142,12 +128,9 @@ public class WorkflowBlockBean implements Serializable {
         finishedReviewTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.REVIEW_TASK);
         finishedOpinionTasks = WorkflowUtil.getFinishedTasks(compoundWorkflows, WorkflowSpecificModel.Types.OPINION_TASK);
         signatureTask = null;
-        workflowSummaryItems = null;
         delegationBean.reset();
         // rebuild the whole task panel
         constructTaskPanelGroup();
-        // refresh workflow panel
-        renderWorkflowPanel();
     }
 
     public boolean isCompoundWorkflowOwner() {
@@ -581,25 +564,6 @@ public class WorkflowBlockBean implements Serializable {
         return (SignatureAppletModalComponent) getDataTableGroupInner().getChildren().get(0);
     }
 
-    public List<WorkflowSummaryItem> getWorkflowSummaryItems() {
-        if (workflowSummaryItems == null) {
-            workflowSummaryItems = new ArrayList<WorkflowSummaryItem>();
-            List<Workflow> workflows = WorkflowUtil.getVisibleWorkflows(getCompoundWorkflows());
-
-            for (Workflow workflow : workflows) {
-                WorkflowSummaryItem workflowSummaryItem = new WorkflowSummaryItem(workflow);
-                workflowSummaryItem.setRaisedRights(checkRights(workflow));
-                workflowSummaryItems.add(workflowSummaryItem);
-                WorkflowSummaryItem workflowSummaryItemTaskView = new WorkflowSummaryItem(workflow);
-                workflowSummaryItemTaskView.setTaskView(true);
-                workflowSummaryItems.add(workflowSummaryItemTaskView);
-            }
-
-            Collections.sort(workflowSummaryItems);
-        }
-        return workflowSummaryItems;
-    }
-
     private boolean checkRights(Workflow workflow) {
         boolean localRights = getUserService().isDocumentManager()
                 || getDocumentService().isDocumentOwner(docRef, AuthenticationUtil.getRunAsUser())
@@ -622,19 +586,6 @@ public class WorkflowBlockBean implements Serializable {
             }
         }
         return false;
-    }
-
-    public void setWorkflowSummaryItems(List<WorkflowSummaryItem> workflowSummaryItems) {
-        this.workflowSummaryItems = workflowSummaryItems;
-    }
-
-    public void toggleTaskViewVisible(ActionEvent event) {
-        NodeRef workflowNodeRef = new NodeRef(ActionUtil.getParam(event, "workflowNodeRef"));
-        for (WorkflowSummaryItem item : getWorkflowSummaryItems()) {
-            if (item.getWorkflowRef().equals(workflowNodeRef)) {
-                item.toggleTaskViewVisible(event);
-            }
-        }
     }
 
     // START: getters / setters
@@ -723,239 +674,24 @@ public class WorkflowBlockBean implements Serializable {
         return dvkService;
     }
 
+    public List<WorkflowBlockItem> getWorkflowBlockItems() {
+        List<WorkflowBlockItem> items = new ArrayList<WorkflowBlockItem>();
+        for (CompoundWorkflow cWf : getCompoundWorkflows()) {
+            for (Workflow wf : cWf.getWorkflows()) {
+                if (WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW.equals(wf.getNode().getType())
+                        || WorkflowUtil.isGeneratedByDelegation(wf)) {
+                    continue; // Don't display registration workflows
+                    // nor workflows that have been temporarily created when assignment task is shown that can potentially be delegated
+                    // using those workflows for information,opinion tasks
+                }
+                boolean raisedRights = checkRights(wf);
+                for (Task task : wf.getTasks()) {
+                    items.add(new WorkflowBlockItem(task, raisedRights));
+                }
+            }
+        }
+        Collections.sort(items, WorkflowBlockItem.COMPARATOR);
+        return items;
+    }
     // END: getters / setters
-
-    private void renderWorkflowPanel() {
-        renderWorkflowPanel(getWfPanelGroupInner());
-    }
-
-    @SuppressWarnings("unchecked")
-    private void renderWorkflowPanel(HtmlPanelGroup wfPanel) {
-        Application app = FacesContext.getCurrentInstance().getApplication();
-        wfPanel.getChildren().clear();
-        UIPanel workflowPanel = (UIPanel) app.createComponent("org.alfresco.faces.Panel");
-        workflowPanel.setId("workflow-summary-panel");
-        workflowPanel.setProgressive(true);
-        workflowPanel.getAttributes().put("styleClass", "panel-100");
-        workflowPanel.setExpanded(false);
-        workflowPanel.setLabel(MessageUtil.getMessage("workflow_workflows"));
-        generateCompoundWorkflowTables(app, workflowPanel);
-        wfPanel.getChildren().add(workflowPanel);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void generateCompoundWorkflowTables(Application app, UIPanel workflowPanel) {
-        for (CompoundWorkflow compound : compoundWorkflows) {
-            HtmlPanelGrid grid = (HtmlPanelGrid) app.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
-            grid.setColumns(4);
-            grid.setStyleClass("compound-workflow-table");
-            grid.setRowClasses("header,compound-details");
-            grid.setColumnClasses("width25,width25,width25,width25");
-
-            List<UIComponent> children = grid.getChildren();
-
-            // Header
-            children.add(createOutput(app, MessageUtil.getMessage("workflow_workflow")));
-            children.add(createOutput(app, MessageUtil.getMessage("workflow_started")));
-            children.add(createOutput(app, MessageUtil.getMessage("workflow_stopped")));
-            children.add(createOutput(app, MessageUtil.getMessage("workflow_creator")));
-
-            // Values
-            final UIComponent compundWFOtuput = createOutput(app, MessageUtil.getMessage("workflow_compound"));
-            ComponentUtil.setTooltip(compundWFOtuput, MessageUtil.getMessage("compoundWorkflow_status", compound.getStatus()));
-            children.add(compundWFOtuput);
-            children.add(createOutput(app, formatDate(compound.getStartedDateTime())));
-            children.add(createOutput(app, formatDate(compound.getStoppedDateTime())));
-            children.add(createOutput(app, compound.getCreatorName()));
-
-            generateWorkflowTables(app, grid, compound);
-
-            workflowPanel.getChildren().add(grid);
-        }
-
-    }
-
-    @SuppressWarnings("unchecked")
-    private void generateWorkflowTables(Application app, HtmlPanelGrid htmlPanelGrid, CompoundWorkflow compound) {
-
-        HtmlPanelGroup workflowWrapper = (HtmlPanelGroup) app.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-
-        for (Workflow workflow : compound.getWorkflows()) {
-            if (WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW.equals(workflow.getNode().getType())
-                    || WorkflowUtil.isGeneratedByDelegation(workflow)) {
-                continue; // Don't display registration workflows
-                // nor workflows that have been temporarily created when assignment task is shown that can potentially be delegated
-                // using those workflows for information,opinion tasks
-            }
-
-            WorkflowSummaryItem summaryItem = new WorkflowSummaryItem(workflow);
-            summaryItem.setRaisedRights(checkRights(workflow));
-            HtmlPanelGrid grid = (HtmlPanelGrid) app.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
-            grid.setColumns(1);
-            grid.setStyleClass("workflow-table");
-            grid.setRowClasses("workflow-header,workflow-details");
-
-            List<UIComponent> gridChildren = grid.getChildren();
-
-            // Heading
-            HtmlPanelGroup headingGroup = (HtmlPanelGroup) app.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-
-            UIActionLink toggle = (UIActionLink) app.createComponent(UIActions.COMPONENT_ACTIONLINK);
-            toggle.setValue("");
-            toggle.setShowLink(false);
-            toggle.setOnclick("return false;");
-            toggle.getAttributes().put("styleClass", "toggle-tasks icon-link expanded");
-            headingGroup.getChildren().add(toggle);
-
-            if (summaryItem.isRaisedRights()) {
-                UIActionLink link = (UIActionLink) app.createComponent(UIActions.COMPONENT_ACTIONLINK);
-                link.setValue(summaryItem.getName());
-                link.setAction(new ConstantMethodBinding("dialog:compoundWorkflowDialog"));
-                link.setActionListener(app.createMethodBinding("#{CompoundWorkflowDialog.setupWorkflow}", new Class[] { javax.faces.event.ActionEvent.class }));
-                link.getAttributes().put("styleClass", "workflow-conf");
-
-                UIParameter nodeRef = (UIParameter) app.createComponent(UIParameter.COMPONENT_TYPE);
-                nodeRef.setName("nodeRef");
-                nodeRef.setValue(summaryItem.getCompoundWorkflowRef().toString());
-                link.getChildren().add(nodeRef);
-
-                headingGroup.getChildren().add(link);
-            } else {
-                headingGroup.getChildren().add(createOutput(app, summaryItem.getName(), "workflow-conf"));
-            }
-
-            headingGroup.getChildren().add(createOutput(app, MessageUtil.getMessage("task_property_resolution") + ": " + summaryItem.getResolution()));
-
-            HtmlPanelGroup taskGroup = (HtmlPanelGroup) app.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
-            if (summaryItem.isAssignmentWorkflow()) {
-                if (summaryItem.getAssignmentResponsibleTasks().size() > 0) {
-                    generateTaskTables(app, summaryItem, taskGroup, true, true);
-                }
-                if (summaryItem.getAssignmentTasks().size() > 0) {
-                    generateTaskTables(app, summaryItem, taskGroup, true, false);
-                }
-            } else {
-                generateTaskTables(app, summaryItem, taskGroup, false, false);
-            }
-
-            gridChildren.add(headingGroup);
-            gridChildren.add(taskGroup);
-            workflowWrapper.getChildren().add(grid);
-        }
-
-        htmlPanelGrid.getFacets().put("footer", workflowWrapper);
-    }
-
-    @SuppressWarnings("unchecked")
-    private void generateTaskTables(Application app, WorkflowSummaryItem summaryItem, HtmlPanelGroup group, boolean isAssignment, boolean isPrimary) {
-        HtmlPanelGrid taskGrid = (HtmlPanelGrid) app.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
-        taskGrid.setStyleClass("task-table");
-        taskGrid.setRowClasses("th,");
-
-        if (isAssignment) {
-            taskGrid.setColumns(8);
-            taskGrid.setColumnClasses("width10,width10,width10,width30,width10,width10,width10,width10");
-        } else {
-            taskGrid.setColumns(7);
-            taskGrid.setColumnClasses("width10,width15,width15,width10,width30,width10,width10");
-        }
-
-        List<UIComponent> children = taskGrid.getChildren();
-
-        // Heading
-        children.add(createOutput(app, MessageUtil.getMessage("workflow_started")));
-        children.add(createOutput(app, MessageUtil.getMessage("workflow_creator")));
-        if (isAssignment && isPrimary) {
-            children.add(createOutput(app, MessageUtil.getMessage("assignmentWorkflow_tasks")));
-        } else if (isAssignment && !isPrimary) {
-            children.add(createOutput(app, MessageUtil.getMessage("assignmentWorkflow_tasks_co")));
-        } else {
-            children.add(createOutput(app, summaryItem.getTaskOwnerRole()));
-        }
-        if (isAssignment) {
-            children.add(createOutput(app, MessageUtil.getMessage("task_property_resolution")));
-        }
-        children.add(createOutput(app, MessageUtil.getMessage("task_property_due_date")));
-        children.add(createOutput(app, MessageUtil.getMessage("workflow_completed")));
-        children.add(createOutput(app, MessageUtil.getMessage("task_property_comment_assignmentTask")));
-        children.add(createOutput(app, MessageUtil.getMessage("workflow_status")));
-
-        List<Task> tasks;
-        if (isAssignment && isPrimary) {
-            tasks = summaryItem.getAssignmentResponsibleTasks();
-        } else if (isAssignment & !isPrimary) {
-            tasks = summaryItem.getAssignmentTasks();
-        } else {
-            tasks = summaryItem.getTasks();
-        }
-
-        for (Task task : tasks) {
-            children.add(createOutput(app, formatDate(task.getStartedDateTime())));
-            children.add(createOutput(app, task.getCreatorName()));
-            children.add(createOutput(app, task.getOwnerName()));
-            if (isAssignment) {
-                children.add(createOutput(app, task.getResolution()));
-            }
-            children.add(createOutput(app, formatDate(task.getDueDate())));
-            children.add(createOutput(app, formatDate(task.getCompletedDateTime())));
-            final UIComponent outcomeAndComments = createOutput(app, task.getOutcomeAndComments());
-            children.add(ComponentUtil.makeCondenced(outcomeAndComments, 150));
-            children.add(createOutput(app, task.getStatus()));
-        }
-
-        group.getChildren().add(taskGrid);
-    }
-
-    private String formatDate(Date date) {
-        if (date != null) {
-            return DateFormatUtils.format(date, "dd.MM.yyyy");
-        }
-        return "&nbsp;";
-    }
-
-    private UIComponent createOutput(Application app, Object value) {
-        return createOutput(app, value, null);
-    }
-
-    private UIComponent createOutput(Application app, Object value, String styleClass) {
-        HtmlOutputText output = (HtmlOutputText) app.createComponent(HtmlOutputText.COMPONENT_TYPE);
-        if (styleClass != null) {
-            output.setStyleClass(styleClass);
-        }
-        if (value != null && value.equals("&nbsp;")) {
-            output.setEscape(false);
-        }
-        output.setValue(value);
-        return output;
-    }
-
-    /**
-     * NB! Don't call this method from java code; this is meant ONLY for workflow-summary-block.jsp binding.
-     * For code use getWfPanelGroupInner() instead
-     */
-    public HtmlPanelGroup getWfPanelGroup() {
-        if (wfPanelGroup == null) {
-            wfPanelGroup = new HtmlPanelGroup();
-        }
-        workflowPanelControlDocument = docRef;
-        return wfPanelGroup;
-    }
-
-    public HtmlPanelGroup getWfPanelGroupInner() {
-        if (wfPanelGroup == null) {
-            wfPanelGroup = new HtmlPanelGroup();
-        }
-        return wfPanelGroup;
-    }
-
-    // always force refresh; jsf is not refreshed correctly
-    // (getWfPanelGroup is not called because of binding attribute used in workflow-summary-block.jsp)
-    public void setWfPanelGroup(HtmlPanelGroup wfPanelGroup) {
-        if (workflowPanelControlDocument != null && !workflowPanelControlDocument.equals(docRef)) {
-            renderWorkflowPanel(wfPanelGroup);
-            workflowPanelControlDocument = docRef;
-        }
-        this.wfPanelGroup = wfPanelGroup;
-    }
-
 }

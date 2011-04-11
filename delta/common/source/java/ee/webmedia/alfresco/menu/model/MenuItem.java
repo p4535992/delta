@@ -31,7 +31,6 @@ import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -76,16 +75,17 @@ public class MenuItem implements Serializable {
     @XStreamOmitField
     public static final String ATTR_PLAIN_MENU_ITEM = "plainMenuItem";
 
-    public MenuItem() {}
+    public MenuItem() {
+    }
 
     public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService) {
         return createComponent(context, id, false, userService, workflowService, false);
     }
-    
+
     public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, boolean createChildren) {
         return createComponent(context, id, false, userService, workflowService, false);
     }
-    
+
     public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, boolean createChildren, boolean plainLink) {
         return createComponent(context, id, false, userService, workflowService, true);
     }
@@ -102,10 +102,10 @@ public class MenuItem implements Serializable {
         if (isRestricted() && !hasPermissions(userService)) {
             return null;
         }
-        
+
         if (isExternalReview() && !isExternalReviewEnabled(workflowService)) {
             return null;
-        }        
+        }
 
         javax.faces.application.Application application = context.getApplication();
         UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
@@ -116,7 +116,7 @@ public class MenuItem implements Serializable {
         link.setRendererType(UIActions.RENDERER_ACTIONLINK);
         FacesHelper.setupComponentId(context, link, id);
 
-        if(getTitle() == null) {
+        if (getTitle() == null) {
             setTitle(I18NUtil.getMessage(getTitleId()));
         }
         link.setValue(getTitle());
@@ -245,17 +245,17 @@ public class MenuItem implements Serializable {
     public boolean isRestricted() {
         return isAdmin() || isDocManager();
     }
-    
+
     public boolean isExternalReview() {
-        return "externalReviewTasks".equals(this.id);
-    } 
-    
-    public boolean isExternalReviewEnabled(WorkflowService workflowService){
+        return "externalReviewTasks".equals(id);
+    }
+
+    public boolean isExternalReviewEnabled(WorkflowService workflowService) {
         return workflowService.externalReviewWorkflowEnabled();
     }
 
     public String getActionListener() {
-        return (this.actionListener != null) ? this.actionListener : "";
+        return (actionListener != null) ? actionListener : "";
     }
 
     public void setActionListener(String actionListener) {
@@ -273,11 +273,11 @@ public class MenuItem implements Serializable {
     public String getId() {
         return id;
     }
-    
+
     public void setId(String id) {
         this.id = id;
     }
-    
+
     public String getTitle() {
         return title;
     }
@@ -285,7 +285,7 @@ public class MenuItem implements Serializable {
     public void setTitle(String title) {
         this.title = title;
     }
-    
+
     public String getTitleId() {
         return titleId;
     }
@@ -331,18 +331,20 @@ public class MenuItem implements Serializable {
     }
 
     public Map<String, String> getParams() {
-        if(params == null) {
+        if (params == null) {
             setParams(new HashMap<String, String>());
         }
         return params;
     }
-    
+
     public void setParams(Map<String, String> params) {
         this.params = params;
     }
+
     public String getProcessor() {
         return processor;
     }
+
     public void setProcessor(String processor) {
         this.processor = processor;
     }

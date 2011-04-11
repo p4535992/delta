@@ -7,7 +7,6 @@ import java.util.Map;
 import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
-import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 
@@ -35,6 +34,7 @@ public interface DvkService {
 
     /**
      * Set ab:organization property dvkCapable=true if organization is capable to receive documents using DVK("DokumendiVahetusKeskus")
+     * 
      * @return number of organizations in the addressbook that are capable to receive documents using DVK
      */
     int updateOrganizationsDvkCapability();
@@ -43,13 +43,13 @@ public interface DvkService {
 
     /**
      * @param docNodeRef document to send
-     * @param compoundWorkflowRef if not null, only this compund workflow recipients are sent updates, 
-     * otherwise all document's compound workflows recipients are sent updates
+     * @param compoundWorkflowRef if not null, only this compund workflow recipients are sent updates,
+     *            otherwise all document's compound workflows recipients are sent updates
      */
     void sendDvkTasksWithDocument(NodeRef docNodeRef, NodeRef compoundWorkflowRef, Map<NodeRef, List<String>> additionalRecipients);
 
     void sendDvkTask(Task task);
-    
+
     String getInstitutionCode();
 
 }

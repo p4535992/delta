@@ -261,7 +261,7 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
 
     protected DocumentSearchService getDocumentSearchService() {
         if (documentSearchService == null) {
-            documentSearchService = (DocumentSearchService) FacesContextUtils.getRequiredWebApplicationContext( // 
+            documentSearchService = (DocumentSearchService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(DocumentSearchService.BEAN_NAME);
         }
         return documentSearchService;
@@ -269,7 +269,7 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
 
     protected UserService getUserService() {
         if (userService == null) {
-            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext( // 
+            userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(UserService.BEAN_NAME);
         }
         return userService;

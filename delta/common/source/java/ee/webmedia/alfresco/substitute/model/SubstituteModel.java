@@ -10,8 +10,8 @@ public interface SubstituteModel {
     String NAMESPACE_PREFFIX = "sub:";
 
     interface Repo {
-        //final static String SUBSTITUTES_PARENT = "/";
-        //final static String SUBSTITUTES_SPACE = SUBSTITUTES_PARENT + NAMESPACE_PREFFIX + Types.SUBSTITUTES_ROOT.getLocalName();
+        // final static String SUBSTITUTES_PARENT = "/";
+        // final static String SUBSTITUTES_SPACE = SUBSTITUTES_PARENT + NAMESPACE_PREFFIX + Types.SUBSTITUTES_ROOT.getLocalName();
     }
 
     interface Types {
@@ -32,6 +32,6 @@ public interface SubstituteModel {
         QName SUBSTITUTE_NAME = QName.createQName(URI, "substituteName");
         QName SUBSTITUTE_ID = QName.createQName(URI, "substituteId");
         QName SUBSTITUTION_START_DATE = QName.createQName(URI, "substitutionStartDate");
-        QName SUBSTITUTION_END_DATE= QName.createQName(URI, "substitutionEndDate");
+        QName SUBSTITUTION_END_DATE = QName.createQName(URI, "substitutionEndDate");
     }
 }

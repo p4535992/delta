@@ -8,7 +8,8 @@ import java.util.Iterator;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
- * This class can be used to give feedback about actions done service layer to web layer (where information could be formated into faces message using {@link MessageUtil})
+ * This class can be used to give feedback about actions done service layer to web layer (where information could be formated into faces message using
+ * {@link MessageUtil})
  * 
  * @author Ats Uiboupin
  */

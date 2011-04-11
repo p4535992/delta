@@ -119,8 +119,8 @@ public interface GeneralService {
     void savePropertiesFiles(Map<QName, Serializable> props);
 
     /**
-     * @return return and remove value from request map that was put there by
-     *         {@link WMUIProperty#saveExistingValue4ComponentGenerator(FacesContext, Node, String)} for component generators to be able to use existing value
+     * @return return and remove value from request map that was put there by {@link WMUIProperty#saveExistingValue4ComponentGenerator(FacesContext, Node, String)} for component
+     *         generators to be able to use existing value
      */
     String getExistingRepoValue4ComponentGenerator();
 
@@ -215,9 +215,8 @@ public interface GeneralService {
     /**
      * @param childRef
      * @param ancestorType
-     * @param checkSubTypes - if true dictionaryService is used to determine if ancestor is subType of expected <code>ancestorType</code> 
+     * @param checkSubTypes - if true dictionaryService is used to determine if ancestor is subType of expected <code>ancestorType</code>
      * @return nodeRef of the first parent of childRef that has type <code>ancestorType</code>
-    
      */
     public NodeRef getAncestorNodeRefWithType(NodeRef childRef, QName ancestorType, boolean checkSubTypes);
 
@@ -248,5 +247,5 @@ public interface GeneralService {
 
     void deleteNodeRefs(Collection<NodeRef> nodeRefs);
 
-    NodeRef getParentNodeRefWithType(NodeRef childRef, QName parentType);    
+    NodeRef getParentNodeRefWithType(NodeRef childRef, QName parentType);
 }

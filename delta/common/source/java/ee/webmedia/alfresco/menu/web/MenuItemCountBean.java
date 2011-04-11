@@ -9,8 +9,8 @@ import java.util.Map.Entry;
 
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
+
 import org.alfresco.repo.content.MimetypeMap;
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.apache.commons.lang.StringUtils;
@@ -34,7 +34,7 @@ public class MenuItemCountBean implements Serializable {
     private transient MenuService menuService;
     private MenuBean menuBean;
 
-    private Map<String, MenuItemCountVO> map = new HashMap<String, MenuItemCountBean.MenuItemCountVO>();
+    private final Map<String, MenuItemCountVO> map = new HashMap<String, MenuItemCountBean.MenuItemCountVO>();
 
     public static class MenuItemCountVO implements Serializable {
         private static final long serialVersionUID = 1L;
@@ -62,16 +62,16 @@ public class MenuItemCountBean implements Serializable {
         long now = System.currentTimeMillis();
         Map<String, Long> nextUpdates = new HashMap<String, Long>();
         for (Entry<String, MenuItemCountVO> entry : map.entrySet()) {
-// Delayed update disabled - updating is always started immediately after page is rendered
-//            if (entry.getValue() == null) {
-                nextUpdates.put(entry.getKey(), 0L); // update immediately
-//            } else {
-//                long timeRemainingToUpdate = entry.getValue().updated + getUpdateTimeout() - now;
-//                if (timeRemainingToUpdate < 0) {
-//                    timeRemainingToUpdate = 0;
-//                }
-//                nextUpdates.put(entry.getKey(), timeRemainingToUpdate);
-//            }
+            // Delayed update disabled - updating is always started immediately after page is rendered
+            // if (entry.getValue() == null) {
+            nextUpdates.put(entry.getKey(), 0L); // update immediately
+            // } else {
+            // long timeRemainingToUpdate = entry.getValue().updated + getUpdateTimeout() - now;
+            // if (timeRemainingToUpdate < 0) {
+            // timeRemainingToUpdate = 0;
+            // }
+            // nextUpdates.put(entry.getKey(), timeRemainingToUpdate);
+            // }
         }
         return nextUpdates;
     }
@@ -79,7 +79,7 @@ public class MenuItemCountBean implements Serializable {
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void updateCount() throws IOException {
         FacesContext context = FacesContext.getCurrentInstance();
-        
+
         @SuppressWarnings("unchecked")
         Map<String, String> params = context.getExternalContext().getRequestParameterMap();
         String menuItemId = params.get(MENU_ITEM_ID_PARAM);
@@ -104,7 +104,7 @@ public class MenuItemCountBean implements Serializable {
         ResponseWriter out = context.getResponseWriter();
         out.write(Integer.toString(countVO.count));
     }
-    
+
     /**
      * Find MenuItem by id. Returns only the first match. If no match is found, returns {@code null}.
      */
@@ -125,7 +125,7 @@ public class MenuItemCountBean implements Serializable {
     }
 
     // START: getters / setters
-    
+
     public MenuService getMenuService() {
         if (menuService == null) {
             menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext( //
@@ -140,6 +140,6 @@ public class MenuItemCountBean implements Serializable {
         }
         return menuBean;
     }
-    
-    // END: getters / setters    
+
+    // END: getters / setters
 }

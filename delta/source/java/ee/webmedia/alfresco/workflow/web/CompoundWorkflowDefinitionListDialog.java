@@ -27,7 +27,7 @@ public class CompoundWorkflowDefinitionListDialog extends BaseDialogBean {
     public Object getActionsContext() {
         return null;
     }
-    
+
     @Override
     public void restored() {
         workflows = getWorkflowService().getCompoundWorkflowDefinitions();

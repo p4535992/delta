@@ -23,7 +23,7 @@ public class SignatureTask extends Task {
     @Override
     protected <T extends BaseWorkflowObject> T copyImpl(T copy) {
         SignatureTask task = (SignatureTask) super.copyImpl(copy);
-        if(signatureDigest != null) {
+        if (signatureDigest != null) {
             task.signatureDigest = new SignatureDigest(signatureDigest.getDigestHex(), signatureDigest.getCertHex(), signatureDigest.getDate());
         }
         @SuppressWarnings("unchecked")

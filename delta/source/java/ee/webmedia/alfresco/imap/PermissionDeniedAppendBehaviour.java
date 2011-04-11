@@ -1,14 +1,15 @@
 package ee.webmedia.alfresco.imap;
 
-import com.icegreen.greenmail.store.FolderException;
+import java.util.Date;
 
 import javax.mail.Flags;
 import javax.mail.internet.MimeMessage;
-import java.util.Date;
+
+import com.icegreen.greenmail.store.FolderException;
 
 /**
  * Behaviour denies appending message.
- *
+ * 
  * @author Romet Aidla
  */
 public class PermissionDeniedAppendBehaviour implements AppendBehaviour {

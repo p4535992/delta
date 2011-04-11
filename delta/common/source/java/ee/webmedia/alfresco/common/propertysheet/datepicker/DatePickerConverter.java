@@ -20,7 +20,7 @@ public class DatePickerConverter implements Converter {
 
     public static final String CONVERTER_ID = DatePickerConverter.class.getCanonicalName();
     public static final String DATE_FORMAT = "dd.MM.yyyy";
-    
+
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DatePickerConverter.class);
     public static SimpleDateFormat simpleDateFormat = new SimpleDateFormat(DATE_FORMAT);
     static {
@@ -31,7 +31,7 @@ public class DatePickerConverter implements Converter {
     public Object getAsObject(FacesContext context, UIComponent component, String value) throws ConverterException {
         Date date;
         try {
-            if(StringUtils.isNotEmpty(value)) {
+            if (StringUtils.isNotEmpty(value)) {
                 date = simpleDateFormat.parse(value);
             } else {
                 return null;

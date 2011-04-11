@@ -2,12 +2,11 @@ package ee.webmedia.alfresco.workflow.bootstrap;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
+
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
+
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.SearchUtil;
@@ -40,7 +39,7 @@ public class Version22ReviewWorkflowTempOutcomeUpdater extends AbstractNodeUpdat
             nodeService.addAspect(nodeRef, WorkflowSpecificModel.Aspects.TEMP_OUTCOME, null);
             modified = true;
         }
-        return new String[]{String.valueOf(modified)};
+        return new String[] { String.valueOf(modified) };
     }
 
     public void setSearchService(SearchService searchService) {

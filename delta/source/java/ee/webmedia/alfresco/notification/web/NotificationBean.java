@@ -14,17 +14,17 @@ public class NotificationBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "NotificationBean";
-    
+
     private transient NotificationService notificationService;
     private List<GeneralNotification> generalNotifications;
     private int updateCount = 0;
-    
+
     private boolean isUpdated() {
-            return updateCount != getNotificationService().getUpdateCount();
+        return updateCount != getNotificationService().getUpdateCount();
     }
 
-    //START: setters/getters
-    
+    // START: setters/getters
+
     protected NotificationService getNotificationService() {
         if (notificationService == null) {
             notificationService = (NotificationService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
@@ -32,13 +32,13 @@ public class NotificationBean implements Serializable {
         }
         return notificationService;
     }
-    
+
     public void setNotificationService(NotificationService notificationService) {
         this.notificationService = notificationService;
     }
 
     public List<GeneralNotification> getGeneralNotifications() {
-        if(generalNotifications == null || isUpdated()) {
+        if (generalNotifications == null || isUpdated()) {
             generalNotifications = getNotificationService().getActiveGeneralNotifications();
             setUpdateCount(getNotificationService().getUpdateCount());
         }
@@ -57,6 +57,6 @@ public class NotificationBean implements Serializable {
         this.updateCount = updateCount;
     }
 
-    //END setters/getters
+    // END setters/getters
 
 }

@@ -86,9 +86,9 @@
       </property>
    </bean>
    
-   <bean id="taskCapablePropertyUpdater" class="ee.webmedia.alfresco.addressbook.bootstrap.TaskCapablePropertyUpdater" parent="module.baseComponent" >
+   <bean id="taskCapablePropertyUpdater4" class="ee.webmedia.alfresco.addressbook.bootstrap.TaskCapablePropertyUpdaterV2" parent="module.baseComponent" >
       <property name="moduleId" value="common" />
-      <property name="name" value="taskCapablePropertyUpdater" />
+      <property name="name" value="taskCapablePropertyUpdater4" />
       <property name="executeOnceOnly" value="true" />
       <property name="generalService" ref="generalService" />
       <property name="nodeService" ref="nodeService" />

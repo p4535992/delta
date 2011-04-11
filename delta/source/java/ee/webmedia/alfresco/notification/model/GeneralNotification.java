@@ -57,15 +57,19 @@ public class GeneralNotification implements Serializable {
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("GeneralNotification [");
-        if (nodeRef != null)
+        if (nodeRef != null) {
             builder.append("nodeRef=").append(nodeRef).append(", ");
+        }
         builder.append("active=").append(active).append(", ");
-        if (createdDateTime != null)
+        if (createdDateTime != null) {
             builder.append("createdDateTime=").append(createdDateTime).append(", ");
-        if (creatorName != null)
+        }
+        if (creatorName != null) {
             builder.append("creatorName=").append(creatorName).append(", ");
-        if (message != null)
+        }
+        if (message != null) {
             builder.append("message=").append(message);
+        }
         builder.append("]");
         return builder.toString();
     }

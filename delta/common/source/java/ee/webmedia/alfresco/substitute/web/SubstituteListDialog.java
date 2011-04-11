@@ -1,12 +1,14 @@
 package ee.webmedia.alfresco.substitute.web;
 
-import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.substitute.model.Substitute;
-import ee.webmedia.alfresco.substitute.service.SubstituteService;
-import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -20,17 +22,17 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.service.SubstituteService;
+import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Dialog for substitutes list.
- *
+ * 
  * @author Romet Aidla
  */
 public class SubstituteListDialog extends BaseDialogBean {
@@ -48,7 +50,6 @@ public class SubstituteListDialog extends BaseDialogBean {
     private Map<String, Substitute> addedSubstitutes;
     private Map<String, String> emailAddresses;
     private NotificationSender notificationSender = new EmptyNotificationSender();
-
 
     @Override
     public void init(Map<String, String> params) {
@@ -68,7 +69,7 @@ public class SubstituteListDialog extends BaseDialogBean {
         for (Substitute substitute : substitutes) {
             originalSubstitutes.put(substitute.getNodeRef().toString(), new Substitute(substitute));
             NodeRef personRef = getPersonService().getPerson(substitute.getSubstituteId());
-            addEmailAddress(substitute, personRef);            
+            addEmailAddress(substitute, personRef);
         }
         addedSubstitutes = new HashMap<String, Substitute>();
     }
@@ -88,13 +89,15 @@ public class SubstituteListDialog extends BaseDialogBean {
         substitutes = null;
         originalSubstitutes = null;
         addedSubstitutes = null;
-        emailAddresses = null;        
+        emailAddresses = null;
         return super.cancel();
     }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        if (log.isDebugEnabled()) log.debug("Saving substitutes changes");
+        if (log.isDebugEnabled()) {
+            log.debug("Saving substitutes changes");
+        }
         save(context);
         isFinished = false;
         return null;
@@ -107,7 +110,9 @@ public class SubstituteListDialog extends BaseDialogBean {
             updateSubstitutes(savedSubstitutes);
             sendNotificationEmails(savedSubstitutes);
             refreshData();
-            if (log.isDebugEnabled()) log.debug("Substitutes changes saved");
+            if (log.isDebugEnabled()) {
+                log.debug("Substitutes changes saved");
+            }
             MessageUtil.addInfoMessage("save_success");
         }
     }
@@ -156,7 +161,9 @@ public class SubstituteListDialog extends BaseDialogBean {
             }
 
             if (!originalSubstitute.equals(substitute)) {
-                if (log.isDebugEnabled()) log.debug(String.format("Updating the substitute with nodeRef = %s", substitute.getNodeRef()));
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Updating the substitute with nodeRef = %s", substitute.getNodeRef()));
+                }
                 getSubstituteService().updateSubstitute(substitute);
                 savedSubstitutes.add(substitute);
             }
@@ -168,7 +175,9 @@ public class SubstituteListDialog extends BaseDialogBean {
             for (Substitute addedSubstitute : addedSubstitutes.values()) {
                 getSubstituteService().addSubstitute(userNodeRef, addedSubstitute);
                 savedSubstitutes.add(addedSubstitute);
-                if (log.isDebugEnabled()) log.debug(String.format("Added new substitute: %s", addedSubstitute.getSubstituteName()));
+                if (log.isDebugEnabled()) {
+                    log.debug(String.format("Added new substitute: %s", addedSubstitute.getSubstituteName()));
+                }
             }
 
             addedSubstitutes.clear();
@@ -181,11 +190,11 @@ public class SubstituteListDialog extends BaseDialogBean {
         }
     }
 
-
-
     public void deleteSubstitute(ActionEvent event) {
         String ref = ActionUtil.getParam(event, "nodeRef");
-        if (log.isDebugEnabled()) log.debug(String.format("Starting to delete substitute with nodeRef = %s.", ref));
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("Starting to delete substitute with nodeRef = %s.", ref));
+        }
         NodeRef subsNodeRef = new NodeRef(ref);
         if (originalSubstitutes.containsKey(ref)) {
             originalSubstitutes.remove(ref);
@@ -194,13 +203,17 @@ public class SubstituteListDialog extends BaseDialogBean {
             addedSubstitutes.remove(ref);
         }
         substitutes.remove(findSubstitute(subsNodeRef));
-        if (log.isDebugEnabled()) log.debug(String.format("Substitute with nodeRef = %s deleted.", ref));
+        if (log.isDebugEnabled()) {
+            log.debug(String.format("Substitute with nodeRef = %s deleted.", ref));
+        }
         MessageUtil.addInfoMessage("substitute_remove_success");
     }
 
     private Substitute findSubstitute(NodeRef subsNodeRef) {
         for (Substitute substitute : substitutes) {
-            if (substitute.getNodeRef().equals(subsNodeRef)) return substitute;
+            if (substitute.getNodeRef().equals(subsNodeRef)) {
+                return substitute;
+            }
         }
         throw new RuntimeException(String.format("Substitute with nodeRef = %s was not found.", subsNodeRef.toString()));
     }

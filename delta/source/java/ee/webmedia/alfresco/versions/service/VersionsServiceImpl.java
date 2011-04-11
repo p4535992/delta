@@ -128,7 +128,7 @@ public class VersionsServiceImpl implements VersionsService {
     public void setVersionLockableAspect(NodeRef lockNode, boolean flag) {
         if (nodeService.hasAspect(lockNode, VersionsModel.Aspects.VERSION_LOCKABLE) == true) {
             if (logger.isDebugEnabled()) {
-                logger.debug("Setting VERSION_LOCKABLE aspect's lock to " + flag +" on nodeRef = " + lockNode);
+                logger.debug("Setting VERSION_LOCKABLE aspect's lock to " + flag + " on nodeRef = " + lockNode);
             }
             nodeService.setProperty(lockNode, VersionsModel.Props.VersionLockable.LOCKED, flag);
         }
@@ -164,9 +164,9 @@ public class VersionsServiceImpl implements VersionsService {
     }
 
     private Map<String, Serializable> getVersionModifiedAspectProperties(NodeRef nodeRef) {
-        Date modified = (Date)nodeService.getProperty(nodeRef, VersionsModel.Props.VersionModified.MODIFIED);
-        String first = (String)nodeService.getProperty(nodeRef, VersionsModel.Props.VersionModified.FIRSTNAME);
-        String last = (String)nodeService.getProperty(nodeRef, VersionsModel.Props.VersionModified.LASTNAME);
+        Date modified = (Date) nodeService.getProperty(nodeRef, VersionsModel.Props.VersionModified.MODIFIED);
+        String first = (String) nodeService.getProperty(nodeRef, VersionsModel.Props.VersionModified.FIRSTNAME);
+        String last = (String) nodeService.getProperty(nodeRef, VersionsModel.Props.VersionModified.LASTNAME);
 
         Map<String, Serializable> props = new HashMap<String, Serializable>(3);
         props.put(VersionsModel.Props.VersionModified.MODIFIED.getLocalName(), modified);

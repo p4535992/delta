@@ -46,9 +46,9 @@ public abstract class ExcelRowMapper<G> {
             );
 
     public abstract G mapRow(Row row, long rowNr, File excelFile, String string);
-    
+
     public void setMapperContext(@SuppressWarnings("unused") Map<String, Object> mapperContext) {
-        //could be overridden in subclassses
+        // could be overridden in subclassses
     }
 
     protected String get(Row row, int colIndex) {

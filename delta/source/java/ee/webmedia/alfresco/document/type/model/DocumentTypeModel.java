@@ -19,7 +19,7 @@ public interface DocumentTypeModel {
         QName PUBLIC_ADR = QName.createQName(URI, "publicAdr");
         QName SELECTED = QName.createQName(URI, "selected");
     }
-    
+
     public interface Types {
         QName SELECTOR = QName.createQName(URI, "selector");
     }

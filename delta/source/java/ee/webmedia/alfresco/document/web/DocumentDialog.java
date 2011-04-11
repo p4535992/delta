@@ -39,6 +39,7 @@ import org.alfresco.web.config.ActionsConfigElement;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.alfresco.web.config.ActionsConfigElement.ActionGroup;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
@@ -81,7 +82,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     private static final String ERR_TEMPLATE_NOT_FOUND = "document_errorMsg_template_not_found";
     private static final String ERR_TEMPLATE_PROCESSING_FAILED = "document_errorMsg_template_processsing_failed";
     /** FollowUps is with the same type */
-    private static final List<QName> regularFollowUpTypes = Arrays.asList(ERRAND_APPLICATION_DOMESTIC, ERRAND_ORDER_ABROAD, ERRAND_ORDER_ABROAD_MV, LEAVING_LETTER,
+    private static final List<QName> regularFollowUpTypes = Arrays.asList(ERRAND_APPLICATION_DOMESTIC, ERRAND_ORDER_ABROAD, ERRAND_ORDER_ABROAD_MV,
+            LEAVING_LETTER,
             TRAINING_APPLICATION, INTERNAL_APPLICATION, INTERNAL_APPLICATION_MV, REPORT, REPORT_MV, INSTRUMENT_OF_DELIVERY_AND_RECEIPT_MV, RESOLUTION_MV);
 
     private static final String PARAM_DOCUMENT_TYPE = "documentType";
@@ -184,6 +186,16 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         if (node == null) {
             throw new RuntimeException("No current document");
         }
+
+        // V1 to V2 copy isn't supported
+        if (CollectionUtils.containsAny(node.getAspects(), Arrays.asList(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD,
+                DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC, DocumentSpecificModel.Aspects.TRAINING_APPLICATION))) {
+            final FacesContext context = FacesContext.getCurrentInstance();
+            MessageUtil.addInfoMessage(context, "document_copy_error_docVersionChanged");
+            context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
+            return;
+        }
+
         try {
             Node newNode = getDocumentService().copyDocument(node.getNodeRef());
             createSnapshot();
@@ -273,7 +285,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 DocumentSubtypeModel.Types.TENDERING_APPLICATION.equals(type)) {
 
             followUp = QName.createQName(DocumentSubtypeModel.URI, ActionUtil.getParam(event, PARAM_DOCUMENT_TYPE));
-        } else if(DocumentSubtypeModel.Types.MINUTES_MV.equals(type)){
+        } else if (DocumentSubtypeModel.Types.MINUTES_MV.equals(type)) {
             followUp = DocumentSubtypeModel.Types.RESOLUTION_MV;
         } else if (regularFollowUpTypes.contains(type)) {
             followUp = type;
@@ -530,28 +542,28 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public boolean isFromDVK() {
         return getDocumentService().isFromDVK(node.getNodeRef());
     }
-    
+
     // doccom:docStatus=suletud
-    public boolean isClosedOrNotEditable(){
+    public boolean isClosedOrNotEditable() {
         return DocumentStatus.FINISHED.equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS))
                 || isNotEditable();
     }
-    
-//    doccom:docStatus!=töös
-    public boolean isNotWorkingOrNotEditable(){
-        return !DocumentStatus.WORKING.equals((String)node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS))
+
+    // doccom:docStatus!=töös
+    public boolean isNotWorkingOrNotEditable() {
+        return !DocumentStatus.WORKING.equals((String) node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS))
                 || isNotEditable();
-    }    
-    
-    public boolean isNotWorkingAndFinishedOrNotEditable(){
+    }
+
+    public boolean isNotWorkingAndFinishedOrNotEditable() {
         return !(DocumentStatus.WORKING.equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS))
                 || DocumentStatus.FINISHED.equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS)))
-        || isNotEditable();
+                || isNotEditable();
     }
-    
+
     public boolean isNotEditable() {
         return Boolean.TRUE.equals(node.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE));
-    }    
+    }
 
     public boolean isFromImap() {
         return getDocumentService().isFromIncoming(node.getNodeRef()) || getDocumentService().isFromSent(node.getNodeRef());
@@ -561,7 +573,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         if ((searchBlockBean.isExpanded() && !metadataBlockBean.isInEditMode())) {
             return true;
         }
-        return metadataBlockBean.isInEditMode() && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar() && ((isFromDVK() || isFromImap()) && !isNotEditable());
+        return metadataBlockBean.isInEditMode() && searchBlockBean.isShow() && !searchBlockBean.isFoundSimilar()
+                && ((isFromDVK() || isFromImap()) && !isNotEditable());
     }
 
     public void hideSearchBlock(@SuppressWarnings("unused") ActionEvent event) {
@@ -756,7 +769,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(DocumentService.BEAN_NAME);
+                    .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
     }
@@ -776,7 +789,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public DocumentTemplateService getDocumentTemplateService() {
         if (documentTemplateService == null) {
             documentTemplateService = (DocumentTemplateService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(DocumentTemplateService.BEAN_NAME);
+                    .getBean(DocumentTemplateService.BEAN_NAME);
         }
         return documentTemplateService;
     }

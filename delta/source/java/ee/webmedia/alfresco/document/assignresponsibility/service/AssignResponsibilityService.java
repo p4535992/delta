@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.document.assignresponsibility.service;
 
-
 /**
  * @author Alar Kvell
  */

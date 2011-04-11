@@ -37,6 +37,7 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     /** Is this bean active? I.e. should this part of the subsystem be used? */
     private boolean active = true;
 
+    @Override
     public Iterator<NodeDescription> getPersons(Date modifiedSince) {
         Ametnik[] ametnikArray = amrService.getAmetnikByAsutusId();
         ArrayList<NodeDescription> persons = new ArrayList<NodeDescription>(ametnikArray.length);
@@ -63,6 +64,7 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         throw new UnsupportedOperationException();
     }
 
+    @Override
     public Iterator<NodeDescription> getGroups(Date modifiedSince) {
         return Collections.<NodeDescription> emptyList().iterator();
     }
@@ -117,8 +119,9 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         this.active = active;
     }
 
+    @Override
     public boolean isActive() {
-        return this.active;
+        return active;
     }
 
     public void setPersonService(PersonService personService) {

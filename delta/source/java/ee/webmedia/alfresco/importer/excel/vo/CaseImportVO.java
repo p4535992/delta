@@ -28,10 +28,10 @@ public class CaseImportVO extends Case implements IClonable<CaseImportVO> {
 
     @Override
     public CaseImportVO clone() {
-        Assert.notNull(this.getNode(), "Node shouldn't be null");
-        final CaseImportVO clone = caseBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(this.getNode().getProperties()));
-        clone.setVolumeNodeRef(this.getVolumeNodeRef());
-        clone.setNode(this.getNode());
+        Assert.notNull(getNode(), "Node shouldn't be null");
+        final CaseImportVO clone = caseBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(getNode().getProperties()));
+        clone.setVolumeNodeRef(getVolumeNodeRef());
+        clone.setNode(getNode());
         clone.baseRegNumber = baseRegNumber;
         clone.dateOfEarliestDocRegistration = dateOfEarliestDocRegistration;
         clone.initialDocNode = initialDocNode;
@@ -46,7 +46,7 @@ public class CaseImportVO extends Case implements IClonable<CaseImportVO> {
     }
 
     public void setRegNumber(String regNr) {
-        this.baseRegNumber = DocumentImportServiceImpl.getRegNrWoIndividualizingNr(regNr);
+        baseRegNumber = DocumentImportServiceImpl.getRegNrWoIndividualizingNr(regNr);
     }
 
     // START: getters / setters
@@ -55,7 +55,7 @@ public class CaseImportVO extends Case implements IClonable<CaseImportVO> {
     }
 
     public void setDateOfEarliestDocRegistration(Date docRegDateTime) {
-        this.dateOfEarliestDocRegistration = docRegDateTime;
+        dateOfEarliestDocRegistration = docRegDateTime;
     }
 
     public void setInitialDocNode(Node initialDocNode) {

@@ -1,13 +1,14 @@
 package ee.webmedia.alfresco.substitute.model;
 
-import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
-import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
-import org.alfresco.service.cmr.repository.NodeRef;
-import org.apache.commons.lang.time.DateUtils;
-
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.lang.time.DateUtils;
+
+import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
+import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 /**
  * @author Romet Aidla
@@ -31,27 +32,43 @@ public class Substitute implements Serializable {
     }
 
     public Substitute(Substitute sub) {
-        this.replacedPersonUserName = sub.replacedPersonUserName;
-        this.substituteName = sub.substituteName;
-        this.substituteId = sub.substituteId;
-        this.substitutionStartDate = sub.substitutionStartDate;
-        this.substitutionEndDate = sub.substitutionEndDate;
-        this.nodeRef = sub.nodeRef;
+        replacedPersonUserName = sub.replacedPersonUserName;
+        substituteName = sub.substituteName;
+        substituteId = sub.substituteId;
+        substitutionStartDate = sub.substitutionStartDate;
+        substitutionEndDate = sub.substitutionEndDate;
+        nodeRef = sub.nodeRef;
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
 
         Substitute that = (Substitute) o;
 
-        if (nodeRef != null ? !nodeRef.equals(that.nodeRef) : that.nodeRef != null) return false;
-        if (replacedPersonUserName != null ? !replacedPersonUserName.equals(that.replacedPersonUserName) : that.replacedPersonUserName != null) return false;
-        if (substituteId != null ? !substituteId.equals(that.substituteId) : that.substituteId != null) return false;
-        if (substituteName != null ? !substituteName.equals(that.substituteName) : that.substituteName != null) return false;
-        if (substitutionEndDate != null ? !substitutionEndDate.equals(that.substitutionEndDate) : that.substitutionEndDate != null) return false;
-        if (substitutionStartDate != null ? !substitutionStartDate.equals(that.substitutionStartDate) : that.substitutionStartDate != null) return false;
+        if (nodeRef != null ? !nodeRef.equals(that.nodeRef) : that.nodeRef != null) {
+            return false;
+        }
+        if (replacedPersonUserName != null ? !replacedPersonUserName.equals(that.replacedPersonUserName) : that.replacedPersonUserName != null) {
+            return false;
+        }
+        if (substituteId != null ? !substituteId.equals(that.substituteId) : that.substituteId != null) {
+            return false;
+        }
+        if (substituteName != null ? !substituteName.equals(that.substituteName) : that.substituteName != null) {
+            return false;
+        }
+        if (substitutionEndDate != null ? !substitutionEndDate.equals(that.substitutionEndDate) : that.substitutionEndDate != null) {
+            return false;
+        }
+        if (substitutionStartDate != null ? !substitutionStartDate.equals(that.substitutionStartDate) : that.substitutionStartDate != null) {
+            return false;
+        }
 
         return true;
     }
@@ -120,7 +137,9 @@ public class Substitute implements Serializable {
             return false;
         }
 
-        if (substitutionEndDate == null) return false;
+        if (substitutionEndDate == null) {
+            return false;
+        }
 
         Date currentDate = DateUtils.truncate(new Date(), Calendar.DATE);
         return substitutionEndDate.before(currentDate);

@@ -93,8 +93,9 @@ public class EscapingCSVExporter extends CSVExporter {
         } catch (IOException e) {
             throw new RuntimeException("CSV export failed", e);
         }
-        if (log.isDebugEnabled())
+        if (log.isDebugEnabled()) {
             log.debug("CSV export successfully completed");
+        }
     }
 
     private void writeRow(CsvWriter writer, List<String> dataRow) {

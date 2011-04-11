@@ -408,8 +408,7 @@ public class ComponentUtil {
     }
 
     /**
-     * Generate JavaScript that sets a hidden parameter. Implementation based on
-     * {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
+     * Generate JavaScript that sets a hidden parameter. Implementation based on {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
      */
     public static String generateFieldSetter(FacesContext context, UIComponent component, String value) {
         String fieldId = component.getClientId(context);
@@ -417,8 +416,7 @@ public class ComponentUtil {
     }
 
     /**
-     * Generate JavaScript that sets a hidden parameter. Implementation based on
-     * {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
+     * Generate JavaScript that sets a hidden parameter. Implementation based on {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
      */
     public static String generateFieldSetter(FacesContext context, UIComponent component, String fieldId, String value) {
         UIForm form = Utils.getParentForm(context, component);
@@ -552,8 +550,8 @@ public class ComponentUtil {
      * @param componentPropVO
      * @param propertySheet
      * @param children
-     * @return component generated based on <code>singlePropVO</code> that is added to list of given <code>children</code> that must come from given
-     *         <code>propertySheet</code> where the generated component is added.
+     * @return component generated based on <code>singlePropVO</code> that is added to list of given <code>children</code> that must come from given <code>propertySheet</code>
+     *         where the generated component is added.
      */
     public static UIComponent generateAndAddComponent(FacesContext context, ComponentPropVO componentPropVO, UIPropertySheet propertySheet,
             final List<UIComponent> children) {
@@ -592,7 +590,7 @@ public class ComponentUtil {
             final String converterName = customAttributes.get(JSF_CONVERTER);
             if (StringUtils.isNotBlank(converterName)) {
                 try {// XXX: pm võiks külge panna ka property tüübi järgi mingid default
-                    // converterid(a la double tüübi puhul DoubleConverter), et ei peaks käsitsi attribuute lisama
+                     // converterid(a la double tüübi puhul DoubleConverter), et ei peaks käsitsi attribuute lisama
                     @SuppressWarnings("unchecked")
                     final Class<Converter> converterClass = (Class<Converter>) Class.forName(converterName);
                     final Converter converter = converterClass.newInstance();
@@ -832,7 +830,7 @@ public class ComponentUtil {
     private static GeneralService getGeneralService() {
         if (generalService == null) {
             generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean(GeneralService.BEAN_NAME);
+                    .getBean(GeneralService.BEAN_NAME);
         }
         return generalService;
     }

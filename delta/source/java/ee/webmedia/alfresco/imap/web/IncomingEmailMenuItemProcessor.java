@@ -12,7 +12,7 @@ public class IncomingEmailMenuItemProcessor extends CountAddingMenuItemProcessor
 
     private MenuService menuService;
     private DocumentService documentService;
-    
+
     @Override
     public int getCount(MenuItem menuItem) {
         return documentService.getIncomingEmailsCount();
@@ -22,7 +22,7 @@ public class IncomingEmailMenuItemProcessor extends CountAddingMenuItemProcessor
     public void afterPropertiesSet() throws Exception {
         menuService.setCountHandler("incomingEmails", this);
     }
-    
+
     // START: getters / setters
 
     public void setMenuService(MenuService menuService) {

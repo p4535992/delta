@@ -32,8 +32,9 @@ public class MyDocumentsMenuItemFilter implements MenuItemFilter {
 
     @Override
     public boolean passesFilter(MenuItem menuItem, NodeRef childNodeRef) {
-        if (!(menuItem instanceof DropdownMenuItem))
+        if (!(menuItem instanceof DropdownMenuItem)) {
             return false;
+        }
 
         NodeRef nodeRef = ((DropdownMenuItem) menuItem).getNodeRef();
         if (nodeRef != null && nodeService.getType(nodeRef).equals(FunctionsModel.Types.FUNCTION)) {
@@ -42,8 +43,9 @@ public class MyDocumentsMenuItemFilter implements MenuItemFilter {
         if (nodeRef == null && ((DropdownMenuItem) menuItem).getXPath() != null && nodeService.getType(childNodeRef).equals(FunctionsModel.Types.FUNCTION)) {
             List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(childNodeRef);
             for (ChildAssociationRef caRef : childAssocs) {
-                if (isCurrentUsersSeries(caRef.getChildRef()))
+                if (isCurrentUsersSeries(caRef.getChildRef())) {
                     return true;
+                }
             }
         }
 
@@ -80,8 +82,9 @@ public class MyDocumentsMenuItemFilter implements MenuItemFilter {
     private Integer getCurrentUsersStructUnitId() {
         Map<QName, Serializable> userProperties = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
         Serializable orgId = userProperties.get(ContentModel.PROP_ORGID);
-        if (orgId == null)
+        if (orgId == null) {
             return null;
+        }
         return Integer.parseInt(orgId.toString());
     }
 

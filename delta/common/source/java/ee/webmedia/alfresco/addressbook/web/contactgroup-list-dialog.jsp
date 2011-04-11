@@ -26,6 +26,14 @@
             <f:param name="groupNodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
       </a:column>
+      
+      <!-- taskCapable selection -->
+      <a:column id="col2">
+         <f:facet name="header">
+            <a:sortLink label="#{msg.addressbook_group_taskCapable}" value="ab:taskCapable" />
+         </f:facet>
+         <h:selectBooleanCheckbox value="#{r['ab:taskCapable']}" disabled="#{DialogManager.bean.notAllowedEditTaskCapable == true}"/>
+      </a:column>      
 
       <%-- Actions column --%>
       <a:column id="col2-act" actions="true" style="text-align:left">

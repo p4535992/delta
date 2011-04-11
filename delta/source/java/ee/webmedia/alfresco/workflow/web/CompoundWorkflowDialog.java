@@ -33,6 +33,8 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -66,6 +68,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     private transient UserService userService;
     private transient DocumentService documentService;
     private transient DocumentLogService documentLogService;
+    private transient ParametersService parametersService;
     private DocumentDialog documentDialog;
 
     private static final List<QName> knownWorkflowTypes = Arrays.asList(//
@@ -354,6 +357,13 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     protected String getConfigArea() {
         return null;
     }
+    
+    protected ParametersService getParametersService() {
+        if (parametersService == null) {
+            parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(ParametersService.BEAN_NAME);
+        }
+        return parametersService;
+    }
 
     protected UserService getUserService() {
         if (userService == null) {
@@ -365,7 +375,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     protected DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(DocumentService.BEAN_NAME);
+                    .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
     }
@@ -437,7 +447,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_responsible");
         } else if (e instanceof EmailAttachmentSizeLimitException) {
             log.debug("Compound workflow action failed: email attachment exceeded size limit set in parameter!", e);
-            MessageUtil.addErrorMessage(context, "notification_zip_size_too_large");
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "notification_zip_size_too_large", ((ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(ParametersService.BEAN_NAME)).getLongParameter(Parameters.MAX_ATTACHED_FILE_SIZE).toString());
         } else if (e instanceof NodeLockedException) {
             log.debug("Compound workflow action failed: document is locked!", e);
             MessageUtil.addErrorMessage(context, new String[] { failMsg, "document_error_docLocked" });

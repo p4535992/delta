@@ -1,10 +1,8 @@
 package ee.webmedia.alfresco.common.filter;
 
 import java.io.IOException;
-
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-
 import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.GregorianCalendar;
@@ -34,7 +32,7 @@ public class HeaderFilter implements Filter {
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         this.filterConfig = filterConfig;
-        this.timeZone = TimeZone.getTimeZone("UTC");
+        timeZone = TimeZone.getTimeZone("UTC");
     }
 
     @SuppressWarnings("unchecked")

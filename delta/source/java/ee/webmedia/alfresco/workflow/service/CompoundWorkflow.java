@@ -17,10 +17,10 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 public class CompoundWorkflow extends BaseWorkflowObject implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private NodeRef parent;
-    private List<Workflow> workflows = new ArrayList<Workflow>();
+    private final NodeRef parent;
+    private final List<Workflow> workflows = new ArrayList<Workflow>();
     private List<CompoundWorkflow> otherCompoundWorkflows = new ArrayList<CompoundWorkflow>();
-    private List<Workflow> removedWorkflows = new ArrayList<Workflow>();
+    private final List<Workflow> removedWorkflows = new ArrayList<Workflow>();
 
     protected CompoundWorkflow(WmNode node, NodeRef parent) {
         super(node);
@@ -53,21 +53,22 @@ public class CompoundWorkflow extends BaseWorkflowObject implements Serializable
     public List<Workflow> getWorkflows() {
         return Collections.unmodifiableList(workflows);
     }
-    
+
     /**
      * NB! At moment it is not quaranteed that this property contains updated info from repo,
      * it is used only to pass (possibly changed) compound workflows to and from AssignmentWorkflowType.
      * Returned list doesn't (and MUST NOT) contain this compound workflow.
+     * 
      * @return
      */
     public List<CompoundWorkflow> getOtherCompoundWorkflows() {
         return otherCompoundWorkflows;
     }
-    
+
     public void setOtherCompoundWorkflows(List<CompoundWorkflow> otherCompoundWorkflows) {
         Assert.notNull(otherCompoundWorkflows);
         this.otherCompoundWorkflows = otherCompoundWorkflows;
-    }     
+    }
 
     protected List<Workflow> getRemovedWorkflows() {
         return removedWorkflows;

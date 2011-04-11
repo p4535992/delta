@@ -1,23 +1,16 @@
 package ee.webmedia.alfresco.signature.service;
 
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.alfresco.repo.content.MimetypeMap;
-import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.BaseAlfrescoSpringTest;
 import org.springframework.core.io.ClassPathResource;
 
-import ee.sk.digidoc.SignedDoc;
-import ee.sk.digidoc.factory.DigiDocFactory;
-import ee.sk.digidoc.factory.SAXDigiDocFactory;
 import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
-import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.util.ContentCreatorHelper;
 
@@ -26,12 +19,12 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
     public static final String TEST_RESOURCE_PATH = "ee/webmedia/alfresco/signature";
     public static final String TEST_DIGIDOC = "digidocTestEnvironment.ddoc";
     public static final String TEST_CERTHEX = "cert.hex";
-    
+
     public static final String TEST_ENCODING1 = AppConstants.CHARSET;
     public static final String TEST_DATA1 = "abcdef";
-    
+
     private SignatureService signatureService;
-    
+
     private NodeRef folderNodeRef;
     private NodeRef nodeRef;
     private List<NodeRef> nodeRefList;
@@ -53,21 +46,20 @@ public class SignatureServiceTest extends BaseAlfrescoSpringTest {
         // List of nodeRefs
         nodeRefList = new ArrayList<NodeRef>();
         nodeRefList.add(contentCreator.createTestFile(folderNodeRef, "testFile1.txt"));
-        
-        contentCreator.writeTestContent(nodeRefList.get(0), TEST_ENCODING1, MimetypeMap.MIMETYPE_TEXT_PLAIN, TEST_DATA1);
-/*
-        // Get the SignedDoc
-        InputStream fileInputStream = ContentCreatorHelper.getClassPathResourceInputStream(TEST_RESOURCE_PATH + "/" + TEST_DIGIDOC); 
-        DigiDocFactory digiDocFactory = new SAXDigiDocFactory();
-        SignedDoc signedDoc = digiDocFactory.readSignedDoc(fileInputStream);
-        fileInputStream.close();
 
-        // Write DigiDoc to nodeRef
-        ContentWriter writer = contentCreator.getContentWriter(nodeRef, AppConstants.CHARSET, SignatureService.DIGIDOC_MIMETYPE);
-        OutputStream os = writer.getContentOutputStream();
-        signedDoc.writeToStream(os);
-        os.close();
-*/
+        contentCreator.writeTestContent(nodeRefList.get(0), TEST_ENCODING1, MimetypeMap.MIMETYPE_TEXT_PLAIN, TEST_DATA1);
+        /*
+         * // Get the SignedDoc
+         * InputStream fileInputStream = ContentCreatorHelper.getClassPathResourceInputStream(TEST_RESOURCE_PATH + "/" + TEST_DIGIDOC);
+         * DigiDocFactory digiDocFactory = new SAXDigiDocFactory();
+         * SignedDoc signedDoc = digiDocFactory.readSignedDoc(fileInputStream);
+         * fileInputStream.close();
+         * // Write DigiDoc to nodeRef
+         * ContentWriter writer = contentCreator.getContentWriter(nodeRef, AppConstants.CHARSET, SignatureService.DIGIDOC_MIMETYPE);
+         * OutputStream os = writer.getContentOutputStream();
+         * signedDoc.writeToStream(os);
+         * os.close();
+         */
         // get the cert, should be less than 2048 bytes
         certHex = ContentCreatorHelper.getClassPathResource(TEST_RESOURCE_PATH + "/" + TEST_CERTHEX);
     }

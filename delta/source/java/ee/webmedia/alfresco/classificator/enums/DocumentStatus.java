@@ -7,11 +7,11 @@ public enum DocumentStatus {
     STOPPED("peatatud"),
     /** lõpetatud */
     FINISHED("lõpetatud");
-    
+
     private String valueName;
-    
+
     DocumentStatus(String value) {
-        this.valueName = value;
+        valueName = value;
     }
 
     public String getValueName() {
@@ -19,6 +19,6 @@ public enum DocumentStatus {
     }
 
     public boolean equals(String value) {
-        return this.valueName.equalsIgnoreCase(value);
+        return valueName.equalsIgnoreCase(value);
     }
 }

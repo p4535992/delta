@@ -12,7 +12,7 @@ import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * UI action evaluator for validating whether reopen current document.
- *
+ * 
  * @author Romet Aidla
  */
 public class ReopenDocumentEvaluator extends BaseActionEvaluator {

@@ -34,7 +34,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
 public class AssignResponsibilityBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String OWNER_ID = "{temp}ownerId";
+    private final String OWNER_ID = "{temp}ownerId";
 
     private transient AssignResponsibilityService assignResponsibilityService;
     private transient ParametersService parametersService;

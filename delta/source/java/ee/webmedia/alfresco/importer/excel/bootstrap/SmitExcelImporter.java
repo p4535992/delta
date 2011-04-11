@@ -10,8 +10,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.faces.context.FacesContext;
 
@@ -26,11 +26,11 @@ import ee.webmedia.alfresco.document.web.evaluator.SmitExcelImportEvaluator;
 import ee.webmedia.alfresco.importer.excel.mapper.AbstractSmitExcelMapper;
 import ee.webmedia.alfresco.importer.excel.mapper.ContractSmitMapper;
 import ee.webmedia.alfresco.importer.excel.mapper.ExcelRowMapper;
+import ee.webmedia.alfresco.importer.excel.mapper.ExcelRowMapper.SheetFinder;
 import ee.webmedia.alfresco.importer.excel.mapper.FieldMismatchException;
 import ee.webmedia.alfresco.importer.excel.mapper.LetterMapper;
 import ee.webmedia.alfresco.importer.excel.mapper.MinutesDocumentMapper;
 import ee.webmedia.alfresco.importer.excel.mapper.RegulationMapper;
-import ee.webmedia.alfresco.importer.excel.mapper.ExcelRowMapper.SheetFinder;
 import ee.webmedia.alfresco.importer.excel.service.DocumentImportService;
 import ee.webmedia.alfresco.importer.excel.vo.ImportDocument;
 import ee.webmedia.alfresco.utils.MessageUtil;

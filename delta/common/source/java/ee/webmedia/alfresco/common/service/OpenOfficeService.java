@@ -14,13 +14,13 @@ public interface OpenOfficeService {
     class OpenOfficeReturnedNullInterfaceException extends Exception {
         private static final long serialVersionUID = 1L;
 
-        private Class<?> clazz;
+        private final Class<?> clazz;
 
         public OpenOfficeReturnedNullInterfaceException(Class<?> clazz) {
             super(clazz.getSimpleName() + " is null");
             this.clazz = clazz;
         }
-        
+
         public Class<?> getClazz() {
             return clazz;
         }

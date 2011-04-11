@@ -28,7 +28,7 @@ public class ForRegisteringListDialog extends BaseDocumentListDialog {
     public String getListTitle() {
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_register_docs");
     }
-    
+
     @Override
     public String getColumnsFile() {
         return "/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog-columns.jsp";

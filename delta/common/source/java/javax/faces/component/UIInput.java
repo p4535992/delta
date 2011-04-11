@@ -20,6 +20,7 @@ package javax.faces.component;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
@@ -36,6 +37,8 @@ import javax.faces.render.Renderer;
 import javax.faces.validator.Validator;
 
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.myfaces.shared_impl.renderkit.html.HtmlRendererUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 
@@ -227,6 +230,16 @@ public class UIInput
         //We (re)set to valid, so that component automatically gets (re)validated
         setValid(true);
         super.decode(context);
+
+        // KAAREL: Actually we should set the value for read-only inputs. If we would like to skip setting the value, we should use disabled attribute instead.
+        if (HtmlRendererUtils.isDisabledOrReadOnly(this) && StringUtils.isNotBlank((String) getAttributes().get("styleClass"))
+                && StringUtils.contains((String) getAttributes().get("styleClass"), "editable")) {
+            @SuppressWarnings("unchecked")
+            Map<Object, Object> paramMap = context.getExternalContext().getRequestParameterMap();
+            if (paramMap.containsKey(getClientId(context))) {
+                setSubmittedValue(paramMap.get(getClientId(context)));
+            }
+        }
     }
 
     public void broadcast(FacesEvent event)

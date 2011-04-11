@@ -23,6 +23,14 @@
          </mandatory-aspects>
       </type>
       
+      <type name="docspec:errandOrderApplicantAbroadTypeV2"><!-- VälisLähetuse taotleja(dokument->taotleja) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandApplicant</aspect>
+            <aspect>docspec:errandOrderApplicantAbroadV2</aspect>
+         </mandatory-aspects>
+      </type>
+
       <type name="docspec:errandOrderAbroadMvApplicantType"><!-- VälisLähetuse (MV) taotleja(dokument->taotleja) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
@@ -39,6 +47,33 @@
          </mandatory-aspects>
       </type>
 
+      <type name="docspec:errandApplicationDomesticApplicantTypeV2"><!-- Siselähetuse taotleja(dokument->taotleja) -->
+         <parent>doccom:metadataContainer</parent>
+         <properties>
+            <property name="docspec:costElement">
+               <type>d:text</type>
+               <mandatory>true</mandatory>           
+            </property>
+         </properties>
+         <associations>
+            <child-association name="docspec:errandsDomesticV2">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:errandsDomesticTypeV2</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>docspec:errandApplicant</aspect>
+            <aspect>docspec:costManager</aspect>
+         </mandatory-aspects>
+      </type>
+
       <type name="docspec:trainingApplicationApplicantType"><!-- Koolitustaotluse taotleja(dokument->taotleja) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
@@ -52,12 +87,42 @@
          </mandatory-aspects>
       </type>
 
+      <type name="docspec:trainingApplicationApplicantTypeV2"><!-- Koolitustaotluse taotleja(dokument->taotleja) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandApplicant</aspect>
+            <aspect>docspec:errandDates</aspect>
+            <aspect>docspec:dailyAllowanceV2</aspect>
+            <aspect>docspec:advancePayment</aspect>
+            <aspect>docspec:expensesV2</aspect>
+            <aspect>docspec:errandSubstituteName</aspect>
+            <aspect>docspec:errandSubstitutePeriod</aspect>
+            <aspect>docspec:errandComment</aspect>
+         </mandatory-aspects>
+      </type>
+
       <type name="docspec:errandsAbroadType"><!-- VälisLähetuse blokk (dokument->taotleja->lähetus) -->
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandBlockCommon</aspect>
+            <aspect>docspec:errandSubstituteName</aspect>
+            <aspect>docspec:expenses</aspect>
             <aspect>docspec:errandBlockAbroad</aspect>
             <aspect>docspec:dailyAllowance</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docspec:errandsAbroadTypeV2"><!-- VälisLähetuse blokk (dokument->taotleja->lähetus) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:travelPurpose</aspect>
+            <aspect>docspec:errandDoc</aspect>
+            <aspect>docspec:errandBlockCommon</aspect>
+            <aspect>docspec:errandSubstituteName</aspect>
+            <aspect>docspec:expensesV2</aspect>
+            <aspect>docspec:errandBlockAbroad</aspect>
+            <aspect>docspec:dailyAllowanceV2</aspect>
+            <aspect>docspec:reportDueDate</aspect>
          </mandatory-aspects>
       </type>
       
@@ -65,6 +130,8 @@
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandBlockCommon</aspect>
+            <aspect>docspec:errandSubstituteName</aspect>
+            <aspect>docspec:expenses</aspect>
             <aspect>docspec:errandBlockAbroad</aspect>
             <aspect>docspec:dailyAllowance</aspect>
          </mandatory-aspects>
@@ -74,6 +141,18 @@
          <parent>doccom:metadataContainer</parent>
          <mandatory-aspects>
             <aspect>docspec:errandBlockCommon</aspect>
+            <aspect>docspec:expenses</aspect>
+            <aspect>docspec:errandBlockDomestic</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docspec:errandsDomesticTypeV2"><!-- Siselähetuse blokk (dokument->taotleja->lähetus) -->
+         <parent>doccom:metadataContainer</parent>
+         <mandatory-aspects>
+            <aspect>docspec:errandDoc</aspect>
+            <aspect>docspec:eventName</aspect>
+            <aspect>docspec:errandBlockCommon</aspect>
+            <aspect>docspec:expensesV2</aspect>
             <aspect>docspec:errandBlockDomestic</aspect>
          </mandatory-aspects>
       </type>
@@ -769,8 +848,8 @@
             <aspect>docspec:procurementApplicants</aspect>
          </mandatory-aspects>
       </aspect>
-      
-      <aspect name="docspec:trainingApplication">
+
+      <aspect name="docspec:trainingApplicationBase">
          <properties>
             <property name="docspec:trainingName">
                <type>d:text</type>
@@ -801,6 +880,10 @@
                <mandatory>true</mandatory>
             </property>
          </properties>
+      </aspect>
+
+      <aspect name="docspec:trainingApplication">
+         <parent>docspec:trainingApplicationBase</parent>
          <associations>
             <child-association name="docspec:trainingApplicationApplicants">
                <source>
@@ -809,6 +892,23 @@
                </source>
                <target>
                   <class>docspec:trainingApplicationApplicantType</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="docspec:trainingApplicationV2">
+         <parent>docspec:trainingApplicationBase</parent>
+         <associations>
+            <child-association name="docspec:trainingApplicationApplicantsV2">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:trainingApplicationApplicantTypeV2</class>
                   <mandatory>true</mandatory>
                   <many>true</many>
                </target>
@@ -869,12 +969,19 @@
       </aspect>
 
       <!-- välisLähetuse taotleja spetsiifilised väljad -->
-      <aspect name="docspec:errandOrderApplicantAbroad">
+      <aspect name="docspec:errandOrderApplicantAbroadBase">
          <properties>
             <property name="docspec:expenditureItem"><!-- Kulukoht -->
                <type>d:text</type>
             </property>
-         </properties>      
+         </properties>
+         <mandatory-aspects>
+            <aspect>docspec:costManager</aspect>
+         </mandatory-aspects>
+      </aspect>
+
+      <aspect name="docspec:errandOrderApplicantAbroad">
+         <parent>docspec:errandOrderApplicantAbroadBase</parent>
          <associations>
             <child-association name="docspec:errandsAbroad">
                <source>
@@ -888,11 +995,25 @@
                </target>
             </child-association>
          </associations>
-         <mandatory-aspects>
-            <aspect>docspec:costManager</aspect>
-         </mandatory-aspects>
       </aspect>
       
+      <aspect name="docspec:errandOrderApplicantAbroadV2">
+         <parent>docspec:errandOrderApplicantAbroadBase</parent>
+         <associations>
+            <child-association name="docspec:errandsAbroadV2">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:errandsAbroadTypeV2</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
       <aspect name="docspec:errandOrderAbroadMvApplicant">
          <associations>
             <child-association name="docspec:errandsAbroadMv">
@@ -947,9 +1068,7 @@
          </properties>
          <mandatory-aspects>
             <aspect>docspec:errandDates</aspect>
-            <aspect>docspec:expenses</aspect>
             <aspect>docspec:advancePayment</aspect>
-            <aspect>docspec:errandSubstituteName</aspect>
             <aspect>docspec:errandComment</aspect>
          </mandatory-aspects>
       </aspect>
@@ -958,6 +1077,17 @@
       <properties>
          <property name="docspec:errandSubstituteName">
             <type>d:text</type>
+         </property>
+      </properties>
+   </aspect>
+   
+   <aspect name="docspec:errandSubstitutePeriod">
+      <properties>
+         <property name="docspec:errandSubstituteBeginDate">
+            <type>d:date</type>
+         </property>
+         <property name="docspec:errandSubstituteEndDate">
+            <type>d:date</type>
          </property>
       </properties>
    </aspect>
@@ -970,22 +1100,41 @@
       </properties>
    </aspect>
 
-   <aspect name="docspec:expenses">
+   <aspect name="docspec:expensesBase">
       <properties>
          <property name="docspec:expenseType"><!-- Kulu -->
             <type>d:text</type>
-            <mandatory>true</mandatory>
             <multiple>true</multiple>
          </property>
+      </properties>
+   </aspect>
+
+   <aspect name="docspec:expenses">
+      <parent>docspec:expensesBase</parent>
+      <properties>
          <property name="docspec:expenseDesc"><!-- Kirjeldus -->
             <type>d:text</type>
-            <mandatory>true</mandatory>
             <multiple>true</multiple>
          </property>
          <property name="docspec:expenseFinancingSource"><!-- Finantseerimisallikas -->
             <type>d:text</type>
-            <mandatory>true</mandatory>
             <multiple>true</multiple>
+         </property>
+      </properties>
+   </aspect>
+   
+   <aspect name="docspec:expensesV2">
+      <parent>docspec:expensesBase</parent>
+      <properties>
+         <property name="docspec:expectedExpenseSum">
+            <type>d:double</type>
+            <multiple>true</multiple>
+         </property>
+         <property name="docspec:expensesTotalSum">
+            <type>d:double</type>
+         </property>
+         <property name="docspec:expensesFinancingSource">
+            <type>d:text</type>
          </property>
       </properties>
    </aspect>
@@ -1013,13 +1162,8 @@
          </properties>
       </aspect>
       
-      <aspect name="docspec:dailyAllowance">
+      <aspect name="docspec:dailyAllowanceBase">
          <properties>
-            <property name="docspec:dailyAllowanceCateringCount">
-               <type>d:text</type>
-               <mandatory>true</mandatory>
-               <multiple>true</multiple>
-            </property>
             <property name="docspec:dailyAllowanceDays">
                <type>d:int</type>
                <mandatory>true</mandatory>
@@ -1030,10 +1174,34 @@
                <mandatory>true</mandatory>
                <multiple>true</multiple>
             </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:dailyAllowance">
+         <parent>docspec:dailyAllowanceBase</parent>
+         <properties>
+            <property name="docspec:dailyAllowanceCateringCount">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <multiple>true</multiple>
+            </property>
             <property name="docspec:dailyAllowanceFinancingSource">
                <type>d:text</type>
                <mandatory>true</mandatory>
                <multiple>true</multiple>
+            </property>
+         </properties>
+      </aspect>
+      
+      <aspect name="docspec:dailyAllowanceV2">
+         <parent>docspec:dailyAllowanceBase</parent>
+         <properties>
+            <property name="docspec:dailyAllowanceSum">
+               <type>d:double</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:dailyAllowanceTotalSum">
+               <type>d:double</type>
             </property>
          </properties>
       </aspect>
@@ -1049,7 +1217,7 @@
             <aspect>docspec:travelPurpose</aspect>
          </mandatory-aspects>
       </aspect>
-      
+
       <aspect name="docspec:travelPurpose">
          <properties>
             <property name="docspec:travelPurpose">
@@ -1060,8 +1228,15 @@
       </aspect>
       
       <!-- VälisLähetuse dokumendi spetsiifilised väljad -->
-            
-      <aspect name="docspec:errandOrderAbroad">
+      <aspect name="docspec:reportDueDate">
+         <properties>
+            <property name="docspec:reportDueDate">
+               <type>d:date</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docspec:errandOrderAbroadBase">
          <properties>
             <property name="docspec:legalBasisForOfficials">
                <type>d:text</type>
@@ -1069,10 +1244,11 @@
             <property name="docspec:legalBasisForSupportStaff">
                <type>d:text</type>
             </property>          
-            <property name="docspec:reportDueDate">
-               <type>d:date</type>
-            </property>
          </properties>
+      </aspect>
+
+      <aspect name="docspec:errandOrderAbroad">
+      	 <parent>docspec:errandOrderAbroadBase</parent>
          <associations>
             <child-association name="docspec:errandOrderApplicantsAbroad">
                <source>
@@ -1088,9 +1264,28 @@
          </associations>
          <mandatory-aspects>
             <aspect>docspec:travelPurpose</aspect>
+            <aspect>docspec:errandDoc</aspect>
+            <aspect>docspec:reportDueDate</aspect>
          </mandatory-aspects>
       </aspect>
-      
+
+      <aspect name="docspec:errandOrderAbroadV2">
+         <parent>docspec:errandOrderAbroadBase</parent>
+         <associations>
+            <child-association name="docspec:errandOrderApplicantsAbroadV2">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:errandOrderApplicantAbroadTypeV2</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
       <aspect name="docspec:errandOrderAbroadMv">
          <associations>
             <child-association name="docspec:errandOrderAbroadMvApplicants">
@@ -1110,14 +1305,16 @@
          </mandatory-aspects>
       </aspect>      
 
-      
-      <!-- Siselähetuse dokumendi spetsiifilised väljad -->
-      <aspect name="docspec:errandApplicationDomestic">
+      <aspect name="docspec:eventName">
          <properties>
             <property name="docspec:eventName">
                <type>d:text</type>
             </property>
          </properties>
+      </aspect>
+
+      <!-- Siselähetuse dokumendi spetsiifilised väljad -->
+      <aspect name="docspec:errandApplicationDomestic">
          <associations>
             <child-association name="docspec:errandApplicationDomesticApplicants">
                <source>
@@ -1131,8 +1328,27 @@
                </target>
             </child-association>
          </associations>
+         <mandatory-aspects>
+            <aspect>docspec:errandDoc</aspect>
+            <aspect>docspec:eventName</aspect>
+         </mandatory-aspects>
       </aspect>
 
+      <aspect name="docspec:errandApplicationDomesticV2">
+         <associations>
+            <child-association name="docspec:errandApplicationDomesticApplicantsV2">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docspec:errandApplicationDomesticApplicantTypeV2</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
       
       <aspect name="docspec:contractSmitDetails">
          <properties>

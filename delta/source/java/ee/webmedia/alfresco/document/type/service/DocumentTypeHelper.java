@@ -26,7 +26,7 @@ public class DocumentTypeHelper {
                 , DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT_MV };
         incomingLetterTypes = Collections.unmodifiableCollection(Arrays.asList(INCOMING_LETTER_TYPES));
         outgoingLetterTypes = Collections.unmodifiableCollection(Arrays.asList(OUTGOING_LETTER_TYPES));
-        
+
         List<QName> incomingOutgoingList = new ArrayList<QName>();
         incomingOutgoingList.addAll(incomingLetterTypes);
         incomingOutgoingList.addAll(outgoingLetterTypes);
@@ -40,10 +40,10 @@ public class DocumentTypeHelper {
     public static boolean isOutgoingLetter(QName documentType) {
         return is(documentType, OUTGOING_LETTER_TYPES);
     }
-    
+
     public static boolean isInstrumentOfDeliveryAndReciept(QName documentType) {
         return is(documentType, INSTRUMENT_OF_DELIVERY_AND_RECEIPT_TYPES);
-    }    
+    }
 
     public static boolean isIncomingOrOutgoingLetter(QName documentType) {
         return isIncomingLetter(documentType) || isOutgoingLetter(documentType);

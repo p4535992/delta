@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.web.evaluator;
 
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.INCOMING_LETTER_MV;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.OUTGOING_LETTER_MV;
+
 import org.alfresco.web.bean.repository.Node;
 
 /**

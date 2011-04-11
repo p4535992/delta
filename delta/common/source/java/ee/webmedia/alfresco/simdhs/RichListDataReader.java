@@ -9,7 +9,6 @@ import javax.faces.component.UIParameter;
 import javax.faces.component.ValueHolder;
 import javax.faces.context.FacesContext;
 
-import org.alfresco.web.ui.common.component.data.IGridDataModel;
 import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.common.component.data.UISortLink;
@@ -19,13 +18,12 @@ import org.springframework.util.Assert;
 /**
  * Reads data directly from rich list data model.
  * <p/>
- * To exclude column from CSV export, add following facet to column:
- * {@code
+ * To exclude column from CSV export, add following facet to column: {@code
  * <f:facet name="csvExport">
  *  <a:param value="false"/>
  * </f:facet>
  * }
- *
+ * 
  * @author Romet Aidla
  */
 public class RichListDataReader implements DataReader {
@@ -55,8 +53,8 @@ public class RichListDataReader implements DataReader {
     private List<String> getDataFromRow(Object row, List<UIColumn> columnsToExport) {
         for (UIColumn uiColumn : columnsToExport) {
             System.out.println(row);
-//            row.getClass().getMethods()
-//            uiColumn.get
+            // row.getClass().getMethods()
+            // uiColumn.get
         }
         // TODO Auto-generated method stub
         return null;
@@ -102,7 +100,9 @@ public class RichListDataReader implements DataReader {
             return link.getLabel();
         } else {
             String componentClass = component.getClass().getName();
-            if (log.isDebugEnabled()) log.debug("Unsupported component type for header row:" + componentClass);
+            if (log.isDebugEnabled()) {
+                log.debug("Unsupported component type for header row:" + componentClass);
+            }
             return componentClass;
         }
     }
@@ -122,9 +122,9 @@ public class RichListDataReader implements DataReader {
             Object value = valueHolder.getValue();
 
             // use converter if exists
-			if(valueHolder.getConverter() != null) {
-				value =  valueHolder.getConverter().getAsString(facesContext, component, value);
-			}
+            if (valueHolder.getConverter() != null) {
+                value = valueHolder.getConverter().getAsString(facesContext, component, value);
+            }
 
             return value != null ? value.toString() : "";
         } else if (component instanceof UICommand) { // handle links
@@ -132,7 +132,9 @@ public class RichListDataReader implements DataReader {
             return command.getValue().toString();
         } else { // unsupported component type
             String componentClass = component.getClass().getName();
-            if (log.isDebugEnabled()) log.debug("Unsupported component type for data row:" + componentClass);
+            if (log.isDebugEnabled()) {
+                log.debug("Unsupported component type for data row:" + componentClass);
+            }
             return componentClass;
         }
     }

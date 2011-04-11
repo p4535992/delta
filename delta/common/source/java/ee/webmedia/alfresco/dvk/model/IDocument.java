@@ -1,7 +1,5 @@
 package ee.webmedia.alfresco.dvk.model;
 
-import java.util.Collection;
-
 //TODO: if not used, remove the interface
 public interface IDocument {
 
@@ -22,5 +20,5 @@ public interface IDocument {
     String getSenderEmail();
 
     void setSenderEmail(String senderEmail);
-    
+
 }

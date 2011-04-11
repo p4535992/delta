@@ -16,14 +16,14 @@ public class NotificationDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
     private transient UserService userService;
     private transient NotificationService notificationService;
-    
+
     private Node userPrefsNode;
-    
+
     @Override
     public boolean getFinishButtonDisabled() {
         return false;
     }
-    
+
     @Override
     public void init(Map<String, String> parameters) {
         restored();
@@ -37,7 +37,7 @@ public class NotificationDialog extends BaseDialogBean {
         isFinished = false;
         return null;
     }
-    
+
     @Override
     public void restored() {
         final String userName = AuthenticationUtil.getRunAsUser();
@@ -45,9 +45,8 @@ public class NotificationDialog extends BaseDialogBean {
         notificationService.addMissingConfigurations(userPrefsNode);
         super.restored();
     }
-    
-    // START: setters/getters
 
+    // START: setters/getters
 
     public Node getUserPrefsNode() {
         return userPrefsNode;
@@ -60,7 +59,7 @@ public class NotificationDialog extends BaseDialogBean {
     public void setNotificationService(NotificationService notificationService) {
         this.notificationService = notificationService;
     }
-    
+
     // END: setters/getters
 
 }

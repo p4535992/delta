@@ -18,7 +18,7 @@ public class Menu implements Serializable {
     private static final long serialVersionUID = 0L;
     @XStreamImplicit
     private List<MenuItem> subItems;
-    
+
     public void addMenuItems(MenuItem menuItem) {
         if (subItems == null) {
             subItems = new ArrayList<MenuItem>();
@@ -37,7 +37,7 @@ public class Menu implements Serializable {
     }
 
     public void setSubItems(List<MenuItem> children) {
-        this.subItems = children;
+        subItems = children;
     }
 
 }

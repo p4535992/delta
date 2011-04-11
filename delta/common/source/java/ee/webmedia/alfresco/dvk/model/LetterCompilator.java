@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.dvk.model;
 
 /**
  * @author Ats Uiboupin
- *
  */
 public interface LetterCompilator {
     String getLetterCompilatorFirstname();

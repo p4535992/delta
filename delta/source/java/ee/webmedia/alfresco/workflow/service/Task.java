@@ -156,7 +156,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
 
     public void setInstitutionName(String institutionName) {
         setProp(WorkflowSpecificModel.Props.INSTITUTION_NAME, institutionName);
-    }    
+    }
 
     public String getInstitutionCode() {
         return getProp(WorkflowSpecificModel.Props.INSTITUTION_CODE);
@@ -164,7 +164,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
 
     public void setInstitutionCode(String institutionCode) {
         setProp(WorkflowSpecificModel.Props.INSTITUTION_CODE, institutionCode);
-    }  
+    }
 
     public String getCreatorInstitutionCode() {
         return getProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_CODE);
@@ -172,7 +172,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
 
     public void setCreatorInstitutionCode(String creatorInstitutionCode) {
         setProp(WorkflowSpecificModel.Props.CREATOR_INSTITUTION_CODE, creatorInstitutionCode);
-    }    
+    }
 
     public String getOriginalDvkId() {
         return getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID);
@@ -180,7 +180,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
 
     public void setOriginalDvkId(String originalDvkId) {
         setProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID, originalDvkId);
-    }    
+    }
 
     public String getSendStatus() {
         return getProp(WorkflowSpecificModel.Props.SEND_STATUS);
@@ -333,6 +333,6 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         if (getNode().getNodeRef() == null && !(getParent().getParent() instanceof CompoundWorkflowDefinition)) {
             getNode().getAspects().add(WorkflowSpecificModel.Aspects.SEARCHABLE);
         }
-    };
+    }
 
 }

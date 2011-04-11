@@ -6,11 +6,11 @@ package ee.webmedia.alfresco.classificator.enums;
 public enum SeriesType {
     SERIES("sari"),
     SUBSERIES("allsari");
-    
+
     private String valueName;
-    
+
     SeriesType(String value) {
-        this.valueName = value;
+        valueName = value;
     }
 
     public String getValueName() {
@@ -18,6 +18,6 @@ public enum SeriesType {
     }
 
     public boolean equals(String value) {
-        return this.valueName.equalsIgnoreCase(value);
+        return valueName.equalsIgnoreCase(value);
     }
 }

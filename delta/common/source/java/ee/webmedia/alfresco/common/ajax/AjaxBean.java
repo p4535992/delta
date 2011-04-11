@@ -37,7 +37,7 @@ public class AjaxBean implements Serializable {
 
     // ------------------------------------------------------------------------------
     // AJAX handler methods
-    
+
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void submit() throws IOException {
         FacesContext context = FacesContext.getCurrentInstance();

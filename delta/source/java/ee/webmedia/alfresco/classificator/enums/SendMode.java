@@ -6,17 +6,17 @@ package ee.webmedia.alfresco.classificator.enums;
  * @author Erko Hansar
  */
 public enum SendMode {
-    
+
     DVK("DVK"),
     EMAIL_DVK("e-post/DVK"),
     EMAIL("e-post"),
     MAIL("post"),
     REGISTERED_MAIL("tähitud post");
-    
+
     private String valueName;
-    
+
     SendMode(String value) {
-        this.valueName = value;
+        valueName = value;
     }
 
     public String getValueName() {
@@ -24,7 +24,7 @@ public enum SendMode {
     }
 
     public boolean equals(String value) {
-        return this.valueName.equalsIgnoreCase(value);
+        return valueName.equalsIgnoreCase(value);
     }
 
 }

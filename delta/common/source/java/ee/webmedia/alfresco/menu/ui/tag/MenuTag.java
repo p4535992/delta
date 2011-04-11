@@ -12,7 +12,7 @@ public class MenuTag extends UIComponentTagBase {
     private static final String MENU_COMPONENT_TYPE = UIMenuComponent.class.getCanonicalName();
     private static final String MENU_RENDERER_TYPE = MenuRenderer.class.getCanonicalName();
     private String primary;
-    
+
     @Override
     public String getComponentType() {
         return MENU_COMPONENT_TYPE;

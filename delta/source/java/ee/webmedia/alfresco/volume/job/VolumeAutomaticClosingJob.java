@@ -16,7 +16,9 @@ public class VolumeAutomaticClosingJob implements StatefulJob {
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-        if (log.isDebugEnabled())  log.debug("Starting VolumeAutomaticClosingJob");
+        if (log.isDebugEnabled()) {
+            log.debug("Starting VolumeAutomaticClosingJob");
+        }
         JobDataMap jobData = jobExecutionContext.getJobDetail().getJobDataMap();
         Object workerObj = jobData.get("functionsService");
 
@@ -34,7 +36,9 @@ public class VolumeAutomaticClosingJob implements StatefulJob {
                     return worker.closeAllOpenExpiredVolumes();
                 }
             }, AuthenticationUtil.getSystemUserName());
-            if (log.isDebugEnabled())  log.debug("VolumeAutomaticClosingJob done, closedCount=" + closedCount);
+            if (log.isDebugEnabled()) {
+                log.debug("VolumeAutomaticClosingJob done, closedCount=" + closedCount);
+            }
         } catch (RuntimeException e) {
             log.error("VolumeAutomaticClosingJob failed: " + e.getMessage(), e);
             throw e;

@@ -28,6 +28,7 @@ public interface EmailService {
      * @param zipFileName if zipIt then zip file name
      * @throws EmailException If e-mail sending fails in JavaMail (or Spring's JavaMail support) layer, not connected to Alfresco
      */
-    void sendEmail(List<String> toEmails, List<String> toNames, String fromEmail, String subject, String content, boolean isHtml, NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName) throws EmailException;
+    void sendEmail(List<String> toEmails, List<String> toNames, String fromEmail, String subject, String content, boolean isHtml
+            , NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName) throws EmailException;
 
 }

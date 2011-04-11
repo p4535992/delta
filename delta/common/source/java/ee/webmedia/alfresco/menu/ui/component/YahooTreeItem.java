@@ -47,7 +47,7 @@ public class YahooTreeItem extends SelfRenderingComponent {
      * @return int distance to the nearest UIMenuComponent component
      */
     private int getLinkDepth() {
-        UIComponent parent = this.getParent();
+        UIComponent parent = getParent();
         int depth = 0;
         while (parent != null) {
             if (parent instanceof UIMenuComponent) {
@@ -62,9 +62,9 @@ public class YahooTreeItem extends SelfRenderingComponent {
     public NodeRef getNodeRef() {
         return nodeRef;
     }
-    
+
     public String getNodeRefString() {
-        if(nodeRef != null) {
+        if (nodeRef != null) {
             return nodeRef.toString();
         }
         return "";

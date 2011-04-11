@@ -6,7 +6,6 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.LetterDocument;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
-
 @AlfrescoModelType(uri = DocumentSpecificModel.URI)
 public class IncomingLetter extends LetterDocument {
     // docspec:transmittalMode
@@ -25,7 +24,7 @@ public class IncomingLetter extends LetterDocument {
     }
 
     public void setTransmittalMode(String sendMode) {
-        this.transmittalMode = sendMode;
+        transmittalMode = sendMode;
     }
 
     public String getTransmittalMode() {

@@ -299,20 +299,6 @@
           </h:column>
       </h:dataTable>
    
-      <br/>
-      <%-- FIXME: veateadete näitamise võiks ka kunagi teha
-      <a:errors message="#{DialogManager.errorMessage}" styleClass="message" errorClass="error-message" infoClass="info-message" />
-       --%>
-      <hr/>
-              <h:outputText value="Association Target NodeRef:"/>
-              <h:inputText id="targetRef" size="100" value="#{AdminNodeBrowseBean.targetRef}"/>
-      <br/>
-              <h:outputText value="Association Type QName:"/>
-              <h:selectOneMenu id="assocTypeQName" value="#{AdminNodeBrowseBean.assocTypeQName}">
-                   <f:selectItems value="#{AdminNodeBrowseBean.assocTypeQNames}"/>
-              </h:selectOneMenu>
-      <br/>
-              <h:commandButton id="submitCreateAssoc" action="#{AdminNodeBrowseBean.submitCreateAssoc}" value="submitCreateAssoc"/>
       <hr/>
       
       <h:outputText styleClass="mainTitle" value="Parents"/>

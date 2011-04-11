@@ -45,7 +45,8 @@ public class PropertySheetGridRenderer extends HtmlGridRenderer {
             rowClasses = (String) component.getAttributes().get(JSFAttr.ROW_CLASSES_ATTR);
         }
 
-        String[] columnClassesArray = (columnClasses == null) ? ArrayUtils.EMPTY_STRING_ARRAY : StringUtils.trim(StringUtils.splitShortString(columnClasses, ','));
+        String[] columnClassesArray = (columnClasses == null) ? ArrayUtils.EMPTY_STRING_ARRAY : StringUtils.trim(StringUtils.splitShortString(columnClasses,
+                ','));
         int columnClassesCount = columnClassesArray.length;
 
         String[] rowClassesArray = (rowClasses == null) ? org.apache.myfaces.shared_impl.util.ArrayUtils.EMPTY_STRING_ARRAY : StringUtils.trim(StringUtils

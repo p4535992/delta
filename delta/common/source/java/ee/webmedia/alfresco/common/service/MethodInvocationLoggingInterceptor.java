@@ -50,7 +50,8 @@ public class MethodInvocationLoggingInterceptor implements MethodInterceptor {
                         language = " " + ((SearchParameters) args[0]).getLanguage();
                     }
                 }
-                log.debug("Method " + invocation.getThis().getClass().getSimpleName() + "." + invocation.getMethod().getName() + " " + duration + " ms" + (store == null ? "" : " " + store.toString()) + language);
+                log.debug("Method " + invocation.getThis().getClass().getSimpleName() + "." + invocation.getMethod().getName()
+                        + " " + duration + " ms" + (store == null ? "" : " " + store.toString()) + language);
             }
         }
     }

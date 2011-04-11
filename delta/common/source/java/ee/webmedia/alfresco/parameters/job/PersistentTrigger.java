@@ -1,27 +1,25 @@
 package ee.webmedia.alfresco.parameters.job;
 
-import ee.webmedia.alfresco.parameters.model.Parameter;
-import ee.webmedia.alfresco.parameters.model.Parameters;
-import ee.webmedia.alfresco.parameters.service.ParametersService;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.quartz.Calendar;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.SimpleTrigger;
 
-import java.util.Date;
+import ee.webmedia.alfresco.parameters.model.Parameter;
+import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 
 /**
  * SimpleTrigger that stores next fire time into repository,
  * so that trigger state can be restored between server restarts.
- *
+ * 
  * @author Romet Aidla
  */
 public class PersistentTrigger extends SimpleTrigger {
     private static final long serialVersionUID = 1L;
 
-    private ParametersService parametersService;
-    private String parameterName;
+    private final ParametersService parametersService;
+    private final String parameterName;
 
     public PersistentTrigger(String name, String group, String parameterName, ParametersService parametersService) {
         super(name, group);

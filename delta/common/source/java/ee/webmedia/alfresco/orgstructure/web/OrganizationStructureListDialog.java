@@ -42,9 +42,8 @@ public class OrganizationStructureListDialog extends BaseDialogBean {
      * This method is part of the contract to the Generic Picker, it is up to the backing bean
      * to execute whatever query is appropriate and return the results.
      * 
-     * @param filterIndex        Index of the filter drop-down selection
-     * @param contains           Text from the contains textbox
-     * 
+     * @param filterIndex Index of the filter drop-down selection
+     * @param contains Text from the contains textbox
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
     public SelectItem[] searchOrgstructs(int filterIndex, String contains) {

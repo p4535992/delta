@@ -14,7 +14,7 @@ public class AttachmentListMenuItemProcessor extends CountAddingMenuItemProcesso
     private MenuService menuService;
     private FileService fileService;
     private ImapServiceExt imapServiceExt;
-    
+
     @Override
     public int getCount(MenuItem menuItem) {
         return fileService.getAllFilesExcludingDigidocSubitems(imapServiceExt.getAttachmentRoot()).size();
@@ -24,7 +24,7 @@ public class AttachmentListMenuItemProcessor extends CountAddingMenuItemProcesso
     public void afterPropertiesSet() throws Exception {
         menuService.setCountHandler("emailAttachments", this);
     }
-    
+
     // START: getters / setters
 
     public void setMenuService(MenuService menuService) {

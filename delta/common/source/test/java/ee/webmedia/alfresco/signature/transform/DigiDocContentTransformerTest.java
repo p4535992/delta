@@ -62,9 +62,9 @@ public class DigiDocContentTransformerTest extends AbstractContentTransformerTes
         while ((line = reader.readLine()) != null) {
             sb.append(line);
         }
-        
+
         output.delete();
-        //System.out.println(sb.toString());
+        // System.out.println(sb.toString());
         assertTrue(sb.indexOf("DMITRI") != -1);
         assertTrue(sb.indexOf("digidocTestEnvironment.txt") != -1);
         assertTrue(sb.indexOf("plain text") != -1);

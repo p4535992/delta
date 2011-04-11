@@ -1,29 +1,30 @@
 package ee.webmedia.alfresco.imap;
 
-import com.icegreen.greenmail.foedus.util.MsgRangeFilter;
-import com.icegreen.greenmail.mail.MovingMessage;
-import com.icegreen.greenmail.store.FolderException;
-import com.icegreen.greenmail.store.FolderListener;
-import com.icegreen.greenmail.store.MailFolder;
-import com.icegreen.greenmail.store.SimpleStoredMessage;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+
+import javax.mail.Flags;
+import javax.mail.internet.MimeMessage;
+import javax.mail.search.SearchTerm;
+
 import org.alfresco.repo.imap.AlfrescoImapFolder;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
 
-import javax.mail.Flags;
-import javax.mail.internet.MimeMessage;
-import javax.mail.search.SearchTerm;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import com.icegreen.greenmail.foedus.util.MsgRangeFilter;
+import com.icegreen.greenmail.mail.MovingMessage;
+import com.icegreen.greenmail.store.FolderException;
+import com.icegreen.greenmail.store.FolderListener;
+import com.icegreen.greenmail.store.MailFolder;
+import com.icegreen.greenmail.store.SimpleStoredMessage;
 
 /**
  * Mail folder implementation, that disables most activities on folder: makes it immutable, unlistable etc.
  * Append behaviour can be defined using {@link ee.webmedia.alfresco.imap.AppendBehaviour}.
- *
+ * 
  * @author Romet Aidla
  */
 public class ImmutableFolder implements MailFolder {
@@ -31,14 +32,13 @@ public class ImmutableFolder implements MailFolder {
     protected MailFolder innerMailFolder;
     private static final Log log = LogFactory.getLog(ImmutableFolder.class);
 
-    private AppendBehaviour appendBehaviour;
-
+    private final AppendBehaviour appendBehaviour;
 
     public ImmutableFolder(MailFolder mailFolder, AppendBehaviour appendBehaviour) {
         Assert.notNull(mailFolder);
         Assert.notNull(appendBehaviour);
-        
-        this.innerMailFolder = mailFolder;
+
+        innerMailFolder = mailFolder;
         this.appendBehaviour = appendBehaviour;
     }
 

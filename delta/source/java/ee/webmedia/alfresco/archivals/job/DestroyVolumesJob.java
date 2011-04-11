@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.archivals.job;
 
-import ee.webmedia.alfresco.archivals.service.ArchivalsService;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.apache.commons.logging.Log;
@@ -10,11 +9,13 @@ import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+import ee.webmedia.alfresco.archivals.service.ArchivalsService;
+
 /**
  * Scheduled job to call a {@link ee.webmedia.alfresco.archivals.service.ArchivalsService#destroyArchivedVolumes()}.
  * <p>
  * Job data is: <b>archivalsService</b>
- *
+ * 
  * @author Romet Aidla
  */
 public class DestroyVolumesJob implements Job {
@@ -22,7 +23,9 @@ public class DestroyVolumesJob implements Job {
 
     @Override
     public void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-        if (log.isDebugEnabled())  log.debug("Starting DestroyVolumesJob");
+        if (log.isDebugEnabled()) {
+            log.debug("Starting DestroyVolumesJob");
+        }
         JobDataMap jobData = jobExecutionContext.getJobDetail().getJobDataMap();
         Object workerObj = jobData.get("archivalsService");
 
@@ -40,6 +43,8 @@ public class DestroyVolumesJob implements Job {
             }
         }, AuthenticationUtil.getSystemUserName());
 
-        if (log.isDebugEnabled())  log.debug("DestroyVolumesJob done, updateCount=" + updateCount);
+        if (log.isDebugEnabled()) {
+            log.debug("DestroyVolumesJob done, updateCount=" + updateCount);
+        }
     }
 }

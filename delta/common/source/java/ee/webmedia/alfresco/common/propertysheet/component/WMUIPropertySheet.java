@@ -47,12 +47,12 @@ public class WMUIPropertySheet extends UIPropertySheet {
     public WMUIPropertySheet() {
         super();
     }
-    
+
     @SuppressWarnings("unchecked")
     @Override
     public void encodeBegin(FacesContext context) throws IOException {
-        this.getAttributes().put(HTML.CELLSPACING_ATTR, 0);
-        this.getAttributes().put(HTML.CELLPADDING_ATTR, 0);
+        getAttributes().put(HTML.CELLSPACING_ATTR, 0);
+        getAttributes().put(HTML.CELLPADDING_ATTR, 0);
         super.encodeBegin(context);
     }
 
@@ -154,7 +154,7 @@ public class WMUIPropertySheet extends UIPropertySheet {
     }
 
     public void setAssociationBrand(NodeAssocBrand nodeAssocBrand) {
-        this.associationBrand = nodeAssocBrand;
+        associationBrand = nodeAssocBrand;
     }
 
     public NodeAssocBrand getAssociationBrand() {
@@ -165,8 +165,8 @@ public class WMUIPropertySheet extends UIPropertySheet {
     public Object saveState(FacesContext context) {
         Object[] state = new Object[3];
         state[0] = super.saveState(context);
-        state[1] = this.associationIndex;
-        state[2] = this.associationBrand;
+        state[1] = associationIndex;
+        state[2] = associationBrand;
         return state;
     }
 
@@ -174,7 +174,7 @@ public class WMUIPropertySheet extends UIPropertySheet {
     public void restoreState(FacesContext context, Object stateObj) {
         Object state[] = (Object[]) stateObj;
         super.restoreState(context, state[0]);
-        this.associationIndex = (Integer) state[1];
-        this.associationBrand = (NodeAssocBrand) state[2];
+        associationIndex = (Integer) state[1];
+        associationBrand = (NodeAssocBrand) state[2];
     }
 }

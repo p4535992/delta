@@ -17,18 +17,18 @@ import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
  * @author Erko Hansar
  */
 public class SendOutBlockBean implements Serializable {
-    
+
     private static final long serialVersionUID = 1L;
-    
+
     private transient SendOutService sendOutService;
-    
+
     private NodeRef document;
     private List<SendInfo> sendInfos;
     private List<CompoundWorkflow> compoundWorkflows;
 
     public void init(Node node, List<CompoundWorkflow> compoundWorkflows) {
         reset();
-        this.document = node.getNodeRef();
+        document = node.getNodeRef();
         this.compoundWorkflows = compoundWorkflows;
         restore();
     }
@@ -43,13 +43,13 @@ public class SendOutBlockBean implements Serializable {
     }
 
     public boolean isRendered() {
-        return this.sendInfos != null && this.sendInfos.size() > 0;
+        return sendInfos != null && sendInfos.size() > 0;
     }
 
     // START: getters / setters
-    
+
     public List<SendInfo> getSendInfos() {
-        return this.sendInfos;
+        return sendInfos;
     }
 
     public SendOutService getSendOutService() {
@@ -61,5 +61,5 @@ public class SendOutBlockBean implements Serializable {
     }
 
     // END: getters / setters
-    
+
 }

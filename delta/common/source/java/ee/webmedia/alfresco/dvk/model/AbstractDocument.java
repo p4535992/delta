@@ -8,7 +8,7 @@ public class AbstractDocument implements IDocument {
      */
     private String senderRegNr;
     private String senderEmail;
-    
+
     @Override
     public String getSenderRegNr() {
         return senderRegNr;

@@ -12,29 +12,29 @@ import ee.webmedia.alfresco.menu.service.MenuService;
  * @author Kaarel Jõgeva
  */
 public class OutboxDocumentMenuItemProcessor extends CountAddingMenuItemProcessor implements MenuItemCountHandler, InitializingBean {
-        public static final String OUTBOX_DOCUMENT = "outboxDocument";
-        private MenuService menuService;
-        private DocumentSearchService documentSearchService;
+    public static final String OUTBOX_DOCUMENT = "outboxDocument";
+    private MenuService menuService;
+    private DocumentSearchService documentSearchService;
 
-        @Override
-        public void afterPropertiesSet() throws Exception {
-            menuService.setCountHandler(OUTBOX_DOCUMENT, this);
-        }
-
-        @Override
-        public int getCount(MenuItem menuItem) {
-            return documentSearchService.searchDocumentsInOutboxCount();
-        }
-
-        // START: getters / setters
-
-        public void setMenuService(MenuService menuService) {
-            this.menuService = menuService;
-        }
-
-        public void setDocumentSearchService(DocumentSearchService documentSearchService) {
-            this.documentSearchService = documentSearchService;
-        }
-
-        // END: getters / setters
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        menuService.setCountHandler(OUTBOX_DOCUMENT, this);
     }
+
+    @Override
+    public int getCount(MenuItem menuItem) {
+        return documentSearchService.searchDocumentsInOutboxCount();
+    }
+
+    // START: getters / setters
+
+    public void setMenuService(MenuService menuService) {
+        this.menuService = menuService;
+    }
+
+    public void setDocumentSearchService(DocumentSearchService documentSearchService) {
+        this.documentSearchService = documentSearchService;
+    }
+
+    // END: getters / setters
+}

@@ -45,6 +45,7 @@ public class BaseWorkflowType implements WorkflowType, InitializingBean {
         this.workflowType = QName.resolveToQName(namespaceService, workflowType);
     }
 
+    @Override
     public Class<? extends Workflow> getWorkflowClass() {
         return workflowClass;
     }
@@ -54,6 +55,7 @@ public class BaseWorkflowType implements WorkflowType, InitializingBean {
         this.workflowClass = workflowClass;
     }
 
+    @Override
     public QName getTaskType() {
         return taskType;
     }
@@ -70,6 +72,7 @@ public class BaseWorkflowType implements WorkflowType, InitializingBean {
         }
     }
 
+    @Override
     public Class<? extends Task> getTaskClass() {
         return taskClass;
     }
@@ -78,6 +81,7 @@ public class BaseWorkflowType implements WorkflowType, InitializingBean {
         this.taskClass = taskClass;
     }
 
+    @Override
     public int getTaskOutcomes() {
         return taskOutcomes;
     }

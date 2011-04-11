@@ -10,10 +10,11 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
-import ee.webmedia.alfresco.addressbook.web.dialog.ConfirmAddDuplicateDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -51,11 +52,30 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Exception {
-        if (this.getEntry() == null) {
+        if (getEntry() == null) {
             Utils.addErrorMessage("addressbook_data_not_found");
+            isFinished = false;
+            skipReset = true;
             return null;
         }
-        return saveData(context, outcome);
+        if (validate()) {
+            return saveData(context, outcome);
+        } else {
+            skipReset = true;
+            isFinished = false;
+        }
+        return null;
+    }
+
+    private boolean validate() {
+        Node contact = getEntry();
+        if (Boolean.TRUE.equals(contact.getProperties().get(AddressbookModel.Props.TASK_CAPABLE))) {
+            if (StringUtils.isBlank((String) contact.getProperties().get(AddressbookModel.Props.EMAIL))) {
+                MessageUtil.addInfoMessage("addressbook_contact_email_empty_error");
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -123,6 +143,13 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
         return MessageUtil.getMessage(messageId);
     }
 
+    public boolean getNotAllowedEditTaskCapable() {
+        if (entry == null || entry instanceof TransientNode) {
+            return false;
+        }
+        return getAddressbookService().isTaskCapableGroupMember(entry.getNodeRef());
+    }
+
     // ------------------------------------------------------------------------------
     // Bean Getters and Setters
 
@@ -139,7 +166,7 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
     }
 
     public Node getEntry() {
-        return this.entry;
+        return entry;
     }
 
 }

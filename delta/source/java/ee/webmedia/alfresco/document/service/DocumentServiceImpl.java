@@ -213,7 +213,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         return createDocument(documentTypeId, parentRef, properties, false, null);
     }
 
-    private Node createDocument(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties, boolean withoutPropModifyingCallbacks, PropertiesModifierCallback callback) {
+    private Node createDocument(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties
+            , boolean withoutPropModifyingCallbacks, PropertiesModifierCallback callback) {
 
         // XXX do we need to check if document type is used?
         if (!dictionaryService.isSubClass(documentTypeId, DocumentCommonModel.Types.DOCUMENT)) {
@@ -512,7 +513,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                     , FUNCTION, SERIES, VOLUME, CASE // location changes
                     , REG_NUMBER, REG_DATE_TIME // registration changes
                     , ACCESS_RESTRICTION // access restriction changed
-            );
+                    );
             if (!EventsLoggingHelper.isLoggingDisabled(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {
                 if (isDraft) {
                     documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_status_created"));
@@ -551,7 +552,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                     }
                     final boolean isInitialDocWithRepliesOrFollowUps //
                     = nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY).size() > 0 //
-                    || nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0;
+                            || nodeService.getSourceAssocs(docNodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0;
                     if (isInitialDocWithRepliesOrFollowUps) {
                         throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_hasReplyOrFollowUp");
                     }
@@ -633,22 +634,29 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         final boolean isErrandMvDocAbroad = DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD_MV.equals(docNodeType);
         final boolean isErrandDocDomestic = DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(docNodeType);
         final boolean isTraining = DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(docNodeType);
-        final boolean isContract = DocumentSubtypeModel.Types.CONTRACT_MV.equals(docNodeType) || DocumentSubtypeModel.Types.CONTRACT_SIM.equals(docNodeType) || DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(docNodeType);
+        final boolean isContract = DocumentSubtypeModel.Types.CONTRACT_MV.equals(docNodeType)
+                || DocumentSubtypeModel.Types.CONTRACT_SIM.equals(docNodeType) || DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(docNodeType);
         propsChanged |= saveRemovedChildAssocsAndReturnCount(docNode) > 0;
         if (isErrandDocAbroad || isErrandMvDocAbroad || isErrandDocDomestic || isTraining) {
             final QName applicantAssoc;
             final QName errandAssocType;
             if (isErrandDocAbroad) {
-                applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD;
-                errandAssocType = DocumentSpecificModel.Assocs.ERRAND_ABROAD;
+                boolean v2 = docNode.hasAspect(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD_V2);
+                applicantAssoc = v2 ? DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD_V2
+                        : DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD;
+                errandAssocType = v2 ? DocumentSpecificModel.Assocs.ERRAND_ABROAD_V2 : DocumentSpecificModel.Assocs.ERRAND_ABROAD;
             } else if (isErrandMvDocAbroad) {
                 applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_ORDER_ABROAD_MV_APPLICANTS;
                 errandAssocType = DocumentSpecificModel.Assocs.ERRAND_ABROAD_MV;
             } else if (isErrandDocDomestic) {
-                applicantAssoc = DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS;
-                errandAssocType = DocumentSpecificModel.Assocs.ERRAND_DOMESTIC;
+                boolean v2 = docNode.hasAspect(DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC_V2);
+                applicantAssoc = v2 ? DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2
+                        : DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS;
+                errandAssocType = v2 ? DocumentSpecificModel.Assocs.ERRAND_DOMESTIC_V2 : DocumentSpecificModel.Assocs.ERRAND_DOMESTIC;
             } else if (isTraining) {
-                applicantAssoc = DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS;
+                boolean v2 = docNode.hasAspect(DocumentSpecificModel.Aspects.TRAINING_APPLICATION_V2);
+                applicantAssoc = v2 ? DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS_V2
+                        : DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS;
                 errandAssocType = null;
             } else {
                 throw new RuntimeException("Unimplemented");
@@ -685,7 +693,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                             }
                         } catch (AlfrescoRuntimeException e) {
                             final String msg = "failed to set properties for nodeRef=" + errandNode.getNodeRef()
-                            + "; properties: " + errandNode.getProperties();
+                                    + "; properties: " + errandNode.getProperties();
                             log.error(msg, e);
                             throw e;
                         }
@@ -693,10 +701,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 }
             }
         }
-        if(isContract){
-            QName partyAssoc = (DocumentSubtypeModel.Types.CONTRACT_MV.equals(docNodeType)) 
-                ? DocumentSpecificModel.Assocs.CONTRACT_MV_PARTIES 
-                : DocumentSpecificModel.Assocs.CONTRACT_PARTIES;
+        if (isContract) {
+            QName partyAssoc = (DocumentSubtypeModel.Types.CONTRACT_MV.equals(docNodeType))
+                    ? DocumentSpecificModel.Assocs.CONTRACT_MV_PARTIES
+                    : DocumentSpecificModel.Assocs.CONTRACT_PARTIES;
             final List<Node> parties = docNode.getAllChildAssociations(partyAssoc);
             if (parties != null && parties.size() >= 0) {
                 for (int i = 0; i < parties.size(); i++) {
@@ -901,9 +909,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         setDocumentSpecificProperties(followupType, baseDoc, followupProps, docProps, copiedProps);
 
         QName baseDocType = baseDoc.getType();
+
+        // @formatter:off
+        /*
         { // copy childNodes
             if (DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(baseDocType)) {
                 List<Node> emptyApplicants = followUpDoc.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS);
+                
                 followUpDoc.removeChildAssociations(DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS, emptyApplicants);
 
                 Map<String, List<Node>> childAssocsByAssocType = baseDoc.getAllChildAssociationsByAssocType();
@@ -911,6 +923,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 copyChildAssocs(childAssocsByAssocType, followUpDoc, DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS);
             }
         }
+        */
+        // @formatter:on
 
         /** Copy common Properties */
         for (Map.Entry<String, Object> prop : docProps.entrySet()) {
@@ -970,7 +984,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                     , DocumentSpecificModel.Props.SENDER_REG_DATE.toString()
                     , DocumentSpecificModel.Props.SENDER_DETAILS_NAME.toString()
                     , DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL.toString()
-            ));
+                    ));
             if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(followupType)) {
                 propsToCopy.add(DocumentSpecificModel.Props.TRANSMITTAL_MODE.toString());
             }
@@ -983,7 +997,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                     , DocumentCommonModel.Props.RECIPIENT_EMAIL.toString()
                     , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.toString()
                     , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.toString()
-            ));
+                    ));
             if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(followupType)) {
                 propsToCopy.add(DocumentCommonModel.Props.SIGNER_NAME.toString());
                 propsToCopy.add(DocumentCommonModel.Props.SIGNER_JOB_TITLE.toString());
@@ -1012,7 +1026,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                     , DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME.toString()
                     , DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_JOB_TITLE.toString()
                     , DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_ORG_STRUCT_UNIT.toString()
-            ));
+                    ));
         }
         if (DocumentSubtypeModel.Types.INTERNAL_APPLICATION.equals(baseDocType)) {
             propsToCopy.add(DocumentCommonModel.Props.SIGNER_NAME.toString());
@@ -1097,11 +1111,11 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         Node doc = getDocument(nodeRef);
         PropertiesModifierCallback callback = null;
         Map<QName, Serializable> properties = null;
-        
+
         // Handle ContractV1 -> ContractV2 copy
-        if(doc.getAspects().contains(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)) {
+        if (doc.getAspects().contains(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)) {
             callback = creationPropertiesModifierCallbacks.get(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1);
-            
+
             Map<String, Object> props = new HashMap<String, Object>(DocumentPropertySets.contractDetailsV1.size());
             for (Map.Entry<String, Object> prop : doc.getProperties().entrySet()) {
                 if (DocumentPropertySets.contractDetailsV1.contains(prop.getKey())) {
@@ -1110,9 +1124,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             }
             properties = RepoUtil.toQNameProperties(props, true);
         }
-        
+
         // create document without calling propertiesModifierCallbacks
-        Node copiedDoc = createDocument(doc.getType(), null, properties, true, callback); 
+        Node copiedDoc = createDocument(doc.getType(), null, properties, true, callback);
         // PROPERTIES
         for (Map.Entry<String, Object> prop : doc.getProperties().entrySet()) {
             if (!DocumentPropertySets.ignoredPropertiesWhenMakingCopy.contains(prop.getKey())) {
@@ -1152,15 +1166,15 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         String caseLbl = caseNode != null ? caseNode.getProperties().get(CaseModel.Props.TITLE).toString() : null;
         String volumeLbl = volumeNode != null ? volumeNode.getProperties().get(VolumeModel.Props.MARK).toString() //
                 + " " + volumeNode.getProperties().get(VolumeModel.Props.TITLE).toString() : null;
-                String seriesLbl = seriesNode != null ? seriesNode.getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER).toString() //
-                        + " " + seriesNode.getProperties().get(SeriesModel.Props.TITLE).toString() : null;
-                        String functionLbl = functionNode != null ? functionNode.getProperties().get(FunctionsModel.Props.MARK).toString() //
-                                + " " + functionNode.getProperties().get(FunctionsModel.Props.TITLE).toString() : null;
-                                props.put(TransientProps.FUNCTION_LABEL, functionLbl);
-                                props.put(TransientProps.SERIES_LABEL, seriesLbl);
-                                props.put(TransientProps.VOLUME_LABEL, volumeLbl);
-                                props.put(TransientProps.CASE_LABEL, caseLbl);
-                                props.put(TransientProps.CASE_LABEL_EDITABLE, caseLbl);
+        String seriesLbl = seriesNode != null ? seriesNode.getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER).toString() //
+                + " " + seriesNode.getProperties().get(SeriesModel.Props.TITLE).toString() : null;
+        String functionLbl = functionNode != null ? functionNode.getProperties().get(FunctionsModel.Props.MARK).toString() //
+                + " " + functionNode.getProperties().get(FunctionsModel.Props.TITLE).toString() : null;
+        props.put(TransientProps.FUNCTION_LABEL, functionLbl);
+        props.put(TransientProps.SERIES_LABEL, seriesLbl);
+        props.put(TransientProps.VOLUME_LABEL, volumeLbl);
+        props.put(TransientProps.CASE_LABEL, caseLbl);
+        props.put(TransientProps.CASE_LABEL_EDITABLE, caseLbl);
     }
 
     @Override
@@ -1720,7 +1734,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             replyAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
         }
         final boolean isReplyOrFollowupDoc = replyAssocs.size() > 0
-        || nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0; //
+                || nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP).size() > 0; //
         return isReplyOrFollowupDoc;
     }
 

@@ -18,8 +18,8 @@ import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
-public class TaskCapablePropertyUpdater extends AbstractNodeUpdater {
-    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(TaskCapablePropertyUpdater.class);
+public class TaskCapablePropertyUpdaterV2 extends AbstractNodeUpdater {
+    private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(TaskCapablePropertyUpdaterV2.class);
 
     private BehaviourFilter behaviourFilter;
     private SearchService searchService;
@@ -27,7 +27,10 @@ public class TaskCapablePropertyUpdater extends AbstractNodeUpdater {
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
-        String query = SearchUtil.generateAspectQuery(AddressbookModel.Aspects.EVERYONE);
+        List<String> queryParts = new ArrayList<String>(2);
+        queryParts.add(SearchUtil.generateAspectQuery(AddressbookModel.Aspects.EVERYONE));
+        queryParts.add(SearchUtil.generateTypeQuery(AddressbookModel.Types.CONTACT_GROUP));
+        String query = SearchUtil.joinQueryPartsOr(queryParts);
         List<ResultSet> result = new ArrayList<ResultSet>(1);
         result.add(searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query));
         return result;
@@ -42,6 +45,9 @@ public class TaskCapablePropertyUpdater extends AbstractNodeUpdater {
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
 
         Map<QName, Serializable> taskCapableProp = new HashMap<QName, Serializable>();
+        if (!nodeService.hasAspect(nodeRef, AddressbookModel.Aspects.TASK_CAPABLE)) {
+            nodeService.addAspect(nodeRef, AddressbookModel.Aspects.TASK_CAPABLE, null);
+        }
         taskCapableProp.put(AddressbookModel.Props.TASK_CAPABLE, Boolean.FALSE);
         nodeService.addProperties(nodeRef, taskCapableProp);
 

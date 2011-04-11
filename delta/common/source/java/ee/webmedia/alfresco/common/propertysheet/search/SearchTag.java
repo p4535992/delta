@@ -1,17 +1,18 @@
 package ee.webmedia.alfresco.common.propertysheet.search;
 
-import org.apache.commons.lang.StringUtils;
+import java.util.Map;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.faces.el.ValueBinding;
 import javax.faces.webapp.UIComponentTag;
-import java.util.Map;
+
+import org.apache.commons.lang.StringUtils;
 
 /**
  * JSF tag for Search.
- *
+ * 
  * @author Romet Aidla
  */
 public class SearchTag extends UIComponentTag {
@@ -26,14 +27,17 @@ public class SearchTag extends UIComponentTag {
     private Boolean showFilter;
     private String filters;
 
+    @Override
     public String getComponentType() {
         return Search.SEARCH_FAMILY;
     }
 
+    @Override
     public String getRendererType() {
         return SearchRenderer.SEARCH_RENDERER_TYPE;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     protected void setProperties(UIComponent component) {
         super.setProperties(component);
@@ -60,16 +64,16 @@ public class SearchTag extends UIComponentTag {
 
         if (readonly != null) {
             if (isValueReference(readonly)) {
-                
+
                 component.setValueBinding("readonly", app.createValueBinding(readonly));
+            } else {
+                attributes.put("readonly", readonly);
             }
-            else {
-                attributes.put("readonly", readonly);                
-            }
-            
+
         }
     }
 
+    @Override
     public void release() {
         super.release();
         value = null;

@@ -63,16 +63,16 @@
       </property-sheet>
    </config>
 
-   <!-- FIXME: comment back in after taskCapable functionality is fully implemented -->
-<!--    <config evaluator="aspect-name" condition="ab:everyone">
+   <config evaluator="aspect-name" condition="ab:everyone">
       <property-sheet>
-         <show-property name="ab:taskCapable" />
+         <show-property name="ab:taskCapable" readOnlyIf="#{AddressbookAddEditDialog.getNotAllowedEditTaskCapable}" />
       </property-sheet>
-   </config> -->
+   </config>
 
    <config evaluator="aspect-name" condition="ab:contactGroupProperties">
       <property-sheet>
          <show-property name="ab:groupName" />
+         <show-property name="ab:taskCapable" readOnlyIf="#{ContactGroupListDialog.getNotAllowedEditTaskCapable}"/>
       </property-sheet>
    </config>
    
@@ -198,7 +198,7 @@
             show-ok-button="true" />
 
          <dialog name="addressbookManageContactGroups" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-list-dialog.jsp" managed-bean="ContactGroupListDialog"
-            icon="/images/icons/users_large.gif" title-id="addressbook_contactgroup_title" actions-config-id="addressbook_contactgroup_menu" show-ok-button="false" />
+            icon="/images/icons/users_large.gif" title-id="addressbook_contactgroup_title" actions-config-id="addressbook_contactgroup_menu" show-ok-button="true" />
             
          <dialog name="addressbookManageContacts" page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/contactgroup-contacts-dialog.jsp" managed-bean="ContactGroupContactsDialog"
             icon="/images/icons/users_large.gif" title-id="addressbook_contactgroup_title" actions-config-id="addressbook_contactgroup_contacts_menu" />

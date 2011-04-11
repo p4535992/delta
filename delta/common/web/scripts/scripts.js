@@ -80,6 +80,10 @@ function isIE8() {
 	return false;
 }
 
+function round(floatVal, decimals) {
+   return Math.round(floatVal * Math.pow(10, decimals)) / Math.pow(10, decimals);
+}
+
 
 function zIndexWorkaround(context)
 {
@@ -781,6 +785,23 @@ $jQ(document).ready(function() {
 			return false;
 	   }
    });
+   
+   $jQ(".errandEndDate").live('change', function (event) {
+      // Get the date
+      var elem = $jQ(this);
+      if (elem != null) {
+         // Find the report due date
+         var errandEnd = elem.datepicker('getDate');
+         var reportDue = new Date(errandEnd.getFullYear(), errandEnd.getMonth(), errandEnd.getDate() + 5);
+         if (reportDue.getDay() == 6) { // Saturday
+            reportDue = new Date(reportDue.getFullYear(), reportDue.getMonth(), reportDue.getDate() + 2);
+         } else if (reportDue.getDay() == 0) { // Sunday
+            reportDue = new Date(reportDue.getFullYear(), reportDue.getMonth(), reportDue.getDate() + 1);
+         }
+         // Set date
+         elem.closest(".panel-border").find(".reportDueDate").datepicker('setDate',  reportDue);
+      }
+   });
 
    if(isIE()) {
 	   // http://www.htmlcenter.com/blog/fixing-the-ie-text-selection-bug/
@@ -826,6 +847,53 @@ $jQ(document).ready(function() {
    window.dhtmlHistory.initialize();
    window.dhtmlHistory.addListener(historyListener);
    window.dhtmlHistory.add(randomHistoryHash(), null);
+   
+
+   jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField").live('change', function(event) {
+      var elem = $jQ(this);
+      // Calculate sum for current row
+      var row = elem.closest("tr");
+      var allowanceDays = parseInt(row.find(".dailyAllowanceDaysField").val());
+      var allowanceRate = parseInt(row.find(".dailyAllowanceRateField").val());
+      var sumField = row.find(".dailyAllowanceSumField");
+      if(!allowanceDays || !allowanceRate) {
+         return;
+      }
+      var sum = allowanceDays * (allowanceRate / 100) * sumField.attr("datafld");
+      if (sum) {
+         sumField.val(round(sum, 2));
+      }
+      
+      // Sum all rows in this block and set total daily allowance sum
+      var totalSum = 0;
+      var sumFields = $jQ(".dailyAllowanceSumField", row.closest("table"));
+      sumFields.each(function() {
+         var sum = parseFloat($jQ(this).val());
+         if(sum) {
+            totalSum = totalSum + sum;
+         }
+      });
+      
+      row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").val(totalSum);
+   });
+   
+   jQuery(".expectedExpenseSumField").live('keyup', function(event) {
+      var elem = $jQ(this);
+      var totalSum = 0;
+      var sum = 0;
+      var sumString;
+      elem.closest("table").find(".expectedExpenseSumField").each(function () {
+         sumString = $jQ(this).val();
+         sumString = sumString.replace(",", ".");
+         sum = parseFloat(sumString);
+         if(sum) {
+            totalSum += sum;
+         }
+      });
+      
+      var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField");
+      totalField.val(totalSum);
+   });
 
    handleHtmlLoaded(null, selects);
 });
@@ -865,7 +933,9 @@ function extendCondencePlugin() {
          lessText: getTranslation('jQuery.condence.lessText'),
          ellipsis: "",
          condensedLength: condenceAtChar,
-         minTrail: moreTxt.length
+         minTrail: moreTxt.length,
+         strictTrim: true  // assume that condense content is text (i.e. doesn't contain html elements) 
+                           // and don't search for word breaks for triming text  
          }
        );
    });

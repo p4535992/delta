@@ -62,7 +62,10 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.ISO9075;
 import org.alfresco.web.app.servlet.DownloadContentServlet;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Repository;
+
+import ee.webmedia.alfresco.common.service.ApplicationService;
 
 // TODO: DownloadServlet - use of request parameter for property name?
 // TODO: Anyway to switch content view url link / property value text?
@@ -668,6 +671,33 @@ public class AdminNodeBrowseBean implements Serializable
         setNodeRef(childRef);
         return "success";
     }
+    
+    // START: Node delete related code
+    /**
+     * Action to delete child
+     * 
+     * @return next action
+     */
+    private transient ApplicationService applicationService;
+
+    public ApplicationService getApplicationService() {
+        if (applicationService == null) {
+            applicationService = (ApplicationService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ApplicationService.BEAN_NAME);
+        }
+        return applicationService;
+    }
+
+    public String deleteChild() {
+        if (getApplicationService().isTest()) {
+            ChildAssociationRef assocRef = (ChildAssociationRef) getChildren().getRowData();
+            NodeRef childRef = assocRef.getChildRef();
+            getNodeService().deleteNode(childRef);
+            setNodeRef(getNodeRef());
+        }
+        return "success";
+    }
+
+    // END: Node delete related code
 
     /**
      * Action to select search result node
@@ -691,6 +721,7 @@ public class AdminNodeBrowseBean implements Serializable
     {
         RetryingTransactionCallback<String> searchCallback = new RetryingTransactionCallback<String>()
         {
+            @Override
             public String execute() throws Throwable
             {
                 if (queryLanguage.equals("noderef"))

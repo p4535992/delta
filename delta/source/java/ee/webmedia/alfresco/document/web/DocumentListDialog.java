@@ -57,14 +57,14 @@ public class DocumentListDialog extends BaseDocumentListDialog {
 
     @Override
     public void restored() {
-        final NodeRef parentRef ;
+        final NodeRef parentRef;
         if (parentCase != null) {
             parentRef = parentCase.getNode().getNodeRef();
         } else {// assuming that parentVolume is volume
             parentRef = parentVolume.getNode().getNodeRef();
         }
         documents = getChildNodes(parentRef);
-        if(documents.size()<=2000) {//if sorting takes less than ca 6 sec (ca 15ms per document, 400doc*15ms==6sec)
+        if (documents.size() <= 2000) {// if sorting takes less than ca 6 sec (ca 15ms per document, 400doc*15ms==6sec)
             Collections.sort(documents);// sorting needs properties to be fetched from repo
         }
     }
@@ -117,5 +117,5 @@ public class DocumentListDialog extends BaseDocumentListDialog {
     }
 
     // END: getters / setters
-    
+
 }

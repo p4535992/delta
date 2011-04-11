@@ -24,9 +24,9 @@ import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocumentsImpl;
 import ee.webmedia.alfresco.util.ContentCreatorHelper;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplTest;
+
 /**
  * @author Ats Uiboupin
- *
  */
 public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DvkServiceImplTest.class);
@@ -34,11 +34,10 @@ public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
 
     private FileFolderService fileFolderService;
     private DvkService dvkService;
-//    private SendOutService sendOutService; //TODO: SendOutService
+    // private SendOutService sendOutService; //TODO: SendOutService
 
     private NodeRef sendableDocFolderNodeRef;
     private NodeRef sendableDocFileNodeRef;
-
 
     @Override
     protected void onSetUpInTransaction() throws Exception {
@@ -52,21 +51,21 @@ public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
     public void testWarmUp() {
         log.debug("warmup done to get better time measure for the first test");
     }
-    
+
     public final void testSendDocuments() {
-//        Collection<ContentToSend> contentsToSend = getContentsToSend();
+        // Collection<ContentToSend> contentsToSend = getContentsToSend();
         Collection<ContentToSend> contentsToSend = getContentsToSend();
         final DvkSendLetterDocuments sendDocument = getSendDocument();
         final String dvkId = dvkService.sendLetterDocuments(sendableDocFolderNodeRef, contentsToSend, sendDocument);
-        log.debug("Sent document id's:"+dvkId);
-        //TODO: SendOutService
-//        final List<SendOutItem> sendOutItems = sendOutService.getSendOut(sendableDocFolderNodeRef);
-//        Assert.assertEquals(sendDocument.getRecipientsRegNrs().size(), sendOutItems.size());
-//        for (SendOutItem sendOutItem : sendOutItems) {
-//            log.debug("sendOutItem: " + ToStringBuilder.reflectionToString(sendOutItem, ToStringStyle.MULTI_LINE_STYLE) + "'");
-//        }
+        log.debug("Sent document id's:" + dvkId);
+        // TODO: SendOutService
+        // final List<SendOutItem> sendOutItems = sendOutService.getSendOut(sendableDocFolderNodeRef);
+        // Assert.assertEquals(sendDocument.getRecipientsRegNrs().size(), sendOutItems.size());
+        // for (SendOutItem sendOutItem : sendOutItems) {
+        // log.debug("sendOutItem: " + ToStringBuilder.reflectionToString(sendOutItem, ToStringStyle.MULTI_LINE_STYLE) + "'");
+        // }
     }
-    
+
     private static DvkSendLetterDocuments getSendDocument() {
         DvkSendLetterDocuments sd = new DvkSendLetterDocumentsImpl();
         sd.setSenderOrgName("Test Org");
@@ -77,8 +76,8 @@ public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
 
         List<String> recipients = DhlXTeeServiceImplTest.getRecipients();
         sd.setRecipientsRegNrs(recipients);
-//        sd.setRecipientsRegNrs(Arrays.asList("10391131", "10425769"));
-//        sd.setRecipientsRegNrs(Arrays.asList("10391131"));
+        // sd.setRecipientsRegNrs(Arrays.asList("10391131", "10425769"));
+        // sd.setRecipientsRegNrs(Arrays.asList("10391131"));
 
         sd.setLetterSenderTitle("Tähtis dokument - testimiseks");
         sd.setDocType("someType1");
@@ -97,23 +96,23 @@ public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
 
         return sd;
     }
-    
+
     private Set<ContentToSend> getContentsToSend() {
         final Set<ContentToSend> contentsToSend = DhlXTeeServiceImplTest.getContentsToSend();
         final ContentToSend content1 = new ContentToSend();
         final ContentReader reader = fileFolderService.getReader(sendableDocFileNodeRef);
         final ByteArrayOutputStream bos1 = new ByteArrayOutputStream();
         reader.getContent(bos1);
-        
+
         content1.setFileName("test1.txt");
         content1.setInputStream(new ByteArrayInputStream(bos1.toByteArray()));
         content1.setMimeType("text/plain");
-        
+
         contentsToSend.add(content1);
         contentsToSend.addAll(getContentsToSend2());
         return contentsToSend;
     }
-    
+
     private Set<ContentToSend> getContentsToSend2() {
         final HashSet<ContentToSend> contentsToSend = new HashSet<ContentToSend>();
         try {
@@ -155,10 +154,10 @@ public class DvkServiceImplTest extends BaseAlfrescoSpringTest {
     public void setFileFolderService(FileFolderService fileFolderService) {
         this.fileFolderService = fileFolderService;
     }
-    
-    //TODO: SendOutService
-//    public void setSendOutService(SendOutService sendOutService) {
-//        this.sendOutService = sendOutService;
-//    }
-    
+
+    // TODO: SendOutService
+    // public void setSendOutService(SendOutService sendOutService) {
+    // this.sendOutService = sendOutService;
+    // }
+
 }

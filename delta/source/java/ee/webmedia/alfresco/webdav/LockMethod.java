@@ -49,17 +49,16 @@ import org.dom4j.io.XMLWriter;
  * 
  * @author gavinc
  */
-public class LockMethod extends WebDAVMethod
-{
+public class LockMethod extends WebDAVMethod {
     private String m_strLockToken = null;
-    //timeout duration in seconds
+    // timeout duration in seconds
     private static final int m_timeoutDuration = 180;
     private int m_requestTimeoutDuration;
 
     /**
      * Default constructor
      */
-    public LockMethod(){
+    public LockMethod() {
     }
 
     /**
@@ -67,7 +66,7 @@ public class LockMethod extends WebDAVMethod
      * 
      * @return boolean
      */
-    protected final boolean hasLockToken(){
+    protected final boolean hasLockToken() {
         return m_strLockToken != null ? true : false;
     }
 
@@ -76,8 +75,7 @@ public class LockMethod extends WebDAVMethod
      * 
      * @return String
      */
-    protected final String getLockToken()
-    {
+    protected final String getLockToken() {
         return m_strLockToken;
     }
 
@@ -86,8 +84,7 @@ public class LockMethod extends WebDAVMethod
      * 
      * @return int
      */
-    protected final int getLockTimeout()
-    {
+    protected final int getLockTimeout() {
         return m_timeoutDuration;
     }
 
@@ -96,8 +93,8 @@ public class LockMethod extends WebDAVMethod
      * 
      * @exception WebDAVServerException
      */
-    protected void parseRequestHeaders() throws WebDAVServerException
-    {
+    @Override
+    protected void parseRequestHeaders() throws WebDAVServerException {
         // Get the lock token, if any
 
         m_strLockToken = parseIfHeader();
@@ -109,31 +106,24 @@ public class LockMethod extends WebDAVMethod
         // If the timeout header starts with anything other than Second
         // leave the timeout as the default
 
-        if (strTimeout != null && strTimeout.startsWith(WebDAV.SECOND))
-        {
-            try
-            {
+        if (strTimeout != null && strTimeout.startsWith(WebDAV.SECOND)) {
+            try {
                 // Some clients send header as Second-180 Seconds so we need to
                 // look for the space
 
                 int idx = strTimeout.indexOf(" ");
 
-                if (idx != -1)
-                {
+                if (idx != -1) {
                     // Get the bit after Second- and before the space
 
                     strTimeout = strTimeout.substring(WebDAV.SECOND.length(), idx);
-                }
-                else
-                {
+                } else {
                     // The string must be in the correct format
 
                     strTimeout = strTimeout.substring(WebDAV.SECOND.length());
                 }
                 m_requestTimeoutDuration = Integer.parseInt(strTimeout);
-            }
-            catch (Exception e)
-            {
+            } catch (Exception e) {
                 // Warn about the parse failure and leave the timeout as the
                 // default
 
@@ -143,9 +133,10 @@ public class LockMethod extends WebDAVMethod
 
         // DEBUG
 
-        if (logger.isDebugEnabled())
+        if (logger.isDebugEnabled()) {
             logger.debug("Lock lockToken=" + getLockToken() + ", request timeout=" + m_requestTimeoutDuration
                     + ", user-agent=" + m_request.getHeader(WebDAV.HEADER_USER_AGENT));
+        }
     }
 
     /**
@@ -153,35 +144,30 @@ public class LockMethod extends WebDAVMethod
      * 
      * @exception WebDAVServerException
      */
-    protected void parseRequestBody() throws WebDAVServerException
-    {
+    @Override
+    protected void parseRequestBody() throws WebDAVServerException {
         // NOTE: There is a body for lock requests which contain the
         // type of lock to apply and the lock owner but we will
         // ignore these settings so don't bother reading the body
-    }    
+    }
 
     @Override
-    protected void executeImpl() throws WebDAVServerException, Exception
-    {
+    protected void executeImpl() throws WebDAVServerException, Exception {
         String path = getPath();
         // Get the active user
         String userName = getDAVHelper().getAuthenticationService().getCurrentUserName();
 
-        if (logger.isDebugEnabled())
-        {
+        if (logger.isDebugEnabled()) {
             logger.debug("Locking node: \n" +
                     "   user: " + userName + "\n" +
                     "   path: " + path);
         }
 
         FileInfo lockNodeInfo = null;
-        try
-        {
+        try {
             // Check if the path exists
             lockNodeInfo = getDAVHelper().getNodeForPath(getRootNodeRef(), getPath(), m_request.getServletPath());
-        }
-        catch (FileNotFoundException e)
-        {
+        } catch (FileNotFoundException e) {
             // create not allowed
             throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
         }
@@ -189,13 +175,10 @@ public class LockMethod extends WebDAVMethod
         Map<QName, Serializable> originalProps = getNodeService().getProperties(lockNodeInfo.getNodeRef());
 
         // Check if this is a new lock or a refresh
-        if (hasLockToken())
-        {
+        if (hasLockToken()) {
             // Refresh an existing lock
             refreshLock(lockNodeInfo.getNodeRef(), userName);
-        }
-        else
-        {
+        } else {
             // Create a new lock
             createLock(lockNodeInfo.getNodeRef(), userName);
         }
@@ -223,28 +206,27 @@ public class LockMethod extends WebDAVMethod
      * @param userName String
      * @exception WebDAVServerException
      */
-    private final void createLock(NodeRef lockNode, String userName) throws WebDAVServerException
-    {
+    private final void createLock(NodeRef lockNode, String userName) throws WebDAVServerException {
         LockService lockService = getLockService();
 
         // Check the lock status of the node
         LockStatus lockSts = lockService.getLockStatus(lockNode);
 
         // DEBUG
-        if (logger.isDebugEnabled())
+        if (logger.isDebugEnabled()) {
             logger.debug("Create lock status=" + lockSts);
+        }
 
-        if (lockSts == LockStatus.LOCKED || lockSts == LockStatus.LOCK_OWNER)
-        {
+        if (lockSts == LockStatus.LOCKED || lockSts == LockStatus.LOCK_OWNER) {
             // Indicate that the resource is already locked
             throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
         }
-        
+
         // Lock the node
         lockService.lock(lockNode, LockType.WRITE_LOCK, getLockTimeout());
-        
-        ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().addVersionLockableAspect(lockNode);
-        ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().setVersionLockableAspect(lockNode, false);
+
+        ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().addVersionLockableAspect(lockNode);
+        ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().setVersionLockableAspect(lockNode, false);
     }
 
     /**
@@ -254,19 +236,18 @@ public class LockMethod extends WebDAVMethod
      * @param userName String
      * @exception WebDAVServerException
      */
-    private final void refreshLock(NodeRef lockNode, String userName) throws WebDAVServerException
-    {
+    private final void refreshLock(NodeRef lockNode, String userName) throws WebDAVServerException {
         LockService lockService = getLockService();
 
         // Check the lock status of the node
         LockStatus lockSts = lockService.getLockStatus(lockNode);
 
         // DEBUG
-        if (logger.isDebugEnabled())
+        if (logger.isDebugEnabled()) {
             logger.debug("Refresh lock status=" + lockSts);
+        }
 
-        if (lockSts != LockStatus.LOCK_OWNER)
-        {
+        if (lockSts != LockStatus.LOCK_OWNER) {
             // Indicate that the resource is already locked
             throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
         }
@@ -278,8 +259,7 @@ public class LockMethod extends WebDAVMethod
     /**
      * Generates the XML lock discovery response body
      */
-    private void generateResponse(NodeRef lockNode, String userName) throws Exception
-    {
+    private void generateResponse(NodeRef lockNode, String userName) throws Exception {
         XMLWriter xml = createXMLWriter();
 
         xml.startDocument();

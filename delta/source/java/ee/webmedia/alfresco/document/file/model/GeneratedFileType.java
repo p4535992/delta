@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.file.model;
 
+import ee.webmedia.alfresco.document.file.model.FileModel.Props;
+
 /**
  * Used as a marker in Props#GENERATION_TYPE field for concrete type of generated file
  * 

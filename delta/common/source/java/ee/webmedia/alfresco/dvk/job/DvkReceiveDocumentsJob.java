@@ -25,6 +25,7 @@ import ee.webmedia.alfresco.dvk.service.DvkServiceImpl;
 public class DvkReceiveDocumentsJob implements Job {
     private static Log log = LogFactory.getLog(DvkReceiveDocumentsJob.class);
 
+    @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         log.debug("Starting DvkReceiveDocumentsJob");
         JobDataMap jobData = context.getJobDetail().getJobDataMap();
@@ -33,7 +34,7 @@ public class DvkReceiveDocumentsJob implements Job {
             throw new AlfrescoRuntimeException("DvkReceiveDocumentsJob data must contain valid 'DvkService' reference");
         }
         final DvkService worker = (DvkService) workerObj;
-        
+
         // Run job as with systemUser privileges
         final Collection<String> receivedDocumentDhlIds = AuthenticationUtil.runAs(new RunAsWork<Collection<String>>() {
             @Override
@@ -43,7 +44,7 @@ public class DvkReceiveDocumentsJob implements Job {
         }, AuthenticationUtil.getSystemUserName());
         // Done
         if (log.isDebugEnabled()) {
-            log.debug("DvkReceiveDocumentsJob done, received "+receivedDocumentDhlIds.size()+" documents: "+receivedDocumentDhlIds);
+            log.debug("DvkReceiveDocumentsJob done, received " + receivedDocumentDhlIds.size() + " documents: " + receivedDocumentDhlIds);
         }
     }
 }

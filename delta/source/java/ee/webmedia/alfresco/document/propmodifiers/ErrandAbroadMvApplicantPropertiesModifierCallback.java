@@ -6,8 +6,9 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
+import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.document.model.DocChildAssocInfoHolder;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 /**
@@ -16,25 +17,25 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
  * @author Ats Uiboupin
  */
 public class ErrandAbroadMvApplicantPropertiesModifierCallback extends AbstractDocChildCreator {
-    
+
     @Override
     public QName getAspectName() {
         return DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD_MV;
     }
-    
+
     @Override
     public void doWithProperties(Map<QName, Serializable> properties) {
     }
 
     @Override
-    protected List<Pair<QName, QName>> getAssocTypesAndAssocTargetTypes() {
-        final Pair<QName, QName> doc2Applicant = new Pair<QName, QName>(
+    protected List<DocChildAssocInfoHolder> getDocChildAssocInfo(Node docNode) {
+        final DocChildAssocInfoHolder doc2Applicant = new DocChildAssocInfoHolder(
                 DocumentSpecificModel.Assocs.ERRAND_ORDER_ABROAD_MV_APPLICANTS,
                 DocumentSpecificModel.Types.ERRAND_ORDER_ABROAD_MV_APPLICANT_MV);
-        final Pair<QName, QName> applicant2Errand = new Pair<QName, QName>(
+        final DocChildAssocInfoHolder applicant2Errand = new DocChildAssocInfoHolder(
                 DocumentSpecificModel.Assocs.ERRAND_ABROAD_MV,
                 DocumentSpecificModel.Types.ERRAND_ABROAD_MV_TYPE);
-        final ArrayList<Pair<QName, QName>> result = new ArrayList<Pair<QName, QName>>(2);
+        final ArrayList<DocChildAssocInfoHolder> result = new ArrayList<DocChildAssocInfoHolder>(2);
         result.add(doc2Applicant);
         result.add(applicant2Errand);
         return result;

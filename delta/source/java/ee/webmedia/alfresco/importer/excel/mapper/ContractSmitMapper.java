@@ -15,7 +15,7 @@ public class ContractSmitMapper extends AbstractSmitExcelMapper<ContractSmitDocu
     Integer RegNumber;
 
     /** E: Leping objekt (docName) */
-    @ExcelColumn('E') // FIXME
+    @ExcelColumn('E')
     Integer DocName;
 
     /** F: Leping sõlmiti (comment) */

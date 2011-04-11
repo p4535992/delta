@@ -35,8 +35,7 @@ import ee.webmedia.alfresco.common.service.GeneralService;
  * show-property element can have following attributes:
  * <ul>
  * <li>{@link #STYLE_CLASS} - style class that will be added</li>
- * <li>{@link #RENDERER_TYPE} - renderer that will be used(to generate textArea(by default) or for example plain
- * input(ComponentConstants#JAVAX_FACES_PANELGROUP)</li>
+ * <li>{@link #RENDERER_TYPE} - renderer that will be used(to generate textArea(by default) or for example plain input(ComponentConstants#JAVAX_FACES_PANELGROUP)</li>
  * <li>{@link #LAYOUT} - {@value #LAYOUT_SIDE_BY_SIDE} will give side-by-side layout opposed to default row-by-row</li>
  * <ul>
  * 
@@ -106,7 +105,7 @@ public class ClassificatorSelectorAndTextGenerator extends TextAreaGenerator {
     protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,
             UIComponent component) {
         super.setupProperty(context, propertySheet, item, propertyDef, component);
-        if(textTargetComponent!=null) {
+        if (textTargetComponent != null) {
             textTargetComponent.setValueBinding("value", component.getValueBinding("value"));
         }
     }

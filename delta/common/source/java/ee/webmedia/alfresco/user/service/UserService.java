@@ -21,7 +21,6 @@ public interface UserService {
     String DOCUMENT_MANAGERS_DISPLAY_NAME = "document_managers_display_name";
     String ALFRESCO_ADMINISTRATORS_DISPLAY_NAME = "alfresco_administrators_display_name";
 
-    
     /**
      * Fetches the node reference, where user preferences are kept
      * 
@@ -29,7 +28,7 @@ public interface UserService {
      * @return
      */
     NodeRef getUsersPreferenceNodeRef(String userName);
-    
+
     /**
      * Checks if user has administrative privileges
      * 
@@ -43,7 +42,7 @@ public interface UserService {
      * @return true if belongs
      */
     boolean isDocumentManager();
-    
+
     boolean isDocumentManager(String userName);
 
     /**
@@ -52,9 +51,9 @@ public interface UserService {
      * @return group name with group type prefix
      */
     String getDocumentManagersGroup();
-    
+
     /**
-     * Return group name for Alfresco administrators group  
+     * Return group name for Alfresco administrators group
      * 
      * @return group name with group type prefix
      */
@@ -69,12 +68,14 @@ public interface UserService {
 
     /**
      * Searches for users from a specified group.
+     * 
      * @see #searchUsers(String, boolean)
      */
     List<Node> searchUsers(String input, boolean returnAllUsers, String group);
 
     /**
-     * Fetches the users node 
+     * Fetches the users node
+     * 
      * @param userName
      * @return node representing the user
      */
@@ -103,6 +104,7 @@ public interface UserService {
 
     /**
      * Returns a map with the user's properties.
+     * 
      * @param userName
      * @return
      */
@@ -111,7 +113,8 @@ public interface UserService {
     Map<QName, Serializable> getCurrentUserProperties();
 
     /**
-     * Returns username of the authenticated user. 
+     * Returns username of the authenticated user.
+     * 
      * @return
      */
     String getCurrentUserName();

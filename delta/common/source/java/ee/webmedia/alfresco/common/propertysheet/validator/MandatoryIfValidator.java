@@ -224,6 +224,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
         return propertyInput;
     }
 
+    @Override
     public Object saveState(FacesContext context) {
         Object values[] = new Object[3];
         values[0] = evaluationExpression;
@@ -231,6 +232,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
         return values;
     }
 
+    @Override
     public void restoreState(FacesContext context,
             Object state) {
         Object values[] = (Object[]) state;
@@ -245,7 +247,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
 
     @Override
     public void setTransient(boolean newTransientValue) {
-        this._transient = newTransientValue;
+        _transient = newTransientValue;
     }
 
     private boolean isOtherFilledAndMandatory(UIInput propertyInput) {
@@ -279,7 +281,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
 
     // START: getters / setters
     public void setOtherPropertyName(String otherPropertyName) {
-        this.evaluationExpression = otherPropertyName;
+        evaluationExpression = otherPropertyName;
     }
 
     // END: getters / setters

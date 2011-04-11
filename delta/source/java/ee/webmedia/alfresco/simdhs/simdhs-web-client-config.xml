@@ -1,4 +1,9 @@
 <alfresco-config>
+   <plug-ins>
+      <evaluators>
+         <evaluator id="node-type-and-aspect-name" class="ee.webmedia.alfresco.document.web.evaluator.NodeTypeAndAspectNameEvaluator" />
+      </evaluators>
+   </plug-ins>
    <config>
       <dialogs>
          <dialog name="informingDeleteNodeDialog" page="/jsp/dialog/delete.jsp" managed-bean="InformingDeleteNodeDialog" icon="/images/icons/delete.gif" />

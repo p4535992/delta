@@ -1,11 +1,18 @@
 package ee.webmedia.alfresco.document.propmodifiers;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
-import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
+import javax.faces.context.FacesContext;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.namespace.QName;
+import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.repository.Node;
+
+import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
+import ee.webmedia.alfresco.document.model.DocChildAssocInfoHolder;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 
 /**
@@ -17,17 +24,21 @@ public class TrainingDocChildCreator extends AbstractDocChildCreator {
 
     @Override
     public QName getAspectName() {
-        return DocumentSpecificModel.Aspects.TRAINING_APPLICATION;
+        return DocumentSpecificModel.Aspects.TRAINING_APPLICATION_V2;
     }
 
     @Override
-    protected List<Pair<QName, QName>> getAssocTypesAndAssocTargetTypes() {
-        final Pair<QName, QName> doc2Applicant = new Pair<QName, QName>(
-                DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS,
-                DocumentSpecificModel.Types.TRAINING_APPLICATION_APPLICANT_TYPE);
-        final ArrayList<Pair<QName, QName>> result = new ArrayList<Pair<QName, QName>>(2);
+    protected List<DocChildAssocInfoHolder> getDocChildAssocInfo(Node docNode) {
+        final DocChildAssocInfoHolder doc2Applicant = new DocChildAssocInfoHolder(
+                DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS_V2,
+                DocumentSpecificModel.Types.TRAINING_APPLICATION_APPLICANT_TYPE_V2,
+                getMetadataBlock().setApplicantName(AuthenticationUtil.getRunAsUser(), new HashMap<String, Object>(), null));
+        final ArrayList<DocChildAssocInfoHolder> result = new ArrayList<DocChildAssocInfoHolder>(1);
         result.add(doc2Applicant);
         return result;
     }
 
+    public MetadataBlockBean getMetadataBlock() {
+        return (MetadataBlockBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MetadataBlockBean.BEAN_NAME);
+    }
 }

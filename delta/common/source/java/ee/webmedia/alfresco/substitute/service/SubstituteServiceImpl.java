@@ -1,9 +1,17 @@
 package ee.webmedia.alfresco.substitute.service;
 
-import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.substitute.model.Substitute;
-import ee.webmedia.alfresco.substitute.model.SubstituteModel;
-import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -13,24 +21,16 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
-import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
-import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
+import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.substitute.model.Substitute;
+import ee.webmedia.alfresco.substitute.model.SubstituteModel;
+import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 /**
  * @author Romet Aidla
@@ -48,7 +48,6 @@ public class SubstituteServiceImpl implements SubstituteService {
         substituteBeanPropertyMapper = BeanPropertyMapper.newInstance(Substitute.class);
     }
 
-
     @Override
     public List<Substitute> getSubstitutes(NodeRef userNodeRef) {
         NodeRef substitutesNodeRef = getSubstitutesNode(userNodeRef, false);
@@ -64,6 +63,7 @@ public class SubstituteServiceImpl implements SubstituteService {
         return substitutes;
     }
 
+    @Override
     public Substitute getSubstitute(NodeRef substituteRef) {
         Substitute substitute = substituteBeanPropertyMapper.toObject(nodeService.getProperties(substituteRef));
         substitute.setNodeRef(substituteRef);
@@ -73,7 +73,7 @@ public class SubstituteServiceImpl implements SubstituteService {
 
     private String getReplacedPersonUserName(NodeRef substituteRef) {
         List<ChildAssociationRef> substitutionsAssocs = nodeService.getParentAssocs(substituteRef);
-        if (substitutionsAssocs.size() != 1)  {
+        if (substitutionsAssocs.size() != 1) {
             throw new RuntimeException("Substitute is expected to have only one parent association, but got " + substitutionsAssocs.size() + " matching the criteria.");
         }
 
@@ -95,7 +95,9 @@ public class SubstituteServiceImpl implements SubstituteService {
                 SubstituteModel.Types.SUBSTITUTE,
                 SubstituteModel.Types.SUBSTITUTE,
                 properties);
-        if (log.isDebugEnabled()) log.debug("Substitute node added: " + assoc.getChildRef());
+        if (log.isDebugEnabled()) {
+            log.debug("Substitute node added: " + assoc.getChildRef());
+        }
         substitute.setNodeRef(assoc.getChildRef());
         return substitute.getNodeRef();
     }
@@ -107,15 +109,21 @@ public class SubstituteServiceImpl implements SubstituteService {
         Assert.isTrue(nodeService.exists(substitute.getNodeRef()), "Substitute must exist");
 
         nodeService.setProperties(substitute.getNodeRef(), substituteBeanPropertyMapper.toProperties(substitute));
-        if (log.isDebugEnabled()) log.debug("Substitute (" + substitute.getNodeRef() + ") properties updated");
+        if (log.isDebugEnabled()) {
+            log.debug("Substitute (" + substitute.getNodeRef() + ") properties updated");
+        }
     }
 
     @Override
     public void deleteSubstitute(NodeRef substituteNodeRef) {
         Assert.notNull(substituteNodeRef, "Substitute reference not provided");
-        if (log.isDebugEnabled()) log.debug("Starting to delete substitute:" + substituteNodeRef);
+        if (log.isDebugEnabled()) {
+            log.debug("Starting to delete substitute:" + substituteNodeRef);
+        }
         nodeService.deleteNode(substituteNodeRef);
-        if (log.isDebugEnabled()) log.debug("Substitute (" + substituteNodeRef + ") deleted");
+        if (log.isDebugEnabled()) {
+            log.debug("Substitute (" + substituteNodeRef + ") deleted");
+        }
     }
 
     @Override
@@ -157,11 +165,9 @@ public class SubstituteServiceImpl implements SubstituteService {
                 return null;
             }
             substitutesNodeRef = createSubstitutesNode(userNodeRef);
-        }
-        else if (subs.size() == 1) {
+        } else if (subs.size() == 1) {
             substitutesNodeRef = subs.get(0).getChildRef();
-        }
-        else {
+        } else {
             throw new RuntimeException(String.format("There shouldn't be more than one substitutes root (currently: %d) for user:%s", subs.size(), userNodeRef));
         }
 

@@ -28,14 +28,13 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 /**
  * Attributes:
  * <ul>
- * <li>{@code textId} - Label-id of main text to be displayed. Each {@code #} in the text is substituted with a component according to {@code props} attribute.
- * Exactly the same number of components are placed in the text, as are defined in {@code props} attribute, remaining {@code #} characters are left untouched.</li>
+ * <li>{@code textId} - Label-id of main text to be displayed. Each {@code #} in the text is substituted with a component according to {@code props} attribute. Exactly the same
+ * number of components are placed in the text, as are defined in {@code props} attribute, remaining {@code #} characters are left untouched.</li>
  * <li>{@code escapeText} - default true. If set to false, html tags could be used in text referenced by textId</li>
  * <li>{@code optionsSeparator} - custom separator for options for cases where default separator can't be used because it is used in options as well</li>
- * <li>{@code props} - Comma-separated list of property names. Each property name may have additional options appended, separated by {@code |} (or custom
- * separator defined with <code>optionsSeparator</code> attribute - for example <code>optionsSeparator="¤"</code>).<br/>
- * The first option after property name must be component generator name. It may be left empty, then a default generator according to property data type is
- * used.<br/>
+ * <li>{@code props} - Comma-separated list of property names. Each property name may have additional options appended, separated by {@code |} (or custom separator defined with
+ * <code>optionsSeparator</code> attribute - for example <code>optionsSeparator="¤"</code>).<br/>
+ * The first option after property name must be component generator name. It may be left empty, then a default generator according to property data type is used.<br/>
  * The following options after component generator name are set as component's attributes, these must be in the format {@code attributeName=attributeValue}.<br/>
  * For example: {@code props="ex:regNr1,ex:name1||styleClass=green,ex:date1|CustomDatePicker|styleClass=date inline|mandatoryIf=ex:other1"}</li>
  * </ul>

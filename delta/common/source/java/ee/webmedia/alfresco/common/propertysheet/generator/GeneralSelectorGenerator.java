@@ -27,7 +27,6 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.converter.BooleanToLabelConverter;
-import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -40,10 +39,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
     public static final String ATTR_SELECTION_ITEMS = "selectionItems";
-    //The following variables' values are also hardcoded in scripts.js, so change the values simultaneously here and in javascript 
+    // The following variables' values are also hardcoded in scripts.js, so change the values simultaneously here and in javascript
     public static final String ONCHANGE_SCRIPT_START_MARKER = "====";
-    public static final String ONCHANGE_MARKER_CLASS = "selectWithOnchangeEvent";    
+    public static final String ONCHANGE_MARKER_CLASS = "selectWithOnchangeEvent";
 
+    @Override
     public UIComponent generate(FacesContext context, String id) {
         // do nothing
         return null;
@@ -76,7 +76,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         @SuppressWarnings("unchecked")
         Map<String, Object> requestMap = context.getExternalContext().getRequestMap();
         final Integer valueIndex = (Integer) requestMap.get(VALUE_INDEX_IN_MULTIVALUED_PROPERTY);
-        if(valueIndex == null || valueIndex < 0 ) {
+        if (valueIndex == null || valueIndex < 0) {
             return multiValued;
         }
         return false;
@@ -94,7 +94,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
             Map<String, Object> attributes = component.getAttributes();
             attributes.put(STYLE_CLASS, styleClass);
         }
-        
+
         if (customAttributes.containsKey(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX)) {
             component.getAttributes().put(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX, customAttributes.get(BooleanToLabelConverter.CONVERTER_LABEL_PREFIX));
         }
@@ -130,9 +130,9 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         String valueChangeListener = getCustomAttributes().get("valueChangeListener");
         if (StringUtils.isNotBlank(valueChangeListener)) {
             ((UIInput) component).setValueChangeListener(context.getApplication().createMethodBinding(valueChangeListener,
-                new Class[] { ValueChangeEvent.class }));
+                    new Class[] { ValueChangeEvent.class }));
             final String onchange;
-            if(Boolean.valueOf(getCustomAttributes().get(AjaxUpdateable.AJAX_DISABLED_ATTR))) {
+            if (Boolean.valueOf(getCustomAttributes().get(AjaxUpdateable.AJAX_DISABLED_ATTR))) {
                 onchange = Utils.generateFormSubmit(context, component);
             } else {
                 onchange = ComponentUtil.generateAjaxFormSubmit(context, component);
@@ -140,7 +140,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
             if (component instanceof HtmlSelectOneMenu) {
                 ((HtmlSelectOneMenu) component).setStyleClass(ONCHANGE_MARKER_CLASS + ONCHANGE_SCRIPT_START_MARKER + onchange);
             } else if (component instanceof HtmlSelectManyListbox) {
-                //TODO: check if this class behaves correctly in IE8 with onChange and jQuery change event both active
+                // TODO: check if this class behaves correctly in IE8 with onChange and jQuery change event both active
                 ((HtmlSelectManyListbox) component).setOnchange(onchange);
             }
         }

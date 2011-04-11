@@ -16,7 +16,6 @@ import org.apache.commons.logging.LogFactory;
 
 /**
  * Authentication via JAAS - we are using it to authenticate with Kerberos (against Active Directory)
- * 
  * For JAAS to work, a configuration file needs to exist and some environment variables need to be set.
  * Currently this is done in CAS application - it means that CAS application needs to be deployed on the same application server as this application.
  */
@@ -61,16 +60,17 @@ public class JAASAuthenticationComponent extends SimpleUpdatingAuthenticationCom
             this.password = password;
         }
 
+        @Override
         public void handle(Callback[] callbacks) throws IOException, UnsupportedCallbackException {
-            for (int i = 0; i < callbacks.length; i++) {
-                if (callbacks[i] instanceof NameCallback) {
-                    NameCallback cb = (NameCallback) callbacks[i];
+            for (Callback callback : callbacks) {
+                if (callback instanceof NameCallback) {
+                    NameCallback cb = (NameCallback) callback;
                     cb.setName(userName);
-                } else if (callbacks[i] instanceof PasswordCallback) {
-                    PasswordCallback cb = (PasswordCallback) callbacks[i];
+                } else if (callback instanceof PasswordCallback) {
+                    PasswordCallback cb = (PasswordCallback) callback;
                     cb.setPassword(password);
                 } else {
-                    throw new UnsupportedCallbackException(callbacks[i]);
+                    throw new UnsupportedCallbackException(callback);
                 }
             }
         }

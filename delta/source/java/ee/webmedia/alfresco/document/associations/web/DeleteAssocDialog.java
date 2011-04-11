@@ -18,20 +18,20 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class DeleteAssocDialog extends DeleteContentDialog {
 
     private static final long serialVersionUID = 1L;
-    transient private DocumentService documentService; 
-    
+    transient private DocumentService documentService;
+
     private NodeRef document;
     private NodeRef nodeRef;
     private NodeRef caseNodeRef;
     private boolean source;
-    
+
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DeleteAssocDialog.class);
-    
+
     @Override
     public void init(Map<String, String> parameters) {
         super.init(parameters);
     }
-    
+
     private void reset() {
         document = null;
         nodeRef = null;
@@ -42,7 +42,7 @@ public class DeleteAssocDialog extends DeleteContentDialog {
     protected String getErrorMessageId() {
         return "document_deleteAssocDialog_deleteAssocError";
     }
-    
+
     @Override
     public String getConfirmMessage() {
         return MessageUtil.getMessage("document_deleteAssocDialog_deleteAssocConfirm");
@@ -54,7 +54,7 @@ public class DeleteAssocDialog extends DeleteContentDialog {
             if (caseNodeRef != null) {
                 getDocumentService().deleteAssoc(document, caseNodeRef, CaseModel.Associations.CASE_DOCUMENT);
             } else {
-                if(source) {
+                if (source) {
                     getDocumentService().deleteAssoc(nodeRef, document, null);
                 } else {
                     getDocumentService().deleteAssoc(document, nodeRef, null);
@@ -67,38 +67,38 @@ public class DeleteAssocDialog extends DeleteContentDialog {
         MessageUtil.addInfoMessage("document_assocDelete_success");
         return null;
     }
-    
+
     @Override
     protected String doPostCommitProcessing(FacesContext context, String outcome) {
         return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
     }
-    
+
     public void setupAssoc(ActionEvent event) {
         reset();
-        
+
         document = new NodeRef(ActionUtil.getParam(event, "documentRef"));
 
         String caseNodeRefString = ActionUtil.getParam(event, "caseNodeRef");
-        if(!(caseNodeRefString == null || caseNodeRefString.equals("null"))) {
-            caseNodeRef =  new NodeRef(caseNodeRefString);
+        if (!(caseNodeRefString == null || caseNodeRefString.equals("null"))) {
+            caseNodeRef = new NodeRef(caseNodeRefString);
         }
-        
+
         String nodeRefString = ActionUtil.getParam(event, "nodeRef");
-        if(!(nodeRefString == null || nodeRefString.equals("null"))) {
-            nodeRef =  new NodeRef(nodeRefString);
+        if (!(nodeRefString == null || nodeRefString.equals("null"))) {
+            nodeRef = new NodeRef(nodeRefString);
         }
-        
+
         String sourceNode = ActionUtil.getParam(event, "source");
-        if(!(sourceNode == null || sourceNode.equals("null"))) {
+        if (!(sourceNode == null || sourceNode.equals("null"))) {
             source = Boolean.parseBoolean(sourceNode);
         }
     }
-    
+
     @Override
     public String getContainerTitle() {
         return "Seose kustutamine";
     }
-    
+
     // START: getters / setters
 
     public DocumentService getDocumentService() {
@@ -112,7 +112,7 @@ public class DeleteAssocDialog extends DeleteContentDialog {
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
     }
-    
+
     // END: getters / setters
 
 }

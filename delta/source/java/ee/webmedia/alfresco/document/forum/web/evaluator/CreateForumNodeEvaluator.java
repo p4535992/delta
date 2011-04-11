@@ -27,15 +27,15 @@ public class CreateForumNodeEvaluator extends BaseActionEvaluator {
         String userName = AuthenticationUtil.getRunAsUser();
         GeneralService generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(GeneralService.BEAN_NAME);
         node = generalService.fetchNode(node.getNodeRef()); // refresh the node, because dialog caches it, and sub dialogs change props/aspects
-        
+
         boolean inEditMode = bean.isInEditMode();
         boolean statusWorking = bean.getDocument().getProperties().get(DocumentCommonModel.Props.DOC_STATUS.toString()).toString().equals(DocumentStatus.WORKING.getValueName());
         boolean isDiscussed = node.hasAspect(ForumModel.ASPECT_DISCUSSABLE);
         boolean isDocManager = userService.isDocumentManager();
         boolean isOwner = userName.equals(node.getProperties().get(DocumentCommonModel.Props.OWNER_ID)); // it appears that OWNER_ID is null if document is from IMAP
         boolean isCompoundWorkflowOwner = workflowBlock.isCompoundWorkflowOwner();
-        boolean isWorkingTaskOwner =  workflowBlock.getMyTasks().size() > 0;
-        
+        boolean isWorkingTaskOwner = workflowBlock.getMyTasks().size() > 0;
+
         return !inEditMode && statusWorking && !isDiscussed && (isDocManager || isOwner || isCompoundWorkflowOwner || isWorkingTaskOwner);
     }
 

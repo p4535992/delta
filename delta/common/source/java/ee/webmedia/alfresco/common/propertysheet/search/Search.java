@@ -187,7 +187,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
                     MethodBinding b = getFacesContext().getApplication().createMethodBinding(setterCallback, paramsTypes.toArray(new Class[paramsTypes.size()]));
                     b.invoke(context, argValues.toArray());
                 }
-                
+
             }
         }
         getAttributes().remove(OPEN_DIALOG_KEY);
@@ -212,7 +212,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         UIComponent container = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_PANELGROUP);
         FacesHelper.setupComponentId(context, container, null);
         children.add(container);
- 
+
         if (isMultiValued()) {
             int rows = getList(context).size();
             for (int rowIndex = 0; rowIndex < rows; rowIndex++) {
@@ -313,7 +313,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         final Boolean takesNode = (Boolean) attributes.get(Search.SETTER_CALLBACK_TAKES_NODE);
         return takesNode == null ? false : takesNode;
     }
-    
+
     protected String getSetterCallback() {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = getAttributes();
@@ -323,7 +323,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     protected boolean isDisabled() {
         return Utils.isComponentDisabledOrReadOnly(this);
     }
-    
+
     protected boolean isMultiValued() {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = getAttributes();
@@ -347,7 +347,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         Map<String, Object> attributes = getAttributes();
         return attributes.containsKey("editable") && (Boolean) attributes.get("editable");
     }
-    
+
     protected Integer getSuggestChars() {
         return (Integer) getAttributes().get(SUGGEST_CHARS_KEY);
     }

@@ -10,7 +10,6 @@ import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 /**
  * @author Kaarel Jõgeva
- *
  */
 @AlfrescoModelType(uri = DocumentTemplateModel.URI)
 public class DocumentTemplate implements Serializable {
@@ -66,7 +65,7 @@ public class DocumentTemplate implements Serializable {
     public void setDownloadUrl(String downloadUrl) {
         this.downloadUrl = downloadUrl;
     }
-    
+
     public String getDocTypeName() {
         return docTypeName;
     }

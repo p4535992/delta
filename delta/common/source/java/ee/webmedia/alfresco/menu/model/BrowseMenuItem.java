@@ -35,13 +35,13 @@ public class BrowseMenuItem extends MenuItem {
     public BrowseMenuItem() {
         super();
     }
-    
+
     @Override
     public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService) {
-        if(isRestricted() && !hasPermissions(userService)) {
+        if (isRestricted() && !hasPermissions(userService)) {
             return null;
         }
-        
+
         if (isExternalReview() && !isExternalReviewEnabled(workflowService)) {
             return null;
         }
@@ -54,13 +54,13 @@ public class BrowseMenuItem extends MenuItem {
         YahooTreeItem ytItem = (YahooTreeItem) context.getApplication().createComponent(YahooTreeItem.class.getCanonicalName());
         FacesHelper.setupComponentId(context, ytItem, null);
         ytItem.setNodeRef(nodeRef);
-        if(isShowChildrenCount()) {
+        if (isShowChildrenCount()) {
             ytItem.setChildrenCount(getNodeChildrenCount(context, nodeRef));
         } else {
             ytItem.setShowChildrenCount(false);
         }
-        
-        if(getTitle() == null) {
+
+        if (getTitle() == null) {
             setTitle(I18NUtil.getMessage(getTitleId()));
         }
         ytItem.setTitle(getTitle());
@@ -85,7 +85,7 @@ public class BrowseMenuItem extends MenuItem {
         MenuService menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext(context).getBean(
                 MenuService.BEAN_NAME);
         return menuService.getNodeRefForXPath(context, XPath);
-        
+
     }
 
     /**

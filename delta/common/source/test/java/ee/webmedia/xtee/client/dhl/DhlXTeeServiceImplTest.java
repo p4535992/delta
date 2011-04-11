@@ -76,7 +76,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
     private static final File testFilesToSendFolder = new File("common/source/test/java/ee/webmedia/xtee/client/testFilesToSend");
 
     private static boolean markOnlyTestDocumentsRead = true;
-    
+
     private static DhlXTeeService.DvkOrganizationsUpdateStrategy cachePeriodUpdateStrategy //
     = new DhlXTeeService.DvkOrganizationsCacheingUpdateStrategy().setMaxUpdateInterval(24).setTimeUnit(Calendar.HOUR);
     private static List<String> recipients;
@@ -86,8 +86,8 @@ public class DhlXTeeServiceImplTest extends TestCase {
     protected void setUp() throws Exception {
         super.setUp();
         if (dhl == null) {
-          final ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("ee/webmedia/xtee/client/dhl/service-impl-test.xml");
-//            final ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("client-test.xml");
+            final ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("ee/webmedia/xtee/client/dhl/service-impl-test.xml");
+            // final ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("client-test.xml");
             dhl = (DhlXTeeService) context.getBean("dhlXTeeService");
             propertiesResolver = (XTeeProviderPropertiesResolver) context.getBean("xTeeServicePropertiesResolver");
         }
@@ -211,7 +211,7 @@ public class DhlXTeeServiceImplTest extends TestCase {
     }
 
     /**
-     * Test method for {@link DhlXTeeService#receiveDocuments(int)
+     * Test method for {@link DhlXTeeService#receiveDocuments(int)
      */
     public void testReceiveDocuments() {
         receivedDocumentsFailed = true;
@@ -278,8 +278,8 @@ public class DhlXTeeServiceImplTest extends TestCase {
 
     public void testMarkDocumentsReceived() {
         final Collection<String> docsToMarkRead;
-        if(markOnlyTestDocumentsRead) {
-            // don't mark those documents read that were not sent during this test - someone might acutaly 
+        if (markOnlyTestDocumentsRead) {
+            // don't mark those documents read that were not sent during this test - someone might acutaly
             // be waiting for them to arrive
             docsToMarkRead = sentDocIds;
         } else {
@@ -288,17 +288,16 @@ public class DhlXTeeServiceImplTest extends TestCase {
                     receivedDocumentIds = new ArrayList<String>();
                 }
                 // if call to receivedDocuments failed, then marking those documents read, that were sent for testing
-                receivedDocumentIds.addAll(sentDocIds); 
+                receivedDocumentIds.addAll(sentDocIds);
             }
             docsToMarkRead = receivedDocumentIds;
         }
-        log.info("Starting to mark "+(markOnlyTestDocumentsRead ? "only test": "received" )+" document received - receivedDocumentIds=" + docsToMarkRead);
+        log.info("Starting to mark " + (markOnlyTestDocumentsRead ? "only test" : "received") + " document received - receivedDocumentIds=" + docsToMarkRead);
         dhl.markDocumentsReceived(docsToMarkRead);
     }
 
     /**
-     * Test method for {@link ee.webmedia.xtee.dvk.service.impl.DvkServiceImpl#getSendStatuses(String)
-
+     * Test method for {@link ee.webmedia.xtee.dvk.service.impl.DvkServiceImpl#getSendStatuses(String)
      */
     public void testGetSendStatus2() {
         final List<Item> items = dhl.getSendStatuses(sentDocIds);

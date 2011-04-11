@@ -8,29 +8,29 @@ import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
-import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
-import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
-
 /**
  * @author Alar Kvell
  */
 public class WorkflowEventQueue {
 
-    private List<WorkflowEvent> events = new ArrayList<WorkflowEvent>();
-    private Date now = new Date();
+    private final List<WorkflowEvent> events = new ArrayList<WorkflowEvent>();
+    private final Date now = new Date();
 
-    private Map<WorkflowQueueParameter, Object> parameters = new HashMap<WorkflowQueueParameter, Object>();
-    
-    public enum WorkflowQueueParameter{
-        TRIGGERED_BY_DOC_REGISTRATION, // Boolean
-        TRIGGERED_BY_FINISHING_EXTERNAL_REVIEW_TASK_ON_CURRENT_SYSTEM, // Boolean, true if finishing task 
-                                                        //  is initiated by curren system, 
-                                                        // not by recieving finished task over dvk
-        EXTERNAL_REVIEWER_TRIGGERING_TASK, // NodeRef
-        EXTERNAL_REVIEW_PROCESSED_DOCUMENTS, // List<NodeRef>
-        ADDITIONAL_EXTERNAL_REVIEW_RECIPIENTS // Map<NodeRef, List<String>>
+    private final Map<WorkflowQueueParameter, Object> parameters = new HashMap<WorkflowQueueParameter, Object>();
+
+    public enum WorkflowQueueParameter {
+        /** Boolean */
+        TRIGGERED_BY_DOC_REGISTRATION,
+        /** Boolean, true if finishing task is initiated by curren system, not by recieving finished task over dvk */
+        TRIGGERED_BY_FINISHING_EXTERNAL_REVIEW_TASK_ON_CURRENT_SYSTEM,
+        /** NodeRef */
+        EXTERNAL_REVIEWER_TRIGGERING_TASK,
+        /** List<NodeRef> */
+        EXTERNAL_REVIEW_PROCESSED_DOCUMENTS,
+        /** Map<NodeRef, List<String>> */
+        ADDITIONAL_EXTERNAL_REVIEW_RECIPIENTS
     }
-    
+
     public List<WorkflowEvent> getEvents() {
         return events;
     }
@@ -56,15 +56,15 @@ public class WorkflowEventQueue {
     public Map<WorkflowQueueParameter, Object> getParameters() {
         return parameters;
     }
-    
+
     public <T extends Object> T getParameter(WorkflowQueueParameter key) {
         @SuppressWarnings("unchecked")
         T value = (T) parameters.get(key);
         return value;
     }
-    
+
     public void setParameter(WorkflowQueueParameter key, Object value) {
         parameters.put(key, value);
-    }    
-    
+    }
+
 }

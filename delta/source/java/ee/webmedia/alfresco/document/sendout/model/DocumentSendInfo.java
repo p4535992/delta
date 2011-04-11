@@ -15,7 +15,7 @@ public class DocumentSendInfo implements Serializable, SendInfo {
 
     private static final long serialVersionUID = 1L;
 
-    private Node node;
+    private final Node node;
 
     public DocumentSendInfo(Node node) {
         Assert.notNull(node);

@@ -6,7 +6,6 @@ import org.alfresco.service.namespace.QName;
 
 /**
  * @author Kaarel Jõgeva
- *
  */
 public interface DocumentTemplateModel {
 

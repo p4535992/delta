@@ -62,7 +62,7 @@ public class UserDetailsDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        this.user = null;
+        user = null;
         substituteListDialog.cancel();
         return super.cancel();
     }
@@ -96,7 +96,7 @@ public class UserDetailsDialog extends BaseDialogBean {
 
         List<Node> users = new ArrayList<Node>(1);
         users.add(node);
-        this.user = getOrganizationStructureService().setUsersUnit(users).get(0);
+        user = getOrganizationStructureService().setUsersUnit(users).get(0);
     }
 
     /**
@@ -117,7 +117,7 @@ public class UserDetailsDialog extends BaseDialogBean {
     public void setupUser(String userName) {
         List<Node> users = new ArrayList<Node>(1);
         users.add(new Node(properties.getPersonService().getPerson(userName)));
-        this.user = getOrganizationStructureService().setUsersUnit(users).get(0);
+        user = getOrganizationStructureService().setUsersUnit(users).get(0);
     }
 
     public UsersBeanProperties getProperties() {

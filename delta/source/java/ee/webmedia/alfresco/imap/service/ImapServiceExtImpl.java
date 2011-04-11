@@ -94,6 +94,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         return addBehaviour(imapService.getFolder(user, folderName));
     }
 
+    @Override
     public long saveEmail(NodeRef folderNodeRef, MimeMessage mimeMessage, boolean incomingEmail) throws FolderException { // todo: ex handling
         try {
             String name = AlfrescoImapConst.MESSAGE_PREFIX + GUID.generate();
@@ -125,9 +126,9 @@ public class ImapServiceExtImpl implements ImapServiceExt {
                 List<String> names = new ArrayList<String>(allRecipients.length);
                 List<String> emails = new ArrayList<String>(allRecipients.length);
                 if (allRecipients != null) {
-                    for (int i = 0; i < allRecipients.length; i++) {
-                        names.add(((InternetAddress) allRecipients[i]).getPersonal());
-                        emails.add(((InternetAddress) allRecipients[i]).getAddress());
+                    for (Address recient : allRecipients) {
+                        names.add(((InternetAddress) recient).getPersonal());
+                        emails.add(((InternetAddress) recient).getAddress());
                     }
                 }
                 properties.put(DocumentCommonModel.Props.RECIPIENT_NAME, (Serializable) names);
@@ -160,6 +161,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         }
     }
 
+    @Override
     public void saveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody)
             throws IOException, MessagingException, TransformationException {
         if (saveBody) {
@@ -180,6 +182,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         }
     }
 
+    @Override
     public NodeRef getAttachmentRoot() {
         NodeRef attachmentSpaceRef = generalService.getNodeRef(ImapModel.Repo.ATTACHMENT_SPACE);
         Assert.notNull(attachmentSpaceRef, "Attachment node reference not found");
@@ -302,13 +305,15 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             for (int i = 0; i < mp.getCount(); i++) {
                 Part bp = mp.getBodyPart(i);
                 if (bp.isMimeType("text/plain")) {
-                    if (text == null)
+                    if (text == null) {
                         text = getText(bp);
+                    }
                     continue;
                 } else if (bp.isMimeType("text/html")) {
                     Part s = getText(bp);
-                    if (s != null)
+                    if (s != null) {
                         return s;
+                    }
                 } else {
                     return getText(bp);
                 }
@@ -318,8 +323,9 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             Multipart mp = (Multipart) p.getContent();
             for (int i = 0; i < mp.getCount(); i++) {
                 Part s = getText(mp.getBodyPart(i));
-                if (s != null)
+                if (s != null) {
                     return s;
+                }
             }
         }
         return null;
@@ -332,7 +338,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         if (folderInfo != null) { // todo: why folder info is null?
             appendBehaviour = (String) folderInfo.getProperties().get(ImapModel.Properties.APPEND_BEHAVIOUR);
             if (appendBehaviour == null) {
-                appendBehaviour = PermissionDeniedAppendBehaviour.BEHAVIOUR_NAME;   
+                appendBehaviour = PermissionDeniedAppendBehaviour.BEHAVIOUR_NAME;
             }
         } else {
             appendBehaviour = PermissionDeniedAppendBehaviour.BEHAVIOUR_NAME;

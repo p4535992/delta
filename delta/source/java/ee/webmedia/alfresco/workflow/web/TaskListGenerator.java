@@ -195,10 +195,9 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     nameInput.setReadonly(true);
                     putAttribute(nameInput, "styleClass", "ownerName medium");
                     String nameValueBinding = null;
-                    if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)){
+                    if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
                         nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.INSTITUTION_NAME);
-                    }
-                    else {
+                    } else {
                         nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.OWNER_NAME);
                     }
                     nameInput.setValueBinding("value", application.createValueBinding(nameValueBinding));
@@ -236,7 +235,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         putAttribute(statusInput, "styleClass", "margin-left-4 small");
                         taskGridChildren.add(statusInput);
 
-                        if(task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)){
+                        if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
                             HtmlInputText sendStatusInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
                             sendStatusInput.setId("task-sendStatus-" + listId + "-" + counter);
                             sendStatusInput.setReadonly(true);
@@ -438,7 +437,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
         if (TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE.equals(searchType)) {
             callbackB = "#{DialogManager.bean.executeResponsibleOwnerSearch}";
             searchProcessingB = "#{DialogManager.bean.processResponsibleOwnerSearchResults}";
-        } else if (TaskOwnerSearchType.TASK_OWNER_SEARCH_EXTERNAL_REVIEW.equals(searchType)){
+        } else if (TaskOwnerSearchType.TASK_OWNER_SEARCH_EXTERNAL_REVIEW.equals(searchType)) {
             callbackB = "#{DialogManager.bean.executeExternalReviewOwnerSearch}";
             searchProcessingB = "#{DialogManager.bean.processExternalReviewOwnerSearchResults}";
         } else {
@@ -452,7 +451,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
     protected ValueBinding createPickerValueBinding(Application application, TaskOwnerSearchType searchType) {
         if (TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE.equals(searchType)) {
             return application.createValueBinding("#{OwnerSearchBean.responsibleOwnerSearchFilters}");
-        } else if (TaskOwnerSearchType.TASK_OWNER_SEARCH_EXTERNAL_REVIEW.equals(searchType)){
+        } else if (TaskOwnerSearchType.TASK_OWNER_SEARCH_EXTERNAL_REVIEW.equals(searchType)) {
             return application.createValueBinding("#{DialogManager.bean.externalReviewOwnerSearchFilters}");
         } else {
             return application.createValueBinding("#{DialogManager.bean.ownerSearchFilters}");

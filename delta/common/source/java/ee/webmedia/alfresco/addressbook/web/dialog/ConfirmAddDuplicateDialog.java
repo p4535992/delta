@@ -6,8 +6,6 @@ import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 
-import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookAddEditDialog;
-
 /**
  * Dialog that shows confirmation message before adding duplicate
  * 

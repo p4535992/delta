@@ -20,11 +20,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * Generate {@link Search} component. Property must be multi-valued and not protected. Usually it is also desireable to specify a {@code converter}. Additional
  * attributes:
  * <ul>
- * <li>{@code pickerCallback} (mandatory) - callback which returns search results for a given input (JSF {@link MethodBinding}). For method signature and
- * description, see {@link AddUsersDialog#pickerCallback(int, String)}</li>
+ * <li>{@code pickerCallback} (mandatory) - callback which returns search results for a given input (JSF {@link MethodBinding}). For method signature and description, see
+ * {@link AddUsersDialog#pickerCallback(int, String)}</li>
  * <li>{@code dialogTitleId} (optional) - search popup dialog's title message ID</li>
- * <li>{@code editable} (optional - default true if property is not multivalued, false otherwise) - should values be only specified using picker (editable =
- * false) or in addition to picker should component value be editable by typing arbitary value(editable = true) <br>
+ * <li>{@code editable} (optional - default true if property is not multivalued, false otherwise) - should values be only specified using picker (editable = false) or in addition
+ * to picker should component value be editable by typing arbitary value(editable = true) <br>
  * NB! note that for multivalued component you must also implement {@link Converter#getAsObject(FacesContext, UIComponent, String)}</li>
  * </ul>
  * 

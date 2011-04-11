@@ -15,10 +15,12 @@ import javax.faces.webapp.UIComponentTag;
  */
 public class HTMLCustomSelectOneRadioTag extends UIComponentTag {
 
+    @Override
     public String getComponentType() {
         return "component.CustomSelectOneRadio";
     }
 
+    @Override
     public String getRendererType() {
         return "renderer.CustomSelectOneRadio";
     }
@@ -141,6 +143,7 @@ public class HTMLCustomSelectOneRadioTag extends UIComponentTag {
         value = string;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     protected void setProperties(UIComponent component) {
         super.setProperties(component);

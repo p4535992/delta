@@ -19,14 +19,14 @@ import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsW
  * @author Erko Hansar
  */
 public class TextAreaAlwaysEditGenerator extends TextAreaGenerator implements GeneratorsWrapper {
-    
+
     @Override
     protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,
             UIComponent component) {
         super.setupProperty(context, propertySheet, item, propertyDef, component);
         unsetReadOnly(component);
     }
-    
+
     @SuppressWarnings("unchecked")
     private void unsetReadOnly(UIComponent component) {
         component.getAttributes().put("readonly", Boolean.FALSE);

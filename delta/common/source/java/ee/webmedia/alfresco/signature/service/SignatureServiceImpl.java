@@ -88,7 +88,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
     }
 
     public void setjDigiDocCfgTest(String jDigiDocCfg) {
-        this.jDigiDocCfgTest = jDigiDocCfg;
+        jDigiDocCfgTest = jDigiDocCfg;
     }
 
     public void setPkcs12Container(String pkcs12Container) {
@@ -163,7 +163,8 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             signedDoc = getSignedDoc(inputStream, includeData);
             return getDataItemsAndSignatureItems(signedDoc, null, includeData);
         } catch (Exception e) {
-            throw new SignatureException("Failed to get ddoc data and signature items, inputStream = " + ObjectUtils.identityToString(inputStream) + ", includeData = " + includeData, e);
+            throw new SignatureException("Failed to get ddoc data and signature items, inputStream = "
+                    + ObjectUtils.identityToString(inputStream) + ", includeData = " + includeData, e);
         }
     }
 
@@ -228,7 +229,8 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             signedDoc = createSignedDoc(contents);
             addSignature(signedDoc, signatureDigest, signatureHex);
             writeSignedDoc(nodeRef, signedDoc);
-            nodeService.setProperty(nodeRef, ContentModel.PROP_NAME, FilenameUtils.removeExtension((String) nodeService.getProperty(nodeRef, ContentModel.PROP_NAME)) + ".ddoc");
+            nodeService.setProperty(nodeRef, ContentModel.PROP_NAME,
+                    FilenameUtils.removeExtension((String) nodeService.getProperty(nodeRef, ContentModel.PROP_NAME)) + ".ddoc");
         } catch (Exception e) {
             throw new SignatureRuntimeException("Failed to change existing doc to ddoc or add signature to ddoc file, nodeRef = " + nodeRef
                     + ", signatureDigest = " + signatureDigest + ", signatureHex = " + signatureHex, e);
@@ -277,14 +279,14 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         // And the following exception is thrown:
         // DigiDocException.code: 65
         // DigiDocException.message: ERROR: 65java.net.ConnectException; nested exception is:
-        //      java.net.ConnectException: Connection refused
+        // java.net.ConnectException: Connection refused
 
         // If connection to OCSP server fails, then the following error is logged:
         // ERROR [ee.sk.digidoc.DigiDocException] - <java.net.ConnectException: Connection timed out>
         // And the following exception is thrown:
         // DigiDocException.code: 65
         // DigiDocException.message: ERROR: 65java.net.ConnectException; nested exception is:
-        //      java.net.ConnectException: Connection timed out
+        // java.net.ConnectException: Connection timed out
 
         log.debug(timer);
     }
@@ -463,7 +465,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         datafile.createCacheFile();
 
         // Newlines must always be writtes as '\n', otherwise signature is not valid
-        OutputStream os = new Base64OutputStream(new BufferedOutputStream(new FileOutputStream(datafile.getDfCacheFile())), true, 64, new byte[] {'\n'});
+        OutputStream os = new Base64OutputStream(new BufferedOutputStream(new FileOutputStream(datafile.getDfCacheFile())), true, 64, new byte[] { '\n' });
         reader.getContent(os); // closes both streams
 
         datafile.setSize(reader.getSize());
@@ -482,7 +484,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
                 StringBuilder s = new StringBuilder("bindCleanTempFiles");
                 s.append("\n  signedDoc=").append(ObjectUtils.identityToString(signedDoc));
                 s.append("\n  countDataFiles=").append(signedDoc.countDataFiles());
-                for(int i = 0; i < signedDoc.countDataFiles(); i++) {
+                for (int i = 0; i < signedDoc.countDataFiles(); i++) {
                     s.append("\n  dataFile[").append(i).append("]=").append(signedDoc.getDataFile(i).getFileName());
                 }
                 log.debug(s.toString());
@@ -526,7 +528,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         if (org.apache.commons.lang.StringUtils.isBlank(displayName)) {
             return fileInfo.getName();
         }
-        
+
         return FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(displayName));
     }
 

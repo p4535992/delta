@@ -17,7 +17,7 @@ public class Classificator implements Serializable {
     private String name;
     @XStreamOmitField
     private boolean addRemoveValues;
-    
+
     @AlfrescoModelProperty(isMappable = false)
     @XStreamOmitField
     private NodeRef nodeRef;

@@ -146,6 +146,9 @@
                <mandatory>true</mandatory>
             </property>
          </properties>
+         <mandatory-aspects>
+            <aspect>ab:taskCapable</aspect>
+         </mandatory-aspects>
       </aspect>
 
       <aspect name="ab:organizationProperties">
@@ -225,12 +228,20 @@
             <property name="ab:phone">
                <type>d:text</type>
             </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>ab:taskCapable</aspect>
+         </mandatory-aspects>
+      </aspect>
+      
+      <aspect name="ab:taskCapable">
+         <properties>
             <property name="ab:taskCapable">
                <type>d:boolean</type>
-               <mandatory>true</mandatory>               
+               <mandatory enforced="true">false</mandatory>               
                <default>false</default>
-            </property>            
-         </properties>
+            </property> 
+         </properties>      
       </aspect>
 
       <aspect name="ab:person">

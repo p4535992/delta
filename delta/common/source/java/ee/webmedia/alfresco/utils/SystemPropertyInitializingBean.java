@@ -10,6 +10,7 @@ public class SystemPropertyInitializingBean implements InitializingBean {
     private Map<String, String> systemProperties;
 
     /** Sets the system properties */
+    @Override
     public void afterPropertiesSet() throws Exception {
         if (systemProperties == null || systemProperties.isEmpty()) {
             return;

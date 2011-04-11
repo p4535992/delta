@@ -12,7 +12,7 @@ public enum StorageType {
     private String valueName;
 
     StorageType(String value) {
-        this.valueName = value;
+        valueName = value;
     }
 
     public String getValueName() {
@@ -20,6 +20,6 @@ public enum StorageType {
     }
 
     public boolean equals(String value) {
-        return this.valueName.equalsIgnoreCase(value);
+        return valueName.equalsIgnoreCase(value);
     }
 }

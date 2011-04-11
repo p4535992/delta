@@ -10,7 +10,7 @@ public interface WorkflowEvent {
     WorkflowEventType getType();
 
     BaseWorkflowObject getObject();
-    
+
     Object[] getExtras();
 
 }

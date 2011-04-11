@@ -1,12 +1,16 @@
 package ee.webmedia.alfresco.parameters.model;
 
+import static ee.webmedia.alfresco.parameters.model.Parameter.ImportStatus.PARAM_CHANGED;
+import static ee.webmedia.alfresco.parameters.model.Parameter.ImportStatus.PARAM_DESC_CHANGED;
+import static ee.webmedia.alfresco.parameters.model.Parameter.ImportStatus.PARAM_NEW;
+import static ee.webmedia.alfresco.parameters.model.Parameter.ImportStatus.PARAM_NOT_CHANGED;
+
 import java.io.Serializable;
 import java.util.Date;
 
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
-import static ee.webmedia.alfresco.parameters.model.Parameter.ImportStatus.*;
 
 /**
  * @author Ats Uiboupin

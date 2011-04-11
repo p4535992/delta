@@ -58,7 +58,7 @@ public class FieldMismatchException extends RuntimeException {
 
     private List<String> overTakeCauseMessages() {
         final List<String> causeMessages2passOver = causeMessages;
-        this.causeMessages = new ArrayList<String>(0);
+        causeMessages = new ArrayList<String>(0);
         return causeMessages2passOver;
     }
 
@@ -66,19 +66,19 @@ public class FieldMismatchException extends RuntimeException {
         // if (true)
         // throw new RuntimeException("test addDataFromCause " + (this == fieldEx) + "--" + getMessage() + " \n\n\nchildEx:" + fieldEx.getMessage());
         if (StringUtils.isBlank(columnName)) {
-            this.columnName = fieldEx.columnName;
+            columnName = fieldEx.columnName;
         }
         if (columnIndex == -1) {
-            this.columnIndex = fieldEx.columnIndex;
+            columnIndex = fieldEx.columnIndex;
         }
         if (rowIndex == -1) {
-            this.rowIndex = fieldEx.rowIndex;
+            rowIndex = fieldEx.rowIndex;
         }
         if (StringUtils.isBlank(sheetName)) {
-            this.sheetName = fieldEx.sheetName;
+            sheetName = fieldEx.sheetName;
         }
         if (StringUtils.isBlank(file)) {
-            this.file = fieldEx.file;
+            file = fieldEx.file;
         }
     }
 
@@ -113,7 +113,7 @@ public class FieldMismatchException extends RuntimeException {
     }
 
     public void setRowIndex(int i) {
-        this.rowIndex = i;
+        rowIndex = i;
     }
 
     public void setSheetName(String sheetName) {
@@ -123,19 +123,19 @@ public class FieldMismatchException extends RuntimeException {
     public void setFile(String file) {
         this.file = file;
     }
-    
+
     public String getFile() {
         return file;
     }
-    
+
     public String getSheetName() {
         return sheetName;
     }
-    
+
     public int getRowIndex() {
         return rowIndex;
     }
-    
+
     public int getColumnIndex() {
         return columnIndex;
     }

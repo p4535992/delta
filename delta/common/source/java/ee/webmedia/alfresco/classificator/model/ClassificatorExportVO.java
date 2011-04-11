@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
@@ -36,7 +35,7 @@ public class ClassificatorExportVO extends Classificator {
     public ClassificatorExportVO(String classificatorName, List<ClassificatorValue> allClassificatorValues) {
         setAddRemoveValues(true);
         setName(classificatorName);
-        this.classificatorValues = allClassificatorValues;
+        classificatorValues = allClassificatorValues;
     }
 
     public ClassificatorExportVO(Classificator classificator, List<ClassificatorValue> allClassificatorValues) {

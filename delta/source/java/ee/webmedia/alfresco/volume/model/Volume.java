@@ -32,7 +32,7 @@ public class Volume implements Serializable, Comparable<Volume> {
     // non-mappable fields
     @AlfrescoModelProperty(isMappable = false)
     private NodeRef seriesNodeRef;
-    
+
     @AlfrescoModelProperty(isMappable = false)
     private Node node;
 
@@ -103,11 +103,11 @@ public class Volume implements Serializable, Comparable<Volume> {
     public int getContainingDocsCount() {
         return Integer.valueOf(containingDocsCount);
     }
-    
+
     public void setContainingDocsCount(int containingDocsCount) {
         this.containingDocsCount = containingDocsCount;
     }
-    
+
     public NodeRef getSeriesNodeRef() {
         return seriesNodeRef;
     }

@@ -11,8 +11,8 @@ import javax.activation.DataSource;
 
 public class FileDataSource implements DataSource {
 
-    private File file;
-    private String contentType;
+    private final File file;
+    private final String contentType;
 
     public FileDataSource(File file, String contentType) {
         this.file = file;

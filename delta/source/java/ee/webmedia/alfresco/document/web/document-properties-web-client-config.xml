@@ -168,7 +168,7 @@
       </property-sheet>
    </config>
    
-   <!-- lähetuse taotleja (välislähetuse ja siselähetuse puhul taotleja ühised väljad) -->
+   <!-- lähetuse taotleja (välislähetuse, siselähetuse ja koolitustaotluse puhul taotleja ühised väljad) -->
    <config evaluator="aspect-name" condition="docspec:errandApplicant">
       <property-sheet>
          <show-property name="applicantInfo" ignore-if-missing="false" display-label-id="document_errand_applicant" textId="document_errand_applicantInfo_templateText" show-in-edit-mode="false"
@@ -181,12 +181,25 @@
          <show-property name="docspec:applicantName" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setApplicantName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="users_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" show-in-view-mode="false" />
          <show-property name="docspec:applicantJobTitle" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" show-in-view-mode="false" />
          <show-property name="docspec:applicantStructUnitName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" show-in-view-mode="false" />
-         <show-property name="docspec:costManager" component-generator="ClassificatorSelectorGenerator" classificatorName="errandOrderAbroadCostManager" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true"/>
+      </property-sheet>
+   </config>
+   
+   <!-- lähetuse taotleja (välislähetuse ja siselähetuse puhul taotleja ühised väljad) -->
+   <config evaluator="node-type" condition="docspec:errandOrderApplicantAbroadType,docspec:errandOrderAbroadMvApplicantType,docspec:errandApplicationDomesticApplicantType,docspec:errandOrderApplicantAbroadTypeV2">
+      <property-sheet>
+         <show-property name="docspec:costManager" component-generator="ClassificatorSelectorGenerator" classificatorName="errandOrderAbroadCostManager" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" displayLabelParameter="costManagerFieldName"/>
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="docspec:errandApplicationDomesticApplicantTypeV2">
+      <property-sheet>
+         <show-property name="docspec:costManager" component-generator="ClassificatorSelectorGenerator" classificatorName="errandApplicationDomesticCostManager" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" displayLabelParameter="costManagerFieldName"/>
+         <show-property name="docspec:costElement" component-generator="ClassificatorSelectorGenerator" classificatorName="errandApplicationDomesticCostElement" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"/>
       </property-sheet>
    </config>
 
    <!-- Koolitustaotluse dokumendi spetsiifilised väljad -->
-   <config evaluator="aspect-name" condition="docspec:trainingApplication">
+   <config evaluator="aspect-name" condition="docspec:trainingApplication,docspec:trainingApplicationV2">
       <property-sheet>
          <show-property name="docspec:trainingName" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
          <show-property name="docspec:trainingOrganizer" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
@@ -203,7 +216,7 @@
    </config>
    
    <!-- VälisLähetuse dokumendi spetsiifilised väljad -->
-   <config evaluator="aspect-name" condition="docspec:errandOrderAbroadLegalBasis">
+   <config evaluator="aspect-name" condition="docspec:errandOrderAbroad,docspec:errandOrderAbroadV2">
       <property-sheet>
          <show-property name="docspec:legalBasisForOfficials" component-generator="ParameterTextAreaGenerator" parameterName="errandOrderLegalBasisForOfficials" styleClass="expand19-200" read-only="true" labelStyleClass="wrap" />
          <show-property name="docspec:legalBasisForSupportStaff" component-generator="ParameterTextAreaGenerator" parameterName="errandOrderLegalBasisForSupportStaff" styleClass="expand19-200" read-only="true" labelStyleClass="wrap" />
@@ -219,13 +232,48 @@
    <!-- SiseLähetuse dokumendi spetsiifilised väljad -->
    <config evaluator="aspect-name" condition="docspec:errandApplicationDomestic"><!-- part 1 -->
       <property-sheet>
-         <show-property name="docspec:eventName" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+         <show-property name="docspec:eventName" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display-label-id="document_city" />
       <!-- TODO: -->
       </property-sheet>
    </config>
    
+   <config evaluator="node-type" condition="docspec:errandsAbroadTypeV2">
+      <property-sheet>
+         <show-property name="docspec:travelPurpose" display-label-id="document_errand_travelPurpose" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="wrap" />
+      </property-sheet>
+   </config>
+   
+   <!-- LÄHETUSE BLOKK (välislähetuse ja siselähetuse puhul lähetuse bloki ühised väljad) -->
+   <config evaluator="node-type-and-aspect-name" condition="docspec:errandsAbroadType,docspec:errandsAbroadMvType,docspec:errandsDomesticType|docspec:errandBlockCommon"><!-- part 1 -->
+      <property-sheet>
+         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
+             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            "
+         />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type-and-aspect-name" condition="docspec:errandsDomesticTypeV2|docspec:errandBlockCommon"><!-- part 1 -->
+      <property-sheet>
+         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
+             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            "
+         />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="docspec:errandsDomesticTypeV2">
+      <property-sheet>
+         <show-property name="docspec:eventName" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+      </property-sheet>
+   </config>
+   
    <!-- VälisLähetuse ja siselähetuse DOKUMENDI ühised väljad -->
-   <config evaluator="aspect-name" condition="docspec:errandDoc">
+   <config evaluator="aspect-name" condition="docspec:errandDoc"> <!-- XXX - liigutati dokumendi alt lähetuse alla, kontrolli pärast anomaaliaid, vbla vaja conditionit kitsendada, kui testist läbi ei lähe (V1 vs V2) -->
       <property-sheet>
          <show-property name="docspec:eventOrganizer" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
       </property-sheet>
@@ -237,7 +285,7 @@
       </property-sheet>
    </config>
       
-   <config evaluator="aspect-name" condition="docspec:errandDocCommon">
+   <config evaluator="aspect-name" condition="docspec:errandDocCommon"> <!-- XXX - liigutati dokumendi alt lähetuse alla, kontrolli pärast anomaaliaid, vbla vaja conditionit kitsendada, kui testist läbi ei lähe (V1 vs V2) -->
       <property-sheet>
          <show-property name="docspec:eventBeginDate" display-label-id="document_eventDates_title" textId="document_eventDates_templateText" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true"
             component-generator="InlinePropertyGroupGenerator" props="
@@ -251,6 +299,12 @@
    <config evaluator="aspect-name" condition="docspec:errandOrderAbroad"><!-- part 2 -->
       <property-sheet>
          <subPropertySheet name="applicantsSection" assocBrand="children" assocName="docspec:errandOrderApplicantsAbroad" actionsGroupId="document_errandOrderApplicant" titleLabelId="document_errand_applicantBlock_title" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="aspect-name" condition="docspec:errandOrderAbroadV2"><!-- part 2 -->
+      <property-sheet>
+         <subPropertySheet name="applicantsSection" assocBrand="children" assocName="docspec:errandOrderApplicantsAbroadV2" actionsGroupId="document_errandOrderApplicant" titleLabelId="document_errand_applicantBlock_title" />
       </property-sheet>
    </config>
    
@@ -268,10 +322,23 @@
       </property-sheet>
    </config>
 
+   <config evaluator="aspect-name" condition="docspec:errandApplicationDomesticV2">
+      <property-sheet>
+         <subPropertySheet name="applicantsSection" assocBrand="children" assocName="docspec:errandApplicationDomesticApplicantsV2" actionsGroupId="document_errandOrderApplicant" titleLabelId="document_errand_applicantBlock_title" />
+      </property-sheet>
+   </config>
+
    <!-- Koolitustaotluse dokumendi spetsiifilised väljad -->
    <config evaluator="aspect-name" condition="docspec:trainingApplication">
       <property-sheet>
          <subPropertySheet name="applicantsSection" assocBrand="children" assocName="docspec:trainingApplicationApplicants" actionsGroupId="document_errandOrderApplicant" titleLabelId="document_errand_applicantBlock_title" />
+      </property-sheet>
+   </config>
+   
+   <!-- Koolitustaotluse dokumendi spetsiifilised väljad -->
+   <config evaluator="aspect-name" condition="docspec:trainingApplicationV2">
+      <property-sheet>
+         <subPropertySheet name="applicantsSection" assocBrand="children" assocName="docspec:trainingApplicationApplicantsV2" actionsGroupId="document_errandOrderApplicant" titleLabelId="document_errand_applicantBlock_title" />
       </property-sheet>
    </config>
    
@@ -314,8 +381,15 @@
    <!-- välisLähetuse taotleja spetsiifilised väljad -->
    <config evaluator="aspect-name" condition="docspec:errandOrderApplicantAbroad">
       <property-sheet>
-         <show-property name="docspec:expenditureItem" component-generator="ClassificatorSelectorGenerator" classificatorName="errandOrderExpenditureItem" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+         <show-property name="docspec:expenditureItem" component-generator="ClassificatorSelectorGenerator" classificatorName="errandOrderExpenditureItem" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" />
          <subPropertySheet name="errandsAbroad" assocBrand="children" assocName="docspec:errandsAbroad" actionsGroupId="document_errandsAbroad" titleLabelId="document_errand_applicantBlock_orderBlock_title" />         
+      </property-sheet>
+   </config>
+   
+   <config evaluator="aspect-name" condition="docspec:errandOrderApplicantAbroadV2">
+      <property-sheet>
+         <show-property name="docspec:expenditureItem" component-generator="ClassificatorSelectorGenerator" classificatorName="errandOrderExpenditureItem" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" />
+         <subPropertySheet name="errandsAbroad" assocBrand="children" assocName="docspec:errandsAbroadV2" actionsGroupId="document_errandsAbroad" titleLabelId="document_errand_applicantBlock_orderBlock_title" />         
       </property-sheet>
    </config>
    
@@ -332,10 +406,16 @@
       </property-sheet>
    </config>
    
-   <!-- LÄHETUSE BLOKK (välislähetuse ja siselähetuse puhul lähetuse bloki ühised väljad) -->
-   <config evaluator="aspect-name" condition="docspec:errandBlockCommon"><!-- part 1 -->
+   <config evaluator="node-type" condition="docspec:errandApplicationDomesticApplicantTypeV2">
       <property-sheet>
-         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText"  readOnlyIf="parent.parent.doccom:docStatus!=töös" 
+         <subPropertySheet name="errandsDomestic" assocBrand="children" assocName="docspec:errandsDomesticV2" actionsGroupId="document_errandsAbroad" titleLabelId="document_errand_applicantBlock_orderBlock_title" />
+      </property-sheet>
+   </config>
+   
+   <!-- Koolitustaotluse taotleja(dokument->taotleja) -->
+   <config evaluator="node-type" condition="docspec:trainingApplicationApplicantType,docspec:trainingApplicationApplicantTypeV2">
+      <property-sheet>
+         <show-property forcedMandatory="true" name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText"  readOnlyIf="parent.doccom:docStatus!=töös" 
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
              docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
             ,docspec:errandEndDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
@@ -344,17 +424,10 @@
       </property-sheet>
    </config>
    
-   <!-- Koolitustaotluse taotleja(dokument->taotleja) -->
-   <config evaluator="node-type" condition="docspec:trainingApplicationApplicantType">
+   <config evaluator="node-type-and-aspect-name" condition="docspec:trainingApplicationApplicantType|docspec:dailyAllowance">
       <property-sheet>
-         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText"  readOnlyIf="parent.doccom:docStatus!=töös" 
-         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
-             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:errandEndDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            "
-         />
          <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance" 
-            addLabelId="document_errandsAbroad_addCatering" styleClass="add-catering" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
+            addLabelId="document_errandsAbroad_add" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
             component-generator="MultiValueEditorGenerator" propsGeneration="
              docspec:dailyAllowanceCateringCount¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceCateringCount¤styleClass=width120
             ,docspec:dailyAllowanceDays¤¤styleClass=small inline-center
@@ -362,14 +435,52 @@
             ,docspec:dailyAllowanceFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=trainingAppDailyAllowanceFinancingSource¤styleClass=medium
             "
          />
-         <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
-            addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
-            component-generator="MultiValueEditorGenerator" propsGeneration="
-             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=trainingAppAbroadExpenseType¤styleClass=width120
-            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium
-            ,docspec:expenseFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=trainingAppExpenseFinancingSource¤styleClass=medium
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type-and-aspect-name" condition="docspec:trainingApplicationApplicantTypeV2|docspec:dailyAllowanceV2">
+      <property-sheet>
+         <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance" 
+            addLabelId="document_errandsAbroad_add" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
+            component-generator="MultiValueEditorGenerator" forcedMandatory="true" initialRows="1" propsGeneration="
+             docspec:dailyAllowanceDays¤¤styleClass=small inline-center dailyAllowanceDaysField
+            ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceRate¤styleClass=small inline-center dailyAllowanceRateField
+            ,docspec:dailyAllowanceSum¤ParameterInputAttributeGenerator¤styleClass=width120 dailyAllowanceSumField editable¤read-only=true¤converter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤parameterName=trainingApplicationDailyAllowanceSum
             "
          />
+         <show-property name="docspec:dailyAllowanceTotalSum" read-only="true" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" styleClass="dailyAllowanceTotalSumField editable"/>
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type-and-aspect-name" condition="docspec:trainingApplicationApplicantType|docspec:expenses">
+      <property-sheet>
+         <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
+            addLabelId="document_errandsAbroad_add" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
+            component-generator="MultiValueEditorGenerator" propsGeneration="
+             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=trainingAppAbroadExpenseType¤styleClass=width120
+            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium¤mandatoryIf=docspec:expenseType!=null¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
+            ,docspec:expenseFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=trainingAppExpenseFinancingSource¤styleClass=medium¤mandatoryIf=docspec:expenseType!=null¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
+            "
+         />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type-and-aspect-name" condition="docspec:trainingApplicationApplicantTypeV2|docspec:expensesV2">
+      <property-sheet>
+         <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
+            addLabelId="document_errandsAbroad_add" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
+            component-generator="MultiValueEditorGenerator" initialRows="1" propsGeneration="
+             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=trainingAppAbroadExpenseType¤styleClass=width120
+            ,docspec:expectedExpenseSum¤¤styleClass=width120 expectedExpenseSumField¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIf=docspec:expenseType!=null¤converter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
+            "
+         />
+         <show-property name="docspec:expensesTotalSum" styleClass="expensesTotalSumField editable" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" read-only="true" />
+         <show-property name="docspec:expensesFinancingSource" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="docspec:trainingApplicationApplicantType,docspec:trainingApplicationApplicantTypeV2">
+      <property-sheet>
          <show-property name="docspec:advancePaymentSum" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-edit" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
             component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
              docspec:advancePaymentSum¤¤styleClass=small¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter
@@ -382,23 +493,61 @@
             ,docspec:advancePaymentDesc
             "
          />
-         <show-property name="docspec:errandSubstituteName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type-and-aspect-name" condition="docspec:trainingApplicationApplicantType|docspec:expenses">
+      <property-sheet>
+      <show-property name="docspec:errandSubstituteName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
          component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setErrandSubstituteName}" setterCallbackTakesNode="true" dialogTitleId="users_search_title"  />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type-and-aspect-name" condition="docspec:trainingApplicationApplicantType|docspec:expensesV2">
+      <property-sheet>
+      <show-property name="docspec:errandSubstituteName" display-label-id="document_errand_errandSubstitute" textId="document_errand_errandSubstitute_templateText" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
+            component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             docspec:errandSubstituteName¤SearchGenerator¤pickerCallback=#{UserListDialog.searchUsers}¤setterCallback=#{MetadataBlockBean.setErrandSubstituteName}¤setterCallbackTakesNode=true¤dialogTitleId=users_search_title
+            ,docspec:errandSubstituteBeginDate¤DatePickerGenerator¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:errandSubstituteEndDate¤DatePickerGenerator¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            "
+         />         
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="docspec:trainingApplicationApplicantType">
+      <property-sheet>
          <show-property name="docspec:errandComment" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type-and-aspect-name" condition="docspec:errandsAbroadTypeV2|docspec:errandBlockCommon"><!-- part 1 -->
+      <property-sheet>
+         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
+             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            "
+         />
       </property-sheet>
    </config>
 
    <!-- välislähetuse lähetuse blokk -->
    <config evaluator="aspect-name" condition="docspec:errandBlockAbroad">
       <property-sheet>
-         <show-property name="docspec:country" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" show-in-view-mode="false" />
-         <show-property name="docspec:city" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" show-in-view-mode="false" />
+         <show-property name="docspec:country" component-generator="ClassificatorSelectorGenerator" classificatorName="countries" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" show-in-view-mode="false" forcedMandatory="true" />
+         <show-property name="docspec:city" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" show-in-view-mode="false" forcedMandatory="true" />
          <show-property name="locationInfo" ignore-if-missing="false" display-label-id="document_errand_locationInfo" textId="document_errand_locationInfo_templateText" show-in-edit-mode="false" readOnlyIf="#{DocumentDialog.isNotEditable}"
             component-generator="InlinePropertyGroupGenerator" props="
              docspec:city
             ,docspec:country
             " 
          />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type-and-aspect-name" condition="docspec:errandsAbroadType,docspec:errandsAbroadMvType|docspec:dailyAllowance">
+      <property-sheet>
          <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance" forcedMandatory="true"
             addLabelId="document_errandsAbroad_addCatering" styleClass="add-catering" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
             component-generator="MultiValueEditorGenerator" propsGeneration="
@@ -410,12 +559,27 @@
          />
       </property-sheet>
    </config>
+   
+   <config evaluator="node-type-and-aspect-name" condition="docspec:errandsAbroadTypeV2|docspec:dailyAllowanceV2">
+      <property-sheet>
+         <show-property name="dailyAllowanceCateringRows" ignore-if-missing="false" display-label-id="document_errand_dailyAllowance" forcedMandatory="true"
+            addLabelId="document_errandsAbroad_add" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
+            component-generator="MultiValueEditorGenerator" initialRows="1" propsGeneration="
+             docspec:dailyAllowanceDays¤¤styleClass=small inline-center dailyAllowanceDaysField
+            ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceRate¤styleClass=small inline-center dailyAllowanceRateField
+            ,docspec:dailyAllowanceSum¤ParameterInputAttributeGenerator¤styleClass=width120 dailyAllowanceSumField editable¤read-only=true¤converter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤parameterName=errandOrderAbroadDailyAllowanceSum
+            "
+         />
+         <show-property name="docspec:dailyAllowanceTotalSum" read-only="true" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" styleClass="dailyAllowanceTotalSumField editable"/>
+      </property-sheet>
+   </config>
+   
 
    <!-- SiseLähetuse lähetuse blokk -->
    <config evaluator="aspect-name" condition="docspec:errandBlockDomestic">
       <property-sheet>
-         <show-property name="docspec:county" component-generator="ClassificatorSelectorGenerator" classificatorName="counties" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
-         <show-property name="docspec:city" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" show-in-view-mode="false" />
+         <show-property name="docspec:county" component-generator="ClassificatorSelectorGenerator" classificatorName="counties" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" />
+         <show-property name="docspec:city" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" show-in-view-mode="false" forcedMandatory="true"/>
          <show-property name="locationInfo" ignore-if-missing="false" display-label-id="document_errand_locationInfo" textId="document_errand_locationInfo_templateText" show-in-edit-mode="false"
             component-generator="InlinePropertyGroupGenerator" props="
              docspec:city
@@ -426,16 +590,35 @@
       </property-sheet>
    </config>
    
-   <config evaluator="node-type" condition="docspec:errandsAbroadType,docspec:errandsAbroadMvType">
+   <config evaluator="node-type-and-aspect-name" condition="docspec:errandsAbroadType,docspec:errandsAbroadMvType|docspec:expenses">
       <property-sheet>
          <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
             addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
             component-generator="MultiValueEditorGenerator" propsGeneration="
              docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandOrderAbroadExpenseType¤styleClass=width120
-            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium
-            ,docspec:expenseFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=errandAbroadExpenseFinancingSource¤styleClass=medium
+            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium¤mandatoryIf=docspec:expenseType!=null¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
+            ,docspec:expenseFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=errandAbroadExpenseFinancingSource¤styleClass=medium¤mandatoryIf=docspec:expenseType!=null¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
             "
          />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type-and-aspect-name" condition="docspec:errandsAbroadTypeV2|docspec:expensesV2">
+      <property-sheet>
+         <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
+            addLabelId="document_errandsAbroad_add" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
+            component-generator="MultiValueEditorGenerator" initialRows="1" propsGeneration="
+            docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandOrderAbroadExpenseType¤styleClass=width120
+            ,docspec:expectedExpenseSum¤¤styleClass=width120 expectedExpenseSumField¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIf=docspec:expenseType!=null¤converter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
+            "
+         />
+         <show-property name="docspec:expensesTotalSum" styleClass="expensesTotalSumField editable" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" read-only="true" />
+         <show-property name="docspec:expensesFinancingSource" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type" condition="docspec:errandsAbroadType,docspec:errandsAbroadTypeV2,docspec:errandsAbroadMvType">
+      <property-sheet>
          <show-property name="docspec:advancePaymentSum" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-edit" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
             component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
              docspec:advancePaymentSum¤TextAreaGenerator¤styleClass=small center expand19-200¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter
@@ -445,16 +628,35 @@
       </property-sheet>
    </config>
 
-   <config evaluator="node-type" condition="docspec:errandsDomesticType">
+   <config evaluator="node-type-and-aspect-name" condition="docspec:errandsDomesticType|docspec:expenses">
       <property-sheet>
          <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
             addLabelId="document_errandsAbroad_addExpense" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
             component-generator="MultiValueEditorGenerator" propsGeneration="
              docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandApplicationDomesticExpenseType¤styleClass=width120
-            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium
-            ,docspec:expenseFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=errandDomesticExpenseFinancingSource¤styleClass=medium
+            ,docspec:expenseDesc¤TextAreaGenerator¤styleClass=expand19-200 medium¤mandatoryIf=docspec:expenseType!=null¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
+            ,docspec:expenseFinancingSource¤ClassificatorSuggesterGenerator¤classificatorName=errandDomesticExpenseFinancingSource¤styleClass=medium¤mandatoryIf=docspec:expenseType!=null¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
             "
          />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type-and-aspect-name" condition="docspec:errandsDomesticTypeV2|docspec:expensesV2">
+      <property-sheet>
+         <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
+            addLabelId="document_errandsAbroad_add" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
+            component-generator="MultiValueEditorGenerator" initialRows="1" propsGeneration="
+             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandApplicationDomesticExpenseType¤styleClass=width120
+            ,docspec:expectedExpenseSum¤¤styleClass=width120 expectedExpenseSumField¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIf=docspec:expenseType!=null¤converter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
+            "
+         />
+         <show-property name="docspec:expensesTotalSum" styleClass="expensesTotalSumField editable" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" read-only="true" />
+         <show-property name="docspec:expensesFinancingSource" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+      </property-sheet>
+   </config>
+         
+   <config evaluator="node-type" condition="docspec:errandsDomesticType,docspec:errandsDomesticTypeV2">
+      <property-sheet>
          <show-property name="docspec:advancePaymentSum" display-label-id="document_errand_advancePayment_title" textId="document_errand_advancePayment_templateText-edit" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
             component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
              docspec:advancePaymentSum¤¤styleClass=small¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter
@@ -475,14 +677,26 @@
          />
          <show-property name="docspec:errandSubstituteName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
          component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setErrandSubstituteName}" setterCallbackTakesNode="true" dialogTitleId="users_search_title"  />
+      </property-sheet>
+   </config>
+   
+   
+   <config evaluator="aspect-name" condition="docspec:errandBlockCommon"><!-- part 2 -->
+      <property-sheet>
          <show-property name="docspec:errandComment" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
       </property-sheet>
    </config>
 
-   <!-- VälisLähetuse ja siselähetuse DOKUMENDI ühised väljad -->
-   <config evaluator="aspect-name" condition="docspec:errandDoc">
+   <config evaluator="node-type" condition="docspec:errandsAbroadTypeV2">
       <property-sheet>
-         <show-property name="docspec:reportDueDate" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+         <show-property name="docspec:reportDueDate" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="reportDueDate date" />
+      </property-sheet>
+   </config>
+
+   <!-- VälisLähetuse ja siselähetuse DOKUMENDI ühised väljad -->
+   <config evaluator="node-type-and-aspect-name" condition="docsub:errandOrderAbroad|docspec:errandDoc">
+      <property-sheet>
+         <show-property name="docspec:reportDueDate" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="reportDueDate date"/>
       </property-sheet>
    </config>
 

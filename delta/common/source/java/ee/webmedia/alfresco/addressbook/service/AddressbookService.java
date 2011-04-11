@@ -152,11 +152,13 @@ public interface AddressbookService {
     List<Node> getContacts(NodeRef nodeRef);
 
     NodeRef getAddressbookNodeRef();
-    
-    List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, String institutionToRemove);    
+
+    List<Node> searchTaskCapableContacts(String searchCriteria, boolean orgOnly, String institutionToRemove);
 
     List<Node> getDvkCapableOrgs();
 
     List<Node> searchContactGroups(String searchCriteria);
-    
+
+    boolean isTaskCapableGroupMember(NodeRef contactRef);
+
 }

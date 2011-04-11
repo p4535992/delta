@@ -9,9 +9,9 @@ public class SignatureDigest implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private String digestHex;
-    private String certHex;
-    private Date date;
+    private final String digestHex;
+    private final String certHex;
+    private final Date date;
 
     public SignatureDigest(String digestHex, String certHex, Date date) {
         this.digestHex = digestHex;

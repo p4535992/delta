@@ -13,7 +13,7 @@ public interface ParametersModel {
         final static String PARAMETERS_PARENT = "/";
         final static String PARAMETERS_SPACE = PARAMETERS_PARENT + PREFIX + "parameters";
     }
-    
+
     public interface Types {
         QName PARAMETER_STRING = QName.createQName(URI, "stringParameter");
         QName PARAMETER_INT = QName.createQName(URI, "intParameter");

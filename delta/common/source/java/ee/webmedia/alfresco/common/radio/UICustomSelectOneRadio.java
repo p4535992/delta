@@ -15,9 +15,9 @@ public class UICustomSelectOneRadio extends UIInput {
         ValueBinding valueBinding = getValueBinding(attr);
         if (valueBinding != null) {
             try {
-                return (String) valueBinding.getValue(this.getFacesContext());
+                return (String) valueBinding.getValue(getFacesContext());
             } catch (ClassCastException e) {
-                return valueBinding.getValue(this.getFacesContext()).toString();
+                return valueBinding.getValue(getFacesContext()).toString();
             }
         } else {
             return null;
@@ -169,6 +169,7 @@ public class UICustomSelectOneRadio extends UIInput {
         styleClass = string;
     }
 
+    @Override
     public Object saveState(FacesContext context) {
         Object[] values = new Object[13];
         values[0] = super.saveState(context);
@@ -188,6 +189,7 @@ public class UICustomSelectOneRadio extends UIInput {
         return (values);
     }
 
+    @Override
     public void restoreState(FacesContext context, Object state) {
         Object[] values = (Object[]) state;
         super.restoreState(context, values[0]);
@@ -205,6 +207,7 @@ public class UICustomSelectOneRadio extends UIInput {
         overrideName = (String) values[12];
     }
 
+    @Override
     public String getFamily() {
         return ("CustomSelectOneRadio");
     }

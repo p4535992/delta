@@ -54,7 +54,7 @@ public class PutMethod extends WebDAVMethod {
 
     // Request parameters
     private String m_strContentType = null;
-    
+
     /**
      * Parse the request headers
      * 
@@ -129,7 +129,7 @@ public class PutMethod extends WebDAVMethod {
         }
 
         // Update the version if the node is unlocked
-        ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().updateVersion(contentNodeInfo.getNodeRef(), contentNodeInfo.getName());
+        ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersion(contentNodeInfo.getNodeRef(), contentNodeInfo.getName());
 
         // Access the content
         ContentWriter writer = fileFolderService.getWriter(contentNodeInfo.getNodeRef());
@@ -170,11 +170,11 @@ public class PutMethod extends WebDAVMethod {
         }
 
         // add the user and date information to the custom aspect properties
-        ((WebDAVCustomHelper)getDAVHelper()).getVersionsService().updateVersionModifiedAspect(contentNodeInfo.getNodeRef());
-        
+        ((WebDAVCustomHelper) getDAVHelper()).getVersionsService().updateVersionModifiedAspect(contentNodeInfo.getNodeRef());
+
         // Update document search info
         NodeRef document = getNodeService().getPrimaryParent(contentNodeInfo.getNodeRef()).getParentRef();
-        ((WebDAVCustomHelper)getDAVHelper()).getDocumentService().updateSearchableFiles(document);
+        ((WebDAVCustomHelper) getDAVHelper()).getDocumentService().updateSearchableFiles(document);
 
         // Set the response status, depending if the node existed or not
         m_response.setStatus(created ? HttpServletResponse.SC_CREATED : HttpServletResponse.SC_NO_CONTENT);

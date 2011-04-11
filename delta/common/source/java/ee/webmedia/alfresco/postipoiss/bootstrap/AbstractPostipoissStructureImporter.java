@@ -11,8 +11,8 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.TreeMap;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
@@ -105,7 +105,8 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
                         writer.close();
                     }
                 }
-                log.info("Completed importing Postipoiss functions file and committed successfully (created " + functionCache.size() + " functions). Please DISABLE FUNCTIONS IMPORT from now on!");
+                log.info("Completed importing Postipoiss functions file and committed successfully (created "
+                        + functionCache.size() + " functions). Please DISABLE FUNCTIONS IMPORT from now on!");
             }
         });
     }
@@ -157,7 +158,8 @@ public abstract class AbstractPostipoissStructureImporter extends AbstractModule
                         writer.close();
                     }
                 }
-                log.info("Completed importing Postipoiss volumes file and committed successfully (created " + volumeCache.size() + " volumes). Please DISABLE VOLUMES IMPORT from now on!");
+                log.info("Completed importing Postipoiss volumes file and committed successfully (created "
+                        + volumeCache.size() + " volumes). Please DISABLE VOLUMES IMPORT from now on!");
             }
         });
     }

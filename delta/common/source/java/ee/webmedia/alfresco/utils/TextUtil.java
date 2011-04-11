@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.utils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+
 import org.apache.commons.lang.StringUtils;
 
 public class TextUtil {

@@ -11,6 +11,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletRequest;
+
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.app.Application;
@@ -30,7 +31,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * Bean for handling substitution selection.
- *
+ * 
  * @author Romet Aidla
  */
 public class SubstitutionBean implements Serializable {
@@ -46,17 +47,16 @@ public class SubstitutionBean implements Serializable {
 
     public String getSelectedSubstitution() {
         return substitutionInfo.getSelectedSubstitution();
-    }    
+    }
 
     public void setSelectedSubstitution(String selectedSubstitution) {
         if (StringUtils.isBlank(selectedSubstitution)) {
             substitutionInfo = new SubstitutionInfo();
-        }
-        else {
+        } else {
             NodeRef userNodeRef = new NodeRef(selectedSubstitution);
             substitutionInfo = new SubstitutionInfo(getSubstituteService().getSubstitute(userNodeRef));
         }
-        setSubstitutionInfo(substitutionInfo);    
+        setSubstitutionInfo(substitutionInfo);
         setForceSubstituteTaskReload(true);
     }
 
@@ -66,26 +66,25 @@ public class SubstitutionBean implements Serializable {
         redirectToHome(getApplicationService().getServerUrl());
     }
 
-
     private static void redirectToHome(String serverUrl) {
         FacesContext fc = FacesContext.getCurrentInstance();
-        
+
         MenuBean.clearViewStack(String.valueOf(MenuBean.MY_TASKS_AND_DOCUMENTS_ID), null);
-        MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(fc, MenuBean.BEAN_NAME);   
-        menuBean.reset(); 
-        
+        MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(fc, MenuBean.BEAN_NAME);
+        menuBean.reset();
+
         fc.getApplication().getNavigationHandler().handleNavigation(fc, null, "myalfresco");
         fc.responseComplete();
         try {
-            //todo: find better solution
-            String redir =  serverUrl +  
-            ((HttpServletRequest)fc.getExternalContext().getRequest()).getContextPath() +
-            BaseServlet.FACES_SERVLET + fc.getViewRoot().getViewId();
+            // todo: find better solution
+            String redir = serverUrl +
+                    ((HttpServletRequest) fc.getExternalContext().getRequest()).getContextPath() +
+                    BaseServlet.FACES_SERVLET + fc.getViewRoot().getViewId();
             fc.getExternalContext().redirect(redir);
             fc.responseComplete();
         } catch (IOException ioe) {
             throw new RuntimeException("Redirecting failed", ioe);
-        }        
+        }
     }
 
     public List<SelectItem> getActiveSubstitutions() {
@@ -115,52 +114,52 @@ public class SubstitutionBean implements Serializable {
 
     protected SubstituteService getSubstituteService() {
         if (substituteService == null) {
-            this.substituteService = (SubstituteService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), SubstituteService.BEAN_NAME);
+            substituteService = (SubstituteService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), SubstituteService.BEAN_NAME);
         }
         return substituteService;
     }
 
     protected UserService getUserService() {
         if (userService == null) {
-            this.userService = (UserService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserService.BEAN_NAME);
+            userService = (UserService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserService.BEAN_NAME);
         }
         return userService;
     }
 
     protected MenuService getMenuService() {
         if (menuService == null) {
-            this.menuService = (MenuService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuService.BEAN_NAME); 
+            menuService = (MenuService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuService.BEAN_NAME);
         }
         return menuService;
     }
-    
-    public String getOnChangeStyleClass(){
-        return GeneralSelectorGenerator.ONCHANGE_MARKER_CLASS 
-                + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER 
+
+    public String getOnChangeStyleClass() {
+        return GeneralSelectorGenerator.ONCHANGE_MARKER_CLASS
+                + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
                 + "var el = document.getElementById(currElId); el.form.submit();";
     }
-    
+
     public void setForceSubstituteTaskReload(boolean force) {
         forceSubstituteTaskReload = force;
     }
-    
-    public boolean getForceSubstituteTaskReload(){
+
+    public boolean getForceSubstituteTaskReload() {
         return forceSubstituteTaskReload;
     }
 
     private void setSubstitutionInfo(SubstitutionInfo substitutionInfo) {
         this.substitutionInfo = substitutionInfo;
     }
-    
+
     public SubstitutionInfo getSubstitutionInfo() {
         return substitutionInfo;
     }
 
     public ApplicationService getApplicationService() {
         if (applicationService == null) {
-            this.applicationService = (ApplicationService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ApplicationService.BEAN_NAME);
+            applicationService = (ApplicationService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ApplicationService.BEAN_NAME);
         }
         return applicationService;
-    }     
+    }
 
 }

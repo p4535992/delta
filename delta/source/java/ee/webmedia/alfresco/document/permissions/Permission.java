@@ -6,13 +6,13 @@ package ee.webmedia.alfresco.document.permissions;
  * @author Erko Hansar
  */
 public enum Permission {
-    
+
     DOCUMENT_WRITE("DocumentWrite");
-    
+
     private String valueName;
-    
+
     Permission(String value) {
-        this.valueName = value;
+        valueName = value;
     }
 
     public String getValueName() {
@@ -20,7 +20,7 @@ public enum Permission {
     }
 
     public boolean equals(String value) {
-        return this.valueName.equals(value);
+        return valueName.equals(value);
     }
 
 }

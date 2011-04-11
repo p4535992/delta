@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.EqualsHelper;
@@ -24,7 +24,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
  */
 public abstract class BaseWorkflowObject {
 
-    private WmNode node;
+    private final WmNode node;
     private Map<QName, Serializable> originalProperties;
 
     protected BaseWorkflowObject(WmNode node) {
@@ -55,10 +55,10 @@ public abstract class BaseWorkflowObject {
     protected void setStatus(String status) {
         setProp(WorkflowCommonModel.Props.STATUS, status);
     }
-    
+
     public QName getType() {
         return getNode().getType();
-    }    
+    }
 
     public String getCreatorName() {
         return getProp(WorkflowCommonModel.Props.CREATOR_NAME);
@@ -126,19 +126,19 @@ public abstract class BaseWorkflowObject {
     protected void clearOriginalProperties() {
         originalProperties.clear();
     }
-    
-    public boolean isStatus(Status... statuses){
+
+    public boolean isStatus(Status... statuses) {
         return WorkflowUtil.isStatus(this, statuses);
     }
-    
-    public boolean isType(QName... types){
+
+    public boolean isType(QName... types) {
         for (QName type : types) {
             if (type.equals(this.getType())) {
                 return true;
             }
         }
         return false;
-    }    
+    }
 
     protected String additionalToString() {
         return "";

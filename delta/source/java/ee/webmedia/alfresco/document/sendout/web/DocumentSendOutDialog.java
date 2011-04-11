@@ -246,10 +246,10 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             for (int i = 0; i < partyNames.size(); i++) {
                 name = (String) partyNames.get(i);
                 email = (String) partyEmails.get(i);
-                if(StringUtils.isBlank(name) && StringUtils.isBlank(email)) {
+                if (StringUtils.isBlank(name) && StringUtils.isBlank(email)) {
                     continue;
                 }
-                
+
                 names.add(name);
                 emails.add(email);
             }

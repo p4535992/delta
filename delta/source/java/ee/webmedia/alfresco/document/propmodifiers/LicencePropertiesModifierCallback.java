@@ -14,12 +14,12 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 public class LicencePropertiesModifierCallback extends PropertiesModifierCallback {
 
     private ParametersService parametersService;
-    
+
     @Override
     public QName getAspectName() {
         return DocumentSubtypeModel.Types.LICENCE;
     }
-    
+
     @Override
     public void doWithProperties(Map<QName, Serializable> properties) {
         properties.put(DocumentCommonModel.Props.DOC_NAME, parametersService.getStringParameter(Parameters.DOC_PROP_LICENCE_DOC_NAME));

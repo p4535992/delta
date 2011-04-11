@@ -724,7 +724,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
         WorkflowEventQueue queue = getNewEventQueue();
 
-        queue.setParameter(WorkflowQueueParameter.TRIGGERED_BY_FINISHING_EXTERNAL_REVIEW_TASK_ON_CURRENT_SYSTEM, new Boolean(isRecievedExternalReviewTask(task)));
+        queue.setParameter(WorkflowQueueParameter.TRIGGERED_BY_FINISHING_EXTERNAL_REVIEW_TASK_ON_CURRENT_SYSTEM,
+                new Boolean(isRecievedExternalReviewTask(task)));
         setTaskFinished(queue, task, outcomeIndex);
 
         saveAndCheckCompoundWorkflow(queue, compoundWorkflow);
@@ -733,7 +734,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     @Override
     public boolean isRecievedExternalReviewTask(Task task) {
         return task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)
-                && (isInternalTesting() && !Boolean.TRUE.equals(nodeService.getProperty(task.getParent().getParent().getParent(), DocumentSpecificModel.Props.NOT_EDITABLE)))
+                && (isInternalTesting() && !Boolean.TRUE.equals(nodeService.getProperty(task.getParent().getParent().getParent(),
+                        DocumentSpecificModel.Props.NOT_EDITABLE)))
                 || (isInternalTesting() && !isResponsibleCurrenInstitution(task));
     }
 
@@ -743,7 +745,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     // finishing initiated by external reviewer from another application instance
     @Override
-    public void finishInProgressExternalReviewTask(Task taskOriginal, String comment, String outcome, Date dateCompleted, String dvkId) throws WorkflowChangedException {
+    public void finishInProgressExternalReviewTask(Task taskOriginal, String comment, String outcome, Date dateCompleted, String dvkId)
+            throws WorkflowChangedException {
         taskOriginal.setComment(comment);
         taskOriginal.setOutcome(outcome, -1);
         taskOriginal.setCompletedDateTime(dateCompleted);

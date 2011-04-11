@@ -10,11 +10,11 @@ import ee.webmedia.alfresco.workflow.service.BaseWorkflowObject;
  */
 public class BaseWorkflowEvent implements WorkflowEvent {
 
-    private WorkflowEventType type;
-    private BaseWorkflowObject object;
-    private Object[] extras;
+    private final WorkflowEventType type;
+    private final BaseWorkflowObject object;
+    private final Object[] extras;
 
-    public BaseWorkflowEvent(WorkflowEventType type, BaseWorkflowObject object, Object ... extras) {
+    public BaseWorkflowEvent(WorkflowEventType type, BaseWorkflowObject object, Object... extras) {
         Assert.notNull(type);
         Assert.notNull(object);
         this.type = type;

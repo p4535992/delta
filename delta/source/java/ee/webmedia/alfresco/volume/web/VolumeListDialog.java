@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.volume.web;
 
-import java.util.Collections;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -26,7 +25,7 @@ public class VolumeListDialog extends BaseDialogBean {
     private transient SeriesService seriesService;
     private transient VolumeService volumeService;
     private Series parent;
-    
+
     public static final String BEAN_NAME = "VolumeListDialog";
 
     @Override
@@ -44,7 +43,7 @@ public class VolumeListDialog extends BaseDialogBean {
     public void showAll(ActionEvent event) {
         showAll(new NodeRef(ActionUtil.getParam(event, "seriesNodeRef")));
     }
-    
+
     public void showAll(NodeRef nodeRef) {
         parent = getSeriesService().getSeriesByNodeRef(nodeRef.toString());
     }
@@ -69,7 +68,7 @@ public class VolumeListDialog extends BaseDialogBean {
         parent = null;
 
     }
-    
+
     // START: getters / setters
     public void setVolumeService(VolumeService volumeService) {
         this.volumeService = volumeService;
@@ -89,7 +88,7 @@ public class VolumeListDialog extends BaseDialogBean {
 
     protected SeriesService getSeriesService() {
         if (seriesService == null) {
-            seriesService = (SeriesService) FacesContextUtils.getRequiredWebApplicationContext( // 
+            seriesService = (SeriesService) FacesContextUtils.getRequiredWebApplicationContext( //
                     FacesContext.getCurrentInstance()).getBean(SeriesService.BEAN_NAME);
         }
         return seriesService;

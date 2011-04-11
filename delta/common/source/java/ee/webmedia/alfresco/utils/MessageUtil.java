@@ -97,9 +97,10 @@ public class MessageUtil {
     }
 
     /**
-     * Add statusMessage to the faces context(to be shown to the user). Message text is retrieved from message bundle based on key <code>messageData.getMessageKey()</code> and
-     * possible valuces
-     * could be set using <code>messageData.getMessageValuesForHolders()</code>. Severity of message is determined by <code>messageData.getSeverity()</code>
+     * Add statusMessage to the faces context(to be shown to the user). Message text is retrieved from message bundle based on key
+     * <code>messageData.getMessageKey()</code> and
+     * possible values could be set using <code>messageData.getMessageValuesForHolders()</code>. Severity of message is determined by
+     * <code>messageData.getSeverity()</code>
      * 
      * @param facesContext
      * @param messageData - messageData object used to create message

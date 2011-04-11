@@ -125,9 +125,9 @@ public class FunctionsServiceImpl implements FunctionsService {
         }
 
         reorderFunctions(function);
-       
+
     }
-    
+
     private void reorderFunctions(Function function) {
         final int order = getFunctionOrder(function);
         final List<Function> allFunctions = getAllFunctions();
@@ -136,7 +136,7 @@ public class FunctionsServiceImpl implements FunctionsService {
             @Override
             public int compare(Function f1, Function f2) {
                 final int order1 = getFunctionOrder(f1);
-                final int order2 = getFunctionOrder(f2);                
+                final int order2 = getFunctionOrder(f2);
                 if (order1 == order2) {
                     return 0;
                 }
@@ -153,16 +153,16 @@ public class FunctionsServiceImpl implements FunctionsService {
             if (order2 == order) {
                 // since collection is ordered, no need to check if(order2 >= order)
                 otherFunction.getNode().getProperties().put(FunctionsModel.Props.ORDER.toString(), order2 + 1);
-              //reorderFunctions is recursively called on all following functions in the list by saveOrUpdate
+                // reorderFunctions is recursively called on all following functions in the list by saveOrUpdate
                 saveOrUpdate(otherFunction);
                 break;
             }
         }
-    }  
-    
-    private Integer getFunctionOrder(Function function){
+    }
+
+    private Integer getFunctionOrder(Function function) {
         Integer order = (Integer) function.getNode().getProperties().get(FunctionsModel.Props.ORDER.toString());
-        if (order == null){
+        if (order == null) {
             order = Integer.MIN_VALUE;
         }
         return order;
@@ -285,8 +285,8 @@ public class FunctionsServiceImpl implements FunctionsService {
                 for (Volume volume : volumeService.getAllOpenExpiredVolumesBySeries(series.getNode().getNodeRef())) {
                     volumeService.closeVolume(volume);
                     counter++;
-                    log.info("Closed volume: [" + function.getMark() + "]" + function.getTitle()
-                            + "/[" + series.getSeriesIdentifier() + "]" + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle() + ", validTo=" + volume.getValidTo());
+                    log.info("Closed volume: [" + function.getMark() + "]" + function.getTitle() + "/[" + series.getSeriesIdentifier() + "]"
+                            + series.getTitle() + "/[" + volume.getVolumeMark() + "]" + volume.getTitle() + ", validTo=" + volume.getValidTo());
                 }
             }
         }

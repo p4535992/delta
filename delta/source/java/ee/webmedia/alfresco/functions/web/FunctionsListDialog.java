@@ -57,7 +57,7 @@ public class FunctionsListDialog extends BaseDialogBean {
     private transient GeneralService generalService;
     protected List<Function> functions;
 
-    
+    @Override
     public void init(Map<String, String> params) {
         reset();
         super.init(params);
@@ -68,18 +68,18 @@ public class FunctionsListDialog extends BaseDialogBean {
         functions = null;
     }
 
-    
+    @Override
     public void restored() {
         loadFunctions();
     }
 
-    
+    @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // save button not used or shown
         return null;
     }
 
-    
+    @Override
     public String cancel() {
         functions = null;
         return super.cancel();
@@ -187,15 +187,15 @@ public class FunctionsListDialog extends BaseDialogBean {
         return outputStream;
     }
 
-    
+    @Override
     public Object getActionsContext() {
         return new Node(getFunctionsService().getFunctionsRoot());
     }
 
     public void startPostipoissStructureImport(javax.faces.event.ActionEvent ev) {
-        PostipoissStructureImporter importer = (PostipoissStructureImporter) 
-            FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean("postipoissStructureImporter");
+        PostipoissStructureImporter importer = (PostipoissStructureImporter)
+                FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                        .getBean("postipoissStructureImporter");
         if (importer.isStarted()) {
             log.info("Not running structure import, already started");
             return;
@@ -208,9 +208,9 @@ public class FunctionsListDialog extends BaseDialogBean {
     }
 
     public void startPostipoissDocumentsImport(javax.faces.event.ActionEvent ev) {
-        PostipoissDocumentsImporter importer = (PostipoissDocumentsImporter) 
-            FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean("postipoissDocumentsImporter");
+        PostipoissDocumentsImporter importer = (PostipoissDocumentsImporter)
+                FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                        .getBean("postipoissDocumentsImporter");
         if (importer.isStarted()) {
             log.info("Not running documents import, already started");
             return;
@@ -221,7 +221,9 @@ public class FunctionsListDialog extends BaseDialogBean {
             throw new RuntimeException(e);
         }
     }
-/*
+
+    // @formatter:off
+    /*
     public void startPostipoissDocumentsFix(javax.faces.event.ActionEvent ev) {
         PostipoissDocumentsImporter importer = (PostipoissDocumentsImporter) 
             FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
@@ -236,7 +238,8 @@ public class FunctionsListDialog extends BaseDialogBean {
             throw new RuntimeException(e);
         }
     }
-*/
+     */
+    // @formatter:on
     // START: private methods
     protected void loadFunctions() {
         functions = getFunctionsService().getAllFunctions();
@@ -273,8 +276,9 @@ public class FunctionsListDialog extends BaseDialogBean {
     private Integer getCurrentUsersStructUnitId() {
         Map<QName, Serializable> userProperties = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
         Serializable orgId = userProperties.get(ContentModel.PROP_ORGID);
-        if (orgId == null)
+        if (orgId == null) {
             return null;
+        }
         return Integer.parseInt(orgId.toString());
     }
 

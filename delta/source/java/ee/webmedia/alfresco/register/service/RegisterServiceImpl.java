@@ -67,7 +67,9 @@ public class RegisterServiceImpl implements RegisterService {
     }
 
     private Integer getRegisterCounter(int registerId) {
-//        return jdbcTemplate.queryForInt("SELECT last_value FROM ?", getSequenceName(registerId)); //XXX: millegi pärast viisakam lahendus ei tööta: BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [SELECT last_value FROM ?]; nested exception is org.postgresql.util.PSQLException: ERROR: syntax error at or near "$1" 
+        // XXX: millegi pärast viisakam lahendus ei tööta: BadSqlGrammarException: PreparedStatementCallback; bad SQL grammar [SELECT last_value FROM ?]; nested exception is
+        // org.postgresql.util.PSQLException: ERROR: syntax error at or near "$1"
+        // return jdbcTemplate.queryForInt("SELECT last_value FROM ?", getSequenceName(registerId));
         return jdbcTemplate.queryForInt("SELECT last_value FROM " + getSequenceName(registerId));
     }
 
@@ -82,7 +84,7 @@ public class RegisterServiceImpl implements RegisterService {
         final Map<String, Object> props = registerNode.getProperties();
         Register reg = registerBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(props));
         reg.setNodeRef(registerNode.getNodeRef());
-        //counter is not mappable(stored in sequence ant put manually into props)
+        // counter is not mappable(stored in sequence ant put manually into props)
         reg.setCounter((Integer) props.get(RegisterModel.Prop.COUNTER.toString()));
         return reg;
     }
@@ -145,8 +147,8 @@ public class RegisterServiceImpl implements RegisterService {
     public void resetCounter(Node register) {
         final Map<String, Object> props = register.getProperties();
         int registerId = (Integer) props.get(RegisterModel.Prop.ID);
-        //"false" argument of setval ensures that next call to nextval() will return 1, not 2
-        jdbcTemplate.queryForInt("SELECT setval(?, ?, false)", getSequenceName(registerId),  DEFAULT_COUNTER_INITIAL_VALUE);
+        // "false" argument of setval ensures that next call to nextval() will return 1, not 2
+        jdbcTemplate.queryForInt("SELECT setval(?, ?, false)", getSequenceName(registerId), DEFAULT_COUNTER_INITIAL_VALUE);
         props.put(RegisterModel.Prop.COUNTER.toString(), DEFAULT_COUNTER_INITIAL_VALUE);
     }
 
@@ -155,7 +157,7 @@ public class RegisterServiceImpl implements RegisterService {
         jdbcTemplate.update("CREATE SEQUENCE " + seqName + " START 1"); // parameetritega ei toimi
         log.debug("created sequence: " + seqName);
     }
-    
+
     // START: getters / setters
     public void setDataSource(DataSource dataSource) {
         jdbcTemplate = new SimpleJdbcTemplate(dataSource);

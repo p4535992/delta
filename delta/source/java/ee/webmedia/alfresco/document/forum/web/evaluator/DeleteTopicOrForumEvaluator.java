@@ -18,10 +18,9 @@ public class DeleteTopicOrForumEvaluator extends BaseActionEvaluator {
     public boolean evaluate(Node node) {
         boolean documentManager = ((UserService) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserService.BEAN_NAME)).isDocumentManager();
         // For topics owner also qualifies
-        if(node.getType().equals(ForumModel.TYPE_TOPIC)) {
+        if (node.getType().equals(ForumModel.TYPE_TOPIC)) {
             return documentManager || AuthenticationUtil.getRunAsUser().equals(node.getProperties().get(ContentModel.PROP_CREATOR).toString());
         }
         return documentManager;
     }
 }
-

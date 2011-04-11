@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.common.propertysheet.config;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,7 +31,6 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
         super(name);
     }
 
-
     /**
      * Inner class to represent a configured property
      */
@@ -48,7 +46,7 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
         // additional fields not present in parent class
         protected Map<String, String> customAttributes;
         private ConfigItemType configItemType;
-        
+
         public ItemConfigVO(String name) {
             super(name);
         }
@@ -56,13 +54,13 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
         public enum ConfigItemType {
             ASSOC, CHILD_ASSOC, PROPERTY, SEPPARATOR, SUB_PROPERTY_SHEET;
         }
-        
+
         @Override
         public String toString() {
             return new StringBuilder(super.toString()) //
-            .append(" configItemType=").append(configItemType).append(")") //
-            .append(" customAttributes=").append(customAttributes).append(")") //
-            .toString();
+                    .append(" configItemType=").append(configItemType).append(")") //
+                    .append(" customAttributes=").append(customAttributes).append(")") //
+                    .toString();
         }
 
         public void setDisplayLabel(String displayLabel) {
@@ -108,15 +106,15 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
         public void setIgnoreIfMissing(boolean ignoreIfMissing) {
             this.ignoreIfMissing = ignoreIfMissing;
         }
-        
+
         public void setConfigItemType(ConfigItemType configItemType) {
             this.configItemType = configItemType;
         }
-        
+
         public ConfigItemType getConfigItemType() {
             return configItemType;
         }
-        
+
         @Override
         public ItemConfigVO copyAsReadOnly() {
             ItemConfigVO copy = new ItemConfigVO(name);
@@ -131,7 +129,7 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             copy.setConfigItemType(configItemType);
             return copy;
         }
-        
+
         @Override
         public Map<String, String> getCustomAttributes() {
             if (customAttributes == null) {
@@ -142,10 +140,10 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         @Override
         public void setCustomAttributes(Map<String, String> propertySheetItemAttributes) {
-            this.customAttributes = propertySheetItemAttributes;
+            customAttributes = propertySheetItemAttributes;
         }
     }
-    
+
     protected void addItem(ItemConfigVO itemConfig) {
         super.addItem(itemConfig);
     }

@@ -58,49 +58,43 @@ import org.apache.commons.logging.LogFactory;
  * 
  * @author GKSpencer
  */
-public class AuthenticationFilter implements DependencyInjectedFilter
-{
+public class AuthenticationFilter implements DependencyInjectedFilter {
     // Debug logging
-    
+
     private static Log logger = LogFactory.getLog(AuthenticationFilter.class);
 
     // Various services required by NTLM authenticator
-    
+
     private AuthenticationService authService;
     private PersonService personService;
     private NodeService nodeService;
     private TransactionService transactionService;
-    
-    
+
     /**
      * @param authService the authService to set
      */
-    public void setAuthenticationService(AuthenticationService authService)
-    {
+    public void setAuthenticationService(AuthenticationService authService) {
         this.authService = authService;
     }
 
     /**
      * @param personService the personService to set
      */
-    public void setPersonService(PersonService personService)
-    {
+    public void setPersonService(PersonService personService) {
         this.personService = personService;
     }
 
     /**
      * @param nodeService the nodeService to set
      */
-    public void setNodeService(NodeService nodeService)
-    {
+    public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
     }
 
     /**
      * @param transactionService the transactionService to set
      */
-    public void setTransactionService(TransactionService transactionService)
-    {
+    public void setTransactionService(TransactionService transactionService) {
         this.transactionService = transactionService;
     }
 
@@ -114,9 +108,9 @@ public class AuthenticationFilter implements DependencyInjectedFilter
      * @exception ServletException
      * @exception IOException
      */
+    @Override
     public void doFilter(ServletContext context, ServletRequest req, ServletResponse resp, FilterChain chain)
-            throws IOException, ServletException
-    {
+            throws IOException, ServletException {
         // Assume it's an HTTP request
 
         HttpServletRequest httpReq = (HttpServletRequest) req;
@@ -124,99 +118,86 @@ public class AuthenticationFilter implements DependencyInjectedFilter
 
         WebDAVUser user = null;
 
-    	// Check if the request includes an authentication ticket
- 
-		String ticket = null;
+        // Check if the request includes an authentication ticket
+
+        String ticket = null;
 
         String path = WebDAV.getRepositoryPath(httpReq);
         List<String> pathElements = WebDAVHelper.splitAllPaths(path);
-        if (pathElements.size() > 0)
-        {
+        if (pathElements.size() > 0) {
             ticket = pathElements.get(0);
-            if (!ticket.startsWith(InMemoryTicketComponentImpl.GRANTED_AUTHORITY_TICKET_PREFIX))
-            {
+            if (!ticket.startsWith(InMemoryTicketComponentImpl.GRANTED_AUTHORITY_TICKET_PREFIX)) {
                 ticket = InMemoryTicketComponentImpl.GRANTED_AUTHORITY_TICKET_PREFIX + ticket;
             }
         }
-    	
-    	if ( ticket != null &&  ticket.length() > 0)
-    	{
-    	    // TODO check if PowerPoint bug fix is still needed
 
-        	// Debug
-            
-            if ( logger.isDebugEnabled())
+        if (ticket != null && ticket.length() > 0) {
+            // TODO check if PowerPoint bug fix is still needed
+
+            // Debug
+
+            if (logger.isDebugEnabled()) {
                 logger.debug("Logon via ticket from " + req.getRemoteHost() + " (" +
                         req.getRemoteAddr() + ":" + req.getRemotePort() + ")" + " ticket=" + ticket);
-            
-    		UserTransaction tx = null;
-    	    try
-    	    {
-    	    	// Validate the ticket
-    	    	  
-    	    	authService.validate(ticket);
+            }
 
-    	    	// Need to create the User instance if not already available
-    	    	  
-    	        String currentUsername = authService.getCurrentUserName();
+            UserTransaction tx = null;
+            try {
+                // Validate the ticket
 
-    	        // Start a transaction
-    	          
-  	            tx = transactionService.getUserTransaction();
-    	        tx.begin();
-    	            
-    	        NodeRef personRef = personService.getPerson(currentUsername);
-    	        user = new WebDAVUser( currentUsername, authService.getCurrentTicket(), personRef);
-    	        NodeRef homeRef = (NodeRef) nodeService.getProperty(personRef, ContentModel.PROP_HOMEFOLDER);
-    	            
-    	        // Check that the home space node exists - else Login cannot proceed
-    	            
-    	        if (nodeService.exists(homeRef) == false)
-    	        {
-    	        	throw new InvalidNodeRefException(homeRef);
-    	        }
-    	        user.setHomeNode(homeRef);
-    	            
-    	        tx.commit();
-    	        tx = null; 
-    	    }
-        	catch (AuthenticationException authErr)
-        	{
-        		// Clear the user object to signal authentication failure
-        		
-                if (logger.isDebugEnabled())
+                authService.validate(ticket);
+
+                // Need to create the User instance if not already available
+
+                String currentUsername = authService.getCurrentUserName();
+
+                // Start a transaction
+
+                tx = transactionService.getUserTransaction();
+                tx.begin();
+
+                NodeRef personRef = personService.getPerson(currentUsername);
+                user = new WebDAVUser(currentUsername, authService.getCurrentTicket(), personRef);
+                NodeRef homeRef = (NodeRef) nodeService.getProperty(personRef, ContentModel.PROP_HOMEFOLDER);
+
+                // Check that the home space node exists - else Login cannot proceed
+
+                if (nodeService.exists(homeRef) == false) {
+                    throw new InvalidNodeRefException(homeRef);
+                }
+                user.setHomeNode(homeRef);
+
+                tx.commit();
+                tx = null;
+            } catch (AuthenticationException authErr) {
+                // Clear the user object to signal authentication failure
+
+                if (logger.isDebugEnabled()) {
                     logger.debug("Logon via ticket failed: " + authErr.getMessage());
+                }
 
-        		user = null;
-        	}
-        	catch (Throwable e)
-        	{
-        		// Clear the user object to signal authentication failure
+                user = null;
+            } catch (Throwable e) {
+                // Clear the user object to signal authentication failure
 
-        	    if (logger.isDebugEnabled())
+                if (logger.isDebugEnabled()) {
                     logger.debug("Logon via ticket failed", e);
-        		
-        		user = null;
-        	}
-        	finally
-        	{
-        		try
-        	    {
-        			if (tx != null)
-        	        {
-        				tx.rollback();
-       	        	}
-        	    }
-        	    catch (Exception tex)
-        	    {
-        	    }
-        	}
-    	}
-        
+                }
+
+                user = null;
+            } finally {
+                try {
+                    if (tx != null) {
+                        tx.rollback();
+                    }
+                } catch (Exception tex) {
+                }
+            }
+        }
+
         // Check if the user is authenticated, if not then prompt again
-        
-        if ( user == null)
-        {
+
+        if (user == null) {
             // No user/ticket, force the client to prompt for logon details
 
             httpResp.sendError(HttpServletResponse.SC_FORBIDDEN);
@@ -231,8 +212,7 @@ public class AuthenticationFilter implements DependencyInjectedFilter
     /**
      * Cleanup filter resources
      */
-    public void destroy()
-    {
+    public void destroy() {
         // Nothing to do
     }
 }

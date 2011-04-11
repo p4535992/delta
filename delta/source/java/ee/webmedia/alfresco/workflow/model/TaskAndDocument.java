@@ -15,8 +15,8 @@ public class TaskAndDocument implements Serializable {
     private static final long serialVersionUID = 1L;
     public static final String STYLECLASS_TASK_OVERDUE = "taskOverdue";
 
-    private Task task;
-    private Document document;
+    private final Task task;
+    private final Document document;
 
     public TaskAndDocument(Task task, Document document) {
         this.task = task;
@@ -46,43 +46,43 @@ public class TaskAndDocument implements Serializable {
     public Document getDocument() {
         return document;
     }
-    
+
     // methods for sortLink tag in jsp
-    public String getDocName(){
+    public String getDocName() {
         return document.getDocName();
     }
-    
-    public Date getTaskDueDate(){
+
+    public Date getTaskDueDate() {
         return task.getDueDate();
-    }    
-    
-    public String getResolution(){
+    }
+
+    public String getResolution() {
         return task.getResolution();
-    } 
-    
-    public String getCreatorName(){
+    }
+
+    public String getCreatorName() {
         return task.getCreatorName();
-    }  
-    
-    public String getRegNumber(){
+    }
+
+    public String getRegNumber() {
         return document.getRegNumber();
-    }  
-    
-    public Date getRegDateTime(){
+    }
+
+    public Date getRegDateTime() {
         return document.getRegDateTime();
-    } 
-    
-    public String getSender(){
+    }
+
+    public String getSender() {
         return document.getSender();
-    }   
-    
-    public Date getDocumentDueDate(){
+    }
+
+    public Date getDocumentDueDate() {
         return document.getDueDate();
-    } 
-    
-    public String getDocumentTypeName(){
+    }
+
+    public String getDocumentTypeName() {
         return document.getDocumentTypeName();
-    }     
+    }
 
     @Override
     public String toString() {

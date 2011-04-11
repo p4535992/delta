@@ -34,10 +34,10 @@ public class ExcelRowMapperTest extends TestCase {
 
     static class TestExcelRowMapper extends ExcelRowMapper<Object> {
         @ExcelColumn('A')
-        private Integer OverRide = (int) 'Z';
-        private Integer FakeOverRide = (int) 'Z';
+        private final Integer OverRide = (int) 'Z';
+        private final Integer FakeOverRide = (int) 'Z';
         @ExcelColumn('K')
-        private Integer SuperField = (int) 'Z';
+        private final Integer SuperField = (int) 'Z';
 
         @Override
         public Object mapRow(Row row, long rowNr, File excelFile, String string) {
@@ -47,6 +47,7 @@ public class ExcelRowMapperTest extends TestCase {
         public Integer getOverRide() {
             return OverRide;
         }
+
         public Integer getFakeOverRide() {
             return FakeOverRide;
         }
@@ -58,13 +59,13 @@ public class ExcelRowMapperTest extends TestCase {
 
     static class TestExcelRowMapper2 extends TestExcelRowMapper {
         @ExcelColumn('B')
-        private Integer OverRide = (int) 'X';
+        private final Integer OverRide = (int) 'X';
         @ExcelColumn('B')
-        private Integer FakeOverRide = (int) 'X';
+        private final Integer FakeOverRide = (int) 'X';
         @ExcelColumn(colNr = 'C')
-        private Integer SubField = (int) 'X';
+        private final Integer SubField = (int) 'X';
         @ExcelColumn()
-        private Integer NullField = (int) 'X';
+        private final Integer NullField = (int) 'X';
     }
 
     private static ExcelRowMapper<Object> getInstance() {
@@ -80,7 +81,7 @@ public class ExcelRowMapperTest extends TestCase {
         System.out.println("OverRide=" + subclass.OverRide);
         Integer superOverride = subclass.getOverRide();
         Integer superFakeOverride = subclass.getFakeOverRide();
-        Assert.isTrue(superFakeOverride == 90/*'Z'*/);
+        Assert.isTrue(superFakeOverride == 90/* 'Z' */);
         Assert.isTrue(subclass.getSuperField() == 'Z');
         Assert.isTrue(superOverride == 'Z');
         System.out.println("super OverRide=" + superOverride);
@@ -96,7 +97,7 @@ public class ExcelRowMapperTest extends TestCase {
         superFakeOverride = subclass.getFakeOverRide();
         System.out.println("super OverRide=" + superOverride);
         Assert.isTrue(superOverride == 1);
-        Assert.isTrue(superFakeOverride == 90/*'Z'*/); // should still have the initial value(as field is not annotated)
+        Assert.isTrue(superFakeOverride == 90/* 'Z' */); // should still have the initial value(as field is not annotated)
         Assert.isTrue(subclass.getSuperField() == 10, "SuperField value is not as expected '" + subclass.getSuperField() + "'");
         Assert.isTrue(subclass.SubField == 'C');
         Assert.isTrue(subclass.NullField == null);

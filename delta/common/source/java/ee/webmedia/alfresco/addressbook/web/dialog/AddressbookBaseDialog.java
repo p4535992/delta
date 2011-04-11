@@ -59,22 +59,24 @@ public abstract class AddressbookBaseDialog extends BaseDialogBean {
     }
 
     public Node getCurrentNode() {
-        if (this.currentNode == null)
+        if (currentNode == null) {
             return null;
+        }
         Node node = new MapNode(currentNode);
         node.getProperties();
         return node;
     }
 
     public NodeRef getCurrentNodeRef() {
-        return this.currentNode;
+        return currentNode;
     }
 
     public void setCurrentNode(Node currentNode) {
-        if (currentNode != null)
+        if (currentNode != null) {
             this.currentNode = currentNode.getNodeRef();
-        else
+        } else {
             this.currentNode = null;
+        }
     }
 
     public List<Node> getOrgPeople() {
@@ -88,7 +90,7 @@ public abstract class AddressbookBaseDialog extends BaseDialogBean {
     }
 
     public void setOrgPeople(List<Node> list) {
-        this.orgPeople = list;
+        orgPeople = list;
     }
 
     public Node getSummary() {
@@ -113,8 +115,9 @@ public abstract class AddressbookBaseDialog extends BaseDialogBean {
     }
 
     public boolean isShowChildren() {
-        if (getOrgPeople().size() > 0)
+        if (getOrgPeople().size() > 0) {
             return true;
+        }
         return false;
     }
 

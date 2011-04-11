@@ -144,7 +144,8 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         }
     }
 
-    private void processDigiDocDownloadRequest(HttpServletRequest req, HttpServletResponse res, boolean redirectToLogin, NodeRef nodeRef, int dataFileId) throws SocketException, IOException {
+    private void processDigiDocDownloadRequest(HttpServletRequest req, HttpServletResponse res, boolean redirectToLogin, NodeRef nodeRef, int dataFileId)
+            throws SocketException, IOException {
         Log logger = getLogger();
 
         ServiceRegistry serviceRegistry = getServiceRegistry(getServletContext());
@@ -185,8 +186,9 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
                 // round the date to the ignore millisecond value which is not supplied by header
                 long modDate = (modified.getTime() / 1000L) * 1000L;
                 if (modDate <= modifiedSince) {
-                    if (logger.isDebugEnabled())
+                    if (logger.isDebugEnabled()) {
                         logger.debug("Returning 304 Not Modified.");
+                    }
                     res.setStatus(HttpServletResponse.SC_NOT_MODIFIED);
                     return;
                 }

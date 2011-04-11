@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.user.web;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -51,8 +50,8 @@ public class PermissionsAddDialog extends BaseDialogBean {
         super.init(params);
         FacesContext context = FacesContext.getCurrentInstance();
         usersGroupsFilters = new SelectItem[] {
-            new SelectItem("0", MessageUtil.getMessage(context, "users")),
-            new SelectItem("1", MessageUtil.getMessage(context, "groups"))
+                new SelectItem("0", MessageUtil.getMessage(context, "users")),
+                new SelectItem("1", MessageUtil.getMessage(context, "groups"))
         };
         authorities = new ArrayList<Authority>();
     }
@@ -60,7 +59,7 @@ public class PermissionsAddDialog extends BaseDialogBean {
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         // We need to run this in elevated rights, so regular users could use PermissionAddDialog
-        // TODO - Assign correct permissions 
+        // TODO - Assign correct permissions
         AuthenticationUtil.runAs(new RunAsWork<Void>() {
 
             @Override
@@ -72,7 +71,7 @@ public class PermissionsAddDialog extends BaseDialogBean {
             }
 
         }, AuthenticationUtil.getSystemUserName());
-    
+
         reset();
         return outcome;
     }
@@ -130,7 +129,7 @@ public class PermissionsAddDialog extends BaseDialogBean {
 
         String[] results = picker.getSelectedResults();
         if (results != null) {
-            if(authorities == null) {
+            if (authorities == null) {
                 authorities = new ArrayList<Authority>();
             }
             for (int i = 0; i < results.length; i++) {
@@ -156,7 +155,7 @@ public class PermissionsAddDialog extends BaseDialogBean {
         }
         return authoritiesModel;
     }
-    
+
     public NodeRef getNodeRef() {
         return nodeRef;
     }
@@ -205,13 +204,13 @@ public class PermissionsAddDialog extends BaseDialogBean {
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
-    
+
     protected DocumentSearchService getDocumentSearchService() {
         if (documentSearchService == null) {
             documentSearchService = (DocumentSearchService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean(DocumentSearchService.BEAN_NAME);
+                    .getBean(DocumentSearchService.BEAN_NAME);
         }
         return documentSearchService;
-    }    
+    }
     // END: getters / setters
 }

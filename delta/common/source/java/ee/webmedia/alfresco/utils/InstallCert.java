@@ -61,7 +61,7 @@ public class InstallCert {
         }
         if (path == null) {
             System.out.println("Enter <path> of KeyStore file: ");
-//            System.out.flush();
+            // System.out.flush();
             path = reader.readLine().trim();
         }
 
@@ -72,13 +72,13 @@ public class InstallCert {
         }
         if (host == null) {
             System.out.println("Enter <host>[:port] to connect with HTTPS: ");
-//            System.out.flush();
+            // System.out.flush();
             host = reader.readLine().trim();
         }
         String[] c = host.split(":");
         host = c[0];
         if (c.length >= 2) {
-            port =Integer.parseInt(c[1]);
+            port = Integer.parseInt(c[1]);
         }
 
         String passphrase = System.getProperty("installcert.passphrase");
@@ -88,7 +88,9 @@ public class InstallCert {
         if (passphrase == null) {
             passphrase = "changeit";
         }
-/*
+
+        // @formatter:off
+        /*
         char[] passphrase;
         if ((args.length == 2) || (args.length == 3)) {
             String[] c = args[0].split(":");
@@ -103,7 +105,8 @@ public class InstallCert {
             System.out.println("Usage: java InstallCert <host>[:port] <file> [passphrase]");
             return;
         }
-*/
+         */
+     // @formatter:on
         KeyStore ks = KeyStore.getInstance(KeyStore.getDefaultType());
         File file = new File(path);
         if (file.isFile()) {
@@ -185,7 +188,7 @@ public class InstallCert {
         System.out.println();
         System.out.println
                 ("Added certificate to KeyStore file '" + path + "' using alias '"
-                + alias + "'");
+                        + alias + "'");
     }
 
     private static final char[] HEXDIGITS = "0123456789abcdef".toCharArray();
@@ -210,15 +213,18 @@ public class InstallCert {
             this.tm = tm;
         }
 
+        @Override
         public X509Certificate[] getAcceptedIssuers() {
             throw new UnsupportedOperationException();
         }
 
+        @Override
         public void checkClientTrusted(X509Certificate[] chain, String authType)
                 throws CertificateException {
             throw new UnsupportedOperationException();
         }
 
+        @Override
         public void checkServerTrusted(X509Certificate[] chain, String authType)
                 throws CertificateException {
             this.chain = chain;

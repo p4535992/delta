@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.signature.exception;
 
-
 /**
  * Checked exception to wrap DigiDocException.
  * 

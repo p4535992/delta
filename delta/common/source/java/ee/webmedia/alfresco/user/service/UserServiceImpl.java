@@ -32,8 +32,8 @@ import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
+
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -52,9 +52,10 @@ public class UserServiceImpl implements UserService {
     private ConfigurableService configurableService;
     private NamespaceService namespaceService;
     private boolean groupsEditingAllowed;
+
     @Override
     public NodeRef getUsersPreferenceNodeRef(String userName) {
-        if(userName == null) {
+        if (userName == null) {
             userName = AuthenticationUtil.getRunAsUser();
         }
 
@@ -86,7 +87,7 @@ public class UserServiceImpl implements UserService {
         }
         return prefRef;
     }
-    
+
     @Override
     public boolean isAdministrator() {
         return authorityService.hasAdminAuthority();
@@ -104,7 +105,7 @@ public class UserServiceImpl implements UserService {
 
         return authorityService.getAuthorities().contains(getDocumentManagersGroup());
     }
-    
+
     @Override
     public boolean isDocumentManager(String userName) {
         if (isAdministrator(userName)) {
@@ -112,7 +113,6 @@ public class UserServiceImpl implements UserService {
         }
         return authorityService.getAuthoritiesForUser(userName).contains(getDocumentManagersGroup());
     }
-
 
     @Override
     public String getDocumentManagersGroup() {
@@ -172,8 +172,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<Authority> getAuthorities(final NodeRef nodeRef, final String permission) {
-        
-        // We need to run this in elevated rights, so regular users could use PermissionListDialog 
+
+        // We need to run this in elevated rights, so regular users could use PermissionListDialog
         return AuthenticationUtil.runAs(new RunAsWork<List<Authority>>() {
             @Override
             public List<Authority> doWork() throws Exception {
@@ -206,11 +206,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public Map<QName, Serializable> getUserProperties(String userName) {
         try {
-            if(personService.personExists(userName)) {
+            if (personService.personExists(userName)) {
                 NodeRef person = personService.getPerson(userName);
                 return nodeService.getProperties(person);
             } else {
-                //FIXME: workaround, et transaktsiooni Rollbakc-only'ks ei märgitaks
+                // FIXME: workaround, et transaktsiooni Rollbakc-only'ks ei märgitaks
                 return null;
             }
         } catch (NoSuchPersonException e) {
@@ -252,12 +252,12 @@ public class UserServiceImpl implements UserService {
         String unitName = organizationStructureService.getOrganizationStructure(unitId);
         return UserUtil.getPersonFullNameWithUnitName(props, unitName);
     }
-    
+
     @Override
     public NodeRef getCurrentUser() {
         return personService.getPerson(authenticationService.getCurrentUserName());
     }
-    
+
     @Override
     public String getCurrentUserName() {
         return authenticationService.getCurrentUserName();
@@ -296,7 +296,7 @@ public class UserServiceImpl implements UserService {
             return;
         }
         Set<String> auths = authorityService.getContainedAuthorities(AuthorityType.USER, authorityService.getName(AuthorityType.GROUP, "SIGNERS"), true);
-        for (Iterator<Node> i = users.iterator(); i.hasNext(); ) {
+        for (Iterator<Node> i = users.iterator(); i.hasNext();) {
             Node user = i.next();
             Object userName = user.getProperties().get(ContentModel.PROP_USERNAME);
             if (!auths.contains(userName)) {
@@ -310,22 +310,19 @@ public class UserServiceImpl implements UserService {
 
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(personService.getPeopleContainer());
         personNodes = new ArrayList<Node>(childRefs.size());
-        for (ChildAssociationRef ref: childRefs)
-        {
+        for (ChildAssociationRef ref : childRefs) {
             // create our Node representation from the NodeRef
             NodeRef nodeRef = ref.getChildRef();
-            if (nodeService.getType(nodeRef).equals(ContentModel.TYPE_PERSON))
-            {
+            if (nodeService.getType(nodeRef).equals(ContentModel.TYPE_PERSON)) {
                 // create our Node representation
                 MapNode node = new MapNode(nodeRef);
 
                 // Load eagerly
-                Map<String, Object> props = node.getProperties(); 
-                String lastName = (String)props.get("lastName");
-                props.put("fullName", ((String)props.get("firstName")) + ' ' + (lastName != null ? lastName : ""));
-                NodeRef homeFolderNodeRef = (NodeRef)props.get("homeFolder");
-                if (homeFolderNodeRef != null)
-                {
+                Map<String, Object> props = node.getProperties();
+                String lastName = (String) props.get("lastName");
+                props.put("fullName", ((String) props.get("firstName")) + ' ' + (lastName != null ? lastName : ""));
+                NodeRef homeFolderNodeRef = (NodeRef) props.get("homeFolder");
+                if (homeFolderNodeRef != null) {
                     props.put("homeSpace", homeFolderNodeRef);
                 }
 
@@ -336,7 +333,7 @@ public class UserServiceImpl implements UserService {
     }
 
     // START: setters/getters
-    
+
     public void setAuthorityService(AuthorityService authorityService) {
         this.authorityService = authorityService;
     }
@@ -368,7 +365,7 @@ public class UserServiceImpl implements UserService {
     public void setOrganizationStructureService(OrganizationStructureService organizationStructureService) {
         this.organizationStructureService = organizationStructureService;
     }
-    
+
     public void setConfigurableService(ConfigurableService configurableService) {
         this.configurableService = configurableService;
     }

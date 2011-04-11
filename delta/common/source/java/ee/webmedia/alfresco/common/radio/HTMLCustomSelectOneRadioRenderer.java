@@ -28,6 +28,7 @@ public class HTMLCustomSelectOneRadioRenderer extends Renderer {
      * @param context <code>FacesContext</code>for the current request
      * @param component <code>UIComponent</code> to be decoded
      */
+    @Override
     public void decode(FacesContext context, UIComponent component) {
         if ((context == null) || (component == null)) {
             throw new NullPointerException();
@@ -58,6 +59,7 @@ public class HTMLCustomSelectOneRadioRenderer extends Renderer {
      * @param context <code>FacesContext</code>for the current request
      * @param component <code>UIComponent</code> to be decoded
      */
+    @Override
     public void encodeBegin(FacesContext context, UIComponent component)
             throws IOException {
         if ((context == null) || (component == null)) {
@@ -73,6 +75,7 @@ public class HTMLCustomSelectOneRadioRenderer extends Renderer {
      * @param context <code>FacesContext</code>for the current request
      * @param component <code>UIComponent</code> to be decoded
      */
+    @Override
     public void encodeChildren(FacesContext context, UIComponent component)
             throws IOException {
         if ((context == null) || (component == null)) {
@@ -89,6 +92,7 @@ public class HTMLCustomSelectOneRadioRenderer extends Renderer {
      * @param component <code>UIComponent</code> to be decoded
      */
 
+    @Override
     public void encodeEnd(FacesContext context, UIComponent component)
             throws IOException {
         if ((context == null) || (component == null)) {
@@ -168,8 +172,9 @@ public class HTMLCustomSelectOneRadioRenderer extends Renderer {
                     partName = id.substring(0, lastIndexOfColon + 1);
                     if (aUICustomSelectOneRadio.getName() == null) {
                         partName = partName + "generatedRad";
-                    } else
+                    } else {
                         partName = partName + aUICustomSelectOneRadio.getName();
+                    }
                 }
 
                 return partName;

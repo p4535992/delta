@@ -21,12 +21,12 @@ public class ParametersServiceImplTest extends BaseAlfrescoSpringTest {
         final Long value = parametersService.getLongParameter(Parameters.DVK_MAX_RECEIVE_DOCUMENTS_NR);
         assertEquals(Long.valueOf(50), value);
     }
-    
+
     public void testGetAllParameters() throws Exception {
         final List<Parameter<?>> allParameters = parametersService.getAllParameters();
         assertTrue(allParameters.size() > 0);
         for (Parameter<?> parameter : allParameters) {
-            log.debug("parameter: "+parameter);
+            log.debug("parameter: " + parameter);
         }
     }
 

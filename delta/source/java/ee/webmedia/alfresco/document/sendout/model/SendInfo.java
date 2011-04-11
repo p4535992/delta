@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.document.sendout.model;
 
-
 import java.util.Date;
 
 import org.alfresco.web.bean.repository.Node;

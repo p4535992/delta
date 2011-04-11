@@ -268,7 +268,7 @@ public class MenuBean implements Serializable {
 
     public void processTaskItem(String... menuItemIds) {
         final Collection<String> menuItemsListToProcess;
-        if(menuItemIds != null) {
+        if (menuItemIds != null) {
             menuItemsListToProcess = new HashSet<String>(menuItemIds.length);
             menuItemsListToProcess.addAll(Arrays.asList(menuItemIds));
         } else {
@@ -330,11 +330,10 @@ public class MenuBean implements Serializable {
                     ((DropdownMenuItem) item).setExpanded(true); // Mark our trail
                 }
                 int index = Integer.parseInt(step);
-                if(index < item.getSubItems().size()){
+                if (index < item.getSubItems().size()) {
                     item = item.getSubItems().get(index);
-                }
-                else {
-                    //probably menu has changed so previous link is not valid any longer
+                } else {
+                    // probably menu has changed so previous link is not valid any longer
                     item = null;
                     break;
                 }
@@ -346,7 +345,7 @@ public class MenuBean implements Serializable {
                 }
                 if (item.getSubItems() == null) {
                     item.setSubItems(new ArrayList<MenuItem>());
-                }                
+                }
                 for (NodeRef childItemRef : getMenuService().openTreeItem(dropdownItem, nodeRef)) {
                     DropdownMenuItem childItem = new DropdownMenuItem();
                     childItem.setChildFilter(dropdownItem.getChildFilter()); // By default pass on parent's filter. Can be overridden in setupTreeItem
@@ -356,13 +355,12 @@ public class MenuBean implements Serializable {
                 Collections.sort(item.getSubItems(), new DropdownMenuComparator());
                 dropdownItem.setExpanded(true);
                 int index = Integer.parseInt(step);
-                if (index < item.getSubItems().size()){                
+                if (index < item.getSubItems().size()) {
                     item = dropdownItem.getSubItems().get(Integer.parseInt(step));
-                }
-                else {
-                    //probably menu has changed so previous link is not valid any longer
+                } else {
+                    // probably menu has changed so previous link is not valid any longer
                     item = null;
-                    break;                    
+                    break;
                 }
             }
         }
@@ -423,16 +421,16 @@ public class MenuBean implements Serializable {
     }
 
     public Menu getMenu() {
-        if (getMenuService().getUpdateCount() != updateCount || this.menu == null) {
+        if (getMenuService().getUpdateCount() != updateCount || menu == null) {
             log.debug("Fetching new menu structure from service.");
             reloadMenu(); // XXX - Somehow this makes it work... Although menu structure in service isn't modified.
-            this.menu = getMenuService().getMenu();
-            this.updateCount = getMenuService().getUpdateCount();
+            menu = getMenuService().getMenu();
+            updateCount = getMenuService().getUpdateCount();
             if (lastLinkId != null && linkNodeRef != null) {
                 updateTree();
             }
         }
-        return this.menu;
+        return menu;
     }
 
     public void reset() {
@@ -457,7 +455,7 @@ public class MenuBean implements Serializable {
 
     private void setMenuItemId(String primaryId, String secondaryId) {
         setActiveItemId(primaryId);
-        this.clickedId = secondaryId;
+        clickedId = secondaryId;
     }
 
     @SuppressWarnings("unchecked")
@@ -546,12 +544,12 @@ public class MenuBean implements Serializable {
         List<MenuItem> subItems = menu.getSubItems();
         MenuItem item = null;
         int index;
-        for (int i = 0; i < path.length; i++) {
+        for (String pathElem : path) {
             if (subItems == null) {
                 return null;
             }
             try {
-                index = Integer.parseInt(path[i]);
+                index = Integer.parseInt(pathElem);
             } catch (NumberFormatException e) {
                 return null;
             }
@@ -649,12 +647,12 @@ public class MenuBean implements Serializable {
         List<MenuItem> subItems = menu.getSubItems();
         MenuItem item = null;
         int index;
-        for (int i = 0; i < path.length; i++) {
+        for (String pathElem : path) {
             if (subItems == null) {
                 return 0;
             }
             try {
-                index = Integer.parseInt(path[i]);
+                index = Integer.parseInt(pathElem);
             } catch (NumberFormatException e) {
                 return 0;
             }
@@ -810,14 +808,14 @@ public class MenuBean implements Serializable {
         }
         return userService;
     }
-    
+
     protected WorkflowService getWorkflowService() {
         if (workflowService == null) {
             workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
                     .getBean(WorkflowService.BEAN_NAME);
         }
         return workflowService;
-    }    
+    }
 
     public void setUserService(UserService userService) {
         this.userService = userService;

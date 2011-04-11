@@ -60,7 +60,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
     public void start(ActionEvent event) {
 
         // Set the templates root space as parent node
-        this.navigator.setCurrentNodeId(getGeneralService().getNodeRef(DocumentTemplateModel.Repo.TEMPLATES_SPACE).getId());
+        navigator.setCurrentNodeId(getGeneralService().getNodeRef(DocumentTemplateModel.Repo.TEMPLATES_SPACE).getId());
         setDocTemplateNode(TransientNode.createNew(getDictionaryService(), getDictionaryService().getType(ContentModel.TYPE_CONTENT), "",
                 new HashMap<QName, Serializable>(0)));
         docTemplateNode.getAspects().add(DocumentTemplateModel.Aspects.TEMPLATE);
@@ -82,8 +82,8 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         clearUpload();
         reset();
 
-        if (this.showOtherProperties) {
-            this.browseBean.setDocument(new Node(this.createdNode));
+        if (showOtherProperties) {
+            browseBean.setDocument(new Node(createdNode));
         }
         return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
     }
@@ -95,7 +95,7 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
         AddFileDialog.checkPlusInFileName(newName);
         try {
             setFileName(newName);
-            saveContent(this.file, null);
+            saveContent(file, null);
         } catch (FileExistsException e) {
             isFinished = false;
             throw new RuntimeException(MessageUtil.getMessage(context, ERR_EXISTING_FILE, e.getName()));
@@ -107,15 +107,15 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
         if (isSystemTemplate()) {
             prop.put(DocumentTemplateModel.Prop.DOCTYPE_ID, MessageUtil.getMessage("template_system_template"));
-            getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE_SYSTEM, prop);
+            getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_SYSTEM, prop);
         } else if (isEmailTemplate()) {
             prop.put(DocumentTemplateModel.Prop.DOCTYPE_ID, MessageUtil.getMessage("template_email_template"));
-            getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE_EMAIL, prop);
+            getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_EMAIL, prop);
         } else {
             if (templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID) != null && !templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID).toString().equals("")) {
                 prop.put(DocumentTemplateModel.Prop.DOCTYPE_ID, templProp.get(DocumentTemplateModel.Prop.DOCTYPE_ID).toString());
             }
-            getNodeService().addAspect(this.createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT, prop);
+            getNodeService().addAspect(createdNode, DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT, prop);
         }
 
         return outcome;
@@ -132,11 +132,13 @@ public class AddDocumentTemplateDialog extends AddContentDialog {
 
     @Override
     public String getContainerTitle() {
-        if (isEmailTemplate())
+        if (isEmailTemplate()) {
             return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_add_new_email_template");
+        }
 
-        if (isSystemTemplate())
+        if (isSystemTemplate()) {
             return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_add_new_system_template");
+        }
 
         return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_add_new_doc_template");
     }

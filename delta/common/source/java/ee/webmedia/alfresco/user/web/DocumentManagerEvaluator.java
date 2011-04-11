@@ -16,8 +16,9 @@ import ee.webmedia.alfresco.user.service.UserService;
 public class DocumentManagerEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 2958297435415449179L;
 
+    @Override
     public boolean evaluate(Node node) {
-        UserService userService = (UserService)FacesContextUtils.getRequiredWebApplicationContext(//
+        UserService userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(//
                 FacesContext.getCurrentInstance()).getBean(UserService.BEAN_NAME);
         return userService.isDocumentManager();
     }

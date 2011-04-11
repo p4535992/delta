@@ -1,9 +1,10 @@
 package ee.webmedia.alfresco.archivals.service;
 
-import ee.webmedia.alfresco.functions.model.Function;
+import java.util.List;
+
 import org.alfresco.service.cmr.repository.NodeRef;
 
-import java.util.List;
+import ee.webmedia.alfresco.functions.model.Function;
 
 /**
  * @author Romet Aidla

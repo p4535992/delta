@@ -42,7 +42,7 @@ public class RelatedDropdownGenerator extends GeneralSelectorGenerator {
         setFillingInformation(selectComponent);
         return selectComponent;
     }
-    
+
     @Override
     protected boolean isMultiValued(PropertyDefinition propertyDef) {
         return false;
