@@ -50,6 +50,11 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
       <property name="sinceVersion" value="2.1.1" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentTypeSpacesBootstrap" />
+         </list>
+      </property>
       <property name="bootstrapViews">
          <list>
             <props>

@@ -89,6 +89,11 @@
       <property name="moduleId" value="common" />
       <property name="name" value="shortcutToMenuItemIdUpdater" />
       <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentTypeSpacesBootstrap2" />
+         </list>
+      </property>
       <property name="nodeService" ref="nodeService" />
       <property name="searchService" ref="searchService" />
       <property name="generalService" ref="generalService" />
