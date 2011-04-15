@@ -31,7 +31,6 @@
    <property name="project.build.temporary.war" location="${project.dir.build}/temporary.war" />
 
    <property file="${project.basedir}/project.properties" />
-   <property name="project.build.result.war" location="${project.dir.build}/dhs-${currentVersion}.war" />
 
    <property name="conf.basedir" location="${project.dir.etc}/conf" />
    <property name="conf.organization.basedir" location="${project.dir.etc}/conf-organization" />
@@ -42,6 +41,7 @@
    <property name="conf.organization.name" value="default" />
    <property name="appserver" value="glassfish" />
    <import file="build-${appserver}.xml" />
+   <property name="project.build.result.war" location="${project.dir.build}/dhs-${currentVersion}-${conf.organization.name}-${appserver}.war" />
 
    <path id="classpath">
       <fileset dir="${project.dir.exploded.lib}" includes="**/*.jar" />
