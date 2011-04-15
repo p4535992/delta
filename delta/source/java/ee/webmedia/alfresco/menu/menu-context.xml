@@ -86,7 +86,7 @@
 
    <!-- Changes shortcut to menuItemId (CL task 158558) -->
    <bean id="shortcutToMenuItemIdUpdater" class="ee.webmedia.alfresco.menu.bootstrap.ShortcutToMenuItemIdUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="common" />
+      <property name="moduleId" value="simdhs" />
       <property name="name" value="shortcutToMenuItemIdUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
