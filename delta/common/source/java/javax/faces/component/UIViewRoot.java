@@ -33,6 +33,8 @@ import javax.faces.event.PhaseId;
 
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
+import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidationEvent;
+import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidationException;
 
 /**
  * see Javadoc of <a href="http://java.sun.com/j2ee/javaserverfaces/1.1_01/docs/api/index.html">JSF Specification</a>
@@ -91,6 +93,7 @@ public class UIViewRoot
         {
             FacesEvent event = (FacesEvent) listiterator.next();
             int ordinal = event.getPhaseId().getOrdinal();
+            if (!abort || MandatoryIfValidationEvent.class.isInstance(event)) {
             if (ordinal == ANY_PHASE_ORDINAL ||
                 ordinal == phaseIdOrdinal)
             {
@@ -99,6 +102,9 @@ public class UIViewRoot
                 try
                 {
                     source.broadcast(event);
+                } catch (MandatoryIfValidationException e) {
+                    // abort event processing except for mandatory if validation events
+                    abort = true;                    
                 }
                 catch (AbortProcessingException e)
                 {
@@ -122,6 +128,7 @@ public class UIViewRoot
 		                listiterator = _events.listIterator();
 	                }
                 }
+            }
             }
         }
 

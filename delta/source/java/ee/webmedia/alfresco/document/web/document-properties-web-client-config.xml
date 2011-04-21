@@ -248,8 +248,8 @@
       <property-sheet>
          <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
-             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
+            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
             "
          />
       </property-sheet>
@@ -259,8 +259,8 @@
       <property-sheet>
          <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
-             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
+            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
             "
          />
       </property-sheet>
@@ -417,8 +417,8 @@
       <property-sheet>
          <show-property forcedMandatory="true" name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText"  readOnlyIf="parent.doccom:docStatus!=töös" 
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
-             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:errandEndDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
+            ,docspec:errandEndDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
             "
          />
       </property-sheet>
@@ -445,7 +445,7 @@
             component-generator="MultiValueEditorGenerator" forcedMandatory="true" initialRows="1" propsGeneration="
              docspec:dailyAllowanceDays¤¤styleClass=small inline-center dailyAllowanceDaysField
             ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=trainingAppDailyAllowanceRate¤styleClass=small inline-center dailyAllowanceRateField
-            ,docspec:dailyAllowanceSum¤ParameterInputAttributeGenerator¤styleClass=width120 dailyAllowanceSumField editable¤read-only=true¤converter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤parameterName=trainingApplicationDailyAllowanceSum
+            ,docspec:dailyAllowanceSum¤ParameterInputAttributeGenerator¤styleClass=width120 dailyAllowanceSumField editable¤read-only=true¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤parameterName=trainingApplicationDailyAllowanceSum
             "
          />
          <show-property name="docspec:dailyAllowanceTotalSum" read-only="true" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" styleClass="dailyAllowanceTotalSumField editable"/>
@@ -469,9 +469,9 @@
       <property-sheet>
          <show-property name="expenseRows" ignore-if-missing="false" display-label-id="document_errand_expenseType" 
             addLabelId="document_errandsAbroad_add" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
-            component-generator="MultiValueEditorGenerator" initialRows="1" propsGeneration="
-             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=trainingAppAbroadExpenseType¤styleClass=width120
-            ,docspec:expectedExpenseSum¤¤styleClass=width120 expectedExpenseSumField¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIf=docspec:expenseType!=null¤converter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
+            component-generator="MultiValueEditorGenerator" initialRows="1" forcedMandatory="true" propsGeneration="
+             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=trainingAppAbroadExpenseType¤styleClass=width120¤forcedMandatory=true
+            ,docspec:expectedExpenseSum¤¤styleClass=width120 expectedExpenseSumField¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIf=docspec:expenseType!=null¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
             "
          />
          <show-property name="docspec:expensesTotalSum" styleClass="expensesTotalSumField editable" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" read-only="true" />
@@ -525,8 +525,8 @@
       <property-sheet>
          <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
-             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
+            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
             "
          />
       </property-sheet>
@@ -567,7 +567,7 @@
             component-generator="MultiValueEditorGenerator" initialRows="1" propsGeneration="
              docspec:dailyAllowanceDays¤¤styleClass=small inline-center dailyAllowanceDaysField
             ,docspec:dailyAllowanceRate¤ClassificatorSelectorGenerator¤classificatorName=errandAbroadDailyAllowanceRate¤styleClass=small inline-center dailyAllowanceRateField
-            ,docspec:dailyAllowanceSum¤ParameterInputAttributeGenerator¤styleClass=width120 dailyAllowanceSumField editable¤read-only=true¤converter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤parameterName=errandOrderAbroadDailyAllowanceSum
+            ,docspec:dailyAllowanceSum¤ParameterInputAttributeGenerator¤styleClass=width120 dailyAllowanceSumField editable¤read-only=true¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤parameterName=errandOrderAbroadDailyAllowanceSum
             "
          />
          <show-property name="docspec:dailyAllowanceTotalSum" read-only="true" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" styleClass="dailyAllowanceTotalSumField editable"/>
@@ -609,7 +609,7 @@
             addLabelId="document_errandsAbroad_add" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
             component-generator="MultiValueEditorGenerator" initialRows="1" propsGeneration="
             docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandOrderAbroadExpenseType¤styleClass=width120
-            ,docspec:expectedExpenseSum¤¤styleClass=width120 expectedExpenseSumField¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIf=docspec:expenseType!=null¤converter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
+            ,docspec:expectedExpenseSum¤¤styleClass=width120 expectedExpenseSumField¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIf=docspec:expenseType!=null¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
             "
          />
          <show-property name="docspec:expensesTotalSum" styleClass="expensesTotalSumField editable" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" read-only="true" />
@@ -647,7 +647,7 @@
             addLabelId="document_errandsAbroad_add" styleClass="add-expense" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
             component-generator="MultiValueEditorGenerator" initialRows="1" propsGeneration="
              docspec:expenseType¤ClassificatorSelectorGenerator¤classificatorName=errandApplicationDomesticExpenseType¤styleClass=width120
-            ,docspec:expectedExpenseSum¤¤styleClass=width120 expectedExpenseSumField¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIf=docspec:expenseType!=null¤converter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
+            ,docspec:expectedExpenseSum¤¤styleClass=width120 expectedExpenseSumField¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIf=docspec:expenseType!=null¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤mandatoryIfLabelId=document_errandOrderAbroad_applicant_errand_validation_mandatory_expense
             "
          />
          <show-property name="docspec:expensesTotalSum" styleClass="expensesTotalSumField editable" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" read-only="true" />

@@ -13,7 +13,6 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UISelectBoolean;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
-import javax.faces.event.AbortProcessingException;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.FacesListener;
 import javax.faces.event.PhaseId;
@@ -84,7 +83,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
 
     private void delayValidation(final FacesContext context, final UIComponent component) {
         final UIPropertySheet propSheet = ComponentUtil.getAncestorComponent(component, UIPropertySheet.class);
-        ActionEvent event = new ActionEvent(propSheet) {
+        ActionEvent event = new MandatoryIfValidationEvent(propSheet) {
             private static final long serialVersionUID = 1L;
             boolean notExecuted = true;
 
@@ -169,7 +168,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
             facesMessage.setSeverity(FacesMessage.SEVERITY_ERROR);
             context.addMessage(input.getClientId(context), facesMessage);
         }
-        throw new AbortProcessingException("MandatoryIf validation failed");
+        throw new MandatoryIfValidationException("MandatoryIf validation failed for input " + input.getClientId(context));
     }
 
     private boolean isRequired(String propExpectedVal, boolean checkEquals, UIInput otherInput) {

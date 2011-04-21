@@ -81,7 +81,7 @@ function isIE8() {
 }
 
 function round(floatVal, decimals) {
-   return Math.round(floatVal * Math.pow(10, decimals)) / Math.pow(10, decimals);
+   return (Math.round(floatVal * Math.pow(10, decimals)) / Math.pow(10, decimals)).toFixed(decimals);
 }
 
 
