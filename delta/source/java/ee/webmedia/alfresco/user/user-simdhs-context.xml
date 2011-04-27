@@ -26,6 +26,12 @@
       <property name="sinceVersion" value="1.1.1.23" />
       <property name="executeOnceOnly" value="true" />
    </bean>
+   
+   <bean id="accountantsGroupBootstrap" class="ee.webmedia.alfresco.user.bootstrap.AccountantsGroupBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="accountantsGroupBootstrap" />
+      <property name="executeOnceOnly" value="true" />
+   </bean>   
 
    <bean id="deleteDummyUserBootstrap" class="ee.webmedia.alfresco.user.bootstrap.DeleteDummyUserBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />

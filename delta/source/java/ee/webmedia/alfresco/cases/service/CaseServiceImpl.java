@@ -123,7 +123,7 @@ public class CaseServiceImpl implements CaseService {
         }
         final boolean isNew = nodeIsNull || node instanceof TransientNode;
         @SuppressWarnings("null")
-        final String title = (String) (fromNodeProps ? node.getProperties().get(CaseModel.Props.TITLE) : theCase.getTitle());
+        final String title = StringUtils.strip((String) (fromNodeProps ? node.getProperties().get(CaseModel.Props.TITLE) : theCase.getTitle()));
         if (isCaseNameUsed(title, theCase.getVolumeNodeRef(), node != null ? node.getNodeRef() : null)) {
             final UnableToPerformException ex = new UnableToPerformException(MessageSeverity.ERROR, "case_save_error_caseNameUsed");
             ex.setMessageValuesForHolders(title);
@@ -139,12 +139,14 @@ public class CaseServiceImpl implements CaseService {
         }
 
         if (isNew) { // save
+            props.put(CaseModel.Props.TITLE, title);
             NodeRef caseRef = nodeService.createNode(theCase.getVolumeNodeRef(),
                     CaseModel.Associations.CASE, CaseModel.Associations.CASE, CaseModel.Types.CASE, props).getChildRef();
             theCase.setNode(generalService.fetchNode(caseRef));
         } else { // update
             @SuppressWarnings("null")
             Map<String, Object> stringQNameProperties = node.getProperties();
+            stringQNameProperties.put(CaseModel.Props.TITLE.toString(), title);
             generalService.setPropertiesIgnoringSystem(node.getNodeRef(), stringQNameProperties);
         }
     }

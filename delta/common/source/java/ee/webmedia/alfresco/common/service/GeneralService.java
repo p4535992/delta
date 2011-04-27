@@ -221,6 +221,15 @@ public interface GeneralService {
     public NodeRef getAncestorNodeRefWithType(NodeRef childRef, QName ancestorType, boolean checkSubTypes);
 
     /**
+     * @param nodeRef
+     * @param ancestorType
+     * @param checkSubTypes - if true dictionaryService is used to determine if ancestor is subType of expected <code>ancestorType</code>
+     * @param startFromParent - if false, then nodeRef is returned if nodeRef type matches ancestorType
+     * @return nodeRef of the first parent of childRef that has type <code>ancestorType</code>
+     */
+    NodeRef getAncestorNodeRefWithType(NodeRef nodeRef, QName ancestorType, boolean checkSubTypes, boolean startFromParent);
+
+    /**
      * Updates parent node containingDocsCount property
      * 
      * @param parentNodeRef parent to update

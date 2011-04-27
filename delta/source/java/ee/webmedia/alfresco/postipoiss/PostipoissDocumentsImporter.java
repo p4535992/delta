@@ -998,7 +998,7 @@ public class PostipoissDocumentsImporter {
         int batchSize = BATCH_SIZE;
         int totalSize;
         int i;
-        int completedSize;;
+        int completedSize;
         long totalStartTime;
         long startTime;
         String processName;
@@ -1628,6 +1628,8 @@ public class PostipoissDocumentsImporter {
 
             propsMap.put(DocumentCommonModel.Props.DOC_STATUS, open ? DocumentStatus.WORKING.getValueName() : DocumentStatus.FINISHED.getValueName());
             propsMap.put(DocumentCommonModel.Props.REG_NUMBER, regNumber /* root.elementText(PP_ELEMENT_TOIMIK_SARI) */);
+            // XXX XXX XXX - THIS IS UNTESTED! Must set this field to support document search functionality.
+            propsMap.put(DocumentCommonModel.Props.SHORT_REG_NUMBER, StringUtils.substringAfter(regNumber, DocumentService.VOLUME_MARK_SEPARATOR));
             propsMap.put(ContentModel.PROP_CREATOR, CREATOR_MODIFIER);
             propsMap.put(ContentModel.PROP_MODIFIER, CREATOR_MODIFIER);
 

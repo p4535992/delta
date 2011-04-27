@@ -1,8 +1,11 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE permissions >
-<!--PUBLIC '-//ALFRECSO//DTD PERMISSIONS//EN' 'permissionSchema.dtd' -->
-
-<!-- Note: the above is commented out as spring does not seem to find the dtd -->
+<!-- <!DOCTYPE permissions PUBLIC '-//ALFRECSO//DTD PERMISSIONS//EN' 'permissionSchema.dtd'> -->
+<!-- Above line could be used to take advantage of content assist of the IDE. For eclipse you can add to new element to the XML Catalog
+   using "Public ID" key type and "-//ALFRECSO//DTD PERMISSIONS//EN" as a key and point location to the schema file 
+   Note that above can't be used when deploying application (unless you have permissionSchema.dtd available for the application container 
+   - for example in glassfish/domains/domain2/config/permissionSchema.dtd)
+ -->
 
 <!-- ============================================ -->
 <!-- The base permission model for the repository -->
@@ -37,7 +40,7 @@
    <!-- =============================================== -->
     
    <permissionSet type="sys:base" expose="all" >
-    
+
       <!-- ================= -->
       <!-- Permission groups -->
       <!-- ================= -->
@@ -290,6 +293,21 @@
         -->
       </permission>
       
+      <!-- START: delta permissions -->
+      <permission name="viewDocumentMetaData" expose="false" />
+      <permission name="editDocumentMetaData" expose="false" />
+      <permission name="deleteDocumentMetaData" expose="false" />
+      <!-- to check following(file permissions), perform check on document nodeRef, not on file NodeRef
+      (because even static permissions are inherited document, dynamic authorities don't check if given node is file - for better performance)
+      docRef = file.parentRef;
+      if(AccessStatus.ALLOWED==permissionService.hasPermission(docRef, "viewDocumentFiles")){
+         // file has permission "viewDocumentFiles"
+      }
+       -->
+      <permission name="viewDocumentFiles" expose="false" />
+      <permission name="editDocumentFiles" expose="false" />
+      <permission name="deleteDocumentFiles" expose="false" />
+      <!-- END: delta permissions -->
    </permissionSet>
    
    <!-- ================================================ -->
@@ -550,4 +568,39 @@
     
    <globalPermission permission="Flatten" authority="ROLE_WCM_STORE_OWNER" />
        
+<!-- START: delta permissions -->
+   <!-- permission granted to the current owner of the document -->
+   <globalPermission permission="viewDocumentMetaData" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="editDocumentMetaData" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="viewDocumentFiles" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="editDocumentFiles" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="deleteDocumentFiles" authority="ROLE_PROP_DOC_OWNER"/>
+   <globalPermission permission="deleteDocumentMetaData" authority="ROLE_PROP_DOC_OWNER"/>
+
+   <!-- permission granted to members of ALFRESCO_ADMINISTRATORS -->
+   <globalPermission permission="viewDocumentMetaData" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="editDocumentMetaData" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="viewDocumentFiles" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="editDocumentFiles" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="deleteDocumentFiles" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+   <globalPermission permission="deleteDocumentMetaData" authority="GROUP_ALFRESCO_ADMINISTRATORS"/>
+
+   <!-- permission granted to members of DOCUMENT_MANAGERS -->
+   <globalPermission permission="viewDocumentMetaData" authority="GROUP_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="editDocumentMetaData" authority="GROUP_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="deleteDocumentMetaData" authority="GROUP_DOCUMENT_MANAGERS"/>
+   
+   <!-- permission granted to members of DOCUMENT_MANAGERS that are added to the series through management interface -->
+   <globalPermission permission="viewDocumentMetaData" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="editDocumentMetaData" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="viewDocumentFiles" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="editDocumentFiles" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="deleteDocumentFiles" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
+   <globalPermission permission="deleteDocumentMetaData" authority="ROLE_SERIES_DOCUMENT_MANAGERS"/>
+
+   <!-- permission granted when document is public -->
+   <globalPermission permission="viewDocumentMetaData" authority="ROLE_PUBLIC_DOCUMENT"/>
+   <globalPermission permission="viewDocumentFiles" authority="ROLE_PUBLIC_DOCUMENT"/>
+<!-- END: delta permissions -->
+
 </permissions>

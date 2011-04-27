@@ -67,9 +67,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
         if (!documentService.isSaved(docNode.getNodeRef())) {
             return false;
         }
-        PermissionService permissionService = (PermissionService) FacesContextUtils.getRequiredWebApplicationContext(//
-                context).getBean("PermissionService");
-        if (!permissionService.hasPermission(docNode.getNodeRef(), PermissionService.WRITE_PROPERTIES).equals(AccessStatus.ALLOWED)) {
+        if (!docNode.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
             return false;
         }
         return isNotRegistered(docNode);

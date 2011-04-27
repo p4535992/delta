@@ -30,6 +30,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
@@ -57,6 +58,7 @@ public class MenuItem implements Serializable {
     @XStreamAsAttribute
     @XStreamAlias("document-manager")
     private boolean docManager;
+    private boolean accountant;
     private String outcome;
     @XStreamAlias("subitems")
     private List<MenuItem> subItems;
@@ -78,16 +80,18 @@ public class MenuItem implements Serializable {
     public MenuItem() {
     }
 
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService) {
-        return createComponent(context, id, false, userService, workflowService, false);
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService) {
+        return createComponent(context, id, false, userService, workflowService, einvoiceService, false);
     }
 
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, boolean createChildren) {
-        return createComponent(context, id, false, userService, workflowService, false);
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
+            boolean createChildren) {
+        return createComponent(context, id, false, userService, workflowService, einvoiceService, false);
     }
 
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, boolean createChildren, boolean plainLink) {
-        return createComponent(context, id, false, userService, workflowService, true);
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
+            boolean createChildren, boolean plainLink) {
+        return createComponent(context, id, false, userService, workflowService, einvoiceService, true);
     }
 
     /**
@@ -97,13 +101,18 @@ public class MenuItem implements Serializable {
      * @param application Faces Application
      * @return
      */
-    public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService, WorkflowService workflowService, boolean plainLink) {
+    public UIComponent createComponent(FacesContext context, String id, boolean active, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
+            boolean plainLink) {
 
         if (isRestricted() && !hasPermissions(userService)) {
             return null;
         }
 
         if (isExternalReview() && !isExternalReviewEnabled(workflowService)) {
+            return null;
+        }
+
+        if (isEinvoiceFunctionality() && !isEinvoiceFunctionalityEnabled(einvoiceService)) {
             return null;
         }
 
@@ -218,6 +227,14 @@ public class MenuItem implements Serializable {
         return wrap;
     }
 
+    private boolean isEinvoiceFunctionalityEnabled(EInvoiceService einvoiceService) {
+        return einvoiceService.isEinvoiceEnabled();
+    }
+
+    private boolean isEinvoiceFunctionality() {
+        return "dimensions".equals(id) || "incomingEInvoice".equals(id);
+    }
+
     protected void addParameter(FacesContext context, UIActionLink link, String name, String value) {
         UIParameter param = (UIParameter) context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_PARAMETER);
         FacesHelper.setupComponentId(context, param, null);
@@ -237,6 +254,8 @@ public class MenuItem implements Serializable {
             return userService.isAdministrator();
         } else if (isDocManager()) {
             return userService.isDocumentManager();
+        } else if (isAccountant()) {
+            return userService.isAccountant();
         }
         return false;
 
@@ -358,6 +377,14 @@ public class MenuItem implements Serializable {
 
     public void setStyleClass(List<String> styleClass) {
         this.styleClass = styleClass;
+    }
+
+    public void setAccountant(boolean accountant) {
+        this.accountant = accountant;
+    }
+
+    public boolean isAccountant() {
+        return accountant;
     }
 
 }

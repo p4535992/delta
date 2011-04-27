@@ -29,11 +29,16 @@ public interface WorkflowSpecificModel {
         /** Allkirjastamiseks */
         QName SIGNATURE_WORKFLOW = QName.createQName(URI, "signatureWorkflow");
 
+        /** Täitmiseks */
         QName ASSIGNMENT_TASK = QName.createQName(URI, "assignmentTask");
+        /** Teadmiseks */
         QName INFORMATION_TASK = QName.createQName(URI, "informationTask");
+        /** Arvamuse andmiseks */
         QName OPINION_TASK = QName.createQName(URI, "opinionTask");
+        /** Kooskõlastamiseks */
         QName REVIEW_TASK = QName.createQName(URI, "reviewTask");
         QName EXTERNAL_REVIEW_TASK = QName.createQName(URI, "externalReviewTask");
+        /** Allkirjastamiseks */
         QName SIGNATURE_TASK = QName.createQName(URI, "signatureTask");
     }
 

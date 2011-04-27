@@ -69,6 +69,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
 
     private static final FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
     private static final String SEPARATOR = ".";
+    private static final Pattern TEMPLATE_FORMULA_GROUP_PATTERN = Pattern.compile(OpenOfficeService.REGEXP_GROUP_PATTERN);
+    private static final Pattern TEMPLATE_FORMULA_PATTERN = Pattern.compile(OpenOfficeService.REGEXP_PATTERN);
 
     private GeneralService generalService;
     private NodeService nodeService;
@@ -323,17 +325,40 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         }
 
         StringBuffer result = new StringBuffer();
-        Pattern pattern = Pattern.compile(OpenOfficeService.REGEXP_PATTERN);
-        Matcher matcher = pattern.matcher(templateTxt);
+        Matcher matcher = TEMPLATE_FORMULA_GROUP_PATTERN.matcher(templateTxt);
         while (matcher.find()) {
-            String formulaKey = matcher.group().substring(1, matcher.group().length() - 1);
-            String formulaValue = allFormulas.get(formulaKey);
-            if (formulaValue == null) {
-                /*
-                 * Spetsifikatsioon "Dokumendi ekraanivorm - Tegevused.docx" punkt 7.1.5.2
-                 * Kui vastav metaandme väli on täitmata, siis asendamist ei toimu.
-                 */
+            String group = matcher.group();
+            String subResult = replaceCurlyBracesFormulas(group, allFormulas, false);
+
+            if (group.equals(subResult)) { // If no replacement occurred then remove this group
+                matcher.appendReplacement(result, "");
+            } else { // remove group separators
+                subResult = subResult.substring("/*".length(), subResult.length() - "*/".length());
+                matcher.appendReplacement(result, escapeXml(subResult));
+            }
+        }
+        matcher.appendTail(result);
+
+        // Replace remaining curly braces formulae that weren't in a group
+        return replaceCurlyBracesFormulas(result.toString(), allFormulas, true);
+    }
+
+    private String replaceCurlyBracesFormulas(String templateText, Map<String, String> formulas, boolean removeUnmatchedFormulas) {
+        StringBuffer result = new StringBuffer();
+        Matcher matcher = TEMPLATE_FORMULA_PATTERN.matcher(templateText);
+        while (matcher.find()) {
+            String formulaKey = matcher.group().substring("{".length(), matcher.group().length() - "}".length());
+            String formulaValue = formulas.get(formulaKey);
+            /**
+             * Spetsifikatsioon "Mallide loomine.docx"
+             * 2.1.4. Kui valemi väärtus jääb täitmata, eemaldatakse valem malli tekstist; erandiks on valemid {regNumber} ja {regDateTime};
+             * dokumendimallide korral toimub eemaldamine dokumendi registreerimisel.
+             */
+            if (formulaValue == null && (DocumentCommonModel.Props.REG_NUMBER.getLocalName().equals(formulaKey)
+                            || DocumentCommonModel.Props.REG_DATE_TIME.getLocalName().equals(formulaKey) || !removeUnmatchedFormulas)) {
                 formulaValue = matcher.group();
+            } else if (formulaValue == null && removeUnmatchedFormulas) {
+                formulaValue = "";
             }
             String formulaResult = escapeXml(formulaValue);
             matcher.appendReplacement(result, formulaResult);
@@ -590,6 +615,9 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
     }
 
     private String escapeXml(String replaceString) {
+        if (replaceString == null) {
+            return "";
+        }
         replaceString = replaceString.replaceAll("&", "&amp;");
         replaceString = replaceString.replaceAll("\"", "&quot;");
         replaceString = replaceString.replaceAll("<", "&lt;");

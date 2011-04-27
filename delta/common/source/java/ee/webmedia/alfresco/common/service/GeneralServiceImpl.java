@@ -25,6 +25,7 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.repo.importer.ImporterBootstrap;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
@@ -53,14 +54,20 @@ import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.GUID;
+import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.UnicodeExtraFieldPolicy;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.upload.UploadFileInput.FileWithContentType;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -70,7 +77,7 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 /**
  * @author Ats Uiboupin
  */
-public class GeneralServiceImpl implements GeneralService {
+public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(GeneralServiceImpl.class);
 
     private StoreRef store;
@@ -82,6 +89,15 @@ public class GeneralServiceImpl implements GeneralService {
     private FileFolderService fileFolderService;
     private ContentService contentService;
     private MimetypeService mimetypeService;
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        // we have only one BeanFactory and it shouldn't change so let's make it available to static methods
+        AppConstants.setBeanFactory(beanFactory);
+        // set static field StoreRef so that it is available already for abstractModuleComponents that run before storeRef would normally be set
+        ImporterBootstrap bootstrap = (ImporterBootstrap) beanFactory.getBean(Application.BEAN_IMPORTER_BOOTSTRAP);
+        Repository.setStoreRef(bootstrap.getStoreRef());
+    }
 
     @Override
     public StoreRef getStore() {
@@ -155,7 +171,17 @@ public class GeneralServiceImpl implements GeneralService {
 
     @Override
     public NodeRef getAncestorNodeRefWithType(NodeRef childRef, QName ancestorType, boolean checkSubTypes) {
-        final NodeRef parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
+        return getAncestorNodeRefWithType(childRef, ancestorType, checkSubTypes, true);
+    }
+
+    @Override
+    public NodeRef getAncestorNodeRefWithType(NodeRef childRef, QName ancestorType, boolean checkSubTypes, boolean startFromParent) {
+        final NodeRef parentRef;
+        if (startFromParent) {
+            parentRef = nodeService.getPrimaryParent(childRef).getParentRef();
+        } else {
+            parentRef = childRef;
+        }
         final QName realParentType = nodeService.getType(parentRef);
         if (ancestorType.equals(realParentType) || (checkSubTypes && dictionaryService.isSubClass(realParentType, ancestorType))) {
             return parentRef;
@@ -163,7 +189,7 @@ public class GeneralServiceImpl implements GeneralService {
         if (realParentType.equals(ContentModel.TYPE_STOREROOT)) {
             return null;
         }
-        return getAncestorNodeRefWithType(parentRef, ancestorType, checkSubTypes);
+        return getAncestorNodeRefWithType(parentRef, ancestorType, checkSubTypes, true);
     }
 
     @Override

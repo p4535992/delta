@@ -5,7 +5,9 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.faces.application.Application;
 import javax.faces.application.FacesMessage;
@@ -28,9 +30,11 @@ import org.alfresco.repo.node.integrity.IntegrityException;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.FileUploadBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.Utils;
@@ -43,11 +47,17 @@ import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.einvoice.generated.EInvoice;
+import ee.webmedia.alfresco.document.einvoice.generated.Invoice;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -71,6 +81,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     private transient DocumentService documentService;
     private transient DocumentLogService documentLogService;
     private transient GeneralService generalService;
+    private transient EInvoiceService eInvoiceService;
 
     private transient HtmlPanelGroup uploadedFilesPanelGroup;
     private transient HtmlSelectManyMenu attachmentSelect;
@@ -80,6 +91,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
     private List<NodeRef> selectedFileNodeRef;
     private List<String> selectedFileName;
     private List<String> selectedFileNameWithoutExtension;
+    private DocumentDialog documentDialog;
 
     @Override
     public String cancel() {
@@ -137,15 +149,31 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         try {
             try {
                 NodeRef documentNodeRef = new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId());
+                validatePermission(documentNodeRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT_FILES);
+                List<String> existingDisplayNames = getFileService().getDocumentFileDisplayNames(documentNodeRef);
+                Map<Integer, EInvoice> attachmentInvoices = new HashMap<Integer, EInvoice>();
+                Map<Integer, EInvoice> fileInvoices = new HashMap<Integer, EInvoice>();
+                boolean isParseInvoice = getEInvoiceService().isEinvoiceEnabled() && DocumentSubtypeModel.Types.INVOICE.equals(getNodeService().getType(documentNodeRef));
+                boolean invoiceAdded = false;
                 if (isFileSelected) {
                     for (int i = 0; i < selectedFileNodeRef.size(); i++) {
-                        String displayName = selectedFileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(selectedFileName.get(i));
-                        String name = checkAndGetUniqueFilename(documentNodeRef, displayName);
-                        getFileService().addFileToDocument(
-                                name,
-                                displayName,
-                                documentNodeRef,
-                                selectedFileNodeRef.get(i));
+                        Pair<String, String> filenames = getAttachmentFilenames(documentNodeRef, existingDisplayNames, i);
+                        NodeRef fileRef = selectedFileNodeRef.get(i);
+                        if (isParseInvoice) {
+                            EInvoice einvoice = EInvoiceUtil.unmarshalEInvoice(getFileFolderService().getReader(fileRef).getContentInputStream());
+                            if (einvoice != null) {
+                                if (!invoiceAdded) {
+                                    getEInvoiceService().setDocPropsFromInvoice(einvoice.getInvoice().get(0), documentNodeRef, null, false);
+                                    addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames);
+                                    invoiceAdded = true;
+                                }
+                                attachmentInvoices.put(i, einvoice);
+                            } else {
+                                addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames);
+                            }
+                        } else {
+                            addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, fileRef, existingDisplayNames);
+                        }
                     }
                 }
                 if (getFileUploadBean() != null) {
@@ -153,17 +181,37 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                     List<String> fileNames = getFileUploadBean().getFileNames();
                     List<String> fileNameWithoutExtension = getFileUploadBean().getFileNameWithoutExtension();
                     for (int i = 0; i < files.size(); i++) {
-                        String displayName = fileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(fileNames.get(i));
-                        String name = checkAndGetUniqueFilename(documentNodeRef, displayName);
-                        getFileService().addFileToDocument(
-                                name,
-                                displayName,
-                                documentNodeRef,
-                                files.get(i),
-                                getFileUploadBean().getContentTypes().get(i));
+                        Pair<String, String> filenames = getFileFilenames(documentNodeRef, existingDisplayNames, fileNames, fileNameWithoutExtension, i);
+                        java.io.File file = files.get(i);
+                        String mimeType = getFileUploadBean().getContentTypes().get(i);
+                        if (isParseInvoice) {
+                            EInvoice einvoice = EInvoiceUtil.unmarshalEInvoice(file);
+                            if (einvoice != null) {
+                                if (!invoiceAdded) {
+                                    getEInvoiceService().setDocPropsFromInvoice(einvoice.getInvoice().get(0), documentNodeRef, null, false);
+                                    addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType);
+                                    invoiceAdded = true;
+                                }
+                                fileInvoices.put(i, einvoice);
+                            } else {
+                                addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType);
+                            }
+                        } else {
+                            addFileAndFilename(filenames.getFirst(), filenames.getSecond(), documentNodeRef, existingDisplayNames, file, mimeType);
+                        }
                     }
                 }
+
                 getDocumentService().updateSearchableFiles(documentNodeRef);
+
+                if (invoiceAdded) {
+                    documentDialog.reloadDocAndClearPropertySheet();
+                }
+
+                // generate new invoice files in case of multiple uploaded invoice xmls
+                createAdditionalInvoices(attachmentInvoices, documentNodeRef, !documentDialog.isDraft());
+                createAdditionalInvoices(fileInvoices, documentNodeRef, !documentDialog.isDraft());
+
             } catch (NodeLockedException e) {
                 MessageUtil.addErrorMessage(context, "document_addFile_error_docLocked");
                 return outcome;
@@ -175,7 +223,112 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         }
     }
 
-    public String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName) {
+    public Pair<String, String> getFileFilenames(NodeRef documentNodeRef, List<String> existingFilenames, List<String> fileNames, List<String> fileNameWithoutExtension, int i) {
+        String displayName = fileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(fileNames.get(i));
+        String name = checkAndGetUniqueFilename(documentNodeRef, displayName, existingFilenames);
+        Pair<String, String> filenames = new Pair<String, String>(name, displayName);
+        return filenames;
+    }
+
+    public Pair<String, String> getAttachmentFilenames(NodeRef documentNodeRef, List<String> existingDisplayNames, int i) {
+        String displayName = selectedFileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(selectedFileName.get(i));
+        String name = checkAndGetUniqueFilename(documentNodeRef, displayName, existingDisplayNames);
+        Pair<String, String> filenames = new Pair<String, String>(name, displayName);
+        return filenames;
+    }
+
+    public void addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, NodeRef fileRef, List<String> existingFilenames) {
+        getFileService().addFileToDocument(name, displayName, documentNodeRef, fileRef);
+        existingFilenames.add(name);
+    }
+
+    public void addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, List<String> existingFilenames, java.io.File file, String mimeType) {
+        getFileService().addFileToDocument(name, displayName, documentNodeRef, file, mimeType);
+        existingFilenames.add(name);
+    }
+
+    public void createAdditionalInvoices(Map<Integer, EInvoice> attachmentInvoices, NodeRef originalDocument, boolean save) {
+        boolean isFirstInvoice = true;
+        for (Map.Entry<Integer, EInvoice> entry : attachmentInvoices.entrySet()) {
+            for (Invoice invoice : entry.getValue().getInvoice()) {
+                if (isFirstInvoice) {
+                    isFirstInvoice = false;
+                    continue;
+                }
+                Node doc = getDocumentService().createDocument(DocumentSubtypeModel.Types.INVOICE);
+                NodeRef docRef = doc.getNodeRef();
+                getEInvoiceService().setDocPropsFromInvoice(invoice, docRef, null, false);
+                List<String> existingFilenames = new ArrayList<String>();
+                if (isFileSelected) {
+                    for (int i = 0; i < selectedFileNodeRef.size(); i++) {
+                        if (i == entry.getKey() || !attachmentInvoices.containsKey(new Integer(i))) {
+                            Pair<String, String> filenames = getAttachmentFilenames(docRef, existingFilenames, i);
+                            addFileAndFilename(filenames.getFirst(), filenames.getSecond(), docRef, selectedFileNodeRef.get(i), existingFilenames);
+                        }
+                    }
+                }
+                if (getFileUploadBean() != null) {
+                    List<java.io.File> files = getFileUploadBean().getFiles();
+                    List<String> fileNames = getFileUploadBean().getFileNames();
+                    List<String> fileNameWithoutExtension = getFileUploadBean().getFileNameWithoutExtension();
+                    for (int i = 0; i < files.size(); i++) {
+                        if (i == entry.getKey() || !attachmentInvoices.containsKey(new Integer(i))) {
+                            Pair<String, String> filenames = getFileFilenames(docRef, existingFilenames, fileNames, fileNameWithoutExtension, i);
+                            addFileAndFilename(filenames.getFirst(), filenames.getSecond(), docRef, existingFilenames, files.get(i), getFileUploadBean().getContentTypes().get(i));
+                        }
+                    }
+                }
+                if (save) {
+                    getDocumentService().updateDocument(doc);
+                    getDocumentService().updateSearchableFiles(docRef);
+                } else {
+                    documentDialog.getNewInvoiceDocuments().add(docRef);
+                }
+            }
+        }
+    }
+
+    // TODO: optimize, store unmarshalled invoices for later use?
+    public boolean isNeedMultipleInvoiceConfirmation() {
+        if (!getEInvoiceService().isEinvoiceEnabled()) {
+            return false;
+        }
+        if (!DocumentSubtypeModel.Types.INVOICE.equals(getNodeService().getType(new NodeRef(Repository.getStoreRef(), navigator.getCurrentNodeId())))) {
+            return false;
+        }
+        boolean hasEinvoice = false;
+        if (isFileSelected) {
+            for (NodeRef fileRef : selectedFileNodeRef) {
+                EInvoice einvoice = EInvoiceUtil.unmarshalEInvoice(getFileFolderService().getReader(fileRef).getContentInputStream());
+                if (einvoice != null) {
+                    if (hasEinvoice) {
+                        return true;
+                    }
+                    if (einvoice.getInvoice().size() > 1) {
+                        return true;
+                    }
+                    hasEinvoice = true;
+                }
+            }
+        }
+        if (getFileUploadBean() != null && getFileUploadBean().getFiles() != null) {
+            for (java.io.File file : getFileUploadBean().getFiles()) {
+                EInvoice einvoice = EInvoiceUtil.unmarshalEInvoice(file);
+                if (einvoice != null) {
+                    if (hasEinvoice) {
+                        return true;
+                    }
+                    if (einvoice.getInvoice().size() > 1) {
+                        return true;
+                    }
+                    hasEinvoice = true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName, List<String> existingFileNames) {
         checkPlusInFileName(displayName);
         displayName = FilenameUtil.replaceNonAsciiCharacters(
                         ISOLatin1Util.removeAccents(
@@ -183,7 +336,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                                         FilenameUtil.stripDotsAndSpaces(
                                                 FilenameUtil.stripForbiddenWindowsCharacters(
                                                         displayName)))), "_");
-        String uniqueDisplayName = getFileService().getUniqueFileDisplayName(documentNodeRef, displayName);
+        String uniqueDisplayName = FilenameUtil.generateUniqueFileDisplayName(displayName, existingFileNames);
         if (!displayName.equals(uniqueDisplayName)) {
             // Take care of "duplicate files"
             throw new FileExistsException(documentNodeRef, displayName);
@@ -262,7 +415,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 selectedFileName.toArray());
         String namesStr = "";
         if (names.length > 2) {
-            namesStr = StringUtils.join(names, ", ", 0, names.length - 2);
+            namesStr = StringUtils.join(names, ", ", 0, names.length - 1);
             namesStr += " " + MessageUtil.getMessage("file_and") + " " + names[names.length - 1];
         } else if (names.length == 2) {
             namesStr = StringUtils.join(names, " " + MessageUtil.getMessage("file_and") + " ");
@@ -503,6 +656,14 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         return documentLogService;
     }
 
+    protected EInvoiceService getEInvoiceService() {
+        if (eInvoiceService == null) {
+            eInvoiceService = (EInvoiceService) FacesContextUtils.getRequiredWebApplicationContext( //
+                    FacesContext.getCurrentInstance()).getBean(EInvoiceService.BEAN_NAME);
+        }
+        return eInvoiceService;
+    }
+
     protected GeneralService getGeneralService() {
         if (generalService == null) {
             generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext( //
@@ -551,6 +712,10 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
 
     public void setSelectedFileNameWithoutExtension(List<String> selectedFileNameWithoutExtension) {
         this.selectedFileNameWithoutExtension = selectedFileNameWithoutExtension;
+    }
+
+    public void setDocumentDialog(DocumentDialog documentDialog) {
+        this.documentDialog = documentDialog;
     }
     // END: getters / setters
 

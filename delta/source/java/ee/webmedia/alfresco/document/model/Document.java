@@ -127,6 +127,10 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         return (String) getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
     }
 
+    public String getRecipients() {
+        return join(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+    }
+
     public String getAllRecipients() {
         return join(DocumentCommonModel.Props.RECIPIENT_NAME, DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME,
                 DocumentSpecificModel.Props.SECOND_PARTY_NAME, DocumentSpecificModel.Props.THIRD_PARTY_NAME, DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME);
@@ -287,6 +291,22 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public String getProcurementType() {
         // Only docsub:tenderingApplication has this property
         return (String) getNode().getProperties().get(DocumentSpecificModel.Props.PROCUREMENT_TYPE);
+    }
+
+    public String getSellerPartyRegNumber() {
+        return (String) getNode().getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER);
+    }
+
+    public String getInvoiceNumber() {
+        return (String) getNode().getProperties().get(DocumentSpecificModel.Props.INVOICE_NUMBER);
+    }
+
+    public Date getInvoiceDate() {
+        return (Date) getNode().getProperties().get(DocumentSpecificModel.Props.INVOICE_DATE);
+    }
+
+    public String getInvoiceDateStr() {
+        return getInvoiceDate() != null ? dateFormat.format(getInvoiceDate()) : "";
     }
 
     @Override

@@ -61,6 +61,10 @@
                         <outcome>dialog:incomingEmailListDialog</outcome>
                         <action-listener>#{IncomingEmailListDialog.setup}</action-listener>
                      </item>
+                     <item id="incomingEInvoice" title-id="menu_received_invoices">
+                        <outcome>dialog:incomingEInvoiceListDialog</outcome>
+                        <action-listener>#{IncomingEInvoiceListDialog.setup}</action-listener>
+                     </item>                     
                      <item id="emailAttachments" title-id="menu_email_attachments">
                         <outcome>dialog:attachmentListDialog</outcome>
                          <action-listener>#{AttachmentListDialog.init}</action-listener>
@@ -175,44 +179,47 @@
    </item>
 
    <!-- ADMINISTRATOR -->
-   <item title-id="menu_administrator" admin="true">
+   <item title-id="menu_administrator" accountant="true">
       <outcome>dialog:userListDialog</outcome>
       <subitems>
-         <item id="userManagement" title-id="menu_user_management">
+         <item id="userManagement" title-id="menu_user_management" admin="true">
             <outcome>dialog:userListDialog</outcome>
          </item>
-         <item id="userGroupManagement" title-id="menu_user_group_management">
+         <item id="userGroupManagement" title-id="menu_user_group_management" admin="true">
             <outcome>dialog:manageGroups</outcome>
             <action-listener>#{GroupsDialog.reset}</action-listener>
          </item>
-         <item id="classificators" title-id="menu_classificators">
+         <item id="classificators" title-id="menu_classificators" admin="true">
             <outcome>dialog:classificatorListDialog</outcome>
          </item>
-         <item id="parameters" title-id="menu_parameters">
+         <item id="dimensions" title-id="menu_dimensions" accountant="true">
+            <outcome>dialog:dimensionListDialog</outcome>
+         </item>         
+         <item id="parameters" title-id="menu_parameters" admin="true">
             <outcome>dialog:parametersListDialog</outcome>
          </item>
-         <item id="registers" title-id="menu_registers">
+         <item id="registers" title-id="menu_registers" admin="true">
             <outcome>dialog:registerListDialog</outcome>
          </item>
-         <item id="compoundWorkflows" title-id="menu_compoundworkflows">
+         <item id="compoundWorkflows" title-id="menu_compoundworkflows" admin="true">
             <outcome>dialog:compoundWorkflowDefinitionListDialog</outcome>
          </item>
-         <item id="templates" title-id="menu_templates">
+         <item id="templates" title-id="menu_templates" admin="true">
             <outcome>dialog:documentTemplateListDialog</outcome>
          </item>
-         <item id="documentTypeManagement" title-id="menu_document_types">
+         <item id="documentTypeManagement" title-id="menu_document_types" admin="true">
             <outcome>dialog:documentTypeDialog</outcome>
          </item>
-         <item id="organizationStructure" title-id="menu_organization_structure">
+         <item id="organizationStructure" title-id="menu_organization_structure" admin="true">
             <outcome>dialog:orgstructureListDialog</outcome>
          </item>
-         <item id="importantNotifications" title-id="menu_important_notifications">
+         <item id="importantNotifications" title-id="menu_important_notifications" admin="true">
             <outcome>dialog:notificationListDialog</outcome>
          </item>
-         <item id="systemInformation" title-id="menu_system_information">
+         <item id="systemInformation" title-id="menu_system_information" admin="true">
             <outcome>dialog:showSystemInfo</outcome>
          </item>
-         <item title-id="menu_node_browser">
+         <item title-id="menu_node_browser" admin="true">
             <outcome>dialog:showNodeBrowser</outcome>
          </item>
       </subitems>

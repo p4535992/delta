@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:cl="http://alfresco.webmedia.ee/model/classificator/1.0">
+
+   <cl:classificator view:childName="cl:leaveType">
+      <cl:name>leaveType</cl:name>
+      <cl:addRemoveValues>true</cl:addRemoveValues>
+      <view:associations>
+         <cl:classificatorValue>
+
+            <cl:classificatorValue view:childName="cl:classificatorValue">
+               <view:properties>
+                  <cl:valueName>leaveAnnual</cl:valueName>
+                  <cl:classificatorDescription>puhkusele (põhipuhkus või lisapuhkus teenistusstaaži eest vastavalt saadaolevate puhkusepäevade järjestusele)
+                  </cl:classificatorDescription>
+                  <cl:order>1</cl:order>
+                  <cl:byDefault>false</cl:byDefault>
+                  <cl:readOnly>false</cl:readOnly>
+                  <cl:active>true</cl:active>
+               </view:properties>
+            </cl:classificatorValue>
+
+            <cl:classificatorValue view:childName="cl:classificatorValue">
+               <view:properties>
+                  <cl:valueName>leaveWithoutPay</cl:valueName>
+                  <cl:classificatorDescription>tasustamata puhkusele</cl:classificatorDescription>
+                  <cl:order>2</cl:order>
+                  <cl:byDefault>false</cl:byDefault>
+                  <cl:readOnly>false</cl:readOnly>
+                  <cl:active>true</cl:active>
+               </view:properties>
+            </cl:classificatorValue>
+
+            <cl:classificatorValue view:childName="cl:classificatorValue">
+               <view:properties>
+                  <cl:valueName>leaveChild</cl:valueName>
+                  <cl:classificatorDescription>lapsepuhkusele</cl:classificatorDescription>
+                  <cl:order>3</cl:order>
+                  <cl:byDefault>false</cl:byDefault>
+                  <cl:readOnly>false</cl:readOnly>
+                  <cl:active>true</cl:active>
+               </view:properties>
+            </cl:classificatorValue>
+
+            <cl:classificatorValue view:childName="cl:classificatorValue">
+               <view:properties>
+                  <cl:valueName>leaveStudy</cl:valueName>
+                  <cl:classificatorDescription>õppepuhkusele</cl:classificatorDescription>
+                  <cl:order>4</cl:order>
+                  <cl:byDefault>false</cl:byDefault>
+                  <cl:readOnly>false</cl:readOnly>
+                  <cl:active>true</cl:active>
+               </view:properties>
+            </cl:classificatorValue>
+
+         </cl:classificatorValue>
+      </view:associations>
+   </cl:classificator>
+
+</view:view>

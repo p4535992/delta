@@ -25,11 +25,12 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentFileWriteDynamicAuthority.class);
+    public static final String BEAN_NAME = "documentFileWriteDynamicAuthority";
 
     /**
      * List of document types that must be opened without ability to modify document with webdav if document status is FINISHED
      */
-    public static final List<QName> downloadFilesReadOnlyDocTypes = Arrays.asList(PERSONELLE_ORDER_SIM, REGULATION, DECREE);
+    public static final List<QName> DOWNLOAD_FILES_READ_ONLY_DOC_TYPES = Arrays.asList(PERSONELLE_ORDER_SIM, REGULATION, DECREE);
     public static final String DOCUMENT_FILE_WRITE_AUTHORITY = "ROLE_DOCUMENT_FILE_WRITE";
     protected WorkflowService workflowService;
 
@@ -46,6 +47,40 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
             return false;
         }
         QName parentType = nodeService.getType(parent);
+        if (isAllowedForFileNotUnderDocument(userName, parent, parentType)) {
+            return true;
+        }
+        if (!dictionaryService.isSubClass(parentType, DocumentCommonModel.Types.DOCUMENT)) {
+            log.trace("Node is not of type 'doccom:document', type=" + parentType + ", refusing authority " + getAuthority());
+            return false;
+        }
+        if (!nodeService.hasAspect(parent, DocumentCommonModel.Aspects.OWNER)) {
+            log.warn("Document does not have " + DocumentCommonModel.Aspects.OWNER + " aspect: type=" + parentType
+                    + " nodeRef=" + parent + ", refusing authority"
+                    + getAuthority());
+            return false;
+        }
+
+        Boolean additionalCheck = additional(userName, parent, parentType);
+        if (additionalCheck != null) {
+            return additionalCheck;
+        }
+
+        if (isDocumentManager()) {
+            log.debug("User " + userName + " is a document manager on node, type=" + type);
+            return true;
+        }
+        String ownerId = (String) nodeService.getProperty(parent, DocumentCommonModel.Props.OWNER_ID);
+        if (EqualsHelper.nullSafeEquals(ownerId, userName)) {
+            log.debug("User " + userName + " matches document ownerId " + ownerId);
+            return true;
+        }
+
+        log.trace("No conditions met, refusing authority " + getAuthority());
+        return false;
+    }
+
+    public boolean isAllowedForFileNotUnderDocument(final String userName, NodeRef parent, QName parentType) {
         if (isDocumentManager()) {
             if (ImapModel.Types.IMAP_FOLDER.equals(parentType)) {
                 if (ImapModel.Types.ATTACHMENTS.equals(nodeService.getPrimaryParent(parent).getQName())) {
@@ -60,17 +95,10 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
                 return true;
             }
         }
-        if (!dictionaryService.isSubClass(parentType, DocumentCommonModel.Types.DOCUMENT)) {
-            log.trace("Node is not of type 'doccom:document', type=" + parentType + ", refusing authority " + getAuthority());
-            return false;
-        }
-        if (!nodeService.hasAspect(parent, DocumentCommonModel.Aspects.OWNER)) {
-            log.warn("Document does not have " + DocumentCommonModel.Aspects.OWNER + " aspect: type=" + parentType
-                    + " nodeRef=" + parent + ", refusing authority"
-                    + getAuthority());
-            return false;
-        }
+        return false; // not granting, but not jet refusing either
+    }
 
+    public Boolean additional(final String userName, NodeRef parent, QName parentType) {
         boolean hasInProgressWorkflow = false;
         for (ChildAssociationRef compoundWorkflowAssoc : nodeService.getChildAssocs(parent, WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW,
                 WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW)) {
@@ -118,24 +146,12 @@ public class DocumentFileWriteDynamicAuthority extends BaseDynamicAuthority {
             return false;
         }
 
-        if (downloadFilesReadOnlyDocTypes.contains(parentType)
+        if (DOWNLOAD_FILES_READ_ONLY_DOC_TYPES.contains(parentType)
                 && StringUtils.equals(DocumentStatus.FINISHED.getValueName(), (String) nodeService.getProperty(parent, DocumentCommonModel.Props.DOC_STATUS))) {
             log.trace("Document is finished and type=" + parentType + ", refusing authority " + getAuthority());
             return false;
         }
-
-        if (isDocumentManager()) {
-            log.debug("User " + userName + " is a document manager on node, type=" + type);
-            return true;
-        }
-        String ownerId = (String) nodeService.getProperty(parent, DocumentCommonModel.Props.OWNER_ID);
-        if (EqualsHelper.nullSafeEquals(ownerId, userName)) {
-            log.debug("User " + userName + " matches document ownerId " + ownerId);
-            return true;
-        }
-
-        log.trace("No conditions met, refusing authority " + getAuthority());
-        return false;
+        return null; // not granting, but not jet refusing either
     }
 
     @Override

@@ -196,9 +196,6 @@
       <type name="docsub:invoice">
          <parent>doccom:document</parent>
          <mandatory-aspects>
-            <aspect>doccom:sendDesc</aspect>
-            <aspect>doccom:recipient</aspect>
-            <aspect>doccom:additionalRecipient</aspect>
             <aspect>docspec:invoice</aspect>
          </mandatory-aspects>
       </type> 
@@ -398,7 +395,7 @@
          <parent>doccom:document</parent>
          <mandatory-aspects>
             <aspect>docspec:whose</aspect>
-            <aspect>docspec:vacationOrder</aspect>
+            <aspect>docspec:vacationOrderV2</aspect>
             <aspect>doccom:legalBasis</aspect>
          </mandatory-aspects>
       </type>
@@ -413,7 +410,7 @@
       <type name="docsub:vacationOrderSmit">
          <parent>doccom:document</parent>
          <mandatory-aspects>
-            <aspect>docspec:vacationOrder</aspect>
+            <aspect>docspec:vacationOrderV2</aspect>
             <aspect>doccom:legalBasis</aspect>
             <aspect>docspec:template</aspect>
          </mandatory-aspects>

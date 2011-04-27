@@ -19,6 +19,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -62,12 +63,13 @@ public class DropdownMenuItem extends MenuItem {
     }
 
     @Override
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService) {
-        return createComponent(context, id, userService, workflowService, true);
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService) {
+        return createComponent(context, id, userService, workflowService, einvoiceService, true);
     }
 
     @Override
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, boolean createChildren) {
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService,
+            boolean createChildren) {
         if (isRestricted() && !hasPermissions(userService)) {
             return null;
         }
@@ -129,7 +131,7 @@ public class DropdownMenuItem extends MenuItem {
         children.add(link);
 
         if (createChildren) {
-            MenuItemWrapper childrenWrapper = (MenuItemWrapper) createChildrenComponents(context, id, userService, workflowService);
+            MenuItemWrapper childrenWrapper = (MenuItemWrapper) createChildrenComponents(context, id, userService, workflowService, einvoiceService);
             if (childrenWrapper != null) {
                 childrenWrapper.setDropdownWrapper(false);
                 childrenWrapper.setSkinnable(isSkinnable());
@@ -141,7 +143,7 @@ public class DropdownMenuItem extends MenuItem {
         return wrapper;
     }
 
-    public UIComponent createChildrenComponents(FacesContext context, String parentId, UserService userService, WorkflowService workflowService) {
+    public UIComponent createChildrenComponents(FacesContext context, String parentId, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService) {
         MenuItemWrapper wrapper = (MenuItemWrapper) context.getApplication().createComponent(MenuItemWrapper.class.getCanonicalName());
         FacesHelper.setupComponentId(context, wrapper, null);
         wrapper.setDropdownWrapper(true);
@@ -158,7 +160,7 @@ public class DropdownMenuItem extends MenuItem {
                 }
 
                 UIComponent childItem;
-                childItem = item.createComponent(context, id + i, userService, workflowService);
+                childItem = item.createComponent(context, id + i, userService, workflowService, einvoiceService);
 
                 if (childItem != null) {
                     children.add(childItem);

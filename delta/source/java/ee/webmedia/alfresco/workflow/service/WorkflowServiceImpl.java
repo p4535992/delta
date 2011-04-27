@@ -21,8 +21,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
@@ -53,10 +53,11 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
+import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowActiveResponsibleTaskException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -67,9 +68,9 @@ import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListenerWithModifications;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue;
+import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventType;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowModifications;
-import ee.webmedia.alfresco.workflow.service.event.WorkflowEventQueue.WorkflowQueueParameter;
 import ee.webmedia.alfresco.workflow.service.type.AssignmentWorkflowType;
 import ee.webmedia.alfresco.workflow.service.type.WorkflowType;
 
@@ -178,7 +179,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(QName documentType, String documentStatus) {
-        boolean isFinished = DocumentStatus.FINISHED.equals(documentStatus);
+        boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(documentStatus);
         List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = getCompoundWorkflowDefinitions();
         outer: //
         for (Iterator<CompoundWorkflowDefinition> i = compoundWorkflowDefinitions.iterator(); i.hasNext();) {
@@ -309,6 +310,22 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             workflow = getWorkflow(parent, null, false);
         }
         return getTask(nodeRef, workflow, false);
+    }
+
+    @Override
+    public Set<Task> getTasks(NodeRef docRef, Predicate<Task> taskPredicate) {
+        Set<Task> selectedTasks = new HashSet<Task>();
+        for (CompoundWorkflow compoundWorkflow : getCompoundWorkflows(docRef)) {
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                List<Task> tasks = workflow.getTasks();
+                for (Task task : tasks) {
+                    if (taskPredicate.evaluate(task)) {
+                        selectedTasks.add(task);
+                    }
+                }
+            }
+        }
+        return selectedTasks;
     }
 
     private Task getTask(NodeRef nodeRef, Workflow workflow, boolean copy) {
@@ -1292,19 +1309,31 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     @Override
     public boolean isOwnerOfInProgressAssignmentTask(CompoundWorkflow compoundWorkflow) {
-        return isOwnerOfInprogressTask(compoundWorkflow, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.ASSIGNMENT_TASK);
+        return isOwnerOfInprogressTask(compoundWorkflow, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.ASSIGNMENT_TASK, false);
+    }
+
+    @Override
+    public boolean isOwnerOfInProgressActiveResponsibleAssignmentTask(NodeRef docRef) {
+        for (NodeRef cWfRef : getCompoundWorkflowNodeRefs(docRef)) {
+            boolean result = isOwnerOfInprogressTask(getCompoundWorkflow(cWfRef)
+                    , WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW, WorkflowSpecificModel.Types.ASSIGNMENT_TASK, true);
+            if (result) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public boolean isOwnerOfInProgressExternalReviewTask(CompoundWorkflow cWorkflow) {
-        return isOwnerOfInprogressTask(cWorkflow, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK);
+        return isOwnerOfInprogressTask(cWorkflow, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK, false);
     }
 
-    private boolean isOwnerOfInprogressTask(CompoundWorkflow cWorkflow, QName workflowType, QName taskType) {
+    private boolean isOwnerOfInprogressTask(CompoundWorkflow cWorkflow, QName workflowType, QName taskType, boolean requireActiveResponsible) {
         for (Workflow workflow : cWorkflow.getWorkflows()) {
             if (workflow.isType(workflowType)) {
                 for (Task task : workflow.getTasks()) {
-                    if (task.isType(taskType) && isOwner(task) && isStatus(task, Status.IN_PROGRESS)) {
+                    if (task.isType(taskType) && isOwner(task) && isStatus(task, Status.IN_PROGRESS) && (!requireActiveResponsible || WorkflowUtil.isActiveResponsible(task))) {
                         return true;
                     }
                 }

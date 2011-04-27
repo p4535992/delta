@@ -157,9 +157,17 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     }
 
     public String init() {
-        DocumentDialog dialog = (DocumentDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DocumentDialog.BEAN_NAME);
-        if (!getNodeService().exists(dialog.getNode().getNodeRef())) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        DocumentDialog dialog = (DocumentDialog) FacesHelper.getManagedBean(context, DocumentDialog.BEAN_NAME);
+        Node docNode = dialog.getNode();
+        if (!getNodeService().exists(docNode.getNodeRef())) {
             return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
+        }
+        try {
+            BaseDialogBean.validatePermission(docNode, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(context, e);
+            return null;
         }
         return "dialog:documentSendOutDialog";
     }

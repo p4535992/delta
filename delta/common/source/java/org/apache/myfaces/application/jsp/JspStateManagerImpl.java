@@ -62,6 +62,8 @@ public class JspStateManagerImpl
     private static final String RESTORED_SERIALIZED_VIEW_REQUEST_ATTR
         = JspStateManagerImpl.class.getName() + ".RESTORED_SERIALIZED_VIEW";
 
+    public static final String BROWSER_REFRESH_OR_INCORRECT_VIEW_STATE_ATTR = "BROWSER_REFRESH_OR_INCORRECT_VIEW_STATE";
+
     /**
      * Only applicable if state saving method is "server" (= default).
      * Defines the amount (default = 20) of the latest views are stored in session.
@@ -269,7 +271,12 @@ public class JspStateManagerImpl
             uiViewRoot.setViewId(viewId);
             restoreComponentState(facescontext, uiViewRoot, renderKitId);
             String restoredViewId = uiViewRoot.getViewId();
-            if (restoredViewId == null || !(restoredViewId.equals(viewId))) {
+
+            @SuppressWarnings("unchecked")
+            Map<String, Object> requestMap = facescontext.getExternalContext().getRequestMap();
+            if (restoredViewId == null || (!restoredViewId.equals(viewId) &&
+                    !Boolean.TRUE.equals(requestMap.get(BROWSER_REFRESH_OR_INCORRECT_VIEW_STATE_ATTR)) // Allow different viewId if we set it ourselves
+            )) {
                 if (log.isTraceEnabled()) log.trace("Exiting restoreView - restored view is null.");
                 return null;
             }
@@ -481,7 +488,29 @@ public class JspStateManagerImpl
                     if (currentSequence != null && sequence != null && !currentSequence.equals(sequence)) {
                         log.warn("OLD VIEW STATE ID: " + sequence + ", CURRENT: " + currentSequence);
                         sequence = currentSequence;
+                        
+                        // If sequence is modified, then we also have to select correct viewId to match the sequence 
+                        String correctViewId = null;
+                        @SuppressWarnings("unchecked")
+                        Set<Map.Entry<SerializedViewKey, Object>> entrySet = viewCollection._serializedViews.entrySet();
+                        for (Map.Entry<SerializedViewKey, Object> entry : entrySet) {
+                            SerializedViewKey key = entry.getKey();
+                            if (key != null && currentSequence.equals(key._sequenceId)) {
+                                if (correctViewId == null) {
+                                    correctViewId = key._viewId;
+                                } else {
+                                    // If more than one sequenceId with our value exists in viewCollection, then don't select viewId
+                                    correctViewId = null;
+                                    break;
+                                }
+                            }
+                        }
+                        if (correctViewId != null) {
+                            viewId = correctViewId;
+                        }
+
                         context.renderResponse();
+                        requestMap.put(BROWSER_REFRESH_OR_INCORRECT_VIEW_STATE_ATTR, Boolean.TRUE);
                     }
                     
                 }

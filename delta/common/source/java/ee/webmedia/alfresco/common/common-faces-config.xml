@@ -15,6 +15,7 @@
 
    <lifecycle>
       <phase-listener>ee.webmedia.alfresco.common.listener.StatisticsPhaseListener</phase-listener>
+      <phase-listener>ee.webmedia.alfresco.common.listener.RefreshInvokerPhaseListener</phase-listener>
    </lifecycle>
 
    <managed-bean>
@@ -103,6 +104,11 @@
          <component-family>CustomSelectOneRadio</component-family>
          <renderer-type>renderer.CustomSelectOneRadio</renderer-type>
          <renderer-class>ee.webmedia.alfresco.common.radio.HTMLCustomSelectOneRadioRenderer</renderer-class>
+      </renderer>
+      <renderer>
+         <component-family>javax.faces.Panel</component-family>
+         <renderer-type>ee.alfresco.web.ui.common.renderer.SimpleHtmlElementRenderer</renderer-type>
+         <renderer-class>ee.alfresco.web.ui.common.renderer.SimpleHtmlElementRenderer</renderer-class>
       </renderer>
    </render-kit>
 

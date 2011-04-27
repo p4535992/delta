@@ -20,6 +20,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -44,9 +45,13 @@ public class SearchBlockBean implements Serializable {
     private boolean foundSimilar;
     private boolean expanded;
 
-    public void init(Node node) {
+    public void init(Node node, boolean executeInvoiceBaseSearch) {
         reset();
         this.node = node;
+        if (executeInvoiceBaseSearch) {
+            documents = getDocumentSearchService().searchInvoiceBaseDocuments((String) node.getProperties().get(DocumentSpecificModel.Props.CONTRACT_NUMBER)
+                    , (String) node.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME));
+        }
     }
 
     public void reset() {

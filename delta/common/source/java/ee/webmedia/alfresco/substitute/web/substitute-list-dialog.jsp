@@ -67,5 +67,13 @@
         <a:dataPager id="pager1" styleClass="pager"/>
 
     </a:richList>
+    
+    <script type="text/javascript">
+    $jQ(document).keyup(function (event) {
+       if (event.keyCode == 13) {
+          $jQ("#"+escapeId4JQ("dialog:finish-button")).click();
+       }
+     });
+    </script>
 
 </a:panel>

@@ -1,0 +1,14 @@
+<alfresco-config>
+   <config>
+
+      <dialogs>
+
+         <dialog name="dimensionListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/einvoice/web/dimension-list-dialog.jsp"
+            managed-bean="DimensionListDialog" icon="/images/icons/versioned_properties_large.gif" title-id="dimensions_title" show-ok-button="true" />
+
+         <dialog name="dimensionDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/einvoice/web/dimension-details-dialog.jsp"
+            managed-bean="DimensionDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="dimensions_title" show-ok-button="true" />
+
+      </dialogs>
+   </config>
+</alfresco-config>

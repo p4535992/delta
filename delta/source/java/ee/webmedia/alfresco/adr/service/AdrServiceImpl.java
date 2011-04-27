@@ -1,9 +1,11 @@
 package ee.webmedia.alfresco.adr.service;
 
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithParentheses;
+import static ee.webmedia.alfresco.utils.XmlUtil.getDate;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -21,6 +23,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
@@ -157,8 +160,11 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             return null;
         }
 
-        // 5.1.2.4. failiga seotud dokumendi docStatus = lõpetatud
-        if (!DocumentStatus.FINISHED.equals(doc.getDocStatus())) {
+        // failiga seotud dokumendi docStatus = lõpetatud või incomingLetter & registreeritud
+        boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(doc.getDocStatus());
+        boolean isRegisteredIncomingLetter = DocumentTypeHelper.isIncomingLetter(doc.getType())
+                && StringUtils.isNotBlank((String) doc.getProperties().get(DocumentCommonModel.Props.REG_NUMBER));
+        if (!isFinished && !isRegisteredIncomingLetter) {
             return null;
         }
 
@@ -393,8 +399,42 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         }
         dokument.setOsapool(getNullIfEmpty(party));
 
-        // TODO when new fields are added to document types:
-        // dokument.setTahtaegKirjeldus(getNullIfEmpty(contractSimEndDesc / contractSmitEndDesc));
+        // Tähtaja kirjeldus
+        if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(doc.getType())) {
+            dokument.setTahtaegKirjeldus(getNullIfEmpty((String) doc.getProperties().get(DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE_DESC)));
+        } else if (DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(doc.getType())) {
+            dokument.setTahtaegKirjeldus(getNullIfEmpty((String) doc.getProperties().get(DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE_DESC)));
+        }
+
+        // Osapooled
+        if (DocumentTypeHelper.isContract(doc.getType())) {
+            List<Node> parties = null;
+            String osapool = "";
+            if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)) {
+                osapool = StringUtils.join(
+                        Arrays.asList(doc.getProperties().get(DocumentSpecificModel.Props.FIRST_PARTY_NAME),
+                                doc.getProperties().get(DocumentSpecificModel.Props.SECOND_PARTY_NAME),
+                                doc.getProperties().get(DocumentSpecificModel.Props.THIRD_PARTY_NAME)), ", ");
+
+            } else if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V2)) {
+                parties = doc.getAllChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_PARTIES);
+
+            } else if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_MV_DETAILS)) {
+                parties = doc.getAllChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_MV_PARTIES);
+            }
+
+            if (parties != null) {
+                List<String> names = new ArrayList<String>(parties.size());
+                for (Node node : parties) {
+                    names.add((String) node.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME));
+                }
+                osapool = StringUtils.join(names, ", ");
+            }
+
+            dokument.setOsapool(osapool);
+        } else if (DocumentTypeHelper.isOutgoingLetter(doc.getType())) {
+            dokument.setOsapool(doc.getRecipients());
+        }
 
         // =======================================================
 
@@ -535,7 +575,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         List<Document> docs = documentService.getReplyOrFollowUpDocuments(document);
         List<Dokument> list = new ArrayList<Dokument>(docs.size());
         for (Document doc : docs) {
-            if (DocumentStatus.FINISHED.equals(doc.getDocStatus())
+            if ((DocumentStatus.FINISHED.getValueName().equals(doc.getDocStatus()) || DocumentTypeHelper.isIncomingLetter(doc.getType()))
                     && (AccessRestriction.OPEN.equals(doc.getAccessRestriction()) || AccessRestriction.AK.equals(doc.getAccessRestriction()))
                     && StringUtils.isNotEmpty(doc.getRegNumber()) && doc.getRegDateTime() != null && documentTypes.contains(doc.getType())) {
 
@@ -599,7 +639,7 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         String accessRestriction = (String) props.get(DocumentCommonModel.Props.ACCESS_RESTRICTION);
         String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);
         Date regDateTime = (Date) props.get(DocumentCommonModel.Props.REG_DATE_TIME);
-        if (DocumentStatus.FINISHED.equals(docStatus)
+        if ((DocumentStatus.FINISHED.getValueName().equals(docStatus) || DocumentTypeHelper.isIncomingLetter(type))
                 && (AccessRestriction.OPEN.equals(accessRestriction) || AccessRestriction.AK.equals(accessRestriction))
                 && StringUtils.isNotEmpty(regNumber) && regDateTime != null) {
 

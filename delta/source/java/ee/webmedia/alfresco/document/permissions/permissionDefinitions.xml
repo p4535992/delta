@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE permissions>
-<!--PUBLIC '-//ALFRECSO//DTD PERMISSIONS//EN' 'permissionSchema.dtd' -->
+<!-- <!DOCTYPE permissions PUBLIC '-//ALFRECSO//DTD PERMISSIONS//EN' 'permissionSchema.dtd'> -->
 
 <!-- Note: the above is commented out as spring does not seem to find the dtd -->
 
@@ -109,15 +109,16 @@
    <permissionSet type="ser:series" expose="selected" >
 
 <!--
+VAREM kehtis DocumentFileRead kohta järgnev:
    Sarjale'ile lisatakse õigused (inherit=true):
     * GRUPP või Kasutaja - DocumentFileRead
    Siis saavad kõik sarjaga seotud kasutajad:
    * Lugeda dokumendi alla kuuluvate failide sisu
+NÜÜD enam dokumendile õiguseid ülevaltpoolt ei pärandata ja õigem nimetus DocumentFileRead permissionGroup'ile oleks "manageDocumentFiles".
 -->
       <permissionGroup name="DocumentFileRead" expose="true" allowFullControl="false">
            <includePermissionGroup type="sys:base" permissionGroup="ReadContent"/>
       </permissionGroup>
-
    </permissionSet>
 
    <permissionSet type="ab:addressbook" expose="selected" >

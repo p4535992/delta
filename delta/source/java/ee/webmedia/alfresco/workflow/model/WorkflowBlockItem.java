@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.model;
 
+import java.io.Serializable;
 import java.util.Comparator;
 import java.util.Date;
 
@@ -19,7 +20,9 @@ import ee.webmedia.alfresco.workflow.service.Task;
 /**
  * @author Kaarel Jõgeva
  */
-public class WorkflowBlockItem {
+public class WorkflowBlockItem implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private final Task task;
     private boolean raisedRights = false;
 

@@ -78,8 +78,11 @@ public interface DocumentSpecificModel {
         QName LICENCE_DETAILS = QName.createQName(URI, "licenceDetails");
         QName TRANSMITTAL_MODE = QName.createQName(URI, "transmittalMode");
         QName MANAGEMENTS_ORDER_DETAILS = QName.createQName(URI, "managementsOrderDetails");
+        QName SUBSTITUTE = QName.createQName(URI, "substitute");
         QName VACATION_ORDER = QName.createQName(URI, "vacationOrder");
+        QName VACATION_ORDER_V2 = QName.createQName(URI, "vacationOrderV2");
         QName VACATION_ORDER_COMMON = QName.createQName(URI, "vacationOrderCommon");
+        QName VACATION_ORDER_COMMON_V2 = QName.createQName(URI, "vacationOrderCommonV2");
         QName VACATION_ORDER_SMIT = QName.createQName(URI, "vacationOrderSmit");
         QName COST_MANAGER = QName.createQName(URI, "costManager");
         /** aspect for common fields of errand applicant (lähetuse taotleja (välislähetuse ja siselähetuse puhul taotleja ühised väljad)) */
@@ -115,11 +118,16 @@ public interface DocumentSpecificModel {
         QName CONTRACT_DETAILS_V2 = QName.createQName(URI, "contractDetailsV2");
         QName CONTRACT_PARTY = QName.createQName(URI, "contractParty");
         QName NOT_EDITABLE = QName.createQName(URI, "notEditable");
+
+        QName INVOICE_XML = QName.createQName(URI, "invoiceXml");
+        QName INVOICE = QName.createQName(URI, "invoice");
+
         QName EXPENSES_V2 = QName.createQName(URI, "expensesV2");
         QName DAILY_ALLOWANCE = QName.createQName(URI, "dailyAllowance");
         QName DAILY_ALLOWANCE_V2 = QName.createQName(URI, "dailyAllowanceV2");
         QName REPORT_DUE_DATE = QName.createQName(URI, "reportDueDate");
         QName EVENT_NAME = QName.createQName(URI, "eventName");
+
     }
 
     interface Props {
@@ -176,6 +184,27 @@ public interface DocumentSpecificModel {
         QName SENDER_ADDRESS2 = QName.createQName(URI, "senderAddress2");
         QName SENDER_POSTAL_CODE = QName.createQName(URI, "senderPostalCode");
         // END: properties of aspect SENDER_DETAILS_MV
+        // START: properties of INVOICE
+        QName SELLER_PARTY_NAME = QName.createQName(URI, "sellerPartyName");
+        QName SELLER_PARTY_REG_NUMBER = QName.createQName(URI, "sellerPartyRegNumber");
+        QName SELLER_PARTY_SAP_ACCOUNT = QName.createQName(URI, "sellerPartySapAccount");
+        QName SELLER_PARTY_CONTACT_NAME = QName.createQName(URI, "sellerPartyContactName");
+        QName SELLER_PARTY_CONTACT_PHONE_NUMBER = QName.createQName(URI, "sellerPartyContactPhoneNumber");
+        QName SELLER_PARTY_CONTACT_EMAIL_ADDRESS = QName.createQName(URI, "sellerPartyContactEmailAddress");
+        QName INVOICE_DATE = QName.createQName(URI, "invoiceDate");
+        QName INVOICE_NUMBER = QName.createQName(URI, "invoiceNumber");
+        QName INVOICE_TYPE = QName.createQName(URI, "invoiceType");
+        QName INVOICE_DUE_DATE = QName.createQName(URI, "invoiceDueDate");
+        QName INVOICE_SUM = QName.createQName(URI, "invoiceSum");
+        QName PAYMENT_TERM = QName.createQName(URI, "paymentTerm");
+        QName VAT = QName.createQName(URI, "vat");
+        QName TOTAL_SUM = QName.createQName(URI, "totalSum");
+        QName CURRENCY = QName.createQName(URI, "currency");
+        QName ADDITIONAL_INFORMATION_CONTENT = QName.createQName(URI, "additionalInformationContent");
+        QName PAYMENT_REFERENCE_NUMBER = QName.createQName(URI, "paymentReferenceNumber");
+        QName PURCHASE_ORDER_SAP_NUMBER = QName.createQName(URI, "purchaseOrderSapNumber");
+        QName CONTRACT_NUMBER = QName.createQName(URI, "contractNumber");
+        // END: properties of INVOICE
         QName SENDER_REG_NUMBER = QName.createQName(URI, "senderRegNumber");
         QName SENDER_REG_DATE = QName.createQName(URI, "senderRegDate");
 
@@ -269,6 +298,23 @@ public interface DocumentSpecificModel {
         QName LEAVE_CANCEL_END_DATE = QName.createQName(URI, "leaveCancelEndDate");
         QName LEAVE_CANCEL_DAYS = QName.createQName(URI, "leaveCancelDays");
 
+        QName LEAVE_TYPE = QName.createQName(URI, "leaveType");
+
+        QName LEAVE_BEGIN_DATES = QName.createQName(URI, "leaveBeginDates");
+        QName LEAVE_END_DATES = QName.createQName(URI, "leaveEndDates");
+
+        QName LEAVE_INITIAL_BEGIN_DATES = QName.createQName(URI, "leaveInitialBeginDates");
+        QName LEAVE_INITIAL_END_DATES = QName.createQName(URI, "leaveInitialEndDates");
+        QName LEAVE_NEW_BEGIN_DATES = QName.createQName(URI, "leaveNewBeginDates");
+        QName LEAVE_NEW_END_DATES = QName.createQName(URI, "leaveNewEndDates");
+
+        QName LEAVE_CANCEL_BEGIN_DATES = QName.createQName(URI, "leaveCancelBeginDates");
+        QName LEAVE_CANCEL_END_DATES = QName.createQName(URI, "leaveCancelEndDates");
+
+        QName LEAVE_DAYS = QName.createQName(URI, "leaveDays");
+        QName LEAVE_CHANGE_DAYS = QName.createQName(URI, "leaveChangeDays");
+        QName LEAVE_CANCELLED_DAYS = QName.createQName(URI, "leaveCancelledDays");
+
         QName SUBSTITUTE_NAME = QName.createQName(URI, "substituteName");
         QName SUBSTITUTE_JOB_TITLE = QName.createQName(URI, "substituteJobTitle");
         QName SUBSTITUTION_BEGIN_DATE = QName.createQName(URI, "substitutionBeginDate");
@@ -277,6 +323,8 @@ public interface DocumentSpecificModel {
         QName CONTRACT_SIM_END_DATE = QName.createQName(URI, "contractSimEndDate");
         QName CONTRACT_SMIT_END_DATE = QName.createQName(URI, "contractSmitEndDate");
         QName CONTRACT_MV_END_DATE = QName.createQName(URI, "contractMvEndDate");
+
+        QName PAYMENT_ANNOTATION = QName.createQName(URI, "paymentAnnotation");
 
         QName MANAGEMENTS_ORDER_DUE_DATE = QName.createQName(URI, "managementsOrderDueDate");
 
@@ -319,9 +367,28 @@ public interface DocumentSpecificModel {
         QName ANNEX = QName.createQName(URI, "annex");
 
         QName NOT_EDITABLE = QName.createQName(URI, "notEditable");
+        QName INVOICE_XML = QName.createQName(URI, "invoiceXml");
 
         QName EXPECTED_EXPENSE_SUM = QName.createQName(URI, "expectedExpenseSum");
         QName EXPENSES_TOTAL_SUM = QName.createQName(URI, "expensesTotalSum");
+
+        QName LEGAL_BASIS_FOR_OFFICIALS = QName.createQName(URI, "legalBasisForOfficials");
+        QName LEGAL_BASIS_FOR_SUPPORT_STAFF = QName.createQName(URI, "legalBasisForSupportStaff");
+
+        QName TRAINING_NAME = QName.createQName(URI, "trainingName");
+        QName TRAINING_ORGANIZER = QName.createQName(URI, "trainingOrganizer");
+        QName TRAINING_NEED = QName.createQName(URI, "trainingNeed");
+        QName TRAINING_BEGIN_DATE = QName.createQName(URI, "trainingBeginDate");
+        QName TRAINING_END_DATE = QName.createQName(URI, "trainingEndDate");
+        QName TRAINING_HOURS = QName.createQName(URI, "trainingHours");
+        QName TRAINING_LOCATION = QName.createQName(URI, "trainingLocation");
+
+        QName INCLUSIVE_PRICE_INCL_VAT = QName.createQName(URI, "inclusivePriceInclVat");
+        QName INCLUSIVE_PRICE_EXCL_VAT = QName.createQName(URI, "inclusivePriceExclVat");
+        QName FINANCING_SOURCE = QName.createQName(URI, "financingSource");
+        QName CONTRACT_SMIT_END_DATE_DESC = QName.createQName(URI, "contractSmitEndDateDesc");
+        QName CONTRACT_SIM_END_DATE_DESC = QName.createQName(URI, "contractSimEndDateDesc");
+
     }
 
 }

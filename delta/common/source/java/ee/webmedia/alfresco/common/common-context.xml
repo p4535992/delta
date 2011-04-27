@@ -128,7 +128,7 @@
       <property name="serverUrl" value="${server.url}" />
    </bean>
 
-   <bean id="generalService" class="ee.webmedia.alfresco.common.service.GeneralServiceImpl">
+   <bean id="generalService" class="ee.webmedia.alfresco.common.service.GeneralServiceImpl" depends-on="spacesBootstrap">
       <property name="defaultStore" value="${spaces.store}" />
       <property name="archivalsStore" value="workspace://ArchivalsStore" />
       <property name="nodeService" ref="NodeService" />
@@ -159,7 +159,6 @@
    <bean id="applicationParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="name" value="applicationParametersBootstrap" />
-      <property name="sinceVersion" value="@currentVersion@" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>

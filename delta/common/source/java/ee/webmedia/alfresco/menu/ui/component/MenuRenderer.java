@@ -18,6 +18,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.context.servlet.ServletFacesContextImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
@@ -38,6 +39,7 @@ public class MenuRenderer extends BaseRenderer {
     private UserService userService;
     private WorkflowService workflowService;
     private MenuService menuService;
+    private EInvoiceService einvoiceService;
 
     @Override
     public void encodeBegin(FacesContext context, UIComponent component) throws IOException {
@@ -187,7 +189,7 @@ public class MenuRenderer extends BaseRenderer {
             int i = 0;
             String id = SECONDARY_MENU_PREFIX;
             for (MenuItem item : menuItems) {
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService());
                 if (menuItem != null) {
                     children.add(menuItem);
                     i++;
@@ -222,7 +224,7 @@ public class MenuRenderer extends BaseRenderer {
         Map<String, MenuItemFilter> menuItemFilters = getMenuService().getMenuItemFilters();
         for (MenuItem item : menuItems) {
             if (activeItemid.equals(Integer.toString(i))) {
-                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), getWorkflowService(), false);
+                UIComponent menuItem = item.createComponent(context, id + i, true, getUserService(), getWorkflowService(), getEinvoiceService(), false);
                 if (menuItem != null) {
                     children.add(menuItem);
                 }
@@ -238,12 +240,12 @@ public class MenuRenderer extends BaseRenderer {
                     filter = null; // reset for next cycle
                 }
 
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService());
                 if (menuItem != null) {
                     children.add(removeTooltipRecursive(menuItem));
                 }
             } else {
-                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService());
+                UIComponent menuItem = item.createComponent(context, id + i, getUserService(), getWorkflowService(), getEinvoiceService());
                 if (menuItem != null) {
                     children.add(menuItem);
                 }
@@ -311,6 +313,14 @@ public class MenuRenderer extends BaseRenderer {
                     .getBean(MenuService.BEAN_NAME);
         }
         return menuService;
+    }
+
+    public EInvoiceService getEinvoiceService() {
+        if (einvoiceService == null) {
+            einvoiceService = (EInvoiceService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(EInvoiceService.BEAN_NAME);
+        }
+        return einvoiceService;
     }
 
 }

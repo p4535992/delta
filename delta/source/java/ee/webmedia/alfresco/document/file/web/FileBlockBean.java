@@ -13,6 +13,7 @@ import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.NavigationBean;
+import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.springframework.util.Assert;
@@ -20,9 +21,11 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * @author Dmitri Melnikov
@@ -38,12 +41,16 @@ public class FileBlockBean implements Serializable {
 
     public void toggleActive(ActionEvent event) {
         NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+
         try {
+            BaseDialogBean.validatePermission(fileNodeRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
             final boolean active = getFileService().toggleActive(fileNodeRef);
             restore(); // refresh the files list
             MessageUtil.addInfoMessage(active ? "file_toggle_active_success" : "file_toggle_deactive_success", getFileName(fileNodeRef));
         } catch (NodeLockedException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_inactive_toggleFailed");
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
         }
     }
 

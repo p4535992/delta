@@ -197,6 +197,18 @@
             <params><param name="documentNodeRef">#{DialogManager.bean.node.nodeRef}</param></params>
          </action>
 
+         <action id="document_manage_permissions">
+            <evaluator>ee.webmedia.alfresco.privilege.web.ManagePrivilegesEvaluator</evaluator>
+            <label-id>document_manage_permissions</label-id>
+            <image>/images/icons/users.gif</image>
+            <action>dialog:managePrivilegesDialog</action>
+            <action-listener>#{ManagePrivilegesDialog.init}</action-listener>
+            <params>
+               <param name="manageableRef">#{DocumentDialog.node.nodeRef}</param>
+               <param name="manageablePermissions">viewDocumentMetaData editDocumentMetaData viewDocumentFiles editDocumentFiles deleteDocumentFiles deleteDocumentMetaData</param>
+            </params>
+         </action>
+
          <action id="document_errandOrderApplicant_add">
             <label-id>document_errand_addApplicant</label-id>
             <tooltip-id>document_errand_addApplicant_tooltip</tooltip-id>
@@ -322,6 +334,7 @@
             <action idref="document_delete"/>
             <action idref="document_favorites_add"/>
             <action idref="document_favorites_remove"/>
+            <action idref="document_manage_permissions" />
          </action-group>
 
         <action-group id="document_more_actions">
@@ -358,6 +371,9 @@
 
          <dialog name="documentSendOutDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/sendout/web/document-send-out-dialog.jsp" managed-bean="DocumentSendOutDialog"
             icon="/images/icons/details_large.gif" title-id="document_send_out" />
+
+         <dialog name="managePrivilegesDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/privilege/web/manage-privileges-dialog.jsp" managed-bean="ManagePrivilegesDialog"
+            icon="/images/icons/users_large.gif" title-id="document_manage_permissions" />
 
          <dialog name="outboxDocumentListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog.jsp" managed-bean="OutboxDocumentListDialog"
             icon="/images/icons/versioned_properties_large.gif" title-id="document_outbox" show-ok-button="false" />

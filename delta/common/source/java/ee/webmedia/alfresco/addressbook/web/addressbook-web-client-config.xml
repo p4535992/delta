@@ -38,6 +38,12 @@
          <show-property name="ab:skype" />
       </property-sheet>
    </config>
+   
+   <config evaluator="aspect-name" condition="ab:everyone">
+      <property-sheet>
+         <show-property name="ab:sapAccount" />
+      </property-sheet>
+   </config>   
 
    <config evaluator="aspect-name" condition="ab:struct">
       <property-sheet>

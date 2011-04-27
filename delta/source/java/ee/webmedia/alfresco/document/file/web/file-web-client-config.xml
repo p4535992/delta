@@ -17,7 +17,7 @@
          <action id="addFile">
             <evaluator>ee.webmedia.alfresco.workflow.service.HasNoInprogressWorkflowsEvaluator</evaluator>
             <permissions>
-               <permission allow="true">DocumentWrite</permission>
+               <permission allow="true">editDocumentFiles</permission>
             </permissions>
             <label-id>file_add_file</label-id>
             <image>/images/icons/add_item.gif</image>

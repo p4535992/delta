@@ -68,4 +68,6 @@ public interface ImapServiceExt {
      * @return node reference
      */
     NodeRef getAttachmentRoot();
+
+    void saveIncomingEInvoice(NodeRef folderNodeRef, MimeMessage mimeMessage) throws FolderException;
 }

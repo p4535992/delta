@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.substitute.service;
 
+import java.util.Date;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -49,5 +50,15 @@ public interface SubstituteService {
      * @return
      */
     List<Substitute> findActiveSubstitutionDuties(String userName);
+
+    /**
+     * Finds list of substitution duties for given user that overlap given time-frame.
+     * 
+     * @param userName
+     * @param startDate if null, return empty list
+     * @param endDate if null, return empty list
+     * @return list of substitutes
+     */
+    List<Substitute> findSubstitutionDutiesInPeriod(String userName, Date startDate, Date endDate);
 
 }

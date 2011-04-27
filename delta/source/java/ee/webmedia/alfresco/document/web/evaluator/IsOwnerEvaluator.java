@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
@@ -13,6 +14,14 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
  */
 public class IsOwnerEvaluator extends BaseActionEvaluator {
     private static final long serialVersionUID = 0L;
+
+    @Override
+    public boolean evaluate(Object obj) {
+        if (obj instanceof NodeRef) {
+            return evaluate(new Node((NodeRef) obj));
+        }
+        return false;
+    }
 
     @Override
     public boolean evaluate(Node node) {

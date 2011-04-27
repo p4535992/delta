@@ -14,6 +14,7 @@
                 <list>
                     <value>permissionDeniedBehaviour</value>
                     <value>incomingBehaviour</value>
+                    <value>incomingInvoiceBehaviour</value>
                     <value>attachmentBehaviour</value>
                     <value>sentBehaviour</value>
                 </list>

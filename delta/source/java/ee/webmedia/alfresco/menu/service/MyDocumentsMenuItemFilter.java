@@ -1,13 +1,9 @@
 package ee.webmedia.alfresco.menu.service;
 
-import java.io.Serializable;
 import java.util.List;
-import java.util.Map;
 
 import javax.faces.context.FacesContext;
 
-import org.alfresco.model.ContentModel;
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -80,12 +76,7 @@ public class MyDocumentsMenuItemFilter implements MenuItemFilter {
     }
 
     private Integer getCurrentUsersStructUnitId() {
-        Map<QName, Serializable> userProperties = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
-        Serializable orgId = userProperties.get(ContentModel.PROP_ORGID);
-        if (orgId == null) {
-            return null;
-        }
-        return Integer.parseInt(orgId.toString());
+        return getUserService().getCurrentUsersStructUnitId();
     }
 
     // START - getters/setters

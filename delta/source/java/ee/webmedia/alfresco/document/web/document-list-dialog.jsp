@@ -19,7 +19,7 @@
 
    <%-- Main List --%>
    <a:richList id="documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{DialogManager.bean.documents}" var="r" doPermissionCheck="ReadProperties">
+      width="100%" value="#{DialogManager.bean.documents}" var="r" >
       <jsp:include page="<%=((BaseDocumentListDialog)Application.getDialogManager().getBean()).getColumnsFile() %>" />
       
 

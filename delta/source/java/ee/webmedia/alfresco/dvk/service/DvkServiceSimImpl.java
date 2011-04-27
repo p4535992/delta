@@ -1,8 +1,10 @@
 package ee.webmedia.alfresco.dvk.service;
 
-import static org.alfresco.web.forms.XMLUtil.findChildByName;
+import static ee.webmedia.alfresco.utils.XmlUtil.findChildByName;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -32,6 +34,8 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang.StringUtils;
+import org.apache.xml.security.exceptions.Base64DecodingException;
+import org.apache.xml.security.utils.Base64;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 import org.w3c.dom.NodeList;
@@ -42,6 +46,7 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -99,6 +104,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
     private FileService fileService;
     private WorkflowService workflowService;
     private NotificationService notificationService;
+    private EInvoiceService einvoiceService;
 
     @Override
     public int updateDocAndTaskSendStatuses() {
@@ -228,8 +234,6 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             // import it second time over existing document
             Map<String, String> originalDvkIdsAndStatuses = new HashMap<String, String>();
             getOriginalDvkIds(docNode, originalDvkIdsAndStatuses);
-            // TODO: check dvk documentation for document recieving order
-            // and if needed add current dvkId for retrieving tasks with newer version that may be recieved earlier
 
             List<String> originalDvkIds = new ArrayList<String>(originalDvkIdsAndStatuses.keySet());
             originalDvkIds.add(dvkId);
@@ -257,6 +261,84 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             }
         }
         return null;
+    }
+
+    @Override
+    protected List<NodeRef> importInvoiceData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList) {
+        List<NodeRef> newInvoices = new ArrayList<NodeRef>();
+        if (!einvoiceService.isEinvoiceEnabled()) {
+            return newInvoices;
+        }
+        try {
+            NodeRef receivedInvoiceFolder = generalService.getNodeRef(documentService.getReceivedInvoicePath());
+            // read invoice(s) from attachments
+            Map<NodeRef, Integer> invoiceRefToDatafile = new HashMap<NodeRef, Integer>();
+            Integer dataFileIndex = 0;
+            for (DataFileType dataFile : dataFileList) {
+                if (isXmlMimetype(dataFile)) {
+                    InputStream input = new ByteArrayInputStream(Base64.decode(dataFile.getStringValue()));
+                    List<NodeRef> newDocRefs = einvoiceService.importInvoiceFromXml(receivedInvoiceFolder, input, TransmittalMode.DVK);
+                    newInvoices.addAll(newDocRefs);
+                    for (NodeRef newDocRef : newDocRefs) {
+                        invoiceRefToDatafile.put(newDocRef, dataFileIndex);
+                    }
+                }
+                dataFileIndex++;
+            }
+            for (NodeRef invoiceRef : newInvoices) {
+                documentLogService.addDocumentLog(invoiceRef, I18NUtil.getMessage("document_log_status_imported"
+                        , I18NUtil.getMessage("document_log_creator_dvk")), I18NUtil.getMessage("document_log_creator_dvk"));
+                dataFileIndex = 0;
+                for (DataFileType dataFile : dataFileList) {
+                    if (!invoiceRefToDatafile.containsValue(dataFileIndex) || invoiceRefToDatafile.get(invoiceRef).equals(dataFileIndex)) {
+                        storeFile(rd, invoiceRef, dataFile);
+                    }
+                    dataFileIndex++;
+                }
+            }
+
+            return newInvoices;
+        } catch (Base64DecodingException e) {
+            throw new RuntimeException("Failed to decode", e);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    protected List<NodeRef> importDimensionData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList) {
+        List<NodeRef> dimensionNodes = new ArrayList<NodeRef>();
+        if (!einvoiceService.isEinvoiceEnabled()) {
+            return dimensionNodes;
+        }
+        for (DataFileType dataFile : dataFileList) {
+            if (isXmlMimetype(dataFile)) {
+                List<NodeRef> fileImportNodes = new ArrayList<NodeRef>();
+                try {
+                    byte[] decode = Base64.decode(dataFile.getStringValue());
+                    fileImportNodes.addAll(einvoiceService.importVatCodeList(new ByteArrayInputStream(decode)));
+                    if (fileImportNodes.size() == 0) {
+                        dimensionNodes.addAll(einvoiceService.importAccountList(new ByteArrayInputStream(decode)));
+                    }
+                    if (fileImportNodes.size() == 0) {
+                        fileImportNodes.addAll(einvoiceService.importSellerList(new ByteArrayInputStream(decode)));
+                    }
+                    if (fileImportNodes.size() == 0) {
+                        fileImportNodes.addAll(einvoiceService.importDimensionsList(new ByteArrayInputStream(decode)));
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to decode", e);
+                }
+                dimensionNodes.addAll(fileImportNodes);
+            }
+        }
+        return dimensionNodes;
+    }
+
+    protected boolean isXmlMimetype(DataFileType dataFile) {
+        String mimeType = mimetypeService.guessMimetype(dataFile.getFilename());
+        boolean isXmlMimetype = MimetypeMap.MIMETYPE_XML.equalsIgnoreCase(mimeType);
+        return isXmlMimetype;
     }
 
     private void sendNotifications(Map<QName, Task> notifications, List<String> statusErrorNotificationContent) {
@@ -802,6 +884,10 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
     public void setNotificationService(NotificationService notificationService) {
         this.notificationService = notificationService;
+    }
+
+    public void setEinvoiceService(EInvoiceService einvoiceService) {
+        this.einvoiceService = einvoiceService;
     }
 
     // END: getters / setters

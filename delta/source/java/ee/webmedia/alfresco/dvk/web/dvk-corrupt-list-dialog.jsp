@@ -23,19 +23,19 @@
          </f:facet>
          <f:facet name="small-icon">
             <h:panelGroup>
-               <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+               <r:permissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
                   <a:actionLink id="col1-act1" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
                      styleClass="inlineAction" />
                </r:permissionEvaluator>
-               <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+               <r:permissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage value="#{r.fileType16}" />
                </r:permissionEvaluator>
             </h:panelGroup>
          </f:facet>
-         <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+         <r:permissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col1-act2" value="#{r.name}" href="#{r.downloadUrl}" target="_blank"/>
          </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+         <r:permissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText value="#{r.name}" />
          </r:permissionEvaluator>
       </a:column>

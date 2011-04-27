@@ -208,6 +208,10 @@
          <property-name>imapServiceExt</property-name>
          <value>#{ImapServiceExt}</value>
       </managed-property>
+      <managed-property>
+         <property-name>documentDialog</property-name>
+         <value>#{DocumentDialog}</value>
+      </managed-property>      
    </managed-bean>
 
    <managed-bean>
@@ -294,6 +298,26 @@
       <managed-bean-class>ee.webmedia.alfresco.document.assignresponsibility.web.AssignResponsibilityBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>DimensionDetailsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.DimensionDetailsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>
+
+   <managed-bean>
+      <managed-bean-name>DimensionListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.DimensionListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>   
 
    <!-- ==================== [ COMPONENT GENERATORS ] =================================== -->
 

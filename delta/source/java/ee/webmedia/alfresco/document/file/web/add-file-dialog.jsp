@@ -76,7 +76,6 @@
       var attachment = $jQ("#" + escapeId4JQ("dialog:dialog-body:select_attachment"));
       var scanned = $jQ("#" + escapeId4JQ("dialog:dialog-body:select_scanned_file"));
       var file = document.jumpLoaderApplet.getUploader().getFile(0);
-
       if((file != null && file.getStatus() == 2) || attachment[0].selectedIndex != -1 || scanned[0].selectedIndex != -1) {
          return true;
       }
@@ -122,7 +121,16 @@
         var finishButton = document.getElementById("dialog:finish-button");
         if(finishButton != null) {
 	    	document.getElementById("dialog:finish-button").disabled = false;
-	        document.getElementById("dialog:finish-button").onclick = function() {clear_dialog();}
+	        document.getElementById("dialog:finish-button").onclick = function() {
+		    <%if ( dialog.isNeedMultipleInvoiceConfirmation()){ %>
+	           if (!confirm('<%=(Application.getBundle(FacesContext.getCurrentInstance())).getString("file_add_confirm_multiple_invoice")%>')){
+	              return false;
+	           }
+	        <%
+	           }
+            %>	           
+	           clear_dialog();
+	        }
         }
       }
 </script>

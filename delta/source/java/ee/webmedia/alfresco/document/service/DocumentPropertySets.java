@@ -5,6 +5,7 @@ import java.util.Set;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 
 public class DocumentPropertySets {
 
@@ -49,13 +50,21 @@ public class DocumentPropertySets {
         contractDetailsV1.add(DocumentSpecificModel.Props.THIRD_PARTY_CONTACT_PERSON.toString());
     }
 
-    /* package */static Set<String> ignoredPropertiesWhenMakingCopy = new HashSet<String>();
+    private static Set<String> privilegeUserGroupMapping = new HashSet<String>(2);
+    static {
+        privilegeUserGroupMapping.add(PrivilegeModel.Props.USER.toString());
+        privilegeUserGroupMapping.add(PrivilegeModel.Props.GROUP.toString());
+    }
+
+    public static Set<String> ignoredPropertiesWhenMakingCopy = new HashSet<String>();
     static {
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.REG_NUMBER.toString());
+        ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.SHORT_REG_NUMBER.toString());
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.REG_DATE_TIME.toString());
         ignoredPropertiesWhenMakingCopy.add(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS.toString());
         ignoredPropertiesWhenMakingCopy.addAll(ownerProperties);
         ignoredPropertiesWhenMakingCopy.addAll(contractDetailsV1);
+        ignoredPropertiesWhenMakingCopy.addAll(privilegeUserGroupMapping);
         ignoredPropertiesWhenMakingCopy.add(DocumentSpecificModel.Props.NOT_EDITABLE.toString());
     }
 

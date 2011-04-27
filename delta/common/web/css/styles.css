@@ -2140,3 +2140,52 @@ TH A.header-wrap {
 	text-indent: -5000px;
 	width: 116px;
 }
+
+/* richlist viewMode="detailsMultiTbody"
+----------------------------------*/
+.detailsMultiTbody {
+	border-collapse: collapse;
+}
+
+table.detailsMultiTbody td.expanded, td.collapsed { width: 20px; }
+
+table.detailsMultiTbody tbody.tbGroup td.expanded {
+	background: url("../images/icons/minus.gif") no-repeat scroll 0 0 transparent;
+}
+
+table.detailsMultiTbody tbody.tbGroup td.collapsed {
+	background: url("../images/icons/plus.gif") no-repeat scroll 0 0 transparent;
+}
+
+table.detailsMultiTbody tbody.tbGroup>tr {
+	border-left: 2px solid gray;
+	border-right: 2px solid gray;
+}
+
+table.detailsMultiTbody tbody.tbGroup>tr.grHeader {
+	background-color: #E0ECF8;
+	border-top: 2px solid gray;
+}
+
+.grHeader{
+	height:18px;
+}
+
+table.detailsMultiTbody tbody tr:last-child {
+	border-bottom: 2px solid gray;
+}
+
+
+
+
+/* hack with JS to show tooltips for disabled checkboxes */
+div.panel.tooltip{
+	position: absolute;
+	width: 100%;
+	height: 100%;
+}
+.detailsMultiTbody td{
+	position: relative;
+}
+/* END: hack to show tooltips for disabled checkboxes */
+

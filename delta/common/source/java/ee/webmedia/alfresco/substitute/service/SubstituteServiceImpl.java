@@ -4,9 +4,11 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQue
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -136,6 +138,33 @@ public class SubstituteServiceImpl implements SubstituteService {
         queryParts.add(generateDatePropertyRangeQuery(today, null, SubstituteModel.Props.SUBSTITUTION_END_DATE));
         String query = joinQueryPartsAnd(queryParts);
         List<Substitute> substitutes = new ArrayList<Substitute>();
+        ResultSet resultSet = doSearch(query);
+        try {
+            for (ResultSetRow row : resultSet) {
+                substitutes.add(getSubstitute(row.getNodeRef()));
+            }
+        } finally {
+            resultSet.close();
+        }
+        return substitutes;
+    }
+
+    @Override
+    public List<Substitute> findSubstitutionDutiesInPeriod(String userName, Date startDate, Date endDate) {
+        List<Substitute> substitutes = new ArrayList<Substitute>();
+        if (startDate == null || endDate == null) {
+            return substitutes;
+        }
+
+        String query = joinQueryPartsAnd(Arrays.asList(
+                generateTypeQuery(SubstituteModel.Types.SUBSTITUTE),
+                generateStringExactQuery(userName, SubstituteModel.Props.SUBSTITUTE_ID),
+                joinQueryPartsOr(Arrays.asList(
+                        generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
+                        generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_END_DATE)
+                        ), true)
+                ));
+
         ResultSet resultSet = doSearch(query);
         try {
             for (ResultSetRow row : resultSet) {

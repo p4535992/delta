@@ -8,6 +8,11 @@
       <component-class>ee.webmedia.alfresco.common.propertysheet.component.SimUIPropertySheet</component-class>
    </component>
 
+   <component>
+      <component-type>ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator</component-type>
+      <component-class>ee.webmedia.alfresco.privilege.web.DocPermissionEvaluator</component-class>
+   </component>
+
    <managed-bean>
       <managed-bean-name>PropValueSeparatorGenerator</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.generator.PropValueSeparatorGenerator</managed-bean-class>

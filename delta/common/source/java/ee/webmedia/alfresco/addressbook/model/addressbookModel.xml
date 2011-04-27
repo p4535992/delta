@@ -240,8 +240,11 @@
                <type>d:boolean</type>
                <mandatory enforced="true">false</mandatory>               
                <default>false</default>
-            </property> 
-         </properties>      
+            </property>
+            <property name="ab:sapAccount">
+               <type>d:text</type>
+            </property>            
+         </properties>
       </aspect>
 
       <aspect name="ab:person">

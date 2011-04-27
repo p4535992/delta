@@ -72,7 +72,7 @@ public class DocumentTypeMenuItemProcessor implements MenuItemProcessor, Initial
             return false;
         }
         item.setTitle(docType.getName());
-        item.setOutcome("dialog:document");
+        item.setOutcome("#{DocumentDialog.action}");
         item.setActionListener("#{DocumentDialog.create}");
         Map<String, String> params = item.getParams();
         if (params == null) {

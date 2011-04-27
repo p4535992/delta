@@ -82,12 +82,12 @@
    </config>
    <config evaluator="node-type" condition="docsub:decree"> <!-- Määrus -->
       <property-sheet>
-         <show-property name="docspec:whoseName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="ClassificatorSelectorGenerator" classificatorName="decreeWhose" />
+         <show-property name="docspec:whoseName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="ClassificatorSelectorGenerator" classificatorName="decreeWhose" forcedMandatory="true" />
       </property-sheet>
    </config>
    <config evaluator="node-type" condition="docsub:ministersOrder"> <!-- Ministri käskkiri -->
       <property-sheet>
-         <show-property name="docspec:whoseName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="ClassificatorSelectorGenerator" classificatorName="ministersOrderWhose" />
+         <show-property name="docspec:whoseName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="ClassificatorSelectorGenerator" classificatorName="ministersOrderWhose" forcedMandatory="true" valueChangeListener="#{MetadataBlockBean.ministersOrderWhoseChanged}" />
       </property-sheet>
    </config>
    
@@ -121,8 +121,25 @@
    
    <config evaluator="aspect-name" condition="docspec:invoice">
       <property-sheet>
-         <show-property name="docspec:bankAccount" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isNotEditable}" />
-         <show-property name="docspec:referenceNumber" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isNotEditable}"/>
+         <show-property name="docspec:sellerPartyName" styleClass="expand19-200 medium" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchOrgContacts}" setterCallback="#{MetadataBlockBean.setSellerPartyName}" suggestChars="3" dialogTitleId="contacts_search_title" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" ajaxParentLevel="1" />
+         <show-property name="docspec:sellerPartyRegNumber" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:sellerPartySapAccount" styleClass="expand19-200 medium" editable="false" />
+         <show-property name="docspec:sellerPartyContactName" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
+         <show-property name="docspec:sellerPartyContactPhoneNumber" styleClass="width250" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:sellerPartyContactEmailAddress" styleClass="medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" labelStyleClass="wrap" />
+         <show-property name="{temp}invoiceNumberDate" show-in-edit-mode="false" display-label-id="document_invoiceNumberDate" />
+         <show-property name="docspec:invoiceDate" component-generator="DatePickerGenerator" show-in-view-mode="false" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:invoiceNumber" show-in-view-mode="false" styleClass="medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:invoiceType" component-generator="ClassificatorSelectorGenerator" classificatorName="invoiceTypes" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
+         <show-property name="docspec:invoiceDueDate" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:paymentTerm" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
+         <show-property name="docspec:totalSum" styleClass="medium invoiceTotalSum" forcedMandatory="true" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:vat" styleClass="medium invoiceVat" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:invoiceSum" styleClass="medium invoiceSum editable" read-only="true" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" />
+         <show-property name="docspec:currency" component-generator="ClassificatorSelectorGenerator" classificatorName="currency" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
+         <show-property name="docspec:paymentReferenceNumber" styleClass="medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:additionalInformationContent" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
+         <show-property name="docspec:purchaseOrderSapNumber" styleClass="width250" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
       </property-sheet>      
    </config>
 
@@ -187,13 +204,13 @@
    <!-- lähetuse taotleja (välislähetuse ja siselähetuse puhul taotleja ühised väljad) -->
    <config evaluator="node-type" condition="docspec:errandOrderApplicantAbroadType,docspec:errandOrderAbroadMvApplicantType,docspec:errandApplicationDomesticApplicantType,docspec:errandOrderApplicantAbroadTypeV2">
       <property-sheet>
-         <show-property name="docspec:costManager" component-generator="ClassificatorSelectorGenerator" classificatorName="errandOrderAbroadCostManager" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" displayLabelParameter="costManagerFieldName"/>
+         <show-property name="docspec:costManager" component-generator="ClassificatorSelectorGenerator" classificatorName="errandOrderAbroadCostManager" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" displayLabelParameter="costManagerFieldName" labelStyleClass="wrap"/>
       </property-sheet>
    </config>
    
    <config evaluator="node-type" condition="docspec:errandApplicationDomesticApplicantTypeV2">
       <property-sheet>
-         <show-property name="docspec:costManager" component-generator="ClassificatorSelectorGenerator" classificatorName="errandApplicationDomesticCostManager" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" displayLabelParameter="costManagerFieldName"/>
+         <show-property name="docspec:costManager" component-generator="ClassificatorSelectorGenerator" classificatorName="errandApplicationDomesticCostManager" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" displayLabelParameter="costManagerFieldName" labelStyleClass="wrap"/>
          <show-property name="docspec:costElement" component-generator="ClassificatorSelectorGenerator" classificatorName="errandApplicationDomesticCostElement" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"/>
       </property-sheet>
    </config>
@@ -246,18 +263,7 @@
    <!-- LÄHETUSE BLOKK (välislähetuse ja siselähetuse puhul lähetuse bloki ühised väljad) -->
    <config evaluator="node-type-and-aspect-name" condition="docspec:errandsAbroadType,docspec:errandsAbroadMvType,docspec:errandsDomesticType|docspec:errandBlockCommon"><!-- part 1 -->
       <property-sheet>
-         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
-         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
-             docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
-            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
-            "
-         />
-      </property-sheet>
-   </config>
-   
-   <config evaluator="node-type-and-aspect-name" condition="docspec:errandsDomesticTypeV2|docspec:errandBlockCommon"><!-- part 1 -->
-      <property-sheet>
-         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
+         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
              docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
             ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
@@ -289,8 +295,19 @@
       <property-sheet>
          <show-property name="docspec:eventBeginDate" display-label-id="document_eventDates_title" textId="document_eventDates_templateText" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true"
             component-generator="InlinePropertyGroupGenerator" props="
-             docspec:eventBeginDate||styleClass=date inline
-            ,docspec:eventEndDate||styleClass=date inline" 
+             docspec:eventBeginDate||styleClass=date inline eventBeginDate|forcedMandatory=true
+            ,docspec:eventEndDate||styleClass=date inline eventEndDate|forcedMandatory=true" 
+         />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="node-type-and-aspect-name" condition="docspec:errandsDomesticTypeV2|docspec:errandBlockCommon"><!-- part 1 -->
+      <property-sheet>
+         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
+             docspec:errandBeginDate¤¤styleClass=date inline errandBeginDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
+            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
+            "
          />
       </property-sheet>
    </config>
@@ -415,7 +432,7 @@
    <!-- Koolitustaotluse taotleja(dokument->taotleja) -->
    <config evaluator="node-type" condition="docspec:trainingApplicationApplicantType,docspec:trainingApplicationApplicantTypeV2">
       <property-sheet>
-         <show-property forcedMandatory="true" name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText"  readOnlyIf="parent.doccom:docStatus!=töös" 
+         <show-property forcedMandatory="true" name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText"  readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
              docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
             ,docspec:errandEndDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
@@ -523,7 +540,7 @@
    
    <config evaluator="node-type-and-aspect-name" condition="docspec:errandsAbroadTypeV2|docspec:errandBlockCommon"><!-- part 1 -->
       <property-sheet>
-         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="parent.parent.doccom:docStatus!=töös" 
+         <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
              docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
             ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
@@ -873,22 +890,35 @@
       <property-sheet>
          <show-property name="docspec:leaveAnnual" show-in-view-mode="false" display-label-id="document_vacationAdd" component-generator="InlinePropertyGroupGenerator" 
          props="docspec:leaveAnnual
-            ,docspec:leaveAnnualBeginDate||styleClass=date inline|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveAnnualEndDate||styleClass=date inline|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveAnnualDays||styleClass=tiny inline center|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotEditable}
+            ,docspec:leaveAnnualBeginDate||styleClass=date inline|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveAnnualEndDate||styleClass=date inline|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveAnnualDays||styleClass=tiny inline center|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
             ,docspec:leaveWithoutPay||readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveWithoutPayBeginDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveWithoutPayEndDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveWithoutPayDays||styleClass=tiny inline center|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotEditable}
+            ,docspec:leaveWithoutPayBeginDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveWithoutPayEndDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveWithoutPayDays||styleClass=tiny inline center|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
             ,docspec:leaveChild||readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveChildBeginDate||styleClass=date inline|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveChildEndDate||styleClass=date inline|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveChildDays||styleClass=tiny inline center|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveStudy||readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveStudyBeginDate||styleClass=date inline|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveStudyEndDate||styleClass=date inline|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveStudyDays||styleClass=tiny inline center|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotEditable}" 
+            ,docspec:leaveChildBeginDate||styleClass=date inline|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveChildEndDate||styleClass=date inline|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveChildDays||styleClass=tiny inline center|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveStudy||readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveStudyBeginDate||styleClass=date inline|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveStudyEndDate||styleClass=date inline|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveStudyDays||styleClass=tiny inline center|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}" 
             textId="document_vacationAdd_edit" />
+      </property-sheet>
+   </config>
+   
+   <config evaluator="aspect-name" condition="docspec:vacationOrderV2">
+      <property-sheet>
+         <show-property name="docspec:leaveType" styleClass="add-item vacationLeave" labelStyleClass="wrap" display-label-id="document_vacationAdd" component-generator="MultiValueEditorGenerator" addLabelId="add" readOnlyIf="" 
+            propsGeneration="
+             docspec:leaveType¤ClassificatorSelectorGenerator¤classificatorName=leaveType¤descriptionAsLabel=true¤styleClass=medium¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveBeginDates¤¤styleClass=date beginDate¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveEndDates¤¤styleClass=date endDate¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveDays¤¤styleClass=small totalDays¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            "
+         />
       </property-sheet>
    </config>
    
@@ -911,52 +941,72 @@
       </property-sheet>
    </config>   
 
-   <config evaluator="node-type" condition="docsub:vacationOrderSmit">
+   <config evaluator="node-type-and-aspect-name" condition="docsub:vacationOrderSmit|docspec:vacationOrder">
       <property-sheet>
          <show-property name="docspec:leaveAnnual" show-in-view-mode="false" display-label-id="document_vacationAdd" component-generator="InlinePropertyGroupGenerator" 
          props="docspec:leaveAnnual
-            ,docspec:leaveAnnualBeginDate||styleClass=date inline|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveAnnualEndDate||styleClass=date inline|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveAnnualDays||styleClass=tiny inline center|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveWithoutPay||readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveWithoutPayBeginDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveWithoutPayEndDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveWithoutPayDays||styleClass=tiny inline center|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveChild||readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveChildBeginDate||styleClass=date inline|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveChildEndDate||styleClass=date inline|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveChildDays||styleClass=tiny inline center|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveStudy|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveStudyBeginDate||styleClass=date inline|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveStudyEndDate||styleClass=date inline|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveStudyDays||styleClass=tiny inline center|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotEditable}" 
+            ,docspec:leaveAnnualBeginDate||styleClass=date inline|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveAnnualEndDate||styleClass=date inline|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveAnnualDays||styleClass=tiny inline center|mandatoryIf=_leaveAnnual|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveWithoutPay||readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveWithoutPayBeginDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveWithoutPayEndDate||styleClass=date inline|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveWithoutPayDays||styleClass=tiny inline center|mandatoryIf=_leaveWithoutPay|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveChild||readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveChildBeginDate||styleClass=date inline|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveChildEndDate||styleClass=date inline|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveChildDays||styleClass=tiny inline center|mandatoryIf=_leaveChild|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveStudy||readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveStudyBeginDate||styleClass=date inline|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveStudyEndDate||styleClass=date inline|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveStudyDays||styleClass=tiny inline center|mandatoryIf=_leaveStudy|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}" 
             textId="document_vacationAddSmit_edit" />
       </property-sheet>
    </config>
 
-   <config evaluator="aspect-name" condition="docspec:vacationOrderCommon">
+   <config evaluator="aspect-name" condition="docspec:vacationOrderCommon,docspec:vacationOrderCommonV2">
       <property-sheet>
          <separator name="vacsep1" component-generator="SeparatorGenerator" show="#{MetadataBlockBean.inEditMode == true || MetadataBlockBean.showVacationChange == true}" />
-         <show-property name="{temp}vacationChangeText" show-in-edit-mode="false" show="#{MetadataBlockBean.showVacationChange == true}" display-label-id="document_vacationChange" component-generator="UnescapedOutputTextGenerator" />
+         <show-property name="{temp}vacationChangeText" show-in-edit-mode="false" show="#{MetadataBlockBean.showVacationChange == true}" display-label-id="document_vacationChange" labelStyleClass="wrap" component-generator="UnescapedOutputTextGenerator" />
       </property-sheet>
    </config>         
          
    <config evaluator="aspect-name" condition="docspec:vacationOrder">
       <property-sheet>
-         <show-property name="docspec:leaveChange" show-in-view-mode="false" display-label-id="document_vacationChange" component-generator="InlinePropertyGroupGenerator" 
+         <show-property name="docspec:leaveChange" show-in-view-mode="false" display-label-id="document_vacationChangeOrCancel" component-generator="InlinePropertyGroupGenerator" 
          props="docspec:leaveChange
-            ,docspec:leaveInitialBeginDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveInitialEndDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveNewBeginDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveNewEndDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveNewDays||styleClass=tiny inline center|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveCancel||readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveCancelBeginDate||styleClass=date inline|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveCancelEndDate||styleClass=date inline|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveCancelDays||styleClass=tiny inline center|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotEditable}" 
+            ,docspec:leaveInitialBeginDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveInitialEndDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveNewBeginDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveNewEndDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveNewDays||styleClass=tiny inline center|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveCancel||readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveCancelBeginDate||styleClass=date inline|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveCancelEndDate||styleClass=date inline|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveCancelDays||styleClass=tiny inline center|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}" 
             textId="document_vacationChange_edit" labelStyleClass="wrap" />
       </property-sheet>  
-   </config> 
+   </config>
+   
+   <config evaluator="aspect-name" condition="docspec:vacationOrderV2">
+      <property-sheet>
+         <show-property name="docspec:leaveChangeDays" addLabelId="add" styleClass="add-item leaveChange" labelStyleClass="wrap" display-label-id="document_vacationChange" component-generator="MultiValueEditorGenerator"
+         propsGeneration="docspec:leaveInitialBeginDates¤¤styleClass=date¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveInitialEndDates¤¤styleClass=date¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveNewBeginDates¤¤styleClass=date beginDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveNewEndDates¤¤styleClass=date endDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveChangeDays¤¤styleClass=small totalDays¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+          "
+          />
+          
+         <show-property name="docspec:leaveCancelledDays" addLabelId="add" styleClass="add-item leaveCancel" labelStyleClass="wrap" display-label-id="document_vacationCancel" component-generator="MultiValueEditorGenerator"
+         propsGeneration="docspec:leaveCancelBeginDates¤¤styleClass=date beginDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveCancelEndDates¤¤styleClass=date endDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveCancelledDays¤¤styleClass=small totalDays¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+          "
+          />
+       </property-sheet>
+    </config>
    
    <!-- override vacation static labels and controls for mv vacationApplication -->
    <config evaluator="node-type" condition="docsub:vacationApplication">
@@ -974,34 +1024,34 @@
    </config>      
 
    <!-- override vacation static labels for smit vacationOrderSmit -->
-   <config evaluator="node-type" condition="docsub:vacationOrderSmit">
+   <config evaluator="node-type-and-aspect-name" condition="docsub:vacationOrderSmit|docspec:vacationOrder">
       <property-sheet>
-         <show-property name="{temp}vacationChangeText" show-in-edit-mode="false" show="#{MetadataBlockBean.showVacationChange == true}" display-label-id="document_vacationChangeSmit" component-generator="UnescapedOutputTextGenerator" />
+         <show-property name="{temp}vacationChangeText" show-in-edit-mode="false" show="#{MetadataBlockBean.showVacationChange == true}" display-label-id="document_vacationChangeSmit" labelStyleClass="wrap" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="docspec:leaveChange" show-in-view-mode="false" display-label-id="document_vacationChangeSmit" component-generator="InlinePropertyGroupGenerator" 
          props="docspec:leaveChange
-            ,docspec:leaveInitialBeginDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveInitialEndDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveNewBeginDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveNewEndDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveNewDays||styleClass=tiny inline center|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveCancel||readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveCancelBeginDate||styleClass=date inline|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveCancelEndDate||styleClass=date inline|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotEditable}
-            ,docspec:leaveCancelDays||styleClass=tiny inline center|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotEditable}" 
+            ,docspec:leaveInitialBeginDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveInitialEndDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveNewBeginDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveNewEndDate||styleClass=date inline|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveNewDays||styleClass=tiny inline center|mandatoryIf=_leaveChange|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveCancel||readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveCancelBeginDate||styleClass=date inline|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveCancelEndDate||styleClass=date inline|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveCancelDays||styleClass=tiny inline center|mandatoryIf=_leaveCancel|readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}" 
             textId="document_vacationChangeSmit_edit" labelStyleClass="wrap" />
       </property-sheet>  
    </config> 
 
-   <config evaluator="aspect-name" condition="docspec:vacationOrderCommon">
+   <config evaluator="aspect-name" condition="docspec:vacationOrderCommon,docspec:vacationOrderCommonV2">
       <property-sheet>
          <separator name="vacsep2" component-generator="SeparatorGenerator" />
          <show-property name="{temp}vacationSubstitute" show-in-edit-mode="false" display-label-id="document_vacationSubstitute" component-generator="UnescapedOutputTextGenerator"  />
-         <show-property name="docspec:substituteName" show-in-view-mode="false" display-label-id="document_vacationSubstitute" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setVacationSubstitute}" dialogTitleId="users_search_title" readOnlyIf="#{DocumentDialog.isNotEditable}" 
+         <show-property name="docspec:substituteName" show-in-view-mode="false" display-label-id="document_vacationSubstitute" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setVacationSubstitute}" dialogTitleId="users_search_title" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
          component-generator="MultiValueEditorGenerator" addLabelId="document_add_substitute" ajaxParentLevel="1" propsGeneration="
-          docspec:substituteName¤¤styleClass=medium
+          docspec:substituteName¤¤styleClass=medium¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
          ,docspec:substituteJobTitle¤TextAreaGenerator¤styleClass=expand19-200 width120¤read-only=true
-         ,docspec:substitutionBeginDate¤DatePickerGenerator¤mandatoryIf=docspec:substituteName!=null¤mandatoryIfLabelId=document_substitutionBeginDate_mandatoryIf
-         ,docspec:substitutionEndDate¤DatePickerGenerator¤mandatoryIf=docspec:substituteName!=null¤mandatoryIfLabelId=document_substitutionEndDate_mandatoryIf
+         ,docspec:substitutionBeginDate¤DatePickerGenerator¤mandatoryIf=docspec:substituteName!=null¤mandatoryIfLabelId=document_substitutionBeginDate_mandatoryIf¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+         ,docspec:substitutionEndDate¤DatePickerGenerator¤mandatoryIf=docspec:substituteName!=null¤mandatoryIfLabelId=document_substitutionEndDate_mandatoryIf¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
          "
          />
       </property-sheet>
@@ -1142,13 +1192,15 @@
          <show-property name="{temp}secondPartyContractDate" display-label-id="document_secondPartyContractDate" show-in-edit-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="DatePickerGenerator" ignore-if-missing="false"/>
          <show-property name="docspec:secondPartyContractDate" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="DatePickerGenerator" display="inline" ignore-if-missing="false" />
          <show-property name="docspec:secondPartyContractNumber" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
+         <show-property name="{temp}comment" show-in-edit-mode="false" display-label-id="document_comment" component-generator="UnescapedOutputTextGenerator" />
+         <show-property name="doccom:comment" show-in-view-mode="false" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:inclusivePriceExclVat" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" labelStyleClass="wrap" />
-         <show-property name="docspec:costManager" component-generator="ClassificatorSelectorGenerator" classificatorName="errandOrderAbroadCostManager" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" displayLabelParameter="costManagerFieldName" />
+         <show-property name="docspec:costManager" component-generator="ClassificatorSelectorGenerator" classificatorName="errandOrderAbroadCostManager" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" forcedMandatory="true" displayLabelParameter="costManagerFieldName" labelStyleClass="wrap"/>
          <show-property name="docspec:financingSource" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="docspec:contractSimEndDate" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" component-generator="DatePickerGenerator" mandatoryIf="docspec:contractSimEndDateDesc=null" mandatoryIfLabelId="document_contractSimEndDate_mandatoryIf" />
          <show-property name="docspec:contractSimEndDateDesc" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" mandatoryIf="docspec:contractSimEndDate=null" mandatoryIfLabelId="document_contractSimEndDateDesc_mandatoryIf" />
          <show-property name="docspec:finalTermOfDeliveryAndReceipt" readOnlyIf="#{DocumentDialog.isNotWorkingAndFinishedOrNotEditable}" component-generator="DatePickerGenerator" />
-         <show-property name="docspec:paymentAnnotation" readOnlyIf="#{DocumentDialog.isNotWorkingAndFinishedOrNotEditable}" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:paymentAnnotation" show="#{MetadataBlockBean.showPaymentAnnotation == true}" readOnlyIf="#{DocumentDialog.isNotWorkingAndFinishedOrNotEditable}" styleClass="expand19-200" component-generator="TextAreaGenerator" />
       </property-sheet>
    </config>
    
@@ -1172,10 +1224,10 @@
    
    <config evaluator="node-type" condition="docspec:contractPartyType">
       <property-sheet>
-         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" suggestChars="3" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="parent.doccom:docStatus!=töös" display="inline" styleClass="medium" />
-         <show-property name="docspec:partySigner" readOnlyIf="parent.doccom:docStatus!=töös" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
-         <show-property name="docspec:partyContactPerson" readOnlyIf="parent.doccom:docStatus!=töös" styleClass="expand19-200 medium" labelStyleClass="secondary" display="inline" />
-         <show-property name="docspec:partyEmail" readOnlyIf="parent.doccom:docStatus!=töös" styleClass="expand19-200 medium" labelStyleClass="secondary"/>
+         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" suggestChars="3" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display="inline" styleClass="medium" />
+         <show-property name="docspec:partySigner" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
+         <show-property name="docspec:partyContactPerson" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary" display="inline" />
+         <show-property name="docspec:partyEmail" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary"/>
       </property-sheet>   
    </config>
    

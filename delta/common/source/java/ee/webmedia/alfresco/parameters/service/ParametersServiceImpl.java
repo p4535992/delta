@@ -124,6 +124,15 @@ public class ParametersServiceImpl implements ParametersService {
     }
 
     @Override
+    public Map<String, Parameters> getSwappedStringParameters(Collection<Parameters> parameters) {
+        Map<String, Parameters> result = new HashMap<String, Parameters>();
+        for (Parameters parameter : parameters) {
+            result.put(getStringParameter(parameter), parameter);
+        }
+        return result;
+    }
+
+    @Override
     public List<Parameter<?>> getAllParameters() {
         String xPath = Repo.PARAMETERS_SPACE;
         final NodeRef parametersRootNodeRef = generalService.getNodeRef(xPath);

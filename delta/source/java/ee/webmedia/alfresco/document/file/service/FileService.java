@@ -121,4 +121,6 @@ public interface FileService {
 
     void deleteGeneratedFilesByType(NodeRef parentRef, GeneratedFileType type);
 
+    List<String> getDocumentFileDisplayNames(NodeRef folder);
+
 }

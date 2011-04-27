@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.metadata.web;
 
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithComma;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithParentheses;
+import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithSpace;
 import static org.alfresco.web.ui.common.StringUtils.encode;
 
 import java.io.IOException;
@@ -18,6 +19,7 @@ import java.util.Set;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
+import javax.faces.component.UISelectItem;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
@@ -38,6 +40,7 @@ import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -370,15 +373,9 @@ public class MetadataBlockBean implements Serializable {
     }
 
     private String getOrgOrPersonName(NodeRef nodeRef) {
-        String name = "";
         Map<QName, Serializable> props = getNodeService().getProperties(nodeRef);
-        if (AddressbookModel.Types.ORGANIZATION.equals(getNodeService().getType(nodeRef))) {
-            name = (String) props.get(AddressbookModel.Props.ORGANIZATION_NAME);
-        } else {
-            name = UserUtil.getPersonFullName((String) props.get(AddressbookModel.Props.PERSON_FIRST_NAME), (String) props
-                    .get(AddressbookModel.Props.PERSON_LAST_NAME));
-        }
-        return name;
+        QName contactType = getNodeService().getType(nodeRef);
+        return AddressbookMainViewDialog.getContactFullName(props, contactType);
     }
 
     public void setApplicantInstitution(String nodeRefStr) {
@@ -389,6 +386,13 @@ public class MetadataBlockBean implements Serializable {
     public void setApplicantPerson(String searchResult) {
         String name = getUserOrContactName(searchResult);
         document.getProperties().put(DocumentSpecificModel.Props.APPLICANT_PERSON.toString(), name);
+    }
+
+    public void setSellerPartyName(String nodeRefStr) {
+        Map<QName, Serializable> props = getNodeService().getProperties(new NodeRef(nodeRefStr));
+        document.getProperties().put(DocumentSpecificModel.Props.SELLER_PARTY_NAME.toString(), props.get(AddressbookModel.Props.ORGANIZATION_NAME));
+        document.getProperties().put(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER.toString(), props.get(AddressbookModel.Props.ORGANIZATION_CODE));
+        document.getProperties().put(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT.toString(), props.get(AddressbookModel.Props.SAP_ACCOUNT));
     }
 
     public String getUserOrContactName(String searchResult) {
@@ -612,6 +616,12 @@ public class MetadataBlockBean implements Serializable {
                 props.put("{temp}senderWriterEmailPhone", joinStringAndStringWithComma(joinStringAndStringWithComma(senderName, senderEmail), senderPhone));
             }
 
+            if (document.hasAspect(DocumentSpecificModel.Aspects.INVOICE)) {
+                String invoiceNumber = (String) props.get(DocumentSpecificModel.Props.INVOICE_NUMBER);
+                Date invoiceDate = (Date) props.get(DocumentSpecificModel.Props.INVOICE_DATE);
+                props.put("{temp}invoiceNumberDate", joinStringAndDateWithSpace(invoiceNumber, invoiceDate));
+            }
+
             if (document.hasAspect(DocumentSpecificModel.Aspects.WHOM)) {
                 String whomName = (String) props.get(DocumentSpecificModel.Props.WHOM_NAME);
                 String whomJobTitle = (String) props.get(DocumentSpecificModel.Props.WHOM_JOB_TITLE);
@@ -804,6 +814,26 @@ public class MetadataBlockBean implements Serializable {
                 }
             }
 
+            if (document.hasAspect(DocumentSpecificModel.Aspects.VACATION_ORDER_COMMON_V2)) {
+                // Substitute classificator values with descriptions
+                @SuppressWarnings("unchecked")
+                List<String> leaveTypes = (List<String>) props.get(DocumentSpecificModel.Props.LEAVE_TYPE);
+                if (leaveTypes != null && !leaveTypes.isEmpty()) {
+                    List<ClassificatorValue> classificators = getClassificatorService().getActiveClassificatorValues(
+                            getClassificatorService().getClassificatorByName("leaveType"));
+                    List<String> leaveTypesDesc = new ArrayList<String>(leaveTypes.size());
+                    types: for (String leaveType : leaveTypes) {
+                        for (ClassificatorValue classificator : classificators) {
+                            if (classificator.getValueName().equals(leaveType)) {
+                                leaveTypesDesc.add(classificator.getClassificatorDescription());
+                                continue types;
+                            }
+                        }
+                    }
+                    props.put(DocumentSpecificModel.Props.LEAVE_TYPE.toString(), leaveTypesDesc);
+                }
+            }
+
         } else {
             /** in Edit mode */
             NodeRef functionRef = (NodeRef) props.get(DocumentService.TransientProps.FUNCTION_NODEREF);
@@ -840,13 +870,19 @@ public class MetadataBlockBean implements Serializable {
         List<DocumentTemplate> docTemplates = getDocumentTemplateService().getDocumentTemplates(document.getType());
         List<SelectItem> selectItems = new ArrayList<SelectItem>(docTemplates.size() + 1);
 
-        // empty default selection
+        // Empty default selection
         selectItems.add(new SelectItem("", ""));
 
         for (DocumentTemplate tmpl : docTemplates) {
             selectItems.add(new SelectItem(tmpl.getName(), FilenameUtils.removeExtension(tmpl.getName())));
         }
-        WebUtil.sort(selectItems);
+
+        // If we have only 1 match, then preselect it
+        if (selectItems.size() == 2) {
+            selectComponent.setValue(selectItems.get(1).getValue());
+        } else {
+            WebUtil.sort(selectItems);
+        }
         return selectItems;
     }
 
@@ -1156,6 +1192,63 @@ public class MetadataBlockBean implements Serializable {
         document.getProperties().put(DocumentService.TransientProps.CASE_LABEL_EDITABLE, caseLabel);
     }
 
+    public void ministersOrderWhoseChanged(ValueChangeEvent event) {
+        String newValue = event.getNewValue().toString();
+        String[] values = null;
+        for (ClassificatorValue value : getClassificatorService().getActiveClassificatorValues(
+                getClassificatorService().getClassificatorByName("ministersOrderWhose"))) {
+            if (value.getValueName().equals(newValue) && StringUtils.isNotBlank(value.getClassificatorDescription())) {
+                values = value.getClassificatorDescription().split(";");
+                break;
+            }
+        }
+
+        if (values == null) {
+            return;
+        }
+
+        // Set volume
+        if (values.length > 0 && StringUtils.isNotBlank(values[0])) {
+            String mark = values[0];
+            NodeRef functionRef = (NodeRef) document.getProperties().get(DocumentService.TransientProps.FUNCTION_NODEREF);
+            NodeRef seriesRef = (NodeRef) document.getProperties().get(DocumentService.TransientProps.SERIES_NODEREF);
+            if (functionRef != null && seriesRef != null) {
+                List<Volume> allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
+                for (Volume volume : allVolumes) {
+                    if (mark.equals(volume.getVolumeMark())) {
+                        updateFnSerVol(functionRef, seriesRef, volume.getNode().getNodeRef(), null, false);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // Set template
+        if (values.length > 1 && StringUtils.isNotBlank(values[1]) && getPropertySheet() != null) {
+            String templateName = values[1];
+            @SuppressWarnings("unchecked")
+            List<UIComponent> children = getPropertySheet().getChildren();
+            children: for (UIComponent component : children) {
+                if (!component.getId().endsWith("_templateName")) {
+                    continue;
+                }
+                HtmlSelectOneMenu templateList = (HtmlSelectOneMenu) component.getChildren().get(1);
+                @SuppressWarnings({ "unchecked", "cast" })
+                List<UISelectItem> templateListValues = (List<UISelectItem>) templateList.getChildren();
+                for (UISelectItem select : templateListValues) {
+                    String itemValue = (String) select.getItemValue();
+                    if (templateName.equals(itemValue) || templateName.equals(select.getItemLabel())) {
+                        document.getProperties().put(DocumentSpecificModel.Props.TEMPLATE_NAME.toString(), itemValue);
+                        templateList.setValue(itemValue);
+                        break children;
+                    }
+                }
+                break; // There is only one template field
+            }
+
+        }
+    }
+
     public SelectItem[] getUserOrContactSearchFilters() {
         return contactOrUserSearchFilters;
     }
@@ -1251,11 +1344,21 @@ public class MetadataBlockBean implements Serializable {
     }
 
     protected String joinStringAndDateWithComma(String value1, Date date) {
+        String value2 = getDateString(date);
+        return joinStringAndStringWithComma(value1, value2);
+    }
+
+    protected String joinStringAndDateWithSpace(String value1, Date date) {
+        String value2 = getDateString(date);
+        return joinStringAndStringWithSpace(value1, value2);
+    }
+
+    private String getDateString(Date date) {
         String value2 = "";
         if (date != null) {
             value2 = dateFormat.format(date);
         }
-        return joinStringAndStringWithComma(value1, value2);
+        return value2;
     }
 
     public void init(NodeRef nodeRef, boolean created) {
@@ -1280,6 +1383,11 @@ public class MetadataBlockBean implements Serializable {
         afterModeChange();
     }
 
+    public void reloadDocAndClearPropertySheet() {
+        reloadDoc();
+        clearPropertySheet();
+    }
+
     public void reset() {
         inEditMode = false;
         lockOrUnlockIfNeeded(inEditMode);
@@ -1288,8 +1396,8 @@ public class MetadataBlockBean implements Serializable {
         documentTypeName = null;
     }
 
-    public void saveAndRegister(boolean isDraft) {
-        if (save(isDraft)) {
+    public void saveAndRegister(boolean isDraft, List<NodeRef> newInvoiceDocuments) {
+        if (save(isDraft, newInvoiceDocuments)) {
             document.getProperties().put(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT, isDraft);
             EventsLoggingHelper.disableLogging(document, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
             registerDocument(null);
@@ -1315,6 +1423,9 @@ public class MetadataBlockBean implements Serializable {
     }
 
     public void editDocument(Node doc) {
+        if (!doc.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
+            return;
+        }
         document = doc;
         inEditMode = true;
         lockOrUnlockIfNeeded(inEditMode);
@@ -1323,6 +1434,15 @@ public class MetadataBlockBean implements Serializable {
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
         documentTypeName = documentType != null ? documentType.getName() : null;
         afterModeChange();
+    }
+
+    public String editAction() {
+        try {
+            BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
+        }
+        return null; // expecting that this action is already called when documentDialog is opened - so always stay on the same dialog
     }
 
     public void viewDocument(Node doc) {
@@ -1335,7 +1455,7 @@ public class MetadataBlockBean implements Serializable {
         afterModeChange();
     }
 
-    public boolean save(boolean isDraft) {
+    public boolean save(boolean isDraft, List<NodeRef> newInvoiveDocuments) {
         log.debug("save: docNodeRef=" + document.getNodeRefAsString());
         if (!inEditMode) {
             throw new RuntimeException("Document metadata block is not in edit mode");
@@ -1346,6 +1466,16 @@ public class MetadataBlockBean implements Serializable {
                 log.debug("save: doc NodeRef=" + document.getNodeRefAsString());
                 document.getProperties().put(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT, isDraft);
                 document = getDocumentService().updateDocument(document);
+                NodeRef volume = (NodeRef) document.getProperties().get(TransientProps.VOLUME_NODEREF);
+                NodeRef series = (NodeRef) document.getProperties().get(TransientProps.SERIES_NODEREF);
+                NodeRef function = (NodeRef) document.getProperties().get(TransientProps.FUNCTION_NODEREF);
+                for (NodeRef invoiceRef : newInvoiveDocuments) {
+                    Node invoice = documentService.getDocument(invoiceRef);
+                    invoice.getProperties().put(TransientProps.VOLUME_NODEREF, volume);
+                    invoice.getProperties().put(TransientProps.SERIES_NODEREF, series);
+                    invoice.getProperties().put(TransientProps.FUNCTION_NODEREF, function);
+                    getDocumentService().updateDocument(invoice);
+                }
                 if (!isDraft && getWorkflowService().isSendableExternalWorkflowDoc(document.getNodeRef())) {
                     getDvkService().sendDvkTasksWithDocument(document.getNodeRef(), null, null);
                 }
@@ -1685,8 +1815,9 @@ public class MetadataBlockBean implements Serializable {
     }
 
     /** Web-client action */
-    public void registerDocument(ActionEvent event) {
+    public void registerDocument(@SuppressWarnings("unused") ActionEvent event) {
         try {
+            BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
             document = getDocumentService().registerDocument(document);
             nodeRef = document.getNodeRef(); // reloadDoc uses NodeRef
             getDocumentTemplateService().updateGeneratedFilesOnRegistration(document.getNodeRef());
@@ -1871,6 +2002,18 @@ public class MetadataBlockBean implements Serializable {
 
     public boolean isInEditMode() {
         return inEditMode;
+    }
+
+    public boolean isDraft() {
+        return isDraft;
+    }
+
+    public boolean isShowPaymentAnnotation() {
+        if (document == null || document.getProperties().get(DocumentSpecificModel.Props.PAYMENT_ANNOTATION) == null) {
+            return false;
+        }
+
+        return true;
     }
 
     public boolean isShowStorageType() {

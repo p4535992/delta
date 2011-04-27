@@ -8,7 +8,6 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.model.DataModel;
 import javax.faces.model.ListDataModel;
-import javax.faces.model.SelectItem;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
@@ -23,20 +22,16 @@ import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.WebUtil;
 
 public class PermissionsAddDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
-    private UserListDialog userListDialog;
     private transient UserService userService;
     private transient PermissionService permissionService;
     private transient DocumentSearchService documentSearchService;
 
     private NodeRef nodeRef;
     private String permission;
-    private SelectItem[] usersGroupsFilters;
     private List<Authority> authorities;
     private transient ListDataModel authoritiesModel;
 
@@ -48,11 +43,6 @@ public class PermissionsAddDialog extends BaseDialogBean {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
-        FacesContext context = FacesContext.getCurrentInstance();
-        usersGroupsFilters = new SelectItem[] {
-                new SelectItem("0", MessageUtil.getMessage(context, "users")),
-                new SelectItem("1", MessageUtil.getMessage(context, "groups"))
-        };
         authorities = new ArrayList<Authority>();
     }
 
@@ -90,35 +80,6 @@ public class PermissionsAddDialog extends BaseDialogBean {
     @Override
     public boolean getFinishButtonDisabled() {
         return authorities.isEmpty();
-    }
-
-    /**
-     * Property accessed by the Generic Picker component.
-     * 
-     * @return the array of filter options to show in the users/groups picker
-     */
-    public SelectItem[] getUsersGroupsFilters() {
-        return usersGroupsFilters;
-    }
-
-    public SelectItem[] searchUsersGroups(int filterIndex, String contains) {
-        if (filterIndex == 0) {
-            return userListDialog.searchUsers(-1, contains);
-        } else if (filterIndex == 1) {
-            return searchGroups(-1, contains);
-        }
-        throw new RuntimeException("filterIndex must be 0 or -1, but is " + filterIndex);
-    }
-
-    public SelectItem[] searchGroups(int filterIndex, String contains) {
-        List<Authority> results = getDocumentSearchService().searchAuthorityGroups(contains, true);
-        SelectItem[] selectItems = new SelectItem[results.size()];
-        int i = 0;
-        for (Authority authority : results) {
-            selectItems[i++] = new SelectItem(authority.getAuthority(), authority.getName());
-        }
-        WebUtil.sort(selectItems);
-        return selectItems;
     }
 
     /**
@@ -178,9 +139,6 @@ public class PermissionsAddDialog extends BaseDialogBean {
     }
 
     // START: getters / setters
-    public void setUserListDialog(UserListDialog userListDialog) {
-        this.userListDialog = userListDialog;
-    }
 
     protected UserService getUserService() {
         if (userService == null) {

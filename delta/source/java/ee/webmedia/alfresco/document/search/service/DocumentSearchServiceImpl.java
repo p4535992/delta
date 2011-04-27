@@ -2,10 +2,13 @@ package ee.webmedia.alfresco.document.search.service;
 
 import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateDoublePropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateMultiStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateNodeRefQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateNotTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyBooleanQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyDateQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyNotNullQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyNullQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyWildcardQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
@@ -54,6 +57,7 @@ import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.lucene.search.BooleanQuery;
+import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
@@ -82,6 +86,7 @@ import ee.webmedia.alfresco.substitute.web.SubstitutionBean;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
@@ -199,6 +204,23 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
+    public List<Document> searchInvoicesWithEmptySapAccount() {
+        long startTime = System.currentTimeMillis();
+        List<String> queryParts = new ArrayList<String>(3);
+        queryParts.add(generateTypeQuery(DocumentSubtypeModel.Types.INVOICE));
+        queryParts.add(generatePropertyNullQuery(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT));
+        queryParts.add(generatePropertyNotNullQuery(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER));
+
+        String query = joinQueryPartsAnd(queryParts);
+        List<Document> results = searchDocumentsImpl(query, false, /* queryName */"searchInvoicesWithEmptySapAccount");
+        if (log.isDebugEnabled()) {
+            log.debug("Invoices with empty sap account search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() //
+                    + ", query: " + query);
+        }
+        return results;
+    }
+
+    @Override
     public List<QName> searchAdrDeletedDocumentTypes(Date deletedDateBegin, Date deletedDateEnd) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(2);
@@ -234,14 +256,20 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         if (documentTypes.size() == 0) {
             return null;
         }
-        List<String> documentTypeParts = new ArrayList<String>(documentTypes.size());
-        for (QName documentType : documentTypes) {
-            documentTypeParts.add(generateTypeQuery(documentType));
-        }
-        queryParts.add(joinQueryPartsOr(documentTypeParts));
+        queryParts.add(generateTypeQuery(documentTypes));
 
-        // Only finished documents go public
-        queryParts.add(generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
+        // If document is of type incomingLetter or incomingLetterMv, then it must be registered. All other documents must be finished
+        queryParts.add(joinQueryPartsOr(Arrays.asList(
+                joinQueryPartsAnd(Arrays.asList(
+                                generateStringExactQuery(DocumentStatus.FINISHED.getValueName(), DocumentCommonModel.Props.DOC_STATUS),
+                                generateNotTypeQuery(DocumentTypeHelper.INCOMING_LETTER_TYPES)
+                                ), false),
+
+                joinQueryPartsAnd(Arrays.asList(
+                                generateTypeQuery(DocumentTypeHelper.INCOMING_LETTER_TYPES),
+                                generatePropertyNotNullQuery(DocumentCommonModel.Props.REG_NUMBER)
+                                ))
+                )));
 
         // Possible access restrictions
         List<String> accessParts = new ArrayList<String>(2);
@@ -797,6 +825,102 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return results;
     }
 
+    @Override
+    public List<Document> searchSimilarInvoiceDocuments(String regNumber, String invoiceNumber, Date invoiceDate) {
+        if (regNumber == null || invoiceNumber == null || invoiceDate == null) {
+            return null;
+        }
+        long startTime = System.currentTimeMillis();
+        List<String> queryParts = new ArrayList<String>(4);
+        queryParts.add(SearchUtil.generateTypeQuery(DocumentSubtypeModel.Types.INVOICE));
+        queryParts.add(SearchUtil.generateStringExactQuery(regNumber, DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER));
+        queryParts.add(SearchUtil.generateStringExactQuery(invoiceNumber, DocumentSpecificModel.Props.INVOICE_NUMBER));
+        queryParts.add(SearchUtil.generatePropertyDateQuery(DocumentSpecificModel.Props.INVOICE_DATE, invoiceDate));
+        String query = SearchUtil.joinQueryPartsAnd(queryParts);
+        List<Document> result = searchDocumentsImpl(query, false, /* queryName */"similarInvoiceDocuments");
+        if (log.isDebugEnabled()) {
+            log.debug("Similar invoice documents search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+        }
+        return result;
+    }
+
+    @Override
+    public List<Document> searchContractsByRegNumber(String regNumber) {
+        List<String> queryParts = new ArrayList<String>();
+        long startTime = System.currentTimeMillis();
+        queryParts.add(SearchUtil.generateTypeQuery(DocumentTypeHelper.CONTRACT_TYPES));
+        queryParts.add(SearchUtil.generateStringExactQuery(regNumber, DocumentCommonModel.Props.REG_NUMBER,
+                DocumentSpecificModel.Props.SECOND_PARTY_CONTRACT_NUMBER));
+        String query = SearchUtil.joinQueryPartsAnd(queryParts);
+        List<Document> result = searchDocumentsImpl(query, false, /* queryName */"contractsByRegNumber");
+        if (log.isDebugEnabled()) {
+            log.debug("Contracts by reg.number search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+        }
+        return result;
+    }
+
+    @Override
+    public List<Document> searchInvoiceBaseDocuments(String contractNumber, String sellerPartyName) {
+        if (StringUtils.isBlank(sellerPartyName)) {
+            return null;
+        }
+        long startTime = System.currentTimeMillis();
+        List<String> queryParts = new ArrayList<String>(2);
+        if (StringUtils.isNotBlank(contractNumber)) {
+            List<String> contractQueryParts = new ArrayList<String>(4);
+            contractQueryParts.add(SearchUtil.generateTypeQuery(DocumentTypeHelper.CONTRACT_TYPES));
+            contractQueryParts.add(SearchUtil.generateStringExactQuery(contractNumber, DocumentCommonModel.Props.REG_NUMBER));
+            contractQueryParts.add(generateStringWordsWildcardQuery(sellerPartyName, DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME));
+            // NB! If more contract types are added, endDate properties should be added here also
+            contractQueryParts.add(SearchUtil.generateDatePropertyRangeQuery(new Date(), null, DocumentSpecificModel.Props.CONTRACT_MV_END_DATE,
+                    DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE, DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE));
+            queryParts.add(SearchUtil.joinQueryPartsAnd(contractQueryParts));
+        }
+        List<String> instrumentOfDeliveryAndReceiptTypeQP = new ArrayList<String>(DocumentTypeHelper.outgoingLetterTypes.size());
+        List<String> instrumentOfDeliveryAndReceiptPropQP = new ArrayList<String>(DocumentTypeHelper.outgoingLetterTypes.size());
+        for (QName docType : DocumentTypeHelper.instrumentOfDeliveryAndReceipt) {
+            instrumentOfDeliveryAndReceiptTypeQP.add(SearchUtil.generateTypeQuery(docType));
+            Collection<QName> docProperties = new HashSet<QName>();
+            Collection<QName> aspects = generalService.getDefaultAspects(docType);
+            for (QName aspect : aspects) {
+                for (Map.Entry<QName, PropertyDefinition> entry : dictionaryService.getPropertyDefs(aspect).entrySet()) {
+                    PropertyDefinition propDef = entry.getValue();
+                    QName prop = propDef.getName();
+                    if (SearchUtil.isStringProperty(prop)
+                            && (DocumentCommonModel.URI.equals(prop.getNamespaceURI()) || DocumentSpecificModel.URI.equals(prop.getNamespaceURI()))) {
+                        docProperties.add(entry.getKey());
+                    }
+                }
+            }
+
+            instrumentOfDeliveryAndReceiptPropQP.add(generateStringWordsWildcardQuery(sellerPartyName, docProperties.toArray(new QName[docProperties.size()])));
+        }
+        List<String> instrumentOfDeliveryAndReceiptQP = new ArrayList<String>();
+        instrumentOfDeliveryAndReceiptQP.add(SearchUtil.joinQueryPartsOr(instrumentOfDeliveryAndReceiptTypeQP));
+        instrumentOfDeliveryAndReceiptQP.add(SearchUtil.joinQueryPartsOr(instrumentOfDeliveryAndReceiptPropQP));
+        queryParts.add(SearchUtil.joinQueryPartsAnd(instrumentOfDeliveryAndReceiptQP));
+
+        String query = SearchUtil.joinQueryPartsOr(queryParts);
+        List<Document> result = searchDocumentsImpl(query, false, /* queryName */"invoiceBaseDocuments");
+        if (log.isDebugEnabled()) {
+            log.debug("Invoice base documents search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
+        }
+        return result;
+    }
+
+    @Override
+    public List<NodeRef> searchUsersByFirstNameLastName(String firstName, String lastName) {
+        Assert.notNull(lastName);
+        List<String> queryParts = new ArrayList<String>(3);
+        queryParts.add(SearchUtil.generateTypeQuery(ContentModel.TYPE_PERSON));
+        if (StringUtils.isNotEmpty(firstName)) {
+            queryParts.add(SearchUtil.generateStringExactQuery(firstName, ContentModel.PROP_FIRSTNAME));
+        }
+        queryParts.add(SearchUtil.generateStringExactQuery(lastName, ContentModel.PROP_LASTNAME));
+        String query = SearchUtil.joinQueryPartsAnd(queryParts);
+        return searchNodes(query, false, /* queryName */"usersByFirstNameLastName");
+    }
+
     private List<String> getTaskQuery(QName taskType, String ownerId, Status status) {
         if (taskType == null) {
             taskType = WorkflowCommonModel.Types.TASK;
@@ -915,6 +1039,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.REG_DATE_TIME_BEGIN) //
                 , (Date) props.get(DocumentSearchModel.Props.REG_DATE_TIME_END), DocumentCommonModel.Props.REG_DATE_TIME));
         queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.REG_NUMBER), DocumentCommonModel.Props.REG_NUMBER));
+        queryParts.add(generateStringExactQuery((String) props.get(DocumentSearchModel.Props.SHORT_REG_NUMBER), DocumentCommonModel.Props.SHORT_REG_NUMBER));
         @SuppressWarnings("unchecked")
         List<String> status = (List<String>) props.get(DocumentSearchModel.Props.DOC_STATUS);
         queryParts.add(generateMultiStringExactQuery(status, DocumentCommonModel.Props.DOC_STATUS));
@@ -935,8 +1060,10 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateDatePropertyRangeQuery(
                 (Date) props.get(DocumentSearchModel.Props.DUE_DATE_BEGIN),
                 (Date) props.get(DocumentSearchModel.Props.DUE_DATE_END), DocumentSpecificModel.Props.DUE_DATE,
+                DocumentSpecificModel.Props.MANAGEMENTS_ORDER_DUE_DATE,
                 DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE,
-                DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE));
+                DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE,
+                DocumentSpecificModel.Props.INVOICE_DUE_DATE));
         queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.COMPLIENCE_DATE_BEGIN), //
                 (Date) props.get(DocumentSearchModel.Props.COMPLIENCE_DATE_END), DocumentSpecificModel.Props.COMPLIENCE_DATE));
         @SuppressWarnings("unchecked")
@@ -991,6 +1118,19 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         @SuppressWarnings("unchecked")
         List<String> procurementType = (List<String>) props.get(DocumentSearchModel.Props.PROCUREMENT_TYPE);
         queryParts.add(generateMultiStringExactQuery(procurementType, DocumentSpecificModel.Props.PROCUREMENT_TYPE));
+
+        // invoice fields
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.INVOICE_NUMBER),
+                DocumentSpecificModel.Props.INVOICE_NUMBER));
+        queryParts.add(generateDatePropertyRangeQuery((Date) props.get(DocumentSearchModel.Props.INVOICE_DATE_BEGIN) //
+                , (Date) props.get(DocumentSearchModel.Props.INVOICE_DATE_END), DocumentSpecificModel.Props.INVOICE_DATE));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SELLER_PARTY_NAME),
+                DocumentSpecificModel.Props.SELLER_PARTY_NAME));
+        queryParts
+                .add(generateStringWordsWildcardQuery((String) props.get(DocumentSearchModel.Props.SELLER_PARTY_REG_NUMBER),
+                        DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER));
+        queryParts.add(generateDoublePropertyRangeQuery((Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_LOWEST) //
+                , (Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_HIGHEST), DocumentSpecificModel.Props.TOTAL_SUM));
 
         // Quick search
         String quickSearchInput = (String) props.get(DocumentSearchModel.Props.INPUT);

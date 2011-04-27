@@ -33,13 +33,15 @@ import com.csvreader.CsvWriter;
 public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     protected final Log log = LogFactory.getLog(getClass());
 
-    protected static final int BATCH_SIZE = 50;
+    protected static final int DEFAULT_BATCH_SIZE = 50;
     protected static final char CSV_SEPARATOR = ';';
     protected static Charset CSV_CHARSET = Charset.forName("UTF-8");
     protected static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
     protected NodeService nodeService;
 
+    protected int batchSize = DEFAULT_BATCH_SIZE;
+    private boolean enabled = true;
     private File inputFolder;
     private Set<NodeRef> nodes = new HashSet<NodeRef>();
     private Set<NodeRef> completedNodes = new HashSet<NodeRef>();
@@ -48,6 +50,14 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
 
     public void setInputFolderPath(String inputFolderPath) {
         inputFolder = new File(inputFolderPath);
+    }
+
+    @Override
+    public void init() {
+    	if (!enabled) {
+    		moduleService = null;
+    	}
+    	super.init();
     }
 
     @Override
@@ -178,7 +188,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     }
 
     protected void updateNodesBatch(final List<NodeRef> batchList) throws Exception {
-        final List<String[]> batchInfos = new ArrayList<String[]>(BATCH_SIZE);
+        final List<String[]> batchInfos = new ArrayList<String[]>(batchSize);
         for (NodeRef nodeRef : batchList) {
             if (!nodeService.exists(nodeRef)) {
                 batchInfos.add(new String[] { nodeRef.toString(), "nodeDoesNotExist" });
@@ -221,7 +231,8 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
     private abstract class BatchProgress<E> {
         Collection<E> origin;
         List<E> batchList;
-        int batchSize = BATCH_SIZE;
+        @SuppressWarnings("hiding")
+        int batchSize = AbstractNodeUpdater.this.batchSize;
         int totalSize;
         int i;
         int completedSize;
@@ -362,6 +373,14 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+    
+    public void setEnabled(boolean enabled) {
+    	this.enabled = enabled;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
     }
 
 }

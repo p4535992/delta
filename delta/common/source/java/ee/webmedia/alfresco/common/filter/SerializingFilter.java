@@ -73,6 +73,7 @@ public class SerializingFilter implements DependencyInjectedFilter, Initializing
             }
         } catch (SerializationException ex) {
             log.warn("session id=" + session.getId() + "\n" + ex.getMessage());
+            throw ex;
         } catch (Exception ex) {
             log.warn("session id=" + session.getId(), ex);
         } finally {

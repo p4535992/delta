@@ -29,7 +29,7 @@ public class ProceedingStopActionEvaluator extends BaseActionEvaluator {
         String status = (String) props.get(DocumentCommonModel.Props.DOC_STATUS.toString());
         String ownerId = (String) props.get(DocumentCommonModel.Props.OWNER_ID.toString());
 
-        return viewStateEval.evaluate(node) && DocumentStatus.WORKING.equals(status) &&
+        return viewStateEval.evaluate(node) && DocumentStatus.WORKING.getValueName().equals(status) &&
                 (userService.isAdministrator() || userService.isDocumentManager() || AuthenticationUtil.getRunAsUser().equals(ownerId));
     }
 

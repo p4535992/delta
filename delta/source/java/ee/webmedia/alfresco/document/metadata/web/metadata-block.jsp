@@ -9,9 +9,9 @@
 
 <h:panelGroup id="metadata-panel-facets">
    <f:facet name="title">
-      <r:permissionEvaluator value="#{DialogManager.bean.meta.document}" allow="WriteProperties">
+      <r:permissionEvaluator value="#{DialogManager.bean.meta.document}" allow="editDocumentMetaData">
          <a:actionLink id="metadata-link-edit" showLink="false" image="/images/icons/edit_properties.gif" value="#{msg.modify}" tooltip="#{msg.modify}"
-            actionListener="#{DialogManager.bean.meta.edit}" rendered="#{!DialogManager.bean.meta.inEditMode}" />
+            actionListener="#{DialogManager.bean.meta.edit}" action="#{MetadataBlockBean.editAction}" rendered="#{!DialogManager.bean.meta.inEditMode}" />
       </r:permissionEvaluator>
    </f:facet>
 </h:panelGroup>

@@ -7,6 +7,7 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 
 public interface OpenOfficeService {
 
+    String REGEXP_GROUP_PATTERN = "/\\*[^\\*/]+\\*/";
     String REGEXP_PATTERN = "\\{[^\\}]+\\}";
 
     void replace(ContentReader reader, ContentWriter writer, Map<String, String> formulas) throws Exception;

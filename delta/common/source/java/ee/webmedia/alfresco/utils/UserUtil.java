@@ -5,6 +5,7 @@ import java.util.Map;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
@@ -58,4 +59,37 @@ public class UserUtil {
         }
         return fullName;
     }
+
+    /**
+     * @param personName - name in format "LastName" or "LastName1 {LastName2}*, FirstName1 {FirstName2}*"
+     *            or "FirstName1 {FirstName2}* LastName1"
+     * @return pair <FirstName1 {FirstName2}*, LastName1 {LastName2}*>; where FirstName may be null
+     *         or null if personName is blank
+     */
+    public static Pair<String, String> splitFirstNameLastName(String personName) {
+        Pair<String, String> firstNameLastName = null;
+        if (StringUtils.isNotBlank(personName)) {
+            String firstName = null;
+            String lastName = null;
+            personName = personName.trim();
+            if (StringUtils.contains(personName, ",")) {
+                if (StringUtils.countMatches(personName, ",") == 1) {
+                    String[] names = StringUtils.split(personName, ",");
+                    firstName = names[1];
+                    lastName = names[0];
+                }
+            } else {
+                int splitIndex = StringUtils.lastIndexOf(personName, " ");
+                if (splitIndex < 0) {
+                    lastName = personName;
+                } else {
+                    firstName = personName.substring(0, splitIndex - 1).trim();
+                    lastName = personName.substring(splitIndex).trim();
+                }
+                firstNameLastName = new Pair<String, String>(firstName, lastName);
+            }
+        }
+        return firstNameLastName;
+    }
+
 }

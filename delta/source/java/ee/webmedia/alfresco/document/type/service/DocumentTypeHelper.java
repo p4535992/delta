@@ -15,22 +15,32 @@ public class DocumentTypeHelper {
     public static final QName[] INCOMING_LETTER_TYPES;
     public static final QName[] OUTGOING_LETTER_TYPES;
     public static final QName[] INSTRUMENT_OF_DELIVERY_AND_RECEIPT_TYPES;
+    public static final QName[] CONTRACT_TYPES;
     public static final Collection<QName> incomingLetterTypes;
     public static final Collection<QName> outgoingLetterTypes;
     public static final Collection<QName> incomingOutgoingLetterTypes;
+    public static final Collection<QName> instrumentOfDeliveryAndReceipt;
+    public static final Collection<QName> contractTypes;
 
     static {
         INCOMING_LETTER_TYPES = new QName[] { DocumentSubtypeModel.Types.INCOMING_LETTER, DocumentSubtypeModel.Types.INCOMING_LETTER_MV };
         OUTGOING_LETTER_TYPES = new QName[] { DocumentSubtypeModel.Types.OUTGOING_LETTER, DocumentSubtypeModel.Types.OUTGOING_LETTER_MV };
         INSTRUMENT_OF_DELIVERY_AND_RECEIPT_TYPES = new QName[] { DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT
                 , DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT_MV };
+        CONTRACT_TYPES = new QName[] { DocumentSubtypeModel.Types.CONTRACT_MV, DocumentSubtypeModel.Types.CONTRACT_SIM, DocumentSubtypeModel.Types.CONTRACT_SMIT };
         incomingLetterTypes = Collections.unmodifiableCollection(Arrays.asList(INCOMING_LETTER_TYPES));
         outgoingLetterTypes = Collections.unmodifiableCollection(Arrays.asList(OUTGOING_LETTER_TYPES));
+        instrumentOfDeliveryAndReceipt = Collections.unmodifiableCollection(Arrays.asList(INSTRUMENT_OF_DELIVERY_AND_RECEIPT_TYPES));
+        contractTypes = Collections.unmodifiableCollection(Arrays.asList(CONTRACT_TYPES));
 
         List<QName> incomingOutgoingList = new ArrayList<QName>();
         incomingOutgoingList.addAll(incomingLetterTypes);
         incomingOutgoingList.addAll(outgoingLetterTypes);
         incomingOutgoingLetterTypes = Collections.unmodifiableCollection(incomingOutgoingList);
+    }
+
+    public static boolean isContract(QName documentType) {
+        return is(documentType, CONTRACT_TYPES);
     }
 
     public static boolean isIncomingLetter(QName documentType) {

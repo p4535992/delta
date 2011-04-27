@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.utils;
 
 import java.text.MessageFormat;
+import java.util.Collection;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
@@ -20,15 +21,80 @@ public class MessageUtil {
     /**
      * @param context
      * @param messageId - message id to be used
-     * @param messageValuesForHolders - values for the placeHolders
+     * @param messageValuesForHolders - values for the placeHolders(could also contain MessageData objects that will be recursively translated
+     *            or collection of elements - that each element is recursively translated if needed and and joined using space)
      * @return message that has given <code>messageId</code> with placeHolders replaced with given <code>messageValuesForHolders</code>
      */
     public static String getMessage(FacesContext context, String messageId, Object... messageValuesForHolders) {
         String message = Application.getMessage(context, messageId);
-        if (messageValuesForHolders != null) {
-            message = MessageFormat.format(message, messageValuesForHolders);
+        final Object[] msgValuesForHolders;
+        if (messageValuesForHolders != null && messageValuesForHolders.length > 0) {
+            msgValuesForHolders = new Object[messageValuesForHolders.length];
+            for (int i = 0; i < messageValuesForHolders.length; i++) {
+                Object messageValueForHolder = messageValuesForHolders[i];
+                if (messageValueForHolder instanceof MessageData) {
+                    MessageData messageData = (MessageData) messageValueForHolder;
+                    msgValuesForHolders[i] = localizeMessage(context, messageData);
+                } else if (messageValueForHolder instanceof Collection) {
+                    @SuppressWarnings("rawtypes")
+                    Collection msgParameterArray = (Collection) messageValueForHolder;
+                    if (!msgParameterArray.isEmpty() && msgParameterArray.iterator().next() instanceof MessageData) {
+                        final StringBuilder sb = new StringBuilder();
+                        @SuppressWarnings("unchecked")
+                        Collection<MessageData> messageDataArray = (Collection<MessageData>) messageValueForHolder;
+                        for (MessageData messageDataItem : messageDataArray) {
+                            sb.append(localizeMessage(context, messageDataItem)).append(" ");
+                        }
+                        msgValuesForHolders[i] = sb.toString();
+                    }
+                } else {
+                    msgValuesForHolders[i] = messageValueForHolder;
+                }
+            }
+        } else {
+            msgValuesForHolders = messageValuesForHolders;
+        }
+        if (msgValuesForHolders != null) {
+            message = MessageFormat.format(message, msgValuesForHolders);
         }
         return message;
+    }
+
+    private static String localizeMessage(FacesContext context, MessageData messageData) {
+        final String translationWithPlaceholders = Application.getMessage(context, messageData.getMessageKey());
+        return MessageFormat.format(translationWithPlaceholders, getTranslatedMessageParameters(context, messageData));
+    }
+
+    /**
+     * Deeply localizes message parameters that might contain MessageData objects, that need to be localized as well
+     * 
+     * @param context
+     * @param messageData
+     * @return
+     */
+    private static Object[] getTranslatedMessageParameters(FacesContext context, MessageData messageData) {
+        final Object[] messageParameters = messageData.getMessageValuesForHolders();
+        for (int i = 0; i < messageParameters.length; i++) {
+            Object msgParameter = messageParameters[i];
+            if (msgParameter instanceof MessageData) {
+                MessageData msgData = (MessageData) msgParameter;
+                final String localizedMessageParameter = localizeMessage(context, msgData);
+                messageParameters[i] = localizedMessageParameter;
+            } else if (msgParameter instanceof Collection) {
+                @SuppressWarnings("rawtypes")
+                Collection msgParameterArray = (Collection) msgParameter;
+                if (!msgParameterArray.isEmpty() && msgParameterArray.iterator().next() instanceof MessageData) {
+                    final StringBuilder sb = new StringBuilder();
+                    @SuppressWarnings("unchecked")
+                    Collection<MessageData> messageDataArray = (Collection<MessageData>) msgParameter;
+                    for (MessageData messageDataItem : messageDataArray) {
+                        sb.append(localizeMessage(context, messageDataItem)).append(" ");
+                    }
+                    messageParameters[i] = sb.toString();
+                }
+            }
+        }
+        return messageParameters;
     }
 
     /**
@@ -73,6 +139,10 @@ public class MessageUtil {
         addStatusMessage(FacesContext.getCurrentInstance(), msgKey, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
     }
 
+    public static void addErrorMessage(String msgKey, Object... messageValuesForHolders) {
+        addStatusMessage(FacesContext.getCurrentInstance(), msgKey, FacesMessage.SEVERITY_ERROR, messageValuesForHolders);
+    }
+
     public static void addInfoMessage(FacesContext currentInstance, String msgKey, Object... messageValuesForHolders) {
         addStatusMessage(currentInstance, msgKey, FacesMessage.SEVERITY_INFO, messageValuesForHolders);
     }
@@ -97,10 +167,8 @@ public class MessageUtil {
     }
 
     /**
-     * Add statusMessage to the faces context(to be shown to the user). Message text is retrieved from message bundle based on key
-     * <code>messageData.getMessageKey()</code> and
-     * possible values could be set using <code>messageData.getMessageValuesForHolders()</code>. Severity of message is determined by
-     * <code>messageData.getSeverity()</code>
+     * Add statusMessage to the faces context(to be shown to the user). Message text is retrieved from message bundle based on key <code>messageData.getMessageKey()</code> and
+     * possible values could be set using <code>messageData.getMessageValuesForHolders()</code>. Severity of message is determined by <code>messageData.getSeverity()</code>
      * 
      * @param facesContext
      * @param messageData - messageData object used to create message
@@ -128,7 +196,7 @@ public class MessageUtil {
             Object maybeUntranslated = maybeUntransaltedMessageValuesForHolders[i];
             if (maybeUntranslated instanceof UnableToPerformException.UntransaltedMessageValueHolder) {
                 final String messageKey = ((UnableToPerformException.UntransaltedMessageValueHolder) maybeUntranslated).getMessageKey();
-                translatedMessageValuesForHolders[i] = getMessage(messageKey);
+                translatedMessageValuesForHolders[i] = getMessage(facesContext, messageKey);
             } else {
                 translatedMessageValuesForHolders[i] = maybeUntranslated;
             }

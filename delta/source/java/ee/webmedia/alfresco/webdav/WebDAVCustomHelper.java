@@ -3,15 +3,23 @@ package ee.webmedia.alfresco.webdav;
 import java.util.List;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.repo.webdav.WebDAVHelper;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthenticationService;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Repository;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.versions.service.VersionsService;
 
@@ -77,6 +85,36 @@ public class WebDAVCustomHelper extends WebDAVHelper {
 
     public DocumentService getDocumentService() {
         return documentService;
+    }
+
+    public static void checkDocumentFileWritePermission(FileInfo nodeInfo) {
+        // check for special cases
+        NodeRef fileRef = nodeInfo.getNodeRef();
+        NodeService nodeService = BeanHelper.getNodeService();
+        NodeRef parentRef = nodeService.getPrimaryParent(fileRef).getParentRef();
+        QName parentType = nodeService.getType(parentRef);
+        String userName = AuthenticationUtil.getRunAsUser();
+        DocumentFileWriteDynamicAuthority documentFileWriteDynamicAuthority = BeanHelper.getDocumentFileWriteDynamicAuthority();
+        if (documentFileWriteDynamicAuthority.isAllowedForFileNotUnderDocument(userName, parentRef, parentType)) {
+            return; // file is not under document and some special conditions hold, so let's allow
+        }
+        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(fileRef, DocumentCommonModel.Types.DOCUMENT, true);
+        if (docRef == null) {
+            throw new AccessDeniedException("File is not under document. File=" + fileRef);
+        }
+        Boolean additionalCheck = documentFileWriteDynamicAuthority.additional(userName, docRef, parentType);
+        if (additionalCheck != null) {
+            if (additionalCheck) {
+                return; // allow writing based on additional logic
+            }
+            throw new AccessDeniedException("not allowing writing - document is finished or has in-progress workflows");
+        }
+
+        // no special cases, just check permission on document
+        String permission = DocumentCommonModel.Privileges.EDIT_DOCUMENT_FILES;
+        if (AccessStatus.ALLOWED != BeanHelper.getPermissionService().hasPermission(docRef, permission)) {
+            throw new AccessDeniedException("permission " + permission + " denied for file of document " + docRef);
+        }
     }
 
 }

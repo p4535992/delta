@@ -171,7 +171,7 @@ public class LockMethod extends WebDAVMethod {
             // create not allowed
             throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
         }
-
+        WebDAVCustomHelper.checkDocumentFileWritePermission(lockNodeInfo);
         Map<QName, Serializable> originalProps = getNodeService().getProperties(lockNodeInfo.getNodeRef());
 
         // Check if this is a new lock or a refresh
@@ -182,7 +182,6 @@ public class LockMethod extends WebDAVMethod {
             // Create a new lock
             createLock(lockNodeInfo.getNodeRef(), userName);
         }
-
         // Set modifier and modified properties to original, so that locking doesn't appear to change the file
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         props.put(ContentModel.PROP_MODIFIER, originalProps.get(ContentModel.PROP_MODIFIER));
@@ -217,9 +216,12 @@ public class LockMethod extends WebDAVMethod {
             logger.debug("Create lock status=" + lockSts);
         }
 
-        if (lockSts == LockStatus.LOCKED || lockSts == LockStatus.LOCK_OWNER) {
+        if (lockSts == LockStatus.LOCKED) {
             // Indicate that the resource is already locked
             throw new WebDAVServerException(WebDAV.WEBDAV_SC_LOCKED);
+        }
+        if (lockSts == LockStatus.LOCK_OWNER) {
+            logger.warn("user " + userName + " is already lock owner");
         }
 
         // Lock the node

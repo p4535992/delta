@@ -8,10 +8,6 @@
       <managed-bean-class>ee.webmedia.alfresco.document.forum.web.InviteUsersDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
       <managed-property>
-         <property-name>userListDialog</property-name>
-         <value>#{UserListDialog}</value>
-      </managed-property>
-      <managed-property>
          <property-name>userService</property-name>
          <value>#{UserService}</value>
       </managed-property>

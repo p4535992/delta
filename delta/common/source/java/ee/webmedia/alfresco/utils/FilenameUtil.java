@@ -1,8 +1,10 @@
 package ee.webmedia.alfresco.utils;
 
+import java.util.List;
 import java.util.regex.Pattern;
 
 import org.alfresco.repo.content.MimetypeMap;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 
 /**
@@ -59,6 +61,22 @@ public class FilenameUtil {
 
     public static String replaceAmpersand(String filename) {
         return filename.replaceAll(" & ", " ja ").replaceAll("&", " ja ");
+    }
+
+    public static String generateUniqueFileDisplayName(String displayName, List<String> existingDisplayNames) {
+        String baseName = displayName.substring(0, FilenameUtils.indexOfExtension(displayName));
+        String extension = FilenameUtils.getExtension(displayName);
+        if (StringUtils.isBlank(extension)) {
+            extension = MimetypeMap.EXTENSION_BINARY;
+        }
+        String suffix = "";
+        int i = 1;
+
+        while (existingDisplayNames.contains(baseName + suffix + "." + extension)) {
+            suffix = " (" + i + ")";
+            i++;
+        }
+        return baseName + suffix + "." + extension;
     }
 
     public static String replaceNonAsciiCharacters(String filename, String replace) {

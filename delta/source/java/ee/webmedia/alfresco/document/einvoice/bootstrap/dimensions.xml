@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:dim="http://alfresco.webmedia.ee/model/dimension/1.0">
+
+   <dim:dimensions view:childName="${dimensions.folder.name}" />
+
+</view:view>

@@ -224,7 +224,8 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                                 SearchRenderer.OPEN_DIALOG_ACTION + ";" + rowIndex));
                         out.write("return showModal('");
                         out.write(getDialogId(context, multiValueEditor));
-                        out.write("');\">");
+                        out.write("');\"");
+                        out.write(" title=\"" + Application.getMessage(context, SearchRenderer.SEARCH_MSG) + "\">");
                         // out.write(Application.getMessage(context, SearchRenderer.SEARCH_MSG));
                         out.write("</a>");
 

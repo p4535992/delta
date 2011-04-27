@@ -2,7 +2,7 @@
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
-<%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
+<%@ taglib uri="/WEB-INF/wm.tld" prefix="wm" %>
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
@@ -19,21 +19,21 @@
          </f:facet>
          <f:facet name="small-icon">
             <h:panelGroup>
-               <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+               <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
                   <a:actionLink id="col1-act1" value="#{r.name}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
                      styleClass="inlineAction" />
-               </r:permissionEvaluator>
-               <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+               </wm:docPermissionEvaluator>
+               <wm:docPermissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage value="#{r.fileType16}" />
-               </r:permissionEvaluator>
+               </wm:docPermissionEvaluator>
             </h:panelGroup>
          </f:facet>
-         <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+         <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col1-act2" value="#{r.name}" href="#{r.downloadUrl}" target="_blank"/>
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText value="#{r.name}" />
-         </r:permissionEvaluator>
+         </wm:docPermissionEvaluator>
       </a:column>
 
       <%-- Created Date column --%>
@@ -48,13 +48,11 @@
 
       <%-- Remove column --%>
       <a:column id="col7">
-         <r:permissionEvaluator value="#{r.node}" allow="DeleteNode">
-            <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
-               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}">
-               <f:param name="id" value="#{r.id}" />
-               <f:param name="ref" value="#{r.nodeRef}" />
-            </a:actionLink>
-         </r:permissionEvaluator>
+         <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
+            image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{UserService.documentManager}" >
+            <f:param name="id" value="#{r.id}" />
+            <f:param name="ref" value="#{r.nodeRef}" />
+         </a:actionLink>
       </a:column>
 
    </a:richList>

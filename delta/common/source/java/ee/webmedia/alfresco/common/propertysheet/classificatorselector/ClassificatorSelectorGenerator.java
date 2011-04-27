@@ -33,6 +33,7 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ClassificatorSelectorGenerator.class);
 
     public static final String ATTR_CLASSIFICATOR_NAME = "classificatorName";
+    public static final String ATTR_DESCRIPTION_AS_LABEL = "descriptionAsLabel";
 
     private transient ClassificatorService classificatorService;
     private transient GeneralService generalService;
@@ -69,7 +70,11 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
         boolean isSingleValued = isSingleValued(context, multiValued); //
         for (ClassificatorValue classificator : classificators) {
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-            selectItem.setItemLabel(classificator.getValueName());
+            if (isDescriptionAsLabel()) {
+                selectItem.setItemLabel(classificator.getClassificatorDescription());
+            } else {
+                selectItem.setItemLabel(classificator.getValueName());
+            }
             // Convert value so validation doesn't fail
             selectItem.setItemValue(RendererUtils.getConvertedUIOutputValue(context, component, classificator.getValueName())); // must not be null or empty
             if (isSingleValued && ((existingValue != null && StringUtils.equals(existingValue, classificator.getValueName())) // prefer existing value..
@@ -91,6 +96,10 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
 
     protected String getClassificatorName() {
         return getCustomAttributes().get(ATTR_CLASSIFICATOR_NAME);
+    }
+
+    protected boolean isDescriptionAsLabel() {
+        return Boolean.valueOf(getCustomAttributes().get(ATTR_DESCRIPTION_AS_LABEL));
     }
 
     // START: getters / setters

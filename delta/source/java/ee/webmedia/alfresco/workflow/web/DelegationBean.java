@@ -157,7 +157,7 @@ public class DelegationBean implements Serializable {
         // If no tasks are added to following workflow, then that workflows is not saved when saving compound workflow
         NodeRef docRef = assignmentTask.getParent().getParent().getParent();
         String docStatus = (String) getNodeService().getProperty(docRef, DocumentCommonModel.Props.DOC_STATUS);
-        if (!DocumentStatus.FINISHED.equals(docStatus)) {
+        if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
             Node taskNode = assignmentTask.getNode();
             taskNode.getProperties().put(TMP_GENERATE_OPINION_TASK_DELEGATION, Boolean.TRUE);
             getOrCreateWorkflow(workflow, DelegatableTaskType.OPINION);

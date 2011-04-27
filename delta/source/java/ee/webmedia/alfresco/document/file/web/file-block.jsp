@@ -3,6 +3,7 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a"%>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r"%>
+<%@ taglib uri="/WEB-INF/wm.tld" prefix="wm" %>
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
@@ -25,21 +26,21 @@
          </f:facet>
          <f:facet name="small-icon">
             <h:panelGroup>
-               <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+               <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
                   <a:actionLink id="col1-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
                      styleClass="inlineAction webdav-open" />
-               </r:permissionEvaluator>
-               <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+               </wm:docPermissionEvaluator>
+               <wm:docPermissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage value="#{r.fileType16}" />
-               </r:permissionEvaluator>
+               </wm:docPermissionEvaluator>
             </h:panelGroup>
          </f:facet>
-         <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+         <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col1-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="webdav-open" />
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText value="#{r.displayName}" />
-         </r:permissionEvaluator>
+         </wm:docPermissionEvaluator>
       </a:column>
       
       <%-- Created By column --%>
@@ -90,46 +91,46 @@
 
       <%-- Remove and Version column --%>
       <a:column id="col7" rendered="#{r.activeAndNotDigiDoc}">
-         <r:permissionEvaluator value="#{r.node}" allow="WriteProperties">
-            <a:actionLink id="col7-act3" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
+         <wm:docPermissionEvaluator value="#{r.node}" allow="editDocumentMetaData">
+            <a:actionLink id="col7-act33" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
                image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{!DocumentDialog.notEditable}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col7-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false"
                image="/images/icons/version_history.gif" rendered="#{r.versionable && !DocumentDialog.notEditable}" tooltip="#{msg.file_version_history}">
                <f:param name="fileName" value="#{r.name}" />
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.node}" allow="DeleteNode">
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.node}" allow="deleteDocumentFiles">
             <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
-               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{UserService.documentManager && !DocumentDialog.inprogressCompoundWorkflows && !DocumentDialog.notEditable}">
+               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{!DocumentDialog.inprogressCompoundWorkflows && !DocumentDialog.notEditable}">
                <f:param name="id" value="#{r.id}" />
                <f:param name="ref" value="#{r.nodeRef}" />
             </a:actionLink>
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.node}" allow="WriteContent">
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.node}" allow="WriteContent">
             <a:actionLink id="col7-act4" value="#{r.name}" actionListener="#{FileBlockBean.transformToPdf}" showLink="false"
                image="/images/filetypes/pdf.gif" tooltip="#{msg.file_generate_pdf}" rendered="#{r.transformableToPdf && !DocumentDialog.notEditable}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
-         </r:permissionEvaluator>
+         </wm:docPermissionEvaluator>
       </a:column>
       
       <a:column id="col1-ddoc" primary="true" rendered="#{r.activeDigiDoc}">
          <a:panel id="ddoc-inner-panel" styleClass="digidoc-panel">
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">
                <h:column id="col1-inner">
-                  <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+                  <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
                      <a:actionLink id="inner-act1" value="#{v.displayName}" tooltip="#{v.name}" href="#{v.downloadUrl}" target="_blank" image="#{v.fileType16}" showLink="false" styleClass="inlineAction" />
                      <a:actionLink id="inner-act2" value="#{v.displayName}" tooltip="#{v.name}" href="#{v.downloadUrl}" target="_blank" />
-                  </r:permissionEvaluator>
-                  <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+                  </wm:docPermissionEvaluator>
+                  <wm:docPermissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
                      <h:graphicImage id="inner-act1-deny" value="#{v.fileType16}" />
                      <h:outputText id="inner-act2-deny" value="#{v.displayName}" title="#{v.name}" />
-                  </r:permissionEvaluator>
+                  </wm:docPermissionEvaluator>
                </h:column>
             </h:dataTable>
          </a:panel>
@@ -191,21 +192,21 @@
          </f:facet>
          <f:facet name="small-icon">
             <h:panelGroup>
-               <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+               <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
                   <a:actionLink id="col21-act1" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" image="#{r.fileType16}" showLink="false"
                      styleClass="inlineAction webdav-open" />
-               </r:permissionEvaluator>
-               <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+               </wm:docPermissionEvaluator>
+               <wm:docPermissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
                   <h:graphicImage value="#{r.fileType16}" />
-               </r:permissionEvaluator>
+               </wm:docPermissionEvaluator>
             </h:panelGroup>
          </f:facet>
-         <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+         <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col21-act2" value="#{r.displayName}" href="#{r.downloadUrl}" target="_blank" styleClass="webdav-open" />
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
             <h:outputText value="#{r.displayName}" />
-         </r:permissionEvaluator>
+         </wm:docPermissionEvaluator>
       </a:column>
 
       <%-- Created By column --%>
@@ -256,40 +257,40 @@
 
       <%-- Remove and Version column --%>
       <a:column id="col27" rendered="#{r.notActiveAndNotDigiDoc}">
-         <r:permissionEvaluator value="#{r.node}" allow="WriteProperties">
+         <wm:docPermissionEvaluator value="#{r.node}" allow="editDocumentMetaData,editDocumentFiles">
             <a:actionLink id="col27-act3" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
                image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_active}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col27-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false"
                image="/images/icons/version_history.gif" rendered="#{r.versionable}" tooltip="#{msg.file_version_history}">
                <f:param name="fileName" value="#{r.name}" />
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
-         </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.node}" allow="DeleteNode">
+         </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.node}" allow="deleteDocumentFiles">
             <a:actionLink id="col27-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
-               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{UserService.documentManager && !DocumentDialog.inprogressCompoundWorkflows}">
+               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{!DocumentDialog.inprogressCompoundWorkflows && !DocumentDialog.notEditable}">
                <f:param name="id" value="#{r.id}" />
                <f:param name="ref" value="#{r.nodeRef}" />
             </a:actionLink>
-         </r:permissionEvaluator>
+         </wm:docPermissionEvaluator>
       </a:column>
       
       <a:column id="col21-ddoc" primary="true" rendered="#{r.notActiveAndDigiDoc}">
          <a:panel id="ddoc-inner-panel" styleClass="digidoc-panel">
             <h:dataTable id="ddocList" value="#{r.dataItems}" var="v">
                <h:column id="col21-inner">
-                  <r:permissionEvaluator value="#{r.node}" allow="ReadContent">
+                  <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
                      <a:actionLink id="inner-act1" value="#{v.displayName}" tooltip="#{v.name}" href="#{v.downloadUrl}" target="_blank" image="#{v.fileType16}" showLink="false" styleClass="inlineAction" />
                      <a:actionLink id="inner-act2" value="#{v.displayName}" tooltip="#{v.name}" href="#{v.downloadUrl}" target="_blank" />
-                  </r:permissionEvaluator>
-                  <r:permissionEvaluator value="#{r.node}" deny="ReadContent">
+                  </wm:docPermissionEvaluator>
+                  <wm:docPermissionEvaluator value="#{r.node}" deny="viewDocumentFiles">
                      <h:graphicImage id="inner-act1-deny" value="#{v.fileType16}" />
                      <h:outputText id="inner-act2-deny" value="#{v.displayName}" title="#{v.name}" />
-                  </r:permissionEvaluator>
+                  </wm:docPermissionEvaluator>
                </h:column>
             </h:dataTable>
          </a:panel>

@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -223,7 +224,7 @@ public class SearchUtil {
         return generateTypeQuery(Arrays.asList(documentTypes));
     }
 
-    public static String generateTypeQuery(List<QName> documentTypes) {
+    public static String generateTypeQuery(Collection<QName> documentTypes) {
         if (documentTypes == null || documentTypes.size() == 0) {
             return null;
         }
@@ -232,6 +233,21 @@ public class SearchUtil {
             queryParts.add("TYPE:" + Repository.escapeQName(documentType));
         }
         return joinQueryPartsOr(queryParts, false);
+    }
+
+    public static String generateNotTypeQuery(QName... documentTypes) {
+        return generateNotTypeQuery(Arrays.asList(documentTypes));
+    }
+
+    public static String generateNotTypeQuery(List<QName> documentTypes) {
+        if (documentTypes == null || documentTypes.size() == 0) {
+            return null;
+        }
+        List<String> queryParts = new ArrayList<String>(documentTypes.size());
+        for (QName documentType : documentTypes) {
+            queryParts.add("TYPE:" + Repository.escapeQName(documentType));
+        }
+        return "NOT (" + joinQueryPartsOr(queryParts, false) + ")";
     }
 
     public static String generateAspectQuery(QName... documentTypes) {
@@ -337,6 +353,28 @@ public class SearchUtil {
         }
         if (endDate != null) {
             end = formatLuceneDate(endDate);
+        }
+        List<String> queryParts = new ArrayList<String>(documentPropNames.length);
+        for (QName documentPropName : documentPropNames) {
+            String query = "@" + Repository.escapeQName(documentPropName) + ":[" + begin + " TO " + end + "]";
+            queryParts.add(query);
+        }
+        return joinQueryPartsOr(queryParts, false);
+    }
+
+    public static String generateDoublePropertyRangeQuery(Double minValue, Double maxValue, QName... documentPropNames) {
+        if (minValue == null && maxValue == null) {
+            return null;
+        }
+        // if (minValue != null && maxValue != null && maxValue < minValue)
+        // then we don't display an error message. generated query won't find anything
+        String begin = "MIN";
+        String end = "MAX";
+        if (minValue != null) {
+            begin = minValue.toString();
+        }
+        if (maxValue != null) {
+            end = maxValue.toString();
         }
         List<String> queryParts = new ArrayList<String>(documentPropNames.length);
         for (QName documentPropName : documentPropNames) {

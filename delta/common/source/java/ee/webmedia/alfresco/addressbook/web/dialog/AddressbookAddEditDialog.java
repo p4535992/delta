@@ -1,10 +1,14 @@
 package ee.webmedia.alfresco.addressbook.web.dialog;
 
+import java.util.List;
+import java.util.Map;
+
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
@@ -17,7 +21,6 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * @author Keit Tehvan
@@ -26,6 +29,8 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
     public static final String BEAN_NAME = "AddressbookAddEditDialog";
+    public static final String PERSON_CODE_EXISTS_ERROR = "addressbook_save_person_error_codeExists";
+    public static final String ORG_CODE_EXISTS_ERROR = "addressbook_save_organization_error_codeExists";
 
     private transient AddressbookService addressbookService;
     protected Node entry;
@@ -59,12 +64,22 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
             return null;
         }
         if (validate()) {
+            checkUserInput();
             return saveData(context, outcome);
         } else {
             skipReset = true;
             isFinished = false;
         }
         return null;
+    }
+
+    private void checkUserInput() {
+        Map<String, Object> properties = getEntry().getProperties();
+        // Remove Whitespace from orgCode
+        properties.put(AddressbookModel.Props.ORGANIZATION_CODE.toString(),
+                StringUtils.deleteWhitespace((String) properties.get(AddressbookModel.Props.ORGANIZATION_CODE.toString())));
+        // ... and email
+        properties.put(AddressbookModel.Props.EMAIL.toString(), StringUtils.deleteWhitespace((String) properties.get(AddressbookModel.Props.EMAIL.toString())));
     }
 
     private boolean validate() {
@@ -103,18 +118,34 @@ public class AddressbookAddEditDialog extends BaseDialogBean {
     }
 
     protected String saveData(FacesContext context, String outcome) {
-        try {
-            getAddressbookService().checkIfContactExists(getEntry());
-            persistEntry();
-        } catch (UnableToPerformException e) {
+        List<Pair<String, String>> duplicateMessages = getAddressbookService().checkIfContactExists(getEntry());
+        boolean allowSave = true;
+        String confirmMessage = null;
+        for (Pair<String, String> message : duplicateMessages) {
+            String messageKey = message.getFirst();
+            if (PERSON_CODE_EXISTS_ERROR.equals(messageKey)
+                    || ORG_CODE_EXISTS_ERROR.equals(messageKey)) {
+                MessageUtil.addErrorMessage(context, messageKey, message.getSecond());
+                allowSave = false;
+            } else if (confirmMessage != null) {
+                confirmMessage = MessageUtil.getMessage(messageKey, message.getSecond());
+            }
+        }
+        if (!allowSave) {
+            isFinished = false;
+            skipReset = true;
+            outcome = null;
+        } else if (confirmMessage != null) {
             ConfirmAddDuplicateDialog confirmBean = (ConfirmAddDuplicateDialog) FacesHelper.getManagedBean( //
                     context, ConfirmAddDuplicateDialog.BEAN_NAME);
-            confirmBean.setConfirmMessage(MessageUtil.getMessage(e.getMessageKey(), e.getMessageValuesForHolders()));
+            confirmBean.setConfirmMessage(confirmMessage);
             isFinished = false;
             skipReset = true;
             outcome = "dialog:confirmAddDuplicate";
+        } else {
+            persistEntry();
+            MessageUtil.addInfoMessage("save_success");
         }
-        MessageUtil.addInfoMessage("save_success");
         return outcome;
     }
 

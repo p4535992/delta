@@ -38,6 +38,7 @@ import javax.faces.el.ValueBinding;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.ui.common.PanelGenerator;
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.lang.StringUtils;
 
 /**
  * Renderer that displays any errors that occurred in the previous lifecylce 
@@ -124,7 +125,9 @@ public class ErrorsRenderer extends BaseRenderer
                out.write("<li");
                renderMessageAttrs(fm, out, errorClass, infoClass);
                out.write(">");
-               out.write(Utils.encode(fm.getSummary()));
+               String msg = Utils.encode(fm.getSummary());
+               msg = StringUtils.replace(msg, "\n", "<br/>");
+               out.write(msg);
                out.write("</li>\n");
             }
             

@@ -8,6 +8,12 @@
         <managed-bean-class>ee.webmedia.alfresco.imap.web.IncomingEmailListDialog</managed-bean-class>
         <managed-bean-scope>session</managed-bean-scope>
     </managed-bean>
+    
+    <managed-bean>
+        <managed-bean-name>IncomingEInvoiceListDialog</managed-bean-name>
+        <managed-bean-class>ee.webmedia.alfresco.imap.web.IncomingEInvoiceListDialog</managed-bean-class>
+        <managed-bean-scope>session</managed-bean-scope>
+    </managed-bean>    
 
     <managed-bean>
         <managed-bean-name>AttachmentListDialog</managed-bean-name>

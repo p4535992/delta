@@ -35,17 +35,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import javax.faces.context.FacesContext;
-
-import org.alfresco.service.cmr.security.AccessStatus;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.bean.repository.Repository;
 
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.permissions.Permission;
 import ee.webmedia.alfresco.document.web.evaluator.DocumentSavedActionEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
 import ee.webmedia.alfresco.workflow.service.HasNoStoppedOrInprogressWorkflowsEvaluator;
@@ -68,10 +62,8 @@ public class SendOutActionEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
-        ViewStateActionEvaluator viewStateEval = new ViewStateActionEvaluator();
-        PermissionService permissionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPermissionService();
-        boolean result = viewStateEval.evaluate(node) && new DocumentSavedActionEvaluator().evaluate(node)
-                && permissionService.hasPermission(node.getNodeRef(), Permission.DOCUMENT_WRITE.getValueName()).equals(AccessStatus.ALLOWED);
+        boolean result = new ViewStateActionEvaluator().evaluate(node) && new DocumentSavedActionEvaluator().evaluate(node)
+                && node.hasPermission(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
         if (result) {
             final Map<String, Object> props = node.getProperties();
             final String regNumber = (String) props.get(DocumentCommonModel.Props.REG_NUMBER);

@@ -37,6 +37,7 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.NavigationBean;
 import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.dialog.DialogState;
+import org.alfresco.web.bean.dialog.IDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.wizard.WizardManager;
 import org.alfresco.web.bean.wizard.WizardState;
@@ -909,4 +910,25 @@ public class AlfrescoNavigationHandler extends NavigationHandler {
 
         return viewStack;
     }
+
+    public IDialogBean getCurrentDialogOrWizard(FacesContext context) {
+        String viewId = context.getViewRoot().getViewId();
+        String dialogContainer = getDialogContainer(context);
+        String wizardContainer = getWizardContainer(context);
+        if (viewId.equals(dialogContainer)) {
+            DialogManager dlgMgr = Application.getDialogManager();
+            DialogState dialogState = dlgMgr.getState();
+            if (dialogState != null) {
+                return dialogState.getDialog();
+            }
+        } else if (viewId.equals(wizardContainer)) {
+            WizardManager wizMgr = Application.getWizardManager();
+            WizardState wizardState = wizMgr.getState();
+            if (wizardState != null) {
+                return wizardState.getWizard();
+            }
+        }
+        return null;
+    }
+
 }

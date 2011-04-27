@@ -58,7 +58,7 @@
          <f:facet name="header">
             <a:sortLink id="col6-sort" label="#{msg.document_docName}" value="docName" styleClass="header" />
          </f:facet>
-         <a:actionLink id="col6-text-1" value="#{r.docName}" action="dialog:document" tooltip="#{r.docName}"
+         <a:actionLink id="col6-text-1" value="#{r.docName}" action="#{DocumentDialog.action}" tooltip="#{r.docName}"
             showLink="false" actionListener="#{DocumentDialog.open}" rendered="#{r.cssStyleClass ne 'case'}" styleClass="condence20- tooltip">
             <f:param name="nodeRef" value="#{r.node.nodeRef}" />
          </a:actionLink>
@@ -77,43 +77,43 @@
           <f:facet name="csvExport">
               <a:param value="false"/>
           </f:facet>
-         <r:permissionEvaluator value="#{r.files[0].node}" allow="ReadContent">
+         <r:permissionEvaluator value="#{r.files[0].node}" allow="viewDocumentFiles">
             <a:actionLink id="col10-act1" value="#{r.files[0].name}" href="#{r.files[0].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[0].node}" deny="ReadContent">
+         <r:permissionEvaluator value="#{r.files[0].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[0].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[0].name}"
                title="#{r.files[0].name}" rendered="#{r.files[0] != null}" />
          </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[1].node}" allow="ReadContent">
+         <r:permissionEvaluator value="#{r.files[1].node}" allow="viewDocumentFiles">
             <a:actionLink id="col10-act2" value="#{r.files[1].name}" href="#{r.files[1].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[1].node}" deny="ReadContent">
+         <r:permissionEvaluator value="#{r.files[1].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[1].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[1].name}"
                title="#{r.files[1].name}" rendered="#{r.files[1] != null}" />
          </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[2].node}" allow="ReadContent">
+         <r:permissionEvaluator value="#{r.files[2].node}" allow="viewDocumentFiles">
             <a:actionLink id="col10-act3" value="#{r.files[2].name}" href="#{r.files[2].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[2].node}" deny="ReadContent">
+         <r:permissionEvaluator value="#{r.files[2].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[2].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[2].name}"
                title="#{r.files[2].name}" rendered="#{r.files[2] != null}" />
          </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[3].node}" allow="ReadContent">
+         <r:permissionEvaluator value="#{r.files[3].node}" allow="viewDocumentFiles">
             <a:actionLink id="col10-act4" value="#{r.files[3].name}" href="#{r.files[3].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[3].node}" deny="ReadContent">
+         <r:permissionEvaluator value="#{r.files[3].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[3].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[3].name}"
                title="#{r.files[3].name}" rendered="#{r.files[3] != null}" />
          </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[4].node}" allow="ReadContent">
+         <r:permissionEvaluator value="#{r.files[4].node}" allow="viewDocumentFiles">
             <a:actionLink id="col10-act5" value="#{r.files[4].name}" href="#{r.files[4].downloadUrl}" target="_blank" showLink="false"
                image="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" styleClass="inlineAction webdav-readOnly" />
          </r:permissionEvaluator>
-         <r:permissionEvaluator value="#{r.files[4].node}" deny="ReadContent">
+         <r:permissionEvaluator value="#{r.files[4].node}" deny="viewDocumentFiles">
             <h:graphicImage value="/images/icons/#{r.files[4].digiDocContainer ? 'ddoc_sign_small.gif' : 'attachment.gif'}" alt="#{r.files[4].name}"
                title="#{r.files[4].name}" rendered="#{r.files[4] != null}" />
          </r:permissionEvaluator>

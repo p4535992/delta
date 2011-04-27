@@ -1,5 +1,12 @@
 package ee.webmedia.alfresco.document.model;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
@@ -40,9 +47,13 @@ public interface DocumentCommonModel {
     }
 
     interface Assocs {
+        /** documentContainer -> document */
         QName DOCUMENT = QName.createQName(URI, "document");
+        /** document(replyDocRef) -> document(initialDocRef) */
         QName DOCUMENT_REPLY = QName.createQName(URI, "reply");
+        /** document(followupDocRef) -> document(initialDocRef) */
         QName DOCUMENT_FOLLOW_UP = QName.createQName(URI, "followUp");
+        /** document(activeDoc) -> document(selectedAssociatedDoc) */
         QName DOCUMENT_2_DOCUMENT = QName.createQName(URI, "document2Document");
         QName SEND_INFO = QName.createQName(URI, "sendInfo");
         QName DOCUMENT_LOG = QName.createQName(URI, "documentLog");
@@ -88,6 +99,7 @@ public interface DocumentCommonModel {
         QName ACCESS_RESTRICTION_END_DESC = QName.createQName(URI, "accessRestrictionEndDesc");
 
         QName REG_NUMBER = QName.createQName(URI, "regNumber");
+        QName SHORT_REG_NUMBER = QName.createQName(URI, "shortRegNumber");
         QName REG_DATE_TIME = QName.createQName(URI, "regDateTime");
 
         QName COMMENT = QName.createQName(URI, "comment");
@@ -121,6 +133,33 @@ public interface DocumentCommonModel {
         QName SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS = QName.createQName(URI, "searchableHasStartedCompoundWorkflows");
 
         QName LEGAL_BASIS_NAME = QName.createQName(URI, "legalBasisName");
+    }
+
+    /**
+     * Document related privileges (and dependencies)
+     * 
+     * @author Ats Uiboupin
+     */
+    abstract class Privileges {
+        public static final String VIEW_DOCUMENT_META_DATA = "viewDocumentMetaData";
+        public static final String EDIT_DOCUMENT_META_DATA = "editDocumentMetaData";
+        public static final String VIEW_DOCUMENT_FILES = "viewDocumentFiles";
+        /** ADD or edit document files */
+        public static final String EDIT_DOCUMENT_FILES = "editDocumentFiles";
+        public static final String DELETE_DOCUMENT_FILES = "deleteDocumentFiles";
+        /** can delete document */
+        public static final String DELETE_DOCUMENT_META_DATA = "deleteDocumentMetaData";
+
+        public static final Map<String, Set<String>> PRIVILEGE_DEPENDENCIES;
+        static {
+            Map<String, Set<String>> m = new HashMap<String, Set<String>>();
+            m.put(EDIT_DOCUMENT_META_DATA, Collections.singleton(VIEW_DOCUMENT_META_DATA));
+            m.put(VIEW_DOCUMENT_FILES, Collections.singleton(VIEW_DOCUMENT_META_DATA));
+            m.put(EDIT_DOCUMENT_FILES, Collections.singleton(VIEW_DOCUMENT_META_DATA));
+            m.put(DELETE_DOCUMENT_FILES, Collections.singleton(VIEW_DOCUMENT_META_DATA));
+            m.put(DELETE_DOCUMENT_META_DATA, Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(VIEW_DOCUMENT_META_DATA, VIEW_DOCUMENT_FILES))));
+            PRIVILEGE_DEPENDENCIES = Collections.unmodifiableMap(m);
+        }
     }
 
 }

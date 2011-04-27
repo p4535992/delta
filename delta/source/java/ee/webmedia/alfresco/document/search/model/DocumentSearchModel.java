@@ -38,6 +38,7 @@ public interface DocumentSearchModel {
         QName REG_DATE_TIME_BEGIN = QName.createQName(URI, "regDateTimeBegin");
         QName REG_DATE_TIME_END = QName.createQName(URI, "regDateTimeEnd");
         QName REG_NUMBER = QName.createQName(URI, "regNumber");
+        QName SHORT_REG_NUMBER = QName.createQName(URI, "shortRegNumber");
         QName DOC_STATUS = QName.createQName(URI, "docStatus");
         QName SENDER_NAME = QName.createQName(URI, "senderName");
         QName RECIPIENT_NAME = QName.createQName(URI, "recipientName");
@@ -78,6 +79,13 @@ public interface DocumentSearchModel {
         QName CONTACT_PERSON = QName.createQName(URI, "contactPerson");
         QName PROCUREMENT_TYPE = QName.createQName(URI, "procurementType");
         QName OUTPUT = QName.createQName(URI, "output");
+        QName INVOICE_NUMBER = QName.createQName(URI, "invoiceNumber");
+        QName INVOICE_DATE_BEGIN = QName.createQName(URI, "invoiceDateBegin");
+        QName INVOICE_DATE_END = QName.createQName(URI, "invoiceDateEnd");
+        QName SELLER_PARTY_NAME = QName.createQName(URI, "sellerPartyName");
+        QName SELLER_PARTY_REG_NUMBER = QName.createQName(URI, "sellerPartyRegNumber");
+        QName TOTAL_SUM_LOWEST = QName.createQName(URI, "totalSumLowest");
+        QName TOTAL_SUM_HIGHEST = QName.createQName(URI, "totalSumHighest");
     }
 
 }

@@ -5,7 +5,6 @@ import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -14,17 +13,14 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.servlet.http.HttpServletResponse;
 
-import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.exporter.ACPExportPackageHandler;
-import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.view.ExportPackageHandler;
 import org.alfresco.service.cmr.view.ExporterCrawlerParameters;
 import org.alfresco.service.cmr.view.ExporterService;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
@@ -257,12 +253,13 @@ public class FunctionsListDialog extends BaseDialogBean {
 
     public List<Function> getMySeriesFunctions() {
         List<Function> seriesFunctions = new ArrayList<Function>(functions.size());
+        Integer currentUsersStructUnitId = getUserService().getCurrentUsersStructUnitId();
         for (Function function : getFunctions()) {
             List<ChildAssociationRef> childAssocs = getNodeService().getChildAssocs(function.getNodeRef());
             for (ChildAssociationRef caRef : childAssocs) {
                 @SuppressWarnings("unchecked")
                 List<Integer> structUnits = (List<Integer>) getNodeService().getProperty(caRef.getChildRef(), SeriesModel.Props.STRUCT_UNIT);
-                boolean contains = structUnits != null && structUnits.contains(getCurrentUsersStructUnitId());
+                boolean contains = structUnits != null && structUnits.contains(currentUsersStructUnitId);
                 if (contains) {
                     seriesFunctions.add(function);
                     break;
@@ -271,15 +268,6 @@ public class FunctionsListDialog extends BaseDialogBean {
         }
 
         return seriesFunctions;
-    }
-
-    private Integer getCurrentUsersStructUnitId() {
-        Map<QName, Serializable> userProperties = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
-        Serializable orgId = userProperties.get(ContentModel.PROP_ORGID);
-        if (orgId == null) {
-            return null;
-        }
-        return Integer.parseInt(orgId.toString());
     }
 
     protected FunctionsService getFunctionsService() {

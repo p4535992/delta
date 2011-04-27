@@ -3,8 +3,10 @@ package ee.webmedia.alfresco.user.service;
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
@@ -17,9 +19,14 @@ public interface UserService {
 
     String DOCUMENT_MANAGERS_GROUP = "DOCUMENT_MANAGERS";
     String ADMINISTRATORS_GROUP = "ALFRESCO_ADMINISTRATORS";
+    String ACCOUNTANTS_GROUP = "ACCOUNTANTS";
+
+    String AUTH_DOCUMENT_MANAGERS_GROUP = AuthorityType.GROUP.getPrefixString() + DOCUMENT_MANAGERS_GROUP;
+    String AUTH_ADMINISTRATORS_GROUP = AuthorityType.GROUP.getPrefixString() + ADMINISTRATORS_GROUP;
 
     String DOCUMENT_MANAGERS_DISPLAY_NAME = "document_managers_display_name";
     String ALFRESCO_ADMINISTRATORS_DISPLAY_NAME = "alfresco_administrators_display_name";
+    String ACCOUNTANTS_DISPLAY_NAME = "accountants_display_name";
 
     /**
      * Fetches the node reference, where user preferences are kept
@@ -123,6 +130,20 @@ public interface UserService {
 
     String getUserEmail(String userName);
 
+    Integer getCurrentUsersStructUnitId();
+
+    /**
+     * @param structUnits - organization structure units
+     * @return userNames of the users directly in given structUnits (not in some descendant structUnit of given structUnits)
+     */
+    Set<String> getUsernamesByStructUnit(List<Integer> structUnits);
+
     boolean isGroupsEditingAllowed();
+
+    void setOwnerPropsFromUser(Map<QName, Serializable> docProps, Map<QName, Serializable> userProps);
+
+    String getAccountantsGroup();
+
+    boolean isAccountant();
 
 }

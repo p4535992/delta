@@ -81,10 +81,27 @@ public enum Parameters {
     SIGNER_NAME("signerName"),
     CONTRACT_FIRST_PARTY_NAME("contractFirstPartyName"),
     EXTERNAL_REVIEW_WORKFLOW_ENABLED("externalReviewWorkflowEnabled"),
-
+    DVK_RECEIVE_DOCUMENTS_INVOICE_FOLDER("dvkReceiveDocumentsInvoiceFolder"),
     COST_MANAGER_FIELD_NAME("costManagerFieldName"),
     TRAINING_APPLICATION_DAILY_ALLOWANCE_SUM("trainingApplicationDailyAllowanceSum"),
-    ERRAND_ORDER_ABROAD_DAILY_ALLOWANCE_SUM("errandOrderAbroadDailyAllowanceSum");
+    ERRAND_ORDER_ABROAD_DAILY_ALLOWANCE_SUM("errandOrderAbroadDailyAllowanceSum"),
+    SAP_FINANCIAL_DIMENSIONS_FOLDER_IN_DVK("sapFinancialDimensionsFolderInDvk"),
+    SAP_CONTACT_UPDATE_TIME("sapContactUpdateTime"),
+
+    // dimension parameters
+    DIMENSION_CODE_INVOICE_FUNDS_CENTERS("dimensionCodeInvoiceFundsCenters"),
+    DIMENSION_CODE_INVOICE_COST_CENTERS("dimensionCodeInvoiceCostCenters"),
+    DIMENSION_CODE_INVOICE_FUNDS("dimensionCodeInvoiceFunds"),
+    DIMENSION_CODE_INVOICE_COMMITMENT_ITEM("dimensionCodeInvoiceCommitmentItem"),
+    DIMENSION_CODE_INVOICE_INTERNAL_ORDERS("dimensionCodeInvoiceInternalOrders"),
+    DIMENSION_CODE_INVOICE_ASSET_INVENTORY_NUMBERS("dimensionCodeInvoiceAssetInventoryNumbers"),
+    DIMENSION_CODE_INVOICE_POSTING_KEY("dimensionCodeInvoicePostingKey"),
+    DIMENSION_CODE_INVOICE_TRADING_PARTNER_CODES("dimensionCodeInvoiceTradingPartnerCodes"),
+    DIMENSION_CODE_INVOICE_FUNCTIONAL_AREA_CODE("dimensionCodeInvoiceFunctionalAreaCode"),
+    DIMENSION_CODE_INVOICE_CASH_FLOW_CODES("dimensionCodeInvoiceCashFlowCodes"),
+    DIMENSION_CODE_INVOICE_SOURCE_CODES("dimensionCodeInvoiceSourceCodes"),
+    DIMENSION_CODE_INVOICE_PAYMENT_METHOD_CODES("dimensionCodeInvoicePaymentMethodCodes"),
+    DIMENSION_CODE_INVOICE_HOUSE_BANK_CODES("dimensionCodeInvoiceHouseBankCodes");
 
     private String xPath;
     private String parameterName;

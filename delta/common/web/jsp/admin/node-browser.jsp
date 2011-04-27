@@ -183,6 +183,21 @@
       </table>
       
       <h:dataTable id="permissions" border="1" value="#{AdminNodeBrowseBean.permissions}" var="permission" styleClass="nodeBrowserTable">
+          <%-- could be, that can't tell if is inherited or set directly(permission.position --%>
+          <h:column>
+              <f:facet name="header">
+                  <h:outputText value="inherited?"/>
+              </f:facet>
+              <a:booleanEvaluator value="#{permission.position==0}">
+                 <h:outputText value="Directly"/>
+              </a:booleanEvaluator>
+              <a:booleanEvaluator value="#{permission.position>0}">
+                 <h:outputText value="INHERITED"/>
+              </a:booleanEvaluator>
+              <a:booleanEvaluator value="#{permission.position<0}">
+                 <h:outputText value="UNKNOWN"/>
+              </a:booleanEvaluator>
+          </h:column>
           <h:column>
               <f:facet name="header">
                   <h:outputText value="Assigned Permission"/>

@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns="http://www.riik.ee/schemas/e-arve/OstuarveKonteering.xsd" targetNamespace="http://www.riik.ee/schemas/e-arve/OstuarveKonteering.xsd" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+	<xs:annotation>
+		<xs:documentation>Andmemudel ostuarvete päisinfo ja konteeritud ostuarvete andmete edastamiseks süsteemist süsteemi (tavaliselt dokumendihaldussüsteemist raamatupidamissüsteemi) ============================ Kuupäev: 09.08.2010 Versioon: 1.1 Autor: Itella Information AS ja Riigi Infosüsteemide Arenduskeskus Litsents: EUPL</xs:documentation>
+	</xs:annotation>
+	<xs:element name="Ostuarve">
+		<xs:annotation>
+			<xs:documentation>Juurelement</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element maxOccurs="unbounded" ref="Arve">
+					<xs:annotation>
+						<xs:documentation>Arve</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="ArveidKokku" type="xs:positiveInteger">
+					<xs:annotation>
+						<xs:documentation>Arvete hulk failis - elementide Arve koguarv. Tegu on kontrollelemendiga, et fikseerida failis esinenud arvete hulk.</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Arve">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Hankija">
+					<xs:annotation>
+						<xs:documentation>Hankija andmed</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element ref="ArveInfo">
+					<xs:annotation>
+						<xs:documentation>Ostuarve päisinfo</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" ref="Konteering">
+					<xs:annotation>
+						<xs:documentation>Ostuarve konteerimise info kajastamiseks vajalikud elemendid</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="ostjaId" type="NormaalTekstType" use="optional">
+				<xs:annotation>
+					<xs:documentation>Osapoole identifikaator, kellele antud ostuarve on suunatud</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Hankija">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="HankijaNimi" type="NimeTekstType">
+					<xs:annotation>
+						<xs:documentation>Hankija ametlik nimi</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="HankijaNumber" type="LyhiTekstType">
+					<xs:annotation>
+						<xs:documentation>Hankija identifikaator raamatupidamissüsteemis (vastavalt konkreetses lahenduses kasutatavatele koodidele, see saadakse läbi hankijate nimekirja sünkroniseerimise süsteemide vahel). Kui hankija number on süsteemis olemas, siis tuleb seda välja täita, ehk selle välja mitte täitmine on lubatud ainult juhul kui antud hankijale pole määratud veel numbrit</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="Registrikood" type="LyhiTekstType">
+					<xs:annotation>
+						<xs:documentation>Hankija ametlik registrikood (Eesti ettevõtete puhul vormingus "1xxxxxxx"). Kui hankija registrikood on süsteemis olemas, siis tuleb seda välja täita, ehk selle välja mitte täitmine on lubatud ainult juhul kui antud hankijal pole registrikoodi (nt välismaa ettevõtete puhul)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="ArveInfo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" name="Asutus" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Asutuse viide, kelle kulu antud Ostuarve kajastab. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="ArveKinnitatud" type="JahEiType" >
+					<xs:annotation>
+						<xs:documentation>Element arve staatuse fikseerimiseks (kinnitatud või mitte). Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="ArveTuup" type="DKType">
+					<xs:annotation>
+						<xs:documentation>Element arve tüübi fikseerimiseks. D – deebetarve; K - kreeditarve. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="ArveNumber" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Ostuarve alusdokumendi number</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="ArveKuupaev" type="KuupaevType">
+					<xs:annotation>
+						<xs:documentation>Ostuarve väljastamise kuupäev</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="Maksepaev" type="KuupaevType">
+					<xs:annotation>
+						<xs:documentation>Ostuarve maksetähtpäev. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="Viitenumber" type="ViitenumberType">
+					<xs:annotation>
+						<xs:documentation>Ostuarve viitenumber. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="TellimuseNumber" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Kui Ostuarvega on seotud konkreetne tellimus, siis antud elemendis kajastatakse tellimuse number. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="ArveSumma" type="NeliKomaKohtaType">
+					<xs:annotation>
+						<xs:documentation>Arve summa kokku koos käibemaksuga</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="KaibemaksKokku" type="NeliKomaKohtaType">
+					<xs:annotation>
+						<xs:documentation>Arvel kajastatud käibemaksu summa. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="Valuuta" type="ValuutaType">
+					<xs:annotation>
+						<xs:documentation>Kolmetäheline ISO 4217 valuutakood. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" ref="LisaInfo">
+					<xs:annotation>
+						<xs:documentation>Ostuarvega seotud lisainfo</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="SisemineId" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Arve sisemise identifikaatori väärtus dokumendihaldussüsteemis, mis võimaldab raamatupidamissüsteemis tekitada otseavatav link antud arvele</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="LisaInfo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" name="InfoNimi" type="LyhiTekstType">
+					<xs:annotation>
+						<xs:documentation>Lisa info nimetus (nt Maksetingimus)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="InfoSisu" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Lisainfo väärtus (nt Palume arve tasuda 10 päeva jooksul)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Konteering">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element minOccurs="0" name="KandeNumber" type="LyhiTekstType">
+					<xs:annotation>
+						<xs:documentation>Arve kande number. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="KandeKuupaev" type="KuupaevType">
+					<xs:annotation>
+						<xs:documentation>Arve kande kuupäev. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="KonteeringuKommentaar" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Üldine kommentaar kõikide konteeringu ridade kohta</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element maxOccurs="unbounded" ref="Kanne">
+					<xs:annotation>
+						<xs:documentation>Read arve konteeringus koos kandeinfoga (tüüp, kontod, summad, dimensioonid)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Kanne">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="KandeTuup" type="DKType">
+					<xs:annotation>
+						<xs:documentation>Kande tüüp. D – deebetkanne; K – kreeditkanne</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="Konto" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Kulukonto, millele antud kulu konteeritakse. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="PearaamatuKonto" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Pearaamatu konto, kuhu kanne sooritatakse. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="KaibemaksuKood" type="LyhiTekstType">
+					<xs:annotation>
+						<xs:documentation>Kandes kajastuva käibemaksu klassifikaator (vastavalt konkreetses lahenduses kasutatavatele koodidele, see saadakse läbi käibemaksu koodide nimekirja sünkroniseerimise süsteemide vahel). Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Summa" type="NeliKomaKohtaType">
+					<xs:annotation>
+						<xs:documentation>Konteeritav summa</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="NetoSumma" type="NeliKomaKohtaType">
+					<xs:annotation>
+						<xs:documentation>Konteeritava summa netoväärtus. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" maxOccurs="10" ref="Dimensioon">
+					<xs:annotation>
+						<xs:documentation>Raamatupidamise analüütika tasemete, ehk dimensioonide sisu kajastamiseks vajalike elementide blokk (vastavalt konkreetses lahenduses kasutatavatele koodidele, see saadakse läbi dimensioonide nimekirja sünkroniseerimise süsteemide vahel)</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="Kogus" type="NeliKomaKohtaType">
+					<xs:annotation>
+						<xs:documentation>Element juhuks, kui kande reaga on seotud ka kogused ja neid on oluline kajastada kande juures. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="KandeKommentaar" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Kommentaar konkreetse konteeringu rea kohta</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="ArveReaNr" type="NormaalTekstType">
+					<xs:annotation>
+						<xs:documentation>Viide algarve rea numbrile. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Dimensioon">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="DimensiooniId" type="LyhiTekstType">
+					<xs:annotation>
+						<xs:documentation>Dimensiooni masinloetav identifikaator</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="DimensiooniNimetus" type="LyhiTekstType">
+					<xs:annotation>
+						<xs:documentation>Dimensiooni inimloetav nimetus. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="DimensiooniVaartuseId" type="NormaalTekstType" >
+					<xs:annotation>
+						<xs:documentation>Dimensiooni väärtuse masinloetav identifikaator</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element minOccurs="0" name="DimensiooniVaartuseNimetus" type="NormaalTekstType" >
+					<xs:annotation>
+						<xs:documentation>Dimensiooni väärtuse inimloetav nimetus. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="DKType">
+		<xs:annotation>
+			<xs:documentation>Element arve tüübi fikseerimiseks. D – deebetarve; K - kreeditarve</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:NMTOKEN">
+			<xs:pattern value="D" />
+			<xs:pattern value="K" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="JahEiType">
+		<xs:annotation>
+			<xs:documentation>Element eestikeelse boolean andmetüübi kasutamiseks</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:NMTOKEN">
+			<xs:pattern value="JAH" />
+			<xs:pattern value="EI" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="KuupaevType">
+		<xs:annotation>
+			<xs:documentation>Kuupäev</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:date" />
+	</xs:simpleType>
+	<xs:simpleType name="LyhiTekstType">
+		<xs:annotation>
+			<xs:documentation>Lühikene tekst (kuni 20 tähemärki)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="20" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="NeliKomaKohtaType">
+		<xs:restriction base="xs:decimal">
+			<xs:fractionDigits value="4" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="NimeTekstType">
+		<xs:annotation>
+			<xs:documentation>Nime tekst (kuni 70 tähemärki)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="70" />
+			<xs:pattern value="[ -ÿŠšŽž]+" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="NormaalTekstType">
+		<xs:annotation>
+			<xs:documentation>Tavaline tekst (kuni 100 tähemärki)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="100" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="ValuutaType">
+		<xs:annotation>
+			<xs:documentation>Kolmetäheline ISO 4217 valuutakood</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:pattern value="[A-Z][A-Z][A-Z]" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="ViitenumberType">
+		<xs:annotation>
+			<xs:documentation>Viitenumber (kuni 20 tähemärki ja ainult numbrid)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:string">
+			<xs:maxLength value="20" />
+			<xs:pattern value="([0-9])*" />
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

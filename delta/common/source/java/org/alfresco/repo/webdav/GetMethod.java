@@ -228,7 +228,7 @@ public class GetMethod extends WebDAVMethod
      * @param nodeInfo the node to check
      * @throws WebDAVServerException if a pre-condition is not met
      */
-    private void checkPreConditions(FileInfo nodeInfo) throws WebDAVServerException
+    protected void checkPreConditions(FileInfo nodeInfo) throws WebDAVServerException
     {
         // Make an etag for the node
 

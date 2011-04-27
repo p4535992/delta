@@ -147,6 +147,13 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         return transformNodesToSelectItems(nodes, personLabel, organizationLabel);
     }
 
+    public SelectItem[] searchOrgContacts(int filterIndex, String contains) {
+        final String personLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_private_person").toLowerCase();
+        final String organizationLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_org").toLowerCase();
+        List<Node> nodes = getAddressbookService().searchOrgContacts(contains);
+        return transformNodesToSelectItems(nodes, personLabel, organizationLabel);
+    }
+
     /**
      * Transforms the list of contact nodes (usually returned by the search) to SelectItems in the following form:
      * OrganizationName (organizationLabel, email) -- if it's an organization
@@ -201,20 +208,25 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         List<String> list = new ArrayList<String>();
         Map<QName, Serializable> props = getNodeService().getProperties(new NodeRef(nodeRef));
 
-        String name;
         QName type = getNodeService().getType(new NodeRef(nodeRef));
-        if (type.equals(Types.CONTACT_GROUP)) {
+        String name = getContactFullName(props, type);
+
+        list.add(name);
+        list.add((String) props.get(AddressbookModel.Props.EMAIL));
+        return list;
+    }
+
+    public static String getContactFullName(Map<QName, Serializable> props, QName contactType) {
+        String name;
+        if (Types.CONTACT_GROUP.equals(contactType)) {
             name = (String) props.get(AddressbookModel.Props.GROUP_NAME);
-        } else if (type.equals(Types.ORGANIZATION)) {
+        } else if (Types.ORGANIZATION.equals(contactType)) {
             name = (String) props.get(AddressbookModel.Props.ORGANIZATION_NAME);
         } else {
             name = UserUtil.getPersonFullName((String) props.get(AddressbookModel.Props.PERSON_FIRST_NAME), (String) props
                     .get(AddressbookModel.Props.PERSON_LAST_NAME));
         }
-
-        list.add(name);
-        list.add((String) props.get(AddressbookModel.Props.EMAIL));
-        return list;
+        return name;
     }
 
     private void clearRichLists() {

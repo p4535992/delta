@@ -141,13 +141,6 @@ public abstract class BaseAdrServiceImpl implements AdrService {
         return datatypeFactory.newXMLGregorianCalendar(cal);
     }
 
-    protected static Date getDate(XMLGregorianCalendar aeg) {
-        if (aeg == null) {
-            return null;
-        }
-        return aeg.toGregorianCalendar().getTime();
-    }
-
     protected static String getNullIfEmpty(String input) {
         if (StringUtils.isEmpty(input)) {
             return null;

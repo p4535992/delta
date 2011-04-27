@@ -802,6 +802,60 @@ $jQ(document).ready(function() {
          elem.closest(".panel-border").find(".reportDueDate").datepicker('setDate',  reportDue);
       }
    });
+   
+   $jQ(".beginDate,.endDate").live('change', function (event) {
+      // Get the date
+      var elem = $jQ(this);
+      if (elem == null) {
+         return;
+      }
+      var row = elem.closest("tr");
+      if (row == null) {
+         return;
+      }
+      var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
+      if (elem.hasClass("beginDate")) {
+         var endDate = row.find(".endDate");
+         if (endDate.val() != "") {
+            row.find(".totalDays").val((endDate.datepicker('getDate') - elem.datepicker('getDate') + oneDay) / oneDay);
+         }
+      } else if (elem.hasClass("endDate")) {
+         var beginDate = row.find(".beginDate");
+         if (beginDate.val() != "") {
+            row.find(".totalDays").val((elem.datepicker('getDate') - beginDate.datepicker('getDate') + oneDay) / oneDay);
+         }
+      }
+  });
+   
+   $jQ(".eventBeginDate,.eventEndDate").live('change', function (event) {
+      // Get the date
+      var elem = $jQ(this);
+      if (elem == null) {
+         return;
+      }
+      
+      
+      var table = elem.closest("table");
+      if (table == null) {
+         return;
+      }
+      
+      var row = table.closest("tr");
+      if (row == null) {
+         return;
+      }
+      
+      
+      var dateField = null;
+      if (elem.hasClass("eventBeginDate")) {
+         dateField = row.next().find(".errandBeginDate");
+      } else if (elem.hasClass("eventEndDate")) {
+         dateField = row.next().find(".errandEndDate");
+      }
+      if (dateField != null) {
+         dateField.datepicker('setDate', elem.datepicker('getDate'));
+      }
+   });
 
    if(isIE()) {
 	   // http://www.htmlcenter.com/blog/fixing-the-ie-text-selection-bug/
@@ -894,9 +948,29 @@ $jQ(document).ready(function() {
       var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField");
       totalField.val(totalSum);
    });
+   
+   jQuery(".invoiceTotalSum, .invoiceVat").live('change', function(event) {
+      // assume there is only one field available for each value      
+      var invoiceTotalSum = getFloatOrNull($jQ(".invoiceTotalSum").val());
+      var invoiceVat = getFloatOrNull($jQ(".invoiceVat").val());
+      var invoiceSum = $jQ(".invoiceSum");
+      if(isNaN(invoiceTotalSum) || isNaN(invoiceVat)){
+         invoiceSum.val('');
+         return;
+      }
+      invoiceSum.val(round(invoiceTotalSum - invoiceVat, 2));
+   });
 
    handleHtmlLoaded(null, selects);
 });
+
+function getFloatOrNull(originalSumString){
+   var sumString = originalSumString.replace(",", ".");
+   if(sumString == ""){
+      return 0;
+   }
+   return parseFloat(sumString);
+}
 
 function initSelectTooltips(selects) {
    selects.each(function(){

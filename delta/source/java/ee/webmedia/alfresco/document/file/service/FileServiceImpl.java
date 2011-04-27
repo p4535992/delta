@@ -47,6 +47,7 @@ import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.versions.model.VersionsModel;
 
@@ -401,13 +402,12 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String getUniqueFileDisplayName(NodeRef folder, String displayName) {
-        String baseName = displayName.substring(0, FilenameUtils.indexOfExtension(displayName));
-        String extension = FilenameUtils.getExtension(displayName);
-        if (StringUtils.isBlank(extension)) {
-            extension = MimetypeMap.EXTENSION_BINARY;
-        }
-        String suffix = "";
-        int i = 1;
+        List<String> childDisplayNames = getDocumentFileDisplayNames(folder);
+        return FilenameUtil.generateUniqueFileDisplayName(displayName, childDisplayNames);
+    }
+
+    @Override
+    public List<String> getDocumentFileDisplayNames(NodeRef folder) {
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(folder);
         List<String> childDisplayNames = new ArrayList<String>(childAssocs.size());
 
@@ -417,12 +417,7 @@ public class FileServiceImpl implements FileService {
                 childDisplayNames.add(property.toString());
             }
         }
-
-        while (childDisplayNames.contains(baseName + suffix + "." + extension)) {
-            suffix = " (" + i + ")";
-            i++;
-        }
-        return baseName + suffix + "." + extension;
+        return childDisplayNames;
     }
 
     @Override

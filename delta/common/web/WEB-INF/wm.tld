@@ -231,8 +231,8 @@
       </attribute>
       <attribute>
          <name>pickerCallback</name>
-         <description>Picker callback for searching values.</description>
          <required>true</required>
+         <description>Picker callback for searching values.</description>
       </attribute>
       <attribute>
          <name>setterCallback</name>
@@ -266,5 +266,40 @@
          <description>Binding to filters.</description>
       </attribute>       
    </tag>
+
+   <tag>
+      <name>docPermissionEvaluator</name>
+      <tag-class>ee.webmedia.alfresco.privilege.web.DocPermissionEvaluatorTag</tag-class>
+      <body-content>JSP</body-content>
       
+      <attribute>
+         <name>id</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+      </attribute>
+      
+      <attribute>
+         <name>value</name>
+         <required>true</required>
+         <rtexprvalue>true</rtexprvalue>
+      </attribute>
+      
+      <attribute>
+         <name>binding</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+      </attribute>
+      
+      <attribute>
+         <name>allow</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+      </attribute>
+      
+      <attribute>
+         <name>deny</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+      </attribute>
+   </tag>
 </taglib>

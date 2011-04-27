@@ -50,7 +50,7 @@ import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.service.UserService;
-import ee.webmedia.alfresco.user.web.PermissionsAddDialog;
+import ee.webmedia.alfresco.user.web.UserGroupSearchBean;
 import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -89,7 +89,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     protected transient TreeMap<String, QName> sortedTypes;
 
     private UserListDialog userListDialog;
-    private PermissionsAddDialog permissionsAddDialog;
+    private UserGroupSearchBean userGroupSearchBean;
 
     private OwnerSearchBean ownerSearchBean;
     private List<SelectItem> parallelSelections;
@@ -235,7 +235,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         if (filterIndex == 0) { // users
             return userListDialog.searchUsers(-1, contains);
         } else if (filterIndex == 1) { // user groups
-            return permissionsAddDialog.searchGroups(-1, contains);
+            return userGroupSearchBean.searchGroups(-1, contains);
         } else if (filterIndex == 2) { // contacts
             final String personLabel = MessageUtil.getMessage("addressbook_private_person").toLowerCase();
             final String organizationLabel = MessageUtil.getMessage("addressbook_org").toLowerCase();
@@ -457,8 +457,8 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         this.userListDialog = userListDialog;
     }
 
-    public void setPermissionsAddDialog(PermissionsAddDialog permissionsAddDialog) {
-        this.permissionsAddDialog = permissionsAddDialog;
+    public void setUserGroupSearchBean(UserGroupSearchBean userGroupSearchBean) {
+        this.userGroupSearchBean = userGroupSearchBean;
     }
 
     public void setOwnerSearchBean(OwnerSearchBean ownerSearchBean) {

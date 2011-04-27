@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.substitute.web;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -120,26 +121,42 @@ public class SubstituteListDialog extends BaseDialogBean {
     private boolean validate(FacesContext context) {
         boolean isValid = true;
         for (Substitute substitute : substitutes) {
+            if (substitute.isReadOnly()) {
+                continue; // Only validate substitutes that user can change
+            }
             // check mandatory fields
             if (StringUtils.isEmpty(substitute.getSubstituteName())) {
                 isValid = false;
                 addRequiredFieldValidationError(context, "substitute_name");
             }
-            if (substitute.getSubstitutionStartDate() == null) {
+            final Date substitutionStartDate = substitute.getSubstitutionStartDate();
+            if (substitutionStartDate == null) {
                 isValid = false;
                 addRequiredFieldValidationError(context, "substitute_startdate");
             }
-            if (substitute.getSubstitutionEndDate() == null) {
+            final Date substitutionEndDate = substitute.getSubstitutionEndDate();
+            if (substitutionEndDate == null) {
                 isValid = false;
                 addRequiredFieldValidationError(context, "substitute_enddate");
             }
 
-            if (substitute.getSubstitutionStartDate() != null
-                    && substitute.getSubstitutionEndDate() != null
-                    && substitute.getSubstitutionStartDate().after(substitute.getSubstitutionEndDate())) {
+            if (isValid && substitutionStartDate.after(substitutionEndDate)) {
                 isValid = false;
                 MessageUtil.addErrorMessage(context, "substitute_start_after_end");
             }
+
+            if (isValid && substitutionEndDate.before(new Date())) {
+                isValid = false;
+                MessageUtil.addErrorMessage(context, "substitute_end_before_now");
+            }
+
+            if (isValid
+                    && !getSubstituteService().findSubstitutionDutiesInPeriod(AuthenticationUtil.getRunAsUser(), substitutionStartDate, substitutionEndDate)
+                            .isEmpty()) {
+                isValid = false;
+                MessageUtil.addErrorMessage(context, "substitute_substitution_while_substituting");
+            }
+
         }
         return isValid;
     }

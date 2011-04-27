@@ -1,5 +1,12 @@
 package ee.webmedia.alfresco.user.service;
 
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_EMAIL;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_JOB_TITLE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_NAME;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_PHONE;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,6 +26,8 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.search.ResultSet;
+import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.AccessPermission;
 import org.alfresco.service.cmr.security.AccessStatus;
@@ -32,10 +41,13 @@ import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.MapNode;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.StringUtils;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.model.Authority;
+import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 public class UserServiceImpl implements UserService {
@@ -107,6 +119,15 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public boolean isAccountant() {
+        if (isAdministrator()) {
+            return true;
+        }
+
+        return authorityService.getAuthorities().contains(getAccountantsGroup());
+    }
+
+    @Override
     public boolean isDocumentManager(String userName) {
         if (isAdministrator(userName)) {
             return true;
@@ -120,6 +141,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public String getAccountantsGroup() {
+        return authorityService.getName(AuthorityType.GROUP, ACCOUNTANTS_GROUP);
+    }
+
+    @Override
     public String getAdministratorsGroup() {
         return authorityService.getName(AuthorityType.GROUP, "ALFRESCO_ADMINISTRATORS");
     }
@@ -130,12 +156,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    // XXX filtering by group is not optimal - it is done after searching/getting all users
     public List<Node> searchUsers(String input, boolean returnAllUsers, String group) {
         Set<QName> props = new HashSet<QName>(1);
         props.add(ContentModel.PROP_FIRSTNAME);
         props.add(ContentModel.PROP_LASTNAME);
 
+        return searchUsersByProps(input, returnAllUsers, group, props);
+    }
+
+    // XXX filtering by group is not optimal - it is done after searching/getting all users
+    private List<Node> searchUsersByProps(String input, boolean returnAllUsers, String group, Set<QName> props) {
         List<NodeRef> nodeRefs = generalService.searchNodes(input, ContentModel.TYPE_PERSON, props);
         if (nodeRefs == null) {
             if (returnAllUsers) {
@@ -229,6 +259,43 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Integer getCurrentUsersStructUnitId() {
+        Map<QName, Serializable> userProperties = getUserProperties(AuthenticationUtil.getRunAsUser());
+        Serializable orgId = userProperties.get(ContentModel.PROP_ORGID);
+        if (orgId == null) {
+            return null;
+        }
+        return Integer.parseInt(orgId.toString());
+    }
+
+    @Override
+    public Set<String> getUsernamesByStructUnit(List<Integer> structUnits) {
+        if (structUnits == null || structUnits.isEmpty()) {
+            return Collections.<String> emptySet();
+        }
+        String query = SearchUtil.generateTypeQuery(ContentModel.TYPE_PERSON);
+        ResultSet resultSet = searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query);
+        try {
+            Set<String> users = new HashSet<String>();
+            for (ResultSetRow resultSetRow : resultSet) {
+                Serializable strStructUnit = resultSetRow.getValue(ContentModel.PROP_ORGID);
+                Integer structUnit = null;
+                if (StringUtils.isNotBlank((String) strStructUnit)) {
+                    structUnit = Integer.valueOf(strStructUnit.toString());
+                    if (structUnits.contains(structUnit)) {
+                        String userName = (String) resultSetRow.getValue(ContentModel.PROP_USERNAME);
+                        Assert.notNull(userName);
+                        users.add(userName);
+                    }
+                }
+            }
+            return users;
+        } finally {
+            resultSet.close();
+        }
+    }
+
+    @Override
     public String getUserFullName() {
         return getUserFullName(getCurrentUserName());
     }
@@ -251,6 +318,20 @@ public class UserServiceImpl implements UserService {
         String unitId = (String) props.get(ContentModel.PROP_ORGID);
         String unitName = organizationStructureService.getOrganizationStructure(unitId);
         return UserUtil.getPersonFullNameWithUnitName(props, unitName);
+    }
+
+    @Override
+    public void setOwnerPropsFromUser(Map<QName, Serializable> docProps, Map<QName, Serializable> userProps) {
+        if (userProps == null) {
+            return;
+        }
+        docProps.put(OWNER_ID, userProps.get(ContentModel.PROP_USERNAME));
+        docProps.put(OWNER_NAME, UserUtil.getPersonFullName1(userProps));
+        docProps.put(OWNER_JOB_TITLE, userProps.get(ContentModel.PROP_JOBTITLE));
+        String orgstructName = organizationStructureService.getOrganizationStructure((String) userProps.get(ContentModel.PROP_ORGID));
+        docProps.put(OWNER_ORG_STRUCT_UNIT, orgstructName);
+        docProps.put(OWNER_EMAIL, userProps.get(ContentModel.PROP_EMAIL));
+        docProps.put(OWNER_PHONE, userProps.get(ContentModel.PROP_TELEPHONE));
     }
 
     @Override

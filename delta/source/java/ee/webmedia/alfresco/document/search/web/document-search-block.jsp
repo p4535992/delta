@@ -73,7 +73,7 @@
 <%-- End assocs that must be saved when clicked --%>               
                
                <a:actionLink id="col-actions-act3" value="#{r.docName}" image="/images/icons/document-attachment.png" showLink="false" action="#assocs-block-panel"
-                  actionListener="#{DocumentDialog.addFilesHandler}" tooltip="#{msg.document_search_add_files}" rendered="#{not DocumentDialog.showDocsAndCasesAssocs}" >
+                  actionListener="#{DocumentDialog.addFilesHandler}" tooltip="#{msg.document_search_add_files}" rendered="#{(not DocumentDialog.showDocsAndCasesAssocs) and (not DocumentDialog.incomingInvoice)}" >
                   <f:param name="nodeRef" value="#{r.node.nodeRef}" />
                </a:actionLink>
             </a:column>

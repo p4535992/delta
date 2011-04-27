@@ -9,12 +9,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_CONTENTS;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FILE_NAMES;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FUNCTION;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_EMAIL;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ID;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_JOB_TITLE;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_NAME;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_ORG_STRUCT_UNIT;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNER_PHONE;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.RECIPIENT_EMAIL;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.RECIPIENT_NAME;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
@@ -30,6 +25,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEAR
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_SEND_MODE;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SEARCHABLE_SUB_NODE_PROPERTIES;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERIES;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SHORT_REG_NUMBER;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLUME;
 
 import java.io.IOException;
@@ -57,9 +53,11 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.i18n.I18NUtil;
-import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
+import org.alfresco.repo.node.NodeServicePolicies;
+import org.alfresco.repo.policy.JavaBehaviour;
+import org.alfresco.repo.policy.PolicyComponent;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
@@ -78,20 +76,26 @@ import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.EqualsHelper;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.text.StrBuilder;
 import org.apache.commons.lang.time.FastDateFormat;
 import org.hibernate.StaleObjectStateException;
+import org.joda.time.Days;
+import org.joda.time.Instant;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
@@ -100,6 +104,7 @@ import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.classificator.enums.LeaveType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
@@ -109,9 +114,11 @@ import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel.Privileges;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.document.permissions.SeriesDocManagerDynamicAuthority;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
@@ -122,7 +129,11 @@ import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.imap.model.ImapModel;
-import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
+import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
+import ee.webmedia.alfresco.privilege.model.UserPrivileges;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService;
+import ee.webmedia.alfresco.privilege.service.PrivilegeService.PrivilegesChangedListener;
+import ee.webmedia.alfresco.privilege.service.PrivilegeServiceImpl.PrivilegeMappings;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.model.Series;
@@ -132,13 +143,13 @@ import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
+import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
-import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -150,7 +161,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 /**
  * @author Alar Kvell
  */
-public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
+public class DocumentServiceImpl implements DocumentService, NodeServicePolicies.OnCreateAssociationPolicy, BeanFactoryAware, PrivilegesChangedListener, InitializingBean {
 
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentServiceImpl.class);
 
@@ -170,9 +181,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     private SignatureService signatureService;
     private WorkflowService workflowService;
     private DocumentLogService documentLogService;
-    private UserService userService;
-    private OrganizationStructureService organizationStructureService;
+    private PrivilegeService privilegeService;
+    private PermissionService permissionService;
     protected SendOutService sendOutService;
+    private UserService userService;
     /** NB! not injected - use getter to obtain instance of AdrService */
     private AdrService _adrService;
     private CaseService _caseService;
@@ -181,6 +193,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
     private String fromDvkXPath;
     private String incomingEmailPath;
+    protected String receivedInvoicePath;
     private String sentEmailPath;
 
     // doesn't need to be synchronized, because it is not modified during runtime
@@ -190,6 +203,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     private static final FastDateFormat userDateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
     private static final String TEMP_LOGGING_DISABLED_REGISTERED_BY_USER = "{temp}logging_registeredByUser";
     private PropertyChangesMonitorHelper propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        privilegeService.registerListener(DocumentCommonModel.Types.DOCUMENT, this);
+        PolicyComponent policyComponent = (PolicyComponent) beanFactory.getBean("policyComponent", PolicyComponent.class);
+        policyComponent.bindAssociationBehaviour(QName.createQName(NamespaceService.ALFRESCO_URI, "onCreateAssociation"), this, new JavaBehaviour(this, "onCreateAssociation"));
+    }
 
     @Override
     public Node getDocument(NodeRef nodeRef) {
@@ -236,9 +256,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             callbackAspectProperiesModifier(docAspect, properties);
         }
 
-        NodeRef document = nodeService.createNode(parentRef, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT //
-                , documentTypeId, properties).getChildRef();
-        updateParentNodesContainingDocsCount(document, true);
+        NodeRef document = createDocumentNode(documentTypeId, parentRef, properties);
 
         final Node documentNode = getDocument(document);
         // first iterate over callbacks to be able to predict in which order callbacks will be called (that is registration order).
@@ -253,6 +271,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         }
 
         return documentNode;
+    }
+
+    private NodeRef createDocumentNode(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties) {
+        NodeRef document = nodeService.createNode(parentRef, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT //
+                , documentTypeId, properties).getChildRef();
+        updateParentNodesContainingDocsCount(document, true);
+        permissionService.setInheritParentPermissions(document, false);
+        return document;
     }
 
     @Override
@@ -270,10 +296,8 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         // Then overwrite initial properties with our properties
         props.putAll(importProps);
 
-        NodeRef document = nodeService.createNode(parentRef, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT //
-                , documentTypeId, props).getChildRef();
+        NodeRef document = createDocumentNode(documentTypeId, parentRef, props);
         nodeService.addAspect(document, DocumentCommonModel.Aspects.SEARCHABLE, null);
-        updateParentNodesContainingDocsCount(document, true);
 
         final Node documentNode = getDocument(document);
 
@@ -499,6 +523,9 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         }
 
         boolean isDraft = RepoUtil.getPropertyBooleanValue(docProps, DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT);
+        if (isDraft) {
+            addPrivilegesBasedOnSeries(docNodeRef, docProps, targetParentRef);
+        }
         { // update properties and log changes made in properties
             final String previousAccessrestriction = (String) nodeService.getProperty(docNodeRef, ACCESS_RESTRICTION);
 
@@ -511,7 +538,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             propertyChangesMonitorHelper = new PropertyChangesMonitorHelper();// FIXME:
             propsChanged |= propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(docNodeRef, docProps //
                     , FUNCTION, SERIES, VOLUME, CASE // location changes
-                    , REG_NUMBER, REG_DATE_TIME // registration changes
+                    , REG_NUMBER, SHORT_REG_NUMBER, REG_DATE_TIME // registration changes
                     , ACCESS_RESTRICTION // access restriction changed
                     );
             if (!EventsLoggingHelper.isLoggingDisabled(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {
@@ -595,6 +622,19 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             }
         }
         return getDocument(docNodeRef);
+    }
+
+    private Pair<Set<String> /* users */, Set<String> /* groups */> getSeriesAuthorities(NodeRef seriesRef) {
+        Set<String> users = new HashSet<String>();
+        Set<String> groups = new HashSet<String>();
+        for (Authority authority : userService.getAuthorities(seriesRef, SeriesDocManagerDynamicAuthority.SERIES_MANAGEABLE_PERMISSION)) {
+            if (authority.isGroup()) {
+                groups.add(authority.getAuthority());
+            } else {
+                users.add(authority.getAuthority());
+            }
+        }
+        return new Pair<Set<String>, Set<String>>(users, groups);
     }
 
     private NodeRef getCaseNodeRef(final Map<String, Object> docProps, final NodeRef volumeNodeRef) {
@@ -908,23 +948,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         /** Substitute and choose properties */
         setDocumentSpecificProperties(followupType, baseDoc, followupProps, docProps, copiedProps);
 
-        QName baseDocType = baseDoc.getType();
-
-        // @formatter:off
-        /*
-        { // copy childNodes
-            if (DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(baseDocType)) {
-                List<Node> emptyApplicants = followUpDoc.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS);
-                
-                followUpDoc.removeChildAssociations(DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS, emptyApplicants);
-
-                Map<String, List<Node>> childAssocsByAssocType = baseDoc.getAllChildAssociationsByAssocType();
-                copyChildAssocs(childAssocsByAssocType, followUpDoc, DocumentSpecificModel.Assocs.ERRAND_DOMESTIC);
-                copyChildAssocs(childAssocsByAssocType, followUpDoc, DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS);
-            }
-        }
-        */
-        // @formatter:on
+        copyChildNodes(baseDoc, followUpDoc);
 
         /** Copy common Properties */
         for (Map.Entry<String, Object> prop : docProps.entrySet()) {
@@ -939,9 +963,160 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         addFollowupAssoc(followUpDoc.getNodeRef(), baseDoc.getNodeRef());
 
         if (log.isDebugEnabled()) {
-            log.debug("Created followUp: " + followupType.getLocalName() + " from " + baseDocType.getLocalName());
+            log.debug("Created followUp: " + followupType.getLocalName() + " from " + baseDoc.getType().getLocalName());
         }
         return followUpDoc;
+    }
+
+    private void copyChildNodes(Node baseDoc, Node followUpDoc) {
+        if (DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC.equals(baseDoc.getType())) {
+            // Remove empty child node
+            List<Node> emptyApplicants = followUpDoc.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2);
+            followUpDoc.removeChildAssociations(DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2, emptyApplicants);
+
+            // V2 -> V2
+            if (baseDoc.hasAspect(DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC_V2)) {
+                Map<String, List<Node>> childAssocsByAssocType = baseDoc.getAllChildAssociationsByAssocType();
+                copyChildAssocs(childAssocsByAssocType, followUpDoc, DocumentSpecificModel.Assocs.ERRAND_DOMESTIC_V2);
+                copyChildAssocs(childAssocsByAssocType, followUpDoc, DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2);
+            }
+
+            // V1 -> V2
+            else if (baseDoc.hasAspect(DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC)) {
+                // Add applicants
+                for (Node applicant : baseDoc.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS)) {
+                    Map<QName, Serializable> typeProperties = RepoUtil.copyTypeProperties(
+                            generalService.getAnonymousType(DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE_V2).getProperties(),
+                            applicant);
+                    NodeRef applicantRef = nodeService.createNode(followUpDoc.getNodeRef(),
+                            DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2,
+                            DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2,
+                            DocumentSpecificModel.Types.ERRAND_APPLICATION_DOMESTIC_APPLICANT_TYPE_V2, typeProperties).getChildRef();
+                    Node applicantNode = new Node(applicantRef);
+                    followUpDoc.addChildAssociations(DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2, applicantNode);
+
+                    // Add errands
+                    List<Node> errands = applicant.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_DOMESTIC);
+                    for (Node errand : errands) {
+                        typeProperties = RepoUtil.copyTypeProperties(generalService.getAnonymousType(DocumentSpecificModel.Types.ERRAND_ABROAD_TYPE_V2)
+                                .getProperties(), errand);
+                        NodeRef errandRef = nodeService.createNode(applicantRef, DocumentSpecificModel.Assocs.ERRAND_DOMESTIC_V2,
+                                DocumentSpecificModel.Assocs.ERRAND_DOMESTIC_V2, DocumentSpecificModel.Types.ERRANDS_DOMESTIC_TYPE_V2, typeProperties)
+                                .getChildRef();
+                        applicantNode.addChildAssociations(DocumentSpecificModel.Assocs.ERRAND_APPLICATION_DOMESTIC_APPLICANTS_V2, new Node(errandRef));
+                    }
+                }
+            }
+        }
+
+        if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(baseDoc.getType())) {
+            // Remove empty child node
+            List<Node> emptyApplicants = followUpDoc.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD_V2);
+            followUpDoc.removeChildAssociations(DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD_V2, emptyApplicants);
+
+            // V2 -> V2
+            if (baseDoc.hasAspect(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD_V2)) {
+                Map<String, List<Node>> childAssocsByAssocType = baseDoc.getAllChildAssociationsByAssocType();
+                copyChildAssocs(childAssocsByAssocType, followUpDoc, DocumentSpecificModel.Assocs.ERRAND_ABROAD_V2);
+                copyChildAssocs(childAssocsByAssocType, followUpDoc, DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD_V2);
+            }
+
+            // V1 -> V2
+            else if (baseDoc.hasAspect(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD)) {
+                // Add applicants
+                for (Node applicant : baseDoc.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD)) {
+                    Map<QName, Serializable> typeProperties = RepoUtil.copyTypeProperties(
+                            generalService.getAnonymousType(DocumentSpecificModel.Types.ERRAND_ORDER_APPLICANT_ABROAD_V2).getProperties(), applicant);
+                    NodeRef applicantRef = nodeService.createNode(followUpDoc.getNodeRef(),
+                            DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD_V2,
+                            DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD_V2,
+                            DocumentSpecificModel.Types.ERRAND_ORDER_APPLICANT_ABROAD_V2, typeProperties).getChildRef();
+                    Node applicantNode = new Node(applicantRef);
+                    followUpDoc.addChildAssociations(DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD_V2, applicantNode);
+
+                    // Add errands
+                    List<Node> errands = applicant.getAllChildAssociations(DocumentSpecificModel.Assocs.ERRAND_ABROAD);
+                    for (Node errand : errands) {
+                        typeProperties = RepoUtil.copyTypeProperties(generalService.getAnonymousType(DocumentSpecificModel.Types.ERRAND_ABROAD_TYPE_V2)
+                                .getProperties(), errand);
+                        NodeRef errandRef = nodeService.createNode(applicantRef, DocumentSpecificModel.Assocs.ERRAND_ABROAD_V2,
+                                DocumentSpecificModel.Assocs.ERRAND_ABROAD_V2, DocumentSpecificModel.Types.ERRAND_ABROAD_TYPE_V2, typeProperties)
+                                .getChildRef();
+                        applicantNode.addChildAssociations(DocumentSpecificModel.Assocs.ERRAND_ORDER_APPLICANTS_ABROAD_V2, new Node(errandRef));
+                    }
+                }
+            }
+        }
+
+        if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(baseDoc.getType())) {
+            // Remove empty child node
+            List<Node> emptyApplicants = followUpDoc.getAllChildAssociations(DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS_V2);
+            followUpDoc.removeChildAssociations(DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS_V2, emptyApplicants);
+
+            // V2 -> V2
+            if (baseDoc.hasAspect(DocumentSpecificModel.Aspects.TRAINING_APPLICATION_V2)) {
+                Map<String, List<Node>> childAssocsByAssocType = baseDoc.getAllChildAssociationsByAssocType();
+                copyChildAssocs(childAssocsByAssocType, followUpDoc, DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS_V2);
+            }
+
+            // V1 -> V2
+            else if (baseDoc.hasAspect(DocumentSpecificModel.Aspects.TRAINING_APPLICATION)) {
+                // Add applicants
+                for (Node applicant : baseDoc.getAllChildAssociations(DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS)) {
+                    Map<QName, Serializable> typeProperties = RepoUtil.copyTypeProperties(
+                            generalService.getAnonymousType(DocumentSpecificModel.Types.TRAINING_APPLICATION_APPLICANT_TYPE_V2).getProperties(), applicant);
+                    NodeRef applicantRef = nodeService.createNode(followUpDoc.getNodeRef(),
+                            DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS_V2,
+                            DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS_V2,
+                            DocumentSpecificModel.Types.TRAINING_APPLICATION_APPLICANT_TYPE_V2, typeProperties).getChildRef();
+                    Node applicantNode = new Node(applicantRef);
+                    followUpDoc.addChildAssociations(DocumentSpecificModel.Assocs.TRAINING_APPLICATION_APPLICANTS_V2, applicantNode);
+                }
+            }
+        }
+
+        if ((DocumentSubtypeModel.Types.CONTRACT_SIM.equals(baseDoc.getType()) && DocumentSubtypeModel.Types.CONTRACT_SIM.equals(followUpDoc.getType()))
+                || (DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(baseDoc.getType()) && DocumentSubtypeModel.Types.CONTRACT_SMIT
+                        .equals(followUpDoc.getType()))) {
+            List<Node> emptyParty = followUpDoc.getAllChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_PARTIES);
+            followUpDoc.removeChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_PARTIES, emptyParty);
+
+            if (baseDoc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)) {
+                Map<String, Object> properties = baseDoc.getProperties();
+                if (properties.containsKey(DocumentSpecificModel.Props.SECOND_PARTY_NAME.toString())
+                        && StringUtils.isNotBlank((String) properties.get(DocumentSpecificModel.Props.SECOND_PARTY_NAME.toString()))) {
+                    Map<QName, Serializable> partyProps = new HashMap<QName, Serializable>(4);
+                    partyProps.put(DocumentSpecificModel.Props.PARTY_NAME, (Serializable) properties.get(DocumentSpecificModel.Props.SECOND_PARTY_NAME));
+                    partyProps.put(DocumentSpecificModel.Props.PARTY_EMAIL, (Serializable) properties.get(DocumentSpecificModel.Props.SECOND_PARTY_EMAIL));
+                    partyProps.put(DocumentSpecificModel.Props.PARTY_SIGNER, (Serializable) properties.get(DocumentSpecificModel.Props.SECOND_PARTY_SIGNER));
+                    partyProps.put(DocumentSpecificModel.Props.PARTY_CONTACT_PERSON,
+                            (Serializable) properties.get(DocumentSpecificModel.Props.SECOND_PARTY_CONTACT_PERSON));
+
+                    NodeRef partyRef = nodeService.createNode(followUpDoc.getNodeRef(), DocumentSpecificModel.Assocs.CONTRACT_PARTIES,
+                            DocumentSpecificModel.Assocs.CONTRACT_PARTIES, DocumentSpecificModel.Types.CONTRACT_PARTY_TYPE, partyProps).getChildRef();
+                    followUpDoc.addChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_PARTIES, new Node(partyRef));
+                }
+
+                if (properties.containsKey(DocumentSpecificModel.Props.THIRD_PARTY_NAME.toString())
+                        && StringUtils.isNotBlank((String) properties.get(DocumentSpecificModel.Props.THIRD_PARTY_NAME.toString()))) {
+                    Map<QName, Serializable> partyProps = new HashMap<QName, Serializable>(4);
+                    partyProps.put(DocumentSpecificModel.Props.PARTY_NAME, (Serializable) properties.get(DocumentSpecificModel.Props.THIRD_PARTY_NAME));
+                    partyProps.put(DocumentSpecificModel.Props.PARTY_EMAIL, (Serializable) properties.get(DocumentSpecificModel.Props.THIRD_PARTY_EMAIL));
+                    partyProps.put(DocumentSpecificModel.Props.PARTY_SIGNER, (Serializable) properties.get(DocumentSpecificModel.Props.THIRD_PARTY_SIGNER));
+                    partyProps.put(DocumentSpecificModel.Props.PARTY_CONTACT_PERSON,
+                            (Serializable) properties.get(DocumentSpecificModel.Props.THIRD_PARTY_CONTACT_PERSON));
+
+                    NodeRef partyRef = nodeService.createNode(followUpDoc.getNodeRef(), DocumentSpecificModel.Assocs.CONTRACT_PARTIES,
+                            DocumentSpecificModel.Assocs.CONTRACT_PARTIES, DocumentSpecificModel.Types.CONTRACT_PARTY_TYPE, partyProps).getChildRef();
+                    followUpDoc.addChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_PARTIES, new Node(partyRef));
+                }
+            } else if (baseDoc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V2)) {
+                Map<String, List<Node>> childAssocsByAssocType = baseDoc.getAllChildAssociationsByAssocType();
+                copyChildAssocs(childAssocsByAssocType, followUpDoc, DocumentSpecificModel.Assocs.CONTRACT_PARTIES);
+            }
+
+        }
+
     }
 
     private void copyChildAssocs(Map<String, List<Node>> childAssocsByAssocType, Node target, QName assocTypeQName) {
@@ -985,6 +1160,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                     , DocumentSpecificModel.Props.SENDER_DETAILS_NAME.toString()
                     , DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL.toString()
                     ));
+            propsToCopy.addAll(DocumentPropertySets.ownerProperties);
             if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(followupType)) {
                 propsToCopy.add(DocumentSpecificModel.Props.TRANSMITTAL_MODE.toString());
             }
@@ -998,6 +1174,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                     , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.toString()
                     , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.toString()
                     ));
+            propsToCopy.addAll(DocumentPropertySets.ownerProperties);
             if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(followupType)) {
                 propsToCopy.add(DocumentCommonModel.Props.SIGNER_NAME.toString());
                 propsToCopy.add(DocumentCommonModel.Props.SIGNER_JOB_TITLE.toString());
@@ -1034,6 +1211,88 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         }
         if (DocumentSubtypeModel.Types.REPORT.equals(baseDocType)) {
             propsToCopy.add(DocumentSpecificModel.Props.RAPPORTEUR_NAME.toString());
+        }
+        if (DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD.equals(baseDocType)) {
+            propsToCopy.add(DocumentSpecificModel.Props.LEGAL_BASIS_FOR_OFFICIALS.toString());
+            propsToCopy.add(DocumentSpecificModel.Props.LEGAL_BASIS_FOR_SUPPORT_STAFF.toString());
+        }
+        if (DocumentSubtypeModel.Types.TRAINING_APPLICATION.equals(baseDocType)) {
+            propsToCopy.addAll(Arrays.asList(
+                    DocumentSpecificModel.Props.TRAINING_NAME.toString(),
+                    DocumentSpecificModel.Props.TRAINING_ORGANIZER.toString(),
+                    DocumentSpecificModel.Props.TRAINING_NEED.toString(),
+                    DocumentSpecificModel.Props.TRAINING_BEGIN_DATE.toString(),
+                    DocumentSpecificModel.Props.TRAINING_END_DATE.toString(),
+                    DocumentSpecificModel.Props.TRAINING_HOURS.toString(),
+                    DocumentSpecificModel.Props.TRAINING_LOCATION.toString()
+                    ));
+        }
+
+        if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(baseDocType) && DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT.equals(followupType)) {
+            followUpProps.put(DocumentSpecificModel.Props.DELIVERER_NAME.toString(), initProps.get(DocumentSpecificModel.Props.FIRST_PARTY_NAME));
+            if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)) {
+                followUpProps.put(DocumentSpecificModel.Props.RECEIVER_NAME.toString(), initProps.get(DocumentSpecificModel.Props.SECOND_PARTY_NAME));
+            } else if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V2)) {
+                List<Node> parties = doc.getAllChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_PARTIES);
+                if (parties != null && !parties.isEmpty()) {
+                    followUpProps.put(DocumentSpecificModel.Props.RECEIVER_NAME.toString(),
+                            parties.get(0).getProperties().get(DocumentSpecificModel.Props.PARTY_NAME));
+                }
+            }
+        }
+
+        if (DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(baseDocType) && DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT.equals(followupType)) {
+            followUpProps.put(DocumentSpecificModel.Props.RECEIVER_NAME.toString(), initProps.get(DocumentSpecificModel.Props.FIRST_PARTY_NAME));
+            if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)) {
+                followUpProps.put(DocumentSpecificModel.Props.DELIVERER_NAME.toString(), initProps.get(DocumentSpecificModel.Props.SECOND_PARTY_NAME));
+            } else if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V2)) {
+                List<Node> parties = doc.getAllChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_PARTIES);
+                if (parties != null && !parties.isEmpty()) {
+                    followUpProps.put(DocumentSpecificModel.Props.DELIVERER_NAME.toString(),
+                            parties.get(0).getProperties().get(DocumentSpecificModel.Props.PARTY_NAME));
+                }
+            }
+        }
+
+        if (DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(baseDocType) && DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(followupType)) {
+            propsToCopy.addAll(Arrays.asList(
+                     DocumentCommonModel.Props.SIGNER_NAME.toString()
+                    , DocumentSpecificModel.Props.FIRST_PARTY_CONTACT_PERSON.toString()
+                    , DocumentSpecificModel.Props.INCLUSIVE_PRICE_INCL_VAT.toString()
+                    , DocumentSpecificModel.Props.COST_MANAGER.toString()
+                    , DocumentSpecificModel.Props.FINANCING_SOURCE.toString()
+                    , DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE.toString()
+                    , DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE_DESC.toString()
+                    , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.toString()
+                    , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.toString()
+                    ));
+        }
+
+        if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(baseDocType) && DocumentSubtypeModel.Types.CONTRACT_SIM.equals(followupType)) {
+            propsToCopy.addAll(Arrays.asList(
+                    DocumentCommonModel.Props.SIGNER_NAME.toString()
+                    , DocumentSpecificModel.Props.FIRST_PARTY_CONTACT_PERSON.toString()
+                    , DocumentSpecificModel.Props.INCLUSIVE_PRICE_EXCL_VAT.toString()
+                    , DocumentSpecificModel.Props.COST_MANAGER.toString()
+                    , DocumentSpecificModel.Props.FINANCING_SOURCE.toString()
+                    , DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE.toString()
+                    , DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE_DESC.toString()
+                    , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.toString()
+                    , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.toString()
+                    ));
+        }
+
+        if ((DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(baseDocType) || DocumentSubtypeModel.Types.CONTRACT_SIM.equals(baseDocType))
+                && DocumentSubtypeModel.Types.REPORT.equals(followupType)) {
+            if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)) {
+                followUpProps.put(DocumentSpecificModel.Props.RAPPORTEUR_NAME.toString(), initProps.get(DocumentSpecificModel.Props.SECOND_PARTY_NAME));
+            } else if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V2)) {
+                List<Node> parties = doc.getAllChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_PARTIES);
+                if (parties != null && !parties.isEmpty()) {
+                    followUpProps.put(DocumentSpecificModel.Props.RAPPORTEUR_NAME.toString(),
+                            parties.get(0).getProperties().get(DocumentSpecificModel.Props.PARTY_NAME));
+                }
+            }
         }
     }
 
@@ -1123,6 +1382,72 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 }
             }
             properties = RepoUtil.toQNameProperties(props, true);
+        } else if (doc.getAspects().contains(DocumentSpecificModel.Aspects.VACATION_ORDER)) {
+            Map<String, Object> props = doc.getProperties();
+            List<String> leaveTypes = new ArrayList<String>(4);
+            List<Date> leaveBeginDates = new ArrayList<Date>(4);
+            List<Date> leaveEndDates = new ArrayList<Date>(4);
+            List<Integer> leaveDays = new ArrayList<Integer>(4);
+
+            if (BooleanUtils.isTrue((Boolean) props.get(DocumentSpecificModel.Props.LEAVE_ANNUAL))) {
+                leaveTypes.add(LeaveType.LEAVE_ANNUAL.getValueName());
+                fillLeaveDates(props, leaveBeginDates, leaveEndDates, leaveDays,
+                        DocumentSpecificModel.Props.LEAVE_ANNUAL_BEGIN_DATE,
+                        DocumentSpecificModel.Props.LEAVE_ANNUAL_END_DATE);
+            }
+            if (BooleanUtils.isTrue((Boolean) props.get(DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY))) {
+                leaveTypes.add(LeaveType.LEAVE_WITHOUT_PAY.getValueName());
+                fillLeaveDates(props, leaveBeginDates, leaveEndDates, leaveDays,
+                        DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY_BEGIN_DATE,
+                        DocumentSpecificModel.Props.LEAVE_WITHOUT_PAY_END_DATE);
+            }
+            if (BooleanUtils.isTrue((Boolean) props.get(DocumentSpecificModel.Props.LEAVE_CHILD))) {
+                leaveTypes.add(LeaveType.LEAVE_CHILD.getValueName());
+                fillLeaveDates(props, leaveBeginDates, leaveEndDates, leaveDays,
+                        DocumentSpecificModel.Props.LEAVE_CHILD_BEGIN_DATE,
+                        DocumentSpecificModel.Props.LEAVE_CHILD_END_DATE);
+            }
+            if (BooleanUtils.isTrue((Boolean) props.get(DocumentSpecificModel.Props.LEAVE_STUDY))) {
+                leaveTypes.add(LeaveType.LEAVE_STUDY.getValueName());
+                fillLeaveDates(props, leaveBeginDates, leaveEndDates, leaveDays,
+                        DocumentSpecificModel.Props.LEAVE_STUDY_BEGIN_DATE,
+                        DocumentSpecificModel.Props.LEAVE_STUDY_END_DATE);
+            }
+
+            properties = new HashMap<QName, Serializable>();
+            properties.put(DocumentSpecificModel.Props.LEAVE_TYPE, (Serializable) leaveTypes);
+            properties.put(DocumentSpecificModel.Props.LEAVE_BEGIN_DATES, (Serializable) leaveBeginDates);
+            properties.put(DocumentSpecificModel.Props.LEAVE_END_DATES, (Serializable) leaveEndDates);
+            properties.put(DocumentSpecificModel.Props.LEAVE_DAYS, (Serializable) leaveDays);
+
+            if (BooleanUtils.isTrue((Boolean) props.get(DocumentSpecificModel.Props.LEAVE_CHANGE))) {
+                properties.put(DocumentSpecificModel.Props.LEAVE_INITIAL_BEGIN_DATES,
+                        (Serializable) Arrays.asList(props.get(DocumentSpecificModel.Props.LEAVE_INITIAL_BEGIN_DATE)));
+                properties.put(DocumentSpecificModel.Props.LEAVE_INITIAL_END_DATES,
+                        (Serializable) Arrays.asList(props.get(DocumentSpecificModel.Props.LEAVE_INITIAL_END_DATE)));
+                Date beginDate = (Date) props.get(DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATE);
+                properties.put(DocumentSpecificModel.Props.LEAVE_NEW_BEGIN_DATES,
+                        (Serializable) Arrays.asList(beginDate));
+                Date endDate = (Date) props.get(DocumentSpecificModel.Props.LEAVE_NEW_END_DATE);
+                properties.put(DocumentSpecificModel.Props.LEAVE_NEW_END_DATES, (Serializable) Arrays.asList(endDate));
+                if (beginDate != null && endDate != null) {
+                    properties.put(DocumentSpecificModel.Props.LEAVE_CHANGE_DAYS,
+                            Days.daysBetween(new Instant(beginDate.getTime()), new Instant(endDate.getTime())).getDays() + 1);
+                }
+            }
+
+            if (BooleanUtils.isTrue((Boolean) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL))) {
+                Date beginDate = (Date) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATE);
+                properties.put(DocumentSpecificModel.Props.LEAVE_CANCEL_BEGIN_DATES,
+                        (Serializable) Arrays.asList(beginDate));
+                Date endDate = (Date) props.get(DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATE);
+                properties.put(DocumentSpecificModel.Props.LEAVE_CANCEL_END_DATES,
+                        (Serializable) Arrays.asList(endDate));
+                if (beginDate != null && endDate != null) {
+                    properties.put(DocumentSpecificModel.Props.LEAVE_CANCELLED_DAYS,
+                            Days.daysBetween(new Instant(beginDate.getTime()), new Instant(endDate.getTime())).getDays() + 1);
+                }
+            }
         }
 
         // create document without calling propertiesModifierCallbacks
@@ -1146,6 +1471,17 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             log.debug("Copied document: " + copiedDoc.toString());
         }
         return copiedDoc;
+    }
+
+    private void fillLeaveDates(Map<String, Object> props, List<Date> leaveBeginDates, List<Date> leaveEndDates, List<Integer> leaveDays, QName beginQName,
+            QName endQName) {
+        Date beginDate = (Date) props.get(beginQName);
+        leaveBeginDates.add(beginDate);
+        Date endDate = (Date) props.get(endQName);
+        leaveEndDates.add(endDate);
+        if (beginDate != null && endDate != null) {
+            leaveDays.add(Days.daysBetween(new Instant(beginDate.getTime()), new Instant(endDate.getTime())).getDays() + 1);
+        }
     }
 
     @Override
@@ -1215,6 +1551,13 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     }
 
     @Override
+    public int getAllDocumentFromIncomingInvoiceCount() {
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(
+                generalService.getNodeRef(receivedInvoicePath), RegexQNamePattern.MATCH_ALL, RegexQNamePattern.MATCH_ALL);
+        return childAssocs != null ? childAssocs.size() : 0;
+    }
+
+    @Override
     public List<Document> getReplyOrFollowUpDocuments(NodeRef base) {
         List<Document> docs = new ArrayList<Document>();
         // reply and follow up are source associations regarding the base document
@@ -1270,6 +1613,16 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     @Override
     public List<Document> getIncomingEmails() {
         NodeRef incomingNodeRef = generalService.getNodeRef(incomingEmailPath);
+        return getIncomingDocuments(incomingNodeRef);
+    }
+
+    @Override
+    public List<Document> getIncomingEInvoices() {
+        NodeRef incomingNodeRef = generalService.getNodeRef(receivedInvoicePath);
+        return getIncomingDocuments(incomingNodeRef);
+    }
+
+    private List<Document> getIncomingDocuments(NodeRef incomingNodeRef) {
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(incomingNodeRef);
         List<Document> docs = new ArrayList<Document>(childAssocs.size());
         for (ChildAssociationRef assocRef : childAssocs) {
@@ -1287,12 +1640,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     @Override
     public List<Document> getSentEmails() {
         NodeRef sentNodeRef = generalService.getNodeRef(sentEmailPath);
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(sentNodeRef);
-        List<Document> docs = new ArrayList<Document>(childAssocs.size());
-        for (ChildAssociationRef assocRef : childAssocs) {
-            docs.add(0, getDocumentByNodeRef(assocRef.getChildRef())); // flips the list, so newest are first
-        }
-        return docs;
+        return getIncomingDocuments(sentNodeRef);
     }
 
     @Override
@@ -1404,13 +1752,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         Map<QName, Serializable> personProps = userService.getUserProperties(userName);
         Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
         // same logic as OwnerPropertiesModifierCallback#doWithProperties
-        properties.put(OWNER_ID, personProps.get(ContentModel.PROP_USERNAME));
-        properties.put(OWNER_NAME, UserUtil.getPersonFullName1(personProps));
-        properties.put(OWNER_JOB_TITLE, personProps.get(ContentModel.PROP_JOBTITLE));
-        String orgstructName = organizationStructureService.getOrganizationStructure((String) personProps.get(ContentModel.PROP_ORGID));
-        properties.put(OWNER_ORG_STRUCT_UNIT, orgstructName);
-        properties.put(OWNER_EMAIL, personProps.get(ContentModel.PROP_EMAIL));
-        properties.put(OWNER_PHONE, personProps.get(ContentModel.PROP_TELEPHONE));
+        userService.setOwnerPropsFromUser(properties, personProps);
         generalService.setPropertiesIgnoringSystem(properties, document);
     }
 
@@ -1418,6 +1760,12 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     public boolean isSaved(NodeRef nodeRef) {
         final Node parentVolume = getVolumeByDocument(nodeRef);
         return parentVolume != null ? true : null != generalService.getParentWithType(nodeRef, CaseModel.Types.CASE);
+    }
+
+    @Override
+    public boolean isIncomingInvoice(NodeRef nodeRef) {
+        NodeRef receivedInvoicePathRef = generalService.getNodeRef(receivedInvoicePath);
+        return receivedInvoicePathRef.equals(nodeService.getPrimaryParent(nodeRef).getParentRef());
     }
 
     @Override
@@ -1495,7 +1843,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             registerService.increaseCount(registerId); // increase before geting the register
             Register register = registerService.getRegister(registerId);
             // compose regNumber
-            regNumber = volumeMark + "/" + register.getPrefix() + (register.getCounter()) + register.getSuffix();
+            regNumber = volumeMark + VOLUME_MARK_SEPARATOR + register.getPrefix() + (register.getCounter()) + register.getSuffix();
             if (individualizingNumbers) {
                 regNumber += REGISTRATION_INDIVIDUALIZING_NUM_SUFFIX;
             }
@@ -1581,7 +1929,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                             }
                         }
                         String docStatus = (String) nodeService.getProperty(originalDocRef, DOC_STATUS);
-                        if (!DocumentStatus.FINISHED.equals(docStatus)) {
+                        if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
                             AuthenticationUtil.runAs(new RunAsWork<NodeRef>() {
                                 @Override
                                 public NodeRef doWork() throws Exception {
@@ -1606,6 +1954,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
             }
 
             props.put(REG_NUMBER.toString(), regNumber);
+            props.put(SHORT_REG_NUMBER.toString(), StringUtils.substringAfter(regNumber, VOLUME_MARK_SEPARATOR));
             propertyChangesMonitorHelper.addIgnoredProps(props, REG_NUMBER);
             if (!isRelocating) {
                 Date oldRegDateTime = (Date) nodeService.getProperty(docNode.getNodeRef(), REG_DATE_TIME);
@@ -1638,7 +1987,7 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
     @Override
     public void setDocStatusFinished(final NodeRef originalDocRef) {
         String docStatus = (String) nodeService.getProperty(originalDocRef, DOC_STATUS);
-        if (!DocumentStatus.FINISHED.equals(docStatus)) {
+        if (!DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
             setPropertyAsSystemUser(DOC_STATUS, DocumentStatus.FINISHED.getValueName(), originalDocRef);
             documentLogService.addDocumentLog(originalDocRef, I18NUtil.getMessage("document_log_status_proceedingFinish") //
                     , I18NUtil.getMessage("document_log_creator_dhs"));
@@ -1747,10 +2096,10 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         return docsOfParent;
     }
 
-    private NodeRef getInitialDocument(NodeRef nodeRef) {
-        NodeRef sourceRef = getFirstTargetAssocRef(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
+    private NodeRef getInitialDocument(NodeRef followupDocRef) {
+        NodeRef sourceRef = getFirstTargetAssocRef(followupDocRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
         if (sourceRef == null) {
-            return getFirstTargetAssocRef(nodeRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
+            return getFirstTargetAssocRef(followupDocRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
         }
         return sourceRef;
     }
@@ -2448,6 +2797,98 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
                 SeriesModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
     }
 
+    @Override
+    public Set<String> addPrivilegesBasedOnSeries(NodeRef docRef, Map<String, Object> docProps, NodeRef parentRef) {
+        NodeRef seriesRef = generalService.getAncestorNodeRefWithType(parentRef != null ? parentRef : docRef, SeriesModel.Types.SERIES);
+        if (seriesRef == null) {
+            return Collections.<String> emptySet();
+        }
+        Pair<Set<String>, Set<String>> usersAndGroups = getSeriesAuthorities(seriesRef);
+        Set<String> usersOfThisSeries = usersAndGroups.getFirst();
+        @SuppressWarnings("unchecked")
+        List<Integer> structUnits = (List<Integer>) nodeService.getProperty(seriesRef, SeriesModel.Props.STRUCT_UNIT);
+        Set<String> seriesStructunitsUsers = userService.getUsernamesByStructUnit(structUnits);
+        usersOfThisSeries.addAll(seriesStructunitsUsers);
+        for (String userName : usersOfThisSeries) {
+            // 3.1.18.2 a,b & 3.1.18.4 a,b
+
+            privilegeService.addPrivilege(docRef, docProps, DocumentCommonModel.Types.DOCUMENT, userName
+                    , DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
+        }
+        return usersAndGroups.getSecond();
+    }
+
+    @Override
+    public void onSavePrivileges(NodeRef docRef, Map<String, UserPrivileges> privilegesByUsername) {
+        for (UserPrivileges vo : privilegesByUsername.values()) {
+            if (!vo.isDeleted() && vo.getPrivilegesToAdd().contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
+                List<DocAssocInfo> assocInfos = getAssocInfos(new Node(docRef));
+                for (DocAssocInfo docAssocInfo : assocInfos) {
+                    if (!docAssocInfo.isCase()) {
+                        NodeRef relatedDocRef = docAssocInfo.getNodeRef();
+                        privilegeService.addPrivilege(relatedDocRef, null, DocumentCommonModel.Types.DOCUMENT, vo.getUserName()
+                                , DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onAddPrivileges(NodeRef docRef, Set<String> permissions) {
+        Set<String> clonedPermissions = new HashSet<String>(permissions); // to avoid concurrentModificationException
+        for (String permission : clonedPermissions) {
+            Set<String> privilegeDependencies = DocumentCommonModel.Privileges.PRIVILEGE_DEPENDENCIES.get(permission);
+            if (privilegeDependencies != null) {
+                permissions.addAll(privilegeDependencies);
+            }
+        }
+    }
+
+    @Override
+    public void onCreateAssociation(AssociationRef nodeAssocRef) {
+        if (nodeAssocRef.getSourceRef().equals(nodeAssocRef.getTargetRef())) {
+            return;
+        }
+        QName assocType = nodeAssocRef.getTypeQName();
+        if (DocumentCommonModel.Assocs.DOCUMENT_REPLY.equals(assocType) || DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP.equals(assocType)
+                || DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT.equals(assocType)) {
+            log.debug("onCreateAssoc " + nodeAssocRef.getSourceRef() + "->" + nodeAssocRef.getTargetRef());
+            NodeRef docRef = nodeAssocRef.getSourceRef();
+            NodeRef otherDocRef = nodeAssocRef.getTargetRef();
+
+            addPrivilegesBasedOnOther(otherDocRef, docRef);
+            addPrivilegesBasedOnOther(docRef, otherDocRef);
+        }
+    }
+
+    private void addPrivilegesBasedOnOther(NodeRef fromRef, NodeRef toRef) {
+        Map<QName, Serializable> nodeProps = nodeService.getProperties(toRef);
+        @SuppressWarnings("unchecked")
+        List<String> privUsers = (List<String>) nodeProps.get(PrivilegeModel.Props.USER);
+        @SuppressWarnings("unchecked")
+        List<String> privGroups = (List<String>) nodeProps.get(PrivilegeModel.Props.GROUP);
+        RepoUtil.validateSameSize(privUsers, privGroups, "users", "groups");
+        Map<String, Object> toNodeUserGroupMapping = RepoUtil.toStringProperties(nodeProps);
+
+        { // add all permissions to the user of document that is owner of other document
+            String otherDocOwner = (String) nodeService.getProperty(fromRef, DocumentCommonModel.Props.OWNER_ID);
+            privilegeService.addPrivilege(toRef, toNodeUserGroupMapping, null, otherDocOwner, Privileges.VIEW_DOCUMENT_META_DATA);
+        }
+        PrivilegeMappings privMappingsFrom = privilegeService.getPrivilegeMappings(fromRef);
+        Collection<UserPrivileges> fromNodeUserPrivileges = privMappingsFrom.getPrivilegesByUsername().values();
+        if (!fromNodeUserPrivileges.isEmpty()) {
+            for (UserPrivileges userPrivs : fromNodeUserPrivileges) {
+                Set<String> staticPrivileges = userPrivs.getStaticPrivileges();
+                if (staticPrivileges.contains(DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA)) {
+                    privilegeService.addPrivilege(toRef, toNodeUserGroupMapping, DocumentCommonModel.Types.DOCUMENT, userPrivs.getUserName(),
+                            DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA);
+                }
+            }
+        }
+        nodeService.addProperties(toRef, RepoUtil.toQNameProperties(toNodeUserGroupMapping));
+    }
+
     // START: getters / setters
 
     public void setRegisterService(RegisterService registerService) {
@@ -2468,6 +2909,14 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
     public void setDocumentTemplateService(DocumentTemplateService documentTemplateService) {
         this.documentTemplateService = documentTemplateService;
+    }
+
+    public void setPrivilegeService(PrivilegeService privilegeService) {
+        this.privilegeService = privilegeService;
+    }
+
+    public void setPermissionService(PermissionService permissionService) {
+        this.permissionService = permissionService;
     }
 
     public void setDictionaryService(DictionaryService dictionaryService) {
@@ -2518,10 +2967,6 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
         this.userService = userService;
     }
 
-    public void setOrganizationStructureService(OrganizationStructureService organizationStructureService) {
-        this.organizationStructureService = organizationStructureService;
-    }
-
     public void setSendOutService(SendOutService sendOutService) {
         this.sendOutService = sendOutService;
     }
@@ -2561,6 +3006,15 @@ public class DocumentServiceImpl implements DocumentService, BeanFactoryAware {
 
     public void setIncomingEmailPath(String incomingEmailPath) {
         this.incomingEmailPath = incomingEmailPath;
+    }
+
+    public void setReceivedInvoicePath(String receivedInvoicePath) {
+        this.receivedInvoicePath = receivedInvoicePath;
+    }
+
+    @Override
+    public String getReceivedInvoicePath() {
+        return receivedInvoicePath;
     }
 
     public void setSentEmailPath(String sentEmailPath) {

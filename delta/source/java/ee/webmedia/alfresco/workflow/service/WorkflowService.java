@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.workflow.service;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -11,6 +12,7 @@ import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
+import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
@@ -130,6 +132,8 @@ public interface WorkflowService {
      */
     Task getTask(NodeRef task, boolean fetchWorkflow);
 
+    Set<Task> getTasks(NodeRef docRef, Predicate<Task> predicate);
+
     void setTaskOwner(NodeRef task, String ownerId);
 
     // Filtering
@@ -147,6 +151,8 @@ public interface WorkflowService {
     boolean isOwner(Task task);
 
     boolean isOwnerOfInProgressAssignmentTask(CompoundWorkflow compoundWorkflow);
+
+    boolean isOwnerOfInProgressActiveResponsibleAssignmentTask(NodeRef docRef);
 
     boolean isOwnerOfInProgressExternalReviewTask(CompoundWorkflow cWorkflow);
 

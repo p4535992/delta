@@ -26,8 +26,8 @@
          <value>#{UserListDialog}</value>
       </managed-property>
       <managed-property>
-         <property-name>permissionsAddDialog</property-name>
-         <value>#{PermissionsAddDialog}</value>
+         <property-name>userGroupSearchBean</property-name>
+         <value>#{UserGroupSearchBean}</value>
       </managed-property>
       <managed-property>
          <property-name>ownerSearchBean</property-name>
@@ -60,10 +60,6 @@
       <managed-property>
          <property-name>userListDialog</property-name>
          <value>#{UserListDialog}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>permissionsAddDialog</property-name>
-         <value>#{PermissionsAddDialog}</value>
       </managed-property>
       <managed-property>
          <property-name>ownerSearchBean</property-name>

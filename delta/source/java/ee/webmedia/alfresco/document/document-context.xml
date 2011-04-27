@@ -12,9 +12,10 @@
    <import resource="classpath:ee/webmedia/alfresco/document/scanned/scanned-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/register/register-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/log/document-log-context.xml" />
+   <import resource="classpath:ee/webmedia/alfresco/document/einvoice/einvoice-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/assignresponsibility/assignresponsibility-context.xml" />
 
-   <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap">
+   <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap,privilegeModelBootstrap">
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/document/model/documentCommonModel.xml</value>
@@ -65,10 +66,12 @@
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="userService" ref="UserService" />
-      <property name="organizationStructureService" ref="OrganizationStructureService" />
       <property name="sendOutService" ref="SendOutService" />
+      <property name="privilegeService" ref="PrivilegeService" />
+      <property name="permissionService" ref="PermissionService" />
       <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
       <property name="incomingEmailPath" value="${imap.config.home.rootPath}/imap-ext:incoming"/>
+      <property name="receivedInvoicePath" value="/imap-ext:receivedInvoices" />
       <property name="sentEmailPath" value="${imap.config.home.rootPath}/imap-ext:sent"/>
    </bean>
 
@@ -274,41 +277,10 @@
             <idref bean="LockService_transaction" />
             <idref bean="AuditMethodInterceptor" />
             <idref bean="exceptionTranslator" />
-<!-- XXX: security interseptori sisse lülitamisel tekivad autentimisega probleemid:
-DaoAuthenticationProvider.authenticate() 
-->getUserFromBackend()
-->DefaultMutableAuthenticationDao.loadUserByUsername()
-->throw new AlfrescoRuntimeException("Not implemented");  
-<idref local="DocLockService_security"/>
--->
          </list>
       </property>
    </bean>
     
-    <!-- Lock and Unlock require the related aspect specific permissions. Querying the   -->
-    <!-- lock status just requires read access to the node.                              -->
-<!-- 
-    <bean id="DocLockService_security" class="net.sf.acegisecurity.intercept.method.aopalliance.MethodSecurityInterceptor">
-        <property name="authenticationManager" ref="authenticationManager"/>
-        <property name="accessDecisionManager" ref="accessDecisionManager"/>
-        <property name="afterInvocationManager" ref="afterInvocationManager"/>
-        <property name="objectDefinitionSource">
-            <value>
-                org.alfresco.service.cmr.lock.LockService.lock=ACL_NODE.0.cm:lockable.Lock
-                org.alfresco.service.cmr.lock.LockService.unlock=ACL_NODE.0.cm:lockable.Unlock
-                org.alfresco.service.cmr.lock.LockService.getLockStatus=ACL_NODE.0.sys:base.ReadProperties
-                org.alfresco.service.cmr.lock.LockService.getLockType=ACL_NODE.0.sys:base.ReadProperties
-                org.alfresco.service.cmr.lock.LockService.checkForLock=ACL_NODE.0.sys:base.ReadProperties
-                org.alfresco.service.cmr.lock.LockService.getLocks=ACL_NODE.0.sys:base.ReadProperties
-
-                ee.webmedia.alfresco.document.service.DocLockService.createLockIfFree=ACL_NODE.0.cm:lockable.Lock
-                ee.webmedia.alfresco.document.service.DocLockService.unlockIfOwner=ACL_NODE.0.cm:lockable.Unlock
-                ee.webmedia.alfresco.document.service.DocLockService.getLockTimeout=ACL_ALLOW
-            </value>
-        </property>
-    </bean>
- -->
- 
    <bean class="ee.webmedia.alfresco.document.web.UnsentDocumentMenuItemProcessor">
       <property name="menuService" ref="MenuService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
@@ -336,9 +308,10 @@ DaoAuthenticationProvider.authenticate()
       <property name="searchableSendModeUpdateBeginDate" value="${searchableSendModeUpdate.begin.date}" />
    </bean>
 
+   <!-- this bean id was named by mistake with capital letter, but shouldn't be changed, because it has been run on some environments -->
    <bean id="SearchableHasStartedCompoundWorkflowsUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableHasStartedCompoundWorkflowsUpdater" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="SearchableHasStartedCompoundWorkflowsUpdater" />
+      <property name="name" value="searchableHasStartedCompoundWorkflowsUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -351,6 +324,51 @@ DaoAuthenticationProvider.authenticate()
       <property name="nodeService" ref="nodeService" />
       <property name="searchService" ref="searchService" />
       <property name="behaviourFilter" ref="policyBehaviourFilter" />
+   </bean>
+
+   <bean id="documentPrivilegesUpdater" class="ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="documentPrivilegesUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
+         </list>
+      </property>
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="authorityService" ref="AuthorityService" />
+      <property name="permissionService" ref="PermissionService" />
+      <property name="privilegeService" ref="PrivilegeService" />
+      <property name="generalService" ref="generalService" />
+      <property name="searchService" ref="searchService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="fileService" ref="FileService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
+   </bean>
+
+   <bean id="documentPrivilegesInArchiveUpdater" class="ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesInArchiveUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="documentPrivilegesInArchiveUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
+         </list>
+      </property>
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="authorityService" ref="AuthorityService" />
+      <property name="permissionService" ref="PermissionService" />
+      <property name="privilegeService" ref="PrivilegeService" />
+      <property name="generalService" ref="generalService" />
+      <property name="searchService" ref="searchService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="fileService" ref="FileService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
+      <property name="enabled" value="${updater.archive.enabled}" />
    </bean>
 
    <!-- Used to add searchable properties to imported document (CL task 143388) -->
@@ -407,6 +425,39 @@ DaoAuthenticationProvider.authenticate()
       <property name="searchService" ref="searchService" />
       <property name="nodeService" ref="nodeService" />
       <property name="generalService" ref="generalService" />
+   </bean> 
+   
+   <!-- Populates shortRegNumber field for registered documents. Updates only SpacesStore. -->
+   <bean id="shortRegNumberUpdater" class="ee.webmedia.alfresco.document.bootstrap.ShortRegNumberUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="shortRegNumberUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
+         </list>
+      </property>
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="searchService" ref="searchService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="generalService" ref="generalService" />
+   </bean> 
+
+   <!-- Populates shortRegNumber field for registered documents. Updates only ArchivalsStore. -->
+   <bean id="shortRegNumberInArchiveUpdater" class="ee.webmedia.alfresco.document.bootstrap.ShortRegNumberInArchiveUpdater" parent="module.baseComponent" >
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="shortRegNumberInArchiveUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
+         </list>
+      </property>
+      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="searchService" ref="searchService" />
+      <property name="nodeService" ref="nodeService" />
+      <property name="generalService" ref="generalService" />
+      <property name="enabled" value="${updater.archive.enabled}" />
    </bean> 
 
    <!-- Perform document model changes that were introduced in 2.1, on existing data -->
@@ -487,6 +538,8 @@ DaoAuthenticationProvider.authenticate()
    <bean id="documentWorkflowStatusEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener">
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="privilegeService" ref="PrivilegeService" />
+      <property name="fileService" ref="FileService" />
    </bean>
 
    <!-- START: web beans: -->

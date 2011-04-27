@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.utils;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -14,6 +15,7 @@ import java.util.Set;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.ClassDefinition;
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.NamespaceService;
@@ -22,6 +24,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.service.IClonable;
+import ee.webmedia.alfresco.document.service.DocumentPropertySets;
 
 /**
  * Utility class related to Alfresco repository
@@ -175,4 +178,35 @@ public class RepoUtil {
         }
         return results;
     }
+
+    public static Map<QName, Serializable> copyTypeProperties(Map<QName, PropertyDefinition> typeProps, Node baseDoc) {
+        if (typeProps == null) {
+            return Collections.<QName, Serializable> emptyMap();
+        }
+
+        Map<QName, Serializable> baseProps = RepoUtil.toQNameProperties(baseDoc.getProperties());
+        Map<QName, Serializable> targetProps = new HashMap<QName, Serializable>(baseProps.size());
+        Serializable propValue = null;
+        for (QName prop : typeProps.keySet()) {
+            propValue = baseProps.get(prop);
+            if (!isSystemProperty(prop) && !DocumentPropertySets.ignoredPropertiesWhenMakingCopy.contains(prop) && propValue != null) {
+                targetProps.put(prop, propValue);
+            }
+        }
+        return targetProps;
+    }
+
+    public static void validateSameSize(Collection<String> first, Collection<String> second, String firstName, String secondName) {
+        if (first == null) {
+            first = Collections.emptyList();
+        }
+        if (second == null) {
+            second = Collections.emptyList();
+        }
+        if (first.size() != second.size()) {
+            throw new RuntimeException("There should be same amount of " + firstName + " and " + secondName + "!\n\t" + first.size()
+                    + " " + firstName + ":" + first + "\n\t" + second.size() + " " + secondName + ":" + second);
+        }
+    }
+
 }

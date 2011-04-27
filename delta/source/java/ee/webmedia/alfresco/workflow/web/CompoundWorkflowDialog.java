@@ -585,7 +585,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
 
         if (checkFinished && hasForbiddenFlowsForFinished) {
             String docStatus = (String) getDocumentDialog().getNode().getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
-            if (DocumentStatus.FINISHED.equals(docStatus)) {
+            if (DocumentStatus.FINISHED.getValueName().equals(docStatus)) {
                 valid = false;
                 MessageUtil.addErrorMessage(context, "workflow_start_failed_docFinished");
             }

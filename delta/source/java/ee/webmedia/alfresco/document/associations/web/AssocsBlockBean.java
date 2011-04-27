@@ -3,11 +3,9 @@ package ee.webmedia.alfresco.document.associations.web;
 import java.io.Serializable;
 import java.util.List;
 
-import javax.faces.context.FacesContext;
-
 import org.alfresco.web.bean.repository.Node;
-import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.service.DocumentService;
 
@@ -51,9 +49,7 @@ public class AssocsBlockBean implements Serializable {
 
     protected DocumentService getDocumentService() {
         if (documentService == null) {
-            documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(
-                    FacesContext.getCurrentInstance())//
-                    .getBean(DocumentService.BEAN_NAME);
+            documentService = BeanHelper.getDocumentService();
         }
         return documentService;
     }

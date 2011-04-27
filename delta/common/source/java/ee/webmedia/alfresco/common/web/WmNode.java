@@ -13,7 +13,6 @@ import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.QNameNodeMap;
@@ -117,11 +116,6 @@ public class WmNode extends TransientNode {
     protected ServiceRegistry getServiceRegistry() {
         // map'i lisamisel vaja NamespacePrefixResolver'it, mis superklassis küsitakse läbi serviceRegistry
         return super.getServiceRegistry();
-    }
-
-    @Override
-    public NamespacePrefixResolver getNamespacePrefixResolver() {
-        return super.getNamespacePrefixResolver();
     }
 
     @Override

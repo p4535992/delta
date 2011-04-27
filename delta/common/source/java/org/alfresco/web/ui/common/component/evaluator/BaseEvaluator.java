@@ -152,5 +152,5 @@ public abstract class BaseEvaluator extends SelfRenderingComponent
    protected static final Log    s_logger = LogFactory.getLog(BaseEvaluator.class);
    
    /** the value to be evaluated against */
-   private Object value;
+   protected Object value;
 }

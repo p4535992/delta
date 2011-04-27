@@ -55,14 +55,17 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.imap.AppendBehaviour;
 import ee.webmedia.alfresco.imap.AttachmentsFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.ImmutableFolder;
+import ee.webmedia.alfresco.imap.IncomingEInvoiceCreateBehaviour;
 import ee.webmedia.alfresco.imap.IncomingFolderAppendBehaviour;
 import ee.webmedia.alfresco.imap.PermissionDeniedAppendBehaviour;
 import ee.webmedia.alfresco.imap.SentFolderAppendBehaviour;
@@ -85,6 +88,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
     private FileService fileService;
     private MimetypeService mimetypeService;
     private DocumentTypeService documentTypeService;
+    private EInvoiceService einvoiceService;
 
     // todo: make this configurable with spring
     private Set<String> allowedFolders = null;
@@ -153,6 +157,72 @@ public class ImapServiceExtImpl implements ImapServiceExt {
     }
 
     @Override
+    public void saveIncomingEInvoice(NodeRef folderNodeRef, MimeMessage mimeMessage) throws FolderException {
+        try {
+            Object content = mimeMessage.getContent();
+            List<NodeRef> newInvoices = new ArrayList<NodeRef>();
+            Map<NodeRef, Integer> invoiceRefToAttachment = new HashMap<NodeRef, Integer>();
+            if (content instanceof Multipart) {
+                Multipart multipart = (Multipart) content;
+
+                for (int i = 0, n = multipart.getCount(); i < n; i++) {
+                    Part part = multipart.getBodyPart(i);
+                    if ("attachment".equalsIgnoreCase(part.getDisposition())) {
+                        List<NodeRef> newDocRefs = createInvoice(folderNodeRef, part);
+                        newInvoices.addAll(newDocRefs);
+                        for (NodeRef newDocRef : newDocRefs) {
+                            invoiceRefToAttachment.put(newDocRef, i);
+                        }
+                    }
+
+                }
+            }
+            if (newInvoices.size() == 0) {
+                String name = AlfrescoImapConst.MESSAGE_PREFIX + GUID.generate();
+                FileInfo docInfo = fileFolderService.create(folderNodeRef, name, DocumentSubtypeModel.Types.INVOICE);
+
+                Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
+                String subject = mimeMessage.getSubject();
+                if (StringUtils.isBlank(subject)) {
+                    subject = I18NUtil.getMessage("imap.letter_subject_missing");
+                }
+                properties.put(DocumentCommonModel.Props.DOC_NAME, subject);
+                if (mimeMessage.getFrom() != null) {
+                    InternetAddress sender = (InternetAddress) mimeMessage.getFrom()[0];
+                    properties.put(DocumentSpecificModel.Props.SELLER_PARTY_CONTACT_NAME, sender.getPersonal());
+                    properties.put(DocumentSpecificModel.Props.SELLER_PARTY_CONTACT_EMAIL_ADDRESS, sender.getAddress());
+                }
+                properties.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.EMAIL.getValueName());
+
+                properties.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
+                properties.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
+                NodeRef nodeRef = docInfo.getNodeRef();
+                nodeService.addProperties(nodeRef, properties);
+                newInvoices.add(nodeRef);
+            }
+
+            for (NodeRef docRef : newInvoices) {
+                // TODO: optimize?
+                saveAttachments(docRef, mimeMessage, true, invoiceRefToAttachment);
+                documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", I18NUtil.getMessage("document_log_creator_imap")) //
+                        , I18NUtil.getMessage("document_log_creator_imap"));
+            }
+
+        } catch (Exception e) { // TODO: improve exception handling
+            log.warn("Cannot save email, folderNodeRef=" + folderNodeRef, e);
+            throw new FolderException("Cannot save email: " + e.getMessage());
+        }
+    }
+
+    private List<NodeRef> createInvoice(NodeRef folderNodeRef, Part part) throws MessagingException, IOException {
+        String mimetype = getMimetype(part, null);
+        if (MimetypeMap.MIMETYPE_XML.equalsIgnoreCase(mimetype)) {
+            return einvoiceService.importInvoiceFromXml(folderNodeRef, part.getInputStream(), TransmittalMode.EMAIL);
+        }
+        return new ArrayList<NodeRef>(0);
+    }
+
+    @Override
     public Collection<MailFolder> createAndListFolders(AlfrescoImapUser user, String mailboxPattern) {
         try {
             return addBehaviour(filter(imapService.listSubscribedMailboxes(user, mailboxPattern)));
@@ -163,6 +233,11 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
     @Override
     public void saveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody)
+            throws IOException, MessagingException, TransformationException {
+        saveAttachments(document, originalMessage, saveBody, null);
+    }
+
+    private void saveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody, Map<NodeRef, Integer> invoiceRefToAttachment)
             throws IOException, MessagingException, TransformationException {
         if (saveBody) {
             Part p = getText(originalMessage);
@@ -175,8 +250,10 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
             for (int i = 0, n = multipart.getCount(); i < n; i++) {
                 Part part = multipart.getBodyPart(i);
-                if ("attachment".equalsIgnoreCase(part.getDisposition())) {
-                    createAttachment(document, part, null);
+                if (invoiceRefToAttachment == null || !invoiceRefToAttachment.containsValue(i) || invoiceRefToAttachment.get(document).equals(i)) {
+                    if ("attachment".equalsIgnoreCase(part.getDisposition())) {
+                        createAttachment(document, part, null);
+                    }
                 }
             }
         }
@@ -190,26 +267,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
     }
 
     private void createAttachment(NodeRef document, Part part, String overrideFilename) throws MessagingException, IOException {
-        String mimeType = null;
-        String contentTypeString = part.getContentType();
-        try {
-            ContentType contentType = new ContentType(contentTypeString);
-            mimeType = StringUtils.lowerCase(contentType.getBaseType());
-        } catch (ParseException e) {
-            log.warn("Error parsing contentType '" + contentTypeString + "'", e);
-        }
-        if (overrideFilename == null) {
-            // Always ignore user-provided mime-type
-            String oldMimetype = mimeType;
-            mimeType = mimetypeService.guessMimetype(part.getFileName());
-            if (log.isDebugEnabled() && !StringUtils.equals(oldMimetype, mimeType)) {
-                log.debug("Original mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '" + part.getFileName() + "' => '"
-                            + mimeType + "'");
-            }
-        } else if (StringUtils.isBlank(mimeType)) {
-            // If mime-type parsing from contentType failed and overrideFilename is used, then use binary mime type
-            mimeType = MimetypeMap.MIMETYPE_BINARY;
-        }
+        String mimeType = getMimetype(part, overrideFilename);
 
         String filename;
         if (overrideFilename == null) {
@@ -230,6 +288,30 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         writer.setEncoding(encoding);
         OutputStream os = writer.getContentOutputStream();
         FileCopyUtils.copy(part.getInputStream(), os);
+    }
+
+    private String getMimetype(Part part, String overrideFilename) throws MessagingException {
+        String mimeType = null;
+        String contentTypeString = part.getContentType();
+        try {
+            ContentType contentType = new ContentType(contentTypeString);
+            mimeType = StringUtils.lowerCase(contentType.getBaseType());
+        } catch (ParseException e) {
+            log.warn("Error parsing contentType '" + contentTypeString + "'", e);
+        }
+        if (overrideFilename == null) {
+            // Always ignore user-provided mime-type
+            String oldMimetype = mimeType;
+            mimeType = mimetypeService.guessMimetype(part.getFileName());
+            if (log.isDebugEnabled() && !StringUtils.equals(oldMimetype, mimeType)) {
+                log.debug("Original mimetype '" + oldMimetype + "', but we are guessing mimetype based on filename '" + part.getFileName() + "' => '"
+                            + mimeType + "'");
+            }
+        } else if (StringUtils.isBlank(mimeType)) {
+            // If mime-type parsing from contentType failed and overrideFilename is used, then use binary mime type
+            mimeType = MimetypeMap.MIMETYPE_BINARY;
+        }
+        return mimeType;
     }
 
     private void createBody(NodeRef document, MimeMessage originalMessage) throws MessagingException, IOException {
@@ -351,6 +433,8 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             return new PermissionDeniedAppendBehaviour();
         } else if (IncomingFolderAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
             return new IncomingFolderAppendBehaviour(this);
+        } else if (IncomingEInvoiceCreateBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
+            return new IncomingFolderAppendBehaviour(this);
         } else if (AttachmentsFolderAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
             return new AttachmentsFolderAppendBehaviour(this);
         } else if (SentFolderAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
@@ -365,7 +449,13 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             @Override
             public boolean evaluate(Object o) {
                 MailFolder folder = (MailFolder) o;
-                return getAllowedFolders().contains(folder.getName());
+                if (getAllowedFolders().contains(folder.getName())) {
+                    if (folder.getName().equals(getIncomingInvoiceFolderName())) {
+                        return einvoiceService.isEinvoiceEnabled();
+                    }
+                    return true;
+                }
+                return false;
             }
         });
         return folders;
@@ -383,10 +473,15 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         if (allowedFolders == null) {
             allowedFolders = new HashSet<String>();
             allowedFolders.add(I18NUtil.getMessage("imap.folder_letters"));
+            allowedFolders.add(getIncomingInvoiceFolderName());
             allowedFolders.add(I18NUtil.getMessage("imap.folder_attachments"));
             allowedFolders.add(I18NUtil.getMessage("imap.folder_sent_letters"));
         }
         return allowedFolders;
+    }
+
+    private String getIncomingInvoiceFolderName() {
+        return I18NUtil.getMessage("imap-folders.incomingInvoice");
     }
 
     public void setImapService(ImapService imapService) {
@@ -423,6 +518,10 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
     public void setDocumentTypeService(DocumentTypeService documentTypeService) {
         this.documentTypeService = documentTypeService;
+    }
+
+    public void setEinvoiceService(EInvoiceService einvoiceService) {
+        this.einvoiceService = einvoiceService;
     }
 
 }

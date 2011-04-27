@@ -38,8 +38,10 @@ import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.model.FileFolderService;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.SearchService;
+import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
@@ -47,10 +49,16 @@ import org.alfresco.web.app.Application;
 import org.alfresco.web.app.context.UIContextService;
 import org.alfresco.web.bean.BrowseBean;
 import org.alfresco.web.bean.NavigationBean;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.common.ReportedException;
 import org.alfresco.web.ui.common.Utils;
+
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
  * Base class for all dialog beans providing common functionality
@@ -136,8 +144,13 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
          {
             public String execute() throws Throwable
             {
-               // call the actual implementation
-               return finishImpl(context, defaultOutcome);
+                try {
+                    // call the actual implementation
+                    return finishImpl(context, defaultOutcome);
+                } catch (UnableToPerformException e) {
+                    MessageUtil.addStatusMessage(e);
+                    return null;
+                }
             }
          };
          try
@@ -441,6 +454,22 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       return MessageFormat.format(Application.getMessage(
             FacesContext.getCurrentInstance(), getErrorMessageId()), 
             exception.getMessage());
+   }
+
+   public static void validatePermission(Node documentNode, String permission) {
+       if (!documentNode.hasPermission(permission)) {
+           throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_" + permission));
+       }
+   }
+
+   public static void validatePermission(NodeRef documentNodeRef, String permission) {
+       if (!hasPermission(documentNodeRef, permission)) {
+           throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_" + permission));
+       }
+   }
+
+   public static boolean hasPermission(NodeRef nodeRef, String permission) {
+       return AccessStatus.ALLOWED == BeanHelper.getPermissionService().hasPermission(nodeRef, permission);
    }
 
 }

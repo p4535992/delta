@@ -47,6 +47,7 @@ public interface AddressbookModel {
         QName ADDRESS2 = QName.createQName(AddressbookModel.URI, "address2");
         QName CITY = QName.createQName(AddressbookModel.URI, "city");
         QName COUNTRY = QName.createQName(AddressbookModel.URI, "country");
+        QName SAP_ACCOUNT = QName.createQName(AddressbookModel.URI, "sapAccount");
     }
 
     interface Aspects {

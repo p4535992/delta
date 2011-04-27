@@ -111,7 +111,6 @@
    <bean id="deleteEmployeeRegOrganisationIdParameterBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="name" value="deleteEmployeeRegOrganisationIdParameterBootstrap" />
-      <property name="sinceVersion" value="@currentVersion@" />
       <property name="executeOnceOnly" value="true" />
       <property name="nodeXPath" value="/param:parameters/param:employeeRegOrganisationId" />
       <property name="generalService" ref="GeneralService" />

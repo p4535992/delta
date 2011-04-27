@@ -1,11 +1,15 @@
 package ee.webmedia.alfresco.utils;
 
+import java.util.Date;
+
+import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 
 import org.apache.xmlbeans.SchemaType;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
 import org.apache.xmlbeans.XmlOptions;
+import org.w3c.dom.NodeList;
 
 /**
  * @author ats.uiboupin
@@ -36,5 +40,31 @@ public class XmlUtil {
             throw new IllegalArgumentException("Failed to get value of '" + responseClass.getCanonicalName()
                     + ".type' to get corresponding SchemaType object: ", e);
         }
+    }
+
+    public static org.w3c.dom.Node findChildByName(javax.xml.namespace.QName qName, org.w3c.dom.Node possibleDeltaNode) {
+        org.w3c.dom.Node externalReviewNode = null;
+        NodeList nodeList = possibleDeltaNode.getChildNodes();
+        for (int i = 0; i < nodeList.getLength(); i++) {
+            if (compareNodeQName(qName, nodeList.item(i))) {
+                externalReviewNode = nodeList.item(i);
+                break;
+            }
+        }
+        return externalReviewNode;
+    }
+
+    public static Date getDate(XMLGregorianCalendar gregorianCalendar) {
+        if (gregorianCalendar != null) {
+            return gregorianCalendar.toGregorianCalendar().getTime();
+        }
+        return null;
+    }
+
+    private static boolean compareNodeQName(javax.xml.namespace.QName qName, org.w3c.dom.Node node) {
+        if (node.getNamespaceURI() != null && node.getLocalName() != null) {
+            return qName.equals(new javax.xml.namespace.QName(node.getNamespaceURI(), node.getLocalName()));
+        }
+        return false;
     }
 }

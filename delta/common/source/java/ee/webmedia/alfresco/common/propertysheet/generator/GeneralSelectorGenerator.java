@@ -128,7 +128,7 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
         // Must do this after component has beed added to tree
         String valueChangeListener = getCustomAttributes().get("valueChangeListener");
-        if (StringUtils.isNotBlank(valueChangeListener)) {
+        if (StringUtils.isNotBlank(valueChangeListener) && component instanceof UIInput) {
             ((UIInput) component).setValueChangeListener(context.getApplication().createMethodBinding(valueChangeListener,
                     new Class[] { ValueChangeEvent.class }));
             final String onchange;

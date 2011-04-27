@@ -72,17 +72,17 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
         } else if (event.getType() == WorkflowEventType.STATUS_CHANGED) {
             Boolean isRegisterDocQueue = queue.getParameter(WorkflowQueueParameter.TRIGGERED_BY_DOC_REGISTRATION);
             // If task is changed to IN_PROGRESS
+            NodeRef docRef = cWorkflow.getParent();
             if (task.isStatus(Status.IN_PROGRESS)) {
 
                 // Change document owner
-                if (task.getOwnerId() != null) {
+                if (task.getOwnerId() != null && DocumentTypeHelper.isIncomingLetter(nodeService.getType(docRef))) {
                     if (log.isDebugEnabled()) {
-                        log.debug("Active responsible task started, setting document ownerId to " + task.getOwnerId());
+                        log.debug("Active responsible task started on incoming letter, setting document ownerId to " + task.getOwnerId());
                     }
                     setDocumentOwnerFromTask(task);
                 }
             } else if (task.isStatus(Status.FINISHED) && !isDelegated(task) && (isRegisterDocQueue == null || !isRegisterDocQueue)) { // if task status is changed to FINISHED
-                NodeRef docRef = cWorkflow.getParent();
                 Node document = documentService.getDocument(docRef);
                 boolean isIncomingLetter = DocumentTypeHelper.isIncomingLetter(document.getType());
                 if (isIncomingLetter) {

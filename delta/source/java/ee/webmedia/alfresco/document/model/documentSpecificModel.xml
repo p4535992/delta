@@ -187,6 +187,7 @@
          </properties>
       </aspect>
 
+      <!-- Aspect to mark documents recieved from DVK with external review task -->
       <aspect name="docspec:notEditable">
          <properties>
             <property name="docspec:notEditable">
@@ -197,6 +198,17 @@
          </properties>
       </aspect>   
 
+      <!-- Aspect to mark invoices generated from e-invoice xml files -->
+      <aspect name="docspec:invoiceXml">
+         <properties>
+            <property name="docspec:invoiceXml">
+               <type>d:boolean</type>
+               <mandatory>true</mandatory>
+               <default>true</default>
+            </property>            
+         </properties>
+      </aspect>
+      
       <aspect name="docspec:senderDetails">
          <properties>
             <property name="docspec:senderName">
@@ -380,7 +392,52 @@
          </properties>
       </aspect>
       
+      <aspect name="docspec:vacationOrderCommonV2">
+         <parent>docspec:substitute</parent>
+         <properties>
+            <property name="docspec:leaveType">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:leaveBeginDates">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:leaveEndDates">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            
+            <property name="docspec:leaveInitialBeginDates">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:leaveInitialEndDates">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:leaveNewBeginDates">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:leaveNewEndDates">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            
+            <property name="docspec:leaveCancelBeginDates">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:leaveCancelEndDates">
+               <type>d:date</type>
+               <multiple>true</multiple>
+            </property>
+         </properties>
+      </aspect>
+      
       <aspect name="docspec:vacationOrderCommon">
+         <parent>docspec:substitute</parent>
          <properties>
             <property name="docspec:leaveAnnual">
                <type>d:boolean</type>
@@ -447,8 +504,13 @@
             <property name="docspec:leaveCancelEndDate">
                <type>d:date</type>
             </property>
-            
-            <property name="docspec:substituteName">
+
+         </properties>
+      </aspect>
+
+      <aspect name="docspec:substitute">
+         <properties>
+         <property name="docspec:substituteName">
                <type>d:text</type>
                <multiple>true</multiple>
                <default></default>
@@ -465,9 +527,28 @@
             <property name="docspec:substitutionEndDate">
                <type>d:date</type>
                <multiple>true</multiple>
-            </property>            
-         
+            </property>
+            </properties>            
+      </aspect>
+
+      <aspect name="docspec:vacationOrderV2">
+         <properties>
+            <property name="docspec:leaveDays">
+               <type>d:int</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:leaveChangeDays">
+               <type>d:int</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docspec:leaveCancelledDays">
+               <type>d:int</type>
+               <multiple>true</multiple>
+            </property>
          </properties>
+         <mandatory-aspects>
+            <aspect>docspec:vacationOrderCommonV2</aspect>
+         </mandatory-aspects>
       </aspect>
       
       <aspect name="docspec:vacationOrder">
@@ -1411,17 +1492,71 @@
             </property>
          </properties>
       </aspect>
-      
-      <aspect name="docspec:invoice">
-         <properties>
-            <property name="docspec:bankAccount">
-               <type>d:text</type>
-            </property>
-            <property name="docspec:referenceNumber">
-               <type>d:text</type>
-            </property>            
-         </properties>
-      </aspect>
+
+   <aspect name="docspec:invoice">
+      <properties>
+         <property name="docspec:sellerPartyName">
+            <type>d:text</type>
+            <mandatory>true</mandatory>
+         </property>
+         <property name="docspec:sellerPartyRegNumber">
+            <type>d:text</type>
+            <mandatory>true</mandatory>
+         </property>
+         <property name="docspec:sellerPartySapAccount">
+            <type>d:text</type>
+         </property>
+         <property name="docspec:sellerPartyContactName">
+            <type>d:text</type>
+         </property>
+         <property name="docspec:sellerPartyContactPhoneNumber">
+            <type>d:text</type>
+         </property>
+         <property name="docspec:sellerPartyContactEmailAddress">
+            <type>d:text</type>
+         </property>
+         <property name="docspec:invoiceDate">
+            <type>d:date</type>
+         </property>
+         <property name="docspec:invoiceNumber">
+            <type>d:text</type>
+         </property>
+         <property name="docspec:invoiceType">
+            <type>d:text</type>
+            <mandatory>true</mandatory>
+         </property>
+         <property name="docspec:invoiceDueDate">
+            <type>d:date</type>
+         </property>
+         <property name="docspec:paymentTerm">
+            <type>d:text</type>
+         </property>
+         <property name="docspec:invoiceSum">
+            <type>d:double</type>
+         </property>
+         <property name="docspec:vat">
+            <type>d:double</type>
+         </property>
+         <property name="docspec:totalSum">
+            <type>d:double</type>
+         </property>
+         <property name="docspec:currency">
+            <type>d:text</type>
+         </property>
+         <property name="docspec:additionalInformationContent">
+            <type>d:text</type>
+         </property>
+         <property name="docspec:paymentReferenceNumber">
+            <type>d:text</type>
+         </property>
+         <property name="docspec:purchaseOrderSapNumber">
+            <type>d:text</type>
+         </property>
+         <property name="docspec:contractNumber">
+            <type>d:text</type>
+         </property>
+      </properties>
+   </aspect>
       
       <aspect name="docspec:personalVehicleUsageCompensationMv">
          <properties>

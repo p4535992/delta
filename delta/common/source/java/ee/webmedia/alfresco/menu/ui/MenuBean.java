@@ -39,6 +39,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuItem;
@@ -77,6 +78,7 @@ public class MenuBean implements Serializable {
     private transient GeneralService generalService;
     private transient UserService userService;
     private transient WorkflowService workflowService;
+    private transient EInvoiceService einvoiceService;
 
     private Menu menu;
     private int updateCount = 0;
@@ -572,7 +574,8 @@ public class MenuBean implements Serializable {
             return false;
         }
         MenuItem item = menuItemAndPath.getFirst();
-        MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, "shortcut-" + shortcutsPanelGroup.getChildCount(), getUserService(), getWorkflowService(), false);
+        MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, "shortcut-" + shortcutsPanelGroup.getChildCount(), getUserService(), getWorkflowService(),
+                getEinvoiceService(), false);
         wrapper.setPlain(true);
 
         UIActionLink link = (UIActionLink) wrapper.getChildren().get(0);
@@ -815,6 +818,14 @@ public class MenuBean implements Serializable {
                     .getBean(WorkflowService.BEAN_NAME);
         }
         return workflowService;
+    }
+
+    public EInvoiceService getEinvoiceService() {
+        if (einvoiceService == null) {
+            einvoiceService = (EInvoiceService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
+                    .getBean(EInvoiceService.BEAN_NAME);
+        }
+        return einvoiceService;
     }
 
     public void setUserService(UserService userService) {

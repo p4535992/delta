@@ -22,13 +22,23 @@ public class TextUtil {
     }
 
     public static String joinStringAndStringWithComma(String value1, String value2) {
+        String separator = ", ";
+        return joinStringAndStringWithSeparator(value1, value2, separator);
+    }
+
+    public static String joinStringAndStringWithSpace(String value1, String value2) {
+        String separator = " ";
+        return joinStringAndStringWithSeparator(value1, value2, separator);
+    }
+
+    private static String joinStringAndStringWithSeparator(String value1, String value2, String separator) {
         String result = "";
         if (StringUtils.isNotBlank(value1)) {
             result += value1;
         }
         if (StringUtils.isNotBlank(value2)) {
             if (StringUtils.isNotBlank(result)) {
-                result += ", ";
+                result += separator;
             }
             result += value2;
         }
@@ -63,6 +73,23 @@ public class TextUtil {
             }
         }
         return StringUtils.join(uniqueValues, ", ");
+    }
+
+    /**
+     * true if both parameters are blank or equal ignoring case
+     * 
+     * @param text1
+     * @param text2
+     * @return
+     */
+    public static boolean isBlankEqual(String text1, String text2) {
+        if (StringUtils.isBlank(text1) && StringUtils.isBlank(text2)) {
+            return true;
+        }
+        if (StringUtils.isBlank(text1) || StringUtils.isBlank(text2)) {
+            return false;
+        }
+        return text1.equalsIgnoreCase(text2);
     }
 
 }

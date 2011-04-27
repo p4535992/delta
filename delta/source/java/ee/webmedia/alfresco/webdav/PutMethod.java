@@ -87,7 +87,7 @@ public class PutMethod extends WebDAVMethod {
     @Override
     protected void executeImpl() throws WebDAVServerException, Exception {
         FileFolderService fileFolderService = getFileFolderService();
-        
+
         // Get the status for the request path
         FileInfo contentNodeInfo = null;
         boolean created = false;
@@ -101,10 +101,11 @@ public class PutMethod extends WebDAVMethod {
             // create not allowed
             throw new WebDAVServerException(HttpServletResponse.SC_FORBIDDEN);
         }
+        WebDAVCustomHelper.checkDocumentFileWritePermission(contentNodeInfo);
 
         if (m_request.getContentLength() <= 0) {
             StringBuilder s = new StringBuilder("Client is trying to save zero-length content, ignoring and returning success; request headers:");
-            for (Enumeration<?> e = m_request.getHeaderNames(); e.hasMoreElements(); ) {
+            for (Enumeration<?> e = m_request.getHeaderNames(); e.hasMoreElements();) {
                 String headerName = (String) e.nextElement();
                 s.append("\n  ").append(headerName).append(": ").append(m_request.getHeader(headerName));
             }

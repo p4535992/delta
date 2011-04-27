@@ -513,12 +513,16 @@ public class ChainingUserRegistrySynchronizer implements UserRegistrySynchronize
             AuthorityType authorityType = AuthorityType.getAuthorityType(groupName);
             String documentManagersGroupDisplayName = I18NUtil.getMessage(UserService.DOCUMENT_MANAGERS_DISPLAY_NAME);
             String administratorsGroupDisplayName = I18NUtil.getMessage(UserService.ALFRESCO_ADMINISTRATORS_DISPLAY_NAME);
+            String accountantsGroupDisplayName = I18NUtil.getMessage(UserService.ACCOUNTANTS_DISPLAY_NAME);
             if (groupName.equals(authorityService.getName(authorityType, documentManagersGroupDisplayName))) {
                 groupName = authorityService.getName(authorityType, UserService.DOCUMENT_MANAGERS_GROUP);
                 groupProperties.put(ContentModel.PROP_AUTHORITY_DISPLAY_NAME, documentManagersGroupDisplayName);
             } else if (groupName.equals(authorityService.getName(authorityType, administratorsGroupDisplayName))) {
                 groupName = authorityService.getName(authorityType, UserService.ADMINISTRATORS_GROUP);
                 groupProperties.put(ContentModel.PROP_AUTHORITY_DISPLAY_NAME, administratorsGroupDisplayName);
+            } else if (groupName.equals(authorityService.getName(authorityType, accountantsGroupDisplayName))) {
+                groupName = authorityService.getName(authorityType, UserService.ACCOUNTANTS_GROUP);
+                groupProperties.put(ContentModel.PROP_AUTHORITY_DISPLAY_NAME, accountantsGroupDisplayName);
             }
 
             if (groupsToDelete.remove(groupName))

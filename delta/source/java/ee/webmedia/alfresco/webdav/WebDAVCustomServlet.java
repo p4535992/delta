@@ -43,6 +43,7 @@ public class WebDAVCustomServlet extends WebDAVServlet {
 
         // Create the WebDAV methods table
 
+        m_davMethods.put(WebDAV.METHOD_GET, GetMethod.class);
         m_davMethods.put(WebDAV.METHOD_COPY, ForbiddenMethod.class);
         m_davMethods.put(WebDAV.METHOD_DELETE, ForbiddenMethod.class);
         m_davMethods.put(WebDAV.METHOD_MKCOL, ForbiddenMethod.class);

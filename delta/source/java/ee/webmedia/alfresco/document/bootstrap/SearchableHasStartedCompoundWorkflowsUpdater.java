@@ -57,7 +57,6 @@ public class SearchableHasStartedCompoundWorkflowsUpdater extends AbstractNodeUp
 
     @Override
     protected String[] updateNode(NodeRef cWorkflowRef) throws Exception {
-        LOG.debug("nodeService=" + nodeService + " cWorkflowRef=" + cWorkflowRef);
         ChildAssociationRef primaryParent = nodeService.getPrimaryParent(cWorkflowRef);
         NodeRef docRef = primaryParent.getParentRef();
         if (docsWithStartedCompoundWorkflows.contains(docRef)) {

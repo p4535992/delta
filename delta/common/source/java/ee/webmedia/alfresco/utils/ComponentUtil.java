@@ -42,6 +42,7 @@ import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
+import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -98,8 +99,12 @@ public class ComponentUtil {
         return component.getAttributes();
     }
 
+    public static <T> Object getAttribute(UIComponent component, String key) {
+        return getAttributes(component).get(key);
+    }
+
     public static <T> T getAttribute(UIComponent component, String key, Class<T> requiredClazz) {
-        Object value = getAttributes(component).get(key);
+        Object value = getAttribute(component, key);
         T result;
         try {
             result = DefaultTypeConverter.INSTANCE.convert(requiredClazz, value);
@@ -109,10 +114,20 @@ public class ComponentUtil {
         return result;
     }
 
+    /**
+     * @param paramName
+     * @param paramValue - could also be string to be used as value binding
+     * @param application
+     * @return
+     */
     public static UIParameter createUIParam(String paramName, Object paramValue, Application application) {
         UIParameter param = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
         param.setName(paramName);
-        param.setValue(paramValue);
+        if (paramValue instanceof String) {
+            UIComponentTagUtils.setValueProperty(FacesContext.getCurrentInstance(), param, (String) paramValue);
+        } else {
+            param.setValue(paramValue);
+        }
         return param;
     }
 
@@ -129,14 +144,25 @@ public class ComponentUtil {
      * @return children of the component
      */
     public static List<UIComponent> addChildren(UIComponent component, UIComponent... children) {
-        @SuppressWarnings("unchecked")
-        final List<UIComponent> componentChildren = component.getChildren();
+        final List<UIComponent> componentChildren = getChildren(component);
         if (children != null) {
             for (UIComponent child : children) {
                 componentChildren.add(child);
             }
         }
         return componentChildren;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<UIComponent> getChildren(UIComponent component) {
+        return component.getChildren();
+    }
+
+    public static Map<String, UIComponent> addFacet(UIComponent component, String facetName, UIComponent facet) {
+        @SuppressWarnings("unchecked")
+        final Map<String, UIComponent> facets = component.getFacets();
+        facets.put(facetName, facet);
+        return facets;
     }
 
     /**

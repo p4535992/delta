@@ -1,9 +1,12 @@
 package ee.webmedia.alfresco.addressbook.service;
 
+import java.io.Serializable;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
@@ -61,9 +64,9 @@ public interface AddressbookService {
 
     /**
      * @param node
-     * @throws UnableToPerformException when contact with the same name already exists
+     * @return List of message keys and value holders for duplicate contacts
      */
-    void checkIfContactExists(Node node) throws UnableToPerformException;
+    List<Pair<String, String>> checkIfContactExists(Node node) throws UnableToPerformException;
 
     /**
      * creates a new node in the repository,
@@ -159,6 +162,23 @@ public interface AddressbookService {
 
     List<Node> searchContactGroups(String searchCriteria);
 
+    /**
+     * @param regNumber
+     * @return contacts of type ORGANIZATION where ORGANIZATION_CODE = regNumber
+     *         and contacts of type PRIV_PERSON where PERSON_ID = regNumber
+     */
+    List<Node> getContactsByRegNumber(String regNumber);
+
+    List<Node> searchPersonContacts(String searchCriteria);
+
+    List<Node> getPersonContactsByCode(String code);
+
+    List<Node> searchOrgContacts(String searchCriteria);
+
     boolean isTaskCapableGroupMember(NodeRef contactRef);
+
+    NodeRef createOrganization(Map<QName, Serializable> data);
+
+    List<Node> getContactsWithSapAccount();
 
 }

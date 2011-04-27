@@ -70,6 +70,9 @@
             <property name="docsearch:regNumber">
                <type>d:text</type>
             </property>
+            <property name="docsearch:shortRegNumber">
+               <type>d:text</type>
+            </property>
             <property name="docsearch:docStatus">
                <type>d:text</type>
                <multiple>true</multiple>
@@ -196,7 +199,27 @@
                <type>d:text</type>
                <multiple>true</multiple>
             </property>
-
+            <property name="docsearch:invoiceNumber">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:invoiceDateBegin">
+               <type>d:date</type>
+            </property>   
+            <property name="docsearch:invoiceDateEnd">
+               <type>d:date</type>
+            </property>
+            <property name="docsearch:sellerPartyName">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:sellerPartyRegNumber">
+               <type>d:text</type>
+            </property>
+            <property name="docsearch:totalSumLowest">
+               <type>d:double</type>
+            </property> 
+            <property name="docsearch:totalSumHighest">
+               <type>d:double</type>
+            </property> 
          </properties>
       </type>
 

@@ -28,6 +28,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -376,6 +377,13 @@ public class AdminNodeBrowseBean implements Serializable
             {
                 nodeProperties.add(new Property(property.getKey(), property.getValue()));
             }
+            Collections.sort(nodeProperties, new Comparator<Property>() {
+
+                @Override
+                public int compare(Property o1, Property o2) {
+                    return o1.getName().compareTo(o2.getName());
+                }
+            });
             properties = new ListDataModel(nodeProperties);
         }
         return properties;
@@ -408,6 +416,13 @@ public class AdminNodeBrowseBean implements Serializable
             if (readPermissions.equals(AccessStatus.ALLOWED))
             {
                 List<AccessPermission> nodePermissions = new ArrayList<AccessPermission>(getPermissionService().getAllSetPermissions(nodeRef));
+                Collections.sort(nodePermissions, new Comparator<AccessPermission>() {
+
+                    @Override
+                    public int compare(AccessPermission o1, AccessPermission o2) {
+                        return o1.getAuthority().compareTo(o2.getAuthority());
+                    }
+                });
                 permissions = new ListDataModel(nodePermissions);
             }
             else

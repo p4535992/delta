@@ -60,7 +60,7 @@ public class PageTag extends TagSupport
    private final static String IE7COND_START = "<!--[if IE 7]>\n";
    private final static String IE7COND_END   = "<![endif]-->\n";
    
-   private final static long urlSuffix;
+   public final static long urlSuffix;
    private final static String[] SCRIPTS;
    static {
        List<String> scriptsList = getScripts();

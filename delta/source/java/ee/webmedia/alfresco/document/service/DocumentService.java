@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -16,6 +17,8 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
+import ee.webmedia.alfresco.document.permissions.SeriesDocManagerDynamicAuthority;
+import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
@@ -46,6 +49,7 @@ public interface DocumentService {
     }
 
     String BEAN_NAME = "DocumentService";
+    String VOLUME_MARK_SEPARATOR = "/";
 
     NodeRef getDrafts();
 
@@ -413,5 +417,25 @@ public interface DocumentService {
     void setDocStatusFinished(final NodeRef docRef);
 
     void setPropertyAsSystemUser(final QName propName, final Serializable value, final NodeRef docRef);
+
+    List<Document> getIncomingEInvoices();
+
+    String getReceivedInvoicePath();
+
+    int getAllDocumentFromIncomingInvoiceCount();
+
+    boolean isIncomingInvoice(NodeRef nodeRef);
+
+    /**
+     * Adds privileges to the users that<br>
+     * 1) are added to the list of {@link SeriesModel.Props#STRUCT_UNIT} of the document ancestor series<br>
+     * 2) have {@link SeriesDocManagerDynamicAuthority#SERIES_MANAGEABLE_PERMISSION} (directly, not trough group)
+     * 
+     * @param docRef
+     * @param docProps
+     * @param parentRef
+     * @return groups that have {@link SeriesDocManagerDynamicAuthority#SERIES_MANAGEABLE_PERMISSION}
+     */
+    Set<String> addPrivilegesBasedOnSeries(NodeRef docRef, Map<String, Object> docProps, NodeRef parentRef);
 
 }

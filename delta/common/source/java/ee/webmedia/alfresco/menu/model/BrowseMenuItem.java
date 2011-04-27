@@ -14,6 +14,7 @@ import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamAsAttribute;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.component.MenuItemWrapper;
 import ee.webmedia.alfresco.menu.ui.component.YahooTreeItem;
@@ -37,7 +38,7 @@ public class BrowseMenuItem extends MenuItem {
     }
 
     @Override
-    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService) {
+    public UIComponent createComponent(FacesContext context, String id, UserService userService, WorkflowService workflowService, EInvoiceService einvoiceService) {
         if (isRestricted() && !hasPermissions(userService)) {
             return null;
         }

@@ -49,6 +49,7 @@
          <show-property name="docsearch:input" display-label-id="document_search_input" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:regDateTimeBegin" display-label-id="document_regDateTime2" component-generator="InlinePropertyGroupGenerator" props="docsearch:regDateTimeBegin||styleClass=date,docsearch:regDateTimeEnd||styleClass=date" textId="document_search_from_to" />
          <show-property name="docsearch:regNumber" display-label-id="document_regNumber2" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         <show-property name="docsearch:shortRegNumber" display-label-id="document_shortRegNumber" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:documentType" display-label-id="document_docType" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchBean.getDocumentTypes}" converter="ee.webmedia.alfresco.common.propertysheet.converter.QNameConverter" />
          <show-property name="docsearch:function" display-label-id="function" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getFunctions}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" valueChangeListener="#{DocumentSearchDialog.functionValueChanged}" />
          <show-property name="docsearch:series" display-label-id="series" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getSeries}" converter="ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter" valueChangeListener="#{DocumentSearchDialog.seriesValueChanged}" />
@@ -90,7 +91,12 @@
          <show-property name="docsearch:coResponsibles" display-label-id="document_coResponsibles" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:contactPerson" display-label-id="document_contactPerson" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:procurementType" display-label-id="document_procurementType" component-generator="ClassificatorSelectorGenerator" classificatorName="procurementType" />
-         <show-property name="docsearch:output" display-label-id="document_search_output" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getSearchOutput}" />
+         <show-property name="docsearch:invoiceNumber" display-label-id="document_invoiceNumber" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         <show-property name="docsearch:invoiceDateBegin" display-label-id="document_invoiceDate" component-generator="InlinePropertyGroupGenerator" props="docsearch:invoiceDateBegin||styleClass=date,docsearch:invoiceDateEnd||styleClass=date" textId="document_search_from_to" />
+         <show-property name="docsearch:sellerPartyName" display-label-id="document_sellerPartyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{DocumentSearchDialog.setSellerPartyName}" dialogTitleId="contacts_search_title" />
+         <show-property name="docsearch:sellerPartyRegNumber" display-label-id="document_sellerPartyRegNumber" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         <show-property name="docsearch:totalSumLowest" display-label-id="document_totalSum" optionsSeparator="¤" component-generator="InlinePropertyGroupGenerator" props="docsearch:totalSumLowest¤¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤styleClass=medium,docsearch:totalSumHighest¤¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤styleClass=medium" textId="document_search_from_to" />
+         <show-property name="docsearch:output" display-label-id="document_search_output" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getSearchOutput}" />         
       </property-sheet>
    </config>
 

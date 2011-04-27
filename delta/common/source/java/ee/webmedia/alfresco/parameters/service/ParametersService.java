@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.parameters.service;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean;
 import ee.webmedia.alfresco.parameters.model.Parameter;
@@ -58,5 +59,13 @@ public interface ParametersService {
     void applicationStarted();
 
     void addParameterRescheduledJob(ParameterRescheduledTriggerBean job);
+
+    /**
+     * Returns map indexed by parameter values (meaning in case of equal values only one value is returned)
+     * 
+     * @param collection
+     * @return
+     */
+    Map<String, Parameters> getSwappedStringParameters(Collection<Parameters> collection);
 
 }

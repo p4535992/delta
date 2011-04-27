@@ -214,4 +214,19 @@ public interface DocumentSearchService {
      */
     List<Authority> searchAuthorityGroups(String groupName, boolean returnAllGroups);
 
+    List<Document> searchSimilarInvoiceDocuments(String regNumber, String invoiceNumber, Date invoiceDate);
+
+    /**
+     * @param firstName - in case firstName is null or empty, search users only by lastName
+     * @param lastName
+     * @return
+     */
+    List<NodeRef> searchUsersByFirstNameLastName(String firstName, String lastName);
+
+    List<Document> searchContractsByRegNumber(String regNumber);
+
+    List<Document> searchInvoiceBaseDocuments(String contractNumber, String sellerPartyName);
+
+    List<Document> searchInvoicesWithEmptySapAccount();
+
 }
