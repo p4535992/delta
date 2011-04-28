@@ -278,12 +278,16 @@ public class UserServiceImpl implements UserService {
         try {
             Set<String> users = new HashSet<String>();
             for (ResultSetRow resultSetRow : resultSet) {
-                Serializable strStructUnit = resultSetRow.getValue(ContentModel.PROP_ORGID);
+            	NodeRef personRef = resultSetRow.getNodeRef();
+				if (!nodeService.exists(personRef)) {
+					continue;
+				}
+                String strStructUnit = (String) nodeService.getProperty(personRef, ContentModel.PROP_ORGID);
                 Integer structUnit = null;
-                if (StringUtils.isNotBlank((String) strStructUnit)) {
-                    structUnit = Integer.valueOf(strStructUnit.toString());
+                if (StringUtils.isNotBlank(strStructUnit)) {
+                    structUnit = Integer.valueOf(strStructUnit);
                     if (structUnits.contains(structUnit)) {
-                        String userName = (String) resultSetRow.getValue(ContentModel.PROP_USERNAME);
+                        String userName = (String) nodeService.getProperty(personRef, ContentModel.PROP_USERNAME);
                         Assert.notNull(userName);
                         users.add(userName);
                     }
