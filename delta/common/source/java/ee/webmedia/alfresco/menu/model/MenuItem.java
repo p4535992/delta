@@ -11,6 +11,7 @@ import java.util.ResourceBundle;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIParameter;
 import javax.faces.context.FacesContext;
+import javax.faces.el.MethodBinding;
 
 import org.alfresco.config.Config;
 import org.alfresco.i18n.I18NUtil;
@@ -130,7 +131,14 @@ public class MenuItem implements Serializable {
         }
         link.setValue(getTitle());
         link.setTooltip(getTitle());
-        link.setAction(new ConstantMethodBinding(getOutcome()));
+        String outcome2 = getOutcome();
+        final MethodBinding mb;
+        if (StringUtils.startsWith(outcome2, "#{")) {
+            mb = application.createMethodBinding(outcome2, new Class[] {});
+        } else {
+            mb = new ConstantMethodBinding(outcome2);
+        }
+        link.setAction(mb);
         if (!getActionListener().equals("")) {
             link.setActionListener(application.createMethodBinding(getActionListener(), new Class[] { javax.faces.event.ActionEvent.class }));
         }
@@ -152,7 +160,7 @@ public class MenuItem implements Serializable {
 
         Config config = Application.getConfigService(context).getGlobalConfig();
         ActionDefinition actionDef = ((ActionsConfigElement) config.getConfigElement(ActionsConfigElement.CONFIG_ELEMENT_ID))
-                .getActionDefinition(getOutcome());
+                .getActionDefinition(outcome2);
 
         // Check, if there is config for this action and overwrite properties if available
         if (actionDef != null) {
