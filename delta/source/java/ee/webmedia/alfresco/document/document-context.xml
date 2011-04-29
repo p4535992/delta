@@ -329,7 +329,7 @@
    <bean id="documentPrivilegesUpdater" class="ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesUpdater" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
       <property name="name" value="documentPrivilegesUpdater" />
-      <property name="executeOnceOnly" value="true" />
+      <property name="executeOnceOnly" value="false" />
       <property name="dependsOn">
          <list>
             <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
@@ -346,12 +346,13 @@
       <property name="fileService" ref="FileService" />
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
+      <property name="limitForTesting" value="${updater.limitForTesting}" />
    </bean>
 
    <bean id="documentPrivilegesInArchiveUpdater" class="ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesInArchiveUpdater" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
       <property name="name" value="documentPrivilegesInArchiveUpdater" />
-      <property name="executeOnceOnly" value="true" />
+      <property name="executeOnceOnly" value="false" />
       <property name="dependsOn">
          <list>
             <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
@@ -369,6 +370,7 @@
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
       <property name="enabled" value="${updater.archive.enabled}" />
+      <property name="limitForTesting" value="${updater.limitForTesting}" />
    </bean>
 
    <!-- Used to add searchable properties to imported document (CL task 143388) -->
@@ -431,7 +433,7 @@
    <bean id="shortRegNumberUpdater" class="ee.webmedia.alfresco.document.bootstrap.ShortRegNumberUpdater" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
       <property name="name" value="shortRegNumberUpdater" />
-      <property name="executeOnceOnly" value="true" />
+      <property name="executeOnceOnly" value="false" />
       <property name="dependsOn">
          <list>
             <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
@@ -441,13 +443,14 @@
       <property name="searchService" ref="searchService" />
       <property name="nodeService" ref="nodeService" />
       <property name="generalService" ref="generalService" />
+      <property name="limitForTesting" value="${updater.limitForTesting}" />
    </bean> 
 
    <!-- Populates shortRegNumber field for registered documents. Updates only ArchivalsStore. -->
    <bean id="shortRegNumberInArchiveUpdater" class="ee.webmedia.alfresco.document.bootstrap.ShortRegNumberInArchiveUpdater" parent="module.baseComponent" >
       <property name="moduleId" value="simdhs" />
       <property name="name" value="shortRegNumberInArchiveUpdater" />
-      <property name="executeOnceOnly" value="true" />
+      <property name="executeOnceOnly" value="false" />
       <property name="dependsOn">
          <list>
             <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
@@ -458,6 +461,7 @@
       <property name="nodeService" ref="nodeService" />
       <property name="generalService" ref="generalService" />
       <property name="enabled" value="${updater.archive.enabled}" />
+      <property name="limitForTesting" value="${updater.limitForTesting}" />
    </bean> 
 
    <!-- Perform document model changes that were introduced in 2.1, on existing data -->

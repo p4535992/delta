@@ -6,6 +6,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -76,10 +77,22 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
         REVIEW_OWNER_PRIVILEGES.add(Privileges.EDIT_DOCUMENT_FILES);
     }
 
+    private boolean limitForTesting = false;
+
+    @SuppressWarnings("deprecation")
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
-        String query = SearchUtil.joinQueryPartsAnd(Arrays.asList(SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT)
-                , generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)));
+        List<String> queryParts = new ArrayList<String>();
+        queryParts.add(SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
+        queryParts.add(generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
+        if (limitForTesting) {
+        	// documents created between 01.02.2011 and now
+            // or documents registered between 01.01.2010 and 28.02.2010
+            queryParts.add(SearchUtil.joinQueryPartsOr(Arrays.asList(SearchUtil.generateDatePropertyRangeQuery(new Date(111, 1, 1), null, ContentModel.PROP_CREATED),
+                    SearchUtil.generateDatePropertyRangeQuery(new Date(110, 0, 1), new Date(110, 1, 28), DocumentCommonModel.Props.REG_DATE_TIME))));
+        }
+		String query = SearchUtil.joinQueryPartsAnd(queryParts);
+		log.info("Search query: " + query);
         Set<StoreRef> stores = getStores();
         List<ResultSet> result = new ArrayList<ResultSet>(stores.size());
         for (StoreRef storeRef : stores) {
@@ -210,6 +223,10 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
 
     public void setFileService(FileService fileService) {
         this.fileService = fileService;
+    }
+
+    public void setLimitForTesting(boolean limitForTesting) {
+        this.limitForTesting = limitForTesting;
     }
 
 }

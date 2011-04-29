@@ -9,6 +9,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.utils.SearchUtil;
 
 /**
  * Populates shortRegNr field for registered documents. Updates only SpacesStore.
@@ -39,14 +41,23 @@ public class ShortRegNumberUpdater extends AbstractNodeUpdater {
     private SearchService searchService;
     protected GeneralService generalService;
 
+    private boolean limitForTesting = false;
+
+    @SuppressWarnings("deprecation")
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
-        String query = joinQueryPartsAnd(Arrays.asList(
-                generateTypeQuery(DocumentCommonModel.Types.DOCUMENT),
-                generateStringNotEmptyQuery(DocumentCommonModel.Props.REG_NUMBER),
-                generatePropertyNullQuery(DocumentCommonModel.Props.SHORT_REG_NUMBER)
-                ));
-
+        List<String> queryParts = new ArrayList<String>();
+        queryParts.add(generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
+        queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.REG_NUMBER));
+        queryParts.add(generatePropertyNullQuery(DocumentCommonModel.Props.SHORT_REG_NUMBER));
+        if (limitForTesting) {
+            // documents created between 01.02.2011 and now
+            // or documents registered between 01.01.2010 and 28.02.2010
+            queryParts.add(SearchUtil.joinQueryPartsOr(Arrays.asList(SearchUtil.generateDatePropertyRangeQuery(new Date(111, 1, 1), null, ContentModel.PROP_CREATED),
+                    SearchUtil.generateDatePropertyRangeQuery(new Date(110, 0, 1), new Date(110, 1, 28), DocumentCommonModel.Props.REG_DATE_TIME))));
+        }
+        String query = joinQueryPartsAnd(queryParts);
+        log.info("Search query: " + query);
         Set<StoreRef> stores = getStores();
         List<ResultSet> result = new ArrayList<ResultSet>(stores.size());
         for (StoreRef storeRef : stores) {
@@ -89,6 +100,10 @@ public class ShortRegNumberUpdater extends AbstractNodeUpdater {
 
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
+    }
+
+    public void setLimitForTesting(boolean limitForTesting) {
+        this.limitForTesting = limitForTesting;
     }
 
 }
