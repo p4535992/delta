@@ -51,10 +51,10 @@ public class ShortRegNumberUpdater extends AbstractNodeUpdater {
         queryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.REG_NUMBER));
         queryParts.add(generatePropertyNullQuery(DocumentCommonModel.Props.SHORT_REG_NUMBER));
         if (limitForTesting) {
-            // documents created between 01.02.2011 and now
-            // or documents registered between 01.01.2010 and 28.02.2010
-            queryParts.add(SearchUtil.joinQueryPartsOr(Arrays.asList(SearchUtil.generateDatePropertyRangeQuery(new Date(111, 1, 1), null, ContentModel.PROP_CREATED),
-                    SearchUtil.generateDatePropertyRangeQuery(new Date(110, 0, 1), new Date(110, 1, 28), DocumentCommonModel.Props.REG_DATE_TIME))));
+            // documents created between 01.03.2011 and now
+            // or documents registered between 01.01.2010 and 31.01.2010
+            queryParts.add(SearchUtil.joinQueryPartsOr(Arrays.asList(SearchUtil.generateDatePropertyRangeQuery(new Date(111, 2, 1), null, ContentModel.PROP_CREATED),
+                    SearchUtil.generateDatePropertyRangeQuery(new Date(110, 0, 1), new Date(110, 0, 31), DocumentCommonModel.Props.REG_DATE_TIME))));
         }
         String query = joinQueryPartsAnd(queryParts);
         log.info("Search query: " + query);

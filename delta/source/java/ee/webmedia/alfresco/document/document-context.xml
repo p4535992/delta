@@ -345,7 +345,7 @@
       <property name="documentService" ref="DocumentService" />
       <property name="fileService" ref="FileService" />
       <property name="workflowService" ref="WmWorkflowService" />
-      <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
+      <property name="batchSize" value="25" /><!-- for each document all tasks are considered and all related documents -->
       <property name="limitForTesting" value="${updater.limitForTesting}" />
    </bean>
 
@@ -368,7 +368,7 @@
       <property name="documentService" ref="DocumentService" />
       <property name="fileService" ref="FileService" />
       <property name="workflowService" ref="WmWorkflowService" />
-      <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
+      <property name="batchSize" value="25" /><!-- for each document all tasks are considered and all related documents -->
       <property name="enabled" value="${updater.archive.enabled}" />
       <property name="limitForTesting" value="${updater.limitForTesting}" />
    </bean>
