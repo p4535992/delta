@@ -76,6 +76,8 @@ import org.alfresco.service.cmr.repository.CopyService;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -108,6 +110,7 @@ import ee.webmedia.alfresco.classificator.enums.LeaveType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
+import ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesUpdater;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.GeneratedFileType;
 import ee.webmedia.alfresco.document.file.service.FileService;
@@ -182,6 +185,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     private WorkflowService workflowService;
     private DocumentLogService documentLogService;
     private PrivilegeService privilegeService;
+    private AuthorityService authorityService;
     private PermissionService permissionService;
     protected SendOutService sendOutService;
     private UserService userService;
@@ -1129,7 +1133,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         }
     }
 
-    public void setDocumentSpecificProperties(QName followupType, Node doc, Map<String, Object> followUpProps, Map<String, Object> initProps,
+    private void setDocumentSpecificProperties(QName followupType, Node doc, Map<String, Object> followUpProps, Map<String, Object> initProps,
             Set<String> propsToCopy) {
         QName baseDocType = doc.getType();
         if (DocumentTypeHelper.isInstrumentOfDeliveryAndReciept(followupType)
@@ -1165,7 +1169,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 propsToCopy.add(DocumentSpecificModel.Props.TRANSMITTAL_MODE.toString());
             }
         }
-        if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(baseDocType)) {
+        if (DocumentTypeHelper.isOutgoingLetter(baseDocType)) {
+            Map<QName, Serializable> userProps = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
+            userService.setOwnerPropsFromUser2(followUpProps, userProps);
+        }
+        if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(baseDocType)) { // only OUTGOING_LETTER not OUTGOING_LETTER_*
             propsToCopy.addAll(Arrays.asList(
                     DocumentSpecificModel.Props.SENDER_REG_NUMBER.toString()
                     , DocumentSpecificModel.Props.SENDER_REG_DATE.toString()
@@ -1174,8 +1182,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                     , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.toString()
                     , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.toString()
                     ));
-            propsToCopy.addAll(DocumentPropertySets.ownerProperties);
-            if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(followupType)) {
+            if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(followupType)) { // only OUTGOING_LETTER not OUTGOING_LETTER_*
                 propsToCopy.add(DocumentCommonModel.Props.SIGNER_NAME.toString());
                 propsToCopy.add(DocumentCommonModel.Props.SIGNER_JOB_TITLE.toString());
             }
@@ -2815,7 +2822,15 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             privilegeService.addPrivilege(docRef, docProps, DocumentCommonModel.Types.DOCUMENT, userName
                     , DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES);
         }
-        return usersAndGroups.getSecond();
+        Set<String> groups = usersAndGroups.getSecond();
+        final QName addPrivListener = DocumentCommonModel.Types.DOCUMENT;
+        for (String group : groups) {
+            Set<String> authorities = authorityService.getContainedAuthorities(AuthorityType.USER, group, true);
+            for (String authority : authorities) {
+                privilegeService.addPrivilege(docRef, docProps, addPrivListener, authority, group, DocumentPrivilegesUpdater.SERIES_GROUPMEMBERS_PRIVILEGES);
+            }
+        }
+        return groups;
     }
 
     @Override
@@ -2913,6 +2928,10 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     public void setPrivilegeService(PrivilegeService privilegeService) {
         this.privilegeService = privilegeService;
+    }
+
+    public void setAuthorityService(AuthorityService authorityService) {
+        this.authorityService = authorityService;
     }
 
     public void setPermissionService(PermissionService permissionService) {

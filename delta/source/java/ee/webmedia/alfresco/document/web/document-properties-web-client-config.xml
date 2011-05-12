@@ -124,14 +124,14 @@
          <show-property name="docspec:sellerPartyName" styleClass="expand19-200 medium" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchOrgContacts}" setterCallback="#{MetadataBlockBean.setSellerPartyName}" suggestChars="3" dialogTitleId="contacts_search_title" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" ajaxParentLevel="1" />
          <show-property name="docspec:sellerPartyRegNumber" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:sellerPartySapAccount" styleClass="expand19-200 medium" editable="false" />
-         <show-property name="docspec:sellerPartyContactName" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
+         <show-property name="docspec:sellerPartyContactName" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
          <show-property name="docspec:sellerPartyContactPhoneNumber" styleClass="width250" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:sellerPartyContactEmailAddress" styleClass="medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" labelStyleClass="wrap" />
          <show-property name="{temp}invoiceNumberDate" show-in-edit-mode="false" display-label-id="document_invoiceNumberDate" />
          <show-property name="docspec:invoiceDate" component-generator="DatePickerGenerator" show-in-view-mode="false" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:invoiceNumber" show-in-view-mode="false" styleClass="medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:invoiceType" component-generator="ClassificatorSelectorGenerator" classificatorName="invoiceTypes" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
-         <show-property name="docspec:invoiceDueDate" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:invoiceDueDate" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" forcedMandatory="true" />
          <show-property name="docspec:paymentTerm" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
          <show-property name="docspec:totalSum" styleClass="medium invoiceTotalSum" forcedMandatory="true" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:vat" styleClass="medium invoiceVat" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
@@ -266,7 +266,7 @@
          <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
              docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
-            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
+            ,docspec:errandEndDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
             "
          />
       </property-sheet>
@@ -543,7 +543,7 @@
          <show-property name="docspec:errandBeginDate" display-label-id="document_errand_errandDates_title" textId="document_eventDates_templateText" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" 
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" forcedMandatory="true" props="
              docspec:errandBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
-            ,docspec:errandEndDate¤¤styleClass=date inline errandEndDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
+            ,docspec:errandEndDate¤¤styleClass=date inline errandReportDateBase¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤forcedMandatory=true
             "
          />
       </property-sheet>

@@ -10,7 +10,7 @@ public interface WorkflowSpecificModel {
     String PREFIX = "wfs:";
 
     /** Workflows that can be started in parallel when they are consecutively in the compoundWorkflow (workflow status can be {@link Status#IN_PROGRESS}) */
-    public QName[] canStartParallel = new QName[] { WorkflowSpecificModel.Types.OPINION_WORKFLOW
+    public QName[] CAN_START_PARALLEL = new QName[] { WorkflowSpecificModel.Types.OPINION_WORKFLOW
             , WorkflowSpecificModel.Types.INFORMATION_WORKFLOW, WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW };
 
     interface Types {

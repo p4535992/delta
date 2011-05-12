@@ -8,9 +8,10 @@
 <%@ page isELIgnored="false"%>
 
 
+<%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
+<%@page import="ee.webmedia.alfresco.functions.model.FunctionsModel"%>
 <%@page import="ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog"%>
-<%@page import="org.alfresco.web.app.servlet.FacesHelper"%>
-<%@page import="javax.faces.context.FacesContext"%>
+<%@page import="org.apache.commons.lang.StringEscapeUtils"%>
 <a:panel id="metadata-panel" label="#{msg.functions_list}" styleClass="panel-100" progressive="true">
    <r:propertySheetGrid id="fn-metadata" value="#{DialogManager.bean.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" binding="#{FunctionsDetailsDialog.propertySheet}" />
 </a:panel>
@@ -18,7 +19,7 @@
 <script type="text/javascript">
 
    function postProcessButtonState(){
-      var status = "</f:verbatim><h:outputText value="#{FunctionsDetailsDialog.currentNode.properties['{http://alfresco.webmedia.ee/model/functions/1.0}status']}" /><f:verbatim>";
+      var status = '<%= StringEscapeUtils.escapeJavaScript((String)BeanHelper.getFunctionsDetailsDialog().getCurrentNode().getProperties().get(FunctionsModel.Props.STATUS)) %>';
       processFnSerVolCaseCloseButton(status);
       processFnReopenButton(status);
    }
@@ -34,7 +35,7 @@
 </script>
 </f:verbatim>
 <%
-   final boolean isNew = ((FunctionsDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "FunctionsDetailsDialog")).isNew();
+   final boolean isNew = BeanHelper.getFunctionsDetailsDialog().isNew();
    if(isNew) {
 %>
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-close-button.jsp" />

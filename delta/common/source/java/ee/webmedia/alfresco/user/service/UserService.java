@@ -100,10 +100,10 @@ public interface UserService {
     String getUserFullName();
 
     /**
-     * Returns full name of the specified user.
+     * Returns full name of the specified user. If user doesn't have full name, returns username.
      * 
      * @param userName
-     * @return
+     * @return full name of user or {@code null} if user does not exist
      */
     String getUserFullName(String userName);
 
@@ -141,6 +141,8 @@ public interface UserService {
     boolean isGroupsEditingAllowed();
 
     void setOwnerPropsFromUser(Map<QName, Serializable> docProps, Map<QName, Serializable> userProps);
+
+    void setOwnerPropsFromUser2(Map<String, Object> docProps, Map<QName, Serializable> userProps);
 
     String getAccountantsGroup();
 

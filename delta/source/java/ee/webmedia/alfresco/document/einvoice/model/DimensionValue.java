@@ -8,7 +8,9 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
-public class DimensionValue {
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorValueProvider;
+
+public class DimensionValue implements Comparable<DimensionValue>, ClassificatorSelectorValueProvider {
 
     private final Node node;
 
@@ -85,5 +87,28 @@ public class DimensionValue {
                 && StringUtils.equals(getValueComment(), otherDimensionValue.getValueComment())
                 && StringUtils.equals(getValueName(), otherDimensionValue.getValueName())
                 && nullSafeEquals(getDefaultValue(), otherDimensionValue.getDefaultValue());
+    }
+
+    @Override
+    public boolean isByDefault() {
+        return getDefaultValue();
+    }
+
+    @Override
+    public String getClassificatorDescription() {
+        return getValueComment();
+    }
+
+    @Override
+    public int compareTo(DimensionValue o) {
+        if (getValueName() == null) {
+            return -1;
+        }
+        return getValueName().compareToIgnoreCase(o.getValueName());
+    }
+
+    @Override
+    public String getSelectorValueName() {
+        return getValueName();
     }
 }

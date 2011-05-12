@@ -786,7 +786,7 @@ $jQ(document).ready(function() {
 	   }
    });
    
-   $jQ(".errandEndDate").live('change', function (event) {
+   $jQ(".errandReportDateBase").live('change', function (event) {
       // Get the date
       var elem = $jQ(this);
       if (elem != null) {
@@ -960,9 +960,53 @@ $jQ(document).ready(function() {
       }
       invoiceSum.val(round(invoiceTotalSum - invoiceVat, 2));
    });
+   
+   toggleSubrow.init();
+   toggleSubrowToggle.init();
 
    handleHtmlLoaded(null, selects);
 });
+
+var toggleSubrowToggle = {
+      init : function(){
+         $jQ(".trans-subrow-toggle").children("a").click(this.clickIt);
+      },
+      clickIt : function(){
+         var table = $jQ(this).parent().nextAll("div.trans-scroll:first").find("table:first");
+         var anchor = table.find("td.trans-toggle-subrow").find("a");
+         var subrow = table.find(".trans-subrow");
+
+         if($jQ(this).hasClass("open")) {
+            subrow.css("display","");
+            anchor.addClass("open");
+         }
+         else {
+            subrow.css("display","none");
+            anchor.removeClass("open");
+         }
+         return false;
+      }
+};
+var toggleSubrow = {
+      init : function(){
+         $jQ("td.trans-toggle-subrow").children("a").click(this.clickIt);
+      },
+      clickIt : function(){
+         var anchor = $jQ(this);
+         var row    = anchor.parents("tr:eq(0)");
+         var subrow = row.next("tr.trans-subrow");
+
+         if(subrow.is(":hidden")) {
+            subrow.css("display","");
+            anchor.addClass("open");
+         }
+         else {
+            subrow.css("display","none");
+            anchor.removeClass("open");
+         }
+         return false;
+      }
+};
 
 function getFloatOrNull(originalSumString){
    var sumString = originalSumString.replace(",", ".");

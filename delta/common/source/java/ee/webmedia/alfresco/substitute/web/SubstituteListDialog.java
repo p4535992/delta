@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.substitute.web;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +18,9 @@ import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.util.GUID;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Repository;
+import org.apache.commons.collections.Transformer;
+import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -63,8 +67,15 @@ public class SubstituteListDialog extends BaseDialogBean {
         this.userNodeRef = userNodeRef;
     }
 
+    @SuppressWarnings("unchecked")
     public void refreshData() {
         substitutes = getSubstituteService().getSubstitutes(userNodeRef);
+        Collections.sort(substitutes, new TransformingComparator(new Transformer() {
+            @Override
+            public Object transform(Object input) {
+                return ((Substitute) input).getSubstitutionStartDate();
+            }
+        }, new NullComparator()));
         originalSubstitutes = new HashMap<String, Substitute>();
         emailAddresses = new HashMap<String, String>();
         for (Substitute substitute : substitutes) {

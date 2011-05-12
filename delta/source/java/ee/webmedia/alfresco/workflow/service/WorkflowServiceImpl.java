@@ -27,7 +27,6 @@ import java.util.Set;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
-import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -36,7 +35,6 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
@@ -57,12 +55,14 @@ import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowActiveResponsibleTaskException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
+import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel.Types;
 import ee.webmedia.alfresco.workflow.service.event.BaseWorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEvent;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
@@ -577,7 +577,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public Pair<MessageDataWrapper, CompoundWorkflow> delegate(Task assignmentTaskOriginal) {
+    public MessageDataWrapper delegate(Task assignmentTaskOriginal) throws UnableToPerformMultiReasonException {
         MessageDataWrapper feedback = new MessageDataWrapper();
         Workflow workflowOriginal = assignmentTaskOriginal.getParent();
         CompoundWorkflow cWorkflowOriginal = workflowOriginal.getParent();
@@ -652,18 +652,13 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             }
         }
 
-        CompoundWorkflow savedCompoundWorkflow = null;
-        if (!feedback.hasErrors()) {
-            savedCompoundWorkflow = saveCompoundWorkflow(cWorkflowCopy, queue);
-
-            AssignmentWorkflow assignmentWorkflowSaved = (AssignmentWorkflow) savedCompoundWorkflow.getWorkflows().get(originalWFIndex);
-            List<Task> assignmentWorkflowSavedTasks = assignmentWorkflowSaved.getTasks();
-            List<NodeRef> delegateAssignmentTaskRefs = new ArrayList<NodeRef>(delegateAssignmentTaskIndexes.size());
-            for (Integer taskIndex : delegateAssignmentTaskIndexes) {
-                delegateAssignmentTaskRefs.add(assignmentWorkflowSavedTasks.get(taskIndex).getNode().getNodeRef());
-            }
+        if (feedback.hasErrors()) {
+            throw new UnableToPerformMultiReasonException(feedback);
         }
-        return new Pair<MessageDataWrapper, CompoundWorkflow>(feedback, savedCompoundWorkflow);
+        CompoundWorkflow savedCompoundWorkflow = saveCompoundWorkflow(cWorkflowCopy, queue);
+
+        savedCompoundWorkflow.getWorkflows().get(originalWFIndex);
+        return feedback;
     }
 
     @Override
@@ -1563,19 +1558,73 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     private void setStatus(WorkflowEventQueue queue, Workflow workflow, Status status) {
         String formerWfStatus = workflow.getStatus();
         setStatusInner(queue, workflow, status);
-        if (!Status.IN_PROGRESS.equals(formerWfStatus) && workflow.isStatus(Status.IN_PROGRESS)) {
+        if (Status.IN_PROGRESS == statusChanged(workflow, formerWfStatus)) {
             if (Status.STOPPED.equals(formerWfStatus)) {
                 continueTasks(queue, workflow);
             }
-            if (workflow.isType(WorkflowSpecificModel.canStartParallel)) {
+            unfinishTasksIfNeeded(queue, workflow);
+
+            if (workflow.isType(WorkflowSpecificModel.CAN_START_PARALLEL)) {
                 for (Workflow oWF : workflow.getParent().getWorkflows()) {
-                    if (oWF.isType(WorkflowSpecificModel.canStartParallel) && !oWF.isStatus(Status.IN_PROGRESS, Status.FINISHED)) {
+                    if (oWF.isType(WorkflowSpecificModel.CAN_START_PARALLEL) && !oWF.isStatus(Status.IN_PROGRESS, Status.FINISHED)) {
                         setStatus(queue, oWF, Status.IN_PROGRESS);
                         break;
                     } else if (oWF.isStatus(Status.NEW)) {
                         break; // workflows after new workflows shouldn't go to IN_PROGRESS status
                     }
                 }
+            }
+        }
+    }
+
+    private Status statusChanged(BaseWorkflowObject wfObject, String formerStatus) {
+        String newStatus = wfObject.getStatus();
+        if (!newStatus.equals(formerStatus)) {
+            return Status.of(newStatus);
+        }
+        return null;
+    }
+
+    private void unfinishTasksIfNeeded(WorkflowEventQueue queue, Workflow workflow) {
+        ReviewWorkflow sequentalReviewWorkflow = null;
+        if (workflow instanceof ReviewWorkflow && !workflow.isParallelTasks()) {
+            sequentalReviewWorkflow = (ReviewWorkflow) workflow;
+        }
+        if (sequentalReviewWorkflow != null || workflow.isType(Types.SIGNATURE_WORKFLOW)) {
+            CompoundWorkflow cWf = workflow.getParent();
+            List<Workflow> workflowsToFinish = new ArrayList<Workflow>();
+
+            addOtherCompundWorkflows(cWf);
+            List<CompoundWorkflow> cWorkflows = new ArrayList<CompoundWorkflow>(cWf.getOtherCompoundWorkflows());
+            cWorkflows.add(cWf);
+
+            for (CompoundWorkflow compoundWorkflow : cWorkflows) {
+                if (compoundWorkflow.isStatus(Status.NEW)) {
+                    continue;
+                }
+                for (Workflow workflow2 : compoundWorkflow.getWorkflows()) {
+                    if (workflow2.isStatus(Status.IN_PROGRESS, Status.NEW)) {
+                        boolean finishWF;
+                        if (sequentalReviewWorkflow != null) {
+                            finishWF = workflow2 instanceof ReviewWorkflow && workflow2.isParallelTasks();
+                        } else {
+                            finishWF = workflow2.isType(Types.REVIEW_WORKFLOW, Types.OPINION_WORKFLOW, Types.ASSIGNMENT_WORKFLOW, Types.DOC_REGISTRATION_WORKFLOW);
+                        }
+                        if (finishWF) {
+                            workflowsToFinish.add(workflow2);
+                        }
+                    }
+                }
+            }
+            log.debug("Unfinishing tasks of " + workflowsToFinish.size() + " workflows");
+            for (Workflow workflowToFinish : workflowsToFinish) {
+                for (Task taskToFinish : workflowToFinish.getTasks()) {
+                    if (!taskToFinish.isStatus(Status.FINISHED, Status.UNFINISHED)) {
+                        setTaskFinishedOrUnfinished(queue, taskToFinish, Status.UNFINISHED, "task_outcome_unfinished_movedOn", -1, true);
+                    }
+                }
+                setStatus(queue, workflowToFinish, Status.FINISHED);
+                saveWorkflow(queue, workflowToFinish);
             }
         }
     }
@@ -1666,7 +1715,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         setStatus(queue, task, newStatus);
         if (outcomeIndex == SIGNATURE_TASK_OUTCOME_NOT_SIGNED && WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(task.getNode().getType())) {
             stopIfNeeded(task, queue);
-        } else if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(task.getNode().getType())) {
+        } else if (task.isType(Types.REVIEW_TASK)) {
             // sometimes here value of TEMP_OUTCOME is Integer, sometimes String
             final Integer tempOutcome = DefaultTypeConverter.INSTANCE.convert(Integer.class, task.getProp(WorkflowSpecificModel.Props.TEMP_OUTCOME));
             if (tempOutcome != null && tempOutcome == REVIEW_TASK_OUTCOME_REJECTED) { // KAAREL: What is tempOutcome and why was it null?
@@ -1771,11 +1820,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private Map<QName, Serializable> getDefaultProperties(QName className) {
-        return getPropertiesIgnoringSystem(generalService.getDefaultProperties(className));
+        return RepoUtil.getPropertiesIgnoringSystem(generalService.getDefaultProperties(className), dictionaryService);
     }
 
     private Map<QName, Serializable> getNodeProperties(NodeRef nodeRef) {
-        return getPropertiesIgnoringSystem(nodeService.getProperties(nodeRef));
+        return RepoUtil.getPropertiesIgnoringSystem(nodeService.getProperties(nodeRef), dictionaryService);
     }
 
     private boolean createOrUpdate(WorkflowEventQueue queue, BaseWorkflowObject object, NodeRef parent, QName assocType) {
@@ -1854,37 +1903,9 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private Map<QName, Serializable> getSaveProperties(Map<QName, Serializable> props) {
-        Map<QName, Serializable> filteredProps = getPropertiesIgnoringSystem(props);
+        Map<QName, Serializable> filteredProps = RepoUtil.getPropertiesIgnoringSystem(props, dictionaryService);
         generalService.savePropertiesFiles(filteredProps);
         return filteredProps;
-    }
-
-    private Map<QName, Serializable> getPropertiesIgnoringSystem(Map<QName, Serializable> props) {
-        Map<QName, Serializable> filteredProps = new HashMap<QName, Serializable>(props.size());
-        for (QName qName : props.keySet()) {
-            addToPropsIfNotSystem(qName, props.get(qName), filteredProps);
-        }
-        return filteredProps;
-    }
-
-    private void addToPropsIfNotSystem(QName qname, Serializable value, Map<QName, Serializable> props) {
-        // ignore system and contentModel properties
-        if (RepoUtil.isSystemProperty(qname)) {
-            return;
-        }
-        // check for empty strings when using number types, set to null in this case
-        if ((value != null) && (value instanceof String) && (value.toString().length() == 0)) {
-            PropertyDefinition propDef = dictionaryService.getProperty(qname);
-            if (propDef != null) {
-                if (propDef.getDataType().getName().equals(DataTypeDefinition.DOUBLE) ||
-                        propDef.getDataType().getName().equals(DataTypeDefinition.FLOAT) ||
-                        propDef.getDataType().getName().equals(DataTypeDefinition.INT) ||
-                        propDef.getDataType().getName().equals(DataTypeDefinition.LONG)) {
-                    value = null;
-                }
-            }
-        }
-        props.put(qname, value);
     }
 
     private static WorkflowEventQueue getNewEventQueue() {

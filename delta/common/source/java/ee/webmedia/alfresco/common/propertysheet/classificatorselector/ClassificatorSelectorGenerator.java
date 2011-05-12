@@ -45,39 +45,37 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
             return selectComponent;
         }
         // for debugging purpose in development
-        return ComponentUtil.setTooltip(selectComponent, MessageUtil.getMessage("classificator_source", getClassificatorName()));
+        return ComponentUtil.setTooltip(selectComponent, MessageUtil.getMessage("classificator_source", getValueProviderName()));
     }
 
     @Override
     protected List<UISelectItem> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
             PropertyDefinition propertyDef, UIInput component, Object boundValue, boolean multiValued) {
 
-        String classificatorName = getClassificatorName();
-        if (StringUtils.isBlank(classificatorName)) {
+        String valueProviderName = getValueProviderName();
+        if (StringUtils.isBlank(valueProviderName)) {
             return null;
         }
 
-        List<ClassificatorValue> classificators //
-        = getClassificatorService().getActiveClassificatorValues(getClassificatorService().getClassificatorByName(classificatorName));
-        List<UISelectItem> results = new ArrayList<UISelectItem>(classificators.size() + 1);
+        List<ClassificatorSelectorValueProvider> valueProviders = getSelectorValueProviders(valueProviderName);
+        List<UISelectItem> results = new ArrayList<UISelectItem>(valueProviders.size() + 1);
 
-        Collections.sort(classificators);
-        ClassificatorValue defaultOrExistingValue = null;
+        ClassificatorSelectorValueProvider defaultOrExistingValue = null;
         String existingValue = boundValue instanceof String ? (String) boundValue : null;
         if (!multiValued && existingValue == null) {
             existingValue = getGeneralService().getExistingRepoValue4ComponentGenerator();
         }
         boolean isSingleValued = isSingleValued(context, multiValued); //
-        for (ClassificatorValue classificator : classificators) {
+        for (ClassificatorSelectorValueProvider classificator : valueProviders) {
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
             if (isDescriptionAsLabel()) {
                 selectItem.setItemLabel(classificator.getClassificatorDescription());
             } else {
-                selectItem.setItemLabel(classificator.getValueName());
+                selectItem.setItemLabel(classificator.getSelectorValueName());
             }
             // Convert value so validation doesn't fail
-            selectItem.setItemValue(RendererUtils.getConvertedUIOutputValue(context, component, classificator.getValueName())); // must not be null or empty
-            if (isSingleValued && ((existingValue != null && StringUtils.equals(existingValue, classificator.getValueName())) // prefer existing value..
+            selectItem.setItemValue(RendererUtils.getConvertedUIOutputValue(context, component, classificator.getSelectorValueName())); // must not be null or empty
+            if (isSingleValued && ((existingValue != null && StringUtils.equals(existingValue, classificator.getSelectorValueName())) // prefer existing value..
                     || (existingValue == null && classificator.isByDefault()))) { // .. to default value
                 component.setValue(selectItem.getItemValue()); // make the selection
                 defaultOrExistingValue = classificator;
@@ -94,7 +92,15 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
         return results;
     }
 
-    protected String getClassificatorName() {
+    protected List<ClassificatorSelectorValueProvider> getSelectorValueProviders(String classificatorName) {
+        List<ClassificatorValue> classificatorValues //
+        = getClassificatorService().getActiveClassificatorValues(getClassificatorService().getClassificatorByName(classificatorName));
+        Collections.sort(classificatorValues);
+        List<ClassificatorSelectorValueProvider> valueProviders = new ArrayList<ClassificatorSelectorValueProvider>(classificatorValues);
+        return valueProviders;
+    }
+
+    protected String getValueProviderName() {
         return getCustomAttributes().get(ATTR_CLASSIFICATOR_NAME);
     }
 

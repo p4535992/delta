@@ -305,13 +305,13 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         return signedDoc.prepareSignature(sert, null, null);
     }
 
-    private SignatureItemsAndDataItems getDataItemsAndSignatureItems(SignedDoc ddoc, NodeRef nodeRef, boolean includeData) throws DigiDocException {
+    private SignatureItemsAndDataItems getDataItemsAndSignatureItems(SignedDoc ddoc, NodeRef nodeRef, boolean includeData) {
         List<SignatureItem> signatureItems = getSignatureItems(nodeRef, ddoc);
         List<DataItem> dataItems = getDataItems(nodeRef, ddoc, includeData);
         return new SignatureItemsAndDataItems(signatureItems, dataItems);
     }
 
-    private DataItem getDataItem(NodeRef nodeRef, SignedDoc ddoc, int id, boolean includeData) throws DigiDocException {
+    private DataItem getDataItem(NodeRef nodeRef, SignedDoc ddoc, int id, boolean includeData) {
         DataFile dataFile = ddoc.getDataFile(id);
         String fileName = dataFile.getFileName();
         String mimeType = dataFile.getMimeType();
@@ -325,7 +325,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         return new DataItem(nodeRef, id, fileName, guessedMimetype, dataFile.getInitialCodepage(), dataFile.getSize());
     }
 
-    private List<DataItem> getDataItems(NodeRef nodeRef, SignedDoc ddoc, boolean includeData) throws DigiDocException {
+    private List<DataItem> getDataItems(NodeRef nodeRef, SignedDoc ddoc, boolean includeData) {
         int filesNumber = ddoc.countDataFiles();
         List<DataItem> items = new ArrayList<DataItem>(filesNumber);
         for (int i = 0; i < filesNumber; ++i) {
@@ -394,7 +394,9 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             for (int j = 0; j < claimedRolesNumber; ++j) {
                 roles.add(signedProperties.getClaimedRole(j));
             }
-            Date signingTime = signedProperties.getSigningTime();
+            // signedProperties.getSigningTime() - when digest is computed, before PIN2 dialog is displayed
+            // unsignedProperties().getNotary().getProducedAt(); - after PIN2 is entered and OCSP is acquired - DigiDocClient also uses this
+            Date signingTime = signature.getUnsignedProperties().getNotary().getProducedAt();
             String address = signatureProductionPlace2String(signedProperties.getSignatureProductionPlace());
 
             // 2nd arg - check the certs validity dates

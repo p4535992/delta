@@ -24,9 +24,11 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
  */
 public class CaseDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "CaseDetailsDialog";
 
     private static final String PARAM_VOLUME_NODEREF = "volumeNodeRef";
     private static final String PARAM_CASE_NODEREF = "caseNodeRef";
+
     private transient CaseService caseService;
     private Case currentEntry;
     private boolean newCase;

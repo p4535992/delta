@@ -33,9 +33,11 @@ import ee.webmedia.alfresco.volume.service.VolumeService;
  */
 public class VolumeDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "VolumeDetailsDialog";
 
     private static final String PARAM_SERIES_NODEREF = "seriesNodeRef";
     private static final String PARAM_VOLUME_NODEREF = "volumeNodeRef";
+
     private transient VolumeService volumeService;
     private transient ArchivalsService archivalsService;
     private transient CaseService caseService;

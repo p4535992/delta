@@ -1,3 +1,4 @@
+<%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h"%>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
@@ -10,9 +11,9 @@
 <f:verbatim>
 <script type="text/javascript" id="metaLockRefreshScript" >
 $jQ(document).ready(function(){
-   var inEditMode = '</f:verbatim><h:outputText id="textInEditMode" value="#{MetadataBlockBean.inEditMode}" /><f:verbatim>';
+   var inEditMode = <%= BeanHelper.getMetadataBlockBean().isInEditMode() %>;
    if(inEditMode){
-      var clientLockRefreshFrequency = '</f:verbatim><h:outputText id="textClientLockRef" value="#{MetadataBlockBean.clientLockRefreshFrequency}" /><f:verbatim>';
+      var clientLockRefreshFrequency = <%= BeanHelper.getMetadataBlockBean().getClientLockRefreshFrequency() %>;
       setTimeout(requestForLockRefresh, clientLockRefreshFrequency/3);
    }
 });

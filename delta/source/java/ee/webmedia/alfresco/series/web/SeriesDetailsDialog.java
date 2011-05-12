@@ -23,9 +23,11 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class SeriesDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "SeriesDetailsDialog";
 
     private static final String PARAM_FUNCTION_NODEREF = "functionNodeRef";
     private static final String PARAM_SERIES_NODEREF = "seriesNodeRef";
+
     private transient SeriesService seriesService;
     private transient MenuService menuService;
     private LogBlockBean logBlockBean;

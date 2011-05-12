@@ -18,8 +18,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
-import org.alfresco.service.cmr.security.AuthorityService;
-import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
@@ -51,7 +49,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentPrivilegesUpdater.class);
     private BehaviourFilter behaviourFilter;
-    private AuthorityService authorityService;
     private PermissionService permissionService;
     private PrivilegeService privilegeService;
     private DocumentService documentService;
@@ -59,7 +56,7 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
     private WorkflowService workflowService;
     private SearchService searchService;
     protected GeneralService generalService;
-    private static HashSet<String> SERIES_GROUPMEMBERS_PRIVILEGES;
+    public static HashSet<String> SERIES_GROUPMEMBERS_PRIVILEGES;
     private static HashSet<String> SIGNATURE_OWNER_PRIVILEGES;
     private static HashSet<String> ASSIGNMENT_OWNER_PRIVILEGES;
     private static HashSet<String> REVIEW_OWNER_PRIVILEGES;
@@ -86,23 +83,23 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
         queryParts.add(SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
         queryParts.add(generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
         if (limitForTesting) {
-        	// documents created between 01.03.2011 and now
-            // or documents registered between 01.01.2010 and 31.01.2010
-            queryParts.add(SearchUtil.joinQueryPartsOr(Arrays.asList(SearchUtil.generateDatePropertyRangeQuery(new Date(111, 2, 1), null, ContentModel.PROP_CREATED),
-                    SearchUtil.generateDatePropertyRangeQuery(new Date(110, 0, 1), new Date(110, 0, 31), DocumentCommonModel.Props.REG_DATE_TIME))));
+            // documents created between 01.02.2011 and now
+            // or documents registered between 01.01.2010 and 28.02.2010
+            queryParts.add(SearchUtil.joinQueryPartsOr(Arrays.asList(SearchUtil.generateDatePropertyRangeQuery(new Date(111, 1, 1), null, ContentModel.PROP_CREATED),
+                    SearchUtil.generateDatePropertyRangeQuery(new Date(110, 0, 1), new Date(110, 1, 28), DocumentCommonModel.Props.REG_DATE_TIME))));
         }
-		String query = SearchUtil.joinQueryPartsAnd(queryParts);
-		log.info("Search query: " + query);
+        String query = SearchUtil.joinQueryPartsAnd(queryParts);
+        log.info("Search query: " + query);
         Set<StoreRef> stores = getStores();
         List<ResultSet> result = new ArrayList<ResultSet>(stores.size());
         for (StoreRef storeRef : stores) {
-        	result.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
-		}
+            result.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
+        }
         return result;
     }
 
     protected Set<StoreRef> getStores() {
-    	return Collections.singleton(generalService.getStore());
+        return Collections.singleton(generalService.getStore());
     }
 
     @Override
@@ -123,15 +120,8 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
         Map<QName, Serializable> origDocProps = nodeService.getProperties(docRef);
         final String docOwner = (String) origDocProps.get(DocumentCommonModel.Props.OWNER_ID);
         final Map<String, Object> docProps = RepoUtil.toStringProperties(origDocProps);
-        Set<String> groups = documentService.addPrivilegesBasedOnSeries(docRef, docProps, null);
-        LOG.debug(groups.size() + " groups added to series authoirites:" + groups);
+        documentService.addPrivilegesBasedOnSeries(docRef, docProps, null);
         final QName addPrivListener = DocumentCommonModel.Types.DOCUMENT;
-        for (String group : groups) {
-            Set<String> authorities = authorityService.getContainedAuthorities(AuthorityType.USER, group, true);
-            for (String authority : authorities) {
-                privilegeService.addPrivilege(docRef, docProps, addPrivListener, authority, group, SERIES_GROUPMEMBERS_PRIVILEGES);
-            }
-        }
 
         final Boolean[] addViewDocMetaToRelatedDocs = new Boolean[1];
         workflowService.getTasks(docRef, new Predicate<Task>() {
@@ -191,10 +181,6 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
 
     public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
         this.behaviourFilter = behaviourFilter;
-    }
-
-    public void setAuthorityService(AuthorityService authorityService) {
-        this.authorityService = authorityService;
     }
 
     public void setPermissionService(PermissionService permissionService) {

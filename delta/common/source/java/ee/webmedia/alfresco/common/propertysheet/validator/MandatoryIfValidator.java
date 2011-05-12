@@ -24,6 +24,7 @@ import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -47,7 +48,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
     private static final String MESSAGE_ID = "common_propertysheet_validator_mandatoryIf";
     public static final String ATTR_MANDATORY_IF = "mandatoryIf";
     public static final String ATTR_MANDATORY_IF_LABEL_ID = "mandatoryIfLabelId";
-    private static final List<String> SELECT_VALUES_INDICATING_MANDATORY = Arrays.asList("Jah", "true", "yes", "AK");
+    private static final List<String> SELECT_VALUES_INDICATING_MANDATORY = Arrays.asList("Jah", "true", "yes", AccessRestriction.AK.getValueName());
 
     /**
      * Expression to be used to decide whether UIInput being validated is required or not.

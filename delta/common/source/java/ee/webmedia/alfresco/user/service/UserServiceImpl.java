@@ -10,13 +10,12 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNE
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
-import javax.faces.context.FacesContext;
 
 import org.alfresco.model.ApplicationModel;
 import org.alfresco.model.ContentModel;
@@ -47,6 +46,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.model.Authority;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -72,7 +72,10 @@ public class UserServiceImpl implements UserService {
         }
 
         NodeRef prefRef = null;
-        NodeRef person = personService.getPerson(userName);
+        NodeRef person = getPerson(userName);
+        if (person == null) {
+            return null;
+        }
         if (nodeService.hasAspect(person, ApplicationModel.ASPECT_CONFIGURABLE) == false) {
             // create the configuration folder for this Person node
             configurableService.makeConfigurable(person);
@@ -170,7 +173,7 @@ public class UserServiceImpl implements UserService {
         if (nodeRefs == null) {
             if (returnAllUsers) {
                 // XXX use alfresco services instead
-                List<Node> users = getUsers(FacesContext.getCurrentInstance(), nodeService, searchService);
+                List<Node> users = getUsers();
                 filterByGroup(users, group);
                 return users;
             }
@@ -197,7 +200,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Node getUser(String userName) {
-        return new Node(personService.getPerson(userName));
+        NodeRef personRef = getPerson(userName);
+        if (personRef == null) {
+            return null;
+        }
+        return new Node(personRef);
     }
 
     @Override
@@ -235,14 +242,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public Map<QName, Serializable> getUserProperties(String userName) {
+        NodeRef personRef = getPerson(userName);
+        if (personRef == null) {
+            return null;
+        }
+        return nodeService.getProperties(personRef);
+    }
+
+    private NodeRef getPerson(String userName) {
+        if (StringUtils.isBlank(userName)) {
+            return null;
+        }
         try {
             if (personService.personExists(userName)) {
-                NodeRef person = personService.getPerson(userName);
-                return nodeService.getProperties(person);
-            } else {
-                // FIXME: workaround, et transaktsiooni Rollbakc-only'ks ei märgitaks
-                return null;
+                return personService.getPerson(userName);
             }
+            return null;
         } catch (NoSuchPersonException e) {
             return null;
         }
@@ -255,7 +270,11 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public String getUserEmail(String userName) {
-        return nodeService.getProperty(personService.getPerson(userName), ContentModel.PROP_EMAIL).toString();
+        NodeRef personRef = getPerson(userName);
+        if (personRef == null) {
+            return null;
+        }
+        return (String) nodeService.getProperty(personRef, ContentModel.PROP_EMAIL);
     }
 
     @Override
@@ -278,10 +297,10 @@ public class UserServiceImpl implements UserService {
         try {
             Set<String> users = new HashSet<String>();
             for (ResultSetRow resultSetRow : resultSet) {
-            	NodeRef personRef = resultSetRow.getNodeRef();
-				if (!nodeService.exists(personRef)) {
-					continue;
-				}
+                NodeRef personRef = resultSetRow.getNodeRef();
+                if (!nodeService.exists(personRef)) {
+                    continue;
+                }
                 String strStructUnit = (String) nodeService.getProperty(personRef, ContentModel.PROP_ORGID);
                 Integer structUnit = null;
                 if (StringUtils.isNotBlank(strStructUnit)) {
@@ -339,8 +358,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public void setOwnerPropsFromUser2(Map<String, Object> docProps, Map<QName, Serializable> userProps) {
+        Map<QName, Serializable> qNameDocProps = new HashMap<QName, Serializable>();
+        setOwnerPropsFromUser(qNameDocProps, userProps);
+        Map<String, Object> stringDocProps = RepoUtil.toStringProperties(qNameDocProps);
+        docProps.putAll(stringDocProps);
+    }
+
+    @Override
     public NodeRef getCurrentUser() {
-        return personService.getPerson(authenticationService.getCurrentUserName());
+        return getPerson(authenticationService.getCurrentUserName());
     }
 
     @Override
@@ -360,7 +387,7 @@ public class UserServiceImpl implements UserService {
 
     private Authority getAuthority(String authority, AuthorityType authorityType, boolean returnNull) {
         if (authorityType == AuthorityType.USER) {
-            NodeRef person = personService.getPerson(authority);
+            NodeRef person = getPerson(authority);
             String name = authority;
             if (person != null) {
                 name = getUserFullNameWithUnitName(authority);
@@ -390,7 +417,7 @@ public class UserServiceImpl implements UserService {
         }
     }
 
-    private List<Node> getUsers(FacesContext context, NodeService nodeService, SearchService searchService) {
+    private List<Node> getUsers() {
         List<Node> personNodes = null;
 
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(personService.getPeopleContainer());

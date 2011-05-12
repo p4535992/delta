@@ -37,6 +37,7 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -45,6 +46,7 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -252,13 +254,15 @@ public class DelegationBean implements Serializable {
         originalTask.setAction(Action.FINISH);
         FacesContext context = FacesContext.getCurrentInstance();
         try {
-            Pair<MessageDataWrapper, CompoundWorkflow> result = getWorkflowService().delegate(originalTask);
-            MessageDataWrapper feedback = result.getFirst();
+            MessageDataWrapper feedback = getWorkflowService().delegate(originalTask);
             MessageUtil.addStatusMessages(context, feedback);
             if (!feedback.hasErrors()) {
                 workflowBlockBean.restore();
                 MessageUtil.addInfoMessage("delegated_successfully");
+                BeanHelper.getDocumentDialog().restored(); // document metadata might have changed(for example owner)
             }
+        } catch (UnableToPerformMultiReasonException e) {
+            MessageUtil.addStatusMessages(context, e.getMessageDataWrapper());
         } catch (UnableToPerformException e) {
             MessageUtil.addStatusMessage(context, e);
         } catch (NodeLockedException e) {

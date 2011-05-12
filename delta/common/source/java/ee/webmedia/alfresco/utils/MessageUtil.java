@@ -8,6 +8,7 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.web.app.Application;
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
@@ -105,6 +106,10 @@ public class MessageUtil {
      */
     public static String getMessage(String messageId, Object... messageValuesForHolders) {
         return getMessage(FacesContext.getCurrentInstance(), messageId, messageValuesForHolders);
+    }
+
+    public static String getMessage(MessageData messageData) {
+        return getMessage(messageData.getMessageKey(), messageData.getMessageValuesForHolders());
     }
 
     /**
@@ -218,4 +223,7 @@ public class MessageUtil {
         Utils.addErrorMessage(sb.toString());
     }
 
+    public static String getMessageAndEscapeJS(String messageId, Object... messageValuesForHolders) {
+        return StringEscapeUtils.escapeJavaScript(getMessage(messageId, messageValuesForHolders));
+    }
 }

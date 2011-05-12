@@ -373,15 +373,22 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         SearchParameters sp = new SearchParameters();
         sp.addStore(store);
         sp.setLanguage(SearchService.LANGUAGE_LUCENE);
-        sp.setLimit(limit);
-        sp.setLimitBy(LimitBy.FINAL_SIZE);
         // sp.addSort("@" + OrganizationStructureModel.Props.NAME, true); // XXX why doesn't lucene sorting work?
         sp.setQuery(query);
+
+        // This limit does not work when ACLEntryAfterInvocationProvider has been disabled
+        // So we perform our own limiting in this method also
+        sp.setLimit(limit);
+        sp.setLimitBy(LimitBy.FINAL_SIZE);
 
         ResultSet resultSet = searchService.query(sp);
         try {
             log.debug("Found " + resultSet.length() + " nodes");
-            return resultSet.getNodeRefs();
+            List<NodeRef> nodeRefs = resultSet.getNodeRefs();
+            if (nodeRefs.size() > limit) {
+                return nodeRefs.subList(0, limit);
+            }
+            return nodeRefs;
         } finally {
             resultSet.close();
         }

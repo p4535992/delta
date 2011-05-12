@@ -8,12 +8,13 @@ import org.apache.commons.lang.StringUtils;
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
 
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorValueProvider;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 @AlfrescoModelType(uri = ClassificatorModel.URI)
 @XStreamAlias("classificatorValue")
-public class ClassificatorValue implements Serializable, Comparable<ClassificatorValue> {
+public class ClassificatorValue implements Serializable, Comparable<ClassificatorValue>, ClassificatorSelectorValueProvider {
 
     private static final long serialVersionUID = 1L;
 
@@ -91,6 +92,7 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
         this.order = order;
     }
 
+    @Override
     public boolean isByDefault() {
         return byDefault;
     }
@@ -230,8 +232,14 @@ public class ClassificatorValue implements Serializable, Comparable<Classificato
         this.classificatorDescription = classificatorDescription;
     }
 
+    @Override
     public String getClassificatorDescription() {
         return classificatorDescription;
+    }
+
+    @Override
+    public String getSelectorValueName() {
+        return getValueName();
     }
 
 }

@@ -6,6 +6,7 @@
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
+<%@ page import="ee.webmedia.alfresco.utils.MessageUtil"%>
 <%@ page import="javax.faces.context.FacesContext"%>
 <%@ page import="org.alfresco.web.app.Application"%>
 <%@ page import="org.alfresco.web.app.servlet.FacesHelper"%>
@@ -79,7 +80,7 @@
       if((file != null && file.getStatus() == 2) || attachment[0].selectedIndex != -1 || scanned[0].selectedIndex != -1) {
          return true;
       }
-      alert('</f:verbatim><h:outputText value="#{msg.file_no_files_selected}" /><f:verbatim>');
+      alert('<%= MessageUtil.getMessageAndEscapeJS("file_no_files_selected") %>');
       return false;
    });
    

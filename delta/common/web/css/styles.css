@@ -988,6 +988,10 @@ input.readonly {
 	text-align: center;
 }
 
+.left {
+	text-align: left !important;
+}
+
 .inline-center {
 	display: block;
 	text-align: center;
@@ -1045,6 +1049,11 @@ textarea.inline {
 
 .delete {
 	background: url("../images/icons/delete.gif") no-repeat;
+	line-height: 20px;
+}
+
+.version_history {
+	background: url("../images/icons/version_history.gif") no-repeat;
 	line-height: 20px;
 }
 
@@ -1678,7 +1687,7 @@ DIV.modalwrap {
 	left: 50%;
 	z-index: 90000 !important;
 	/*width: 450px;*/
-	width: 500px;
+	width: 503px;
 	height: auto;
 	margin: -250px 0 0 -250px;
 	padding: 0;
@@ -2141,42 +2150,71 @@ TH A.header-wrap {
 	width: 116px;
 }
 
-/* richlist viewMode="detailsMultiTbody"
-----------------------------------*/
-.detailsMultiTbody {
-	border-collapse: collapse;
+select.genericpicker-filter{
+	margin-right: 3px;
 }
 
-table.detailsMultiTbody td.expanded, td.collapsed { width: 20px; }
+/* richlist viewMode="detailsMultiTbody"
+----------------------------------*/
+
+table.detailsMultiTbody td.expanded, td.collapsed {
+	width: 26px;
+	cursor: pointer;
+}
 
 table.detailsMultiTbody tbody.tbGroup td.expanded {
-	background: url("../images/icons/minus.gif") no-repeat scroll 0 0 transparent;
+	background: #e9ecef url("../images/icons/minus.gif") no-repeat 50% 50%;
 }
 
 table.detailsMultiTbody tbody.tbGroup td.collapsed {
-	background: url("../images/icons/plus.gif") no-repeat scroll 0 0 transparent;
+	background: #e9ecef url("../images/icons/plus.gif") no-repeat 50% 50%;
 }
 
-table.detailsMultiTbody tbody.tbGroup>tr {
-	border-left: 2px solid gray;
-	border-right: 2px solid gray;
+table.detailsMultiTbody th {
+	padding-top: 6px;
+	border-bottom: none;
+	background: #1c497e;
+	color: #fff;
+	text-align: center;
 }
 
-table.detailsMultiTbody tbody.tbGroup>tr.grHeader {
-	background-color: #E0ECF8;
-	border-top: 2px solid gray;
+table.detailsMultiTbody th SPAN {
+	color: #fff;
+}
+table.detailsMultiTbody .grHeader {
+	background-color: #e9ecef;
+}
+table.detailsMultiTbody .grHeader TD {
+	padding-top: 5px;
+	padding-bottom: 5px;
+}
+table.detailsMultiTbody .tbGroup .recordSetRow TD {
+	border-bottom: 1px solid #eee;
+	background-color: #fff;
+}
+
+table.detailsMultiTbody .tbGroup .recordSetRow TD:first-child {
+	border-color: #fff;
 }
 
 .grHeader{
 	height:18px;
 }
 
-table.detailsMultiTbody tbody tr:last-child {
-	border-bottom: 2px solid gray;
+table.detailsMultiTbody tbody tr:first-child td {
+	border-bottom: 1px solid #fff;
 }
 
+table.detailsMultiTbody td{
+	vertical-align: middle;
+}
+table.detailsMultiTbody td{
+	text-align: center;
+}
 
-
+table.privileges{
+	margin-top: 10px;
+}
 
 /* hack with JS to show tooltips for disabled checkboxes */
 div.panel.tooltip{
@@ -2189,3 +2227,123 @@ div.panel.tooltip{
 }
 /* END: hack to show tooltips for disabled checkboxes */
 
+/* Transaction block styles */
+
+TR.trans-recordSetRowAlt2 TD {
+	padding: 5px;
+	background: #f8f8f8;
+}
+
+DIV.trans-subrow-toggle {
+	display: block;
+	margin-bottom: 1em;
+}
+
+DIV.trans-subrow-toggle A {
+	padding-left: 18px;
+	background: url("../images/icons/bg_details.gif") no-repeat 0 2px;
+}
+
+DIV.trans-subrow-toggle A.close {
+	background-position: 0 -48px;
+}
+
+DIV.trans-subrow-toggle SPAN {
+	margin: 0 3px;
+	color: #999;
+}
+
+TR.trans-subrow TD {
+	padding: 10px 31px;
+	background: #f8f8f8 url("../images/icons/bg_subrow.gif") repeat-x 0 100%;
+}
+
+TR.trans-subrow TD TD {
+	padding: 2px 5px;
+	background: none;
+}
+
+TR.trans-subrow P {
+	margin: 0;
+	line-height: normal;
+}
+
+TR.trans-subrow TABLE {
+	width: 100%;
+}
+
+TR.trans-subrow TH {
+	font-weight: bold;
+	padding-left: 7px;
+	border: none !important;
+	color: #666;
+}
+
+TD.trans-toggle-subrow {
+	width: 1%;
+}
+
+TD.trans-toggle-subrow A {
+	display: block;
+	width: 10px;
+	height: 12px;
+	overflow: hidden;
+	background: url("../images/icons/bg_subrow_toggle.png") no-repeat 0 2px;
+	text-indent: -5000px;
+}
+
+TD.trans-toggle-subrow A:hover,
+
+TD.trans-toggle-subrow A:focus {
+	background-position: -23px 2px;
+}
+
+TD.trans-toggle-subrow A.open {
+	background-position: -46px 2px;
+}
+
+TD.trans-toggle-subrow A.open:hover,
+
+TD.trans-toggle-subrow A.open:focus {
+	background-position: -69px 2px;
+}
+
+INPUT.trans-wide {
+	width: 120px;
+}
+
+INPUT.trans-text {
+	width: 95px;
+}
+
+INPUT.trans-min {
+	width: 50px;
+}
+
+.trans-sum TD {
+	padding: 6px;
+}
+
+.trans-sum STRONG {
+	margin-right: 1em;
+}
+
+DIV.trans-scroll {
+	min-width: 718px;
+	margin: 1em 0 .5em;
+	padding: 8px 0 0;
+	border: 1px solid #eee;
+	background: #fff;
+	overflow: auto;
+	overflow-x: auto;
+}
+
+DIV.trans-scroll TABLE {
+	margin: 0;
+}
+
+* HTML DIV.trans-scroll {
+	width: expression(document.body.clientWidth < 720? "718px" : document.body.clientWidth > 1902? "1900px" : "auto");
+}
+
+/* End transaction block styles */

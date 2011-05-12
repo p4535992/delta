@@ -4,9 +4,12 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
@@ -23,12 +26,14 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.einvoice.accountlist.generated.KontoInfo;
 import ee.webmedia.alfresco.document.einvoice.accountlist.generated.KontoNimekiri;
 import ee.webmedia.alfresco.document.einvoice.dimensionslist.generated.Dimensioon;
@@ -45,6 +50,8 @@ import ee.webmedia.alfresco.document.einvoice.model.Dimension;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionModel;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
+import ee.webmedia.alfresco.document.einvoice.model.Transaction;
+import ee.webmedia.alfresco.document.einvoice.model.TransactionModel;
 import ee.webmedia.alfresco.document.einvoice.sellerslist.generated.HankijaInfo;
 import ee.webmedia.alfresco.document.einvoice.sellerslist.generated.HankijaNimekiri;
 import ee.webmedia.alfresco.document.einvoice.vatcodelist.generated.KaibemaksuKoodInfo;
@@ -80,6 +87,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     private GeneralService generalService;
     private ParametersService parametersService;
     private DocumentTypeService documentTypeService;
+    private static final Map<NodeRef, List<DimensionValue>> dimensionValueCache = new ConcurrentHashMap<NodeRef, List<DimensionValue>>();
+    private static List<DimensionValue> vatCodeDimesnionValues = null;
 
     private String dimensionsPath;
 
@@ -257,10 +266,21 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
+    public NodeRef createTransaction(NodeRef parentRef, Map<QName, Serializable> properties) {
+        return nodeService.createNode(parentRef, TransactionModel.Associations.TRANSACTION, TransactionModel.Associations.TRANSACTION
+                , TransactionModel.Types.TRANSACTION, properties).getChildRef();
+    }
+
+    @Override
     public void updateDimensions(List<Dimension> dimensions) {
         for (Dimension dimension : dimensions) {
-            nodeService.setProperty(dimension.getNode().getNodeRef(), DimensionModel.Props.COMMENT, dimension.getComment());
+            updateDimension(dimension);
         }
+    }
+
+    @Override
+    public void updateDimension(Dimension dimension) {
+        nodeService.setProperty(dimension.getNode().getNodeRef(), DimensionModel.Props.COMMENT, dimension.getComment());
     }
 
     @Override
@@ -280,10 +300,43 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
+    public List<DimensionValue> getActiveDimensionValues(NodeRef dimension) {
+        if (dimensionValueCache.containsKey(dimension)) {
+            return dimensionValueCache.get(dimension);
+        }
+        List<DimensionValue> allDimensionValues = getAllDimensionValues(dimension);
+        List<DimensionValue> activeDimensionValues = new ArrayList<DimensionValue>(allDimensionValues.size());
+        Date now = new Date();
+        for (DimensionValue dimensionValue : allDimensionValues) {
+            Date beginDate = dimensionValue.getBeginDateTime();
+            Date endDate = dimensionValue.getEndDateTime();
+            if (dimensionValue.getActive() && (beginDate == null || DateUtils.isSameDay(beginDate, now) || beginDate.before(now))
+                    && (endDate == null || DateUtils.isSameDay(endDate, now) || endDate.after(now))) {
+                activeDimensionValues.add(dimensionValue);
+            }
+        }
+        dimensionValueCache.put(dimension, activeDimensionValues);
+        return activeDimensionValues;
+    }
+
+    @Override
+    public List<DimensionValue> getVatCodeDimensionValues() {
+        List<DimensionValue> tmpValues = null;
+        if (vatCodeDimesnionValues == null) {
+            final NodeRef nodeRef = generalService.getNodeRef(Dimensions.TAX_CODE_ITEMS.toString());
+            tmpValues = new ArrayList<DimensionValue>(getAllDimensionValues(nodeRef));
+            vatCodeDimesnionValues = tmpValues;
+        }
+        return vatCodeDimesnionValues;
+    }
+
+    @Override
     public Collection<NodeRef> importDimensionsList(InputStream input) {
         DimensioonideNimekiri xmlDimensionsList = EInvoiceUtil.unmarshalDimensionsList(input);
         List<NodeRef> result = new ArrayList<NodeRef>();
         if (xmlDimensionsList != null) {
+            // TODO: optimize - could empty only cache for updated dimensions
+            emptyDimensionValueChache();
             Map<Parameters, Dimensions> dimensionParameters = EInvoiceUtil.DIMENSION_PARAMETERS;
             Map<String, Parameters> dimParameterValues = parametersService.getSwappedStringParameters(dimensionParameters.keySet());
             for (Dimensioon xmlDimension : xmlDimensionsList.getDimensioon()) {
@@ -316,6 +369,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         KontoNimekiri accountsList = EInvoiceUtil.unmarshalAccountsList(input);
         List<NodeRef> result = new ArrayList<NodeRef>();
         if (accountsList != null) {
+            // TODO: optimize - could empty only cache for account list dimension
+            emptyDimensionValueChache();
             @SuppressWarnings("unchecked")
             Collection<XmlDimensionListsValueWrapper> dimensionListsValueWrappers = CollectionUtils.collect(accountsList.getKontoInfo(), new Transformer() {
 
@@ -336,6 +391,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         KaibemaksuKoodNimekiri vatCodesList = EInvoiceUtil.unmarshalVatCodesList(input);
         List<NodeRef> result = new ArrayList<NodeRef>();
         if (vatCodesList != null) {
+            // TODO: optimize - could empty only cache for vat code list dimension
+            emptyDimensionValueChache();
             @SuppressWarnings("unchecked")
             Collection<XmlDimensionListsValueWrapper> dimensionListsValueWrappers = CollectionUtils.collect(vatCodesList.getKaibemaksuKoodInfo(), new Transformer() {
 
@@ -403,7 +460,46 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
+    public List<Transaction> getInvoiceTransactions(NodeRef invoiceRef) {
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(invoiceRef, TransactionModel.Associations.TRANSACTION,
+                RegexQNamePattern.MATCH_ALL);
+        List<Transaction> transactions = new ArrayList<Transaction>(childRefs.size());
+        for (ChildAssociationRef childRef : childRefs) {
+            NodeRef transactionRef = childRef.getChildRef();
+            WmNode transaction = new WmNode(transactionRef, TransactionModel.Types.TRANSACTION, RepoUtil.toStringProperties(nodeService.getProperties(transactionRef)),
+                    new HashSet<QName>(
+                            nodeService.getAspects(transactionRef)));
+            transactions.add(new Transaction(transaction));
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Transactions found: " + transactions);
+        }
+        return transactions;
+    }
+
+    @Override
+    public void updateTransactions(NodeRef invoiceRef, List<Transaction> transactions, List<Transaction> removedTransactions) {
+        for (Transaction removedTransaction : removedTransactions) {
+            if (removedTransaction.getNode().getNodeRef() != null) {
+                nodeService.deleteNode(removedTransaction.getNode().getNodeRef());
+            }
+        }
+        for (Transaction transaction : transactions) {
+            NodeRef nodeRef = transaction.getNode().getNodeRef();
+            Map<String, Object> properties = transaction.getNode().getProperties();
+            if (transaction.getNode().isUnsaved()) {
+                // create new transaction
+                createTransaction(invoiceRef, RepoUtil.toQNameProperties(properties));
+            } else {
+                // update existing transaction
+                nodeService.addProperties(nodeRef, RepoUtil.toQNameProperties(properties));
+            }
+        }
+    }
+
+    @Override
     public void updateDimensionValues(List<DimensionValue> dimensionValues, Node selectedDimension) {
+        emptyDimensionValueChache();
         // for optimizing update, save only dimensions that have changed
         List<DimensionValue> originalDimensionValues = new ArrayList<DimensionValue>();
         if (selectedDimension != null) {
@@ -414,6 +510,10 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                 nodeService.setProperties(dimensionValue.getNode().getNodeRef(), RepoUtil.toQNameProperties(dimensionValue.getNode().getProperties()));
             }
         }
+    }
+
+    private void emptyDimensionValueChache() {
+        dimensionValueCache.clear();
     }
 
     private boolean hasDimensionValueChanged(DimensionValue dimensionValue, List<DimensionValue> originalDimensionValues) {
@@ -430,8 +530,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
      * NB! It is assumed that xmlDimension is valid as to required fields exist;
      * no null check is performed if xsd states that element is required
      */
-    private NodeRef updateDimensionValuesFromXml(Dimensions dimensions, Collection<XmlDimensionListsValueWrapper> xmlDimensionValues, String dimensionId) {
-        NodeRef dimensionRef = getOrCreateDimension(dimensions, dimensionId);
+    private NodeRef updateDimensionValuesFromXml(Dimensions dimensions, Collection<XmlDimensionListsValueWrapper> xmlDimensionValues, String xmlDimensionId) {
+        NodeRef dimensionRef = getOrCreateDimension(dimensions, xmlDimensionId);
         List<DimensionValue> dimensionValues = getAllDimensionValues(dimensionRef);
         // List xmlDimension values that already exist in application
         List<Integer> existingDimensionValues = new ArrayList<Integer>();
@@ -473,7 +573,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
             properties.put(DimensionModel.Props.NAME, xmlDimensionId);
             properties.put(DimensionModel.Props.COMMENT, null);
-            dimensionRef = createDimension(xmlDimensionId, properties);
+            dimensionRef = createDimension(dimensions.getDimensionName(), properties);
         }
         return dimensionRef;
     }

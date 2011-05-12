@@ -59,6 +59,7 @@ public class MenuItem implements Serializable {
     @XStreamAsAttribute
     @XStreamAlias("document-manager")
     private boolean docManager;
+    @XStreamAsAttribute
     private boolean accountant;
     private String outcome;
     @XStreamAlias("subitems")
@@ -270,7 +271,7 @@ public class MenuItem implements Serializable {
     }
 
     public boolean isRestricted() {
-        return isAdmin() || isDocManager();
+        return isAdmin() || isDocManager() || isAccountant();
     }
 
     public boolean isExternalReview() {

@@ -7,7 +7,7 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="dimensions-panel" styleClass="panel-100 with-pager" label="#{msg.dimensions_list}" progressive="true">
+<a:panel id="dimensions-panel" styleClass="with-pager" label="#{msg.dimensions_list}" >
 
    <%-- Spaces List --%>
    <a:richList id="dimensionsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
@@ -30,7 +30,7 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.dimension_comment}" value="comment" mode="case-insensitive" styleClass="header" />
          </f:facet>
-         <h:inputText id="col2-text" value="#{dimension.comment}" styleClass="expand19-200" />
+         <h:outputText id="col2-text" value="#{dimension.comment}" />
       </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />

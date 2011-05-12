@@ -107,6 +107,8 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl implements DocumentSearchService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSearchServiceImpl.class);
 
+    private static final int RESULTS_LIMIT = 100;
+
     private DocumentService documentService;
     private GeneralService generalService;
     private NodeService nodeService;
@@ -338,13 +340,13 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>();
         List<String> tempQueryParts = new ArrayList<String>();
 
-        tempQueryParts.add(generateStringExactQuery("AK", DocumentCommonModel.Props.ACCESS_RESTRICTION)); // TODO this should come from classificator!
+        tempQueryParts.add(generateStringExactQuery(AccessRestriction.AK.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION));
         tempQueryParts.add(generatePropertyNullQuery(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
         tempQueryParts.add(generateStringNotEmptyQuery(DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DESC));
         queryParts.add(joinQueryPartsAnd(tempQueryParts));
         tempQueryParts.clear();
 
-        tempQueryParts.add(generateStringExactQuery("AK", DocumentCommonModel.Props.ACCESS_RESTRICTION)); // TODO this should come from classificator!
+        tempQueryParts.add(generateStringExactQuery(AccessRestriction.AK.getValueName(), DocumentCommonModel.Props.ACCESS_RESTRICTION));
         tempQueryParts.add(generateDatePropertyRangeQuery(null, restrictionEndDate, DocumentCommonModel.Props.ACCESS_RESTRICTION_END_DATE));
         queryParts.add(joinQueryPartsAnd(tempQueryParts));
         tempQueryParts.clear();
@@ -439,7 +441,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return results;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public Map<NodeRef, Pair<String, String>> searchTaskBySendStatusQuery(QName taskType) {
         if (taskType == null) {
@@ -1132,6 +1133,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateDoublePropertyRangeQuery((Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_LOWEST) //
                 , (Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_HIGHEST), DocumentSpecificModel.Props.TOTAL_SUM));
 
+        log.info("Documents search filter: " + WmNode.toString(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService));
+
         // Quick search
         String quickSearchInput = (String) props.get(DocumentSearchModel.Props.INPUT);
         if (StringUtils.isNotBlank(quickSearchInput)) {
@@ -1291,6 +1294,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.STOPPED_DATE_TIME_BEGIN), //
                 (Date) props.get(TaskSearchModel.Props.STOPPED_DATE_TIME_END), WorkflowCommonModel.Props.STOPPED_DATE_TIME));
 
+        log.info("Tasks search filter: " + WmNode.toString(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService));
+
         if (isBlank(queryParts)) {
             return null;
         }
@@ -1397,10 +1402,17 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         });
     }
 
+    private <E> List<E> limitResults(List<E> allResults, boolean limited) {
+        if (limited && allResults.size() > RESULTS_LIMIT) {
+            return allResults.subList(0, RESULTS_LIMIT);
+        }
+        return allResults;
+    }
+
     private List<NodeRef> searchNodes(String query, boolean limited, String queryName) {
         ResultSet resultSet = doSearch(query, limited, queryName);
         try {
-            return resultSet.getNodeRefs();
+            return limitResults(resultSet.getNodeRefs(), limited);
         } finally {
             try {
                 resultSet.close();
@@ -1415,7 +1427,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         try {
             List<NodeRef> nodeRefs = new ArrayList<NodeRef>();
             for (ResultSet resultSet : resultSets) {
-                nodeRefs.addAll(resultSet.getNodeRefs());
+                nodeRefs.addAll(limitResults(resultSet.getNodeRefs(), limited));
             }
             return nodeRefs;
         } finally {
@@ -1451,26 +1463,35 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         } else {
             resultSets = doSearches(query, limited, queryName, storeRefs);
         }
-        final List<E> extractResults = new ArrayList<E>();
-        for (ResultSet resultSet : resultSets) {
-            extractResults.addAll(extractResults(callback, startTime, resultSet));
-        }
+        final List<E> extractResults = extractResults(callback, startTime, resultSets, limited);
         Collections.sort(extractResults);
         return extractResults;
     }
 
-    private <E> List<E> extractResults(SearchCallback<E> callback, long startTime, final ResultSet resultSet) {
+    private <E> List<E> extractResults(SearchCallback<E> callback, long startTime, final List<ResultSet> resultSets, boolean limited) {
         try {
-            List<E> result = new ArrayList<E>(resultSet.length());
+            List<E> result = new ArrayList<E>(RESULTS_LIMIT);
             if (log.isDebugEnabled()) {
-                log.debug("Lucene search time " + (System.currentTimeMillis() - startTime) + " ms, results: " + resultSet.length());
+                long resultsCount = 0;
+                for (ResultSet resultSet : resultSets) {
+                    resultsCount += resultSet.length();
+                }
+                log.debug("Lucene search time " + (System.currentTimeMillis() - startTime) + " ms, results: " + resultsCount);
                 startTime = System.currentTimeMillis();
             }
 
-            for (ResultSetRow row : resultSet) {
-                E item = callback.addResult(row);
-                if (item != null) {
-                    result.add(item);
+            for (ResultSet resultSet : resultSets) {
+                for (ResultSetRow row : resultSet) {
+                    E item = callback.addResult(row);
+                    if (item != null) {
+                        result.add(item);
+                    }
+                    if (limited && result.size() >= RESULTS_LIMIT) {
+                        break;
+                    }
+                }
+                if (limited && result.size() >= RESULTS_LIMIT) {
+                    break;
                 }
             }
 
@@ -1480,7 +1501,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             return result;
         } finally {
             try {
-                resultSet.close();
+                for (ResultSet resultSet : resultSets) {
+                    resultSet.close();
+                }
             } catch (Exception e) {
                 // Do nothing
             }
@@ -1523,6 +1546,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             sp.getStores().clear();
             sp.addStore(storeRef);
             results.add(doSearchQuery(sp, queryName));
+
+            // Optimization: don't search from other stores if limit is reached
+            if (limited && results.size() >= RESULTS_LIMIT) {
+                break;
+            }
         }
         return results;
     }
@@ -1549,6 +1577,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         SearchParameters sp = new SearchParameters();
         sp.setLanguage(SearchService.LANGUAGE_LUCENE);
         sp.setQuery(query);
+
+        // This limit does not work when ACLEntryAfterInvocationProvider has been disabled
+        // So we perform our own limiting in this service also
         if (limited) {
             sp.setLimit(100);
             sp.setLimitBy(LimitBy.FINAL_SIZE);

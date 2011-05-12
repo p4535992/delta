@@ -73,6 +73,7 @@ import ee.webmedia.alfresco.document.service.EventsLoggingHelper;
 import ee.webmedia.alfresco.document.service.InMemoryChildNodeHelper;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
+import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.dvk.service.ExternalReviewException;
 import ee.webmedia.alfresco.functions.model.Function;
@@ -136,6 +137,7 @@ public class MetadataBlockBean implements Serializable {
     private boolean isDraft;
     private DateFormat dateFormat;
     private String documentTypeName;
+    private DocumentDialog documentDialog;
 
     /** timeOut in seconds how often lock should be refreshed to avoid expiring */
     private Integer lockRefreshTimeout;
@@ -1361,8 +1363,9 @@ public class MetadataBlockBean implements Serializable {
         return value2;
     }
 
-    public void init(NodeRef nodeRef, boolean created) {
+    public void init(NodeRef nodeRef, boolean created, DocumentDialog documentDialog) {
         this.nodeRef = nodeRef;
+        this.documentDialog = documentDialog;
         inEditMode = created;
         isDraft = created;
         propertySheet = null;
@@ -1434,6 +1437,7 @@ public class MetadataBlockBean implements Serializable {
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
         documentTypeName = documentType != null ? documentType.getName() : null;
         afterModeChange();
+        documentDialog.notifyModeChanged();
     }
 
     public String editAction() {
@@ -1453,6 +1457,7 @@ public class MetadataBlockBean implements Serializable {
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
         documentTypeName = documentType != null ? documentType.getName() : null;
         afterModeChange();
+        documentDialog.notifyModeChanged();
     }
 
     public boolean save(boolean isDraft, List<NodeRef> newInvoiveDocuments) {

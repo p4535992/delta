@@ -16,17 +16,24 @@ import org.alfresco.web.bean.repository.Repository;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.cases.web.CaseDetailsDialog;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.document.web.DocumentDialog;
+import ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog;
+import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManagePrivilegesDialog;
+import ee.webmedia.alfresco.series.web.SeriesDetailsDialog;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.volume.web.VolumeDetailsDialog;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
-import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 
 /**
  * Helper class for web environment for accessing beans simply through getter. If getter for your bean is missing then just add it
@@ -37,6 +44,30 @@ public class BeanHelper {
     // START: web beans
     public static ManagePrivilegesDialog getManagePrivilegesDialog() {
         return (ManagePrivilegesDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ManagePrivilegesDialog.BEAN_NAME);
+    }
+
+    public static MetadataBlockBean getMetadataBlockBean() {
+        return (MetadataBlockBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MetadataBlockBean.BEAN_NAME);
+    }
+
+    public static FunctionsDetailsDialog getFunctionsDetailsDialog() {
+        return (FunctionsDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), FunctionsDetailsDialog.BEAN_NAME);
+    }
+
+    public static SeriesDetailsDialog getSeriesDetailsDialog() {
+        return (SeriesDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), SeriesDetailsDialog.BEAN_NAME);
+    }
+
+    public static VolumeDetailsDialog getVolumeDetailsDialog() {
+        return (VolumeDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), VolumeDetailsDialog.BEAN_NAME);
+    }
+
+    public static CaseDetailsDialog getCaseDetailsDialog() {
+        return (CaseDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), CaseDetailsDialog.BEAN_NAME);
+    }
+
+    public static DocumentDialog getDocumentDialog() {
+        return (DocumentDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DocumentDialog.BEAN_NAME);
     }
 
     // END: web beans
@@ -112,6 +143,11 @@ public class BeanHelper {
     public static EInvoiceService getEInvoiceService() {
         return (EInvoiceService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(EInvoiceService.BEAN_NAME);
     }
+
+    public static ParametersService getParametersService() {
+        return (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(ParametersService.BEAN_NAME);
+    }
+
     // END: delta services
 
     public static DocumentFileWriteDynamicAuthority getDocumentFileWriteDynamicAuthority() {

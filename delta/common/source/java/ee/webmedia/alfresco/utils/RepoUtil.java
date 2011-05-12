@@ -15,6 +15,8 @@ import java.util.Set;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.ClassDefinition;
+import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
+import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -207,6 +209,31 @@ public class RepoUtil {
             throw new RuntimeException("There should be same amount of " + firstName + " and " + secondName + "!\n\t" + first.size()
                     + " " + firstName + ":" + first + "\n\t" + second.size() + " " + secondName + ":" + second);
         }
+    }
+
+    public static Map<QName, Serializable> getPropertiesIgnoringSystem(Map<QName, Serializable> props, DictionaryService dictionaryService) {
+        Map<QName, Serializable> filteredProps = new HashMap<QName, Serializable>(props.size());
+        for (QName qName : props.keySet()) {
+            // ignore system and contentModel properties
+            if (RepoUtil.isSystemProperty(qName)) {
+                continue;
+            }
+            Serializable value = props.get(qName);
+            // check for empty strings when using number types, set to null in this case
+            if ((value != null) && (value instanceof String) && (value.toString().length() == 0)) {
+                PropertyDefinition propDef = dictionaryService.getProperty(qName);
+                if (propDef != null) {
+                    if (propDef.getDataType().getName().equals(DataTypeDefinition.DOUBLE) ||
+                            propDef.getDataType().getName().equals(DataTypeDefinition.FLOAT) ||
+                            propDef.getDataType().getName().equals(DataTypeDefinition.INT) ||
+                            propDef.getDataType().getName().equals(DataTypeDefinition.LONG)) {
+                        value = null;
+                    }
+                }
+            }
+            filteredProps.put(qName, value);
+        }
+        return filteredProps;
     }
 
 }

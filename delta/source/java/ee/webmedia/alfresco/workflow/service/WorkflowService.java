@@ -7,12 +7,12 @@ import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
-import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.Predicate;
+import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.service.event.WorkflowEventListener;
@@ -70,10 +70,11 @@ public interface WorkflowService {
 
     /**
      * @param originalAssignmentTask - task that will be delegated(originalAssignmentTask.parent contains information about new tasks and
-     *            originalAssignmentTask.parent.parent
-     *            contains information about new workflows)
+     *            originalAssignmentTask.parent.parent contains information about new workflows)
+     * @return MessageDataWrapper with 0 or more non-error messages to be shown to the user
+     * @throws UnableToPerformMultiReasonException - when at least one error-message should be shown to the user
      */
-    Pair<MessageDataWrapper, CompoundWorkflow> delegate(Task originalAssignmentTask);
+    MessageDataWrapper delegate(Task originalAssignmentTask) throws UnableToPerformMultiReasonException;
 
     void deleteCompoundWorkflow(NodeRef compoundWorkflow);
 

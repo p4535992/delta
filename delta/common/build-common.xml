@@ -553,30 +553,35 @@
 	 	<param name="xsd" value="DimensioonideNimekiri.xsd" />
 	 	<param name="package" value="ee.webmedia.alfresco.document.einvoice.dimensionslist.generated" />
 	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/dimensionslist/generated" />
+	 	<param name="namespace" value="http://www.riik.ee/schemas/e-arve/DimensioonideNimekiri.xsd" />
 	 </antcall>
 	 <antcall target="generate-jaxb-conditionally" >
 	 	<param name="name" value="sellerslist" />
 	 	<param name="xsd" value="HankijaNimekiri.xsd" />
 	 	<param name="package" value="ee.webmedia.alfresco.document.einvoice.sellerslist.generated" />
 	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/sellerslist/generated" />
+	 	<param name="namespace" value="http://www.riik.ee/schemas/e-arve/HankijaNimekiri.xsd" />
 	 </antcall> 
 	 <antcall target="generate-jaxb-conditionally" >
 	 	<param name="name" value="vatcodelist" />
 	 	<param name="xsd" value="KaibemaksuKoodNimekiri.xsd" />
 	 	<param name="package" value="ee.webmedia.alfresco.document.einvoice.vatcodelist.generated" />
 	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/vatcodelist/generated" />
+	 	<param name="namespace" value="http://www.riik.ee/schemas/e-arve/KaibemaksuKoodNimekiri.xsd" />
 	 </antcall>
 	 <antcall target="generate-jaxb-conditionally" >
 	 	<param name="name" value="accountlist" />
 	 	<param name="xsd" value="KontoNimekiri.xsd" />
 	 	<param name="package" value="ee.webmedia.alfresco.document.einvoice.accountlist.generated" />
 	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/accountlist/generated" />
+	 	<param name="namespace" value="http://www.riik.ee/schemas/e-arve/KontoNimekiri.xsd" />
 	 </antcall> 
 	 <antcall target="generate-jaxb-conditionally" >
 	 	<param name="name" value="account" />
 	 	<param name="xsd" value="OstuarveKonteering.xsd" />
 	 	<param name="package" value="ee.webmedia.alfresco.document.einvoice.account.generated" />
 	 	<param name="folder" value="ee/webmedia/alfresco/document/einvoice/account/generated" />
+	 	<param name="namespace" value="http://www.riik.ee/schemas/e-arve/OstuarveKonteering.xsd" />
 	 </antcall>    	
    </target>
 
@@ -656,6 +661,12 @@
 		<xjc destdir="${project.dir.build}/${name}" package="${package}" removeOldOutput="true" >
 			<schema dir="${common.dir.etc}" includes="${xsd}" />
 		</xjc>
+		<!-- Add namespace to root element (if namespace is given), as some versions of jdk (jaxb? xerces?) 
+			cannot erroneously validate root elements without that -->
+		<antcall target="replace-namespace-conditionally">
+			<param name="name" value="${name}" />
+			<param name="rootNamespace" value="${namespace}" />
+		</antcall>
 		<!-- encoding="UTF-8" attribute is removed because otherwise character reference 
 			(like <xs:pattern value="[&#x0020;-&#x00FF;]*"/>) causes compilation error) -->
 		<javac destdir="${project.dir.build}/${name}" classpathref="classpath-generate" source="1.6" target="1.6" debug="on" fork="yes" >
@@ -665,6 +676,12 @@
 		<delete file="${common.dir.lib.server}/${name}.jar" failonerror="false" />
 		<jar destfile="${common.dir.lib.server}/${name}.jar" basedir="${project.dir.build}/${name}" />
 		<copy todir="${project.dir.exploded.lib}" preservelastmodified="true" file="${common.dir.lib.server}/${name}.jar" />
+	</target>
+	
+	<target name="replace-namespace-conditionally" if="namespace">
+		<replaceregexp match="@XmlRootElement\(" replace="@XmlRootElement\(namespace=&quot;${rootNamespace}&quot;, " >
+			<fileset dir="${project.dir.build}/${name}" includes="**/*.java"/>
+		</replaceregexp>		
 	</target>
 
 </project>

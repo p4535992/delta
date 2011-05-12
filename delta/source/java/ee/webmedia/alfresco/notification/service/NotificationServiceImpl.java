@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import javax.faces.event.ActionEvent;
@@ -26,6 +27,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -167,11 +169,13 @@ public class NotificationServiceImpl implements NotificationService {
 
     private void addAdminGroupRecipients(Notification notification) {
         Set<String> adminAuthorities = authorityService.getContainedAuthorities(AuthorityType.USER, UserService.ADMINISTRATORS_GROUP, true);
-        for (String admin : adminAuthorities) {
-            String email = userService.getUserEmail(admin);
-            if (StringUtils.isNotBlank(email)) {
-                notification.addRecipient(userService.getUserFullName(admin), email);
+        for (String userName : adminAuthorities) {
+            String userFullName = userService.getUserFullName(userName);
+            if (userFullName == null) {
+                // User does not exist
+                continue;
             }
+            notification.addRecipient(userFullName, userService.getUserEmail(userName));
         }
     }
 
@@ -437,13 +441,17 @@ public class NotificationServiceImpl implements NotificationService {
                 if (!(task.getDueDate() == null && WorkflowSpecificModel.Types.INFORMATION_TASK.equals(task.getNode().getType()))) {
                     int daysForSubstitutionTasksCalc = (int) (parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC) * 1);
                     Calendar calendar = Calendar.getInstance();
+                    Date now = new Date();
                     for (Substitute sub : substitutes) {
                         calendar.setTime(sub.getSubstitutionEndDate());
                         calendar.add(Calendar.DATE, daysForSubstitutionTasksCalc);
                         if (task.getDueDate() == null) {
                             log.error("Duedate is null for task: " + task);
                         }
-                        if (sub.getSubstitutionStartDate().before(task.getDueDate()) && calendar.getTime().after(task.getDueDate())) {
+                        Date substitutionStartDate = sub.getSubstitutionStartDate();
+                        Date substitutionEndDate = sub.getSubstitutionEndDate();
+                        if (isSubstituting(substitutionStartDate, substitutionEndDate, now) && substitutionStartDate.before(task.getDueDate())
+                                && calendar.getTime().after(task.getDueDate())) {
                             notification.addRecipient(sub.getSubstituteName(), userService.getUserEmail(sub.getSubstituteId()));
                         }
                     }
@@ -456,6 +464,11 @@ public class NotificationServiceImpl implements NotificationService {
             }
         }
         return null;
+    }
+
+    private boolean isSubstituting(Date substitutionStartDate, Date substitutionEndDate, Date now) {
+        return (substitutionStartDate == null || DateUtils.isSameDay(substitutionStartDate, now) || substitutionStartDate.before(now))
+                && (substitutionEndDate == null || DateUtils.isSameDay(substitutionEndDate, now) || substitutionEndDate.after(now));
     }
 
     /**
@@ -813,17 +826,19 @@ public class NotificationServiceImpl implements NotificationService {
             return 0; // if the admins are lazy and we don't have a template, we don't have to send out notifications... :)
         }
 
-        String content = "";
-        String userFullName = "";
-        String userEmail = "";
         DocumentAccessRestrictionEndDateComparator endDateComparator = new DocumentAccessRestrictionEndDateComparator();
-        for (String userName : documentsByUser.keySet()) {
-            userFullName = userService.getUserFullName(userName);
-            userEmail = userService.getUserEmail(userName);
+        for (Entry<String, List<Document>> entry : documentsByUser.entrySet()) {
+            String userName = entry.getKey();
+            String userFullName = userService.getUserFullName(userName);
+            if (userFullName == null) {
+                // User does not exist
+                continue;
+            }
+            String userEmail = userService.getUserEmail(userName);
             notification.addRecipient(userFullName, userEmail);
-            List<Document> userDocuments = documentsByUser.get(userName);
+            List<Document> userDocuments = entry.getValue();
             Collections.sort(userDocuments, endDateComparator);
-            content = templateService.getProcessedAccessRestrictionEndDateTemplate(userDocuments, systemTemplateByName);
+            String content = templateService.getProcessedAccessRestrictionEndDateTemplate(userDocuments, systemTemplateByName);
 
             try {
                 sendEmail(notification, content, null);
@@ -849,7 +864,7 @@ public class NotificationServiceImpl implements NotificationService {
         notification = addDocumentManagersAsRecipients(notification);
         DocumentRegNrComparator regNrComparator = new DocumentRegNrComparator();
         Collections.sort(documents, regNrComparator);
-        content = templateService.getProcessedAccessRestrictionEndDateTemplate(documents, systemTemplateByName);
+        String content = templateService.getProcessedAccessRestrictionEndDateTemplate(documents, systemTemplateByName);
 
         try {
             sendEmail(notification, content, null);
@@ -881,13 +896,22 @@ public class NotificationServiceImpl implements NotificationService {
                                 userService.getDocumentManagersGroup(), true);
         for (String documentManager : documentManagers) {
             String userName = authorityService.getShortName(documentManager);
-            notification.addRecipient(userService.getUserFullName(userName), userService.getUserEmail(userName));
+            String userFullName = userService.getUserFullName(userName);
+            if (userFullName == null) {
+                // User does not exist
+                continue;
+            }
+            notification.addRecipient(userFullName, userService.getUserEmail(userName));
         }
         return notification;
     }
 
     private boolean isSubscribed(String userName, QName subscriptionType) {
-        Serializable property = nodeService.getProperty(userService.getUsersPreferenceNodeRef(userName), subscriptionType);
+        NodeRef usersPreferenceRef = userService.getUsersPreferenceNodeRef(userName);
+        if (usersPreferenceRef == null) {
+            return false;
+        }
+        Serializable property = nodeService.getProperty(usersPreferenceRef, subscriptionType);
         if (property != null && Boolean.valueOf(property.toString())) {
             return true;
         }
@@ -927,7 +951,21 @@ public class NotificationServiceImpl implements NotificationService {
             log.debug("Sending notification e-mail\nnotification=" + notification + "\ncontent=" + WmNode.toString(content) + "\ndocRef=" + docRef
                     + "\nfileRefs=" + WmNode.toString(fileRefs) + "\nzipIt=" + zipIt + "\nzipName=" + zipName);
         }
-        emailService.sendEmail(notification.getToEmails(), notification.getToNames(), notification.getSenderEmail() //
+
+        // Remove recipients with blank e-mail address
+        // So that, if there is at least one recipient with non-blank e-mail address, e-mail sending doesn't fail
+        List<String> toEmails = new ArrayList<String>(notification.getToEmails());
+        List<String> toNames = new ArrayList<String>(notification.getToNames());
+        for (int i = 0; i < toEmails.size();) {
+            if (StringUtils.isBlank(toEmails.get(i))) {
+                toEmails.remove(i);
+                toNames.remove(i);
+            } else {
+                i++;
+            }
+        }
+
+        emailService.sendEmail(toEmails, toNames, notification.getSenderEmail() //
                 , notification.getSubject(), content, true, docRef, fileRefs, zipIt, zipName);
     }
 

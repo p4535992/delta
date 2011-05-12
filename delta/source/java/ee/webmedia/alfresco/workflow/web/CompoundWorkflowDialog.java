@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.parameters.model.Parameters.MAX_ATTACHED_FILE_SIZE;
 import static ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.TASK_INDEX;
 import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
 
@@ -27,13 +28,13 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.notification.exception.EmailAttachmentSizeLimitException;
-import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -357,7 +358,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     protected String getConfigArea() {
         return null;
     }
-    
+
     protected ParametersService getParametersService() {
         if (parametersService == null) {
             parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(ParametersService.BEAN_NAME);
@@ -447,7 +448,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             MessageUtil.addErrorMessage(context, "workflow_compound_save_failed_responsible");
         } else if (e instanceof EmailAttachmentSizeLimitException) {
             log.debug("Compound workflow action failed: email attachment exceeded size limit set in parameter!", e);
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "notification_zip_size_too_large", ((ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(ParametersService.BEAN_NAME)).getLongParameter(Parameters.MAX_ATTACHED_FILE_SIZE).toString());
+            MessageUtil.addErrorMessage(context, "notification_zip_size_too_large", BeanHelper.getParametersService().getLongParameter(MAX_ATTACHED_FILE_SIZE));
         } else if (e instanceof NodeLockedException) {
             log.debug("Compound workflow action failed: document is locked!", e);
             MessageUtil.addErrorMessage(context, new String[] { failMsg, "document_error_docLocked" });

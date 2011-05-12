@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.user.web;
 
+import java.util.Iterator;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -8,8 +9,10 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -52,6 +55,19 @@ public class PermissionsListDialog extends BaseDialogBean {
             alternateDialogTitleId = ActionUtil.getParam(event, "alternateDialogTitleId");
         }
         restored();
+    }
+
+    public void removeAuthorityAndSave(ActionEvent event) {
+        String auth = ActionUtil.getParam(event, "authority");
+        for (Iterator<Authority> it = authorities.iterator(); it.hasNext();) {
+            Authority authority = it.next();
+            if (StringUtils.equals(authority.getAuthority(), auth)) {
+                BeanHelper.getPermissionService().deletePermission(nodeRef, authority.getAuthority(), permission);
+                MessageUtil.addInfoMessage("delete_success");
+                it.remove();
+                break;
+            }
+        }
     }
 
     @Override

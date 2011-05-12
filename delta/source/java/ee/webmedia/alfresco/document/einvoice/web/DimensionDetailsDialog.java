@@ -15,7 +15,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.einvoice.model.DimensionModel;
+import ee.webmedia.alfresco.document.einvoice.model.Dimension;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -29,7 +29,7 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
     private transient UIRichList richList;
 
     private List<DimensionValue> dimensionValues;
-    private Node selectedDimension;
+    private Dimension selectedDimension;
 
     public DimensionDetailsDialog() {
         UIContextService.getInstance(FacesContext.getCurrentInstance()).registerBean(this);
@@ -40,6 +40,13 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
      */
     public List<DimensionValue> getDimensionValues() {
         return dimensionValues;
+    }
+
+    /**
+     * Used in JSP pages.
+     */
+    public Dimension getDimension() {
+        return selectedDimension;
     }
 
     /**
@@ -59,7 +66,8 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         if (validate()) {
-            BeanHelper.getEInvoiceService().updateDimensionValues(dimensionValues, selectedDimension);
+            BeanHelper.getEInvoiceService().updateDimension(selectedDimension);
+            BeanHelper.getEInvoiceService().updateDimensionValues(dimensionValues, selectedDimension.getNode());
             resetData();
             MessageUtil.addInfoMessage("save_success");
             return outcome;
@@ -73,6 +81,7 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
         for (DimensionValue dimensionValue : dimensionValues) {
             if (Boolean.TRUE.equals(dimensionValue.getDefaultValue())) {
                 if (defaultValueSelected) {
+                    MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "dimension_validationMsg_moreThanOneDefaultValue");
                     return false;
                 }
                 defaultValueSelected = true;
@@ -95,7 +104,7 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
     @Override
     public String getContainerTitle() {
         if (selectedDimension != null) {
-            return (String) selectedDimension.getProperties().get(DimensionModel.Props.NAME);
+            return selectedDimension.getName();
         }
         return super.getContainerTitle();
     }
@@ -112,7 +121,7 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
      * @param event
      */
     public void select(ActionEvent event) {
-        selectedDimension = new Node(new NodeRef(ActionUtil.getParam(event, "nodeRef")));
+        selectedDimension = new Dimension(new Node(new NodeRef(ActionUtil.getParam(event, "nodeRef"))));
         loadDimensionValues();
     }
 
@@ -145,7 +154,7 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
 
     private void loadDimensionValues() {
         if (selectedDimension != null) {
-            dimensionValues = BeanHelper.getEInvoiceService().getAllDimensionValues(selectedDimension.getNodeRef());
+            dimensionValues = BeanHelper.getEInvoiceService().getAllDimensionValues(selectedDimension.getNode().getNodeRef());
         }
     }
 
@@ -153,4 +162,5 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
     public Object getActionsContext() {
         return null;
     }
+
 }

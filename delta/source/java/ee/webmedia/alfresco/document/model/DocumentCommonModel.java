@@ -150,6 +150,7 @@ public interface DocumentCommonModel {
         /** can delete document */
         public static final String DELETE_DOCUMENT_META_DATA = "deleteDocumentMetaData";
 
+        public static final Set<String> READ_ONLY_PRIVILEGES = new HashSet<String>(Arrays.asList(DELETE_DOCUMENT_FILES, DELETE_DOCUMENT_META_DATA));
         public static final Map<String, Set<String>> PRIVILEGE_DEPENDENCIES;
         static {
             Map<String, Set<String>> m = new HashMap<String, Set<String>>();

@@ -8,10 +8,12 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8" %>
 <%@ page isELIgnored="false" %>
 
+<%@page import="ee.webmedia.alfresco.utils.MessageUtil"%>
+
 <a:panel id="substitute-panel" styleClass="panel-100 with-pager" label="#{msg.substitute_list}" progressive="true">
 
     <a:richList id="substituteList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-                width="100%" value="#{DialogManager.bean.substitutes}" var="r" initialSortColumn="substitutionStartDate" initialSortDescending="true" refreshOnBind="true">
+                width="100%" value="#{DialogManager.bean.substitutes}" var="r" refreshOnBind="true">
 
         <a:column id="substituteNameCol">
             <f:facet name="header">
@@ -67,13 +69,29 @@
         <a:dataPager id="pager1" styleClass="pager"/>
 
     </a:richList>
-    
+    <f:verbatim>
     <script type="text/javascript">
-    $jQ(document).keyup(function (event) {
-       if (event.keyCode == 13) {
-          $jQ("#"+escapeId4JQ("dialog:finish-button")).click();
-       }
-     });
-    </script>
+    $jQ(function() {
+       $jQ(document).keyup(function (event) {
+          if (event.keyCode == 13) {
+             $jQ("#"+escapeId4JQ("dialog:finish-button")).click();
+          }
+        });
 
+       $jQ("#"+escapeId4JQ("dialog:finish-button") + ",#" + escapeId4JQ("dialog:finish-button-2")).click(function (event) {
+          	var now = new Date()
+          	var action = null;
+          	$jQ('input[name$="substitutionStartDateInput"]').each(function () {
+          	   if ($jQ(this).datepicker('getDate') < now) {
+                  action = confirm('<%= MessageUtil.getMessageAndEscapeJS("substitute_start_before_now")%>');
+          	   }
+          	   if (action != null) {
+          	      return false; // break out of each
+          	   }
+          	});
+          	return (action == null) ? true : action;
+       });
+    });
+    </script>
+	</f:verbatim>
 </a:panel>

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
@@ -11,9 +12,11 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.security.AuthorityType;
 import org.apache.cxf.common.util.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.email.service.EmailException;
 import ee.webmedia.alfresco.email.service.EmailService;
@@ -24,6 +27,7 @@ import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.web.PermissionsAddDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 public class InviteUsersDialog extends PermissionsAddDialog {
     private static final long serialVersionUID = 1L;
@@ -86,10 +90,14 @@ public class InviteUsersDialog extends PermissionsAddDialog {
         String content = getDocumentTemplateService().getProcessedEmailTemplate(nodeRefs, templateNodeRef);
 
         for (Authority a : auth) {
-            final Map<String, Object> props = getUserService().getUser(a.getAuthority()).getProperties();
-            if (props.get(ContentModel.PROP_EMAIL) != null) {
-                toEmails.add(props.get(ContentModel.PROP_EMAIL).toString());
-                toNames.add(getUserService().getUserFullName(a.getAuthority()));
+            String authority = a.getAuthority();
+            if (a.isGroup()) {
+                Set<String> containedAuthorities = BeanHelper.getAuthorityService().getContainedAuthorities(AuthorityType.USER, authority, true);
+                for (String user : containedAuthorities) {
+                    addToEmails(user, toEmails, toNames);
+                }
+            } else {
+                addToEmails(authority, toEmails, toNames);
             }
         }
 
@@ -98,6 +106,17 @@ public class InviteUsersDialog extends PermissionsAddDialog {
         } catch (EmailException e) {
             log.error("Discussion invitation notification e-mail sending failed, ignoring and continuing", e);
             return;
+        }
+    }
+
+    private void addToEmails(String user, List<String> toEmails, List<String> toNames) {
+        final Map<String, Object> props = getUserService().getUser(user).getProperties();
+        if (props.get(ContentModel.PROP_EMAIL) != null) {
+            String email = props.get(ContentModel.PROP_EMAIL).toString();
+            if (!toEmails.contains(email)) {
+                toEmails.add(email);
+                toNames.add(UserUtil.getPersonFullName2(props));
+            }
         }
     }
 

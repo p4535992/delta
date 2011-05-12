@@ -192,8 +192,7 @@ public class RichListMultiTbodyRenderer extends RichListRenderer {
                 out.write("</tbody><tbody>");
             }
 
-            // FIXME: style='height: 24px;' - hack for IE7 & IE8 so that pager doesn't hide last richlist row. Now FF doesn't render it correctly
-            out.write("<tr><td colspan='99' align='center' style='height: 24px;'>");
+            out.write("<tr><td colspan='99' align='center' >");
 
             for (UIComponent child : ComponentUtil.getChildren(richList)) {
                 if (child instanceof UIColumn == false) {

@@ -41,7 +41,7 @@
    
    <config evaluator="aspect-name" condition="ab:everyone">
       <property-sheet>
-         <show-property name="ab:sapAccount" />
+         <show-property name="ab:sapAccount" read-only="true" />
       </property-sheet>
    </config>   
 

@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.workflow.service;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
+/** Kooskõlastamiseks töövoog - review workflow */
 public class ReviewWorkflow extends Workflow {
 
     private static final long serialVersionUID = 1L;

@@ -35,8 +35,7 @@
    <!-- @Override classpath:alfresco/subsystems/Authentication/common-ldap-context.xml -->
    <bean id="userRegistry" class="ee.webmedia.alfresco.orgstructure.amr.AMRUserRegistry">
       <property name="active" value="true" />
-      <property name="personService" ref="PersonService" />
-      <property name="nodeService" ref="NodeService" />
+      <property name="userService" ref="UserService" />
       <property name="amrService" ref="AmrService" />
    </bean>
 

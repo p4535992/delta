@@ -7,6 +7,7 @@
       <import uri="http://www.alfresco.org/model/content/1.0" prefix="cm" />
       <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
       <import uri="http://alfresco.webmedia.ee/model/document/specific/1.0" prefix="docspec" />
+      <import uri="http://alfresco.webmedia.ee/model/transaction/1.0" prefix="trn" />
    </imports>
 
    <namespaces>
@@ -197,6 +198,7 @@
          <parent>doccom:document</parent>
          <mandatory-aspects>
             <aspect>docspec:invoice</aspect>
+            <aspect>trn:transactionContainer</aspect>
          </mandatory-aspects>
       </type> 
       

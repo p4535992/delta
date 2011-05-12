@@ -142,6 +142,15 @@
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
+   
+   <managed-bean>
+      <description>
+         Bean that generates a selectBox with values of classificator specified using classificatorName attribute on property-sheet/show-property element
+      </description>
+      <managed-bean-name>DimensionSelectorGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>   
 
    <managed-bean>
       <managed-bean-name>ParameterTextAreaGenerator</managed-bean-name>
@@ -235,6 +244,18 @@
          <renderer-type>ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer</renderer-type>
          <renderer-class>ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer</renderer-class>
       </renderer>
+      
+      <renderer>
+         <component-family>javax.faces.Panel</component-family>
+         <renderer-type>ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGridCustomChildAttrRenderer</renderer-type>
+         <renderer-class>ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGridCustomChildAttrRenderer</renderer-class>
+      </renderer>
+      
+      <renderer>
+         <component-family>javax.faces.Panel</component-family>
+         <renderer-type>ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRenderer</renderer-type>
+         <renderer-class>ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRenderer</renderer-class>
+      </renderer>  
       
    </render-kit>
 

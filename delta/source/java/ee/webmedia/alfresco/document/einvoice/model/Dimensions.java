@@ -22,17 +22,17 @@ public enum Dimensions {
     TAX_CODE_ITEMS("taxCodeItems");
 
     private String xPath;
-    private String parameterName;
+    private String dimensionName;
 
     Dimensions(String dimensionName) {
         xPath = Repo.DIMENSIONS_SPACE + "/" + DimensionModel.NAMESPACE_PREFFIX + dimensionName;
-        parameterName = dimensionName;
+        this.dimensionName = dimensionName;
     }
 
     public static Dimensions get(String dimensionName) {
         final Dimensions[] values = Dimensions.values();
         for (Dimensions dimension : values) {
-            if (dimension.parameterName.equals(dimensionName)) {
+            if (dimension.dimensionName.equals(dimensionName)) {
                 return dimension;
             }
         }
@@ -45,6 +45,6 @@ public enum Dimensions {
     }
 
     public String getDimensionName() {
-        return parameterName;
+        return dimensionName;
     }
 }

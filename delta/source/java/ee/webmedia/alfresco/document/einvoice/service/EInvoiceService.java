@@ -1,10 +1,13 @@
 package ee.webmedia.alfresco.document.einvoice.service;
 
 import java.io.InputStream;
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
@@ -12,6 +15,7 @@ import ee.webmedia.alfresco.document.einvoice.generated.Invoice;
 import ee.webmedia.alfresco.document.einvoice.model.Dimension;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
+import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 
 /**
  * Handle e-invoices conversion between document and xml
@@ -62,6 +66,24 @@ public interface EInvoiceService {
      */
     void deleteAllDimensions();
 
+    List<Transaction> getInvoiceTransactions(NodeRef invoiceRef);
+
     void updateDimensionValues(List<DimensionValue> dimensionValues, Node selectedDimension);
+
+    /**
+     * Get active dimension values from service cache
+     * 
+     * @param dimension
+     * @return
+     */
+    List<DimensionValue> getActiveDimensionValues(NodeRef dimension);
+
+    NodeRef createTransaction(NodeRef parentRef, Map<QName, Serializable> properties);
+
+    void updateTransactions(NodeRef invoiceRef, List<Transaction> transactions, List<Transaction> removedTransactions);
+
+    List<DimensionValue> getVatCodeDimensionValues();
+
+    void updateDimension(Dimension dimension);
 
 }

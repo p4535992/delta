@@ -40,8 +40,10 @@ import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.collections.comparators.ComparatorChain;
+import org.apache.commons.collections.comparators.FixedOrderComparator;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
@@ -92,10 +94,11 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     public static final String BEAN_NAME = "ManagePrivilegesDialog";
 
     private static final String PARAM_CURRENT_GROUP = "currentGroup";
-    private static Comparator<UserPrivilegesRow> TABLE_ROW_COMPARATOR;
+    private Comparator<UserPrivilegesRow> tableRowComparator;
 
     private static final Set<String> dynamicPrivilegesGroups = new HashSet<String>(Arrays.asList(UserService.AUTH_ADMINISTRATORS_GROUP
             , "curSeries_" + UserService.AUTH_DOCUMENT_MANAGERS_GROUP, UserService.AUTH_DOCUMENT_MANAGERS_GROUP));
+    private static final String CUR_SER_DOC_MANAGERS_GROUP_CODE = "curSeries_" + UserService.AUTH_DOCUMENT_MANAGERS_GROUP;
 
     private static final String USERGROUP_MARKER_CLASS = "tbGroup";
 
@@ -108,6 +111,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     private boolean editable;
     private boolean markPrivilegesBaseState;
     private UIRichList permissionsRichList;
+    private UIGenericPicker picker;
     private NodeRef manageableRef;
     private Collection<String> manageablePermissions;
 
@@ -117,7 +121,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     private boolean rebuildUserPrivilegesRows;
     private boolean permissionsChecked;
 
-    private GroupTranslatorMap groupNamesByCode = new GroupTranslatorMap();
+    private final GroupTranslatorMap groupNamesByCode = new GroupTranslatorMap();
     private static final JSONSerializer PRIV_DEPENDENCIES_SERIALIZER = new JSONSerializer().include("*").exclude("*.class");
 
     public void init(ActionEvent event) {
@@ -176,6 +180,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
                 MessageUtil.addErrorMessage("save_failed", e.getMessage());
             }
             rebuildUserPrivilegesRows = true;
+            picker.queueEvent(new UIGenericPicker.PickerEvent(picker, 1 /* ACTION_CLEAR */, 0, null, null));
         }
         return null;
     }
@@ -270,14 +275,24 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     private void resetState(boolean reInit) {
         if (!reInit) {
             permissionsRichList = null;
+            picker = null;
             permissionsChecked = false;
         }
+        tableRowComparator = null;
         manageableRef = null;
         manageablePermissions = null;
 
         userPrivilegesRows = null;
         privMappings = null;
         editable = false;
+    }
+
+    public UIGenericPicker getPicker() {
+        return picker;
+    }
+
+    public void setPicker(UIGenericPicker picker) {
+        this.picker = picker;
     }
 
     public UIRichList getPermissionsRichList() {
@@ -297,7 +312,8 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             FacesContext context = FacesContext.getCurrentInstance();
             List<UIComponent> permissionRLChildren = ComponentUtil.getChildren(permissionsRichList);
             for (String permission : manageablePermissions) {
-                permissionRLChildren.add(createPermissionColumn(permission, context));
+                boolean columnMaybeEditable = editable && !DocumentCommonModel.Privileges.READ_ONLY_PRIVILEGES.contains(permission);
+                permissionRLChildren.add(createPermissionColumn(permission, context, columnMaybeEditable));
             }
             permissionRLChildren.add(createActionsColumn(context));
         }
@@ -310,8 +326,8 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     public void addAuthorities(ActionEvent event) {
         UIGenericPicker picker = (UIGenericPicker) event.getComponent().findComponent("picker");
         String[] results = picker.getSelectedResults();
-        Set<String> userNames = new HashSet<String>();
         if (results != null) {
+            Set<String> userNames = new HashSet<String>();
             for (String authorityName : results) {
                 addAuthorityUsers(userNames, authorityName, GROUPLESS_GROUP);
                 rebuildUserPrivilegesRows = true;
@@ -465,23 +481,39 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     }
 
     private Comparator<? super UserPrivilegesRow> getTableRowComparator() {
-        if (TABLE_ROW_COMPARATOR == null) {
-            ComparatorChain chain = new ComparatorChain();
-            chain.addComparator(new TransformingComparator(new Transformer<UserPrivilegesRow>() {
+        if (tableRowComparator == null) {
+            Object[] groupOrderHigh = new Object[] { groupNamesByCode.get(GROUPLESS_GROUP) };
+            FixedOrderComparator grouplessFirstComp = new FixedOrderComparator(groupOrderHigh);
+            grouplessFirstComp.setUnknownObjectBehavior(FixedOrderComparator.UNKNOWN_AFTER);
+
+            List<String> groupOrderLow = Arrays.asList(groupNamesByCode.get(UserService.AUTH_DOCUMENT_MANAGERS_GROUP), groupNamesByCode.get(UserService.AUTH_ADMINISTRATORS_GROUP),
+                    groupNamesByCode.get(CUR_SER_DOC_MANAGERS_GROUP_CODE));
+            Collections.sort(groupOrderLow);
+            FixedOrderComparator specialGroupsLastComp = new FixedOrderComparator(groupOrderLow);
+            specialGroupsLastComp.setUnknownObjectBehavior(FixedOrderComparator.UNKNOWN_BEFORE);
+
+            Transformer<UserPrivilegesRow> privGroupTransformer = new Transformer<UserPrivilegesRow>() {
                 @Override
                 public Object tr(UserPrivilegesRow input) {
                     return groupNamesByCode.get(input.getCurrentGroup());
                 }
-            }, new NullComparator(false)));
+            };
+
+            ComparatorChain chain = new ComparatorChain();
+            // rows order by groups: groupless users, regular usergroups, special usergroups
+            chain.addComparator(new TransformingComparator(privGroupTransformer, new NullComparator(grouplessFirstComp)));
+            chain.addComparator(new TransformingComparator(privGroupTransformer, new NullComparator(specialGroupsLastComp)));
+            chain.addComparator(new TransformingComparator(privGroupTransformer, new NullComparator(false)));
+            // withing same group sort users by display name
             chain.addComparator(new TransformingComparator(new Transformer<UserPrivilegesRow>() {
                 @Override
                 public Object tr(UserPrivilegesRow input) {
                     return input.getUserDisplayName();
                 }
             }, new NullComparator()));
-            TABLE_ROW_COMPARATOR = chain;
+            tableRowComparator = chain;
         }
-        return TABLE_ROW_COMPARATOR;
+        return tableRowComparator;
     }
 
     private void addDynamicUserPrivilegesRows() {
@@ -614,16 +646,14 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             String groupCode = (String) key;
             String value = super.get(groupCode);
             if (value == null) {
-                String groupName;
                 if (GROUPLESS_GROUP.equals(key)) {
                     value = MessageUtil.getMessage("manage_permissions_group_groupless");
                 } else {
-                    if (("curSeries_" + UserService.AUTH_DOCUMENT_MANAGERS_GROUP).equals(groupCode)) {
-                        groupName = MessageUtil.getMessage(groupCode);
+                    if (CUR_SER_DOC_MANAGERS_GROUP_CODE.equals(groupCode)) {
+                        value = MessageUtil.getMessage(groupCode);
                     } else {
-                        groupName = getAuthorityService().getAuthorityDisplayName(groupCode);
+                        value = getAuthorityService().getAuthorityDisplayName(groupCode);
                     }
-                    value = MessageUtil.getMessage("groups_management_subgroup", groupName);
                 }
                 put(groupCode, value);
             }
@@ -632,8 +662,6 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     }
 
     private void addTbodyAttributesByGroup(String groupCode) {
-        groupNamesByCode = new GroupTranslatorMap();
-
         Map<String/* attributeName */, String/* attributeValue */> tbodyAttributes = new HashMap<String, String>();
         String groupCodeHtml = HtmlUtils.htmlEscape(groupCode).replaceAll(" ", "¤");
         tbodyAttributes.put("class", USERGROUP_MARKER_CLASS + " " + groupCodeHtml);
@@ -650,10 +678,11 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             // "permission_" + privilege
 
             UITableCell tableCell = new UITableCell();
-            putAttribute(tableCell, "styleClass", "expanded");
+            putAttribute(tableCell, "styleClass", GROUPLESS_GROUP.equals(groupCode) ? "expanded" : "collapsed");
             addChildren(tr, tableCell);
             {
                 UITableCell uiTableCell = new UITableCell();
+                putAttribute(uiTableCell, "styleClass", "left");
                 HtmlOutputText headerText = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
                 headerText.setValue(groupDisplayName);
                 addChildren(uiTableCell, headerText);
@@ -663,7 +692,8 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             for (String permission : manageablePermissions) {
                 tableCell = new UITableCell();
                 HtmlSelectBooleanCheckbox cb = (HtmlSelectBooleanCheckbox) application.createComponent(HtmlSelectBooleanCheckbox.COMPONENT_TYPE);
-                cb.setDisabled(!editable);
+                boolean columnMaybeEditable = editable && !DocumentCommonModel.Privileges.READ_ONLY_PRIVILEGES.contains(permission);
+                cb.setDisabled(!columnMaybeEditable);
                 cb.setStyleClass("permission_" + permission);
                 addChildren(tableCell, cb);
                 addChildren(tr, tableCell);
@@ -717,7 +747,10 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             UIComponentTagUtils.setValueBinding(context, removePersonLink, "rendered", "#{!r.readOnly}");
             addChildren(removePersonLink, createUIParam("userName", "#{r.userName}", application));
 
-            addChildren(column, removePersonLink);
+            HtmlOutputText nbsp = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
+            nbsp.setValue(StringEscapeUtils.unescapeHtml("&nbsp;")); // workaround for IE7 - otherwise if removePersonLink is not rendered, then underline is not rendered either
+
+            addChildren(column, removePersonLink, nbsp);
         }
         return column;
     }
@@ -734,7 +767,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
         return removeLink;
     }
 
-    private UIColumn createPermissionColumn(String privilege, FacesContext context) {
+    private UIColumn createPermissionColumn(String privilege, FacesContext context, boolean columnMaybeEditable) {
         Application application = context.getApplication();
         UIColumn column = (UIColumn) application.createComponent("org.alfresco.faces.RichListColumn");
 
@@ -744,7 +777,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
 
         HtmlSelectBooleanCheckbox cb = (HtmlSelectBooleanCheckbox) application.createComponent(HtmlSelectBooleanCheckbox.COMPONENT_TYPE);
         UIComponentTagUtils.setValueProperty(context, cb, "#{" + BEAN_NAME + ".privilegesByUsername[r.userName].privileges['" + privilege + "']}");
-        if (editable) {
+        if (columnMaybeEditable) {
             UIComponentTagUtils.setValueBinding(context, cb, "disabled", "#{r.dynamicPrivileges['" + privilege + "']==false}");
         } else {
             cb.setDisabled(true);

@@ -457,8 +457,15 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    }
 
    public static void validatePermission(Node documentNode, String permission) {
+       validatePermission(documentNode, null, permission);
+   }
+
+   public static void validatePermission(Node documentNode, String errMsg, String permission) {
+       if (errMsg == null) {
+           errMsg = "action_failed_missingPermission";
+       }
        if (!documentNode.hasPermission(permission)) {
-           throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_" + permission));
+           throw new UnableToPerformException(errMsg, new MessageDataImpl("permission_" + permission));
        }
    }
 

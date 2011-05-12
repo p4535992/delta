@@ -17,7 +17,6 @@ import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.cmr.view.ImportPackageHandler;
 import org.alfresco.service.cmr.view.ImporterBinding;
 import org.alfresco.service.cmr.view.ImporterProgress;
@@ -43,6 +42,7 @@ import ee.webmedia.alfresco.dvk.service.ExternalReviewException;
 import ee.webmedia.alfresco.dvk.service.ExternalReviewException.ExceptionType;
 import ee.webmedia.alfresco.notification.model.NotificationModel;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -61,7 +61,6 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
     private MimetypeService mimetypeService;
     private DvkService dvkService;
     private FileService fileService;
-    private PersonService personService;
 
     @Override
     public NodeRef importWorkflowDocument(Reader viewReader, Location location, NodeRef existingDocumentRef
@@ -233,8 +232,9 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                 for (ClassificatorValue ownerValue : ownerValues) {
                     if (ownerInstitutionCode.equalsIgnoreCase(ownerValue.getClassificatorDescription())) {
                         String userCode = ownerValue.getValueName();
-                        if (personService.personExists(userCode)) {
-                            String userFullName = userService.getUserFullName(userCode);
+                        Map<QName, Serializable> userProps = userService.getUserProperties(userCode);
+                        if (userProps != null) {
+                            String userFullName = UserUtil.getPersonFullName1(userProps);
                             task.setOwnerId(userCode);
                             task.setOwnerName(userFullName);
                             taskNewProps.put(WorkflowCommonModel.Props.OWNER_ID, userCode);
@@ -427,10 +427,6 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
 
     public void setFileService(FileService fileService) {
         this.fileService = fileService;
-    }
-
-    public void setPersonService(PersonService personService) {
-        this.personService = personService;
     }
 
     public interface DocImporter extends Importer {

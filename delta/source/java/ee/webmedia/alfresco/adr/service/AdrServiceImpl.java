@@ -18,7 +18,6 @@ import java.util.Set;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.alfresco.service.cmr.repository.AssociationRef;
-import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
@@ -380,25 +379,6 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         }
         dokument.setSaatmisviis(getNullIfEmpty(transmittalMode));
 
-        String party = null;
-        if (DocumentTypeHelper.isOutgoingLetter(doc.getType())) {
-            // recipientName ja additionalRecipientName
-            party = doc.getAllRecipients();
-        } else if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(doc.getType()) || DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(doc.getType())) {
-            String secondPartyName = (String) doc.getProperties().get(DocumentSpecificModel.Props.SECOND_PARTY_NAME);
-            String thirdPartyName = (String) doc.getProperties().get(DocumentSpecificModel.Props.THIRD_PARTY_NAME);
-            party = TextUtil.joinStringAndStringWithComma(secondPartyName, thirdPartyName);
-        } else if (DocumentSubtypeModel.Types.CONTRACT_MV.equals(doc.getType())) {
-            List<ChildAssociationRef> partyAssocs = nodeService.getChildAssocs(doc.getNodeRef(), DocumentSpecificModel.Assocs.CONTRACT_MV_PARTIES, RegexQNamePattern.MATCH_ALL);
-            List<String> partyNames = new ArrayList<String>(partyAssocs.size());
-            for (ChildAssociationRef partyRef : partyAssocs) {
-                String partyName = (String) nodeService.getProperty(partyRef.getChildRef(), DocumentSpecificModel.Props.PARTY_NAME);
-                partyNames.add(partyName);
-            }
-            party = TextUtil.joinNonBlankStringsWithComma(partyNames);
-        }
-        dokument.setOsapool(getNullIfEmpty(party));
-
         // Tähtaja kirjeldus
         if (DocumentSubtypeModel.Types.CONTRACT_SIM.equals(doc.getType())) {
             dokument.setTahtaegKirjeldus(getNullIfEmpty((String) doc.getProperties().get(DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE_DESC)));
@@ -411,10 +391,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             List<Node> parties = null;
             String osapool = "";
             if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V1)) {
-                osapool = StringUtils.join(
-                        Arrays.asList(doc.getProperties().get(DocumentSpecificModel.Props.FIRST_PARTY_NAME),
-                                doc.getProperties().get(DocumentSpecificModel.Props.SECOND_PARTY_NAME),
-                                doc.getProperties().get(DocumentSpecificModel.Props.THIRD_PARTY_NAME)), ", ");
+                osapool = TextUtil.joinNonBlankStringsWithComma(
+                        Arrays.<String> asList((String) doc.getProperties().get(DocumentSpecificModel.Props.FIRST_PARTY_NAME),
+                                (String) doc.getProperties().get(DocumentSpecificModel.Props.SECOND_PARTY_NAME),
+                                (String) doc.getProperties().get(DocumentSpecificModel.Props.THIRD_PARTY_NAME)));
 
             } else if (doc.hasAspect(DocumentSpecificModel.Aspects.CONTRACT_DETAILS_V2)) {
                 parties = doc.getAllChildAssociations(DocumentSpecificModel.Assocs.CONTRACT_PARTIES);
@@ -428,12 +408,12 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 for (Node node : parties) {
                     names.add((String) node.getProperties().get(DocumentSpecificModel.Props.PARTY_NAME));
                 }
-                osapool = StringUtils.join(names, ", ");
+                osapool = TextUtil.joinNonBlankStringsWithComma(names);
             }
 
-            dokument.setOsapool(osapool);
+            dokument.setOsapool(getNullIfEmpty(osapool));
         } else if (DocumentTypeHelper.isOutgoingLetter(doc.getType())) {
-            dokument.setOsapool(doc.getRecipients());
+            dokument.setOsapool(getNullIfEmpty(doc.getRecipients()));
         }
 
         // =======================================================

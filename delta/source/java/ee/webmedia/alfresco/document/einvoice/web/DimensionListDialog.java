@@ -33,8 +33,6 @@ public class DimensionListDialog extends BaseDialogBean {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        isFinished = false;
-        BeanHelper.getEInvoiceService().updateDimensions(dimensions);
         return null;
     }
 
@@ -47,11 +45,6 @@ public class DimensionListDialog extends BaseDialogBean {
     @Override
     public Object getActionsContext() {
         return null;
-    }
-
-    @Override
-    public boolean getFinishButtonDisabled() {
-        return false;
     }
 
 }

@@ -324,7 +324,7 @@ public class WorkflowUtil {
     }
 
     private static boolean isValidParallel(List<Workflow> workflows, Status cWfStatus) {
-        return isStatusOrder(workflows).requireAny(Status.FINISHED).requireAtLeastOne(WorkflowSpecificModel.canStartParallel, cWfStatus)
+        return isStatusOrder(workflows).requireAny(Status.FINISHED).requireAtLeastOne(WorkflowSpecificModel.CAN_START_PARALLEL, cWfStatus)
                 .requireAny(Status.NEW, Status.FINISHED).check();
     }
 

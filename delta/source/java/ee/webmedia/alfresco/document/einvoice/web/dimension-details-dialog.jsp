@@ -8,12 +8,17 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
+   <a:panel styleClass="column panel-100" id="dimension-data" label="#{msg.dimension_data}">
+      <h:panelGrid id="dimension-data-panel" styleClass="table-padding" border="0" width="100%" columnClasses="propertiesLabel," columns="3" >
+         <h:outputText id="dimension-comment-label" value="#{msg.dimension_comment}:" style="padding-left:8px" />
+         <h:inputText id="dimension-comment" value="#{DimensionDetailsDialog.dimension.comment}" styleClass="expand19-200" />
+      </h:panelGrid>
+   </a:panel>
+
 <a:panel id="dimensions-panel" styleClass="panel-100 with-pager" label="#{msg.dimensions_values_list}" progressive="true">
 
-   <%-- Dimension Values List --%>
-   <a:richList id="dimensionDetailsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
-      altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.dimensionValues}" var="dimValue" initialSortColumn="valueName"
-      binding="#{DialogManager.bean.richList}">
+   <a:richList id="dimensionDetailsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
+      value="#{DialogManager.bean.dimensionValues}" var="dimValue" initialSortColumn="valueName" binding="#{DialogManager.bean.richList}">
 
       <%-- Name column --%>
       <a:column id="col1">
@@ -22,23 +27,23 @@
          </f:facet>
          <h:outputText id="col1-text" value="#{dimValue.valueName}" />
       </a:column>
-      
+
       <%-- Value column --%>
       <a:column id="col2">
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.dimension_value_value}" value="value" mode="case-insensitive" styleClass="header" />
          </f:facet>
          <h:outputText id="col2-text" value="#{dimValue.value}" />
-      </a:column>        
-      
+      </a:column>
+
       <%-- Comment column --%>
       <a:column id="col3">
          <f:facet name="header">
             <a:sortLink id="col3-sort" label="#{msg.dimension_value_comment}" value="valueComment" mode="case-insensitive" styleClass="header" />
          </f:facet>
          <h:inputText id="col3-in-txt" value="#{dimValue.valueComment}" styleClass="expand19-200" />
-      </a:column>  
-      
+      </a:column>
+
       <%-- BeginDateTime column --%>
       <a:column id="col4">
          <f:facet name="header">
@@ -68,7 +73,7 @@
             <f:selectItem value="#{dimValue.active}" />
          </h:selectBooleanCheckbox>
       </a:column>
-      
+
       <%-- Default value column --%>
       <a:column id="col7">
          <f:facet name="header">
@@ -77,7 +82,7 @@
          <h:selectBooleanCheckbox id="col7-select-check" value="#{dimValue.defaultValue}">
             <f:selectItem value="#{dimValue.defaultValue}" />
          </h:selectBooleanCheckbox>
-      </a:column>      
+      </a:column>
 
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="pager1" styleClass="pager" />

@@ -220,8 +220,8 @@ public class AddressbookServiceImpl implements AddressbookService {
         queryParts.add(generatePersonByCodeQuery(regNumber));
         String query = SearchUtil.joinQueryPartsOr(queryParts);
         ResultSet searchResult = searchService.query(store, SearchService.LANGUAGE_LUCENE, query);
-        List<NodeRef> nodeRefs = searchResult.getNodeRefs();
         try {
+            List<NodeRef> nodeRefs = searchResult.getNodeRefs();
             List<Node> contactNodes = new ArrayList<Node>(nodeRefs.size());
             for (NodeRef nodeRef : nodeRefs) {
                 contactNodes.add(getNode(nodeRef));
@@ -246,7 +246,6 @@ public class AddressbookServiceImpl implements AddressbookService {
             for (NodeRef nodeRef : nodeRefs) {
                 contactNodes.add(getNode(nodeRef));
             }
-            searchResult.close();
             return contactNodes;
         } finally {
             searchResult.close();
@@ -263,7 +262,6 @@ public class AddressbookServiceImpl implements AddressbookService {
             for (NodeRef nodeRef : nodeRefs) {
                 contactNodes.add(getNode(nodeRef));
             }
-            searchResult.close();
             return contactNodes;
         } finally {
             searchResult.close();

@@ -18,8 +18,9 @@ import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class FunctionsDetailsDialog extends BaseDialogBean {
-
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "FunctionsDetailsDialog";
+
     private static final String PARAM_FUNCTION_NODEREF = "nodeRef";
     private static final String ERROR_MESSAGE_SERIES_EXIST = "function_validation_series";
 

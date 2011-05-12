@@ -15,7 +15,7 @@
    <import resource="classpath:ee/webmedia/alfresco/document/einvoice/einvoice-context.xml" />
    <import resource="classpath:ee/webmedia/alfresco/document/assignresponsibility/assignresponsibility-context.xml" />
 
-   <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap,privilegeModelBootstrap">
+   <bean id="documentModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap,workflowModelBootstrap,privilegeModelBootstrap,transactionModelBootstrap">
       <property name="models">
          <list>
             <value>ee/webmedia/alfresco/document/model/documentCommonModel.xml</value>
@@ -68,6 +68,7 @@
       <property name="userService" ref="UserService" />
       <property name="sendOutService" ref="SendOutService" />
       <property name="privilegeService" ref="PrivilegeService" />
+      <property name="authorityService" ref="AuthorityService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
       <property name="incomingEmailPath" value="${imap.config.home.rootPath}/imap-ext:incoming"/>
@@ -337,7 +338,6 @@
       </property>
       <property name="behaviourFilter" ref="policyBehaviourFilter" />
       <property name="nodeService" ref="nodeService" />
-      <property name="authorityService" ref="AuthorityService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="privilegeService" ref="PrivilegeService" />
       <property name="generalService" ref="generalService" />
@@ -345,7 +345,7 @@
       <property name="documentService" ref="DocumentService" />
       <property name="fileService" ref="FileService" />
       <property name="workflowService" ref="WmWorkflowService" />
-      <property name="batchSize" value="25" /><!-- for each document all tasks are considered and all related documents -->
+      <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
       <property name="limitForTesting" value="${updater.limitForTesting}" />
    </bean>
 
@@ -360,7 +360,6 @@
       </property>
       <property name="behaviourFilter" ref="policyBehaviourFilter" />
       <property name="nodeService" ref="nodeService" />
-      <property name="authorityService" ref="AuthorityService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="privilegeService" ref="PrivilegeService" />
       <property name="generalService" ref="generalService" />
@@ -368,7 +367,7 @@
       <property name="documentService" ref="DocumentService" />
       <property name="fileService" ref="FileService" />
       <property name="workflowService" ref="WmWorkflowService" />
-      <property name="batchSize" value="25" /><!-- for each document all tasks are considered and all related documents -->
+      <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
       <property name="enabled" value="${updater.archive.enabled}" />
       <property name="limitForTesting" value="${updater.limitForTesting}" />
    </bean>
@@ -553,6 +552,8 @@
    <bean id="SearchBlockBean" class="ee.webmedia.alfresco.document.search.web.SearchBlockBean" scope="session" >
       <property name="documentSearchBean" ref="DocumentSearchBean" />
    </bean>
+   
+   <bean id="TransactionsBlockBean" class="ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean" scope="session" />
 
    <!-- END: web beans: -->
 

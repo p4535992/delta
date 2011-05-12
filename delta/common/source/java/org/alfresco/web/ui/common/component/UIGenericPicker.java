@@ -72,7 +72,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
    
    private final static int DEFAULT_HEIGHT = 100;
    private final static int DEFAULT_WIDTH = 250;
-   private final static int DEFAULT_SIZE = 5;
+   private static final int DEFAULT_SIZE = 0;
    private final static int MAX_SIZE = 21;
    private final static int MIN_SIZE = 2;
    
@@ -294,7 +294,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       // filter drop-down
       if (getShowFilter() == true)
       {
-         out.write("<select class=\"ff-margin-right-2\" name='");
+         out.write("<select class=\"genericpicker-filter ff-margin-right-2\" name='");
          out.write(clientId + FIELD_FILTER);
          out.write("' size='1'");
          
@@ -361,6 +361,8 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
          out.write("</a></td></tr>");
       }
       
+      int size = getSize();
+      if(size>0 || currentResults!=null) {
       // results list row
       out.write("<tr><td>");
       out.write("<select size=\"" + getSize() + "\"");
@@ -428,7 +430,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
          out.write("\">");
          out.write("</td></tr>");
       }
-      
+      }
       // end outer table
       out.write("</table>");
    }
@@ -661,7 +663,6 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
           
           return this.currentResults.length;
       }
-      
       return size != null ? size.intValue() : DEFAULT_SIZE;
    }
 

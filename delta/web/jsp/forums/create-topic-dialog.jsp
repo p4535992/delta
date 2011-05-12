@@ -22,6 +22,7 @@
 * the FLOSS exception, and it is also available here:
 * http://www.alfresco.com/legal/licensing"
 --%>
+<%@page import="ee.webmedia.alfresco.utils.MessageUtil"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
@@ -62,7 +63,7 @@ if (finishButtonPressed)
 {
 finishButtonPressed = false;
 return validateName(document.getElementById("dialog:dialog-body:name"),
-unescape('</f:verbatim><h:outputText value="#{msg.validation_invalid_character}" /><f:verbatim>'),
+'<%= MessageUtil.getMessageAndEscapeJS("validation_invalid_character") %>',
 true);
 }
 else

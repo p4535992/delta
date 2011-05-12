@@ -134,7 +134,6 @@
    <bean id="classificatorRootBootstrap6" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="name" value="classificatorRootBootstrap6" />
-      <property name="sinceVersion" value="@currentVersion@" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">

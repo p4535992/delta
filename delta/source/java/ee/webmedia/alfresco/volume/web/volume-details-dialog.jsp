@@ -8,9 +8,10 @@
 <%@ page isELIgnored="false"%>
 
 
+<%@page import="ee.webmedia.alfresco.volume.model.VolumeModel"%>
+<%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
+<%@page import="org.apache.commons.lang.StringEscapeUtils"%>
 <%@page import="ee.webmedia.alfresco.volume.web.VolumeDetailsDialog"%>
-<%@page import="org.alfresco.web.app.servlet.FacesHelper"%>
-<%@page import="javax.faces.context.FacesContext"%>
 <a:panel id="metadata-panel" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
    <r:propertySheetGrid id="volume-metatada" value="#{VolumeDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel"/>
 </a:panel>
@@ -18,7 +19,7 @@
 <f:verbatim>
 <script type="text/javascript">
    function postProcessButtonState(){
-      var status = "</f:verbatim><h:outputText value="#{VolumeDetailsDialog.currentNode.properties['{http://alfresco.webmedia.ee/model/volume/1.0}status']}" /><f:verbatim>";
+      var status = '<%= StringEscapeUtils.escapeJavaScript((String)BeanHelper.getVolumeDetailsDialog().getCurrentNode().getProperties().get(VolumeModel.Props.STATUS)) %>';
       processFnSerVolCaseCloseButton(status);
    }
 
@@ -45,7 +46,7 @@
 </script>
 </f:verbatim>
 <%
-   final boolean isNew = ((VolumeDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "VolumeDetailsDialog")).isNew();
+   final boolean isNew = BeanHelper.getVolumeDetailsDialog().isNew();
    if(isNew) {
 %>
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-close-button.jsp" />

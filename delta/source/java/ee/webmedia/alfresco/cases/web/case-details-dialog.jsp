@@ -7,9 +7,10 @@
 <%@ page isELIgnored="false"%>
 
 
+<%@page import="ee.webmedia.alfresco.cases.model.CaseModel"%>
 <%@page import="ee.webmedia.alfresco.cases.web.CaseDetailsDialog"%>
-<%@page import="org.alfresco.web.app.servlet.FacesHelper"%>
-<%@page import="javax.faces.context.FacesContext"%>
+<%@page import="ee.webmedia.alfresco.common.web.BeanHelper"%>
+<%@page import="org.apache.commons.lang.StringEscapeUtils"%>
 <a:panel id="metadata-panel" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
    <r:propertySheetGrid id="case-metatada" value="#{CaseDetailsDialog.currentNode}" columns="1" mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" />
 </a:panel>
@@ -18,13 +19,13 @@
 <script type="text/javascript">
 
    function postProcessButtonState(){
-      var status = "</f:verbatim><h:outputText value="#{CaseDetailsDialog.currentNode.properties['{http://alfresco.webmedia.ee/model/case/1.0}status']}" /><f:verbatim>";
+      var status = '<%= StringEscapeUtils.escapeJavaScript((String)BeanHelper.getCaseDetailsDialog().getCurrentNode().getProperties().get(CaseModel.Props.STATUS)) %>';
       processFnSerVolCaseCloseButton(status);
    }
 </script>
 </f:verbatim>
 <%
-   final boolean isNew = ((CaseDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "CaseDetailsDialog")).isNew();
+   final boolean isNew = BeanHelper.getCaseDetailsDialog().isNew();
    if(isNew) {
 %>
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-close-button.jsp" />

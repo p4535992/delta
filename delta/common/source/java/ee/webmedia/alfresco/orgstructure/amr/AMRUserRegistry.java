@@ -12,15 +12,13 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.repo.management.subsystems.ActivateableBean;
 import org.alfresco.repo.security.sync.NodeDescription;
 import org.alfresco.repo.security.sync.UserRegistry;
-import org.alfresco.service.cmr.repository.NodeService;
-import org.alfresco.service.cmr.security.NoSuchPersonException;
-import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import smit.ametnik.services.Ametnik;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
+import ee.webmedia.alfresco.user.service.UserService;
 
 /**
  * A {@link UserRegistry} implementation with the ability to query Alfresco-like descriptions of users and groups from a SIM "Ametnikeregister".
@@ -30,8 +28,7 @@ import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
 public class AMRUserRegistry implements UserRegistry, ActivateableBean {
     private static Log log = LogFactory.getLog(AMRUserRegistry.class);
 
-    private PersonService personService;
-    private NodeService nodeService;
+    private UserService userService;
     private AMRService amrService;
 
     /** Is this bean active? I.e. should this part of the subsystem be used? */
@@ -78,11 +75,9 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         Map<QName, Serializable> properties;
         NodeDescription person = new NodeDescription();
         properties = person.getProperties();
-        try {
-            Map<QName, Serializable> existingProperties = nodeService.getProperties(personService.getPerson(ametnik.getIsikukood()));
+        Map<QName, Serializable> existingProperties = userService.getUserProperties(ametnik.getIsikukood());
+        if (existingProperties != null) {
             properties.putAll(existingProperties);
-        } catch (NoSuchPersonException e) {
-            // fall-through: creating new person
         }
         fillPropertiesFromAmetnik(ametnik, properties);
         return person;
@@ -124,12 +119,8 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
         return active;
     }
 
-    public void setPersonService(PersonService personService) {
-        this.personService = personService;
-    }
-
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     public void setAmrService(AMRService amrService) {
