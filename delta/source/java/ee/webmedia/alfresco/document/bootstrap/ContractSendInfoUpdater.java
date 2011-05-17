@@ -12,25 +12,28 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.util.Pair;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.SendMode;
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 /**
@@ -41,11 +44,8 @@ import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 public class ContractSendInfoUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ContractSendInfoUpdater.class);
 
-    private BehaviourFilter behaviourFilter;
-    private SearchService searchService;
-    private GeneralService generalService;
-    private Date now = new Date();
-    private Date dayBeforeYesterday = DateUtils.addDays(new Date(), -2);
+    private final Date now = new Date();
+    private final Date dayBeforeYesterday = DateUtils.addDays(new Date(), -2);
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -77,7 +77,53 @@ public class ContractSendInfoUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
+        QName type = nodeService.getType(nodeRef);
+        Set<QName> aspects = nodeService.getAspects(nodeRef);
         Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);
+        Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
+
+        Pair<Boolean, String[]> result = updateDocument(nodeRef, type, aspects, origProps, setProps);
+
+        if (result.getFirst()) {
+            setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
+            setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
+            nodeService.addProperties(nodeRef, setProps);
+        }
+
+        return result.getSecond();
+    }
+
+    public Pair<Boolean, String[]> updateDocument(NodeRef nodeRef, QName type, Set<QName> aspects, Map<QName, Serializable> origProps, Map<QName, Serializable> setProps) {
+        if (!aspects.contains(DocumentCommonModel.Aspects.SEARCHABLE)) {
+            return new Pair<Boolean, String[]>(false, new String[] { "doesNotHaveSearchableAspect" });
+        }
+        if (!DocumentTypeHelper.isContract(type)) {
+            return new Pair<Boolean, String[]>(false, new String[] { "isNotContractType", type.toPrefixString(serviceRegistry.getNamespaceService()) });
+        }
+
+        @SuppressWarnings("unchecked")
+        List<String> recipientName = (List<String>) origProps.get(DocumentCommonModel.Props.RECIPIENT_NAME);
+        @SuppressWarnings("unchecked")
+        List<String> additionalRecipientName = (List<String>) origProps.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME);
+        @SuppressWarnings("unchecked")
+        List<String> searchablePartyName = (List<String>) origProps.get(DocumentCommonModel.Props.SEARCHABLE_PARTY_NAME);
+        String secondPartyName = (String) origProps.get(DocumentSpecificModel.Props.SECOND_PARTY_NAME);
+        String thirdPartyName = (String) origProps.get(DocumentSpecificModel.Props.THIRD_PARTY_NAME);
+        if (TextUtil.isBlank(recipientName) && TextUtil.isBlank(additionalRecipientName) && TextUtil.isBlank(searchablePartyName)
+                && StringUtils.isBlank(secondPartyName) && StringUtils.isBlank(thirdPartyName)) {
+            return new Pair<Boolean, String[]>(false, new String[] { "allRecipientAndPartyNamesAreBlank" });
+        }
+
+        @SuppressWarnings("unchecked")
+        List<String> searchableSendMode = (List<String>) origProps.get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
+        if (searchableSendMode != null) {
+            return new Pair<Boolean, String[]>(false, new String[] { "searchableSendModeIsNotNull", StringUtils.join(searchableSendMode, ',') });
+        }
+        Date regDateTime = (Date) origProps.get(DocumentCommonModel.Props.REG_DATE_TIME);
+        if (regDateTime == null || (!dayBeforeYesterday.after(regDateTime) && !DateUtils.isSameDay(regDateTime, dayBeforeYesterday))) {
+            return new Pair<Boolean, String[]>(false, new String[] { "regDateTimeIsLaterThanDayBeforeYesterday",
+                    regDateTime == null ? "" : regDateTime.toString() });
+        }
 
         Map<QName, Serializable> sendInfoProps = new HashMap<QName, Serializable>();
         sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_RESOLUTION,
@@ -88,7 +134,7 @@ public class ContractSendInfoUpdater extends AbstractNodeUpdater {
         sendInfoProps.put(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME, now);
 
         // Perform sendInfo adding and searchableSendMode updating manually, because SendOutService.addSendInfo cannot be used when FacesContext is null
-        nodeService.createNode(nodeRef, //
+        NodeRef sendInfoRef = nodeService.createNode(nodeRef, //
                 DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Assocs.SEND_INFO, DocumentCommonModel.Types.SEND_INFO, sendInfoProps).getChildRef();
 
         List<ChildAssociationRef> assocs = nodeService.getChildAssocs(nodeRef, RegexQNamePattern.MATCH_ALL, DocumentCommonModel.Assocs.SEND_INFO);
@@ -96,30 +142,11 @@ public class ContractSendInfoUpdater extends AbstractNodeUpdater {
         for (ChildAssociationRef assoc : assocs) {
             sendModes.add((String) nodeService.getProperty(assoc.getChildRef(), DocumentCommonModel.Props.SEND_INFO_SEND_MODE));
         }
-        
-        Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
+
         setProps.put(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE, sendModes);
-        setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
-        setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
-        nodeService.addProperties(nodeRef, setProps);
 
-        Date regDateTime = (Date) origProps.get(DocumentCommonModel.Props.REG_DATE_TIME);
-        return new String[] {
-                (String) origProps.get(DocumentCommonModel.Props.REG_NUMBER),
-                regDateTime == null ? "" : regDateTime.toString(),
-                (String) origProps.get(DocumentCommonModel.Props.DOC_NAME) };
-    }
-
-    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
-        this.behaviourFilter = behaviourFilter;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
+        return new Pair<Boolean, String[]>(true, new String[] { "createdSendInfoNode", sendInfoRef.toString(), (String) origProps.get(DocumentCommonModel.Props.REG_NUMBER),
+                regDateTime.toString(), StringUtils.join(sendModes, ',') });
     }
 
 }

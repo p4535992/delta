@@ -9,6 +9,7 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Hits;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.CreatedOrRegistratedDateComparator;
 import ee.webmedia.alfresco.document.web.BaseDocumentListDialog;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
@@ -25,11 +26,18 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
 
     /** @param event */
     public void setup(ActionEvent event) {
-        restored();
+        doInitialSearch();
+        doPostSearch();
+        BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
     }
 
     @Override
     public void restored() {
+        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(documents);
+        doPostSearch();
+    }
+
+    protected void doInitialSearch() {
         try {
             documents = getDocumentSearchService().searchDocumentsQuick(searchValue);
             Collections.sort(documents, CreatedOrRegistratedDateComparator.getComparator());
@@ -42,7 +50,9 @@ public class DocumentQuickSearchResultsDialog extends BaseDocumentListDialog {
             documents = Collections.emptyList();
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toolongquery");
         }
+    }
 
+    protected void doPostSearch() {
         // Quick search must "reset the current dialog stack" and put the document list dialog as the base dialog into the stack.
         // Also in case of quick search the cancel button is not displayed (the whole button container is not rendered through
         // container.jsp hack for DocumentListDialog). If there are more beans that need to sometimes display some buttons and sometimes

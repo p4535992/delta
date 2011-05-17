@@ -65,6 +65,10 @@
          <property-name>ownerSearchBean</property-name>
          <value>#{OwnerSearchBean}</value>
       </managed-property>
+      <managed-property>
+         <property-name>userGroupSearchBean</property-name>
+         <value>#{UserGroupSearchBean}</value>
+      </managed-property>
    </managed-bean>
 
    <managed-bean>

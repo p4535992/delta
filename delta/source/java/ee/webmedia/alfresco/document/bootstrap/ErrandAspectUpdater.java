@@ -6,17 +6,17 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
@@ -27,10 +27,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  * @author Kaarel Jõgeva
  */
 public class ErrandAspectUpdater extends AbstractNodeUpdater {
-
-    private BehaviourFilter behaviourFilter;
-    private SearchService searchService;
-    private GeneralService generalService;
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -53,42 +49,46 @@ public class ErrandAspectUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
-        boolean modified = false;
         Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);
-        List<String> actions = new ArrayList<String>(2);
+        Set<QName> aspects = nodeService.getAspects(nodeRef);
 
-        if (nodeService.hasAspect(nodeRef, DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD)) {
-            nodeService.addAspect(nodeRef, DocumentSpecificModel.Aspects.REPORT_DUE_DATE, null);
-            actions.add("reportDueDateAspectAdded");
-            modified = true;
-        }
+        Pair<Boolean, String> result = updateDocument(nodeRef, aspects);
 
-        if (nodeService.hasAspect(nodeRef, DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC)) {
-            nodeService.addAspect(nodeRef, DocumentSpecificModel.Aspects.EVENT_NAME, null);
-            actions.add("eventNameAspectAdded");
-            modified = true;
-        }
-
-        if (modified) {
+        if (result.getFirst()) {
             Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
             setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
             setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
             nodeService.addProperties(nodeRef, setProps);
         }
 
-        return new String[] { StringUtils.join(actions, ',') };
+        return new String[] { result.getSecond() };
     }
 
-    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
-        this.behaviourFilter = behaviourFilter;
-    }
+    public Pair<Boolean, String> updateDocument(NodeRef nodeRef, Set<QName> aspects) {
+        boolean modified = false;
+        List<String> actions = new ArrayList<String>();
 
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
+        if (aspects.contains(DocumentSpecificModel.Aspects.ERRAND_ORDER_ABROAD)) {
+            if (aspects.contains(DocumentSpecificModel.Aspects.REPORT_DUE_DATE)) {
+                actions.add("reportDueDateAspectExists");
+            } else {
+                nodeService.addAspect(nodeRef, DocumentSpecificModel.Aspects.REPORT_DUE_DATE, null);
+                actions.add("reportDueDateAspectAdded");
+                modified = true;
+            }
+        }
 
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
+        if (aspects.contains(DocumentSpecificModel.Aspects.ERRAND_APPLICATION_DOMESTIC)) {
+            if (aspects.contains(DocumentSpecificModel.Aspects.EVENT_NAME)) {
+                actions.add("eventNameAspectExists");
+            } else {
+                nodeService.addAspect(nodeRef, DocumentSpecificModel.Aspects.EVENT_NAME, null);
+                actions.add("eventNameAspectAdded");
+                modified = true;
+            }
+        }
+
+        return new Pair<Boolean, String>(modified, StringUtils.join(actions, ','));
     }
 
 }

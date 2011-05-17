@@ -47,6 +47,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.cases.model.CaseModel;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.listener.RefreshEventListener;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
@@ -111,6 +112,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     private boolean isDraft;
     private boolean showDocsAndCasesAssocs;
     private boolean skipInit;
+    private boolean docReloadDisabled;
 
     private Node node;
     private List<NodeRef> newInvoiceDocuments = new ArrayList<NodeRef>();
@@ -271,7 +273,11 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public void deleteDocument(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(node, "No current document");
         try {
+            validatePermission(node, DocumentCommonModel.Privileges.DELETE_DOCUMENT_META_DATA);
             getDocumentService().deleteDocument(node.getNodeRef());
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
+            return;
         } catch (AccessDeniedException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_delete_error_accessDenied");
             return;
@@ -403,6 +409,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     @Override
     public void init(Map<String, String> params) {
         validatePermissions();
+        BeanHelper.getVisitedDocumentsBean().getVisitedDocuments().add(node.getNodeRef());
         if (skipInit) {
             searchBlockBean.init(node, isIncomingInvoice());
             skipInit = false;
@@ -444,8 +451,13 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     public void restored() {
         try {
             final boolean snapshotRestored = restoreSnapshot();
+            BeanHelper.getVisitedDocumentsBean().getVisitedDocuments().add(node.getNodeRef());
             if (!snapshotRestored) {
-                reloadDocAndClearPropertySheet();
+                if (!docReloadDisabled) {
+                    reloadDocAndClearPropertySheet();
+                } else {
+                    docReloadDisabled = false;
+                }
                 fileBlockBean.restore();
                 sendOutBlockBean.restore();
                 assocsBlockBean.restore();
@@ -467,12 +479,13 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 /** It's possible to change the type of the node that came from DVK */
                 getDocumentService().changeType(node);
             }
-            metadataBlockBean.save(isDraft, newInvoiceDocuments);
-            transactionsBlockBean.save();
+            if (transactionsBlockBean.save()) {
+                metadataBlockBean.save(isDraft, newInvoiceDocuments);
+                notifyModeChanged();
+            }
             logBlockBean.restore();
             isDraft = false;
             isFinished = false;
-            notifyModeChanged();
             ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItems(); // Update UserWorkingDocuments number
             return null;
         }
@@ -737,6 +750,11 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             node = getDocumentService().getDocument(nodeRef);
             setupAction(false);
         }
+    }
+
+    public void addFile(@SuppressWarnings("unused") ActionEvent event) {
+        docReloadDisabled = true;
+        BeanHelper.getAddFileDialog().start(null);
     }
 
     @Override

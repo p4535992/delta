@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup;
 
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.OPTIONS_SEPARATOR;
+import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROPERTIES_SEPARATOR;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALDIATION_DISABLED;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALIDATION_MARKER_DISABLED;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
@@ -66,7 +67,8 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
         String propertyDescriptions = getCustomAttributes().get("props");
         boolean escapeText = Boolean.valueOf(getCustomAttributes().get(ESCAPE_TEXT));
         String optionsSeparator = getCustomAttributes().get(OPTIONS_SEPARATOR);
-        final List<ComponentPropVO> propVOs = CombinedPropReader.readProperties(propertyDescriptions, null, optionsSeparator, propertySheet.getNode(), context);
+        String propertiesSeparator = getCustomAttributes().get(PROPERTIES_SEPARATOR);
+        final List<ComponentPropVO> propVOs = CombinedPropReader.readProperties(propertyDescriptions, propertiesSeparator, optionsSeparator, propertySheet.getNode(), context);
 
         String text = Application.getMessage(FacesContext.getCurrentInstance(), getCustomAttributes().get("textId"));
         @SuppressWarnings("unchecked")

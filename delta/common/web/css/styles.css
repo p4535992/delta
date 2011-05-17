@@ -1285,6 +1285,15 @@ table.expand19-200 {
 	display: block;
 }
 
+.delegateBtn {
+	margin-top: 6px !important;
+	margin-bottom: 4px;
+}
+
+.taskOutcome {
+	margin-bottom: 5px;
+}
+
 table.recipient td {
 	padding-right: 6px;
 }
@@ -2227,6 +2236,19 @@ div.panel.tooltip{
 }
 /* END: hack to show tooltips for disabled checkboxes */
 
+.workflow-separator {
+	background-color: #fff;
+}
+
+.workflow-separator-zebra {
+	padding: 0 !important;
+}
+
+.workflow-separator hr {
+	margin: 0;
+	border-color: #333;
+}
+
 /* Transaction block styles */
 
 TR.trans-recordSetRowAlt2 TD {
@@ -2326,6 +2348,15 @@ INPUT.trans-min {
 
 .trans-sum STRONG {
 	margin-right: 1em;
+}
+
+.trans-align-right {
+	text-align: right;
+}
+
+.trans-width-10 {
+	whitespace: normal;
+	width: 10%;	
 }
 
 DIV.trans-scroll {

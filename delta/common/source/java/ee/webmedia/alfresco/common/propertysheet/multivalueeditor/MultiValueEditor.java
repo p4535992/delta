@@ -140,16 +140,22 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         if (results == null) {
             return;
         }
-        FacesContext context = FacesContext.getCurrentInstance();
 
         int rowIndex = Integer.parseInt((String) getAttributes().get(Search.OPEN_DIALOG_KEY));
+        innerPickerFinish(picker.getFilterIndex(), rowIndex, results, FacesContext.getCurrentInstance());
+
+        getAttributes().remove(Search.OPEN_DIALOG_KEY);
+        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, 1 /* ACTION_CLEAR */, 0, null, null));
+    }
+
+    public void innerPickerFinish(int pickerFilterIndex, int rowIndex, String[] results, FacesContext context) {
         log.debug("Selected rowIndex=" + rowIndex + ", adding results: " + StringUtils.join(results, ", "));
 
         String preprocessCallback = (String) getAttributes().get(PREPROCESS_CALLBACK);
         if (StringUtils.isNotBlank(preprocessCallback)) {
             MethodBinding preprocessBind = getFacesContext().getApplication().createMethodBinding(
                     preprocessCallback, new Class[] { String[].class, Integer.class });
-            results = (String[]) preprocessBind.invoke(context, new Object[] { results, picker.getFilterIndex() });
+            results = (String[]) preprocessBind.invoke(context, new Object[] { results, pickerFilterIndex });
         }
 
         List<String> propNames = getPropNames();
@@ -207,9 +213,6 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
         for (List<Object> columnList : columnLists) {
             log.debug("Column list=" + columnList);
         }
-
-        getAttributes().remove(Search.OPEN_DIALOG_KEY);
-        picker.queueEvent(new UIGenericPicker.PickerEvent(picker, 1 /* ACTION_CLEAR */, 0, null, null));
     }
 
     // We can reuse org.alfresco.web.ui.repo.component.MultiValueEditorEvent and don't have to define it ourselves,

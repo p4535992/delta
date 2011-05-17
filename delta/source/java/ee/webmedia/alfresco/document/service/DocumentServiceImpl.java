@@ -2370,11 +2370,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             public String doWork() throws Exception {
                 NodeRef existingDdoc = checkExistingDdoc(document);
                 long step2 = System.currentTimeMillis();
-                String debug = "\n    check for existing ddoc - " + (step2 - step1) + " ms";
+                String debug1 = "\n    check for existing ddoc - " + (step2 - step1) + " ms";
                 if (existingDdoc != null) {
                     signatureService.addSignature(existingDdoc, task.getSignatureDigest(), signatureHex);
                     long step3 = System.currentTimeMillis();
-                    debug += "\n    add signature to existing ddoc - " + (step3 - step2) + " ms";
+                    debug1 += "\n    add signature to existing ddoc - " + (step3 - step2) + " ms";
                 } else {
                     List<NodeRef> files = fileService.getAllActiveFilesNodeRefs(document);
                     long step3 = System.currentTimeMillis();
@@ -2386,13 +2386,13 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                     fileService.setAllFilesInactiveExcept(document, ddoc);
                     long step6 = System.currentTimeMillis();
 
-                    debug += "\n    load file list - " + (step3 - step2) + " ms";
-                    debug += "\n    create ddoc and add signature (" + files.size() + " files) - " + (step4 - step3) + " ms";
-                    debug += "\n    add log entry to document - " + (step5 - step4) + " ms";
-                    debug += "\n    set files inactive - " + (step6 - step5) + " ms";
+                    debug1 += "\n    load file list - " + (step3 - step2) + " ms";
+                    debug1 += "\n    create ddoc and add signature (" + files.size() + " files) - " + (step4 - step3) + " ms";
+                    debug1 += "\n    add log entry to document - " + (step5 - step4) + " ms";
+                    debug1 += "\n    set files inactive - " + (step6 - step5) + " ms";
                 }
                 fileService.deleteGeneratedFilesByType(document, GeneratedFileType.SIGNED_PDF);
-                return debug;
+                return debug1;
             }
         }, AuthenticationUtil.getSystemUserName());
         long step7 = System.currentTimeMillis();

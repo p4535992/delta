@@ -25,10 +25,18 @@ public class WorkflowBlockItem implements Serializable {
 
     private final Task task;
     private boolean raisedRights = false;
+    private boolean separator = false;
+    private boolean zebra = false;
 
     public WorkflowBlockItem(Task task, boolean raisedRights) {
         this.task = task;
         this.raisedRights = raisedRights;
+    }
+
+    public WorkflowBlockItem(boolean separatorAndNotZebra) {
+        task = null;
+        separator = separatorAndNotZebra;
+        zebra = !separatorAndNotZebra;
     }
 
     public Date getStartedDateTime() {
@@ -90,6 +98,26 @@ public class WorkflowBlockItem implements Serializable {
 
     public NodeRef getCompoundWorkflowNodeRef() {
         return task.getParent().getParent().getNode().getNodeRef();
+    }
+
+    public void setSeparator(boolean isSeparator) {
+        separator = isSeparator;
+    }
+
+    public boolean isSeparator() {
+        return separator;
+    }
+
+    public void setZebra(boolean isZebra) {
+        zebra = isZebra;
+    }
+
+    public boolean isZebra() {
+        return zebra;
+    }
+
+    public boolean isTask() {
+        return !zebra && !separator;
     }
 
     public static final Comparator<WorkflowBlockItem> COMPARATOR;

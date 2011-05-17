@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -338,21 +339,23 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             // TODO: optimize - could empty only cache for updated dimensions
             emptyDimensionValueChache();
             Map<Parameters, Dimensions> dimensionParameters = EInvoiceUtil.DIMENSION_PARAMETERS;
-            Map<String, Parameters> dimParameterValues = parametersService.getSwappedStringParameters(dimensionParameters.keySet());
+            Map<String, Set<Parameters>> dimParameterValues = parametersService.getSwappedStringParameters(new ArrayList<Parameters>(dimensionParameters.keySet()));
             for (Dimensioon xmlDimension : xmlDimensionsList.getDimensioon()) {
-                Parameters parameter = dimParameterValues.get(xmlDimension.getId());
-                if (parameter != null) {
-                    @SuppressWarnings("unchecked")
-                    Collection<XmlDimensionListsValueWrapper> dimensionListsValueWrappers = CollectionUtils.collect(xmlDimension.getVaartus(), new Transformer() {
+                Set<Parameters> parameters = dimParameterValues.get(xmlDimension.getId());
+                if (parameters != null) {
+                    for (Parameters parameter : parameters) {
+                        @SuppressWarnings("unchecked")
+                        Collection<XmlDimensionListsValueWrapper> dimensionListsValueWrappers = CollectionUtils.collect(xmlDimension.getVaartus(), new Transformer() {
 
-                        @Override
-                        public Object transform(Object paramObject) {
-                            Vaartus value = (Vaartus) paramObject;
-                            return new XmlDimensionValueWrapper(value);
-                        }
+                            @Override
+                            public Object transform(Object paramObject) {
+                                Vaartus value = (Vaartus) paramObject;
+                                return new XmlDimensionValueWrapper(value);
+                            }
 
-                    });
-                    result.add(updateDimensionValuesFromXml(dimensionParameters.get(parameter), dimensionListsValueWrappers, xmlDimension.getId()));
+                        });
+                        result.add(updateDimensionValuesFromXml(dimensionParameters.get(parameter), dimensionListsValueWrappers, xmlDimension.getId()));
+                    }
                 }
             }
             // add dimension root nodeRef to indicate successful import in case no dimensions were actually modified

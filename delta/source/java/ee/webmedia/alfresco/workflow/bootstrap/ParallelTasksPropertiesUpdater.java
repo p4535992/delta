@@ -5,15 +5,12 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
-
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.ArrayUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -29,19 +26,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
 public class ParallelTasksPropertiesUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ParallelTasksPropertiesUpdater.class);
-
-    private SearchService searchService;
-    private GeneralService generalService;
-    private boolean enabled = false;
-
-    @Override
-    protected void executeInternal() throws Throwable {
-        if (!enabled) {
-            log.debug("Skipping parallelTasks property update, execution parameter (parallelTasksPropertiesUpdater.enabled) set to false.");
-            return;
-        }
-        super.executeInternal();
-    }
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -80,23 +64,6 @@ public class ParallelTasksPropertiesUpdater extends AbstractNodeUpdater {
 
         String[] info = new String[] { "null", Boolean.toString(parallel) };
         return (String[]) ArrayUtils.addAll(info, updatedRefs.toArray(new String[updatedRefs.size()]));
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    @Override
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 
 }

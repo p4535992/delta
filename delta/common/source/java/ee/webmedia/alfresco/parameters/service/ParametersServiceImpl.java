@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -124,10 +126,16 @@ public class ParametersServiceImpl implements ParametersService {
     }
 
     @Override
-    public Map<String, Parameters> getSwappedStringParameters(Collection<Parameters> parameters) {
-        Map<String, Parameters> result = new HashMap<String, Parameters>();
+    public Map<String, Set<Parameters>> getSwappedStringParameters(List<Parameters> parameters) {
+        Map<String, Set<Parameters>> result = new HashMap<String, Set<Parameters>>();
         for (Parameters parameter : parameters) {
-            result.put(getStringParameter(parameter), parameter);
+            String parameterStr = getStringParameter(parameter);
+            Set<Parameters> stringParameters = result.get(parameterStr);
+            if (stringParameters == null) {
+                stringParameters = new HashSet<Parameters>();
+                result.put(parameterStr, stringParameters);
+            }
+            stringParameters.add(parameter);
         }
         return result;
     }

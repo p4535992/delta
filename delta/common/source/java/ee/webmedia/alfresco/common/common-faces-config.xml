@@ -37,6 +37,22 @@
       <managed-bean-name>DatePickerGenerator</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
+      <managed-property>
+         <property-name>addBeginDateClassByPropName</property-name>
+         <list-entries>
+            <value>accessRestrictionEndDateBegin</value>
+            <value>errandEndDateBegin</value>
+            <value>validFrom</value>
+         </list-entries>
+      </managed-property>
+      <managed-property>
+         <property-name>addEndDateClassByPropName</property-name>
+         <list-entries>
+            <value>accessRestrictionBeginDateEnd</value>
+            <value>errandBeginDateEnd</value>
+            <value>validTo</value>
+         </list-entries>
+      </managed-property>
    </managed-bean>
 
     <managed-bean>

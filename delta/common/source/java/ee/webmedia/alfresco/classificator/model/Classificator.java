@@ -22,6 +22,9 @@ public class Classificator implements Serializable {
     @XStreamOmitField
     private NodeRef nodeRef;
 
+    private String description;
+    private Boolean alfabeticOrder;
+
     public String getName() {
         return name;
     }
@@ -44,6 +47,22 @@ public class Classificator implements Serializable {
 
     public void setNodeRef(NodeRef nodeRef) {
         this.nodeRef = nodeRef;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Boolean getAlfabeticOrder() {
+        return alfabeticOrder;
+    }
+
+    public void setAlfabeticOrder(Boolean alfabeticOrder) {
+        this.alfabeticOrder = alfabeticOrder;
     }
 
     @Override

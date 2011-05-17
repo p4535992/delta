@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.substitute.web;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -22,6 +23,7 @@ import org.apache.commons.collections.Transformer;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
@@ -156,7 +158,7 @@ public class SubstituteListDialog extends BaseDialogBean {
                 MessageUtil.addErrorMessage(context, "substitute_start_after_end");
             }
 
-            if (isValid && substitutionEndDate.before(new Date())) {
+            if (isValid && substitutionEndDate.before(DateUtils.truncate(new Date(), Calendar.DATE))) {
                 isValid = false;
                 MessageUtil.addErrorMessage(context, "substitute_end_before_now");
             }

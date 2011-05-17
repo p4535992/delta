@@ -17,6 +17,11 @@ public interface ClassificatorModel {
     }
 
     interface Props {
-        QName DESCRIPTION = QName.createQName(URI, "classificatorDescription");
+        /** description of the classificator */
+        QName DESCRIPTION = QName.createQName(URI, "description");
+        /** description of the classificator value */
+        QName CL_VALUE_DESCRIPTION = QName.createQName(URI, "classificatorDescription");
+        /** should classificator values be sorted alfabetically? */
+        QName ALFABETIC_ORDER = QName.createQName(URI, "alfabeticOrder");
     }
 }

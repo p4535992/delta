@@ -47,4 +47,12 @@
 
       </dialogs>
    </config>
+
+   <config evaluator="node-type" condition="cl:classificator" >
+      <property-sheet>
+         <show-property name="cl:description" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="cl:alfabeticOrder" component-generator="BooleanRadioGenerator" labelTrue="classificator_order_alfabetic" labelFalse="classificator_order_sequental" nullValue="false" />
+      </property-sheet>
+   </config>
+
 </alfresco-config>

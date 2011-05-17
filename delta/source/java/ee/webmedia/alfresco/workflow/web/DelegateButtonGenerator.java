@@ -5,13 +5,16 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIOutput;
 import javax.faces.component.html.HtmlCommandButton;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
@@ -36,13 +39,18 @@ public class DelegateButtonGenerator extends BaseComponentGenerator {
         Application app = context.getApplication();
         delegateButton.setActionListener(app.createMethodBinding("#{" + DelegationBean.BEAN_NAME + ".delegate}", new Class[] { ActionEvent.class }));
         delegateButton.setValue(MessageUtil.getMessage("task_delegate_assignmentTask"));
-        delegateButton.setStyle("margin-top: 6px");
+        delegateButton.setStyleClass("delegateBtn");
         Integer delegatableTaskIndex = ComponentUtil.getAttribute(propertySheet, DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, Integer.class);
         NodeRef compoundWorkflowRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(assignmentTaskNode.getNodeRef(), WorkflowCommonModel.Types.COMPOUND_WORKFLOW);
         addChildren(delegateButton,
                 createUIParam(PARAM_NODEREF, compoundWorkflowRef, app)
                 , createUIParam(DelegationBean.ATTRIB_DELEGATABLE_TASK_INDEX, delegatableTaskIndex, app));
-        return delegateButton;
+
+        UIOutput wrapper = (UIOutput) context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_OUTPUT);
+        FacesHelper.setupComponentId(context, wrapper, "delegBtnUnderLine");
+        ComponentUtil.putAttribute(wrapper, "styleClass", "delegationWrapper");
+        ComponentUtil.addChildren(wrapper, delegateButton);
+        return wrapper;
     }
 
     @Override

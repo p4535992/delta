@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -18,7 +17,6 @@ import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
@@ -29,9 +27,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  */
 public class GeneratedFileMimeTypeUpdater extends AbstractNodeUpdater {
 
-    private BehaviourFilter behaviourFilter;
-    private SearchService searchService;
-    private GeneralService generalService;
     private MimetypeService mimetypeService;
 
     @Override
@@ -84,18 +79,6 @@ public class GeneratedFileMimeTypeUpdater extends AbstractNodeUpdater {
 
         return new String[] { nodeRef.toString(), "mimetypeUpdated", name, oldContent.getMimetype(), newContent.getMimetype(), newContent.getEncoding(),
                 Long.toString(newContent.getSize()), newContent.getContentUrl() };
-    }
-
-    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
-        this.behaviourFilter = behaviourFilter;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
     }
 
     public void setMimetypeService(MimetypeService mimetypeService) {

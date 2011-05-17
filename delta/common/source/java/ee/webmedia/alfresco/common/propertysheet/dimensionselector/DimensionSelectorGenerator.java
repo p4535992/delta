@@ -17,7 +17,14 @@ import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 public class DimensionSelectorGenerator extends ClassificatorSelectorGenerator {
 
     public static final String ATTR_DIMENSION_NAME = "dimensionName";
-    private final Predicate filter = null;
+    private Predicate filter = null;
+
+    public DimensionSelectorGenerator(Predicate filter) {
+        this.filter = filter;
+    }
+
+    public DimensionSelectorGenerator() {
+    }
 
     @SuppressWarnings("unchecked")
     @Override

@@ -11,7 +11,7 @@
    <a:panel styleClass="column panel-100" id="dimension-data" label="#{msg.dimension_data}">
       <h:panelGrid id="dimension-data-panel" styleClass="table-padding" border="0" width="100%" columnClasses="propertiesLabel," columns="3" >
          <h:outputText id="dimension-comment-label" value="#{msg.dimension_comment}:" style="padding-left:8px" />
-         <h:inputText id="dimension-comment" value="#{DimensionDetailsDialog.dimension.comment}" styleClass="expand19-200" />
+         <h:inputTextarea id="dimension-comment" value="#{DimensionDetailsDialog.dimension.comment}" styleClass="expand19-200" />
       </h:panelGrid>
    </a:panel>
 
@@ -41,7 +41,7 @@
          <f:facet name="header">
             <a:sortLink id="col3-sort" label="#{msg.dimension_value_comment}" value="valueComment" mode="case-insensitive" styleClass="header" />
          </f:facet>
-         <h:inputText id="col3-in-txt" value="#{dimValue.valueComment}" styleClass="expand19-200" />
+         <h:inputTextarea id="col3-in-txt" value="#{dimValue.valueComment}" styleClass="expand19-200" />
       </a:column>
 
       <%-- BeginDateTime column --%>

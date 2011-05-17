@@ -211,8 +211,10 @@ public interface DocumentSearchService {
     /**
      * Searches for groups by name. If {@code input} is empty, all groups are returned if {@code returnAllGroups} is {@code true}, otherwise an empty list is
      * returned.
+     * 
+     * @param withAdminsAndDocManagers - should administrators and document managers groups be included or filtered out
      */
-    List<Authority> searchAuthorityGroups(String groupName, boolean returnAllGroups);
+    List<Authority> searchAuthorityGroups(String groupName, boolean returnAllGroups, boolean withAdminsAndDocManagers);
 
     List<Document> searchSimilarInvoiceDocuments(String regNumber, String invoiceNumber, Date invoiceDate);
 

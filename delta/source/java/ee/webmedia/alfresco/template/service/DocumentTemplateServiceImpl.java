@@ -144,7 +144,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         name = FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(FilenameUtil.buildFileName(name,
                 mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD))));
         name = FilenameUtil.replaceNonAsciiCharacters(name, "_");
-        name = generalService.limitFileNameLength(name, 50, null);
+        name = FilenameUtil.limitFileNameLength(name, 50, null);
         name = generalService.getUniqueFileName(documentNodeRef, name);
         String templName = "";
         if (docProp.get(DocumentSpecificModel.Props.TEMPLATE_NAME) != null) {

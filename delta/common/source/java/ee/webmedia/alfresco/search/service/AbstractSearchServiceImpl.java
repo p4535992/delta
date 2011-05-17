@@ -40,18 +40,32 @@ public abstract class AbstractSearchServiceImpl {
 
     protected LuceneAnalyser luceneAnalyser;
 
+    /**
+     * Default is without left wildcard and with right wildcard.
+     */
     public String generateStringWordsWildcardQuery(String value, QName... documentPropNames) {
-        return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value), documentPropNames);
+        return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value), false, true, documentPropNames);
     }
 
+    public String generateStringWordsWildcardQuery(String value, boolean leftWildcard, boolean rightWildcard, QName... documentPropNames) {
+        return SearchUtil.generateStringWordsWildcardQuery(parseQuickSearchWords(value), leftWildcard, rightWildcard, documentPropNames);
+    }
+
+    /**
+     * Default is without left wildcard and with right wildcard.
+     */
     public String generateMultiStringWordsWildcardQuery(List<String> values, QName... documentPropNames) {
+        return generateMultiStringWordsWildcardQuery(values, false, true, documentPropNames);
+    }
+
+    public String generateMultiStringWordsWildcardQuery(List<String> values, boolean leftWildcard, boolean rightWildcard, QName... documentPropNames) {
         if (values == null || values.isEmpty()) {
             return null;
         }
 
         List<String> queryParts = new ArrayList<String>(values.size());
         for (String value : values) {
-            queryParts.add(generateStringWordsWildcardQuery(value, documentPropNames));
+            queryParts.add(generateStringWordsWildcardQuery(value, leftWildcard, rightWildcard, documentPropNames));
         }
         return SearchUtil.joinQueryPartsOr(queryParts);
     }

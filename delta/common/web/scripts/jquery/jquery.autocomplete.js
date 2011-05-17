@@ -193,7 +193,11 @@ jQuery.autocomplete = function(input, options) {
       prev = v;
       $results.html("");
       var oldVal = $input.val();
-      $input.val(v);
+      if (options.formatResult) {
+         $input.val(options.formatResult(v));
+      } else {
+         $input.val(v);
+      }
       $input.blur();
       $input.trigger('autoComplete', {oldVal: oldVal,newVal: v});
       hideResultsNow();

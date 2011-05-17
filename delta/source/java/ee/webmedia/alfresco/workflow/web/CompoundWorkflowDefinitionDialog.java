@@ -235,7 +235,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         if (filterIndex == 0) { // users
             return userListDialog.searchUsers(-1, contains);
         } else if (filterIndex == 1) { // user groups
-            return userGroupSearchBean.searchGroups(-1, contains);
+            return userGroupSearchBean.searchGroups(-1, contains, false);
         } else if (filterIndex == 2) { // contacts
             final String personLabel = MessageUtil.getMessage("addressbook_private_person").toLowerCase();
             final String organizationLabel = MessageUtil.getMessage("addressbook_org").toLowerCase();

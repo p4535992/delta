@@ -14,7 +14,6 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.menu.model.Menu;
 import ee.webmedia.alfresco.menu.model.MenuModel;
 import ee.webmedia.alfresco.menu.service.MenuService;
@@ -28,8 +27,6 @@ import ee.webmedia.alfresco.menu.ui.MenuBean;
 public class ShortcutToMenuItemIdUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ShortcutToMenuItemIdUpdater.class);
 
-    private SearchService searchService;
-    private GeneralService generalService;
     private MenuService menuService;
     private Menu menu;
 
@@ -88,14 +85,6 @@ public class ShortcutToMenuItemIdUpdater extends AbstractNodeUpdater {
                 oldShortcuts == null ? "null" : Integer.toString(oldShortcuts.size()),
                 newShortcuts == null ? "null" : Integer.toString(newShortcuts.size()),
                 s.toString() };
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
     }
 
     public void setMenuService(MenuService menuService) {

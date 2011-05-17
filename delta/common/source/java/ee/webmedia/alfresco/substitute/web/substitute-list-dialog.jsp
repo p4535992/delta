@@ -35,7 +35,7 @@
             <f:facet name="header">
                 <a:sortLink id="substitutionStartDateSort" label="#{msg.substitute_startdate}" value="substitutionStartDate" styleClass="header" />
             </f:facet>
-            <h:inputText id="substitutionStartDateInput" value="#{r.substitutionStartDate}" styleClass="date" rendered="#{!r.readOnly}">
+            <h:inputText id="substitutionStartDateInput" value="#{r.substitutionStartDate}" styleClass="beginDate date" rendered="#{!r.readOnly}">
                 <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter"/>
             </h:inputText>
             <h:outputText id="substitutionStartDateOutput" value="#{r.substitutionStartDate}" rendered="#{r.readOnly}">
@@ -47,7 +47,7 @@
             <f:facet name="header">
                 <a:sortLink id="substitutionEndDateSort" label="#{msg.substitute_enddate}" value="substitutionEndDate" styleClass="header" />                
             </f:facet>
-            <h:inputText id="substitutionEndDateInput" value="#{r.substitutionEndDate}" styleClass="date" rendered="#{!r.readOnly}">
+            <h:inputText id="substitutionEndDateInput" value="#{r.substitutionEndDate}" styleClass="date endDate" rendered="#{!r.readOnly}">
                 <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter"/>
             </h:inputText>
             <h:outputText id="substitutionEndDateOutput" value="#{r.substitutionEndDate}" rendered="#{r.readOnly}">
@@ -79,7 +79,14 @@
         });
 
        $jQ("#"+escapeId4JQ("dialog:finish-button") + ",#" + escapeId4JQ("dialog:finish-button-2")).click(function (event) {
-          	var now = new Date()
+            if(!validateDatePeriods()){
+               return false;
+            }
+          	var now = new Date();
+          	now.setHours(0);
+          	now.setMinutes(0);
+          	now.setSeconds(0);
+          	now.setMilliseconds(0);
           	var action = null;
           	$jQ('input[name$="substitutionStartDateInput"]').each(function () {
           	   if ($jQ(this).datepicker('getDate') < now) {

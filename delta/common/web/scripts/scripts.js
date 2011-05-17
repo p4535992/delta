@@ -37,13 +37,13 @@ window.onbeforeunload = function () {
 
    if (nextSubmitStaysOnSamePageFlag) {
       nextSubmitStaysOnSamePageFlag = false;
-      
+
       // Pause ajax queue for 20 seconds!
       $jQ.ajaxPause();
       window.setTimeout(function() {
          $jQ.ajaxResume();
       }, 20000);
-      
+
    } else {
       // When page is submitted, user sees an hourglass cursor
       $jQ(".submit-protection-layer").show().focus();
@@ -180,7 +180,7 @@ function escapeId4JQ(idToEscape) {
 }
 
 /**
- * Prepend given function to each element selected with jQBtnOrLink jQuery object.  
+ * Prepend given function to each element selected with jQBtnOrLink jQuery object.
  * @param jQBtnOrLink - jQuery object containing elements that need prepending function
  * @param prependFn - function to be called before existing onclick function is called
  * @return
@@ -194,7 +194,7 @@ function prependOnchange(jQHtmlElem, prependFn) {
 }
 
 /**
- * Prepend given function to each element selected with jQHtmlElem jQuery object.  
+ * Prepend given function to each element selected with jQHtmlElem jQuery object.
  * @param jQHtmlElem - jQuery object containing elements that need prepending function
  * @param prependFn - function to be called before existing function is called (function name given with eventAttributeName parameter)
  * @param eventAttributeName - attribute name that contains function that needs to be prepended
@@ -280,24 +280,37 @@ function addAutocompleter(inputId, valuesArray){
    });
 }
 
-function addSearchSuggest(inputId, suggestChars, pickerCallback) {
-   autocompleters.push(function() {
-      var jQInput = $jQ("#"+escapeId4JQ(inputId));
+function addSearchSuggest(clientId, suggestChars, pickerCallback, viewName, containerClientId) {
+   autocompleters.push(function () {
+      var jQInput = $jQ("#"+escapeId4JQ(clientId));
       var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
-      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, minChars: suggestChars, suggestAll: 1, delay: 50, onItemSelect: function(li) {
-         processButtonState(); 
-      }});
+      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, minChars: suggestChars, suggestAll: 1, delay: 50, 
+      onItemSelect: function (li) {
+         processButtonState();
+      }, 
+      formatResult: function (data) {
+         var end = data.indexOf("<");
+         if (end > 0) {
+            return data.substring(0, data.indexOf("<"));
+         }
+         return data;
+      }
+      });
 
       suggest.bind("autoComplete", function(e, data){
-         var ac = $jQ(this);
-         ac.val(data.newVal.substring(0, data.newVal.indexOf(" (")));
-         
-         // Check if we can find and fill email value
-         var emailInput = ac.closest("table.subPropSheet").find('input[name*="partyEmail"]');
-         if(emailInput != null) {
-            email = data.newVal.contains("@") ? data.newVal.substring(data.newVal.lastIndexOf(",") + 1, data.newVal.length - 1) : ""; 
-            emailInput.val(email);
-         }
+
+         // Call setter and refresh HTML
+         var uri = getContextPath() + '/ajax/invoke/AjaxSearchBean.setterCallback?clientId=' + clientId + '&containerClientId=' + containerClientId + '&viewName=' + viewName + '&data=' + data.newVal;
+         $jQ.ajax({
+           type: 'POST',
+           url: uri,
+           mode: 'queue',
+           success: function (responseText) {
+             ajaxSuccess(responseText, clientId, containerClientId); 
+           },
+           error: ajaxError,
+           datatype: 'html'
+         });
       });
       jQInput.focus(function() {
          jQInput.keydown();
@@ -317,7 +330,7 @@ function applyAutocompleters() {
 
 function showFooterTitlebar() {
 	var bar = $jQ("#footer-titlebar");
-	
+
 	if (bar.length > 0) {
    	if($jQ(window).height() < bar.offset().top) {
    		bar.css('visibility', 'visible'); // vivibility is used, because display: none; gives offset (0, 0)
@@ -399,7 +412,7 @@ function applySizeContent(e)
 }
 
 function applySize(e, field)
-{ 
+{
    var formId = $jQ("#wrapper form").attr("name");
    document.forms[formId][formId+':act'].value= formId + ':' + field;
    document.forms[formId].submit();
@@ -432,6 +445,7 @@ function showModal(target, height){
 
 	$jQ("#overlay").css("display","block");
 	$jQ("#" + target).css("display","block");
+	$jQ("#" + target).find(".genericpicker-input").focus();
 	if (height != null) {
 	   $jQ("#" + target).css("height",height);
 	}
@@ -461,7 +475,7 @@ var propSheetFinishBtnPressed = false;
 var propSheetNextBtnPressed = false;
 
 // Should be called once per property sheet. If there are multiple propertySheets on the same
-// page then the last caller overwrites formId, finishBtnId and nextBtnId, so those must be 
+// page then the last caller overwrites formId, finishBtnId and nextBtnId, so those must be
 // equal to all property sheets on the same page.
 function registerPropertySheetValidator(btnFn, submitFn, formId, finishBtnId, nextBtnId) {
    propSheetValidateBtnFn.push(btnFn);
@@ -474,7 +488,7 @@ function registerPropertySheetValidator(btnFn, submitFn, formId, finishBtnId, ne
 
 function processButtonState() {
    for (var i = 0; i < propSheetValidateBtnFn.length; i++) {
-      if (typeof propSheetValidateBtnFn[i] == 'function') { 
+      if (typeof propSheetValidateBtnFn[i] == 'function') {
          propSheetValidateBtnFn[i]();
          var finishBtn = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId);
          var finishBtn2 = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryFinishId);
@@ -489,8 +503,12 @@ function processButtonState() {
 function propSheetValidateSubmit() {
    var result = true;
    if (propSheetFinishBtnPressed || propSheetNextBtnPressed) {
+      result = propSheetValidateSubmitCommon();
+      if(!result){
+         return result;
+      }
       for (var i = 0; i < propSheetValidateSubmitFn.length; i++) {
-         if (typeof propSheetValidateSubmitFn[i] == 'function') { 
+         if (typeof propSheetValidateSubmitFn[i] == 'function') {
             if (!propSheetValidateSubmitFn[i]()) {
                result = false;
                break;
@@ -501,6 +519,47 @@ function propSheetValidateSubmit() {
    propSheetFinishBtnPressed = false;
    propSheetNextBtnPressed = false;
    return result;
+}
+
+function propSheetValidateSubmitCommon() {
+   return validateDatePeriods();
+}
+
+function validateDatePeriods() {
+   var endBeforeBegin = false;
+   $jQ(".beginDate").each(function (index, beginDateElem) {
+      // Get the date
+      var bDate = $jQ(beginDateElem);
+      var row = bDate.closest("tr");
+      if (row == null) {
+         return;
+      }
+      var endDate = getEndDate(beginDateElem, row);
+      var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
+      if (endDate.val() != "") {
+         var daysDiff = (endDate.datepicker('getDate') - bDate.datepicker('getDate') ) / oneDay;
+         if(daysDiff<0){
+            informUser(bDate, getTranslation('error_endDateBeforeBeginDate'), true);
+            endBeforeBegin = true;
+            return false; // break from each()
+            }
+         }
+   });
+   return !endBeforeBegin;
+}
+
+function getEndDate(beginDateElem, container){
+   var endDates = container.find(".endDate");
+   if(endDates.length>1){
+      var dates = container.find(".beginDate, .endDate");
+      for ( var i = 0; i < dates.length; i++) {
+         if(dates[i]==beginDateElem && dates.length > i+1){
+            return $jQ(dates[i+1]);
+         }
+      }
+   } else {
+      return endDates;
+   }
 }
 
 function propSheetValidateOnDocumentReady() {
@@ -566,7 +625,7 @@ function ajaxError(request, textStatus, errorThrown) {
       $jQ('#wrapper').html(result[1]);
    } else {
       alert('Error during submit: ' + textStatus + "\nAfter clicking OK, the page will reload!");
-      $jQ('#' + formClientId).submit();
+      $jQ('#wrapper form').submit();
    }
 }
 
@@ -593,33 +652,37 @@ function ajaxSubmit(componentId, componentClientId, componentContainerId, formCl
       url: uri,
       data: componentChildFormElements.add(hiddenFormElements).serialize(),
       success: function (responseText) {
-         if (responseText) { // check that response is not empty
-            // Split response
-            var i = responseText.lastIndexOf('VIEWSTATE:');
-            var html = responseText.substr(0, i);
-            var viewState = responseText.substr(i + 10);
-
-            // Update HTML
-            $jQ('#' + escapeId4JQ(componentContainerId)).after(html).remove();
-
-            // Update ViewState
-            document.getElementById('javax.faces.ViewState').value = viewState;
-
-            // Reset hidden fields
-            var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
-               return componentClientId == this.name.substring(0, componentClientId.length);
-            }).each(function() {
-               this.value = '';
-            });
-
-            // Reattach behaviour
-            handleHtmlLoaded($jQ('#' + escapeId4JQ(componentContainerId)));
-         }
-         $jQ(".submit-protection-layer").hide();
+         ajaxSuccess(responseText, componentClientId, componentContainerId)
       },
       error: ajaxError,
       dataType: 'html'
    });
+}
+
+function ajaxSuccess(responseText, componentClientId, componentContainerId) {
+   if (responseText) { // check that response is not empty
+      // Split response
+      var i = responseText.lastIndexOf('VIEWSTATE:');
+      var html = responseText.substr(0, i);
+      var viewState = responseText.substr(i + 10);
+
+      // Update HTML
+      $jQ('#' + escapeId4JQ(componentContainerId)).after(html).remove();
+
+      // Update ViewState
+      document.getElementById('javax.faces.ViewState').value = viewState;
+
+      // Reset hidden fields
+      var hiddenFormElements = $jQ('input[type=hidden]').filter(function() {
+         return componentClientId == this.name.substring(0, componentClientId.length);
+      }).each(function() {
+         this.value = '';
+      });
+
+      // Reattach behaviour
+      handleHtmlLoaded($jQ('#' + escapeId4JQ(componentContainerId)));
+   }
+   $jQ(".submit-protection-layer").hide();
 }
 
 //-----------------------------------------------------------------------------
@@ -697,7 +760,7 @@ var historyListener = function(newLocation, historyData) {
       // Special case for our only real anchor tag
       if (debugHist) window.alert('files-panel ei tee midagi!');
       window.dhtmlHistory.add(randomHistoryHash(), null);
-   } 
+   }
    else if (newLocation != '' && newLocation == curHashVal) {
       // Just a browser refresh of the same page, do nothing
       if (debugHist) window.alert('Given hash equals to current hash, no action!');
@@ -733,7 +796,7 @@ function randomHistoryHash() {
 }
 
 window.dhtmlHistory.create( {
-   debugMode : false, 
+   debugMode : false,
    toJSON : function(o) {
       return $jQ.toJSON(o);
    },
@@ -780,12 +843,19 @@ $jQ(document).ready(function() {
    });
 
    $jQ(".genericpicker-input").live('keydown', function (event) {
-	   if (event.keyCode == 13) {
-		    $jQ(this).next().click();
+      if (event.keyCode == 13) {
+	      $jQ(this).next().click();
 			return false;
 	   }
-   });
+	});
    
+   $jQ(".genericpicker-input").live('keyup', function (event) {
+      var input = $jQ(this);
+      if (input.val() && input.val().length % 3 == 0) {
+         input.next().click();
+      }
+   });
+
    $jQ(".errandReportDateBase").live('change', function (event) {
       // Get the date
       var elem = $jQ(this);
@@ -802,8 +872,8 @@ $jQ(document).ready(function() {
          elem.closest(".panel-border").find(".reportDueDate").datepicker('setDate',  reportDue);
       }
    });
-   
-   $jQ(".beginDate,.endDate").live('change', function (event) {
+
+   $jQ(".beginTotalCount,.endTotalCount").live('change', function (event) {
       // Get the date
       var elem = $jQ(this);
       if (elem == null) {
@@ -813,39 +883,43 @@ $jQ(document).ready(function() {
       if (row == null) {
          return;
       }
+      var totalDays = row.find(".totalDays");
+      if(totalDays.length==0){
+         return;
+      }
       var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
-      if (elem.hasClass("beginDate")) {
-         var endDate = row.find(".endDate");
+      if (elem.hasClass("beginTotalCount")) {
+         var endDate = row.find(".endTotalCount");
          if (endDate.val() != "") {
-            row.find(".totalDays").val((endDate.datepicker('getDate') - elem.datepicker('getDate') + oneDay) / oneDay);
+            totalDays.val((endDate.datepicker('getDate') - elem.datepicker('getDate') + oneDay) / oneDay);
          }
-      } else if (elem.hasClass("endDate")) {
-         var beginDate = row.find(".beginDate");
+      } else if (elem.hasClass("endTotalCount")) {
+         var beginDate = row.find(".beginTotalCount");
          if (beginDate.val() != "") {
-            row.find(".totalDays").val((elem.datepicker('getDate') - beginDate.datepicker('getDate') + oneDay) / oneDay);
+            totalDays.val((elem.datepicker('getDate') - beginDate.datepicker('getDate') + oneDay) / oneDay);
          }
       }
   });
-   
+
    $jQ(".eventBeginDate,.eventEndDate").live('change', function (event) {
       // Get the date
       var elem = $jQ(this);
       if (elem == null) {
          return;
       }
-      
-      
+
+
       var table = elem.closest("table");
       if (table == null) {
          return;
       }
-      
+
       var row = table.closest("tr");
       if (row == null) {
          return;
       }
-      
-      
+
+
       var dateField = null;
       if (elem.hasClass("eventBeginDate")) {
          dateField = row.next().find(".errandBeginDate");
@@ -861,7 +935,7 @@ $jQ(document).ready(function() {
 	   // http://www.htmlcenter.com/blog/fixing-the-ie-text-selection-bug/
 	   document.body.style.height = document.documentElement.scrollHeight + 'px';
    }
-   
+
    if(isIE7()) {
 	   $jQ(window).resize(function() {
 		   var htmlWidth = $jQ("html").outerWidth(true);
@@ -869,7 +943,7 @@ $jQ(document).ready(function() {
 		   $jQ("#wrapper").css("min-width", width + "px");
 	   });
    }
-   
+
    var suggesters = $jQ("span.suggest-wrapper>textarea");
    suggesters.live("change", function(e){
       var jqSuggester = $jQ(this);
@@ -887,7 +961,7 @@ $jQ(document).ready(function() {
       }
    });
 
-   
+
    extendCondencePlugin();
    // extendCondencePlugin() MUST be called before tooltips are added on the following lines,
    // as condence plugin will make a copy of element for condenced text that would not get tooltips if created later
@@ -901,7 +975,7 @@ $jQ(document).ready(function() {
    window.dhtmlHistory.initialize();
    window.dhtmlHistory.addListener(historyListener);
    window.dhtmlHistory.add(randomHistoryHash(), null);
-   
+
 
    jQuery(".dailyAllowanceDaysField, .dailyAllowanceRateField").live('change', function(event) {
       var elem = $jQ(this);
@@ -917,7 +991,7 @@ $jQ(document).ready(function() {
       if (sum) {
          sumField.val(round(sum, 2));
       }
-      
+
       // Sum all rows in this block and set total daily allowance sum
       var totalSum = 0;
       var sumFields = $jQ(".dailyAllowanceSumField", row.closest("table"));
@@ -927,10 +1001,10 @@ $jQ(document).ready(function() {
             totalSum = totalSum + sum;
          }
       });
-      
+
       row.closest("div").closest("tr").next().find(".dailyAllowanceTotalSumField").val(totalSum);
    });
-   
+
    jQuery(".expectedExpenseSumField").live('keyup', function(event) {
       var elem = $jQ(this);
       var totalSum = 0;
@@ -944,13 +1018,13 @@ $jQ(document).ready(function() {
             totalSum += sum;
          }
       });
-      
+
       var totalField = elem.closest("div").closest("tr").next().find(".expensesTotalSumField");
       totalField.val(totalSum);
    });
-   
+
    jQuery(".invoiceTotalSum, .invoiceVat").live('change', function(event) {
-      // assume there is only one field available for each value      
+      // assume there is only one field available for each value
       var invoiceTotalSum = getFloatOrNull($jQ(".invoiceTotalSum").val());
       var invoiceVat = getFloatOrNull($jQ(".invoiceVat").val());
       var invoiceSum = $jQ(".invoiceSum");
@@ -960,7 +1034,7 @@ $jQ(document).ready(function() {
       }
       invoiceSum.val(round(invoiceTotalSum - invoiceVat, 2));
    });
-   
+
    toggleSubrow.init();
    toggleSubrowToggle.init();
 
@@ -1029,7 +1103,7 @@ function initSelectTooltips(selects) {
    });
 }
 /**
- * extend jQuery Condence plugin so that 
+ * extend jQuery Condence plugin so that
  * 1) condencing to specific number of chars could be performed based on styleClass (number of characters must be specified in the styleclass right after the text "condence"):)
  * 2) showMore/showLess text could be left out if condence styleclass ends with "-"
  */
@@ -1052,8 +1126,8 @@ function extendCondencePlugin() {
          ellipsis: "",
          condensedLength: condenceAtChar,
          minTrail: moreTxt.length,
-         strictTrim: true  // assume that condense content is text (i.e. doesn't contain html elements) 
-                           // and don't search for word breaks for triming text  
+         strictTrim: true  // assume that condense content is text (i.e. doesn't contain html elements)
+                           // and don't search for word breaks for triming text
          }
        );
    });
@@ -1086,7 +1160,7 @@ function handleHtmlLoaded(context, selects) {
    fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li", context);
    fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li", context);
    zIndexWorkaround(context);
-   
+
    if(isIE()) {
 	   $jQ("option").each(function() {
 		   $jQ(this).attr('title', $jQ(this).text());
@@ -1108,16 +1182,16 @@ function handleHtmlLoaded(context, selects) {
    $jQ(".suggest-wrapper", context).click(function (e) {
       $jQ(this).children("textarea").focus();
    });
-   
+
    $jQ(".toggle-tasks", context).click(function(){
       var nextTr = $jQ(this).toggleClass("expanded").closest("tr").next()[0];
       if(nextTr.style.display == 'none') { // bug in IE8
            $jQ(nextTr).show();
       } else {
-           $jQ(nextTr).hide();                       
+           $jQ(nextTr).hide();
       }
    });
-   
+
    if(context != null) {
 	   $jQ("input", context).focus(function() {
 		      lastActiveInput = $jQ(this);
@@ -1126,7 +1200,7 @@ function handleHtmlLoaded(context, selects) {
 
    /**
     * Binder for alfresco properties that are generated with ClassificatorSelectorAndTextGenerator.class
-    * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX) 
+    * Binds all elements that have class="selectBoundWithText" with corresponding textAreas/inputs(assumed to have same id prefix and suffix specified with TARGET_SUFFIX)
     * @author Ats Uiboupin
     */
    $jQ(".selectBoundWithText", context).each(function (intIndex)
@@ -1146,9 +1220,9 @@ function handleHtmlLoaded(context, selects) {
          appendSelection($jQ(this), textAreaId)
       });
    });
-   
+
    /**
-    * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE) 
+    * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE)
     * @author Riina Tens
     */
    $jQ("[class^=selectWithOnchangeEvent]", context).each(function (intIndex)
@@ -1160,12 +1234,12 @@ function handleHtmlLoaded(context, selects) {
       if(onChangeJavascript != ""){
          //XXX: maybe remove script part from class atribute after reading it into function?
          //selectElement.setAttribute('class', classString.substring(0, lastIndexOf('====')));
-         
+
          var selectBaseId = $(this).id.substring(selectId.lastIndexOf(':') + 1);
          if(selectBaseId == 'select_user' || selectBaseId == 'selPageSize'){
             $jQ(this).bind("change", function()
             {
-               //assume onChangeJavascript contains valid function body 
+               //assume onChangeJavascript contains valid function body
                //eval("(function() {" + onChangeJavascript + "}) ();");
                eval("(function(currElId) {" + onChangeJavascript + "}) ('" + $(this).id + "');");
             });
@@ -1178,13 +1252,15 @@ function handleHtmlLoaded(context, selects) {
          }
       }
    });
-   
+
    $jQ(".admin-user-search-input", context).keyup(function(event) {
        updateButtonState();
        if (event.keyCode == '13') {
           $jQ(this).next().click();
        }
     });
+
+   $jQ(".genericpicker-input:visible").focus();
 
 	propSheetValidateOnDocumentReady();
 }
@@ -1199,7 +1275,7 @@ function processCert(certHex, certId) {
  return oamSubmitForm('dialog','dialog:dialog-body:processCert',null,[['certHex', certHex], ['certId', certId]]);
 }
 
-function signDocument(signatureHex) {   
+function signDocument(signatureHex) {
  $jQ('#signApplet').hide();
  $jQ('#signWait').show();
   return oamSubmitForm('dialog','dialog:dialog-body:signDocument',null,[['signatureHex', signatureHex]]);
@@ -1297,7 +1373,7 @@ function loadSigningPlugin(operation, hashHex, certId, path) {
           return;
        }
 
-       var signedHashHex = response.signature; 
+       var signedHashHex = response.signature;
        signDocument(signedHashHex);
     }
  }
@@ -1332,7 +1408,7 @@ function loadSigningPlugin(operation, hashHex, certId, path) {
        + ' LEGACY_LIFECYCLE="true"'
        + '><noembed></noembed></embed>';
 */
- }  
+ }
 }
 
 function firefoxSigningPluginError(returnCode) {

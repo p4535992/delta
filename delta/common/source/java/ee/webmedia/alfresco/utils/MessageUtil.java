@@ -177,9 +177,10 @@ public class MessageUtil {
      * 
      * @param facesContext
      * @param messageData - messageData object used to create message
+     * @return true if added message with error or fatal severity
      */
-    public static void addStatusMessage(MessageData messageData) {
-        addStatusMessage(FacesContext.getCurrentInstance(), messageData);
+    public static boolean addStatusMessage(MessageData messageData) {
+        return addStatusMessage(FacesContext.getCurrentInstance(), messageData);
     }
 
     private static void addStatusMessage(FacesContext facesContext, final MessageSeverity severity, final String message,

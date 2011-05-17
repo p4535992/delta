@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.document.einvoice.model;
 
 import static org.alfresco.util.EqualsHelper.nullSafeEquals;
 
+import java.io.Serializable;
 import java.util.Date;
 
 import org.alfresco.web.bean.repository.Node;
@@ -10,8 +11,9 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorValueProvider;
 
-public class DimensionValue implements Comparable<DimensionValue>, ClassificatorSelectorValueProvider {
+public class DimensionValue implements Comparable<DimensionValue>, ClassificatorSelectorValueProvider, Serializable {
 
+    private static final long serialVersionUID = 1L;
     private final Node node;
 
     public DimensionValue(Node node) {

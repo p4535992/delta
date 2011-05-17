@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.utils;
 
+import static ee.webmedia.alfresco.utils.ISOLatin1Util.removeAccents;
+
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -81,6 +83,53 @@ public class FilenameUtil {
 
     public static String replaceNonAsciiCharacters(String filename, String replace) {
         return NON_ASCII.matcher(filename).replaceAll(replace);
+    }
+
+    /**
+     * Shortens the given filename by taking first part that fits in limit and inserts the marker between base name and extension
+     * 
+     * @param filename name to shorten
+     * @param maxLength maximum length of the name including extension
+     * @param marker string to insert between base name and extension, if <code>null</code>, defaults to "..."
+     * @return shortened filename or <code>null</code> if given name is <code>null</code>
+     */
+    public static String limitFileNameLength(String filename, int maxLength, String marker) {
+        marker = (marker == null) ? "...." : marker;
+
+        if (filename != null && filename.length() > maxLength) {
+            String baseName = FilenameUtils.getBaseName(filename);
+            String extension = FilenameUtils.getExtension(filename);
+            baseName = baseName.substring(0, maxLength - extension.length() - marker.length());
+            filename = baseName + marker + extension;
+        }
+        return filename;
+    }
+
+    public static String makeSafeFilename(String name) {
+        return makeSafeFilename(name, 50, null, "_", null);
+    }
+
+    public static String makeSafeUniqueFilename(String name, List<String> existingFileNames) {
+        return makeSafeFilename(name, 50, null, "_", existingFileNames);
+    }
+
+    public static String makeSafeFilename(String name, int maxLength, String maxLengthSufix, String nonAsciiReplacement, List<String> existingFileNames) {
+        maxLengthSufix = (maxLengthSufix == null) ? "...." : maxLengthSufix;
+        nonAsciiReplacement = (nonAsciiReplacement == null) ? "_" : nonAsciiReplacement;
+        
+        String safeName = replaceNonAsciiCharacters(
+                            removeAccents(
+                            replaceAmpersand(
+                            stripDotsAndSpaces(
+                            stripForbiddenWindowsCharacters(
+                            limitFileNameLength(name, maxLength, null)
+                            )))), nonAsciiReplacement);
+
+        if (existingFileNames != null && !existingFileNames.isEmpty()) {
+            safeName = generateUniqueFileDisplayName(safeName, existingFileNames);
+        }
+
+        return safeName;
     }
 
 }

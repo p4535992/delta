@@ -5,6 +5,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -67,6 +68,7 @@ import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -268,17 +270,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             emails = new ArrayList<String>();
         }
 
-        List<String> namesAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), false);
-        names.addAll(namesAdd);
-        List<String> emailsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), false);
-        emails.addAll(emailsAdd);
-
-        if (names.isEmpty()) {
-            names.add("");
-        }
-        if (emails.isEmpty()) {
-            emails.add("");
-        }
+        addAdditionalRecipients(props, names, emails);
         List<String> recSendModes = new ArrayList<String>(names.size());
         for (int i = 0; i < names.size(); i++) {
             if (StringUtils.isNotBlank(names.get(i)) || StringUtils.isNotBlank(emails.get(i))) {
@@ -293,6 +285,39 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         properties.put(PROP_KEYS[2], recSendModes);
 
         model.setProperties(properties);
+    }
+
+    private void addAdditionalRecipients(Map<String, Object> props, List<String> names, List<String> emails) {
+        @SuppressWarnings("unchecked")
+        List<String> namesAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME), false);
+        @SuppressWarnings("unchecked")
+        List<String> emailsAdd = newListIfNull((List<String>) props.get(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL), false);
+        RepoUtil.validateSameSize(namesAdd, emailsAdd, "additionalNames", "additionalEmails");
+
+        List<Integer> removeIndexes = new ArrayList<Integer>();
+        int j = 0;
+        for (Iterator<String> it = emailsAdd.iterator(); it.hasNext();) {
+            String email = it.next();
+            if (StringUtils.isBlank(email) && StringUtils.isBlank(namesAdd.get(j))) {
+                it.remove();
+                removeIndexes.add(j);
+            }
+            j++;
+        }
+        Collections.reverse(removeIndexes);
+        for (Integer index : removeIndexes) {
+            namesAdd.remove((int) index);
+        }
+
+        names.addAll(namesAdd);
+        emails.addAll(emailsAdd);
+
+        if (names.isEmpty()) {
+            names.add("");
+        }
+        if (emails.isEmpty()) {
+            emails.add("");
+        }
     }
 
     public String getPanelTitle() {

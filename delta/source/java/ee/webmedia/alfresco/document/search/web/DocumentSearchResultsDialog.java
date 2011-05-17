@@ -20,9 +20,10 @@ import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.enums.SendMode;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
-import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.CreatedOrRegistratedDateComparator;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
@@ -44,19 +45,27 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
 
     private transient SendOutService sendOutService;
 
+    private List<Document> originalDocuments;
     private Node searchFilter;
     private String dialogOutcome;
 
     public String setup(Node filter) {
         searchFilter = filter;
-        restored();
+        doInitialSearch();
+        doPostSearch();
+        BeanHelper.getVisitedDocumentsBean().clearVisitedDocuments();
         return dialogOutcome;
     }
 
     @Override
     public void restored() {
+        BeanHelper.getVisitedDocumentsBean().resetVisitedDocuments(originalDocuments);
+        doPostSearch();
+    }
+
+    protected void doInitialSearch() {
         try {
-            documents = getDocumentSearchService().searchDocuments(searchFilter);
+            originalDocuments = getDocumentSearchService().searchDocuments(searchFilter);
         } catch (BooleanQuery.TooManyClauses e) {
             Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(searchFilter.getProperties()));
             filterProps.remove(DocumentSearchModel.Props.OUTPUT);
@@ -65,7 +74,7 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                     + "\n  searchFilter="
                     + WmNode.toString(filterProps, Repository
                             .getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService())); // stack trace is logged in the service
-            documents = Collections.emptyList();
+            originalDocuments = Collections.emptyList();
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toomanyclauses");
         } catch (Hits.TooLongQueryException e) {
             Map<QName, Serializable> filterProps = RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(searchFilter.getProperties()));
@@ -75,17 +84,22 @@ public class DocumentSearchResultsDialog extends BaseDocumentListDialog {
                     + "\n  searchFilter="
                     + WmNode.toString(filterProps, Repository
                             .getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService())); // stack trace is logged in the service
-            documents = Collections.emptyList();
+            originalDocuments = Collections.emptyList();
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_search_toolongquery");
         }
-        String dialog = "documentSearchResultsDialog";
+    }
+
+    protected void doPostSearch() {
+        String dialog;
         if (DocumentSearchDialog.OUTPUT_EXTENDED.equals(searchFilter.getProperties().get(DocumentSearchModel.Props.OUTPUT))) {
             dialog = "documentSearchExtendedResultsDialog";
-            documents = getDocumentService().processExtendedSearchResults(documents, searchFilter);
+            documents = getDocumentService().processExtendedSearchResults(originalDocuments, searchFilter);
+        } else {
+            dialog = "documentSearchResultsDialog";
+            documents = new ArrayList<Document>(originalDocuments);
         }
-        Collections.sort(documents, CreatedOrRegistratedDateComparator.getComparator());        
+        Collections.sort(documents, CreatedOrRegistratedDateComparator.getComparator());
         dialogOutcome = dialog;
-        super.restored();
     }
 
     @Override

@@ -15,17 +15,17 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.time.DateUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.utils.SearchUtil;
@@ -40,11 +40,8 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 public class IncomingLetterDummyWorkflowUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ContractSendInfoUpdater.class);
 
-    private BehaviourFilter behaviourFilter;
-    private SearchService searchService;
-    private GeneralService generalService;
-    private Date now = new Date();
-    private Date dayBeforeYesterday = DateUtils.addDays(new Date(), -2);
+    private final Date now = new Date();
+    private final Date dayBeforeYesterday = DateUtils.addDays(new Date(), -2);
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -54,7 +51,7 @@ public class IncomingLetterDummyWorkflowUpdater extends AbstractNodeUpdater {
         queryParts.add(joinQueryPartsOr(Arrays.asList(
                 generatePropertyBooleanQuery(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, false),
                 generatePropertyNullQuery(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS)
-        )));
+                )));
         queryParts.add(generatePropertyNotNullQuery(DocumentCommonModel.Props.REG_NUMBER));
         String dateQueryPart = generateDatePropertyRangeQuery(null, dayBeforeYesterday, DocumentCommonModel.Props.REG_DATE_TIME);
         queryParts.add(dateQueryPart);
@@ -74,19 +71,39 @@ public class IncomingLetterDummyWorkflowUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef documentRef) throws Exception {
-        if (!nodeService.hasAspect(documentRef, DocumentCommonModel.Aspects.SEARCHABLE)) {
-            return new String[] { "doesNotHaveSearchableAspect" };
-        }
         QName type = nodeService.getType(documentRef);
-        if (!DocumentTypeHelper.isIncomingLetter(type)) {
-            return new String[] { "isNotIncomingLetter", type.toString() };
-        }
+        Set<QName> aspects = nodeService.getAspects(documentRef);
         Map<QName, Serializable> origProps = nodeService.getProperties(documentRef);
-        if (Boolean.TRUE.equals(origProps.get(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS))) {
-            return new String[] { "searchableHasStartedCompoundWorkflowsIsTrue" };
+        Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
+
+        Pair<Boolean, String[]> result = updateDocument(documentRef, type, aspects, origProps, setProps);
+
+        if (result.getFirst()) {
+            setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
+            setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
+            nodeService.addProperties(documentRef, setProps);
         }
-        if (origProps.get(DocumentCommonModel.Props.REG_NUMBER) == null) {
-            return new String[] { "regNumberIsNull" };
+        return result.getSecond();
+    }
+
+    public Pair<Boolean, String[]> updateDocument(NodeRef documentRef, QName type, Set<QName> aspects, Map<QName, Serializable> origProps, Map<QName, Serializable> setProps) {
+        if (!aspects.contains(DocumentCommonModel.Aspects.SEARCHABLE)) {
+            return new Pair<Boolean, String[]>(false, new String[] { "doesNotHaveSearchableAspect" });
+        }
+        if (!DocumentTypeHelper.isIncomingLetter(type)) {
+            return new Pair<Boolean, String[]>(false, new String[] { "isNotIncomingLetterType", type.toPrefixString(serviceRegistry.getNamespaceService()) });
+        }
+        if (Boolean.TRUE.equals(origProps.get(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS))) {
+            return new Pair<Boolean, String[]>(false, new String[] { "searchableHasStartedCompoundWorkflowsIsTrue" });
+        }
+        String regNumber = (String) origProps.get(DocumentCommonModel.Props.REG_NUMBER);
+        if (regNumber == null) {
+            return new Pair<Boolean, String[]>(false, new String[] { "regNumberIsNull" });
+        }
+        Date regDateTime = (Date) origProps.get(DocumentCommonModel.Props.REG_DATE_TIME);
+        if (regDateTime == null || (!dayBeforeYesterday.after(regDateTime) && !DateUtils.isSameDay(regDateTime, dayBeforeYesterday))) {
+            return new Pair<Boolean, String[]>(false, new String[] { "regDateTimeIsLaterThanDayBeforeYesterday",
+                    regDateTime == null ? "" : regDateTime.toString() });
         }
 
         Map<QName, Serializable> cwfProps = new HashMap<QName, Serializable>();
@@ -100,31 +117,12 @@ public class IncomingLetterDummyWorkflowUpdater extends AbstractNodeUpdater {
         NodeRef cwfRef = nodeService.createNode(documentRef, //
                 WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW, WorkflowCommonModel.Assocs.COMPOUND_WORKFLOW, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, cwfProps).getChildRef();
 
-        Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
         setProps.put(DocumentCommonModel.Props.SEARCHABLE_HAS_STARTED_COMPOUND_WORKFLOWS, Boolean.TRUE);
-        setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
-        setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
-        nodeService.addProperties(documentRef, setProps);
 
-        Date regDateTime = (Date) origProps.get(DocumentCommonModel.Props.REG_DATE_TIME);
-        return new String[] {
+        return new Pair<Boolean, String[]>(true, new String[] {
                 "createdWorkflowNode",
                 cwfRef.toString(),
-                (String) origProps.get(DocumentCommonModel.Props.REG_NUMBER),
-                regDateTime == null ? "" : regDateTime.toString(),
-                (String) origProps.get(DocumentCommonModel.Props.DOC_NAME) };
+                regNumber,
+                regDateTime.toString() });
     }
-
-    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
-        this.behaviourFilter = behaviourFilter;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
 }

@@ -43,6 +43,12 @@
                <type>d:boolean</type>
                <mandatory>true</mandatory>
             </property>
+            <property name="cl:alfabeticOrder">
+               <type>d:boolean</type><!-- when true values should be sorted alfabetically, otherwise(null or false) in the order of adding -->
+            </property>
+            <property name="cl:description">
+               <type>d:text</type>
+            </property>
          </properties>
          <associations>
             <child-association name="cl:classificatorValue">

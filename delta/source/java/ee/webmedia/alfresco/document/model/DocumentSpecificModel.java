@@ -149,6 +149,7 @@ public interface DocumentSpecificModel {
         QName ERRAND_END_DATE = QName.createQName(URI, "errandEndDate");
         QName ADVANCE_PAYMENT_DESC = QName.createQName(URI, "advancePaymentDesc"); // FIXME: vist veel ei kasutata
         QName ERRAND_SUBSTITUTE_NAME = QName.createQName(URI, "errandSubstituteName");
+        QName ERRAND_COMMENT = QName.createQName(URI, "errandComment");
         // END: properties of aspect docspec:errandBlockCommon
         // START: properties of aspect ERRAND_ORDER_ABROAD_BLOCK (errandBlockAbroad)
         QName ERRAND_COUNTRY = QName.createQName(URI, "country");

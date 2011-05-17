@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -15,7 +14,6 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
@@ -31,21 +29,8 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 public class SearchablePropertiesUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(SearchablePropertiesUpdater.class);
 
-    private BehaviourFilter behaviourFilter;
-    private SearchService searchService;
-    private GeneralService generalService;
     private DocumentService documentService;
     private SendOutService sendOutService;
-    private boolean enabled = false;
-
-    @Override
-    protected void executeInternal() throws Throwable {
-        if (!enabled) {
-            log.debug("Skipping searchable properties update, execution parameter (searchablePropertiesUpdater.enabled) set to false.");
-            return;
-        }
-        super.executeInternal();
-    }
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -174,28 +159,12 @@ public class SearchablePropertiesUpdater extends AbstractNodeUpdater {
                 && origProps.containsKey(DocumentCommonModel.Props.CASE);
     }
 
-    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
-        this.behaviourFilter = behaviourFilter;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
     public void setSendOutService(SendOutService sendOutService) {
         this.sendOutService = sendOutService;
     }
 
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
     public void setDocumentService(DocumentService documentService) {
         this.documentService = documentService;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
     }
 
 }

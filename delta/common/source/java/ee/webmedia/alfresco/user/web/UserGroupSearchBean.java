@@ -34,17 +34,25 @@ public class UserGroupSearchBean implements Serializable {
         return usersGroupsFilters;
     }
 
-    public SelectItem[] searchUsersGroups(int filterIndex, String contains) {
+    public SelectItem[] searchUsersGroups(int filterIndex, String contains, boolean withAdminsAndDocManagers) {
         if (filterIndex == 0) {
             return userListDialog.searchUsers(-1, contains);
         } else if (filterIndex == 1) {
-            return searchGroups(-1, contains);
+            return searchGroups(-1, contains, withAdminsAndDocManagers);
         }
         throw new RuntimeException("filterIndex must be 0 or -1, but is " + filterIndex);
     }
 
-    public SelectItem[] searchGroups(int filterIndex, String contains) {
-        List<Authority> results = getDocumentSearchService().searchAuthorityGroups(contains, true);
+    public SelectItem[] searchUsersGroups(int filterIndex, String contains) {
+        return searchGroups(filterIndex, contains, false);
+    }
+
+    public SelectItem[] searchUsersGroupsWithAdminsAndDocManagers(int filterIndex, String contains) {
+        return searchUsersGroups(filterIndex, contains, true);
+    }
+
+    public SelectItem[] searchGroups(int filterIndex, String contains, boolean withAdminsAndDocManagers) {
+        List<Authority> results = getDocumentSearchService().searchAuthorityGroups(contains, true, withAdminsAndDocManagers);
         SelectItem[] selectItems = new SelectItem[results.size()];
         int i = 0;
         for (Authority authority : results) {

@@ -9,6 +9,7 @@ import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.factory.InitializingBean;
 
 import ee.webmedia.alfresco.document.file.model.File;
@@ -57,11 +58,11 @@ public class DocumentWorkflowStatusEventListener implements WorkflowEventListene
             }
         } else if (object instanceof Task) {
             Task task = (Task) object;
-            if (event.getType().equals(WorkflowEventType.STATUS_CHANGED) && task.isStatus(Status.IN_PROGRESS)) {
+            String taskOwnerId = task.getOwnerId();
+            if (StringUtils.isNotBlank(taskOwnerId) && event.getType().equals(WorkflowEventType.STATUS_CHANGED) && task.isStatus(Status.IN_PROGRESS)) {
                 Workflow workflow = task.getParent();
                 CompoundWorkflow cWorkFlow = workflow.getParent();
                 NodeRef docRef = cWorkFlow.getParent();
-                String taskOwnerId = task.getOwnerId();
 
                 Set<String> requiredPrivileges = getRequiredPrivsForInprogressTask(task, docRef, fileService);
                 privilegeService.addPrivilege(docRef, null, DocumentCommonModel.Types.DOCUMENT, taskOwnerId, null, requiredPrivileges);

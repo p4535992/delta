@@ -54,11 +54,13 @@ import ee.webmedia.alfresco.signature.service.SignatureService;
 import ee.webmedia.alfresco.signature.web.SignatureAppletModalComponent;
 import ee.webmedia.alfresco.signature.web.SignatureBlockBean;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.workflow.exception.WorkflowChangedException;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowBlockItem;
+import ee.webmedia.alfresco.workflow.model.WorkflowBlockItemGroup;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflowDefinition;
@@ -249,7 +251,9 @@ public class WorkflowBlockBean implements Serializable {
                                 + " ms\n    service call - " + (step2 - step1) + " ms\n    reload file list - " + (step3 - step2) + " ms");
                     }
                 } catch (UnableToPerformException e) {
-                    MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
+                    if (MessageUtil.addStatusMessage(e)) {
+                        return;
+                    }
                 }
                 MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
                 return;
@@ -512,8 +516,10 @@ public class WorkflowBlockBean implements Serializable {
                 outcomeButton.setId("outcome-id-" + index + "-" + outcomeIndex);
                 outcomeButton.setActionListener(app.createMethodBinding("#{DocumentDialog.workflow.finishTask}", new Class[] { ActionEvent.class }));
                 outcomeButton.setValue(MessageUtil.getMessage(label + outcomeIndex));
-                outcomeButton.getAttributes().put(ATTRIB_INDEX, index);
-                outcomeButton.getAttributes().put(ATTRIB_OUTCOME_INDEX, outcomeIndex);
+                Map<String, Object> outcomeBtnAttributes = ComponentUtil.putAttribute(outcomeButton, "styleClass", "taskOutcome");
+                outcomeBtnAttributes.put(ATTRIB_INDEX, index);
+                outcomeBtnAttributes.put(ATTRIB_OUTCOME_INDEX, outcomeIndex);
+
                 panelGrid.getChildren().add(outcomeButton);
 
                 // the review and external review task has only 1 button and the outcomes come from TEMP_OUTCOME property
@@ -675,9 +681,11 @@ public class WorkflowBlockBean implements Serializable {
     }
 
     public List<WorkflowBlockItem> getWorkflowBlockItems() {
-        List<WorkflowBlockItem> items = new ArrayList<WorkflowBlockItem>();
+        List<WorkflowBlockItemGroup> workflows = new ArrayList<WorkflowBlockItemGroup>();
         for (CompoundWorkflow cWf : getCompoundWorkflows()) {
-            for (Workflow wf : cWf.getWorkflows()) {
+            List<WorkflowBlockItem> items = new ArrayList<WorkflowBlockItem>();
+            final List<Workflow> wfs = cWf.getWorkflows();
+            for (Workflow wf : wfs) {
                 if (WorkflowSpecificModel.Types.DOC_REGISTRATION_WORKFLOW.equals(wf.getNode().getType())
                         || WorkflowUtil.isGeneratedByDelegation(wf)) {
                     continue; // Don't display registration workflows
@@ -689,9 +697,29 @@ public class WorkflowBlockBean implements Serializable {
                     items.add(new WorkflowBlockItem(task, raisedRights));
                 }
             }
+            Collections.sort(items, WorkflowBlockItem.COMPARATOR);
+            workflows.add(new WorkflowBlockItemGroup(items, wfs.size()));
         }
-        Collections.sort(items, WorkflowBlockItem.COMPARATOR);
+
+        if (workflows.isEmpty()) {
+            return Collections.<WorkflowBlockItem> emptyList();
+        }
+
+        // Sort by workflows
+        Collections.sort(workflows, WorkflowBlockItemGroup.COMPARATOR);
+
+        // Flatten the structure.
+        List<WorkflowBlockItem> items = new ArrayList<WorkflowBlockItem>();
+        for (WorkflowBlockItemGroup workflowBlockItemGroup : workflows) {
+            items.addAll(workflowBlockItemGroup.getItems());
+            items.add(new WorkflowBlockItem(true));
+            items.add(new WorkflowBlockItem(false));
+        }
+        items.remove(items.size() - 1); // remove two last ones
+        items.remove(items.size() - 1);
         return items;
     }
+
     // END: getters / setters
+
 }

@@ -1,10 +1,13 @@
 package ee.webmedia.alfresco.document.einvoice.model;
 
+import java.io.Serializable;
+
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.util.Assert;
 
-public class Dimension {
+public class Dimension implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     private final Node node;
 
     public Dimension(Node node) {

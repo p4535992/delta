@@ -14,6 +14,7 @@ import javax.faces.context.ResponseWriter;
 import javax.faces.event.PhaseId;
 
 import org.alfresco.web.app.Application;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
@@ -24,6 +25,8 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -146,7 +149,7 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                 styleClass = "add-person";
             }
             out.write("<a class=\"icon-link " + styleClass + "\" onclick=\"");
-            // TODO: optimeerimise võimalus
+            // TODO: optimeerimise võimalus (vt ka AjaxSearchBean)
             // siin seatakse ajaxParentLevel=1 ainult selle pärast, et ajax'iga uut rida lisades renderdataks ka valideerimise skriptid,
             // mis praegu lisatakse propertySheet'ile, aga mitte komponendile endale.
             // Kui valideerimine teha nii ümber, et komponentide valideerimine delegeerida propertySheet'ide poolt komponentidele
@@ -204,6 +207,9 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                     }
                     out.write("<td>");
                     Utils.encodeRecursive(context, column);
+                    if (hasSearchSuggest(column)) {
+                        ComponentUtil.generateSuggestScript(context, column, (String) multiValueEditor.getAttributes().get(Search.PICKER_CALLBACK_KEY), out);
+                    }
                     out.write("</td>");
                 }
 
@@ -236,6 +242,15 @@ public class MultiValueEditorRenderer extends BaseRenderer {
                 rowIndex++;
             }
         }
+    }
+
+    private boolean hasSearchSuggest(UIComponent column) {
+        String id = column.getId();
+        return StringUtils.startsWith(id, FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.RECIPIENT_NAME.getLocalName()))
+                || StringUtils.startsWith(id,
+                        FacesHelper.makeLegalId(DocumentCommonModel.PREFIX + DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.getLocalName()))
+                || StringUtils.startsWith(id,
+                        FacesHelper.makeLegalId(DocumentSpecificModel.PREFIX + DocumentSpecificModel.Props.PROCUREMENT_APPLICANT_NAME.getLocalName()));
     }
 
     protected void renderPicker(FacesContext context, ResponseWriter out, UIComponent multiValueEditor, UIGenericPicker picker) throws IOException {

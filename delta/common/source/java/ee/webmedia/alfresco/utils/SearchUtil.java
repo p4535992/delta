@@ -28,17 +28,6 @@ public class SearchUtil {
         return luceneDateFormat.format(date);
     }
 
-    public static boolean isBlank(List<String> list) {
-        boolean blank = true;
-        for (String element : list) {
-            if (StringUtils.isNotBlank(element)) {
-                blank = false;
-                break;
-            }
-        }
-        return blank;
-    }
-
     /**
      * Replace characters that have special meaning in Lucene query.
      * 
@@ -196,10 +185,6 @@ public class SearchUtil {
         return "ISUNSET:" + Repository.escapeQName(documentPropName);
     }
 
-    public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean escape) {
-        return generatePropertyWildcardQuery(documentPropName, value, escape, true, true);
-    }
-
     public static String generatePropertyWildcardQuery(QName documentPropName, String value, boolean escape, boolean leftWildcard, boolean rightWildcard) {
         if (StringUtils.isBlank(value)) {
             return null;
@@ -261,7 +246,7 @@ public class SearchUtil {
         return joinQueryPartsOr(queryParts, false);
     }
 
-    public static String generateStringWordsWildcardQuery(List<String> words, QName... documentPropNames) {
+    public static String generateStringWordsWildcardQuery(List<String> words, boolean leftWildcard, boolean rightWildcard, QName... documentPropNames) {
         if (words.isEmpty()) {
             return null;
         }
@@ -269,7 +254,7 @@ public class SearchUtil {
         for (String word : words) {
             List<String> propQueryParts = new ArrayList<String>(documentPropNames.length);
             for (QName documentPropName : documentPropNames) {
-                propQueryParts.add(generatePropertyWildcardQuery(documentPropName, word, false));
+                propQueryParts.add(generatePropertyWildcardQuery(documentPropName, word, false, leftWildcard, rightWildcard));
             }
             wordQueryParts.add(joinQueryPartsOr(propQueryParts, false));
         }

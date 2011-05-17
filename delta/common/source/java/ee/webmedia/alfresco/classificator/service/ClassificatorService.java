@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.classificator.service;
 import java.io.Writer;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 
@@ -97,5 +98,8 @@ public interface ClassificatorService {
     void exportClassificators(Writer writer);
 
     void importClassificators(Collection<ClassificatorExportVO> changedClassificators);
+
+    void updateClassificatorValues(Classificator classificator, Map<String, ClassificatorValue> originalValues
+            , List<ClassificatorValue> classificatorValues, List<ClassificatorValue> addedClassificators);
 
 }

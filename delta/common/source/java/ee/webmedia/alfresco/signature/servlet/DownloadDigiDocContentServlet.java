@@ -37,6 +37,7 @@ import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
 import ee.webmedia.alfresco.signature.service.SignatureService;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 
 /**
  * Servlet that can read and return selected files from the DigiDoc container.
@@ -60,6 +61,9 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         Assert.notNull(ref, "Parameter 'ref' is mandatory");
         Assert.isTrue(id >= 0, "Parameter 'id' must not be negative");
         Assert.notNull(name, "Parameter 'name' is mandatory");
+
+        name = FilenameUtil.makeSafeFilename(name);
+
         return MessageFormat.format("/ddc/{0}/{1}/{2}/{3}/{4}", new Object[] { ref.getStoreRef().getProtocol(),
                 ref.getStoreRef().getIdentifier(), ref.getId(), id, URLEncoder.encode(name) });
     }

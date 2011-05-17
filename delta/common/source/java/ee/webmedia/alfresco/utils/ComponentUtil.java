@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.utils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,6 +22,7 @@ import javax.faces.component.UIViewRoot;
 import javax.faces.component.ValueHolder;
 import javax.faces.component.html.HtmlSelectManyListbox;
 import javax.faces.context.FacesContext;
+import javax.faces.context.ResponseWriter;
 import javax.faces.convert.Converter;
 import javax.faces.el.ValueBinding;
 import javax.faces.model.SelectItem;
@@ -31,6 +33,7 @@ import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.repository.datatype.TypeConversionException;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
@@ -55,6 +58,8 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
+import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
+import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.service.GeneralService;
 
 /**
@@ -434,7 +439,8 @@ public class ComponentUtil {
     }
 
     /**
-     * Generate JavaScript that sets a hidden parameter. Implementation based on {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
+     * Generate JavaScript that sets a hidden parameter. Implementation based on
+     * {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
      */
     public static String generateFieldSetter(FacesContext context, UIComponent component, String value) {
         String fieldId = component.getClientId(context);
@@ -442,7 +448,8 @@ public class ComponentUtil {
     }
 
     /**
-     * Generate JavaScript that sets a hidden parameter. Implementation based on {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
+     * Generate JavaScript that sets a hidden parameter. Implementation based on
+     * {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
      */
     public static String generateFieldSetter(FacesContext context, UIComponent component, String fieldId, String value) {
         UIForm form = Utils.getParentForm(context, component);
@@ -487,21 +494,10 @@ public class ComponentUtil {
     public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value //
             , Map<String, String> params, int parentLevel) {
         Assert.isTrue(parentLevel >= 0, "parentLevel cannot be negative");
-        UIComponent ajaxComponent = null;
-        int parentLevelFound = -1;
-        while (parentLevelFound < parentLevel) {
-            if (ajaxComponent == null) {
-                ajaxComponent = component;
-            } else {
-                ajaxComponent = ajaxComponent.getParent();
-                if (ajaxComponent == null) {
-                    break;
-                }
-            }
-            if (ajaxComponent instanceof AjaxUpdateable && !Boolean.TRUE.equals(ajaxComponent.getAttributes().get(AjaxUpdateable.AJAX_DISABLED_ATTR))) {
-                parentLevelFound++;
-            }
-        }
+        // Find parent AJAX component to update and find out parent level.
+        Pair<Integer, UIComponent> levelAndComponent = findAncestorAjaxComponent(component, null, parentLevel);
+        int parentLevelFound = levelAndComponent.getFirst();
+        UIComponent ajaxComponent = levelAndComponent.getSecond();
 
         // If desired upper level parent AjaxUpdateable component not found, do full submit
         if (ajaxComponent == null || parentLevelFound < parentLevel) {
@@ -557,6 +553,76 @@ public class ComponentUtil {
         return s.toString();
     }
 
+    public static Pair<Integer, UIComponent> findAncestorAjaxComponent(UIComponent childComponent, UIComponent ajaxComponent, int parentLevel) {
+        int parentLevelFound = (ajaxComponent == null) ? -1 : 0;
+
+        while (parentLevelFound < parentLevel) {
+            if (ajaxComponent == null) {
+                ajaxComponent = childComponent;
+            } else {
+                ajaxComponent = ajaxComponent.getParent();
+                if (ajaxComponent == null) {
+                    break;
+                }
+            }
+            if (ajaxComponent instanceof AjaxUpdateable && !Boolean.TRUE.equals(ajaxComponent.getAttributes().get(AjaxUpdateable.AJAX_DISABLED_ATTR))) {
+                parentLevelFound++;
+            }
+        }
+
+        return new Pair<Integer, UIComponent>(parentLevelFound, ajaxComponent);
+    }
+
+    /**
+     * NB! Before calling this, check if given child is rendered!
+     * 
+     * @param child
+     * @param search
+     * @param out
+     * @throws IOException
+     */
+    public static void generateSuggestScript(FacesContext context, UIComponent child, String pickerCallback, ResponseWriter out) throws IOException {
+        if (!(child instanceof UIInput) || StringUtils.isBlank(pickerCallback)) {
+            return;
+        }
+
+        String clientId = child.getClientId(context);
+        // Strip method binding delimiters for javascript
+        if (pickerCallback.contains("#{")) {
+            pickerCallback = pickerCallback.substring("#{".length(), pickerCallback.length() - 1);
+        }
+
+        int ajaxParentLevel = 0;
+        UIComponent searchComponent = ComponentUtil.getAncestorComponent(child, Search.class);
+        if (searchComponent == null) {
+            searchComponent = ComponentUtil.getAncestorComponent(child, MultiValueEditor.class);
+            ajaxParentLevel++;
+        }
+
+        if (searchComponent == null) {
+            throw new RuntimeException("Missing parent component with search capabilities! (Search or MultiValueEditor)");
+        }
+
+        Integer addition = (Integer) searchComponent.getAttributes().get(Search.AJAX_PARENT_LEVEL_KEY);
+        if (addition != null) {
+            ajaxParentLevel += addition;
+        } else if (ajaxParentLevel == 0) {
+            ajaxParentLevel++; // set default level to 1
+        }
+        UIComponent ancestorAjaxComponent = ComponentUtil.findAncestorAjaxComponent(searchComponent, null, ajaxParentLevel).getSecond();
+        if (ancestorAjaxComponent == null) {
+            throw new RuntimeException("Couldn't find parent ajax component to update for " + clientId + "!");
+        }
+
+        String sep = "\", \"";
+        StringBuffer sb = new StringBuffer("<script type=\"text/javascript\">");
+        sb.append("addSearchSuggest(\"").append(clientId).append(sep).append(3).append(sep).append(pickerCallback).append(sep)
+                .append(context.getViewRoot().getViewId());
+        sb.append(sep).append(ancestorAjaxComponent.getClientId(context)).append("\");");
+        sb.append("</script>");
+        out.write(sb.toString());
+    }
+
     public static void setAjaxDisabled(UIComponent component) {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
@@ -576,8 +642,8 @@ public class ComponentUtil {
      * @param componentPropVO
      * @param propertySheet
      * @param children
-     * @return component generated based on <code>singlePropVO</code> that is added to list of given <code>children</code> that must come from given <code>propertySheet</code>
-     *         where the generated component is added.
+     * @return component generated based on <code>singlePropVO</code> that is added to list of given <code>children</code> that must come from given
+     *         <code>propertySheet</code> where the generated component is added.
      */
     public static UIComponent generateAndAddComponent(FacesContext context, ComponentPropVO componentPropVO, UIPropertySheet propertySheet,
             final List<UIComponent> children) {

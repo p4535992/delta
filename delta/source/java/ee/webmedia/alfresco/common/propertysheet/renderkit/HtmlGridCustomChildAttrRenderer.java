@@ -65,10 +65,16 @@ public class HtmlGridCustomChildAttrRenderer extends HtmlGridRenderer {
             List<String> headingKeys = (List<String>) component.getAttributes().get(HEADING_KEYS_ATTR);
             writer.startElement("thead", component);
             writer.startElement("tr", component);
+            int lastHeading = headingKeys.size() - 1;
+            int i = 0;
             for (String headingKey : headingKeys) {
                 writer.startElement("th", component);
+                if (i == lastHeading - 1 && StringUtils.isBlank(headingKeys.get(lastHeading))) {
+                    writer.writeAttribute("style", "text-align: right;", null);
+                }
                 writer.write(StringUtils.isBlank(headingKey) ? "" : MessageUtil.getMessage(headingKey));
                 writer.endElement("th");
+                i++;
             }
             writer.endElement("tr");
             writer.endElement("thead");

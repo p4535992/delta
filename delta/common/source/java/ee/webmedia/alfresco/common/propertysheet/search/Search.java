@@ -25,6 +25,7 @@ import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -55,7 +56,6 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String ID_KEY = "id";
     public static final String STYLE_CLASS_KEY = "styleClass";
     public static final String AJAX_PARENT_LEVEL_KEY = "ajaxParentLevel";
-    public static final String SUGGEST_CHARS_KEY = "suggestChars";
 
     @Override
     public String getFamily() {
@@ -154,44 +154,50 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
                 throw new RuntimeException("Single-valued property does not support multiple values");
             }
             if (results.length == 1) {
-
-                String setterCallback = getSetterCallback();
-
-                @SuppressWarnings("unchecked")
-                List<UIComponent> children = ((UIComponent) getChildren().get(0)).getChildren();
-                if (!children.isEmpty()) {
-                    children.remove(0);
-                }
-                appendRow(context, results[0]);
-
-                if (setterCallback != null) {
-                    // first argument is always String(result from picker)
-                    // second argument can be either Object(value from RichList)
-                    // or Node(of surrounding propertySheet, that is the last argument of method binding) if setterCallbackTakesNode()
-                    final List<Class<?>> paramsTypes = new ArrayList<Class<?>>(3);
-                    final List<Object> argValues = new ArrayList<Object>(3);
-                    paramsTypes.add(String.class);
-                    argValues.add(results[0]);
-                    if (isChildOfUIRichList()) {
-                        Integer rowIndex = (Integer) getAttributes().get(Search.OPEN_DIALOG_KEY);
-                        Object rowObject = getRowObjectByIndex(rowIndex);
-                        paramsTypes.add(rowObject.getClass());
-                        argValues.add(rowObject);
-                    }
-
-                    if (setterCallbackTakesNode()) {
-                        final UIPropertySheet propSheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
-                        paramsTypes.add(Node.class);
-                        argValues.add(propSheet.getNode());
-                    }
-                    MethodBinding b = getFacesContext().getApplication().createMethodBinding(setterCallback, paramsTypes.toArray(new Class[paramsTypes.size()]));
-                    b.invoke(context, argValues.toArray());
-                }
-
+                singleValuedPickerFinish(context, results[0]);
             }
         }
         getAttributes().remove(OPEN_DIALOG_KEY);
         picker.queueEvent(new UIGenericPicker.PickerEvent(picker, 1 /* ACTION_CLEAR */, 0, null, null));
+    }
+
+    public void singleValuedPickerFinish(FacesContext context, String value) {
+        @SuppressWarnings("unchecked")
+        List<UIComponent> children = ((UIComponent) getChildren().get(0)).getChildren();
+        if (!children.isEmpty()) {
+            children.remove(0);
+        }
+        appendRow(context, value);
+
+        // Invoke setter callback if needed
+        String setterCallback = getSetterCallback();
+        if (StringUtils.isBlank(setterCallback)) {
+            return;
+        }
+        // first argument is always String(result from picker)
+        // second argument can be either Object(value from RichList)
+        // or Node(of surrounding propertySheet, that is the last argument of method binding) if setterCallbackTakesNode()
+        final List<Class<?>> paramsTypes = new ArrayList<Class<?>>(3);
+        final List<Object> argValues = new ArrayList<Object>(3);
+        paramsTypes.add(String.class);
+        argValues.add(value);
+        if (isChildOfUIRichList()) {
+            Integer rowIndex = (Integer) getAttributes().get(Search.OPEN_DIALOG_KEY);
+            Object rowObject = getRowObjectByIndex(rowIndex);
+            paramsTypes.add(rowObject.getClass());
+            argValues.add(rowObject);
+        }
+
+        Node node = null;
+        if (setterCallbackTakesNode()) {
+            final UIPropertySheet propSheet = ComponentUtil.getAncestorComponent(this, UIPropertySheet.class);
+            paramsTypes.add(Node.class);
+            node = propSheet.getNode();
+            argValues.add(node);
+        }
+        MethodBinding b = getFacesContext().getApplication()
+                    .createMethodBinding(setterCallback, paramsTypes.toArray(new Class[paramsTypes.size()]));
+        b.invoke(context, argValues.toArray());
     }
 
     public boolean isChildOfUIRichList() {
@@ -346,10 +352,6 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = getAttributes();
         return attributes.containsKey("editable") && (Boolean) attributes.get("editable");
-    }
-
-    protected Integer getSuggestChars() {
-        return (Integer) getAttributes().get(SUGGEST_CHARS_KEY);
     }
 
     private int getNextCounterValue() {

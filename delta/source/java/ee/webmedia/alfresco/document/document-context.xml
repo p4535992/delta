@@ -297,217 +297,55 @@
    </bean>
    
    <!-- Used to remove sequences of document copying bug (CL task 131723) -->
-   <bean id="searchableSendModeUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableSendModeUpdater" parent="module.baseComponent" >
+   <bean id="searchableSendModeUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableSendModeUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="name" value="searchableSendModeUpdater" />
       <property name="executeOnceOnly" value="false" />
-      <property name="generalService" ref="generalService" />
       <property name="sendOutService" ref="sendOutService" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="searchService" ref="searchService" />
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
       <property name="searchableSendModeUpdateBeginDate" value="${searchableSendModeUpdate.begin.date}" />
-   </bean>
-
-   <!-- this bean id was named by mistake with capital letter, but shouldn't be changed, because it has been run on some environments -->
-   <bean id="SearchableHasStartedCompoundWorkflowsUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableHasStartedCompoundWorkflowsUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="name" value="searchableHasStartedCompoundWorkflowsUpdater" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="contractPartyUpdater" />
-            <ref bean="vacationOrderTemplateAspectUpdater" />
-            <ref bean="errandAspectUpdater" />
-         </list>
-      </property>
-      <property name="generalService" ref="generalService" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="searchService" ref="searchService" />
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-   </bean>
-
-   <bean id="documentPrivilegesUpdater" class="ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="name" value="documentPrivilegesUpdater" />
-      <property name="executeOnceOnly" value="false" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
-         </list>
-      </property>
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="permissionService" ref="PermissionService" />
-      <property name="privilegeService" ref="PrivilegeService" />
-      <property name="generalService" ref="generalService" />
-      <property name="searchService" ref="searchService" />
-      <property name="documentService" ref="DocumentService" />
-      <property name="fileService" ref="FileService" />
-      <property name="workflowService" ref="WmWorkflowService" />
-      <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
-      <property name="limitForTesting" value="${updater.limitForTesting}" />
-   </bean>
-
-   <bean id="documentPrivilegesInArchiveUpdater" class="ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesInArchiveUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="name" value="documentPrivilegesInArchiveUpdater" />
-      <property name="executeOnceOnly" value="false" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
-         </list>
-      </property>
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="permissionService" ref="PermissionService" />
-      <property name="privilegeService" ref="PrivilegeService" />
-      <property name="generalService" ref="generalService" />
-      <property name="searchService" ref="searchService" />
-      <property name="documentService" ref="DocumentService" />
-      <property name="fileService" ref="FileService" />
-      <property name="workflowService" ref="WmWorkflowService" />
-      <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
-      <property name="enabled" value="${updater.archive.enabled}" />
-      <property name="limitForTesting" value="${updater.limitForTesting}" />
    </bean>
 
    <!-- Used to add searchable properties to imported document (CL task 143388) -->
    <!-- Normally should be run only once, execution depends on searchablePropertiesUpdater.enabled value -->
-   <bean id="searchablePropertiesUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchablePropertiesUpdater" parent="module.baseComponent" >
+   <bean id="searchablePropertiesUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchablePropertiesUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="name" value="searchablePropertiesUpdater" />
       <property name="executeOnceOnly" value="false" />
-      <property name="generalService" ref="generalService" />
       <property name="sendOutService" ref="sendOutService" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="searchService" ref="searchService" />
       <property name="documentService" ref="documentService" />
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
       <property name="enabled" value="${searchablePropertiesUpdater.enabled}" />
    </bean>    
 
    <!-- Used to fix mimeType on files (CL task 122959) -->
-   <bean id="fileMimeTypeUpdater" class="ee.webmedia.alfresco.document.bootstrap.FileMimeTypeUpdater" parent="module.baseComponent" >
+   <bean id="fileMimeTypeUpdater" class="ee.webmedia.alfresco.document.bootstrap.FileMimeTypeUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="name" value="fileMimeTypeUpdater" />
       <property name="executeOnceOnly" value="false" />
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-      <property name="searchService" ref="searchService" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="generalService" ref="generalService" />
       <property name="mimetypeService" ref="mimetypeService" />
       <property name="beginDate" value="${fileMimeTypeUpdater.begin.date}" />
    </bean>
 
    <!-- Used to fix mimeType on files (CL task 122959) -->
-   <bean id="generatedFileMimeTypeUpdater" class="ee.webmedia.alfresco.document.bootstrap.GeneratedFileMimeTypeUpdater" parent="module.baseComponent" >
+   <bean id="generatedFileMimeTypeUpdater" class="ee.webmedia.alfresco.document.bootstrap.GeneratedFileMimeTypeUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="name" value="generatedFileMimeTypeUpdater" />
       <property name="executeOnceOnly" value="true" />
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-      <property name="searchService" ref="searchService" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="generalService" ref="generalService" />
       <property name="mimetypeService" ref="mimetypeService" />
    </bean>    
 
-   <!-- Used to update contract party model (CL task 152368) -->
-   <bean id="contractPartyUpdater" class="ee.webmedia.alfresco.document.bootstrap.ContractPartyUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="name" value="contractPartyUpdater" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="version21DocumentUpdater" />
-         </list>
-      </property>
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-      <property name="searchService" ref="searchService" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="generalService" ref="generalService" />
-   </bean> 
-   
-   <!-- Populates shortRegNumber field for registered documents. Updates only SpacesStore. -->
-   <bean id="shortRegNumberUpdater" class="ee.webmedia.alfresco.document.bootstrap.ShortRegNumberUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="name" value="shortRegNumberUpdater" />
-      <property name="executeOnceOnly" value="false" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
-         </list>
-      </property>
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-      <property name="searchService" ref="searchService" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="generalService" ref="generalService" />
-      <property name="limitForTesting" value="${updater.limitForTesting}" />
-   </bean> 
-
-   <!-- Populates shortRegNumber field for registered documents. Updates only ArchivalsStore. -->
-   <bean id="shortRegNumberInArchiveUpdater" class="ee.webmedia.alfresco.document.bootstrap.ShortRegNumberInArchiveUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="name" value="shortRegNumberInArchiveUpdater" />
-      <property name="executeOnceOnly" value="false" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
-         </list>
-      </property>
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-      <property name="searchService" ref="searchService" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="generalService" ref="generalService" />
-      <property name="enabled" value="${updater.archive.enabled}" />
-      <property name="limitForTesting" value="${updater.limitForTesting}" />
-   </bean> 
+   <!-- =================================================================== -->
+   <!-- === 1.10 -> 2.5 update scripts                                  === -->
+   <!-- =================================================================== -->
 
    <!-- Perform document model changes that were introduced in 2.1, on existing data -->
-   <bean id="version21DocumentUpdater" class="ee.webmedia.alfresco.document.bootstrap.Version21DocumentUpdater" parent="module.baseComponent" >
+   <bean id="version21DocumentUpdater" class="ee.webmedia.alfresco.document.bootstrap.Version21DocumentUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="name" value="version21DocumentUpdater" />
-      <property name="executeOnceOnly" value="false" />
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-      <property name="searchService" ref="searchService" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="generalService" ref="generalService" />
-      <property name="enabled" value="${version21DocumentUpdater.enabled}" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="disabled" value="${updater.version110To25Combined}" />
    </bean>    
-
-   <!-- Used to add sendinfos to contracts (CL task 156770) -->
-   <bean id="contractSendInfoUpdater" class="ee.webmedia.alfresco.document.bootstrap.ContractSendInfoUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="name" value="contractSendInfoUpdater" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="contractPartyUpdater" />
-         </list>
-      </property>
-      <property name="nodeService" ref="nodeService" />
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-      <property name="searchService" ref="searchService" />
-      <property name="generalService" ref="generalService" />
-   </bean> 
-
-   <!-- Removes docspec:template aspect from docsub:vacationOrder documents -->
-   <bean id="vacationOrderTemplateAspectUpdater" class="ee.webmedia.alfresco.document.bootstrap.VacationOrderTemplateAspectUpdater" parent="module.baseComponent" >
-      <property name="moduleId" value="simdhs" />
-      <property name="name" value="vacationOrderTemplateAspectUpdater" />
-      <property name="executeOnceOnly" value="true" />
-      <property name="dependsOn">
-         <list>
-            <ref bean="version21DocumentUpdater" />
-         </list>
-      </property>
-      <property name="searchService" ref="searchService" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="generalService" ref="generalService" />
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-   </bean>
    
-   <bean id="errandAspectUpdater" class="ee.webmedia.alfresco.document.bootstrap.ErrandAspectUpdater" parent="module.baseComponent" >
+   <bean id="errandAspectUpdater" class="ee.webmedia.alfresco.document.bootstrap.ErrandAspectUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="name" value="errandAspectUpdater" />
       <property name="executeOnceOnly" value="true" />
@@ -516,27 +354,178 @@
             <ref bean="version21DocumentUpdater" />
          </list>
       </property>
-      <property name="searchService" ref="searchService" />
-      <property name="nodeService" ref="nodeService" />
-      <property name="generalService" ref="generalService" />
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
+      <property name="disabled" value="${updater.version110To25Combined}" />
    </bean>
 
+   <!-- Removes docspec:template aspect from docsub:vacationOrder documents -->
+   <bean id="vacationOrderTemplateAspectUpdater" class="ee.webmedia.alfresco.document.bootstrap.VacationOrderTemplateAspectUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="vacationOrderTemplateAspectUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="errandAspectUpdater" />
+         </list>
+      </property>
+      <property name="disabled" value="${updater.version110To25Combined}" />
+   </bean>
+
+   <!-- NOT put together with version110To25DocumentUpdater -->
+   <!-- Used to update contract party model (CL task 152368) -->
+   <bean id="contractPartyUpdater" class="ee.webmedia.alfresco.document.bootstrap.ContractPartyUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="contractPartyUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="vacationOrderTemplateAspectUpdater" />
+         </list>
+      </property>
+   </bean> 
+
+   <!-- Used to update contract party model (CL task 152368) -->
+   <bean id="contractDetailsUpdater" class="ee.webmedia.alfresco.document.bootstrap.ContractDetailsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="contractDetailsUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="contractPartyUpdater" />
+         </list>
+      </property>
+      <property name="disabled" value="${updater.version110To25Combined}" />
+   </bean> 
+
+   <!-- Used to add sendinfos to contracts (CL task 156770) -->
+   <bean id="contractSendInfoUpdater" class="ee.webmedia.alfresco.document.bootstrap.ContractSendInfoUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="contractSendInfoUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="contractDetailsUpdater" />
+         </list>
+      </property>
+      <property name="disabled" value="${updater.version110To25Combined}" />
+   </bean> 
+
    <!-- Used to add dummy workflow to old incoming letters to prevent them from appearing in "Menetluses" menu (CL task 158704) -->
-   <bean id="incomingLetterDummyWorkflowUpdater" class="ee.webmedia.alfresco.document.bootstrap.IncomingLetterDummyWorkflowUpdater" parent="module.baseComponent" >
+   <bean id="incomingLetterDummyWorkflowUpdater" class="ee.webmedia.alfresco.document.bootstrap.IncomingLetterDummyWorkflowUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
       <property name="name" value="incomingLetterDummyWorkflowUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
-            <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
+            <ref bean="contractSendInfoUpdater" />
          </list>
       </property>
-      <property name="nodeService" ref="nodeService" />
-      <property name="behaviourFilter" ref="policyBehaviourFilter" />
-      <property name="searchService" ref="searchService" />
-      <property name="generalService" ref="generalService" />
+      <property name="disabled" value="${updater.version110To25Combined}" />
    </bean> 
+
+   <!-- Populates shortRegNumber field for registered documents. -->
+   <bean id="shortRegNumberUpdater" class="ee.webmedia.alfresco.document.bootstrap.ShortRegNumberUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="shortRegNumberUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="incomingLetterDummyWorkflowUpdater" />
+         </list>
+      </property>
+      <property name="disabled" value="${updater.version110To25Combined}" />
+   </bean> 
+
+   <!-- Update documents that are imported from Postipoiss. (CL task 153829) -->
+   <bean id="postipoissImportDocumentsUpdater" class="ee.webmedia.alfresco.document.bootstrap.PostipoissImportDocumentsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="postipoissImportDocumentsUpdater" />
+      <property name="executeOnceOnly" value="false" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="shortRegNumberUpdater" />
+         </list>
+      </property>
+      <property name="disabled" value="${updater.version110To25Combined}" />
+      <property name="enabledCustom" value="${postipoissImportDocumentsUpdater.enabled}" />
+
+      <property name="importStartDate">
+         <bean id="postipoissImportStartDate" class="org.apache.commons.lang.time.DateUtils" factory-method="parseDate">
+             <constructor-arg value="${postipoissImportDocumentsUpdater.importStartDate}"/>
+             <constructor-arg>
+                 <list><value>dd.MM.yyyy HH:mm:s</value></list>
+            </constructor-arg>
+         </bean>
+     </property>
+     <property name="importEndDate">
+         <bean id="postipoissImportEndDate" class="org.apache.commons.lang.time.DateUtils" factory-method="parseDate">
+             <constructor-arg value="${postipoissImportDocumentsUpdater.importEndDate}"/>
+             <constructor-arg>
+                 <list><value>dd.MM.yyyy HH:mm:s</value></list>
+            </constructor-arg>
+         </bean>
+     </property>
+   </bean> 
+
+   <bean id="documentPrivilegesUpdater" class="ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="documentPrivilegesUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="postipoissImportDocumentsUpdater" />
+         </list>
+      </property>
+      <property name="disabled" value="${updater.version110To25Combined}" />
+
+      <property name="permissionService" ref="PermissionService" />
+      <property name="privilegeService" ref="PrivilegeService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="fileService" ref="FileService" />
+      <property name="workflowService" ref="WmWorkflowService" />
+      <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
+   </bean>
+
+   <bean id="version110To25DocumentUpdater" class="ee.webmedia.alfresco.document.bootstrap.Version110To25DocumentUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="version110To25DocumentUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="documentPrivilegesUpdater" />
+         </list>
+      </property>
+      <property name="enabled" value="${updater.version110To25Combined}" />
+      <property name="version21DocumentUpdater" ref="version21DocumentUpdater" />
+      <property name="errandAspectUpdater" ref="errandAspectUpdater" />
+      <property name="vacationOrderTemplateAspectUpdater" ref="vacationOrderTemplateAspectUpdater" />
+      <property name="contractDetailsUpdater" ref="contractDetailsUpdater" />
+      <property name="contractSendInfoUpdater" ref="contractSendInfoUpdater" />
+      <property name="incomingLetterDummyWorkflowUpdater" ref="incomingLetterDummyWorkflowUpdater" />
+      <property name="shortRegNumberUpdater" ref="shortRegNumberUpdater" />
+      <property name="postipoissImportDocumentsUpdater" ref="postipoissImportDocumentsUpdater" />
+      <property name="documentPrivilegesUpdater" ref="documentPrivilegesUpdater" />
+      <property name="limitForTesting" value="${updater.limitForTesting}" />
+      <property name="limitCreatedBegin" value="01.03.2011" />
+      <property name="limitCreatedEnd" value="31.03.2011" />
+      <property name="limitRegisteredBegin" value="01.01.2010" />
+      <property name="limitRegisteredEnd" value="31.01.2010" />
+      <property name="batchSize" value="10" /><!-- TODO test how this influences performance -->
+   </bean>
+
+   <!-- NOT put together with version110To25DocumentUpdater -->
+   <!-- this bean id was named by mistake with capital letter, but shouldn't be changed, because it has been run on some environments -->
+   <bean id="SearchableHasStartedCompoundWorkflowsUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableHasStartedCompoundWorkflowsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="searchableHasStartedCompoundWorkflowsUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="version110To25DocumentUpdater" />
+         </list>
+      </property>
+   </bean>
+
+   <!-- =================================================================== -->
 
    <bean id="documentWorkflowStatusEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener">
       <property name="workflowService" ref="WmWorkflowService" />
@@ -549,11 +538,13 @@
 
    <bean id="AssocsBlockBean" class="ee.webmedia.alfresco.document.associations.web.AssocsBlockBean" scope="session" />
    
-   <bean id="SearchBlockBean" class="ee.webmedia.alfresco.document.search.web.SearchBlockBean" scope="session" >
+   <bean id="SearchBlockBean" class="ee.webmedia.alfresco.document.search.web.SearchBlockBean" scope="session">
       <property name="documentSearchBean" ref="DocumentSearchBean" />
    </bean>
    
    <bean id="TransactionsBlockBean" class="ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean" scope="session" />
+   
+   <bean id="VisitedDocumentsBean" class="ee.webmedia.alfresco.document.web.VisitedDocumentsBean" scope="session" />
 
    <!-- END: web beans: -->
 

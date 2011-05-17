@@ -62,7 +62,6 @@ import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.alfresco.utils.ISOLatin1Util;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -71,6 +70,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class AddFileDialog extends BaseDialogBean implements Validator {
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "AddFileDialog";
 
     private static final String ERR_EXISTING_FILE = "add_file_existing_file";
     private static final String ERR_INVALID_FILE_NAME = "add_file_invalid_file_name";
@@ -153,7 +153,8 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 List<String> existingDisplayNames = getFileService().getDocumentFileDisplayNames(documentNodeRef);
                 Map<Integer, EInvoice> attachmentInvoices = new HashMap<Integer, EInvoice>();
                 Map<Integer, EInvoice> fileInvoices = new HashMap<Integer, EInvoice>();
-                boolean isParseInvoice = getEInvoiceService().isEinvoiceEnabled() && DocumentSubtypeModel.Types.INVOICE.equals(getNodeService().getType(documentNodeRef));
+                boolean isParseInvoice = getEInvoiceService().isEinvoiceEnabled()
+                        && DocumentSubtypeModel.Types.INVOICE.equals(getNodeService().getType(documentNodeRef));
                 boolean invoiceAdded = false;
                 if (isFileSelected) {
                     for (int i = 0; i < selectedFileNodeRef.size(); i++) {
@@ -223,18 +224,21 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         }
     }
 
-    public Pair<String, String> getFileFilenames(NodeRef documentNodeRef, List<String> existingFilenames, List<String> fileNames, List<String> fileNameWithoutExtension, int i) {
+    public Pair<String, String> getFileFilenames(NodeRef documentNodeRef, List<String> existingFilenames
+            , List<String> fileNames, List<String> fileNameWithoutExtension, int i) {
         String displayName = fileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(fileNames.get(i));
-        String name = checkAndGetUniqueFilename(documentNodeRef, displayName, existingFilenames);
-        Pair<String, String> filenames = new Pair<String, String>(name, displayName);
-        return filenames;
+        return getFilenameFromDisplayname(documentNodeRef, existingFilenames, displayName);
     }
 
     public Pair<String, String> getAttachmentFilenames(NodeRef documentNodeRef, List<String> existingDisplayNames, int i) {
         String displayName = selectedFileNameWithoutExtension.get(i) + "." + FilenameUtils.getExtension(selectedFileName.get(i));
-        String name = checkAndGetUniqueFilename(documentNodeRef, displayName, existingDisplayNames);
-        Pair<String, String> filenames = new Pair<String, String>(name, displayName);
-        return filenames;
+        return getFilenameFromDisplayname(documentNodeRef, existingDisplayNames, displayName);
+    }
+
+    private Pair<String, String> getFilenameFromDisplayname(NodeRef documentNodeRef, List<String> existingDisplayNames, String displayName) {
+        displayName = FilenameUtil.generateUniqueFileDisplayName(displayName, existingDisplayNames);
+        String name = checkAndGetUniqueFilename(documentNodeRef, displayName);
+        return new Pair<String, String>(name, displayName);
     }
 
     public void addFileAndFilename(String name, String displayName, NodeRef documentNodeRef, NodeRef fileRef, List<String> existingFilenames) {
@@ -274,7 +278,8 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                     for (int i = 0; i < files.size(); i++) {
                         if (i == entry.getKey() || !attachmentInvoices.containsKey(new Integer(i))) {
                             Pair<String, String> filenames = getFileFilenames(docRef, existingFilenames, fileNames, fileNameWithoutExtension, i);
-                            addFileAndFilename(filenames.getFirst(), filenames.getSecond(), docRef, existingFilenames, files.get(i), getFileUploadBean().getContentTypes().get(i));
+                            addFileAndFilename(filenames.getFirst(), filenames.getSecond(), docRef
+                                    , existingFilenames, files.get(i), getFileUploadBean().getContentTypes().get(i));
                         }
                     }
                 }
@@ -328,22 +333,13 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
         return false;
     }
 
-    public String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName, List<String> existingFileNames) {
+    /**
+     * NB! this method is intended only for cm:name property!
+     */
+    public String checkAndGetUniqueFilename(NodeRef documentNodeRef, String displayName) {
         checkPlusInFileName(displayName);
-        displayName = FilenameUtil.replaceNonAsciiCharacters(
-                        ISOLatin1Util.removeAccents(
-                                FilenameUtil.replaceAmpersand(
-                                        FilenameUtil.stripDotsAndSpaces(
-                                                FilenameUtil.stripForbiddenWindowsCharacters(
-                                                        displayName)))), "_");
-        String uniqueDisplayName = FilenameUtil.generateUniqueFileDisplayName(displayName, existingFileNames);
-        if (!displayName.equals(uniqueDisplayName)) {
-            // Take care of "duplicate files"
-            throw new FileExistsException(documentNodeRef, displayName);
-        }
-        String name = getGeneralService().limitFileNameLength(displayName, 50, null);
-        name = getGeneralService().getUniqueFileName(documentNodeRef, name);
-        return name;
+        String safeFilename = FilenameUtil.makeSafeFilename(displayName);
+        return getGeneralService().getUniqueFileName(documentNodeRef, safeFilename);
     }
 
     public static void checkPlusInFileName(String displayName) {

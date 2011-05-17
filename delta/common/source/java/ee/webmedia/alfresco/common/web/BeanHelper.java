@@ -12,6 +12,7 @@ import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.repository.Repository;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -21,11 +22,13 @@ import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.file.web.AddFileDialog;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
+import ee.webmedia.alfresco.document.web.VisitedDocumentsBean;
 import ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
@@ -42,6 +45,10 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  */
 public class BeanHelper {
     // START: web beans
+    public static DialogManager getDialogManager() {
+        return (DialogManager) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DialogManager.BEAN_NAME);
+    }
+
     public static ManagePrivilegesDialog getManagePrivilegesDialog() {
         return (ManagePrivilegesDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ManagePrivilegesDialog.BEAN_NAME);
     }
@@ -68,6 +75,14 @@ public class BeanHelper {
 
     public static DocumentDialog getDocumentDialog() {
         return (DocumentDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DocumentDialog.BEAN_NAME);
+    }
+
+    public static AddFileDialog getAddFileDialog() {
+        return (AddFileDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), AddFileDialog.BEAN_NAME);
+    }
+
+    public static VisitedDocumentsBean getVisitedDocumentsBean() {
+        return (VisitedDocumentsBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), VisitedDocumentsBean.BEAN_NAME);
     }
 
     // END: web beans

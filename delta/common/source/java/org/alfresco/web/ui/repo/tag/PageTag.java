@@ -41,6 +41,8 @@ import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+
 /**
  * A non-JSF tag library that adds the HTML begin and end tags if running in servlet mode
  * 
@@ -109,11 +111,12 @@ public class PageTag extends TagSupport
                 "/scripts/validation.js",
                 "/scripts/scripts.js"
                 );
-        if (log.isDebugEnabled()) {
+        if(BeanHelper.getApplicationService().isTest()) {
             // construct new List, that supports adding
+            scriptsList = new java.util.ArrayList<String>(scriptsList);
+            scriptsList.add("/scripts/project.test.js");
             /*
              * uncomment, if need to use firebug-lite (with non-firefox browser)
-            scriptsList = new java.util.ArrayList<String>(scriptsList);
             scriptsList.add("/scripts/firebug-lite.js");
              */
         }

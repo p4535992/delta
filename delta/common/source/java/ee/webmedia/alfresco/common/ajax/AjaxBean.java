@@ -33,7 +33,7 @@ public class AjaxBean implements Serializable {
 
     public static final String COMPONENT_ID_PARAM = "componentId";
     public static final String COMPONENT_CLIENT_ID_PARAM = "componentClientId";
-    private static final String VIEW_NAME_PARAM = "viewName";
+    protected static final String VIEW_NAME_PARAM = "viewName";
 
     // ------------------------------------------------------------------------------
     // AJAX handler methods
@@ -58,7 +58,6 @@ public class AjaxBean implements Serializable {
 
         UIComponent component = ComponentUtil.findChildComponentById(context, viewRoot, componentId, componentClientId);
         Assert.notNull(component, String.format("Component with id=%s was not found", componentId));
-        System.out.println("Found component\n    id=" + component.getId() + "\n    clientId=" + component.getClientId(context));
 
         // The following is copied from RestoreStateUtils#recursivelyHandleComponentReferencesAndSetValid
         ValueBinding binding = component.getValueBinding("binding");
@@ -97,17 +96,7 @@ public class AjaxBean implements Serializable {
         });
 
         // Phase 4: Update model values; process events
-        execute(context, viewRoot, component, new PhaseExecutor() {
-            @Override
-            public boolean execute(FacesContext context, UIViewRoot viewRoot, UIComponent component) {
-                component.processUpdates(context);
-                viewRoot._broadcastForPhase(PhaseId.UPDATE_MODEL_VALUES);
-                if (context.getRenderResponse() || context.getResponseComplete()) {
-                    viewRoot.clearEvents();
-                }
-                return false;
-            }
-        });
+        updateModelValues(context, viewRoot, component);
 
         // Phase 5: Invoke application; process events
         execute(context, viewRoot, component, new PhaseExecutor() {
@@ -127,6 +116,20 @@ public class AjaxBean implements Serializable {
         String viewState = saveView(context, viewRoot);
         ResponseWriter out = context.getResponseWriter();
         out.write("VIEWSTATE:" + viewState);
+    }
+
+    protected void updateModelValues(FacesContext context, UIViewRoot viewRoot, UIComponent component) {
+        execute(context, viewRoot, component, new PhaseExecutor() {
+            @Override
+            public boolean execute(FacesContext context, UIViewRoot viewRoot, UIComponent component) {
+                component.processUpdates(context);
+                viewRoot._broadcastForPhase(PhaseId.UPDATE_MODEL_VALUES);
+                if (context.getRenderResponse() || context.getResponseComplete()) {
+                    viewRoot.clearEvents();
+                }
+                return false;
+            }
+        });
     }
 
     private boolean execute(FacesContext context, UIViewRoot viewRoot, UIComponent component, PhaseExecutor executor) {
@@ -153,13 +156,13 @@ public class AjaxBean implements Serializable {
         boolean execute(FacesContext context, UIViewRoot viewRoot, UIComponent component);
     }
 
-    private String saveView(FacesContext fc, UIViewRoot viewRoot) {
+    protected String saveView(FacesContext fc, UIViewRoot viewRoot) {
         StateManager stateManager = fc.getApplication().getStateManager();
         stateManager.saveSerializedView(fc);
         return createViewState(fc, viewRoot);
     }
 
-    private UIViewRoot restoreViewRoot(FacesContext fc, String viewName) {
+    protected UIViewRoot restoreViewRoot(FacesContext fc, String viewName) {
         Application application = fc.getApplication();
         ViewHandler viewHandler = application.getViewHandler();
 

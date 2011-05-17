@@ -8,13 +8,17 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
+import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
@@ -22,46 +26,60 @@ import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.ResultSet;
+import org.alfresco.service.cmr.search.SearchService;
+import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.time.FastDateFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.InitializingBean;
 
 import com.csvreader.CsvReader;
 import com.csvreader.CsvWriter;
 
-public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
+import ee.webmedia.alfresco.common.service.GeneralService;
+
+public abstract class AbstractNodeUpdater extends AbstractModuleComponent implements InitializingBean {
     protected final Log log = LogFactory.getLog(getClass());
 
     protected static final int DEFAULT_BATCH_SIZE = 50;
     protected static final char CSV_SEPARATOR = ';';
     protected static Charset CSV_CHARSET = Charset.forName("UTF-8");
-    protected static FastDateFormat dateFormat = FastDateFormat.getInstance("dd.MM.yyyy");
 
     protected NodeService nodeService;
+    protected SearchService searchService;
+    protected GeneralService generalService;
+    protected BehaviourFilter behaviourFilter;
+
+    protected final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+    protected final DateFormat dateTimeFormat = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss-SSS");
+    {
+        dateFormat.setLenient(false);
+        dateTimeFormat.setLenient(false);
+    }
 
     protected int batchSize = DEFAULT_BATCH_SIZE;
     private boolean enabled = true;
     private File inputFolder;
+
     private Set<NodeRef> nodes = new HashSet<NodeRef>();
     private Set<NodeRef> completedNodes = new HashSet<NodeRef>();
     private File nodesFile;
     private File completedNodesFile;
 
-    public void setInputFolderPath(String inputFolderPath) {
-        inputFolder = new File(inputFolderPath);
-    }
-
     @Override
-    public void init() {
-    	if (!enabled) {
-    		moduleService = null;
-    	}
-    	super.init();
+    public void afterPropertiesSet() throws Exception {
+        nodeService = serviceRegistry.getNodeService();
+        searchService = serviceRegistry.getSearchService();
+        generalService = (GeneralService) serviceRegistry.getService(QName.createQName(null, GeneralService.BEAN_NAME));
+        behaviourFilter = (BehaviourFilter) serviceRegistry.getService(QName.createQName(null, "policyBehaviourFilter"));
     }
 
     @Override
     protected void executeInternal() throws Throwable {
+        if (!enabled) {
+            log.info("Skipping node updater, because it is disabled" + (isExecuteOnceOnly() ? ". It will not be executed again, because executeOnceOnly=true" : ""));
+            return;
+        }
         log.info("Starting node updater");
         nodesFile = new File(inputFolder, getNodesCsvFileName());
         nodes = loadNodesFromFile(nodesFile, false);
@@ -93,12 +111,20 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         log.info("Completed nodes updater");
     }
 
+    protected String getBaseFileName() {
+        return getClass().getSimpleName();
+    }
+
     protected String getNodesCsvFileName() {
-        return getClass().getSimpleName() + ".csv";
+        return getBaseFileName() + ".csv";
     }
 
     protected String getCompletedNodesCsvFileName() {
-        return getClass().getSimpleName() + "Completed.csv";
+        return getBaseFileName() + "Completed.csv";
+    }
+
+    protected String getRollbackNodesCsvFileName() {
+        return getBaseFileName() + "Rollback-" + dateTimeFormat.format(new Date()) + ".csv";
     }
 
     protected Set<NodeRef> loadNodesFromFile(File file, boolean readHeaders) throws Exception {
@@ -126,12 +152,12 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         return loadedNodes;
     }
 
-    protected void writeNodesToFile(File file, Set<NodeRef> nodes) throws Exception {
-        log.info("Writing " + nodes.size() + " nodes to file " + file.getAbsolutePath());
+    protected void writeNodesToFile(File file, Set<NodeRef> nodesToWrite) throws Exception {
+        log.info("Writing " + nodesToWrite.size() + " nodes to file " + file.getAbsolutePath());
         try {
             CsvWriter writer = new CsvWriter(new FileOutputStream(file), CSV_SEPARATOR, CSV_CHARSET);
             try {
-                for (NodeRef nodeRef : nodes) {
+                for (NodeRef nodeRef : nodesToWrite) {
                     writer.writeRecord(new String[] { nodeRef.toString() });
                 }
             } finally {
@@ -195,12 +221,11 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
                 continue;
             }
             String[] info = updateNode(nodeRef);
-            if (info != null) {
-                String[] batchInfo = (String[]) ArrayUtils.add(info, 0, nodeRef.toString());
-                batchInfos.add(batchInfo);
-            }
+            String[] batchInfo = (String[]) ArrayUtils.add(info, 0, nodeRef.toString());
+            batchInfos.add(batchInfo);
         }
-        bindCsvWriteAfterCommit(completedNodesFile, new CsvWriterClosure() {
+        File rollbackNodesFile = new File(inputFolder, getRollbackNodesCsvFileName());
+        bindCsvWriteAfterCommit(completedNodesFile, rollbackNodesFile, new CsvWriterClosure() {
 
             @Override
             public void execute(CsvWriter writer) throws IOException {
@@ -330,15 +355,15 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         String[] getHeaders();
     }
 
-    private static void bindCsvWriteAfterCommit(final File file, final CsvWriterClosure closure) {
+    private static void bindCsvWriteAfterCommit(final File completedFile, final File rollbackFile, final CsvWriterClosure closure) {
         AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
             @Override
             public void afterCommit() {
                 try {
                     // Write created documents
-                    boolean exists = file.exists();
+                    boolean exists = completedFile.exists();
                     if (!exists) {
-                        OutputStream outputStream = new FileOutputStream(file);
+                        OutputStream outputStream = new FileOutputStream(completedFile);
                         try {
                             // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
                             outputStream.write("\ufeff".getBytes("UTF-8"));
@@ -346,7 +371,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
                             outputStream.close();
                         }
                     }
-                    CsvWriter writer = new CsvWriter(new FileWriter(file, true), CSV_SEPARATOR);
+                    CsvWriter writer = new CsvWriter(new FileWriter(completedFile, true), CSV_SEPARATOR);
                     try {
                         if (!exists) {
                             writer.writeRecord(closure.getHeaders());
@@ -356,7 +381,33 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
                         writer.close();
                     }
                 } catch (IOException e) {
-                    throw new RuntimeException("Error writing file '" + file + "': " + e.getMessage(), e);
+                    throw new RuntimeException("Error writing file '" + completedFile + "': " + e.getMessage(), e);
+                }
+            }
+
+            @Override
+            public void afterRollback() {
+                try {
+                    // Write created documents
+                    if (rollbackFile.exists()) {
+                        throw new RuntimeException("File already exists: " + rollbackFile.getAbsolutePath());
+                    }
+                    OutputStream outputStream = new FileOutputStream(rollbackFile);
+                    try {
+                        // the Unicode value for UTF-8 BOM, is needed so that Excel would recognise the file in correct encoding
+                        outputStream.write("\ufeff".getBytes("UTF-8"));
+                    } finally {
+                        outputStream.close();
+                    }
+                    CsvWriter writer = new CsvWriter(new FileWriter(rollbackFile, true), CSV_SEPARATOR);
+                    try {
+                        writer.writeRecord(closure.getHeaders());
+                        closure.execute(writer);
+                    } finally {
+                        writer.close();
+                    }
+                } catch (IOException e) {
+                    throw new RuntimeException("Error writing file '" + rollbackFile + "': " + e.getMessage(), e);
                 }
             }
         });
@@ -371,16 +422,20 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent {
         return helper;
     }
 
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
-    }
-    
-    public void setEnabled(boolean enabled) {
-    	this.enabled = enabled;
-    }
-
     public void setBatchSize(int batchSize) {
         this.batchSize = batchSize;
+    }
+
+    public void setInputFolderPath(String inputFolderPath) {
+        inputFolder = new File(inputFolderPath);
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
+    }
+
+    public void setDisabled(boolean disabled) {
+        enabled = !disabled;
     }
 
 }

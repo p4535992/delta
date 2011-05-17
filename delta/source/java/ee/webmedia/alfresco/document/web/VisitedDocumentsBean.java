@@ -1,0 +1,60 @@
+package ee.webmedia.alfresco.document.web;
+
+import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
+
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.Document;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.search.model.FakeDocument;
+
+public class VisitedDocumentsBean implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "VisitedDocumentsBean";
+
+    private Set<NodeRef> visitedDocuments;
+
+    public Set<NodeRef> getVisitedDocuments() {
+        if (visitedDocuments == null) {
+            visitedDocuments = new HashSet<NodeRef>();
+        }
+        return visitedDocuments;
+    }
+
+    public void clearVisitedDocuments() {
+        visitedDocuments = null;
+    }
+
+    public void resetVisitedDocuments(List<Document> documents) {
+        for (NodeRef visitedDoc : getVisitedDocuments()) {
+            boolean found = false;
+            // Remove all matching entries
+            for (Iterator<Document> i = documents.iterator(); i.hasNext();) {
+                Document document = i.next();
+                if (document != null && visitedDoc.equals(document.getNodeRef())) {
+                    found = true;
+                    i.remove();
+                }
+            }
+            if (found && BeanHelper.getNodeService().exists(visitedDoc)) {
+                QName resultType = BeanHelper.getNodeService().getType(visitedDoc);
+                Document newDocument;
+                if (!BeanHelper.getDictionaryService().isSubClass(resultType, DocumentCommonModel.Types.DOCUMENT)) {
+                    newDocument = new FakeDocument(visitedDoc);
+                } else {
+                    newDocument = BeanHelper.getDocumentService().getDocumentByNodeRef(visitedDoc);
+                }
+                documents.add(newDocument);
+            }
+        }
+        clearVisitedDocuments();
+    }
+
+}

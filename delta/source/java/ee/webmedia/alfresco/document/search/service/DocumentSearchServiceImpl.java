@@ -15,9 +15,9 @@ import static ee.webmedia.alfresco.utils.SearchUtil.generateStringExactQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringNotEmptyQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateStringNullQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
-import static ee.webmedia.alfresco.utils.SearchUtil.isBlank;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
+import static ee.webmedia.alfresco.utils.TextUtil.isBlank;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -552,7 +552,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
     @SuppressWarnings("unchecked")
     @Override
-    public List<Authority> searchAuthorityGroups(String input, boolean returnAllGroups) {
+    public List<Authority> searchAuthorityGroups(String input, boolean returnAllGroups, boolean withAdminsAndDocManagers) {
         input = StringUtils.trimToEmpty(input);
         Set<String> results;
         List<Authority> authorities = new ArrayList<Authority>();
@@ -574,7 +574,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             }));
         }
         for (String result : results) {
-            if (!userService.getAdministratorsGroup().equals(result) && !userService.getDocumentManagersGroup().equals(result)) {
+            if (withAdminsAndDocManagers || (!userService.getAdministratorsGroup().equals(result) && !userService.getDocumentManagersGroup().equals(result))) {
                 authorities.add(userService.getAuthority(result));
             }
         }
@@ -585,7 +585,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(2);
         queryParts.add(generateTypeQuery(ContentModel.TYPE_AUTHORITY_CONTAINER));
-        queryParts.add(generateStringWordsWildcardQuery(groupName, ContentModel.PROP_AUTHORITY_DISPLAY_NAME));
+        // Use both left and right wildcard in user/group/contact/contactgroup/org.unit searches
+        queryParts.add(generateStringWordsWildcardQuery(groupName, true, true, ContentModel.PROP_AUTHORITY_DISPLAY_NAME));
 
         String query = joinQueryPartsAnd(queryParts);
         List<NodeRef> results = searchNodes(query, false, /* queryName */"authorityGroups");
@@ -1190,7 +1191,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                 List<String> propQueries = new ArrayList<String>(searchProperties.size());
 
                 for (QName property : searchProperties) {
-                    propQueries.add(generatePropertyWildcardQuery(property, searchWord, false));
+                    // Use only right wildcard in document searches
+                    propQueries.add(generatePropertyWildcardQuery(property, searchWord, false, false, true));
                 }
                 queryParts.add(joinQueryPartsOr(propQueries, false));
             }
@@ -1268,14 +1270,15 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         List<String> queryParts = new ArrayList<String>(20);
         Map<String, Object> props = filter.getProperties();
 
+        // Use both left and right wildcard in task searches
         queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.STARTED_DATE_TIME_BEGIN), //
                 (Date) props.get(TaskSearchModel.Props.STARTED_DATE_TIME_END), WorkflowCommonModel.Props.STARTED_DATE_TIME));
         queryParts.add(generateTypeQuery((List<QName>) props.get(TaskSearchModel.Props.TASK_TYPE)));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.OWNER_NAME), WorkflowCommonModel.Props.OWNER_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.CREATOR_NAME), WorkflowCommonModel.Props.CREATOR_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.ORGANIZATION_NAME),
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.OWNER_NAME), true, true, WorkflowCommonModel.Props.OWNER_NAME));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.CREATOR_NAME), true, true, WorkflowCommonModel.Props.CREATOR_NAME));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.ORGANIZATION_NAME), true, true,
                 WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.JOB_TITLE), WorkflowCommonModel.Props.OWNER_JOB_TITLE));
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.JOB_TITLE), true, true, WorkflowCommonModel.Props.OWNER_JOB_TITLE));
         queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.DUE_DATE_TIME_BEGIN), //
                 (Date) props.get(TaskSearchModel.Props.DUE_DATE_TIME_END), WorkflowSpecificModel.Props.DUE_DATE));
         if (Boolean.TRUE.equals(props.get(TaskSearchModel.Props.ONLY_RESPONSIBLE))) {
@@ -1283,9 +1286,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
         queryParts.add(generateDatePropertyRangeQuery((Date) props.get(TaskSearchModel.Props.COMPLETED_DATE_TIME_BEGIN), //
                 (Date) props.get(TaskSearchModel.Props.COMPLETED_DATE_TIME_END), WorkflowCommonModel.Props.COMPLETED_DATE_TIME));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.COMMENT), WorkflowCommonModel.Props.OUTCOME,
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.COMMENT), true, true, WorkflowCommonModel.Props.OUTCOME,
                 WorkflowSpecificModel.Props.COMMENT));
-        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.RESOLUTION), WorkflowSpecificModel.Props.RESOLUTION,
+        queryParts.add(generateStringWordsWildcardQuery((String) props.get(TaskSearchModel.Props.RESOLUTION), true, true, WorkflowSpecificModel.Props.RESOLUTION,
                 WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION));
         queryParts.add(generateMultiStringExactQuery((List<String>) props.get(TaskSearchModel.Props.STATUS), WorkflowCommonModel.Props.STATUS));
         if (Boolean.TRUE.equals(props.get(TaskSearchModel.Props.COMPLETED_OVERDUE))) {
@@ -1581,7 +1584,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         // This limit does not work when ACLEntryAfterInvocationProvider has been disabled
         // So we perform our own limiting in this service also
         if (limited) {
-            sp.setLimit(100);
+            sp.setLimit(RESULTS_LIMIT);
             sp.setLimitBy(LimitBy.FINAL_SIZE);
         } else {
             sp.setLimitBy(LimitBy.UNLIMITED);

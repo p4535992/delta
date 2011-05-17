@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import ee.webmedia.alfresco.parameters.job.ParameterRescheduledTriggerBean;
 import ee.webmedia.alfresco.parameters.model.Parameter;
@@ -66,6 +67,6 @@ public interface ParametersService {
      * @param collection
      * @return
      */
-    Map<String, Parameters> getSwappedStringParameters(Collection<Parameters> collection);
+    Map<String, Set<Parameters>> getSwappedStringParameters(List<Parameters> collection);
 
 }

@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -15,6 +17,8 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.ISO9075;
+import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.util.Assert;
@@ -27,18 +31,29 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorExportVO.Classifica
 import ee.webmedia.alfresco.classificator.model.ClassificatorModel;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.utils.Transformer;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 public class ClassificatorServiceImpl implements ClassificatorService {
 
     private static final Log log = LogFactory.getLog(ClassificatorServiceImpl.class);
 
-    private static BeanPropertyMapper<Classificator> classificatorBeanPropertyMapper;
+    public static BeanPropertyMapper<Classificator> classificatorBeanPropertyMapper;
     private static BeanPropertyMapper<ClassificatorValue> classificatorValueBeanPropertyMapper;
+    private static final Comparator<ClassificatorValue> CLASSIFICATOR_VALUES_ALFABETIC_ORDER_COMPARATOR;
 
     static {
         classificatorBeanPropertyMapper = BeanPropertyMapper.newInstance(Classificator.class);
         classificatorValueBeanPropertyMapper = BeanPropertyMapper.newInstance(ClassificatorValue.class);
+
+        @SuppressWarnings("unchecked")
+        Comparator<ClassificatorValue> tmp = new TransformingComparator(new Transformer<ClassificatorValue>() {
+            @Override
+            public Object tr(ClassificatorValue c) {
+                return c.getValueName();
+            }
+        }, new NullComparator());
+        CLASSIFICATOR_VALUES_ALFABETIC_ORDER_COMPARATOR = tmp;
     }
 
     private GeneralService generalService;
@@ -202,6 +217,56 @@ public class ClassificatorServiceImpl implements ClassificatorService {
             log.debug("Node (" + assoc.getChildRef() + ") added: " + classificatorValue);
         }
         return assoc.getChildRef();
+    }
+
+    @Override
+    public void updateClassificatorValues(Classificator classificator, Map<String, ClassificatorValue> originalValues
+            , List<ClassificatorValue> classificatorValues, List<ClassificatorValue> addedClassificators) {
+        NodeRef classificatorRef = classificator.getNodeRef();
+        Boolean alfabeticOrder = reOrderClassificatorValues(classificator, classificatorValues);
+        nodeService.setProperty(classificatorRef, ClassificatorModel.Props.ALFABETIC_ORDER, alfabeticOrder);
+        nodeService.setProperty(classificatorRef, ClassificatorModel.Props.DESCRIPTION, classificator.getDescription());
+        for (ClassificatorValue mod : classificatorValues) {
+            ClassificatorValue orig = originalValues.get(mod.getNodeRef().toString());
+            if (orig == null) {
+                continue;
+            }
+
+            if (!orig.equals(mod)) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Updating the classificator value with nodeRef = " + mod.getNodeRef());
+                }
+                removeClassificatorValue(classificator, orig);
+                addClassificatorValue(classificator, mod);
+            }
+        }
+        // save the added new value
+        if (addedClassificators != null && !addedClassificators.isEmpty()) {
+            for (ClassificatorValue add : addedClassificators) {
+                addClassificatorValue(classificator, add);
+                if (log.isDebugEnabled()) {
+                    log.debug("New classificator value (" + add.getValueName() + ") saved.");
+                }
+            }
+        }
+    }
+
+    public static Boolean reOrderClassificatorValues(Classificator classificator, List<ClassificatorValue> classificatorValues) {
+        Boolean alfabeticOrder = classificator.getAlfabeticOrder();
+        if (alfabeticOrder == null) {
+            alfabeticOrder = false;
+            classificator.setAlfabeticOrder(false);
+        }
+        if (alfabeticOrder) {
+            Collections.sort(classificatorValues, CLASSIFICATOR_VALUES_ALFABETIC_ORDER_COMPARATOR);
+        } else {
+            Collections.sort(classificatorValues);
+        }
+        for (int i = 0; i < classificatorValues.size(); i++) {
+            ClassificatorValue classificatorValue = classificatorValues.get(i);
+            classificatorValue.setOrder(i + 1);
+        }
+        return alfabeticOrder;
     }
 
     // START: getters / setters

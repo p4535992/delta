@@ -7,23 +7,18 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.SearchUtil;
 
 public class TaskCapablePropertyUpdaterV2 extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(TaskCapablePropertyUpdaterV2.class);
-
-    private BehaviourFilter behaviourFilter;
-    private SearchService searchService;
-    private GeneralService generalService;
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -43,27 +38,18 @@ public class TaskCapablePropertyUpdaterV2 extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
+        List<String> actions = new ArrayList<String>();
 
         Map<QName, Serializable> taskCapableProp = new HashMap<QName, Serializable>();
         if (!nodeService.hasAspect(nodeRef, AddressbookModel.Aspects.TASK_CAPABLE)) {
             nodeService.addAspect(nodeRef, AddressbookModel.Aspects.TASK_CAPABLE, null);
+            actions.add("taskCapableAspectAdded");
         }
         taskCapableProp.put(AddressbookModel.Props.TASK_CAPABLE, Boolean.FALSE);
         nodeService.addProperties(nodeRef, taskCapableProp);
+        actions.add("taskCapablePropertySetToFalse");
 
-        return null;
-    }
-
-    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
-        this.behaviourFilter = behaviourFilter;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
+        return new String[] { StringUtils.join(actions, ',') };
     }
 
 }

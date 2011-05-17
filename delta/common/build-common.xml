@@ -661,7 +661,7 @@
 		<xjc destdir="${project.dir.build}/${name}" package="${package}" removeOldOutput="true" >
 			<schema dir="${common.dir.etc}" includes="${xsd}" />
 		</xjc>
-		<!-- Add namespace to root element (if namespace is given), as some versions of jdk (jaxb? xerces?) 
+		<!-- Add namespace to root elements (if namespace is given), as some versions of jdk (jaxb? xerces?) 
 			cannot erroneously validate root elements without that -->
 		<antcall target="replace-namespace-conditionally">
 			<param name="name" value="${name}" />
@@ -681,7 +681,16 @@
 	<target name="replace-namespace-conditionally" if="namespace">
 		<replaceregexp match="@XmlRootElement\(" replace="@XmlRootElement\(namespace=&quot;${rootNamespace}&quot;, " >
 			<fileset dir="${project.dir.build}/${name}" includes="**/*.java"/>
-		</replaceregexp>		
+		</replaceregexp>
+		<replaceregexp match="@XmlElement\(" replace="@XmlElement\(namespace=&quot;${rootNamespace}&quot;, " flags="g" >
+			<fileset dir="${project.dir.build}/${name}" includes="**/DimensioonideNimekiri.java,**/Dimensioon.java"/>
+		</replaceregexp>
+		<replaceregexp match="@XmlElement\(name = &quot;Nimetus&quot;" replace="@XmlElement\(name = &quot;Nimetus&quot;, namespace=&quot;${rootNamespace}&quot;" flags="g" >
+			<fileset dir="${project.dir.build}/${name}" includes="**/Vaartus.java"/>
+		</replaceregexp>
+		<replaceregexp match="@XmlElement\(name = &quot;Id&quot;" replace="@XmlElement\(name = &quot;Id&quot;, namespace=&quot;${rootNamespace}&quot;" flags="g" >
+			<fileset dir="${project.dir.build}/${name}" includes="**/Vaartus.java"/>
+		</replaceregexp>
 	</target>
 
 </project>

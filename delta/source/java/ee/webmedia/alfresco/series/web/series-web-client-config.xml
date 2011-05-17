@@ -76,8 +76,12 @@
             readOnlyIf="ser:status=suletud" />
          <show-property name="doccom:accessRestrictionReason" mandatoryIf="accessRestriction" component-generator="ClassificatorSelectorAndTextGenerator"
             classificatorName="accessRestrictionReason" styleClass="expand19-200" layoutStyle="default(could also use sideBySide)" readOnlyIf="ser:status=suletud" />
-         <show-property name="doccom:accessRestrictionBeginDate" mandatoryIf="accessRestriction" readOnlyIf="ser:status=suletud" />
-         <show-property name="doccom:accessRestrictionEndDate" readOnlyIf="ser:status=suletud" />
+         <show-property name="doccom:accessRestrictionBeginDate" display-label-id="document_accessRestrictionDate" textId="document_eventDates_templateText"
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             doccom:accessRestrictionBeginDate¤¤styleClass=date inline¤readOnlyIf=ser:status=suletud¤mandatoryIf=accessRestriction
+            ,doccom:accessRestrictionEndDate¤¤styleClass=date inline¤readOnlyIf=ser:status=suletud
+            "
+         />
          <show-property name="doccom:accessRestrictionEndDesc" readOnlyIf="ser:status=suletud" />
          <show-property name="ser:structUnit" display-label-id="series_structUnit" component-generator="SearchGenerator"
             pickerCallback="#{OrganizationStructureListDialog.searchOrgstructs}" converter="ee.webmedia.alfresco.orgstructure.web.OrganizationStructureConverter"

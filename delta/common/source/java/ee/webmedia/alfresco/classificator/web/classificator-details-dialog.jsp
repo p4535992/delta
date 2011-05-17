@@ -8,6 +8,12 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
+<a:panel id="classificator-details" styleClass="panel-100" label="#{msg.classificator_metadata}" progressive="true" >
+   <r:propertySheetGrid id="classificator-details-props" value="#{ClassificatorDetailsDialog.classificatorNode}" columns="1"
+      mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" />
+
+</a:panel>
+
 <a:panel id="classificators-panel" styleClass="panel-100 with-pager" label="#{msg.classificators_values_list}" progressive="true">
 
    <%-- Classificator Values List --%>

@@ -8,6 +8,7 @@ import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.helpers.DefaultValidationEventHandler;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
@@ -72,6 +73,9 @@ public class EInvoiceUtil {
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_SOURCE_CODES, Dimensions.INVOICE_SOURCE_CODES);
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_PAYMENT_METHOD_CODES, Dimensions.INVOICE_PAYMENT_METHOD_CODES);
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_HOUSE_BANK_CODES, Dimensions.INVOICE_HOUSE_BANK_CODES);
+        // turn on jaxb debug
+        // TODO: turn off when jaxb import has been tested in client environment (or make switchable by general log settings)
+        System.setProperty("jaxb.debug", "true");
     }
 
     public static JAXBContext initJaxbContext(String destPackage) {
@@ -119,6 +123,8 @@ public class EInvoiceUtil {
     public static Unmarshaller getUnmarshaller(JAXBContext jaxbContext, Schema jaxbSchema) throws JAXBException {
         Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
         unmarshaller.setSchema(jaxbSchema);
+        // event handler to print error messages to log
+        unmarshaller.setEventHandler(new DefaultValidationEventHandler());
         return unmarshaller;
     }
 

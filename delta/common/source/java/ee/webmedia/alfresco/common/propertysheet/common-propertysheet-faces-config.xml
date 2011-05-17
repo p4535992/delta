@@ -220,6 +220,12 @@
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
 
+   <managed-bean>
+      <managed-bean-name>BooleanRadioGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.generator.BooleanRadioGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
    <render-kit>
       <renderer>
          <component-family>javax.faces.Input</component-family>

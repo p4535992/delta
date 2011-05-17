@@ -39,7 +39,6 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.UIComponentBase;
 import javax.faces.context.FacesContext;
 import javax.faces.el.EvaluationException;
-import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 import javax.faces.event.AbortProcessingException;
 import javax.faces.event.FacesEvent;
@@ -58,6 +57,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.PagedListBookmark;
+
 /**
  * @author Kevin Roast
  */
@@ -66,7 +68,8 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
    // ------------------------------------------------------------------------------
    // Construction
    
-   private static final long serialVersionUID = 4302199745018058173L;
+    private static final long serialVersionUID = 4302199745018058173L;
+    private static final String RICH_LIST_PAGE_BOOKMARKS = "RichList-page-bookmarks";
 
    /**
     * Default constructor
@@ -164,57 +167,71 @@ public class UIRichList extends UIComponentBase implements IDataContainer,Serial
     /**
      * Problem: when selecting page number X (where X is other than 1)
      * and navigating away from the view and later navigating back the page that is shown in the list is not X, but 1.
-     * Workaround that saves page number into Dialog(unless it doesn't exist for first request) for later use
+     * Workaround that saves page number and sorting information into Dialog(unless it doesn't exist for first request) for later use
      * (by id of the UIRichList, to support multiple Lists)
      * 
      * @param context
      */
     private void savePageNumber(FacesContext context) {
+        IDialogBean dialogBean;
         try {
-            MethodBinding mb = context.getApplication().createMethodBinding("#{DialogManager.getBean}", null);
-            IDialogBean dialogBean = (IDialogBean) mb.invoke(context, null);
-            @SuppressWarnings("unchecked")
-            Map<String, Integer> pageNumberMap = (Map<String, Integer>) dialogBean.getCustomAttribute("RichList-pageNr-bookmarks");
-            if (currentPage != 0) {
-                if (pageNumberMap == null) {
-                    pageNumberMap = new HashMap<String, Integer>();
-                    dialogBean.addCustomAttribute("RichList-pageNr-bookmarks", pageNumberMap);
-                }
-                pageNumberMap.put(getId(), currentPage);
+            dialogBean = BeanHelper.getDialogManager().getBean();
+        } catch (NullPointerException e) {
+            // must be first request since DialogManager.currentDialogState not initialized. This is not a problem - there is no page number to be restored anyway
+            return;
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, PagedListBookmark> bookmarksMap = (Map<String, PagedListBookmark>) dialogBean.getCustomAttribute(RICH_LIST_PAGE_BOOKMARKS);
+        String listId = getId();
+        boolean pagingChanged = currentPage != 0 || !StringUtils.equals(sortColumn, initialSortColumn) || sortDescending != initialSortDescending;
+        if (pagingChanged) {
+            PagedListBookmark bookmark = null;
+            if (bookmarksMap != null) {
+                bookmark = bookmarksMap.get(listId);
             } else {
-                if (pageNumberMap != null) {
-                    pageNumberMap.remove(getId());
-                }
+                bookmarksMap = new HashMap<String, PagedListBookmark>();
+                dialogBean.addCustomAttribute(RICH_LIST_PAGE_BOOKMARKS, bookmarksMap);
             }
-        } catch (EvaluationException e) {
-            // must be first request since DialogManager not initialized. This is not a problem - this method gets called once more during next submit
-            // and meanwhile page number (that we failed to save) is not needed
+            if (bookmark == null) {
+                bookmark = new PagedListBookmark();
+                bookmarksMap.put(listId, bookmark);
+            }
+            bookmark.update(currentPage, sortColumn, sortDescending);
+        } else {
+            if (bookmarksMap != null) {
+                bookmarksMap.remove(listId);
+            }
         }
     }
 
     private boolean currentPageRestored;
 
     private void restoreCurrentPageNumber() {
-        final FacesContext context = FacesContext.getCurrentInstance();
+        IDialogBean dialogBean;
         try {
-            MethodBinding mb = context.getApplication().createMethodBinding("#{DialogManager.getBean}", null);
-            IDialogBean dialogBean = (IDialogBean) mb.invoke(context, null);
-            @SuppressWarnings("unchecked")
-            Map<String, Integer> pageNumberMap = (Map<String, Integer>) dialogBean.getCustomAttribute("RichList-pageNr-bookmarks");
-            if (pageNumberMap != null) {
-                final Integer savedPageNumber = pageNumberMap.get(getId());
-                if (savedPageNumber != null && currentPage == 0) {
-                    this.currentPage = savedPageNumber;
+            dialogBean = BeanHelper.getDialogManager().getBean();
+        } catch (NullPointerException e) {
+            // must be first request since DialogManager.currentDialogState not initialized. This is not a problem - there is no page number to be restored anyway
+            return;
+        }
+        @SuppressWarnings("unchecked")
+        Map<String, PagedListBookmark> bookmarksMap = (Map<String, PagedListBookmark>) dialogBean.getCustomAttribute(RICH_LIST_PAGE_BOOKMARKS);
+        if (bookmarksMap != null) {
+            PagedListBookmark bookmark = bookmarksMap.get(getId());
+            if (bookmark != null) {
+                if (currentPage == 0) {
+                    currentPage = bookmark.getPageNr();
+                    sortColumn = bookmark.getSortColumn();
+                    sortDescending = bookmark.isSortDescending();
+                    sort(sortColumn, sortDescending, IDataContainer.SORT_CASEINSENSITIVE);
                     currentPageRestored = true;
                 } else {
-                    pageNumberMap.remove(getId());
+                    bookmarksMap.remove(getId());
                 }
             }
-        } catch (EvaluationException e) {
-            // must be first request since DialogManager not initialized. This is not a problem - there is no page number to be restored anyway
         }
     }
-   
+    
     @Override
     public void setId(String id) {
         super.setId(id);

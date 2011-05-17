@@ -21,6 +21,7 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 /**
@@ -30,6 +31,11 @@ import ee.webmedia.alfresco.utils.ComponentUtil;
  * @author Kaarel Jõgeva
  */
 public class DatePickerGenerator extends BaseComponentGenerator {
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DatePickerGenerator.class);
+    /** predefined property names, that should be considered as beginDates despite how they are named */
+    private List<String> addBeginDateClassByPropName;
+    /** predefined property names, that should be considered as endDates despite how they are named */
+    private List<String> addEndDateClassByPropName;
 
     @Override
     public UIComponent generate(FacesContext context, String id) {
@@ -41,7 +47,6 @@ public class DatePickerGenerator extends BaseComponentGenerator {
     @Override
     protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,
             UIComponent component) {
-
         super.setupProperty(context, propertySheet, item, propertyDef, component);
 
         if (!Utils.isComponentDisabledOrReadOnly(component)) {
@@ -51,8 +56,76 @@ public class DatePickerGenerator extends BaseComponentGenerator {
             if (StringUtils.isBlank(styleClass)) {
                 styleClass = "date";
             }
+            String additionalStyleClass = getAdditionalStyleClass(propertyDef);
+            if (additionalStyleClass != null) {
+                styleClass += " " + additionalStyleClass;
+            }
             attributes.put("styleClass", styleClass);
         }
+    }
+
+    private String getAdditionalStyleClass(PropertyDefinition propertyDef) {
+        String propName = propertyDef.getName().getLocalName();
+        boolean isBegin = isBeginDate(propName);
+        boolean isEnd = isEndDate(propName);
+        if (!isBegin && !isEnd) {
+            return null;
+        }
+        if (isBegin && isEnd) {
+            String msg = "Unable to decide if property " + propertyDef.getName() + " should be beginDate or endDate - validation might not work correctly";
+            LOG.warn(msg);
+            if (BeanHelper.getApplicationService().isTest()) {
+                throw new IllegalStateException(msg + " (this exception is thrown only when project.test is set)");
+            }
+            return null;
+        }
+        return isBegin ? "beginDate" : "endDate";
+    }
+
+    private boolean isEndDate(String propName) {
+        if (addBeginDateClassByPropName.contains(propName)) {
+            return false;
+        }
+        return addEndDateClassByPropName.contains(propName) || containsCamelCaseWord(propName, "end") || containsCamelCaseWord(propName, "End");
+    }
+
+    private boolean isBeginDate(String propName) {
+        if (addEndDateClassByPropName.contains(propName)) {
+            return false;
+        }
+        return (addBeginDateClassByPropName.contains(propName)) || containsCamelCaseWord(propName, "begin") || containsCamelCaseWord(propName, "Begin");
+    }
+
+    public static boolean containsCamelCaseWord(String wholeText, String word) {
+        int startPos = 0;
+        int index = -1;
+        while (0 <= (index = StringUtils.indexOf(wholeText, word, startPos))) {
+            int constantEndIndex = index + word.length();
+            boolean startOk = false;
+            if (index > 0) {
+                boolean wordStartsWithLowerCase = Character.isLowerCase(word.charAt(0));
+                if (wordStartsWithLowerCase) {
+                    if (!Character.isLowerCase(wholeText.charAt(index - 1))) {
+                        startOk = true;
+                    }
+                } else {
+                    // startOk = !Character.isUpperCase(wholeText.charAt(index - 1));// alternative: when "End" shouldn't be considered as a word in "XEnd"
+                    startOk = true;
+                }
+            } else {
+                startOk = true;
+            }
+            if (startOk) {
+                if (wholeText.length() == constantEndIndex) {
+                    return true; // end ok
+                }
+                if (!Character.isLowerCase(wholeText.charAt(constantEndIndex))) {
+                    return true;
+                }
+            }
+            startPos = constantEndIndex;
+        }
+        return false;
     }
 
     @Override
@@ -95,6 +168,14 @@ public class DatePickerGenerator extends BaseComponentGenerator {
     protected void setupMandatoryValidation(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, UIComponent component,
             boolean realTimeChecking, String idSuffix) {
         super.setupMandatoryValidation(context, propertySheet, item, component, true, idSuffix);
+    }
+
+    public void setAddBeginDateClassByPropName(List<String> addBeginDateClassByPropName) {
+        this.addBeginDateClassByPropName = addBeginDateClassByPropName;
+    }
+
+    public void setAddEndDateClassByPropName(List<String> addEndDateClassByPropName) {
+        this.addEndDateClassByPropName = addEndDateClassByPropName;
     }
 
 }

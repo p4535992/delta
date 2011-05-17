@@ -177,6 +177,10 @@
       </property>
    </bean>
 
+   <bean id="abstractNodeUpdater" abstract="true" parent="module.baseComponent">
+      <property name="inputFolderPath" value="${dir.root}" />
+   </bean>
+
    <!-- START: web beans: -->
 
    <bean id="TestingForDeveloperBean" class="ee.webmedia.alfresco.common.web.TestingForDeveloperBean" scope="session" />

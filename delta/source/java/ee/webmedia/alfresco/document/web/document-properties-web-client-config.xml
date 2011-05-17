@@ -11,8 +11,12 @@
          <show-property name="doccom:accessRestriction" component-generator="ClassificatorSelectorGenerator" classificatorName="accessRestriction" readOnlyIf="#{DocumentDialog.isNotEditable}" />
          <show-property name="doccom:accessRestrictionReason" mandatoryIf="accessRestriction" component-generator="ClassificatorSelectorAndTextGenerator" classificatorName="accessRestrictionReason" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotEditable}" />
          <show-property name="accessRestrictionDate" show-in-edit-mode="false" display-label-id="document_accessRestrictionDate" />
-         <show-property name="doccom:accessRestrictionBeginDate" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}" mandatoryIf="accessRestriction" show-in-view-mode="false" />
-         <show-property name="doccom:accessRestrictionEndDate" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}" mandatoryIf="accessRestriction,accessRestrictionEndDesc=null" mandatoryIfLabelId="document_accessRestrictionEndDate_mandatoryIf" show-in-view-mode="false" />
+         <show-property name="doccom:accessRestrictionBeginDate" display-label-id="document_accessRestrictionDate" textId="document_eventDates_templateText"  readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}" show-in-view-mode="false"
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" propertiesSeparator="£" props="
+            doccom:accessRestrictionBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isClosedOrNotEditable}¤mandatoryIf=accessRestriction
+            £doccom:accessRestrictionEndDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isClosedOrNotEditable}¤mandatoryIf=accessRestriction,accessRestrictionEndDesc=null¤mandatoryIfLabelId=document_accessRestrictionEndDate_mandatoryIf
+            "
+         />
          <show-property name="doccom:accessRestrictionEndDesc" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <separator name="sep1" component-generator="SeparatorGenerator" />
       </property-sheet>
@@ -121,7 +125,7 @@
    
    <config evaluator="aspect-name" condition="docspec:invoice">
       <property-sheet>
-         <show-property name="docspec:sellerPartyName" styleClass="expand19-200 medium" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchOrgContacts}" setterCallback="#{MetadataBlockBean.setSellerPartyName}" suggestChars="3" dialogTitleId="contacts_search_title" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" ajaxParentLevel="1" />
+         <show-property name="docspec:sellerPartyName" styleClass="expand19-200 medium" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchOrgContacts}" setterCallback="#{MetadataBlockBean.setSellerPartyName}" dialogTitleId="contacts_search_title" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" ajaxParentLevel="1" />
          <show-property name="docspec:sellerPartyRegNumber" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:sellerPartySapAccount" styleClass="expand19-200 medium" editable="false" />
          <show-property name="docspec:sellerPartyContactName" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
@@ -513,14 +517,14 @@
       </property-sheet>
    </config>
    
-   <config evaluator="node-type-and-aspect-name" condition="docspec:trainingApplicationApplicantType|docspec:expenses">
+   <config evaluator="node-type" condition="docspec:trainingApplicationApplicantType">
       <property-sheet>
       <show-property name="docspec:errandSubstituteName" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
          component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setErrandSubstituteName}" setterCallbackTakesNode="true" dialogTitleId="users_search_title"  />
       </property-sheet>
    </config>
    
-   <config evaluator="node-type-and-aspect-name" condition="docspec:trainingApplicationApplicantType|docspec:expensesV2">
+   <config evaluator="node-type" condition="docspec:trainingApplicationApplicantTypeV2">
       <property-sheet>
       <show-property name="docspec:errandSubstituteName" display-label-id="document_errand_errandSubstitute" textId="document_errand_errandSubstitute_templateText" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}"
             component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
@@ -532,7 +536,7 @@
       </property-sheet>
    </config>
    
-   <config evaluator="node-type" condition="docspec:trainingApplicationApplicantType">
+   <config evaluator="node-type" condition="docspec:trainingApplicationApplicantType,docspec:trainingApplicationApplicantTypeV2">
       <property-sheet>
          <show-property name="docspec:errandComment" component-generator="TextAreaGenerator" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
       </property-sheet>
@@ -914,8 +918,8 @@
          <show-property name="docspec:leaveType" styleClass="add-item vacationLeave" labelStyleClass="wrap" display-label-id="document_vacationAdd" component-generator="MultiValueEditorGenerator" addLabelId="add" readOnlyIf="" 
             propsGeneration="
              docspec:leaveType¤ClassificatorSelectorGenerator¤classificatorName=leaveType¤descriptionAsLabel=true¤styleClass=medium¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveBeginDates¤¤styleClass=date beginDate¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveEndDates¤¤styleClass=date endDate¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveBeginDates¤¤styleClass=date beginTotalCount¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveEndDates¤¤styleClass=date endTotalCount¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
             ,docspec:leaveDays¤¤styleClass=small totalDays¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
             "
          />
@@ -993,15 +997,15 @@
          <show-property name="docspec:leaveChangeDays" addLabelId="add" styleClass="add-item leaveChange" labelStyleClass="wrap" display-label-id="document_vacationChange" component-generator="MultiValueEditorGenerator"
          propsGeneration="docspec:leaveInitialBeginDates¤¤styleClass=date¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
             ,docspec:leaveInitialEndDates¤¤styleClass=date¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveNewBeginDates¤¤styleClass=date beginDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveNewEndDates¤¤styleClass=date endDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveNewBeginDates¤¤styleClass=date beginTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveNewEndDates¤¤styleClass=date endTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
             ,docspec:leaveChangeDays¤¤styleClass=small totalDays¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
           "
           />
           
          <show-property name="docspec:leaveCancelledDays" addLabelId="add" styleClass="add-item leaveCancel" labelStyleClass="wrap" display-label-id="document_vacationCancel" component-generator="MultiValueEditorGenerator"
-         propsGeneration="docspec:leaveCancelBeginDates¤¤styleClass=date beginDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveCancelEndDates¤¤styleClass=date endDate¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+         propsGeneration="docspec:leaveCancelBeginDates¤¤styleClass=date beginTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+            ,docspec:leaveCancelEndDates¤¤styleClass=date endTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
             ,docspec:leaveCancelledDays¤¤styleClass=small totalDays¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
           "
           />
@@ -1224,7 +1228,7 @@
    
    <config evaluator="node-type" condition="docspec:contractPartyType">
       <property-sheet>
-         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" suggestChars="3" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display="inline" styleClass="medium" />
+         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display="inline" styleClass="medium" />
          <show-property name="docspec:partySigner" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
          <show-property name="docspec:partyContactPerson" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary" display="inline" />
          <show-property name="docspec:partyEmail" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary"/>

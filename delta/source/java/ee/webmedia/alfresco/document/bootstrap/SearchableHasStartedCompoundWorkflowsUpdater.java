@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -16,7 +15,6 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
@@ -28,9 +26,7 @@ import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
  */
 public class SearchableHasStartedCompoundWorkflowsUpdater extends AbstractNodeUpdater {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(SearchableHasStartedCompoundWorkflowsUpdater.class);
-    private BehaviourFilter behaviourFilter;
-    private SearchService searchService;
-    private GeneralService generalService;
+
     private final List<NodeRef> docsWithStartedCompoundWorkflows = new ArrayList<NodeRef>();
 
     @Override
@@ -72,18 +68,6 @@ public class SearchableHasStartedCompoundWorkflowsUpdater extends AbstractNodeUp
         nodeService.addProperties(docRef, docProps);
         docsWithStartedCompoundWorkflows.add(docRef);
         return new String[] { docRef.toString(), "Property updated" };
-    }
-
-    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
-        this.behaviourFilter = behaviourFilter;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
     }
 
 }

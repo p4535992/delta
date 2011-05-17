@@ -16,6 +16,7 @@ import org.alfresco.web.app.Application;
 import org.alfresco.web.app.context.IContextListener;
 import org.alfresco.web.app.context.UIContextService;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.StringUtils;
@@ -25,10 +26,13 @@ import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.model.Classificator;
+import ee.webmedia.alfresco.classificator.model.ClassificatorModel;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.classificator.service.ClassificatorServiceImpl;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 public class ClassificatorDetailsDialog extends BaseDialogBean implements IContextListener {
 
@@ -43,6 +47,7 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
     private List<ClassificatorValue> classificatorValues;
     private Map<String, ClassificatorValue> originalValues;
     private Classificator selectedClassificator;
+    private Node classificatorNode;
     private List<ClassificatorValue> addedClassificators;
 
     public ClassificatorDetailsDialog() {
@@ -66,6 +71,13 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
      */
     public List<ClassificatorValue> getClassificatorValues() {
         return classificatorValues;
+    }
+
+    public Node getClassificatorNode() {
+        if (classificatorNode == null) {
+            classificatorNode = new Node(selectedClassificator.getNodeRef());
+        }
+        return classificatorNode;
     }
 
     /**
@@ -133,7 +145,8 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
             outcome = null;
             super.isFinished = false;
         } else {
-            updateClassificatorValues();
+            ClassificatorServiceImpl.classificatorBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(classificatorNode.getProperties()), selectedClassificator);
+            getClassificatorService().updateClassificatorValues(selectedClassificator, originalValues, classificatorValues, addedClassificators);
             resetData();
             MessageUtil.addInfoMessage("save_success");
         }
@@ -174,6 +187,7 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
      * @param event
      */
     public void select(ActionEvent event) {
+        resetData();
         selectedClassificator = getClassificatorByNodeRef(ActionUtil.getParam(event, "nodeRef"));
         loadClassificatorValues();
     }
@@ -199,6 +213,12 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
         if (log.isDebugEnabled()) {
             log.debug("Classificator value with nodeRef = " + ref + " deleted.");
         }
+        reOrderIfNeeded();
+    }
+
+    private void reOrderIfNeeded() {
+        ClassificatorServiceImpl.classificatorBeanPropertyMapper.toObject(RepoUtil.toQNameProperties(classificatorNode.getProperties()), selectedClassificator);
+        ClassificatorServiceImpl.reOrderClassificatorValues(selectedClassificator, classificatorValues);
     }
 
     /**
@@ -208,13 +228,17 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
      * @param event
      */
     public void addNewValue(ActionEvent event) {
+        Boolean alfabeticOrder = (Boolean) classificatorNode.getProperties().get(ClassificatorModel.Props.ALFABETIC_ORDER);
         ClassificatorValue addedClassificatorValue = new ClassificatorValue();
         addedClassificatorValue.setActive(true);
-        addedClassificatorValue.setOrder(getMaxClassificatorValueOrder() + 1);
+        if (alfabeticOrder == null || !alfabeticOrder) {
+            addedClassificatorValue.setOrder(getMaxClassificatorValueOrder() + 1);
+        }
         // set the temporary random unique ID to be used in the UI form
         addedClassificatorValue.setNodeRef(new NodeRef(addedClassificatorValue.hashCode() + "", event.hashCode() + "", GUID.generate()));
         classificatorValues.add(addedClassificatorValue);
         addedClassificators.add(addedClassificatorValue);
+        reOrderIfNeeded();
     }
 
     @Override
@@ -238,39 +262,13 @@ public class ClassificatorDetailsDialog extends BaseDialogBean implements IConte
         }
     }
 
-    private void updateClassificatorValues() {
-        for (ClassificatorValue mod : classificatorValues) {
-            ClassificatorValue orig = originalValues.get(mod.getNodeRef().toString());
-            if (orig == null) {
-                continue;
-            }
-
-            if (!orig.equals(mod)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Updating the classificator value with nodeRef = " + mod.getNodeRef());
-                }
-                getClassificatorService().removeClassificatorValue(selectedClassificator, orig);
-                getClassificatorService().addClassificatorValue(selectedClassificator, mod);
-            }
-        }
-        // save the added new value
-        if (addedClassificators != null && addedClassificators.size() > 0) {
-            for (ClassificatorValue add : addedClassificators) {
-                getClassificatorService().addClassificatorValue(selectedClassificator, add);
-                if (log.isDebugEnabled()) {
-                    log.debug("New classificator value (" + add.getValueName() + ") saved.");
-                }
-            }
-            addedClassificators = null;
-        }
-    }
-
     private void resetData() {
         originalValues = null;
         classificatorValues = null;
         selectedClassificator = null;
         addedClassificators = null;
         richList = null;
+        classificatorNode = null;
     }
 
     private void loadClassificatorValues() {

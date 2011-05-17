@@ -29,6 +29,7 @@ public class CombinedPropReader {
 
     public interface AttributeNames {
         String OPTIONS_SEPARATOR = "optionsSeparator";
+        String PROPERTIES_SEPARATOR = "propertiesSeparator";
         String PROPS_GENERATION = "propsGeneration";
         String PROP_GENERATOR_DESCRIPTORS = "propGeneratorDescriptors";
     }

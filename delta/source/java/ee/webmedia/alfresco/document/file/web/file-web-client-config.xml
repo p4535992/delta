@@ -22,7 +22,7 @@
             <label-id>file_add_file</label-id>
             <image>/images/icons/add_item.gif</image>
             <action>dialog:addFile</action>
-            <action-listener>#{AddFileDialog.start}</action-listener>
+            <action-listener>#{DocumentDialog.addFile}</action-listener>
          </action>
 
          <action-group id="addFileMenu">

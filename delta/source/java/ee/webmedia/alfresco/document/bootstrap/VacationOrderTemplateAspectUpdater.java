@@ -6,16 +6,16 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
@@ -26,10 +26,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  * @author Kaarel Jõgeva
  */
 public class VacationOrderTemplateAspectUpdater extends AbstractNodeUpdater {
-
-    private BehaviourFilter behaviourFilter;
-    private SearchService searchService;
-    private GeneralService generalService;
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -52,31 +48,31 @@ public class VacationOrderTemplateAspectUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
-        if (!nodeService.hasAspect(nodeRef, DocumentSpecificModel.Aspects.TEMPLATE)) {
-            return new String[] { "templateAspectNotFound" };
+        Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);
+        Set<QName> aspects = nodeService.getAspects(nodeRef);
+        QName type = nodeService.getType(nodeRef);
+
+        Pair<Boolean, String> result = updateDocument(nodeRef, type, aspects);
+
+        if (result.getFirst()) {
+            Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
+            setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
+            setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
+            nodeService.addProperties(nodeRef, setProps);
         }
 
-        Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);
+        return new String[] { result.getSecond() };
+    }
+
+    public Pair<Boolean, String> updateDocument(NodeRef nodeRef, QName type, Set<QName> aspects) {
+        if (!DocumentSubtypeModel.Types.VACATION_ORDER.equals(type)) {
+            return new Pair<Boolean, String>(false, "isNotVacationOrderType");
+        }
+        if (!aspects.contains(DocumentSpecificModel.Aspects.TEMPLATE)) {
+            return new Pair<Boolean, String>(false, "doesNotHaveTemplateAspect");
+        }
         nodeService.removeAspect(nodeRef, DocumentSpecificModel.Aspects.TEMPLATE);
-
-        Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
-        setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
-        setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
-        nodeService.addProperties(nodeRef, setProps);
-
-        return new String[] { "templateAspectRemoved" };
-    }
-
-    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
-        this.behaviourFilter = behaviourFilter;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
+        return new Pair<Boolean, String>(true, "templateAspectRemoved");
     }
 
 }

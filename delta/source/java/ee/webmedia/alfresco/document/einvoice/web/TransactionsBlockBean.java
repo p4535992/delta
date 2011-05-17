@@ -90,10 +90,12 @@ public class TransactionsBlockBean implements Serializable {
         constructTransactionPanelGroup();
     }
 
-    public void save() {
+    public boolean save() {
         if (validate()) {
             BeanHelper.getEInvoiceService().updateTransactions(document.getNodeRef(), transactions, removedTransactions);
+            return true;
         }
+        return false;
     }
 
     private boolean validate() {
@@ -245,7 +247,7 @@ public class TransactionsBlockBean implements Serializable {
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_INTERNAL_ORDERS, TransactionModel.Props.ORDER_NUMBER, transRowCounter);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, TransactionModel.Props.ASSET_INVENTARY_NUMBER,
                     transRowCounter);
-            addDoubleInput(context, transMainGridChildren, transRowCounter, TransactionModel.Props.SUM_WITHOUT_VAT);
+            addDoubleInput(context, transMainGridChildren, transRowCounter, TransactionModel.Props.SUM_WITHOUT_VAT, childrenStyleClassAttribute);
             // actions
             transMainGridChildren.add(createTransActions(application, listId, transRowCounter));
 
@@ -258,6 +260,8 @@ public class TransactionsBlockBean implements Serializable {
             tranRowSecondaryGrid.setCellspacing("0");
             tranRowSecondaryGrid.setWidth("100%");
             tranRowSecondaryGrid.setColumns(mainGridColumnCount);
+            Map<String, String> secondaryChildrenStyleClassAttribute = new HashMap<String, String>();
+            tranRowSecondaryGrid.getAttributes().put(HtmlGridCustomChildAttrRenderer.CHILDREN_CLASSES_ATTR, secondaryChildrenStyleClassAttribute);
             tranRowSecondaryGrid.getAttributes().put(HtmlGridCustomChildAttrRenderer.HEADING_KEYS_ATTR, secondaryHeadingKeys);
             childrenColspanAttribute.put(transSecondaryRowId, mainGridColumnCount);
 
@@ -277,7 +281,7 @@ public class TransactionsBlockBean implements Serializable {
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_PAYMENT_METHOD_CODES, TransactionModel.Props.PAYMENT_METHOD, transRowCounter,
                     "small");
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_HOUSE_BANK_CODES, TransactionModel.Props.HOUSE_BANK, transRowCounter);
-            addTextareaInput(context, tranRowSecondaryGridChildren, transRowCounter, TransactionModel.Props.ENTRY_CONTENT);
+            addTextareaInput(context, tranRowSecondaryGridChildren, transRowCounter, TransactionModel.Props.ENTRY_CONTENT, secondaryChildrenStyleClassAttribute);
 
             rowClasses = rowClasses + rowClassesValue;
             transRowCounter++;
@@ -443,7 +447,12 @@ public class TransactionsBlockBean implements Serializable {
     private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, String styleClass, Predicate filter) {
         UIComponent dimensionSelector;
         if (isInEditMode()) {
-            DimensionSelectorGenerator dimensionGenerator = new DimensionSelectorGenerator();
+            DimensionSelectorGenerator dimensionGenerator;
+            if (filter != null) {
+                dimensionGenerator = new DimensionSelectorGenerator(filter);
+            } else {
+                dimensionGenerator = new DimensionSelectorGenerator();
+            }
             dimensionSelector = dimensionGenerator.generateSelectComponent(context, null, false);
             dimensionGenerator.getCustomAttributes().put(DimensionSelectorGenerator.ATTR_DIMENSION_NAME, dimensions.getDimensionName());
             dimensionGenerator.setupSelectComponent(context, null, null, null, dimensionSelector, false);
@@ -473,7 +482,7 @@ public class TransactionsBlockBean implements Serializable {
         };
     }
 
-    private void addDoubleInput(FacesContext context, List siblings, int transactionIndex, QName propName) {
+    private void addDoubleInput(FacesContext context, List siblings, int transactionIndex, QName propName, Map<String, String> childrenStyleClassAttribute) {
         UIComponent doubleInput;
         if (isInEditMode()) {
             doubleInput = context.getApplication().createComponent(HtmlInputText.COMPONENT_TYPE);
@@ -484,24 +493,25 @@ public class TransactionsBlockBean implements Serializable {
             doubleInput = context.getApplication().createComponent(UIOutput.COMPONENT_TYPE);
             Double value = (Double) transactions.get(transactionIndex).getNode().getProperties().get(propName);
             ((UIOutput) doubleInput).setValue(value != null ? df.format(value.doubleValue()) : "");
+            doubleInput.setId(getComponentId(transactionIndex, propName));
+            childrenStyleClassAttribute.put(doubleInput.getId(), "trans-align-right");
         }
         doubleInput.getAttributes().put(CustomAttributeNames.STYLE_CLASS, "margin-left-4 width120");
         doubleInput.getAttributes().put("style", "text-align: right");
         siblings.add(doubleInput);
     }
 
-    private void addTextareaInput(FacesContext context, List siblings, int transactionIndex, QName propName) {
+    private void addTextareaInput(FacesContext context, List siblings, int transactionIndex, QName propName, Map<String, String> secondaryChildrenStyleClassAttribute) {
         UIComponent textareaInput;
         String id = getComponentId(transactionIndex, propName);
         if (isInEditMode()) {
             TextAreaGenerator textAreaGenerator = new TextAreaGenerator();
             textareaInput = textAreaGenerator.generate(context, id);
-            textareaInput.getAttributes().put("maxlength", 50);
-            textareaInput.getAttributes().put("maxlength", 50);
         } else {
             textareaInput = context.getApplication().createComponent(UIOutput.COMPONENT_TYPE);
             textareaInput.setId(id);
             textareaInput.getAttributes().put("style", "whitespace: normal;");
+            secondaryChildrenStyleClassAttribute.put(id, "trans-width-10");
         }
         setValueBinding(context, transactionIndex, propName, textareaInput);
         textareaInput.getAttributes().put(CustomAttributeNames.STYLE_CLASS, "expand19-200 medium");

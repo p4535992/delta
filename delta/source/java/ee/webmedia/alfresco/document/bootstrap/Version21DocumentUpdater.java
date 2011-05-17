@@ -8,15 +8,14 @@ import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.utils.SearchUtil;
@@ -27,19 +26,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
  * @author Alar Kvell
  */
 public class Version21DocumentUpdater extends AbstractNodeUpdater {
-
-    private BehaviourFilter behaviourFilter;
-    private SearchService searchService;
-    private GeneralService generalService;
-    private boolean enabled;
-
-    @Override
-    protected void executeInternal() throws Throwable {
-        if (!enabled) {
-            return;
-        }
-        super.executeInternal();
-    }
 
     @Override
     protected void doAfterTransactionBegin() {
@@ -82,11 +68,24 @@ public class Version21DocumentUpdater extends AbstractNodeUpdater {
 
     @Override
     protected String[] updateNode(NodeRef nodeRef) throws Exception {
-        List<String> actions = new ArrayList<String>();
-
         Map<QName, Serializable> origProps = nodeService.getProperties(nodeRef);
         Set<QName> aspects = nodeService.getAspects(nodeRef);
+
+        Pair<Boolean, String> result = updateDocument(nodeRef, aspects);
+
+        if (result.getFirst()) {
+            Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
+            setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
+            setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
+            nodeService.addProperties(nodeRef, setProps);
+        }
+
+        return new String[] { result.getSecond() };
+    }
+
+    public Pair<Boolean, String> updateDocument(NodeRef nodeRef, Set<QName> aspects) {
         boolean modified = false;
+        List<String> actions = new ArrayList<String>();
 
         if (aspects.contains(DocumentCommonModel.Aspects.SIGNER)) {
             if (aspects.contains(DocumentCommonModel.Aspects.SIGNER_NAME)) {
@@ -128,30 +127,7 @@ public class Version21DocumentUpdater extends AbstractNodeUpdater {
             }
         }
 
-        if (modified) {
-            Map<QName, Serializable> setProps = new HashMap<QName, Serializable>();
-            setProps.put(ContentModel.PROP_MODIFIER, origProps.get(ContentModel.PROP_MODIFIER));
-            setProps.put(ContentModel.PROP_MODIFIED, origProps.get(ContentModel.PROP_MODIFIED));
-            nodeService.addProperties(nodeRef, setProps);
-        }
-
-        return new String[] { StringUtils.join(actions, ',') };
-    }
-
-    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
-        this.behaviourFilter = behaviourFilter;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
+        return new Pair<Boolean, String>(modified, StringUtils.join(actions, ','));
     }
 
 }

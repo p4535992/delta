@@ -621,19 +621,6 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     }
 
     @Override
-    public String limitFileNameLength(String filename, int maxLength, String marker) {
-        marker = (marker == null) ? "...." : marker;
-
-        if (filename != null && filename.length() > maxLength) {
-            String baseName = FilenameUtils.getBaseName(filename);
-            String extension = FilenameUtils.getExtension(filename);
-            baseName = baseName.substring(0, maxLength - extension.length() - marker.length());
-            filename = baseName + marker + extension;
-        }
-        return filename;
-    }
-
-    @Override
     // TODO: current implementation doesn't worry about situation where more than one transaction tries to update documents count on same object
     // (but maybe alfresco prevents it?)
     public void updateParentContainingDocsCount(final NodeRef parentNodeRef, final QName propertyName, boolean added, Integer count) {

@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.document.bootstrap;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -9,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
@@ -19,7 +17,6 @@ import org.alfresco.service.namespace.RegexQNamePattern;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.utils.SearchUtil;
@@ -33,9 +30,6 @@ import ee.webmedia.alfresco.utils.SearchUtil;
 public class SearchableSendModeUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(SearchableSendModeUpdater.class);
 
-    private BehaviourFilter behaviourFilter;
-    private SearchService searchService;
-    private GeneralService generalService;
     private SendOutService sendOutService;
     private String searchableSendModeUpdateBeginDate;
 
@@ -50,7 +44,6 @@ public class SearchableSendModeUpdater extends AbstractNodeUpdater {
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         Date liveDate = dateFormat.parse(searchableSendModeUpdateBeginDate);
 
         List<String> queryParts = new ArrayList<String>(2);
@@ -92,20 +85,8 @@ public class SearchableSendModeUpdater extends AbstractNodeUpdater {
                             sendInfos == null ? "0" : String.valueOf(sendInfos.size()) };
     }
 
-    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
-        this.behaviourFilter = behaviourFilter;
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
     public void setSendOutService(SendOutService sendOutService) {
         this.sendOutService = sendOutService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
     }
 
     public void setSearchableSendModeUpdateBeginDate(String searchableSendModeUpdateBeginDate) {

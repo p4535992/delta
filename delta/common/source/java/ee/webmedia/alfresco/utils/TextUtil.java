@@ -92,4 +92,16 @@ public class TextUtil {
         return text1.equalsIgnoreCase(text2);
     }
 
+    public static boolean isBlank(Collection<String> list) {
+        if (list == null) {
+            return true;
+        }
+        for (String element : list) {
+            if (StringUtils.isNotBlank(element)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 }

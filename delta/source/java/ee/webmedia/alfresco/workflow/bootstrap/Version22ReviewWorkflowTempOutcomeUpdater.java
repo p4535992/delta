@@ -8,7 +8,6 @@ import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 
@@ -19,9 +18,6 @@ import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
  */
 public class Version22ReviewWorkflowTempOutcomeUpdater extends AbstractNodeUpdater {
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(Version22ReviewWorkflowTempOutcomeUpdater.class);
-
-    private SearchService searchService;
-    private GeneralService generalService;
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -40,14 +36,6 @@ public class Version22ReviewWorkflowTempOutcomeUpdater extends AbstractNodeUpdat
             modified = true;
         }
         return new String[] { String.valueOf(modified) };
-    }
-
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
     }
 
 }

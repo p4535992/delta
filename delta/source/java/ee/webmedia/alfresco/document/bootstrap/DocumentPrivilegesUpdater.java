@@ -1,30 +1,23 @@
 package ee.webmedia.alfresco.document.bootstrap;
 
-import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
-
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.model.ContentModel;
-import org.alfresco.repo.policy.BehaviourFilter;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
-import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -42,20 +35,17 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 
 /**
- * Update document privileges according to new document privileges system. Updates only SpacesStore.
+ * Update document privileges according to new document privileges system
  * 
  * @author Ats Uiboupin
  */
 public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentPrivilegesUpdater.class);
-    private BehaviourFilter behaviourFilter;
     private PermissionService permissionService;
     private PrivilegeService privilegeService;
     private DocumentService documentService;
     private FileService fileService;
     private WorkflowService workflowService;
-    private SearchService searchService;
-    protected GeneralService generalService;
     public static HashSet<String> SERIES_GROUPMEMBERS_PRIVILEGES;
     private static HashSet<String> SIGNATURE_OWNER_PRIVILEGES;
     private static HashSet<String> ASSIGNMENT_OWNER_PRIVILEGES;
@@ -74,32 +64,14 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
         REVIEW_OWNER_PRIVILEGES.add(Privileges.EDIT_DOCUMENT_FILES);
     }
 
-    private boolean limitForTesting = false;
-
-    @SuppressWarnings("deprecation")
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
-        List<String> queryParts = new ArrayList<String>();
-        queryParts.add(SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
-        queryParts.add(generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
-        if (limitForTesting) {
-            // documents created between 01.02.2011 and now
-            // or documents registered between 01.01.2010 and 28.02.2010
-            queryParts.add(SearchUtil.joinQueryPartsOr(Arrays.asList(SearchUtil.generateDatePropertyRangeQuery(new Date(111, 1, 1), null, ContentModel.PROP_CREATED),
-                    SearchUtil.generateDatePropertyRangeQuery(new Date(110, 0, 1), new Date(110, 1, 28), DocumentCommonModel.Props.REG_DATE_TIME))));
-        }
-        String query = SearchUtil.joinQueryPartsAnd(queryParts);
-        log.info("Search query: " + query);
-        Set<StoreRef> stores = getStores();
-        List<ResultSet> result = new ArrayList<ResultSet>(stores.size());
-        for (StoreRef storeRef : stores) {
-            result.add(searchService.query(storeRef, SearchService.LANGUAGE_LUCENE, query));
-        }
-        return result;
-    }
-
-    protected Set<StoreRef> getStores() {
-        return Collections.singleton(generalService.getStore());
+        String query = SearchUtil.joinQueryPartsAnd(Arrays.asList(
+                SearchUtil.generateTypeQuery(DocumentCommonModel.Types.DOCUMENT),
+                SearchUtil.generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)));
+        return Arrays.asList(
+                searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query),
+                searchService.query(generalService.getArchivalsStoreRef(), SearchService.LANGUAGE_LUCENE, query));
     }
 
     @Override
@@ -118,8 +90,25 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
 
         // ChildAssociationRef primaryParent = nodeService.getPrimaryParent(cWorkflowRef);
         Map<QName, Serializable> origDocProps = nodeService.getProperties(docRef);
-        final String docOwner = (String) origDocProps.get(DocumentCommonModel.Props.OWNER_ID);
         final Map<String, Object> docProps = RepoUtil.toStringProperties(origDocProps);
+        Set<QName> aspects = nodeService.getAspects(docRef);
+
+        Pair<Boolean, String> result = updatePrivileges(docRef, aspects, docProps);
+
+        if (result.getFirst()) {
+            docProps.put(ContentModel.PROP_MODIFIER.toString(), origDocProps.get(ContentModel.PROP_MODIFIER));
+            docProps.put(ContentModel.PROP_MODIFIED.toString(), origDocProps.get(ContentModel.PROP_MODIFIED));
+            nodeService.setProperties(docRef, RepoUtil.toQNameProperties(docProps));
+        }
+
+        return new String[] { result.getSecond() };
+    }
+
+    public Pair<Boolean, String> updatePrivileges(final NodeRef docRef, final Set<QName> aspects, final Map<String, Object> docProps) {
+        if (!aspects.contains(DocumentCommonModel.Aspects.SEARCHABLE)) {
+            return new Pair<Boolean, String>(false, "doesNotHaveSearchableAspect");
+        }
+        final String docOwner = (String) docProps.get(DocumentCommonModel.Props.OWNER_ID.toString());
         documentService.addPrivilegesBasedOnSeries(docRef, docProps, null);
         final QName addPrivListener = DocumentCommonModel.Types.DOCUMENT;
 
@@ -170,17 +159,8 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
             }
         }
 
-        docProps.put(ContentModel.PROP_MODIFIER.toString(), origDocProps.get(ContentModel.PROP_MODIFIER));
-        docProps.put(ContentModel.PROP_MODIFIED.toString(), origDocProps.get(ContentModel.PROP_MODIFIED));
-
-        nodeService.setProperties(docRef, RepoUtil.toQNameProperties(docProps));
         permissionService.setInheritParentPermissions(docRef, false);
-
-        return new String[] { "Privileges updated" };
-    }
-
-    public void setBehaviourFilter(BehaviourFilter behaviourFilter) {
-        this.behaviourFilter = behaviourFilter;
+        return new Pair<Boolean, String>(true, "privilegesUpdated");
     }
 
     public void setPermissionService(PermissionService permissionService) {
@@ -199,20 +179,8 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
         this.workflowService = workflowService;
     }
 
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    public void setGeneralService(GeneralService generalService) {
-        this.generalService = generalService;
-    }
-
     public void setFileService(FileService fileService) {
         this.fileService = fileService;
-    }
-
-    public void setLimitForTesting(boolean limitForTesting) {
-        this.limitForTesting = limitForTesting;
     }
 
 }
