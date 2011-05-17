@@ -220,9 +220,13 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                 batchInfos.add(new String[] { nodeRef.toString(), "nodeDoesNotExist" });
                 continue;
             }
-            String[] info = updateNode(nodeRef);
-            String[] batchInfo = (String[]) ArrayUtils.add(info, 0, nodeRef.toString());
-            batchInfos.add(batchInfo);
+            try {
+                String[] info = updateNode(nodeRef);
+                String[] batchInfo = (String[]) ArrayUtils.add(info, 0, nodeRef.toString());
+                batchInfos.add(batchInfo);
+            } catch (Exception e) {
+                throw new Exception("Error updating node " + nodeRef + ": " + e.getMessage(), e);
+            }
         }
         File rollbackNodesFile = new File(inputFolder, getRollbackNodesCsvFileName());
         bindCsvWriteAfterCommit(completedNodesFile, rollbackNodesFile, new CsvWriterClosure() {

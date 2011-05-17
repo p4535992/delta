@@ -149,7 +149,7 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
             }
         });
 
-        if (addViewDocMetaToRelatedDocs[0] != null && addViewDocMetaToRelatedDocs[0]) {
+        if (addViewDocMetaToRelatedDocs[0] != null && addViewDocMetaToRelatedDocs[0] && StringUtils.isNotBlank(docOwner)) {
             List<DocAssocInfo> assocInfos = documentService.getAssocInfos(new Node(docRef));
             for (DocAssocInfo docAssocInfo : assocInfos) {
                 if (!docAssocInfo.isCase()) {
