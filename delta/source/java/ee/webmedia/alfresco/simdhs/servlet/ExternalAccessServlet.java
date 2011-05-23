@@ -16,7 +16,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.repository.StoreRef;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.servlet.AuthenticationStatus;
 import org.alfresco.web.app.servlet.BaseServlet;
@@ -41,7 +43,7 @@ public class ExternalAccessServlet extends BaseServlet {
     private static Log logger = LogFactory.getLog(ExternalAccessServlet.class);
 
     private static final String VIEW_STACK = "_alfViewStack";
-    private static final String OUTCOME_DOCUMENT = "document";
+    public static final String OUTCOME_DOCUMENT = "document";
 
     private static Map<String, String> dialogMappings = new HashMap<String, String>();
 
@@ -78,26 +80,15 @@ public class ExternalAccessServlet extends BaseServlet {
         }
         setNoCacheHeaders(res);
 
-        uri = uri.substring(req.getContextPath().length());
-        StringTokenizer t = new StringTokenizer(uri, "/");
-        int tokenCount = t.countTokens();
-        if (tokenCount < 2) {
-            throw new IllegalArgumentException("Externally addressable URL did not contain all required args: " + uri);
-        }
+        Pair<String, String[]> outcomeAndArgs = getDocumentUriTokens(req.getContextPath().length(), uri);
 
-        // 1. servlet name (not used)
-        t.nextToken();
-        // 2. outcome
-        String outcome = t.nextToken();
-        // 3. rest of the tokens arguments
-        String[] args = extractArguments(t, tokenCount);
+        String outcome = outcomeAndArgs.getFirst();
 
         if (logger.isDebugEnabled()) {
             logger.debug("External outcome found: " + outcome);
         }
 
         FacesContext fc = FacesHelper.getFacesContext(req, res, getServletContext());
-        ServiceRegistry serviceRegistry = getServiceRegistry(getServletContext());
 
         // always allow missing bindings from ExternalAccessServlet:
         // when redirecting from ExternalAccessServlet, jsp binding attribute value may be queried from wrong bean
@@ -105,29 +96,9 @@ public class ExternalAccessServlet extends BaseServlet {
         req.setAttribute("allow_missing_bindings", Boolean.TRUE);
 
         if (OUTCOME_DOCUMENT.equals(outcome)) {
-            String currentNodeId = args[0];
-            Assert.notNull(currentNodeId);
 
-            if (logger.isDebugEnabled()) {
-                logger.debug("currentNodeId: " + currentNodeId);
-            }
-
-            boolean nodeExists = false;
-            String nodeRefsStr = null;
-            NodeRef nodeRef = null;
-            for (String storeName : storeNames) {
-                StoreRef storeRef = new StoreRef(storeName);
-                nodeRef = new NodeRef(storeRef, currentNodeId);
-                nodeRefsStr += (nodeRefsStr == null) ? nodeRef : (";" + nodeRef);
-                if (serviceRegistry.getNodeService().exists(nodeRef)) {
-                    nodeExists = true;
-                    break;
-                }
-            }
-
-            if (!nodeExists) {
-                throw new InvalidNodeRefException("Invalid URI provided (" + nodeRefsStr + ")", nodeRef);
-            }
+            ServiceRegistry serviceRegistry = getServiceRegistry(getServletContext());
+            NodeRef nodeRef = getNodeRefFromNodeId(outcomeAndArgs.getSecond()[0], serviceRegistry.getNodeService(), storeNames);
 
             // select correct menu
             MenuBean.clearViewStack(String.valueOf(MenuBean.DOCUMENT_REGISTER_ID), null);
@@ -144,7 +115,55 @@ public class ExternalAccessServlet extends BaseServlet {
         getServletContext().getRequestDispatcher(FACES_SERVLET + fc.getViewRoot().getViewId()).forward(req, res);
     }
 
-    private String[] extractArguments(StringTokenizer t, int tokenCount) {
+    public static NodeRef getNodeRefFromNodeId(String currentNodeId, NodeService nodeService, List<String> storeNames) {
+        Assert.notNull(currentNodeId);
+
+        if (logger.isDebugEnabled()) {
+            logger.debug("currentNodeId: " + currentNodeId);
+        }
+
+        boolean nodeExists = false;
+        String nodeRefsStr = null;
+        NodeRef nodeRef = null;
+        for (String storeName : storeNames) {
+            StoreRef storeRef = new StoreRef(storeName);
+            nodeRef = new NodeRef(storeRef, currentNodeId);
+            nodeRefsStr += (nodeRefsStr == null) ? nodeRef : (";" + nodeRef);
+            if (nodeService.exists(nodeRef)) {
+                nodeExists = true;
+                break;
+            }
+        }
+
+        if (!nodeExists) {
+            throw new InvalidNodeRefException("Invalid URI provided (" + nodeRefsStr + ")", nodeRef);
+        }
+        return nodeRef;
+    }
+
+    /**
+     * @param substringLength if substringLength > 0, use substring of given length from uri to parse uri tokens
+     */
+    public static Pair<String, String[]> getDocumentUriTokens(int substringLength, String uri) {
+        Pair<String, String[]> outcomeAndArgs = new Pair<String, String[]>(null, null);
+        if (substringLength > 0) {
+            uri = uri.substring(substringLength);
+        }
+        StringTokenizer t = new StringTokenizer(uri, "/");
+        int tokenCount = t.countTokens();
+        if (tokenCount < 2) {
+            throw new IllegalArgumentException("Externally addressable URL did not contain all required args: " + uri);
+        }
+        // 1. servlet name (not used)
+        t.nextToken();
+        // 2. outcome
+        outcomeAndArgs.setFirst(t.nextToken());
+        // 3. rest of the tokens arguments
+        outcomeAndArgs.setSecond(extractArguments(t, tokenCount));
+        return outcomeAndArgs;
+    }
+
+    private static String[] extractArguments(StringTokenizer t, int tokenCount) {
         String[] args = new String[tokenCount - 2];
         for (int i = 0; i < tokenCount - 2; i++) {
             args[i] = t.nextToken();

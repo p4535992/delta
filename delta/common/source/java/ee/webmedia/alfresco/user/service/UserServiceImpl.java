@@ -127,6 +127,11 @@ public class UserServiceImpl implements UserService {
             return true;
         }
 
+        return isInAccountantGroup();
+    }
+
+    @Override
+    public boolean isInAccountantGroup() {
         return authorityService.getAuthorities().contains(getAccountantsGroup());
     }
 

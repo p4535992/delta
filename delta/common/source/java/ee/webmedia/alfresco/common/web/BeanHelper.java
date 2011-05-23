@@ -26,8 +26,10 @@ import ee.webmedia.alfresco.document.file.web.AddFileDialog;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
+import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
+import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.document.web.VisitedDocumentsBean;
 import ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
@@ -161,6 +163,14 @@ public class BeanHelper {
 
     public static ParametersService getParametersService() {
         return (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(ParametersService.BEAN_NAME);
+    }
+
+    public static SendOutService getSendOutService() {
+        return (SendOutService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(SendOutService.BEAN_NAME);
+    }
+
+    public static DvkService getDvkService() {
+        return (DvkService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DvkService.BEAN_NAME);
     }
 
     // END: delta services

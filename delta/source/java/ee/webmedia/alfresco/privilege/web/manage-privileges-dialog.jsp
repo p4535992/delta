@@ -15,17 +15,17 @@
    <script type="text/javascript" src="<%=request.getContextPath()%>/scripts/manage-privileges-dialog.js?r=<%=PageTag.urlSuffix%>"> </script>
 </f:verbatim>
 
-<a:panel id="permissions-panel" label="#{msg.users_groups}" styleClass="with-pager">
+<a:panel id="permissions-panel" label="#{msg.users_groups}">
    <a:booleanEvaluator value="#{ManagePrivilegesDialog.editable}">
       <a:genericPicker id="picker" filters="#{UserGroupSearchBean.usersGroupsFilters}" queryCallback="#{UserGroupSearchBean.searchUsersGroups}"
          actionListener="#{ManagePrivilegesDialog.addAuthorities}" binding="#{ManagePrivilegesDialog.picker}"/>
    </a:booleanEvaluator>
-   <a:richList id="permissions-list" binding="#{ManagePrivilegesDialog.permissionsRichList}" value="#{ManagePrivilegesDialog.userPrivilegesRows}"
-      var="r" refreshOnBind="true" viewMode="detailsMultiTbody" width="100%" pageSize="#{BrowseBean.pageSizeContent}" 
-      styleClass="privileges detailsMultiTbody" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRow">
+   <a:richList id="permissions-list" binding="#{ManagePrivilegesDialog.permissionsRichList}" value="#{ManagePrivilegesDialog.userPrivilegesRows}" var="r" refreshOnBind="true"
+      viewMode="detailsMultiTbody" width="100%" styleClass="privileges detailsMultiTbody" headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow"
+      altRowStyleClass="recordSetRow">
 
       <%-- column where expand/collapse link is added through hack for grouping --%>
-      <a:column/>
+      <a:column />
 
       <%-- Label column (user fullname / group display name) --%>
       <a:column primary="true" styleClass="left">

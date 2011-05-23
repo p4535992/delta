@@ -1,7 +1,10 @@
 package ee.webmedia.alfresco.utils;
 
 import java.util.Date;
+import java.util.GregorianCalendar;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 
@@ -57,6 +60,19 @@ public class XmlUtil {
     public static Date getDate(XMLGregorianCalendar gregorianCalendar) {
         if (gregorianCalendar != null) {
             return gregorianCalendar.toGregorianCalendar().getTime();
+        }
+        return null;
+    }
+
+    public static XMLGregorianCalendar getXmlGregorianCalendar(Date date) {
+        if (date != null) {
+            GregorianCalendar gCal = new GregorianCalendar();
+            gCal.setTime(date);
+            try {
+                return DatatypeFactory.newInstance().newXMLGregorianCalendar(gCal);
+            } catch (DatatypeConfigurationException e) {
+                log.error("Error instantiating datatype factory", e);
+            }
         }
         return null;
     }

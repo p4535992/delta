@@ -48,6 +48,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
     private static final String MESSAGE_ID = "common_propertysheet_validator_mandatoryIf";
     public static final String ATTR_MANDATORY_IF = "mandatoryIf";
     public static final String ATTR_MANDATORY_IF_LABEL_ID = "mandatoryIfLabelId";
+    public static final String ATTR_MANDATORY_IF_ALL_MANDATORY = "mandatoryIfAllMandatory";
     private static final List<String> SELECT_VALUES_INDICATING_MANDATORY = Arrays.asList("Jah", "true", "yes", AccessRestriction.AK.getValueName());
 
     /**
@@ -55,6 +56,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
      */
     private String evaluationExpression;
     private String mandatoryIfLabelId;
+    private boolean allMandatory;
     private boolean _transient;
 
     public MandatoryIfValidator() {
@@ -70,6 +72,10 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
 
     public void setMandatoryIfLabelId(String mandatoryIfLabelId) {
         this.mandatoryIfLabelId = mandatoryIfLabelId;
+    }
+
+    public void setAllMandatory(boolean allMandatory) {
+        this.allMandatory = allMandatory;
     }
 
     @Override
@@ -142,13 +148,13 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
             }
         }
 
-        boolean required = !operands.contains(Boolean.FALSE);
+        boolean required = allMandatory && operands.contains(Boolean.FALSE);
         input.setRequired(required);
         if (!required) {
             return;
         }
 
-        if (evaluationExpression.indexOf('=') < 0) {
+        if (evaluationExpression.indexOf('=') < 0 || StringUtils.isBlank(mandatoryIfLabelId)) {
             String label = (String) input.getAttributes().get(ComponentUtil.ATTR_DISPLAY_LABEL);
             if (label == null) {
                 UIProperty thisUIProperty = ComponentUtil.getAncestorComponent(component, UIProperty.class, true);
@@ -229,15 +235,16 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
         Object values[] = new Object[3];
         values[0] = evaluationExpression;
         values[1] = mandatoryIfLabelId;
+        values[2] = allMandatory;
         return values;
     }
 
     @Override
-    public void restoreState(FacesContext context,
-            Object state) {
+    public void restoreState(FacesContext context, Object state) {
         Object values[] = (Object[]) state;
         evaluationExpression = (String) values[0];
         mandatoryIfLabelId = (String) values[1];
+        allMandatory = (Boolean) values[2];
     }
 
     @Override

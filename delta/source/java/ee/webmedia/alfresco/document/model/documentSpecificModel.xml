@@ -1555,6 +1555,15 @@
          <property name="docspec:contractNumber">
             <type>d:text</type>
          </property>
+         <property name="docspec:xxlInvoice">
+            <type>d:boolean</type>
+         </property>
+         <property name="docspec:entrySapNumber">
+            <type>d:text</type>
+         </property>  
+         <property name="docspec:entryDate">
+            <type>d:date</type>
+         </property>   
       </properties>
    </aspect>
       

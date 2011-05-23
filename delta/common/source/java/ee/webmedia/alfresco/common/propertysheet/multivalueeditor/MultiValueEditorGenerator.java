@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.common.propertysheet.multivalueeditor;
 
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.OPTIONS_SEPARATOR;
+import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROPERTIES_SEPARATOR;
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROPS_GENERATION;
 import static ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader.AttributeNames.PROP_GENERATOR_DESCRIPTORS;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.VALDIATION_DISABLED;
@@ -54,7 +55,8 @@ public class MultiValueEditorGenerator extends BaseComponentGenerator implements
         if (StringUtils.isBlank(optionsSeparator)) {
             optionsSeparator = "¤";
         }
-        final List<ComponentPropVO> propVOs = CombinedPropReader.readProperties(propsAttribute, null, optionsSeparator, propertySheet.getNode(), context);
+        String propertiesSeparator = getCustomAttributes().get(PROPERTIES_SEPARATOR);
+        final List<ComponentPropVO> propVOs = CombinedPropReader.readProperties(propsAttribute, propertiesSeparator, optionsSeparator, propertySheet.getNode(), context);
 
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();

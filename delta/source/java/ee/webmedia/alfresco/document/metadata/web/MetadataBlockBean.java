@@ -62,6 +62,10 @@ import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.einvoice.model.Transaction;
+import ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean;
+import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -479,6 +483,13 @@ public class MetadataBlockBean implements Serializable {
         return Integer.toString(integer);
     }
 
+    private String formatDoubleOrEmpty(Double dbl) {
+        if (dbl == null) {
+            return "";
+        }
+        return TransactionsBlockBean.INVOICE_DECIMAL_FORMAT.format(dbl.doubleValue());
+    }
+
     protected void afterModeChange() {
         Map<String, Object> props = document.getProperties();
         if (!inEditMode) {
@@ -622,6 +633,21 @@ public class MetadataBlockBean implements Serializable {
                 String invoiceNumber = (String) props.get(DocumentSpecificModel.Props.INVOICE_NUMBER);
                 Date invoiceDate = (Date) props.get(DocumentSpecificModel.Props.INVOICE_DATE);
                 props.put("{temp}invoiceNumberDate", joinStringAndDateWithSpace(invoiceNumber, invoiceDate));
+
+                String currency = (String) props.get(DocumentSpecificModel.Props.CURRENCY);
+                if (currency == null) {
+                    currency = "";
+                }
+                String totalSumStr = formatDoubleOrEmpty((Double) props.get(DocumentSpecificModel.Props.TOTAL_SUM));
+                String sumWithoutVatStr = formatDoubleOrEmpty((Double) props.get(DocumentSpecificModel.Props.INVOICE_SUM));
+                String vatStr = formatDoubleOrEmpty((Double) props.get(DocumentSpecificModel.Props.VAT));
+                props.put("{temp}invoiceTotalSum", MessageUtil.getMessage("document_invoice_total_sum_text", totalSumStr, currency, sumWithoutVatStr, currency, vatStr, currency));
+
+                String entryDateStr = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.ENTRY_DATE));
+                String entrySapNumber = (String) props.get(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER);
+                props.put("{temp}entrySapDateAndNumber", joinStringAndStringWithComma(entryDateStr, entrySapNumber));
+
+                props.put("{temp}xxlInvoice", Boolean.TRUE.equals(props.get(DocumentSpecificModel.Props.XXL_INVOICE)) ? MessageUtil.getMessage("document_invoiceXxlInvoice") : "");
             }
 
             if (document.hasAspect(DocumentSpecificModel.Aspects.WHOM)) {
@@ -855,6 +881,48 @@ public class MetadataBlockBean implements Serializable {
 
             if (DocumentSubtypeModel.Types.CONTRACT_SMIT.equals(document.getType())) {
                 props.put(DocumentSpecificModel.Props.FIRST_PARTY_NAME.toString(), MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_smit"));
+            }
+        }
+        if (DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
+            addInvoiceMessages();
+        }
+    }
+
+    private void addInvoiceMessages() {
+        String sellerPartyRegNumber = (String) document.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER);
+        if (StringUtils.isNotBlank(sellerPartyRegNumber)) {
+            List<Node> contacts = getAddressbookService().getContactsByRegNumber(sellerPartyRegNumber);
+            String sellerPartyName = (String) document.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
+            for (Node contact : contacts) {
+                if (getNodeService().getType(contact.getNodeRef()).equals(AddressbookModel.Types.ORGANIZATION)) {
+                    String contactName = (String) contact.getProperties().get(AddressbookModel.Props.ORGANIZATION_NAME);
+                    if (!(contactName == null && sellerPartyName == null)) {
+                        if (!StringUtils.equalsIgnoreCase(sellerPartyName, contactName)) {
+                            MessageUtil.addInfoMessage("document_invoice_different_seller_name");
+                        }
+                    }
+                }
+            }
+        }
+        if (document.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT) == null) {
+            MessageUtil.addInfoMessage("document_invoice_no_seller_sap_account");
+        }
+        for (Transaction transaction : documentDialog.getTransactionsBlockBean().getTransactions()) {
+            if (transaction.getAssetInventaryNumber() != null) {
+                MessageUtil.addInfoMessage("document_invoice_assetInventoryNumberFilled");
+                break;
+            }
+        }
+        String regNumber = (String) document.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER);
+        String invoiceNumber = (String) document.getProperties().get(DocumentSpecificModel.Props.INVOICE_NUMBER);
+        Date invoiceDate = (Date) document.getProperties().get(DocumentSpecificModel.Props.INVOICE_DATE);
+        List<Document> similarDocuments = BeanHelper.getDocumentSearchService().searchSimilarInvoiceDocuments(regNumber, invoiceNumber, invoiceDate);
+        if (similarDocuments != null) {
+            for (Document document : similarDocuments) {
+                if (!document.getNodeRef().equals(nodeRef)) {
+                    MessageUtil.addInfoMessage("document_invoice_similar_document", invoiceNumber, formatDateOrEmpty(invoiceDate),
+                            document.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME), regNumber);
+                }
             }
         }
     }

@@ -1,22 +1,42 @@
 package ee.webmedia.alfresco.document.einvoice.service;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Serializable;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.MathContext;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.xml.datatype.DatatypeConstants;
 import javax.xml.datatype.XMLGregorianCalendar;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.alfresco.model.ContentModel;
+import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
+import org.alfresco.service.cmr.repository.ContentReader;
+import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
@@ -28,6 +48,8 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
+import org.apache.xml.security.exceptions.Base64DecodingException;
+import org.apache.xml.security.utils.Base64;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
@@ -35,6 +57,13 @@ import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.document.einvoice.account.generated.Arve;
+import ee.webmedia.alfresco.document.einvoice.account.generated.ArveInfo;
+import ee.webmedia.alfresco.document.einvoice.account.generated.Hankija;
+import ee.webmedia.alfresco.document.einvoice.account.generated.Kanne;
+import ee.webmedia.alfresco.document.einvoice.account.generated.Konteering;
+import ee.webmedia.alfresco.document.einvoice.account.generated.LisaInfo;
+import ee.webmedia.alfresco.document.einvoice.account.generated.Ostuarve;
 import ee.webmedia.alfresco.document.einvoice.accountlist.generated.KontoInfo;
 import ee.webmedia.alfresco.document.einvoice.accountlist.generated.KontoNimekiri;
 import ee.webmedia.alfresco.document.einvoice.dimensionslist.generated.Dimensioon;
@@ -57,18 +86,27 @@ import ee.webmedia.alfresco.document.einvoice.sellerslist.generated.HankijaInfo;
 import ee.webmedia.alfresco.document.einvoice.sellerslist.generated.HankijaNimekiri;
 import ee.webmedia.alfresco.document.einvoice.vatcodelist.generated.KaibemaksuKoodInfo;
 import ee.webmedia.alfresco.document.einvoice.vatcodelist.generated.KaibemaksuKoodNimekiri;
+import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.file.model.FileModel;
+import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
+import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
+import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.XmlUtil;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
+import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
 /**
  * @author Riina Tens
@@ -76,6 +114,14 @@ import ee.webmedia.alfresco.utils.XmlUtil;
 
 public class EInvoiceServiceImpl implements EInvoiceService {
 
+    private static final String XXL_INVOICE_TEXT = "XXL";
+    private static final String EXTENSION_RECORD_TYPE = "LIIK";
+    private static final String ERP_NAMESPACE_URI = "erp";
+    private static final String XML_FILE_EXTENSION = "xml";
+    private static final String TRANSACTION_XML_CRE = "K";
+    private static final String TRANSACTION_XML_DEB = "D";
+    private static final String PAYMENT_INFO_NAME_TEXT = "MKSelgitus";
+    private static final String ACCOUNT_VALUE_YES = "JAH";
     private static final String PURCHASE_ORDER_SAP_NUMBER_PREFIX = "OT4";
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(EInvoiceServiceImpl.class);
@@ -88,7 +134,11 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     private GeneralService generalService;
     private ParametersService parametersService;
     private DocumentTypeService documentTypeService;
-    private static final Map<NodeRef, List<DimensionValue>> dimensionValueCache = new ConcurrentHashMap<NodeRef, List<DimensionValue>>();
+    private DocumentTemplateService documentTemplateService;
+    private FileService fileService;
+    private DvkService dvkService;
+    private static final Map<NodeRef, List<DimensionValue>> activeDimensionValueCache = new ConcurrentHashMap<NodeRef, List<DimensionValue>>();
+    private static final Map<NodeRef, List<DimensionValue>> allDimensionValueCache = new ConcurrentHashMap<NodeRef, List<DimensionValue>>();
     private static List<DimensionValue> vatCodeDimesnionValues = null;
 
     private String dimensionsPath;
@@ -157,6 +207,10 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                         purchaseOrderSapNumber = purchaseOrderSapNumber + "; " + recordInformationContent;
                     }
                 }
+                if (EXTENSION_RECORD_TYPE.equalsIgnoreCase(extensionRecord.getExtensionId()) && EXTENSION_RECORD_TYPE.equalsIgnoreCase(extensionRecord.getInformationName())
+                        && XXL_INVOICE_TEXT.equalsIgnoreCase(extensionRecord.getInformationContent())) {
+                    props.put(DocumentSpecificModel.Props.XXL_INVOICE, Boolean.TRUE);
+                }
             }
         }
         props.put(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER, purchaseOrderSapNumber);
@@ -198,8 +252,12 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             if (userProps == null && StringUtils.isNotBlank(contractRegNumber)) {
                 List<Document> contracts = documentSearchService.searchContractsByRegNumber(contractRegNumber);
                 if (contracts.size() == 1) {
-                    setOwnerPropsFromDocument(props, contracts.get(0).getProperties());
-                    ownerSet = true;
+                    Document document = contracts.get(0);
+                    Node user = userService.getUser(document.getOwnerId());
+                    if (user != null) {
+                        setOwnerPropsFromDocument(props, document.getProperties());
+                        ownerSet = true;
+                    }
                 }
             }
             if (!ownerSet && StringUtils.isNotBlank(contactName)) {
@@ -286,6 +344,9 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     @Override
     public List<DimensionValue> getAllDimensionValues(NodeRef dimensionRef) {
+        if (allDimensionValueCache.containsKey(dimensionRef)) {
+            return allDimensionValueCache.get(dimensionRef);
+        }
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(dimensionRef, DimensionModel.Associations.DIMENSION_VALUE,
                 RegexQNamePattern.MATCH_ALL);
         List<DimensionValue> dimensionValues = new ArrayList<DimensionValue>(childRefs.size());
@@ -297,13 +358,14 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         if (LOG.isDebugEnabled()) {
             LOG.debug("Dimension values found: " + dimensionValues);
         }
+        allDimensionValueCache.put(dimensionRef, Collections.unmodifiableList(dimensionValues));
         return dimensionValues;
     }
 
     @Override
     public List<DimensionValue> getActiveDimensionValues(NodeRef dimension) {
-        if (dimensionValueCache.containsKey(dimension)) {
-            return dimensionValueCache.get(dimension);
+        if (activeDimensionValueCache.containsKey(dimension)) {
+            return activeDimensionValueCache.get(dimension);
         }
         List<DimensionValue> allDimensionValues = getAllDimensionValues(dimension);
         List<DimensionValue> activeDimensionValues = new ArrayList<DimensionValue>(allDimensionValues.size());
@@ -316,7 +378,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                 activeDimensionValues.add(dimensionValue);
             }
         }
-        dimensionValueCache.put(dimension, activeDimensionValues);
+        Collections.sort(activeDimensionValues);
+        activeDimensionValueCache.put(dimension, Collections.unmodifiableList(activeDimensionValues));
         return activeDimensionValues;
     }
 
@@ -326,7 +389,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         if (vatCodeDimesnionValues == null) {
             final NodeRef nodeRef = generalService.getNodeRef(Dimensions.TAX_CODE_ITEMS.toString());
             tmpValues = new ArrayList<DimensionValue>(getAllDimensionValues(nodeRef));
-            vatCodeDimesnionValues = tmpValues;
+            vatCodeDimesnionValues = Collections.unmodifiableList(tmpValues);
         }
         return vatCodeDimesnionValues;
     }
@@ -338,6 +401,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         if (xmlDimensionsList != null) {
             // TODO: optimize - could empty only cache for updated dimensions
             emptyDimensionValueChache();
+            @SuppressWarnings("unchecked")
             Map<Parameters, Dimensions> dimensionParameters = EInvoiceUtil.DIMENSION_PARAMETERS;
             Map<String, Set<Parameters>> dimParameterValues = parametersService.getSwappedStringParameters(new ArrayList<Parameters>(dimensionParameters.keySet()));
             for (Dimensioon xmlDimension : xmlDimensionsList.getDimensioon()) {
@@ -437,6 +501,100 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
+    public Map<NodeRef, Integer> importTransactionsForInvoices(List<NodeRef> newInvoices, List<DataFileType> dataFileList) {
+        Map<NodeRef, Integer> transactionDataFileIndexes = new HashMap<NodeRef, Integer>();
+        List<Node> invoices = getInvoiceNodes(newInvoices);
+        List<DataFileType> newDataFiles = new ArrayList<DataFileType>();
+        int dataFileIndex = 0;
+        for (Iterator<DataFileType> i = dataFileList.iterator(); i.hasNext();) {
+            DataFileType dataFile = i.next();
+            if (dvkService.isXmlMimetype(dataFile)) {
+                InputStream input;
+                try {
+                    input = new ByteArrayInputStream(Base64.decode(dataFile.getStringValue()));
+                } catch (Base64DecodingException e) {
+                    LOG.debug("Unable to decode file " + dataFile.getFilename(), e);
+                    continue;
+                }
+                Ostuarve ostuarve = EInvoiceUtil.unmarshalAccount(input);
+                if (ostuarve != null) {
+                    int matchedArveCount = 0;
+                    int currentArveIndex = 0;
+                    int arveCount = ostuarve.getArve().size();
+                    List<Arve> originalArve = new ArrayList<Arve>(ostuarve.getArve());
+                    // iterate over originalArve so we can change ostuarve content during iteration
+                    // for generating different transaction dataFileContents
+                    for (Arve arve : originalArve) {
+                        for (Node invoice : invoices) {
+                            Map<String, Object> props = invoice.getProperties();
+                            String invoiceNumber = (String) props.get(DocumentSpecificModel.Props.INVOICE_NUMBER);
+                            Date invoiceDate = (Date) props.get(DocumentSpecificModel.Props.INVOICE_DATE);
+                            String sellerName = (String) props.get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
+                            // may be empty by xsd
+                            String sellerRegNumber = (String) props.get(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER);
+                            ArveInfo arveInfo = arve.getArveInfo();
+                            String registrikood = arve.getHankija().getRegistrikood();
+                            Date xmlInvoiceDate = XmlUtil.getDate(arveInfo.getArveKuupaev());
+                            if (invoiceNumber.equalsIgnoreCase(arveInfo.getArveNumber())
+                                    && (invoiceDate != null && xmlInvoiceDate != null && DateUtils.isSameDay(invoiceDate, xmlInvoiceDate))
+                                    && sellerName.equalsIgnoreCase(arve.getHankija().getHankijaNimi())
+                                    && ((StringUtils.isEmpty(sellerRegNumber) && StringUtils.isEmpty(registrikood)) || (sellerRegNumber != null && sellerRegNumber
+                                            .equalsIgnoreCase(registrikood)))) {
+                                // if ostuarve contains one arve that maches invoice, use original DataFileType as transactions file
+                                // otherwise generate separate DataFileType for each matched arve element
+                                if (arveCount == 1) {
+                                    transactionDataFileIndexes.put(invoice.getNodeRef(), dataFileIndex);
+                                } else {
+                                    DataFileType newDataFile = (DataFileType) dataFile.copy();
+                                    int arveIndex = 0;
+                                    for (Iterator<Arve> it = ostuarve.getArve().iterator(); i.hasNext();) {
+                                        if (arveIndex != currentArveIndex) {
+                                            it.remove();
+                                        }
+                                        arveIndex++;
+                                    }
+                                    ostuarve.setArveidKokku(BigInteger.ONE);
+                                    Writer writer = new StringWriter();
+                                    // FIXME: validate generated xml
+                                    EInvoiceUtil.marshalAccount(ostuarve, writer);
+                                    Ostuarve testOstuarve = EInvoiceUtil.unmarshalAccount(new StringReader(writer.toString()));
+                                    newDataFile.setStringValue(writer.toString());
+                                    newDataFiles.add(newDataFile);
+
+                                    // restore original ostuarve
+                                    ostuarve.getArve().clear();
+                                    ostuarve.getArve().addAll(originalArve);
+                                    ostuarve.setArveidKokku(BigInteger.valueOf(arveCount));
+
+                                    transactionDataFileIndexes.put(invoice.getNodeRef(), dataFileList.size() + newDataFiles.size() - 1);
+                                }
+                                matchedArveCount++;
+                            }
+                        }
+                        currentArveIndex++;
+                    }
+                    // if ostuarve contained more than one arve and all of arve found matched invoice,
+                    // separate DataFileType was added for each arve, so original DataFileType must be removed
+                    if (matchedArveCount == arveCount && arveCount > 1) {
+                        i.remove();
+                    }
+                }
+            }
+            dataFileIndex++;
+        }
+        dataFileList.addAll(newDataFiles);
+        return transactionDataFileIndexes;
+    }
+
+    private List<Node> getInvoiceNodes(List<NodeRef> newInvoices) {
+        List<Node> invoices = new ArrayList<Node>();
+        for (NodeRef invoiceRef : newInvoices) {
+            invoices.add(new Node(invoiceRef));
+        }
+        return invoices;
+    }
+
+    @Override
     public Integer updateDocumentsSapAccount() {
         int documentsUpdated = 0;
         List<Document> invoices = documentSearchService.searchInvoicesWithEmptySapAccount();
@@ -515,8 +673,192 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         }
     }
 
+    @Override
+    public List<ContentToSend> createContentToSend(File file) {
+        List<ContentToSend> contentToSend = new ArrayList<ContentToSend>();
+        ContentReader reader = fileFolderService.getReader(file.getNodeRef());
+        ContentToSend content = new ContentToSend();
+        content.setFileName(file.getDisplayName());
+        content.setMimeType(reader.getMimetype());
+        ByteArrayOutputStream byteStream = new ByteArrayOutputStream();
+        reader.getContent(byteStream);
+        byte[] byteArray = byteStream.toByteArray();
+        content.setInputStream(new ByteArrayInputStream(byteArray));
+        contentToSend.add(content);
+        return contentToSend;
+    }
+
+    @Override
+    public String getTransactionDvkFolder(Node document) {
+        Map<String, Object> props = document.getProperties();
+        if (props.get(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER) == null) {
+            if (!Boolean.TRUE.equals(props.get(DocumentSpecificModel.Props.XXL_INVOICE))) {
+                return parametersService.getStringParameter(Parameters.SEND_INVOICE_TO_DVK_FOLDER);
+            } else {
+                return parametersService.getStringParameter(Parameters.SEND_XXL_INVOICE_TO_DVK_FOLDER);
+            }
+        } else {
+            return parametersService.getStringParameter(Parameters.SEND_PURCHASE_ORDER_INVOICE_TO_DVK_FOLDER);
+        }
+    }
+
+    @Override
+    public File generateTransactionXmlFile(Node node, List<Transaction> transactions) throws IOException {
+        Ostuarve ostuarve = generateTransactionXml(node, transactions);
+        NodeRef fileRef = addTransactionFile(node, ostuarve);
+        return fileService.getFile(fileRef);
+    }
+
+    private NodeRef addTransactionFile(Node node, Ostuarve ostuarve) throws IOException {
+        String originalFileName = (String) node.getProperties().get(DocumentCommonModel.Props.DOC_NAME) + "." + XML_FILE_EXTENSION;
+        List<String> documentFileDisplayNames = fileService.getDocumentFileDisplayNames(node.getNodeRef());
+        String displayName = FilenameUtil.generateUniqueFileDisplayName(originalFileName, documentFileDisplayNames);
+        String fileName = FilenameUtil.makeSafeUniqueFilename(displayName, documentFileDisplayNames);
+        NodeRef file = fileFolderService.create(node.getNodeRef(), fileName, ContentModel.TYPE_CONTENT).getNodeRef();
+        final ContentWriter writer = fileFolderService.getWriter(file);
+        writer.setMimetype(MimetypeMap.MIMETYPE_XML);
+        final OutputStream os = writer.getContentOutputStream();
+        try {
+            // FIXME: validate generated xml
+            EInvoiceUtil.marshalAccount(ostuarve, os);
+        } finally {
+            os.close();
+        }
+        nodeService.setProperty(file, FileModel.Props.DISPLAY_NAME, displayName);
+        return file;
+    }
+
+    private Ostuarve generateTransactionXml(Node node, List<Transaction> transactions) {
+        Ostuarve ostuarve = new Ostuarve();
+        Arve arve = new Arve();
+        Hankija hankija = new Hankija();
+        Map<String, Object> props = node.getProperties();
+        hankija.setHankijaNimi((String) props.get(DocumentSpecificModel.Props.SELLER_PARTY_NAME));
+        hankija.setHankijaNumber((String) props.get(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT));
+        hankija.setRegistrikood((String) props.get(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER));
+        arve.setHankija(hankija);
+
+        ArveInfo arveInfo = new ArveInfo();
+        arveInfo.setAsutus(parametersService.getStringParameter(Parameters.DVK_ORGANIZATION_NAME));
+        arveInfo.setArveKinnitatud(ACCOUNT_VALUE_YES);
+        arveInfo.setArveTuup(getAccountType((String) props.get(DocumentSpecificModel.Props.INVOICE_TYPE)));
+        arveInfo.setArveNumber((String) props.get(DocumentSpecificModel.Props.INVOICE_NUMBER));
+        XMLGregorianCalendar invoiceDate = XmlUtil.getXmlGregorianCalendar((Date) props.get(DocumentSpecificModel.Props.INVOICE_DATE));
+        invoiceDate.setHour(DatatypeConstants.FIELD_UNDEFINED);
+        invoiceDate.setMinute(DatatypeConstants.FIELD_UNDEFINED);
+        invoiceDate.setSecond(DatatypeConstants.FIELD_UNDEFINED);
+        invoiceDate.setMillisecond(DatatypeConstants.FIELD_UNDEFINED);
+        invoiceDate.setTimezone(DatatypeConstants.FIELD_UNDEFINED);
+        arveInfo.setArveKuupaev(invoiceDate);
+        XMLGregorianCalendar invoiceDueDate = XmlUtil.getXmlGregorianCalendar((Date) props.get(DocumentSpecificModel.Props.INVOICE_DUE_DATE));
+        invoiceDueDate.setHour(DatatypeConstants.FIELD_UNDEFINED);
+        invoiceDueDate.setMinute(DatatypeConstants.FIELD_UNDEFINED);
+        invoiceDueDate.setSecond(DatatypeConstants.FIELD_UNDEFINED);
+        invoiceDueDate.setMillisecond(DatatypeConstants.FIELD_UNDEFINED);
+        invoiceDueDate.setTimezone(DatatypeConstants.FIELD_UNDEFINED);
+        arveInfo.setMaksepaev(invoiceDueDate);
+        arveInfo.setViitenumber((String) props.get(DocumentSpecificModel.Props.PAYMENT_REFERENCE_NUMBER));
+        arveInfo.setTellimuseNumber((String) props.get(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER));
+
+        MathContext mc = new MathContext(4);
+        arveInfo.setArveSumma(new BigDecimal((Double) props.get(DocumentSpecificModel.Props.TOTAL_SUM)).round(mc));
+        Double vat = (Double) props.get(DocumentSpecificModel.Props.VAT);
+        arveInfo.setKaibemaksKokku(vat == null ? null : new BigDecimal(vat).round(mc));
+        arveInfo.setValuuta((String) props.get(DocumentSpecificModel.Props.CURRENCY));
+        arveInfo.setSisemineId(documentTemplateService.getDocumentUrl(node.getNodeRef()));
+
+        arve.setArveInfo(arveInfo);
+
+        LisaInfo lisainfo = new LisaInfo();
+        lisainfo.setInfoNimi(PAYMENT_INFO_NAME_TEXT);
+        lisainfo.setInfoSisu((String) props.get(DocumentSpecificModel.Props.ADDITIONAL_INFORMATION_CONTENT));
+        arveInfo.setLisaInfo(lisainfo);
+
+        Konteering konteering = new Konteering();
+        konteering.setKandeKuupaev(XmlUtil.getXmlGregorianCalendar((Date) props.get(DocumentSpecificModel.Props.ENTRY_DATE)));
+        arve.setKonteering(konteering);
+
+        List<Kanne> kanded = konteering.getKanne();
+        for (Transaction transaction : transactions) {
+            Kanne kanne = new Kanne();
+            Double sumWithoutVat = transaction.getSumWithoutVat();
+            kanne.setKandeTuup(sumWithoutVat == null || sumWithoutVat >= 0 ? TRANSACTION_XML_DEB : TRANSACTION_XML_CRE);
+            kanne.setPearaamatuKonto(transaction.getAccount());
+            kanne.setKaibemaksuKood(transaction.getInvoiceTaxCode());
+
+            // it is assumed that all numeric values are present
+            BigDecimal transSumWithoutVat = new BigDecimal(transaction.getSumWithoutVat()).round(mc);
+            BigDecimal vatPercent = new BigDecimal(transaction.getInvoiceTaxPercent());
+            kanne.setSumma(transSumWithoutVat.add(transSumWithoutVat.multiply(vatPercent).divide(new BigDecimal(100))).round(mc));
+            kanne.setNetoSumma(new BigDecimal(transaction.getSumWithoutVat()).round(mc));
+            kanne.setKandeKommentaar(transaction.getEntryContent());
+            List<ee.webmedia.alfresco.document.einvoice.account.generated.Dimensioon> dimensioonList = kanne.getDimensioon();
+            createXmlDimension(Dimensions.INVOICE_FUNDS_CENTERS, transaction.getFundsCenter(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_COST_CENTERS, transaction.getCostCenter(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_FUNDS, transaction.getFund(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_COMMITMENT_ITEM, transaction.getCommitmentItem(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_INTERNAL_ORDERS, transaction.getOrderNumber(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, transaction.getAssetInventaryNumber(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_POSTING_KEY, transaction.getPostingKey(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_TRADING_PARTNER_CODES, transaction.getTradingPartnerCode(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_FUNCTIONAL_AREA_CODE, transaction.getFunctionalAreaCode(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_CASH_FLOW_CODES, transaction.getCashFlowCode(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_SOURCE_CODES, transaction.getSource(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_PAYMENT_METHOD_CODES, transaction.getPaymentMethod(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_HOUSE_BANK_CODES, transaction.getHouseBank(), dimensioonList);
+
+            kanded.add(kanne);
+        }
+
+        ostuarve.getArve().add(arve);
+        ostuarve.setArveidKokku(BigInteger.ONE);
+
+        return ostuarve;
+    }
+
+    private void createXmlDimension(Dimensions dimension, String transDimensionValue,
+            List<ee.webmedia.alfresco.document.einvoice.account.generated.Dimensioon> dimensioonList) {
+        if (StringUtils.isBlank(transDimensionValue)) {
+            return;
+        }
+        ee.webmedia.alfresco.document.einvoice.account.generated.Dimensioon dimensioon = new ee.webmedia.alfresco.document.einvoice.account.generated.Dimensioon();
+        Parameters parameter = (Parameters) EInvoiceUtil.DIMENSION_PARAMETERS.getKey(dimension);
+        String dimensionXmlId = parametersService.getStringParameter(parameter);
+        dimensioon.setDimensiooniId(dimensionXmlId);
+        DimensionValue dimensionValue = getDimensionValue(getDimension(dimension), transDimensionValue);
+        if (dimensionValue == null) {
+            String message = "No dimension value was found for dimension='" + dimensionXmlId + "', value name='" + transDimensionValue + "'";
+            LOG.error(message);
+            throw new RuntimeException(message);
+        }
+        dimensioon.setDimensiooniVaartuseId(dimensionValue.getValueName());
+        dimensioon.setDimensiooniVaartuseNimetus(dimensionValue.getValue());
+        dimensioonList.add(dimensioon);
+    }
+
+    private DimensionValue getDimensionValue(NodeRef dimensionRef, String transDimensionValue) {
+        List<DimensionValue> dimensionValues = getAllDimensionValues(dimensionRef);
+        for (DimensionValue dimensionValue : dimensionValues) {
+            if (dimensionValue.getValueName().equals(transDimensionValue)) {
+                return dimensionValue;
+            }
+        }
+        return null;
+    }
+
+    private String getAccountType(String invoiceType) {
+        if ("DEB".equalsIgnoreCase(invoiceType)) {
+            return TRANSACTION_XML_DEB;
+        }
+        if ("CRE".equalsIgnoreCase(invoiceType)) {
+            return TRANSACTION_XML_CRE;
+        }
+        return "KS";
+    }
+
     private void emptyDimensionValueChache() {
-        dimensionValueCache.clear();
+        activeDimensionValueCache.clear();
+        allDimensionValueCache.clear();
     }
 
     private boolean hasDimensionValueChanged(DimensionValue dimensionValue, List<DimensionValue> originalDimensionValues) {
@@ -593,6 +935,61 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             props.put(DimensionModel.Props.DEFAULT_VALUE, Boolean.FALSE);
         }
         return props;
+    }
+
+    @Override
+    public Pair<String, String> getDocUrlAndErpDocNumber(String inputStr) {
+        DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+        try {
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            org.w3c.dom.Document document = db.parse(inputStr);
+            org.w3c.dom.Node root = XmlUtil.findChildByName(new javax.xml.namespace.QName(ERP_NAMESPACE_URI, "BuyInvoiceRegisteredRequest"), document);
+            if (root != null && root.getChildNodes().getLength() > 0) {
+                org.w3c.dom.Node regInvoiceNode = XmlUtil.findChildByName(new javax.xml.namespace.QName(ERP_NAMESPACE_URI, "RegisteredInvoice"), document);
+                if (regInvoiceNode != null) {
+                    org.w3c.dom.Node invoiceUrlNode = regInvoiceNode.getAttributes().getNamedItem("invoiceId");
+                    if (invoiceUrlNode != null) {
+                        String invoiceUrl = invoiceUrlNode.getNodeValue();
+                        if (StringUtils.isNotBlank(invoiceUrl)) {
+                            org.w3c.dom.Node erpDocNumberNode = XmlUtil.findChildByName(new javax.xml.namespace.QName(ERP_NAMESPACE_URI, "ErpDocumentNumber"), document);
+                            if (erpDocNumberNode != null) {
+                                String erpDocNumber = StringUtils.strip(erpDocNumberNode.getTextContent());
+                                if (StringUtils.isNotBlank(erpDocNumber)) {
+                                    return new Pair<String, String>(invoiceUrl, erpDocNumber);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.debug("Error parsing erp data.", e);
+        }
+        return null;
+    }
+
+    @Override
+    public NodeRef updateDocumentEntrySapNumber(String docUrl, String erpDocNumber) {
+        try {
+            Pair<String, String[]> outcomeAndArgs = ExternalAccessServlet.getDocumentUriTokens(0, docUrl);
+            if (!ExternalAccessServlet.OUTCOME_DOCUMENT.equals(outcomeAndArgs.getFirst())) {
+                return null;
+            }
+            // TODO: unify with ExternalAccessServlet
+            List<String> storeNames = new ArrayList<String>(Arrays.asList("workspace://SpacesStore", "workspace://ArchivalsStore"));
+            NodeRef nodeRef = ExternalAccessServlet.getNodeRefFromNodeId(outcomeAndArgs.getSecond()[0], nodeService, storeNames);
+            if (nodeRef == null || !DocumentSubtypeModel.Types.INVOICE.equals(nodeService.getType(nodeRef))) {
+                return null;
+            }
+            if (StringUtils.isNotEmpty((String) nodeService.getProperty(nodeRef, DocumentSpecificModel.Props.ENTRY_SAP_NUMBER))) {
+                LOG.error("Document with nodeRef=" + nodeRef + " has already entry sap number, not overwriting.");
+                return null;
+            }
+            nodeService.setProperty(nodeRef, DocumentSpecificModel.Props.ENTRY_SAP_NUMBER, erpDocNumber);
+        } catch (IllegalArgumentException e) {
+            LOG.error("Document uri could not be parsed to valid uri tokens");
+        }
+        return null;
     }
 
     // START: getters / setters
@@ -737,6 +1134,18 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     public void setDocumentTypeService(DocumentTypeService documentTypeService) {
         this.documentTypeService = documentTypeService;
+    }
+
+    public void setDocumentTemplateService(DocumentTemplateService documentTemplateService) {
+        this.documentTemplateService = documentTemplateService;
+    }
+
+    public void setFileService(FileService fileService) {
+        this.fileService = fileService;
+    }
+
+    public void setDvkService(DvkService dvkService) {
+        this.dvkService = dvkService;
     }
 
     // END: getters / setters

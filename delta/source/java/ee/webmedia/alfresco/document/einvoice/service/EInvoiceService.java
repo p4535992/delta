@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.einvoice.service;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Collection;
@@ -8,6 +9,7 @@ import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
@@ -16,6 +18,9 @@ import ee.webmedia.alfresco.document.einvoice.model.Dimension;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
+import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
+import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
 /**
  * Handle e-invoices conversion between document and xml
@@ -85,5 +90,23 @@ public interface EInvoiceService {
     List<DimensionValue> getVatCodeDimensionValues();
 
     void updateDimension(Dimension dimension);
+
+    /**
+     * Modify dataFileList - add new files for transactions containing multiple Arve elements
+     * and remove data files that were completely transfered to new transaction files
+     * 
+     * @return map of invoice corresponding transaction file
+     */
+    Map<NodeRef, Integer> importTransactionsForInvoices(List<NodeRef> newInvoices, List<DataFileType> dataFileList);
+
+    List<ContentToSend> createContentToSend(File file);
+
+    String getTransactionDvkFolder(Node document);
+
+    File generateTransactionXmlFile(Node node, List<Transaction> transactions) throws IOException;
+
+    Pair<String, String> getDocUrlAndErpDocNumber(String inputStr);
+
+    NodeRef updateDocumentEntrySapNumber(String first, String second);
 
 }

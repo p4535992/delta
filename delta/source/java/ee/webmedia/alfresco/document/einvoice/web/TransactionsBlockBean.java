@@ -59,7 +59,7 @@ public class TransactionsBlockBean implements Serializable {
     private static final String EA_PREFIX = "EA";
     public static final String TAX_CODE_ATTR = "taxCode";
     private static final String TRANS_COMPONENT_ID_PREFIX = "trans-";
-    private static final DecimalFormat df = new DecimalFormat("#,##0.00");
+    public static final DecimalFormat INVOICE_DECIMAL_FORMAT = new DecimalFormat("#,##0.00");
 
     private static final long serialVersionUID = 1L;
 
@@ -73,6 +73,8 @@ public class TransactionsBlockBean implements Serializable {
 
     private Node document;
     private List<Transaction> transactions;
+    /** Contains properties of saved transactions (where nodeRef != null) before last submit **/
+    private final Map<NodeRef, Map<QName, Serializable>> originalProperties = new HashMap<NodeRef, Map<QName, Serializable>>();
     private List<Transaction> removedTransactions = new ArrayList<Transaction>();
     private transient HtmlPanelGroup transactionPanelGroup;
     private NodeRef taskPanelControlDocument;
@@ -87,15 +89,43 @@ public class TransactionsBlockBean implements Serializable {
 
     public void restore() {
         transactions = BeanHelper.getEInvoiceService().getInvoiceTransactions(document.getNodeRef());
+        updateOriginalProperties();
         constructTransactionPanelGroup();
     }
 
+    private void updateOriginalProperties() {
+        for (Transaction transaction : transactions) {
+            if (transaction.getNode().getNodeRef() != null) {
+                originalProperties.put(transaction.getNode().getNodeRef(),
+                        RepoUtil.getPropertiesIgnoringSystem(RepoUtil.toQNameProperties(transaction.getNode().getProperties(), true), BeanHelper.getDictionaryService()));
+            }
+        }
+    }
+
     public boolean save() {
+        updateVatCodePercent();
         if (validate()) {
             BeanHelper.getEInvoiceService().updateTransactions(document.getNodeRef(), transactions, removedTransactions);
             return true;
         }
         return false;
+    }
+
+    // update vat code for new rows and in case of changed invoiveTaxCode
+    // (tax code dimension value may be changed and we don't want to overwrite old values that user didn't change)
+    private void updateVatCodePercent() {
+        for (Transaction transaction : transactions) {
+            Map<QName, Serializable> originalProps = originalProperties.get(transaction.getNode().getNodeRef());
+            String taxCode = transaction.getInvoiceTaxCode();
+            String originalTaxCode = (String) (originalProps == null ? null : originalProps.get(TransactionModel.Props.INVOICE_TAX_CODE));
+            if (originalProps == null || taxCode == null || (taxCode != null && !taxCode.equals(originalTaxCode))) {
+                if (taxCode == null) {
+                    transaction.setInvoiceTaxPercent(null);
+                } else {
+                    transaction.setInvoiceTaxPercent(getVatPercentageFromDimension(taxCode));
+                }
+            }
+        }
     }
 
     private boolean validate() {
@@ -125,7 +155,7 @@ public class TransactionsBlockBean implements Serializable {
     }
 
     public void onModeChanged() {
-        constructTransactionPanelGroup(getTransactionPanelGroupInner());
+        constructTransactionPanelGroup();
     }
 
     private void constructTransactionPanelGroup() {
@@ -172,6 +202,7 @@ public class TransactionsBlockBean implements Serializable {
         constructTransactionPanelGroup();
     }
 
+    @SuppressWarnings("unchecked")
     private void constructTransactionPanelGroup(HtmlPanelGroup panelGroup) {
         FacesContext context = FacesContext.getCurrentInstance();
         Application application = context.getApplication();
@@ -187,6 +218,12 @@ public class TransactionsBlockBean implements Serializable {
         panelGroup.getChildren().add(transactionPanel);
 
         String listId = context.getViewRoot().createUniqueId();
+
+        // popup to manually enter sap entry number
+        SendManuallyToSapModalComponent entrySapNumber = (SendManuallyToSapModalComponent) application.createComponent(SendManuallyToSapModalComponent.class.getCanonicalName());
+        entrySapNumber.setId("entry-sap-popup-" + listId);
+        entrySapNumber.setActionListener(application.createMethodBinding("#{DialogManager.bean.sendToSapManually}", UIActions.ACTION_CLASS_ARGS));
+        transactionPanel.getChildren().add(entrySapNumber);
 
         // links for expanding/collapsing all subrows
         final HtmlPanelGroup transExpandingGroup = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
@@ -296,14 +333,43 @@ public class TransactionsBlockBean implements Serializable {
         double sumWithoutVatValue = getSumWithoutVat();
         double vatSumValue = getVatSum();
 
-        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_sumWithoutVat"), new Pair<String, String>(df.format(sumWithoutVatValue),
+        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_sumWithoutVat"), new Pair<String, String>(INVOICE_DECIMAL_FORMAT
+                .format(sumWithoutVatValue),
                 null)));
-        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_total_vatSum"), new Pair<String, String>(df.format(vatSumValue), null)));
+        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_total_vatSum"), new Pair<String, String>(INVOICE_DECIMAL_FORMAT
+                .format(vatSumValue), null)));
         Double totalSum = (Double) document.getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM);
         double transTotalSum = sumWithoutVatValue + vatSumValue;
         String color = totalSum != null && Math.abs(totalSum - transTotalSum) > 0.001 ? "red" : null;
-        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_sumWithVat"), new Pair<String, String>(df.format(transTotalSum), color)));
+        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_sumWithVat"), new Pair<String, String>(INVOICE_DECIMAL_FORMAT
+                .format(transTotalSum), color)));
 
+    }
+
+    public boolean checkTotalSum() {
+        Double totalSum = (Double) document.getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM);
+        if (totalSum == null) {
+            return false;
+        }
+        if (transactions.size() == 0) {
+            return true;
+        }
+        for (Transaction transaction : transactions) {
+            if (transaction.getSumWithoutVat() == null) {
+                MessageUtil.addErrorMessage("document_sendToSap_transMissingSum");
+                return false;
+            }
+            if (transaction.getInvoiceTaxPercent() == null) {
+                MessageUtil.addErrorMessage("document_sendToSap_transMissingTaxPercent");
+                return false;
+            }
+        }
+        double transTotalSum = getSumWithoutVat() + getVatSum();
+        boolean result = Math.abs(totalSum - transTotalSum) <= 0.001;
+        if (!result) {
+            MessageUtil.addErrorMessage("document_sendToSap_transSumsNotCorrect");
+        }
+        return result;
     }
 
     private double getSumWithoutVat() {
@@ -321,7 +387,7 @@ public class TransactionsBlockBean implements Serializable {
         BigDecimal sum = new BigDecimal("0.0");
         for (Transaction transaction : transactions) {
             Double rowSumWithoutVat = transaction.getSumWithoutVat();
-            Integer rowVatPercentage = getVatPercentage(transaction.getInvoiceTaxCode());
+            Integer rowVatPercentage = getVatPercentage(transaction);
             if (rowSumWithoutVat != null) {
                 sum = sum.add((new BigDecimal(rowSumWithoutVat)).multiply(new BigDecimal(rowVatPercentage)).divide(new BigDecimal(100)));
             }
@@ -329,12 +395,28 @@ public class TransactionsBlockBean implements Serializable {
         return sum.doubleValue();
     }
 
-    private Integer getVatPercentage(String invoiceTaxCode) {
+    // in case of saved and not changed invoice tax code, read percentage from transaction, otherwise from dimension
+    private Integer getVatPercentage(Transaction transaction) {
+        Map<QName, Serializable> originalProps = originalProperties.get(transaction.getNode().getNodeRef());
+        String taxCode = transaction.getInvoiceTaxCode();
+        String originalTaxCode = (String) (originalProps == null ? null : originalProps.get(TransactionModel.Props.INVOICE_TAX_CODE));
+        if (originalProps == null || taxCode == null || (taxCode != null && !taxCode.equals(originalTaxCode))) {
+            return getVatPercentageFromDimension(taxCode);
+        }
+        return transaction.getInvoiceTaxPercent();
+    }
+
+    // For calculations return 0 for null value
+    private Integer getVatPercentageFromDimension(String invoiceTaxCode) {
+        if (invoiceTaxCode == null) {
+            return 0;
+        }
         for (DimensionValue dimensionValue : BeanHelper.getEInvoiceService().getVatCodeDimensionValues()) {
             if (dimensionValue.getValueName().equalsIgnoreCase(invoiceTaxCode)) {
                 try {
                     return Integer.parseInt(dimensionValue.getValue());
                 } catch (NumberFormatException e) {
+                    // TODO: report error?
                     return 0;
                 }
             }
@@ -342,6 +424,7 @@ public class TransactionsBlockBean implements Serializable {
         return 0;
     }
 
+    @SuppressWarnings("unchecked")
     private void addExpandingLinks(Application application, HtmlPanelGroup transExpandingGroup, String listId) {
         HtmlOutputLink expandLink = (HtmlOutputLink) application.createComponent(HtmlOutputLink.COMPONENT_TYPE);
         expandLink.setValue("#");
@@ -356,7 +439,7 @@ public class TransactionsBlockBean implements Serializable {
         transExpandingGroup.getChildren().add(expandLink);
 
         UIOutput span = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
-        span.setValue("|");
+        span.setValue(" | ");
         transExpandingGroup.getChildren().add(span);
 
         HtmlOutputLink collapseLink = (HtmlOutputLink) application.createComponent(HtmlOutputLink.COMPONENT_TYPE);
@@ -405,6 +488,7 @@ public class TransactionsBlockBean implements Serializable {
         return columnActions;
     }
 
+    @SuppressWarnings("unchecked")
     private void createAddTransLink(Application application, String listId, Map map) {
         UIActionLink taskAddLink = (UIActionLink) application.createComponent("org.alfresco.faces.ActionLink");
         taskAddLink.setId(TRANS_COMPONENT_ID_PREFIX + "add-link-" + listId);
@@ -492,7 +576,7 @@ public class TransactionsBlockBean implements Serializable {
         } else {
             doubleInput = context.getApplication().createComponent(UIOutput.COMPONENT_TYPE);
             Double value = (Double) transactions.get(transactionIndex).getNode().getProperties().get(propName);
-            ((UIOutput) doubleInput).setValue(value != null ? df.format(value.doubleValue()) : "");
+            ((UIOutput) doubleInput).setValue(value != null ? INVOICE_DECIMAL_FORMAT.format(value.doubleValue()) : "");
             doubleInput.setId(getComponentId(transactionIndex, propName));
             childrenStyleClassAttribute.put(doubleInput.getId(), "trans-align-right");
         }
@@ -537,6 +621,9 @@ public class TransactionsBlockBean implements Serializable {
     }
 
     public List<Transaction> getTransactions() {
+        if (transactions == null) {
+            transactions = new ArrayList<Transaction>();
+        }
         return transactions;
     }
 

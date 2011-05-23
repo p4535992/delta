@@ -409,7 +409,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             formulas.put("seriesIdentifier", getAncestorProperty(document, SeriesModel.Types.SERIES, SeriesModel.Props.SERIES_IDENTIFIER));
             formulas.put("volumeTitle", getAncestorProperty(document, VolumeModel.Types.VOLUME, VolumeModel.Props.TITLE));
             formulas.put("volumeMark", getAncestorProperty(document, VolumeModel.Types.VOLUME, VolumeModel.Props.MARK));
-            String docUrl = applicationService.getServerUrl() + servletContext.getContextPath() + "/n/document/" + document.getId();
+            String docUrl = getDocumentUrl(document);
             formulas.put("docUrl", docUrl);
         }
 
@@ -462,6 +462,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             }
         }
         return formulas;
+    }
+
+    @Override
+    public String getDocumentUrl(NodeRef document) {
+        return applicationService.getServerUrl() + servletContext.getContextPath() + "/n/document/" + document.getId();
     }
 
     private String getTypeSpecificReplacement(Object object) {

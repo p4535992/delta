@@ -146,6 +146,14 @@ public interface UserService {
 
     String getAccountantsGroup();
 
+    /**
+     * @return true if user is in admin or accountant group
+     */
     boolean isAccountant();
+
+    /**
+     * @return true if user is in accountant group
+     */
+    boolean isInAccountantGroup();
 
 }

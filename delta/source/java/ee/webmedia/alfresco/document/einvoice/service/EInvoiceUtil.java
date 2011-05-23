@@ -1,12 +1,15 @@
 package ee.webmedia.alfresco.document.einvoice.service;
 
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
+import java.io.OutputStream;
+import java.io.Reader;
+import java.io.Writer;
+import java.util.List;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.bind.helpers.DefaultValidationEventHandler;
 import javax.xml.transform.stream.StreamSource;
@@ -14,7 +17,11 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
+import org.apache.commons.collections.BidiMap;
+import org.apache.commons.collections.bidimap.DualTreeBidiMap;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.account.generated.Ostuarve;
 import ee.webmedia.alfresco.document.einvoice.accountlist.generated.KontoNimekiri;
 import ee.webmedia.alfresco.document.einvoice.dimensionslist.generated.DimensioonideNimekiri;
@@ -23,6 +30,7 @@ import ee.webmedia.alfresco.document.einvoice.model.DimensionModel;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.document.einvoice.sellerslist.generated.HankijaNimekiri;
 import ee.webmedia.alfresco.document.einvoice.vatcodelist.generated.KaibemaksuKoodNimekiri;
+import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 
 public class EInvoiceUtil {
@@ -56,10 +64,13 @@ public class EInvoiceUtil {
 
     public static final Dimensions ACCOUNT_DIMENSION = Dimensions.INVOICE_ACCOUNTS;
     public static final Dimensions VAT_CODE_DIMENSION = Dimensions.TAX_CODE_ITEMS;
-    public static final Map<Parameters, Dimensions> DIMENSION_PARAMETERS;
+    /** TODO: actually it would be better to use generic bidirectional map (from guava? refactored Commons-Collections?) here */
+    public static final BidiMap /* <Parameters, Dimensions> */DIMENSION_PARAMETERS;
+
+    public static final String XXL_INVOICE_TYPE = "XXL";
 
     static {
-        DIMENSION_PARAMETERS = new HashMap<Parameters, Dimensions>();
+        DIMENSION_PARAMETERS = new DualTreeBidiMap /* <Parameters, Dimensions> */();
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_FUNDS_CENTERS, Dimensions.INVOICE_FUNDS_CENTERS);
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_COST_CENTERS, Dimensions.INVOICE_COST_CENTERS);
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_FUNDS, Dimensions.INVOICE_FUNDS);
@@ -118,6 +129,10 @@ public class EInvoiceUtil {
 
     public static Unmarshaller getVatCodesListUnmarshaller() throws JAXBException {
         return getUnmarshaller(vatCodesListJaxbContext, vatCodesListJaxbSchema);
+    }
+
+    public static Unmarshaller getAccountUnmarshaller() throws JAXBException {
+        return getUnmarshaller(accountJaxbContext, accountJaxbSchema);
     }
 
     public static Unmarshaller getUnmarshaller(JAXBContext jaxbContext, Schema jaxbSchema) throws JAXBException {
@@ -198,8 +213,92 @@ public class EInvoiceUtil {
         return accountsList;
     }
 
+    public static Ostuarve unmarshalAccount(InputStream input) {
+        Ostuarve account = null;
+        try {
+            account = (Ostuarve) getAccountUnmarshaller().unmarshal(input);
+        } catch (JAXBException e) {
+            LOG.debug("Failed to unmarshal account.", e);
+        }
+        return account;
+    }
+
+    public static Ostuarve unmarshalAccount(Reader reader) {
+        Ostuarve account = null;
+        try {
+            account = (Ostuarve) getAccountUnmarshaller().unmarshal(reader);
+        } catch (JAXBException e) {
+            LOG.debug("Failed to unmarshal account.", e);
+        }
+        return account;
+    }
+
+    /**
+     * Schema is not used because in certain cases jaxb xml generation erroneously fails although valid xml is generated.
+     * After marshalling with this method one should validate generated xml.
+     */
+    public static void marshalAccount(Ostuarve ostuarve, OutputStream outputStream) {
+        try {
+            getAccountMarshaller().marshal(ostuarve, outputStream);
+        } catch (JAXBException e) {
+            handleAccountMarshalException(e);
+        }
+    }
+
+    /**
+     * Schema is not used because in certain cases jaxb xml generation erroneously fails although valid xml is generated
+     * After marshalling with this method one should validate generated xml
+     */
+    public static void marshalAccount(Ostuarve ostuarve, Writer writer) {
+        try {
+            getAccountMarshaller().marshal(ostuarve, writer);
+        } catch (JAXBException e) {
+            handleAccountMarshalException(e);
+        }
+    }
+
+    private static void handleAccountMarshalException(JAXBException e) {
+        String message = "Failed to marshal account.";
+        LOG.debug(message, e);
+        throw new RuntimeException(message, e);
+    }
+
+    private static Marshaller getAccountMarshaller() throws JAXBException {
+        Marshaller marshaller = accountJaxbContext.createMarshaller();
+        // event handler to print error messages to log
+        marshaller.setEventHandler(new DefaultValidationEventHandler());
+        return marshaller;
+    }
+
     public static QName getDimensionAssocQName(String dimensionAssocName) {
         return QName.createQName(DimensionModel.URI, dimensionAssocName);
     }
 
+    /**
+     * @param transaction - if true try to parse account file, otherwise try to parse invoice file
+     * @return pair of first account xml file and number:
+     *         0 if no account file was found; 1 if exactly one account file was found;
+     *         2 if more than one account file was found
+     */
+    public static Pair<File, Integer> getTransOrInvoiceFileAndCount(List<File> files, boolean transaction) {
+        int transactionFileCount = 0;
+        File transactionFile = null;
+        for (File file : files) {
+            Object parsedFile = null;
+            if (transaction) {
+                parsedFile = unmarshalAccount(BeanHelper.getFileFolderService().getReader(file.getNodeRef()).getContentInputStream());
+            } else {
+                parsedFile = unmarshalEInvoice(BeanHelper.getFileFolderService().getReader(file.getNodeRef()).getContentInputStream());
+            }
+            if (parsedFile != null) {
+                transactionFileCount++;
+                if (transactionFile == null) {
+                    transactionFile = file;
+                } else {
+                    break;
+                }
+            }
+        }
+        return new Pair<File, Integer>(transactionFile, transactionFileCount);
+    }
 }

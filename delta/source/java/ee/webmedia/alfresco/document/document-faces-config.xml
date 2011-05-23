@@ -7,6 +7,11 @@
       new navigation rules * ... But NOT overrides of existing navigation rules (you must use META-INF/faces-config.xml for that) More information:
       http://wiki.alfresco.com/wiki/Packaging_And_Deploying_Extensions#JSF_configuration_files
    -->
+   
+   <component>
+      <component-type>ee.webmedia.alfresco.document.einvoice.web.SendManuallyToSapModalComponent</component-type>
+      <component-class>ee.webmedia.alfresco.document.einvoice.web.SendManuallyToSapModalComponent</component-class>
+   </component>   
 
    <managed-bean>
       <managed-bean-name>DocumentListDialog</managed-bean-name>

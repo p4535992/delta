@@ -87,6 +87,10 @@ public enum Parameters {
     ERRAND_ORDER_ABROAD_DAILY_ALLOWANCE_SUM("errandOrderAbroadDailyAllowanceSum"),
     SAP_FINANCIAL_DIMENSIONS_FOLDER_IN_DVK("sapFinancialDimensionsFolderInDvk"),
     SAP_CONTACT_UPDATE_TIME("sapContactUpdateTime"),
+    SAP_DVK_CODE("sapDvkCode"),
+    SEND_XXL_INVOICE_TO_DVK_FOLDER("sendXxlInvoiceToDvkFolder"),
+    SEND_INVOICE_TO_DVK_FOLDER("sendInvoiceToDvkFolder"),
+    SEND_PURCHASE_ORDER_INVOICE_TO_DVK_FOLDER("sendPurchaseOrderInvoiceToDvkFolder"),
 
     // dimension parameters
     DIMENSION_CODE_INVOICE_FUNDS_CENTERS("dimensionCodeInvoiceFundsCenters"),

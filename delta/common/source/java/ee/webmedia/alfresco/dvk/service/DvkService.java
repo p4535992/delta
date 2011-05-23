@@ -1,14 +1,19 @@
 package ee.webmedia.alfresco.dvk.service;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.document.einvoice.model.Transaction;
+import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
 import ee.webmedia.alfresco.workflow.service.Task;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
+import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
 /**
  * @author Ats Uiboupin
@@ -51,5 +56,11 @@ public interface DvkService {
     void sendDvkTask(Task task);
 
     String getInstitutionCode();
+
+    boolean isXmlMimetype(DataFileType dataFile);
+
+    String sendInvoiceFileToSap(Node document, File file);
+
+    String generateAndSendInvoiceFileToSap(Node node, List<Transaction> transactions) throws IOException;
 
 }

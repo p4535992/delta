@@ -125,25 +125,31 @@
    
    <config evaluator="aspect-name" condition="docspec:invoice">
       <property-sheet>
+         <separator name="invoice-separator" component-generator="SeparatorGenerator" />
          <show-property name="docspec:sellerPartyName" styleClass="expand19-200 medium" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchOrgContacts}" setterCallback="#{MetadataBlockBean.setSellerPartyName}" dialogTitleId="contacts_search_title" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" ajaxParentLevel="1" />
-         <show-property name="docspec:sellerPartyRegNumber" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:sellerPartyRegNumber" styleClass="expand19-200 medium" forcedMandatory="true" display="inline" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:sellerPartySapAccount" styleClass="expand19-200 medium" editable="false" />
          <show-property name="docspec:sellerPartyContactName" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
-         <show-property name="docspec:sellerPartyContactPhoneNumber" styleClass="width250" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
-         <show-property name="docspec:sellerPartyContactEmailAddress" styleClass="medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" labelStyleClass="wrap" />
+         <show-property name="docspec:sellerPartyContactPhoneNumber" styleClass="width250" display="inline" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:sellerPartyContactEmailAddress" styleClass="medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
          <show-property name="{temp}invoiceNumberDate" show-in-edit-mode="false" display-label-id="document_invoiceNumberDate" />
-         <show-property name="docspec:invoiceDate" component-generator="DatePickerGenerator" show-in-view-mode="false" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:invoiceDate" component-generator="DatePickerGenerator" show-in-view-mode="false" display="inline" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:invoiceNumber" show-in-view-mode="false" styleClass="medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
-         <show-property name="docspec:invoiceType" component-generator="ClassificatorSelectorGenerator" classificatorName="invoiceTypes" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
-         <show-property name="docspec:invoiceDueDate" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" forcedMandatory="true" />
+         <show-property name="docspec:invoiceType" component-generator="ClassificatorSelectorGenerator" classificatorName="invoiceTypes" descriptionAsLabel="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
+         <show-property name="{temp}xxlInvoice" show-in-edit-mode="false" display-label-id="document_empty_label" component-generator="UnescapedOutputTextGenerator" />
+         <show-property name="docspec:invoiceDueDate" component-generator="DatePickerGenerator" display="inline" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" forcedMandatory="true" />
          <show-property name="docspec:paymentTerm" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
-         <show-property name="docspec:totalSum" styleClass="medium invoiceTotalSum" forcedMandatory="true" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
-         <show-property name="docspec:vat" styleClass="medium invoiceVat" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
-         <show-property name="docspec:invoiceSum" styleClass="medium invoiceSum editable" read-only="true" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" />
-         <show-property name="docspec:currency" component-generator="ClassificatorSelectorGenerator" classificatorName="currency" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
+         <show-property name="{temp}invoiceTotalSum" show-in-edit-mode="false" display-label-id="document_invoiceTotalSum" />
+         <show-property name="docspec:totalSum" show-in-view-mode="false" styleClass="medium invoiceTotalSum" forcedMandatory="true" display="inline" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:currency" component-generator="ClassificatorSelectorGenerator" classificatorName="currency" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />         
+         <show-property name="docspec:invoiceSum" show-in-view-mode="false" styleClass="medium invoiceSum editable" read-only="true" display="inline" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" />
+         <show-property name="docspec:vat" show-in-view-mode="false" styleClass="medium invoiceVat" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>         
          <show-property name="docspec:paymentReferenceNumber" styleClass="medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:additionalInformationContent" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
          <show-property name="docspec:purchaseOrderSapNumber" styleClass="width250" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
+         <show-property name="{temp}entrySapDateAndNumber" show-in-edit-mode="false" display-label-id="document_invoiceEntrySapDateAndNumber" />
+         <show-property name="docspec:entryDate" show-in-view-mode="false" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotEditable}"/>
+         <show-property name="docspec:entrySapNumber" show-in-view-mode="false" editable="false" />
       </property-sheet>      
    </config>
 
@@ -916,11 +922,15 @@
    <config evaluator="aspect-name" condition="docspec:vacationOrderV2">
       <property-sheet>
          <show-property name="docspec:leaveType" styleClass="add-item vacationLeave" labelStyleClass="wrap" display-label-id="document_vacationAdd" component-generator="MultiValueEditorGenerator" addLabelId="add" readOnlyIf="" 
-            propsGeneration="
+            propertiesSeparator="£" propsGeneration="
              docspec:leaveType¤ClassificatorSelectorGenerator¤classificatorName=leaveType¤descriptionAsLabel=true¤styleClass=medium¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveBeginDates¤¤styleClass=date beginTotalCount¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveEndDates¤¤styleClass=date endTotalCount¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveDays¤¤styleClass=small totalDays¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+             ¤mandatoryIfAllMandatory=true¤mandatoryIf=docspec:leaveBeginDates!=null,docspec:leaveEndDates!=null,docspec:leaveDays!=null
+            £docspec:leaveBeginDates¤¤styleClass=date beginTotalCount¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+             ¤mandatoryIfAllMandatory=true¤mandatoryIf=docspec:leaveEndDates!=null,docspec:leaveType!=null,docspec:leaveDays!=null
+            £docspec:leaveEndDates¤¤styleClass=date endTotalCount¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+             ¤mandatoryIfAllMandatory=true¤mandatoryIf=docspec:leaveBeginDates!=null,docspec:leaveType!=null,docspec:leaveDays!=null
+            £docspec:leaveDays¤¤styleClass=small totalDays¤mandatoryIf=docspec:leaveType!=null¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+             ¤mandatoryIfAllMandatory=true¤mandatoryIf=docspec:leaveBeginDates!=null,docspec:leaveEndDates!=null,docspec:leaveType!=null
             "
          />
       </property-sheet>
@@ -995,18 +1005,28 @@
    <config evaluator="aspect-name" condition="docspec:vacationOrderV2">
       <property-sheet>
          <show-property name="docspec:leaveChangeDays" addLabelId="add" styleClass="add-item leaveChange" labelStyleClass="wrap" display-label-id="document_vacationChange" component-generator="MultiValueEditorGenerator"
-         propsGeneration="docspec:leaveInitialBeginDates¤¤styleClass=date¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveInitialEndDates¤¤styleClass=date¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveNewBeginDates¤¤styleClass=date beginTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveNewEndDates¤¤styleClass=date endTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveChangeDays¤¤styleClass=small totalDays¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+         propertiesSeparator="£"
+         propsGeneration="docspec:leaveInitialBeginDates¤¤styleClass=date¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIfAllMandatory=true
+            ¤mandatoryIf=docspec:leaveInitialEndDates!=null,docspec:leaveNewBeginDates!=null,docspec:leaveNewEndDates!=null,docspec:leaveChangeDays!=null
+            £docspec:leaveInitialEndDates¤¤styleClass=date¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIfAllMandatory=true
+            ¤mandatoryIf=docspec:leaveInitialBeginDates!=null,docspec:leaveNewBeginDates!=null,docspec:leaveNewEndDates!=null,docspec:leaveChangeDays!=null
+            £docspec:leaveNewBeginDates¤¤styleClass=date beginTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIfAllMandatory=true
+            ¤mandatoryIf=docspec:leaveInitialBeginDates!=null,docspec:leaveInitialEndDates!=null,docspec:leaveNewEndDates!=null,docspec:leaveChangeDays!=null
+            £docspec:leaveNewEndDates¤¤styleClass=date endTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIfAllMandatory=true
+            ¤mandatoryIf=docspec:leaveInitialBeginDates!=null,docspec:leaveNewBeginDates!=null,docspec:leaveInitialEndDates!=null,docspec:leaveChangeDays!=null
+            £docspec:leaveChangeDays¤¤styleClass=small totalDays¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}¤mandatoryIfAllMandatory=true
+            ¤mandatoryIf=docspec:leaveInitialBeginDates!=null,docspec:leaveNewBeginDates!=null,docspec:leaveNewEndDates!=null,docspec:leaveInitialEndDates!=null
           "
           />
           
          <show-property name="docspec:leaveCancelledDays" addLabelId="add" styleClass="add-item leaveCancel" labelStyleClass="wrap" display-label-id="document_vacationCancel" component-generator="MultiValueEditorGenerator"
-         propsGeneration="docspec:leaveCancelBeginDates¤¤styleClass=date beginTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveCancelEndDates¤¤styleClass=date endTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
-            ,docspec:leaveCancelledDays¤¤styleClass=small totalDays¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+         propertiesSeparator="£" propsGeneration="
+             docspec:leaveCancelBeginDates¤¤styleClass=date beginTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+             ¤mandatoryIfAllMandatory=true¤mandatoryIf=docspec:leaveCancelEndDates!=null,docspec:leaveCancelledDays!=null
+            £docspec:leaveCancelEndDates¤¤styleClass=date endTotalCount¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+             ¤mandatoryIfAllMandatory=true¤mandatoryIf=docspec:leaveCancelBeginDates!=null,docspec:leaveCancelledDays!=null
+            £docspec:leaveCancelledDays¤¤styleClass=small totalDays¤readOnlyIf=#{DocumentDialog.isNotWorkingOrNotEditable}
+             ¤mandatoryIfAllMandatory=true¤mandatoryIf=docspec:leaveCancelEndDates!=null,docspec:leaveCancelBeginDates!=null
           "
           />
        </property-sheet>

@@ -572,8 +572,8 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             if (StringUtils.equals(accessRestriction, AccessRestriction.OPEN.getValueName())) {
                 String docIsPublic = MessageUtil.getMessage("manage_permissions_extraInfo_documentIsPublic");
                 for (UserPrivilegesRow row : userPrivilegesRows) {
-                    row.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, docIsPublic);
-                    row.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
+                    // row.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, docIsPublic);
+                    // row.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
                 }
             }
         }

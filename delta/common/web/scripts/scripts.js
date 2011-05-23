@@ -888,16 +888,18 @@ $jQ(document).ready(function() {
          return;
       }
       var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
-      if (elem.hasClass("beginTotalCount")) {
+      if (elem.hasClass("beginTotalCount") && elem.val() != "") {
          var endDate = row.find(".endTotalCount");
          if (endDate.val() != "") {
             totalDays.val((endDate.datepicker('getDate') - elem.datepicker('getDate') + oneDay) / oneDay);
          }
-      } else if (elem.hasClass("endTotalCount")) {
+      } else if (elem.hasClass("endTotalCount") && elem.val() != "") {
          var beginDate = row.find(".beginTotalCount");
          if (beginDate.val() != "") {
             totalDays.val((elem.datepicker('getDate') - beginDate.datepicker('getDate') + oneDay) / oneDay);
          }
+      } else if (row.find(".beginTotalCount").val() == "" || row.find(".endTotalCount").val() == "") {
+         totalDays.val("");
       }
   });
 
@@ -1440,4 +1442,8 @@ function isActiveXOK(plugin) {
     return false;
 
  return true;
+}
+
+function sendToSapManually(){
+   return showModal('entrySapNumber_popup');
 }

@@ -38,6 +38,7 @@ import org.apache.xml.security.exceptions.Base64DecodingException;
 import org.apache.xml.security.utils.Base64;
 import org.apache.xmlbeans.XmlException;
 import org.apache.xmlbeans.XmlObject;
+import org.springframework.util.Assert;
 import org.w3c.dom.NodeList;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
@@ -46,6 +47,7 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.classificator.enums.VolumeType;
+import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
@@ -273,6 +275,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             NodeRef receivedInvoiceFolder = generalService.getNodeRef(documentService.getReceivedInvoicePath());
             // read invoice(s) from attachments
             Map<NodeRef, Integer> invoiceRefToDatafile = new HashMap<NodeRef, Integer>();
+            Map<NodeRef, Integer> transactionRefToDataFile = new HashMap<NodeRef, Integer>();
             Integer dataFileIndex = 0;
             for (DataFileType dataFile : dataFileList) {
                 if (isXmlMimetype(dataFile)) {
@@ -285,12 +288,14 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                 }
                 dataFileIndex++;
             }
+            transactionRefToDataFile = einvoiceService.importTransactionsForInvoices(newInvoices, dataFileList);
             for (NodeRef invoiceRef : newInvoices) {
                 documentLogService.addDocumentLog(invoiceRef, I18NUtil.getMessage("document_log_status_imported"
                         , I18NUtil.getMessage("document_log_creator_dvk")), I18NUtil.getMessage("document_log_creator_dvk"));
                 dataFileIndex = 0;
                 for (DataFileType dataFile : dataFileList) {
-                    if (!invoiceRefToDatafile.containsValue(dataFileIndex) || invoiceRefToDatafile.get(invoiceRef).equals(dataFileIndex)) {
+                    if ((!transactionRefToDataFile.containsValue(dataFileIndex) || transactionRefToDataFile.get(invoiceRef).equals(dataFileIndex))
+                            && (!invoiceRefToDatafile.containsValue(dataFileIndex) || invoiceRefToDatafile.get(invoiceRef).equals(dataFileIndex))) {
                         storeFile(rd, invoiceRef, dataFile);
                     }
                     dataFileIndex++;
@@ -303,6 +308,34 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    protected NodeRef importSapInvoiceRegistration(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList) {
+        if (!einvoiceService.isEinvoiceEnabled()) {
+            return null;
+        }
+        try {
+            for (DataFileType dataFile : dataFileList) {
+                if (isXmlMimetype(dataFile)) {
+                    InputStream input = new ByteArrayInputStream(Base64.decode(dataFile.getStringValue()));
+                    Pair<String, String> docUrlAndErpDocNumber = einvoiceService.getDocUrlAndErpDocNumber(dataFile.getStringValue());
+                    if (docUrlAndErpDocNumber != null) {
+                        NodeRef updatedDoc = einvoiceService.updateDocumentEntrySapNumber(docUrlAndErpDocNumber.getFirst(), docUrlAndErpDocNumber.getSecond());
+                        if (updatedDoc == null) {
+                            // throw exception if document was parsed sucessfully, but related document could not be found
+                            String message = "Failed to find document with url " + docUrlAndErpDocNumber.getFirst() + ", saving dvk document to failed dvk folder.";
+                            log.error(message);
+                            throw new RuntimeException(message);
+                        }
+                        return updatedDoc;
+                    }
+                }
+            }
+        } catch (Base64DecodingException e) {
+            throw new RuntimeException("Failed to decode", e);
+        }
+        return null;
     }
 
     @Override
@@ -335,7 +368,8 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         return dimensionNodes;
     }
 
-    protected boolean isXmlMimetype(DataFileType dataFile) {
+    @Override
+    public boolean isXmlMimetype(DataFileType dataFile) {
         String mimeType = mimetypeService.guessMimetype(dataFile.getFilename());
         boolean isXmlMimetype = MimetypeMap.MIMETYPE_XML.equalsIgnoreCase(mimeType);
         return isXmlMimetype;
@@ -625,6 +659,26 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             nodeService.setProperty(task.getNode().getNodeRef(), WorkflowSpecificModel.Props.SENT_DVK_ID, dvkId);
             nodeService.setProperty(task.getNode().getNodeRef(), WorkflowSpecificModel.Props.SEND_STATUS, SendStatus.SENT);
         }
+    }
+
+    @Override
+    public String sendInvoiceFileToSap(Node document, File file) {
+        Collection<ContentToSend> contentsToSend = einvoiceService.createContentToSend(file);
+        String folder = einvoiceService.getTransactionDvkFolder(document);
+        final Collection<String> recipientsRegNrs = new ArrayList<String>();
+        recipientsRegNrs.add(parametersService.getStringParameter(Parameters.SAP_DVK_CODE));
+        verifyEnoughData(contentsToSend, recipientsRegNrs, true);
+        final Set<String> sendDocuments = dhlXTeeService.sendDocuments(contentsToSend, getRecipients(recipientsRegNrs), getSenderAddress(),
+                new DhsSendInvoiceToSapCallback(), getSendDocumentToFolderRequestCallback(folder));
+        Assert.isTrue(1 == sendDocuments.size(), "Supprise! Size of sendDocuments is " + sendDocuments.size());
+        String dvkId = sendDocuments.iterator().next();
+        sendOutService.addSapSendInfo(document, dvkId);
+        return dvkId;
+    }
+
+    @Override
+    public String generateAndSendInvoiceFileToSap(Node node, List<Transaction> transactions) throws IOException {
+        return sendInvoiceFileToSap(node, einvoiceService.generateTransactionXmlFile(node, transactions));
     }
 
     @Override

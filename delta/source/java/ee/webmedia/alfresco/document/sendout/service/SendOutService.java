@@ -7,6 +7,7 @@ import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.workflow.service.CompoundWorkflow;
@@ -70,5 +71,7 @@ public interface SendOutService {
     public String buildZipFileName(Map<QName, Serializable> docProperties);
 
     List<SendInfo> getDocumentAndTaskSendInfos(NodeRef document, List<CompoundWorkflow> compoundWorkflows);
+
+    void addSapSendInfo(Node document, String dvkId);
 
 }

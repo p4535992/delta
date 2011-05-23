@@ -109,7 +109,15 @@ public class Transaction implements Serializable {
         node.getProperties().put(TransactionModel.Props.INVOICE_TAX_CODE.toString(), invoiceTaxCode);
     }
 
-    public String getTraidingPartnerCode() {
+    public Integer getInvoiceTaxPercent() {
+        return (Integer) node.getProperties().get(TransactionModel.Props.INVOICE_TAX_PERCENT);
+    }
+
+    public void setInvoiceTaxPercent(Integer invoiceTaxPercent) {
+        node.getProperties().put(TransactionModel.Props.INVOICE_TAX_PERCENT.toString(), invoiceTaxPercent);
+    }
+
+    public String getTradingPartnerCode() {
         return (String) node.getProperties().get(TransactionModel.Props.TRADING_PARTNER_CODE);
     }
 

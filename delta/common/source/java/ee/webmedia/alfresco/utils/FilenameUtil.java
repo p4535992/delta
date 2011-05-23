@@ -9,6 +9,8 @@ import org.alfresco.repo.content.MimetypeMap;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
+
 /**
  * Helps to strip illegal characters from filenames
  * 
@@ -85,6 +87,10 @@ public class FilenameUtil {
         return NON_ASCII.matcher(filename).replaceAll(replace);
     }
 
+    public static String getDvkFilename(DataFileType dataFile) {
+        return dataFile.getId() + " " + dataFile.getFilename();
+    }
+
     /**
      * Shortens the given filename by taking first part that fits in limit and inserts the marker between base name and extension
      * 
@@ -116,7 +122,7 @@ public class FilenameUtil {
     public static String makeSafeFilename(String name, int maxLength, String maxLengthSufix, String nonAsciiReplacement, List<String> existingFileNames) {
         maxLengthSufix = (maxLengthSufix == null) ? "...." : maxLengthSufix;
         nonAsciiReplacement = (nonAsciiReplacement == null) ? "_" : nonAsciiReplacement;
-        
+
         String safeName = replaceNonAsciiCharacters(
                             removeAccents(
                             replaceAmpersand(

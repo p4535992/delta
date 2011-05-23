@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.common.propertysheet.dimensionselector;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -33,7 +32,6 @@ public class DimensionSelectorGenerator extends ClassificatorSelectorGenerator {
         NodeRef dimensionRef = BeanHelper.getEInvoiceService().getDimension(Dimensions.get(dimensionName));
         if (dimensionRef != null) {
             List<DimensionValue> dimensions = BeanHelper.getEInvoiceService().getActiveDimensionValues(dimensionRef);
-            Collections.sort(dimensions);
             if (filter != null) {
                 valueProviders.addAll(CollectionUtils.select(dimensions, filter));
             } else {

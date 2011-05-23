@@ -55,6 +55,8 @@ public class SendOutServiceImpl implements SendOutService {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(SendOutServiceImpl.class);
 
+    private static final String SAP_ORG_NAME = "SAP";
+
     private NodeService nodeService;
     private GeneralService generalService;
     private EmailService emailService;
@@ -348,6 +350,18 @@ public class SendOutServiceImpl implements SendOutService {
 
     public void setWorkflowService(WorkflowService workflowService) {
         this.workflowService = workflowService;
+    }
+
+    @Override
+    public void addSapSendInfo(Node document, String dvkId) {
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>();
+        props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT, SAP_ORG_NAME);
+        props.put(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR, parametersService.getStringParameter(Parameters.SAP_DVK_CODE));
+        props.put(DocumentCommonModel.Props.SEND_INFO_SEND_DATE_TIME, new Date());
+        props.put(DocumentCommonModel.Props.SEND_INFO_SEND_MODE, SendMode.DVK.getValueName());
+        props.put(DocumentCommonModel.Props.SEND_INFO_SEND_STATUS, SendStatus.SENT.toString());
+        props.put(DocumentCommonModel.Props.SEND_INFO_DVK_ID, dvkId);
+        addSendinfo(document.getNodeRef(), props);
     }
 
     // END: getters / setters

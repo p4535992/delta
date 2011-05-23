@@ -205,6 +205,9 @@ public interface DocumentSpecificModel {
         QName PAYMENT_REFERENCE_NUMBER = QName.createQName(URI, "paymentReferenceNumber");
         QName PURCHASE_ORDER_SAP_NUMBER = QName.createQName(URI, "purchaseOrderSapNumber");
         QName CONTRACT_NUMBER = QName.createQName(URI, "contractNumber");
+        QName XXL_INVOICE = QName.createQName(URI, "xxlInvoice");
+        QName ENTRY_SAP_NUMBER = QName.createQName(URI, "entrySapNumber");
+        QName ENTRY_DATE = QName.createQName(URI, "entryDate");
         // END: properties of INVOICE
         QName SENDER_REG_NUMBER = QName.createQName(URI, "senderRegNumber");
         QName SENDER_REG_DATE = QName.createQName(URI, "senderRegDate");

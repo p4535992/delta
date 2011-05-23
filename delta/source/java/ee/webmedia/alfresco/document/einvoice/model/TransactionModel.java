@@ -27,6 +27,7 @@ public interface TransactionModel {
         QName POSTING_KEY = QName.createQName(URI, "postingKey");
         QName ACCOUNT = QName.createQName(URI, "account");
         QName INVOICE_TAX_CODE = QName.createQName(URI, "invoiceTaxCode");
+        QName INVOICE_TAX_PERCENT = QName.createQName(URI, "invoiceTaxPercent");
         QName TRADING_PARTNER_CODE = QName.createQName(URI, "traidingPartnerCode");
         QName FUNCTIONAL_ARE_CODE = QName.createQName(URI, "functionalAreaCode");
         QName CASH_FLOW_CODE = QName.createQName(URI, "cashFlowCode");

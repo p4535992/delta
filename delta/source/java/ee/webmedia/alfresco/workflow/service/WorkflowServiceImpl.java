@@ -1203,6 +1203,43 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
+    public boolean hasUnfinishedReviewTasks(NodeRef docNode) {
+        for (CompoundWorkflow compoundWorkflow : getCompoundWorkflows(docNode)) {
+            if (!compoundWorkflow.isStatus(Status.NEW, Status.IN_PROGRESS, Status.STOPPED)) {
+                continue;
+            }
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                if (workflow.isType(WorkflowSpecificModel.Types.REVIEW_WORKFLOW, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
+                    for (Task task : workflow.getTasks()) {
+                        if (task.isStatus(Status.NEW, Status.IN_PROGRESS, Status.STOPPED)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
+    public void finishUserActiveResponsibleInProgressTask(NodeRef docRef, String comment) {
+        for (CompoundWorkflow compoundWorkflow : getCompoundWorkflows(docRef)) {
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                for (Task task : workflow.getTasks()) {
+                    if (!isStatus(task, Status.IN_PROGRESS)) {
+                        continue;
+                    }
+                    if (isStatus(task, Status.IN_PROGRESS) && isActiveResponsible(task) && isOwner(task)) {
+                        task.setComment(comment);
+                        finishInProgressTask(task, 0);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public void setTaskOwner(NodeRef task, String ownerId) {
         if (!dictionaryService.isSubClass(nodeService.getType(task), WorkflowCommonModel.Types.TASK)) {
             throw new RuntimeException("Node is not a task: " + task);

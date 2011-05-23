@@ -683,7 +683,7 @@
 			<fileset dir="${project.dir.build}/${name}" includes="**/*.java"/>
 		</replaceregexp>
 		<replaceregexp match="@XmlElement\(" replace="@XmlElement\(namespace=&quot;${rootNamespace}&quot;, " flags="g" >
-			<fileset dir="${project.dir.build}/${name}" includes="**/DimensioonideNimekiri.java,**/Dimensioon.java"/>
+			<fileset dir="${project.dir.build}/${name}" includes="**/DimensioonideNimekiri.java,**/dimensionslist/*/Dimensioon.java"/>
 		</replaceregexp>
 		<replaceregexp match="@XmlElement\(name = &quot;Nimetus&quot;" replace="@XmlElement\(name = &quot;Nimetus&quot;, namespace=&quot;${rootNamespace}&quot;" flags="g" >
 			<fileset dir="${project.dir.build}/${name}" includes="**/Vaartus.java"/>

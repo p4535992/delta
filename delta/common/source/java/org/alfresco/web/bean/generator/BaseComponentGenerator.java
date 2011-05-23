@@ -240,6 +240,8 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             MandatoryIfValidator validator = new MandatoryIfValidator(mandatoryIfValue);
             String mandatoryIfLabelId = (propertySheetItemAttributes != null ? propertySheetItemAttributes.get(MandatoryIfValidator.ATTR_MANDATORY_IF_LABEL_ID) : null);
             validator.setMandatoryIfLabelId(mandatoryIfLabelId);
+            boolean allMandatory = (propertySheetItemAttributes != null ? Boolean.valueOf(propertySheetItemAttributes.get(MandatoryIfValidator.ATTR_MANDATORY_IF_ALL_MANDATORY)) : false);
+            validator.setAllMandatory(allMandatory);
             component.addValidator(validator);
             if (logger.isDebugEnabled()) {
                 logger.debug("Adding MandatoryIfValidator based on property with name '" + mandatoryIfValue + "' to component with id '" + component.getId()

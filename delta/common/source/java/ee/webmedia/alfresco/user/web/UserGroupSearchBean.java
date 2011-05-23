@@ -44,7 +44,7 @@ public class UserGroupSearchBean implements Serializable {
     }
 
     public SelectItem[] searchUsersGroups(int filterIndex, String contains) {
-        return searchGroups(filterIndex, contains, false);
+        return searchUsersGroups(filterIndex, contains, false);
     }
 
     public SelectItem[] searchUsersGroupsWithAdminsAndDocManagers(int filterIndex, String contains) {

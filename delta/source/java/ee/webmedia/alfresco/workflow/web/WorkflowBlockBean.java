@@ -503,6 +503,7 @@ public class WorkflowBlockBean implements Serializable {
                 saveButton.setId("save-id-" + node.getId());
                 saveButton.setActionListener(app.createMethodBinding("#{DocumentDialog.workflow.saveTask}", new Class[] { ActionEvent.class }));
                 saveButton.setValue(MessageUtil.getMessage("task_save_" + taskType.getLocalName()));
+                saveButton.setStyleClass("taskOutcome");
                 saveButton.getAttributes().put(ATTRIB_INDEX, index);
 
                 panelGrid.getChildren().add(saveButton);
@@ -572,12 +573,12 @@ public class WorkflowBlockBean implements Serializable {
 
     private boolean checkRights(Workflow workflow) {
         boolean localRights = getUserService().isDocumentManager()
-                || getDocumentService().isDocumentOwner(docRef, AuthenticationUtil.getRunAsUser())
-                || getWorkflowService().isOwner(workflow.getParent())
-                || getWorkflowService().isOwnerOfInProgressAssignmentTask(workflow.getParent());
+        || getDocumentService().isDocumentOwner(docRef, AuthenticationUtil.getRunAsUser())
+        || getWorkflowService().isOwner(workflow.getParent())
+        || getWorkflowService().isOwnerOfInProgressAssignmentTask(workflow.getParent());
         boolean externalReviewRights = !workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)
-                || !Boolean.TRUE.equals(document.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE))
-                || !hasCurrentInstitutionTask(workflow);
+        || !Boolean.TRUE.equals(document.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE))
+        || !hasCurrentInstitutionTask(workflow);
         return localRights && externalReviewRights;
     }
 
@@ -635,7 +636,7 @@ public class WorkflowBlockBean implements Serializable {
     protected UserService getUserService() {
         if (userService == null) {
             userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(UserService.BEAN_NAME);
+            .getBean(UserService.BEAN_NAME);
         }
         return userService;
     }
@@ -643,7 +644,7 @@ public class WorkflowBlockBean implements Serializable {
     protected DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentService.BEAN_NAME);
+            .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
     }
@@ -659,7 +660,7 @@ public class WorkflowBlockBean implements Serializable {
     protected FileService getFileService() {
         if (fileService == null) {
             fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(FileService.BEAN_NAME);
+            .getBean(FileService.BEAN_NAME);
         }
         return fileService;
     }

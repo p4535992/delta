@@ -184,4 +184,8 @@ public interface WorkflowService {
 
     void addOtherCompundWorkflows(CompoundWorkflow compoundWorkflow);
 
+    void finishUserActiveResponsibleInProgressTask(NodeRef docRef, String comment);
+
+    boolean hasUnfinishedReviewTasks(NodeRef docNode);
+
 }

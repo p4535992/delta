@@ -2,15 +2,15 @@ package ee.webmedia.alfresco.signature.web;
 
 import java.io.IOException;
 
+import javax.faces.component.UICommand;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
-import org.alfresco.web.ui.common.component.UIOutputText;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
 
-public class SignatureAppletModalComponent extends UIOutputText {
+public class SignatureAppletModalComponent extends UICommand {
 
     private String operation = "";
     private String digestHex = "";

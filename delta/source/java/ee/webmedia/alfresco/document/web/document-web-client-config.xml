@@ -298,6 +298,21 @@
                <param name="nodeRef">#{DocumentDialog.node.nodeRef}</param>
             </params>
          </action>
+         
+         <action id="document_sendToSap">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.SendEInvoiceToSapEvaluator</evaluator>
+            <label-id>document_sendToSap</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>#{DocumentDialog.action}</action>
+            <action-listener>#{DocumentDialog.sendToSap}</action-listener>
+         </action>
+         
+         <action id="document_sendToSapManually">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.SendEInvoiceToSapManuallyEvaluator</evaluator>
+            <label-id>document_sendToSapManually</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <onclick>sendToSapManually(); return false;</onclick>
+         </action> 
 
          <action id="dvk_receive">
             <label-id>dvk_receive</label-id>
@@ -335,6 +350,8 @@
             <action idref="document_favorites_add"/>
             <action idref="document_favorites_remove"/>
             <action idref="document_manage_permissions" />
+            <action idref="document_sendToSap" />
+            <action idref="document_sendToSapManually" />
          </action-group>
 
         <action-group id="document_more_actions">

@@ -15,7 +15,7 @@
                   <cl:byDefault>true</cl:byDefault>
                   <cl:readOnly>true</cl:readOnly>
                   <cl:active>true</cl:active>
-                  <cl:classificatorDescription>deebetarve</cl:classificatorDescription>
+                  <cl:classificatorDescription>Ostuarve</cl:classificatorDescription>
                </view:properties>
             </cl:classificatorValue>
 
@@ -26,7 +26,7 @@
                   <cl:byDefault>false</cl:byDefault>
                   <cl:readOnly>true</cl:readOnly>
                   <cl:active>true</cl:active>
-                  <cl:classificatorDescription>kreeditarve</cl:classificatorDescription>
+                  <cl:classificatorDescription>Kreeditarve</cl:classificatorDescription>
                </view:properties>
             </cl:classificatorValue>
 

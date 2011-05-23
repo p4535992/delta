@@ -16,6 +16,9 @@
       <property name="generalService" ref="GeneralService" />
       <property name="parametersService" ref="ParametersService" />
       <property name="documentTypeService" ref="DocumentTypeService" />
+      <property name="documentTemplateService" ref="DocumentTemplateService" />
+      <property name="fileService" ref="FileService" />
+      <property name="dvkService" ref="DvkService" />
       <property name="dimensionsPath" value="${dimensions.parent.folder.xpath}${dimensions.folder.name}" />
    </bean>
    
@@ -87,7 +90,28 @@
             </props>
          </list>
       </property>
-   </bean>   
+   </bean>
+   
+   <bean id="einvoiceParametersBootstrap1" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="einvoiceParametersBootstrap1" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/einvoice/bootstrap/einvoice-parameters1.xml</prop>
+               <prop key="encoding">UTF-8</prop>
+            </props>
+         </list>
+      </property>
+   </bean>  
    
    <bean id="dimensionModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
       <property name="models">

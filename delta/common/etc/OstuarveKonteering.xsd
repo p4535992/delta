@@ -215,7 +215,7 @@
 						<xs:documentation>Konteeritava summa netoväärtus. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
 					</xs:annotation>
 				</xs:element>
-				<xs:element minOccurs="0" maxOccurs="10" ref="Dimensioon">
+				<xs:element minOccurs="0" maxOccurs="30" ref="Dimensioon">
 					<xs:annotation>
 						<xs:documentation>Raamatupidamise analüütika tasemete, ehk dimensioonide sisu kajastamiseks vajalike elementide blokk (vastavalt konkreetses lahenduses kasutatavatele koodidele, see saadakse läbi dimensioonide nimekirja sünkroniseerimise süsteemide vahel)</xs:documentation>
 					</xs:annotation>

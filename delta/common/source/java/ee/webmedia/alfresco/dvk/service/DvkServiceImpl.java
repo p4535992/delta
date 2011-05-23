@@ -39,14 +39,17 @@ import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.dvk.model.DvkModel;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedDocumentImpl;
 import ee.webmedia.alfresco.dvk.model.DvkReceivedLetterDocument;
 import ee.webmedia.alfresco.dvk.model.DvkSendLetterDocuments;
 import ee.webmedia.alfresco.dvk.model.DvkSendWorkflowDocuments;
+import ee.webmedia.alfresco.dvk.model.IDocument;
 import ee.webmedia.alfresco.dvk.service.ExternalReviewException.ExceptionType;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
@@ -287,6 +290,10 @@ public abstract class DvkServiceImpl implements DvkService {
             if (invoiceNodes.size() > 0) {
                 return invoiceNodes;
             }
+            NodeRef sapRegisteredDoc = importSapInvoiceRegistration(rd, dhlDokument, dhlId, dataFileList);
+            if (sapRegisteredDoc != null) {
+                return Arrays.asList(sapRegisteredDoc);
+            }
             fillLetterData(rd, dhlDokument);
             String documentFolderName;
             if (StringUtils.isNotBlank(rd.getLetterSenderTitle())) {
@@ -356,10 +363,10 @@ public abstract class DvkServiceImpl implements DvkService {
     }
 
     protected NodeRef storeFile(DvkReceivedLetterDocument rd, NodeRef documentFolder, DataFileType dataFile) throws IOException {
-        String filename = dataFile.getId() + " " + dataFile.getFilename();
+        String filename = FilenameUtil.getDvkFilename(dataFile);
         log.info("writing file '" + filename + "' from dvk document with dvkId '" + dataFile.getId() + "' to repository space: '"
                 + receivedDvkDocumentsPath + "'");
-        NodeRef file = createFileNode(rd, documentFolder, filename);
+        NodeRef file = createFileNode(documentFolder, filename);
 
         final ContentWriter writer = fileFolderService.getWriter(file);
         String originalMimeType = StringUtils.lowerCase(dataFile.getMimeType());
@@ -389,7 +396,7 @@ public abstract class DvkServiceImpl implements DvkService {
      * @param filename
      * @return
      */
-    protected NodeRef createFileNode(DvkReceivedLetterDocument rd, NodeRef documentFolder, String filename) {
+    protected NodeRef createFileNode(NodeRef documentFolder, String filename) {
         return fileFolderService.create(documentFolder, filename, ContentModel.TYPE_CONTENT).getNodeRef();
     }
 
@@ -455,6 +462,8 @@ public abstract class DvkServiceImpl implements DvkService {
 
     abstract protected List<NodeRef> importDimensionData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList);
 
+    abstract protected NodeRef importSapInvoiceRegistration(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList);
+
     @Override
     public String sendLetterDocuments(NodeRef document, Collection<ContentToSend> contentsToSend, final DvkSendLetterDocuments sd) {
         final Collection<String> recipientsRegNrs = sd.getRecipientsRegNrs();
@@ -490,17 +499,36 @@ public abstract class DvkServiceImpl implements DvkService {
         return sendDocuments.iterator().next();
     }
 
+    @Override
+    public abstract String sendInvoiceFileToSap(Node document, File file);
+
     public SendDocumentsRequestCallback getSendDocumentRequestCallback() {
         return new SendDocumentsRequestCallback() {
 
             @Override
-            public void doWithRequest(SendDocumentsV2RequestType dokumentDocument) {
-                final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
-                final Calendar retainCal = Calendar.getInstance();
-                retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
-                dokumentDocument.setSailitustahtaeg(retainCal);
+            public void doWithRequest(SendDocumentsV2RequestType request) {
+                setSailitustahtaeg(request);
             }
         };
+    }
+
+    public SendDocumentsRequestCallback getSendDocumentToFolderRequestCallback(final String folder) {
+        return new SendDocumentsRequestCallback() {
+            @Override
+            public void doWithRequest(SendDocumentsV2RequestType request) {
+                setSailitustahtaeg(request);
+                if (StringUtils.isNotBlank(folder)) {
+                    request.setKaust(folder);
+                }
+            }
+        };
+    }
+
+    private void setSailitustahtaeg(SendDocumentsV2RequestType request) {
+        final Long dvkRetainDaysPeriod = parametersService.getLongParameter(Parameters.DVK_RETAIN_PERIOD);
+        final Calendar retainCal = Calendar.getInstance();
+        retainCal.add(Calendar.DAY_OF_MONTH, dvkRetainDaysPeriod.intValue());
+        request.setSailitustahtaeg(retainCal);
     }
 
     public void verifyEnoughData(Collection<ContentToSend> contentsToSend, final Collection<String> recipientsRegNrs, boolean requireFiles) {
@@ -518,7 +546,7 @@ public abstract class DvkServiceImpl implements DvkService {
         return dhlXTeeService.getDvkOrganizationsHelper().getOrganizationName(addresseeRegNum);
     }
 
-    private AadressType[] getRecipients(Collection<String> recipientsRegNrs) {
+    protected AadressType[] getRecipients(Collection<String> recipientsRegNrs) {
         AadressType[] recipients = new AadressType[recipientsRegNrs.size()];
         int i = 0;
         for (String regNr : recipientsRegNrs) {
@@ -530,7 +558,7 @@ public abstract class DvkServiceImpl implements DvkService {
         return recipients;
     }
 
-    private AadressType getSenderAddress() {
+    protected AadressType getSenderAddress() {
         AadressType sender = AadressType.Factory.newInstance();
         sender.setRegnr(propertiesResolver.getProperty("x-tee.institution"));
         // sender.setAsutuseNimi(senderName); // set in DhlXTeeServiceImpl.constructDokumentDocument() based on regNr
@@ -636,20 +664,7 @@ public abstract class DvkServiceImpl implements DvkService {
 
             final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
             final Transport transport = dhlDokument.getTransport();
-            // add senders information
-            final AadressType transportSaatja = transport.getSaatja();
-            final String senderRegNr = dvkSendDocuments.getSenderRegNr();
-            if (StringUtils.isNotBlank(senderRegNr)) { // use senderRegNr from X-Tee conf if senderRegNr not given
-                transportSaatja.setRegnr(senderRegNr);
-            }
-            String senderOrgName = dvkSendDocuments.getSenderOrgName();
-            // use default senderOrgName (from DVK capable orgs list) if senderOrgName not given
-            senderOrgName = StringUtils.isNotBlank(senderOrgName) ? senderOrgName : transportSaatja.getAsutuseNimi();
-
-            transportSaatja.setAsutuseNimi(senderOrgName);
-            // Maiga: paneme senderOrgName nimi elementi (nagu postipoisis) ja dubleerime asutuseNimes
-            transportSaatja.setNimi(senderOrgName);
-            transportSaatja.setEpost(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
+            fillDefaultSenderData(transport, dvkSendDocuments);
 
             Metaxml metaxml = null;
             try {
@@ -687,6 +702,20 @@ public abstract class DvkServiceImpl implements DvkService {
         }
     }
 
+    class DhsSendInvoiceToSapCallback implements SendDocumentsDokumentCallback {
+
+        @Override
+        public void doWithDocument(DokumentDocument dokumentDocument) {
+            log.debug("altering dokument");
+
+            final DhlDokumentType dhlDokument = dokumentDocument.getDokument();
+            final Transport transport = dhlDokument.getTransport();
+            fillDefaultSenderData(transport, null);
+
+            dhlDokument.setTransport(transport);
+        }
+    }
+
     private Metaxml composeMetaxml(final XmlObject documentXml, List<javax.xml.namespace.QName> wrappers) {
         final Metaxml metaXml = Metaxml.Factory.newInstance();
         final XmlCursor cursorL = documentXml.newCursor();
@@ -705,6 +734,28 @@ public abstract class DvkServiceImpl implements DvkService {
         cursorL.dispose();
         cursorM.dispose();
         return metaXml;
+    }
+
+    private void fillDefaultSenderData(final Transport transport, IDocument dvkSendDocuments) {
+        // add senders information
+        final AadressType transportSaatja = transport.getSaatja();
+
+        String senderRegNr = null;
+        String senderOrgName = null;
+        if (dvkSendDocuments != null) {
+            senderRegNr = dvkSendDocuments.getSenderRegNr();
+            senderOrgName = dvkSendDocuments.getSenderOrgName();
+        }
+        if (StringUtils.isNotBlank(senderRegNr)) { // use senderRegNr from X-Tee conf if senderRegNr not given
+            transportSaatja.setRegnr(senderRegNr);
+        }
+        // use default senderOrgName (from DVK capable orgs list) if senderOrgName not given
+        senderOrgName = StringUtils.isNotBlank(senderOrgName) ? senderOrgName : transportSaatja.getAsutuseNimi();
+
+        transportSaatja.setAsutuseNimi(senderOrgName);
+        // Maiga: paneme senderOrgName nimi elementi (nagu postipoisis) ja dubleerime asutuseNimes
+        transportSaatja.setNimi(senderOrgName);
+        transportSaatja.setEpost(parametersService.getStringParameter(Parameters.DOC_SENDER_EMAIL));
     }
 
     // START: getters / setters

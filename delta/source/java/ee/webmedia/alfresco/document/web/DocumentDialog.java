@@ -32,6 +32,7 @@ import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
@@ -51,7 +52,10 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
+import ee.webmedia.alfresco.document.einvoice.web.SendManuallyToSapModalComponent.SendToSapManuallyEvent;
 import ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean;
+import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
@@ -363,6 +367,63 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_addReply_error_docDeleted");
         }
+    }
+
+    public void sendToSap(ActionEvent event) {
+        if (!transactionsBlockBean.checkTotalSum()) {
+            // transactionBlockBean is responsible for setting error messages
+            return;
+        }
+        Pair<File, Integer> transFileAndCount = EInvoiceUtil.getTransOrInvoiceFileAndCount(fileBlockBean.getFiles(), true);
+        if (transFileAndCount.getSecond() > 1) {
+            MessageUtil.addErrorMessage("document_sendToSap_transMultipleXmlFiles");
+            return;
+        }
+        Pair<File, Integer> einvoiceFileAndCount = null;
+        if (transactionsBlockBean.getTransactions().size() == 0) {
+            einvoiceFileAndCount = EInvoiceUtil.getTransOrInvoiceFileAndCount(fileBlockBean.getFiles(), false);
+            if (einvoiceFileAndCount.getSecond() == 0) {
+                MessageUtil.addErrorMessage("document_sendToSap_noSapData");
+                return;
+            }
+            if (einvoiceFileAndCount.getSecond() > 1) {
+                MessageUtil.addErrorMessage("document_sendToSap_einvoiceMultipleXmlFiles");
+                return;
+            }
+        }
+        try {
+            if (transFileAndCount.getSecond() == 1) {
+                BeanHelper.getDvkService().sendInvoiceFileToSap(node, transFileAndCount.getFirst());
+            } else if (transactionsBlockBean.getTransactions().size() > 0) {
+                BeanHelper.getDvkService().generateAndSendInvoiceFileToSap(node, transactionsBlockBean.getTransactions());
+            } else {
+                BeanHelper.getDvkService().sendInvoiceFileToSap(node, einvoiceFileAndCount.getFirst());
+            }
+            BeanHelper.getDocumentService().setDocStatusFinished(node.getNodeRef());
+            BeanHelper.getWorkflowService().finishUserActiveResponsibleInProgressTask(node.getNodeRef(), MessageUtil.getMessage("task_comment_sentToSap"));
+            reloadDocAndClearPropertySheet();
+        } catch (Exception e) {
+            MessageUtil.addErrorMessage("document_sendToSap_errorSendingOrGeneratingXml");
+            return;
+        }
+    }
+
+    public void sendToSapManually(ActionEvent event) {
+        if (!transactionsBlockBean.checkTotalSum()) {
+            // transactionBlockBean is responsible for setting error messages
+            return;
+        }
+        SendToSapManuallyEvent sendToSapEvent = (SendToSapManuallyEvent) event;
+        String entrySapNumber = sendToSapEvent.entrySapNumber;
+        if (StringUtils.isBlank(entrySapNumber)) {
+            return;
+        }
+        node.getProperties().put(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER.toString(), entrySapNumber);
+        node.getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
+        BeanHelper.getDocumentService().updateDocument(node);
+        BeanHelper.getWorkflowService().finishUserActiveResponsibleInProgressTask(node.getNodeRef(), MessageUtil.getMessage("task_comment_sentToSap_manually"));
+        reloadDocAndClearPropertySheet();
+        MessageUtil.addInfoMessage("save_success");
     }
 
     public void setupAction(boolean mode) {
