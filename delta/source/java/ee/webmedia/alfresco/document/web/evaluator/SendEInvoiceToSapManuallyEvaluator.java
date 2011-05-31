@@ -7,6 +7,8 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.einvoice.model.Transaction;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
@@ -46,7 +48,13 @@ public class SendEInvoiceToSapManuallyEvaluator extends BaseActionEvaluator {
     }
 
     private boolean mandatoryTransactionFieldsFilled(Node docNode) {
-        // FIXME: implement when transaction mandatory fields are implemented
+        List<String> accountantMandatoryProps = BeanHelper.getEInvoiceService().getAccountantMandatoryFields();
+        List<Transaction> transactions = BeanHelper.getEInvoiceService().getInvoiceTransactions(docNode.getNodeRef());
+        for (Transaction transaction : transactions) {
+            if (!EInvoiceUtil.checkTransactionMandatoryFields(accountantMandatoryProps, null, null, transaction)) {
+                return false;
+            }
+        }
         return true;
     }
 }

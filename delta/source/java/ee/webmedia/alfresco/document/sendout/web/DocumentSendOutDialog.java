@@ -48,9 +48,11 @@ import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
@@ -80,6 +82,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
 public class DocumentSendOutDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "DocumentSendOutDialog";
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentSendOutDialog.class);
 
@@ -99,6 +102,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
     private transient UserService userService;
     private transient AuthorityService authorityService;
     private transient PersonService personService;
+    private transient MetadataBlockBean metadataBlockBean;
     private AddressbookMainViewDialog addressbookDialog;
 
     private SendOutModel model;
@@ -165,6 +169,11 @@ public class DocumentSendOutDialog extends BaseDialogBean {
         if (!getNodeService().exists(docNode.getNodeRef())) {
             return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
         }
+
+        if (!getMetadataBlockBean().lockOrUnlockIfNeeded(getMetadataBlockBean().isLockingAllowed())) {
+            return null;
+        }
+
         try {
             BaseDialogBean.validatePermission(docNode, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
         } catch (UnableToPerformException e) {
@@ -439,11 +448,10 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             String name = names.get(i);
             String email = StringUtils.trim(emails.get(i));
             String mode = modes.get(i);
-            if (!hasValidRecipient && StringUtils.isNotBlank(name) && StringUtils.isNotBlank(mode)
-                    && (StringUtils.isNotBlank(email) || (!SendMode.EMAIL.equals(mode) && !SendMode.EMAIL_DVK.equals(mode)))) {
+            if (!hasValidRecipient && StringUtils.isNotBlank(name) && StringUtils.isNotBlank(mode) && (StringUtils.isNotBlank(email)
+                    || (!SendMode.EMAIL.equals(mode) && !SendMode.EMAIL_DVK.equals(mode) && !SendMode.EMAIL_BCC.equals(mode)))) {
                 hasValidRecipient = true;
-            } else if (!hasMissingEmails && StringUtils.isNotBlank(mode) && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode))
-                    && StringUtils.isBlank(email)) {
+            } else if (!hasMissingEmails && StringUtils.isNotBlank(mode) && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode) || SendMode.EMAIL_BCC.equals(mode)) && StringUtils.isBlank(email)) {
                 hasMissingEmails = true;
             } else if (!hasInvalidRecipient && (StringUtils.isNotBlank(name) || StringUtils.isNotBlank(mode) || StringUtils.isNotBlank(email))
                     && (StringUtils.isBlank(name) || StringUtils.isBlank(mode))) {
@@ -455,7 +463,7 @@ public class DocumentSendOutDialog extends BaseDialogBean {
                     MessageUtil.addErrorMessage(context, "email_format_is_not_valid");
                 }
             }
-            if (!hasEmailMode && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode))) {
+            if (!hasEmailMode && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode) || SendMode.EMAIL_BCC.equals(mode))) {
                 hasEmailMode = true;
             }
         }
@@ -694,6 +702,13 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
         }
         return personService;
+    }
+
+    protected MetadataBlockBean getMetadataBlockBean() {
+        if (metadataBlockBean == null) {
+            metadataBlockBean = BeanHelper.getMetadataBlockBean();
+        }
+        return metadataBlockBean;
     }
 
     // END: getters / setters

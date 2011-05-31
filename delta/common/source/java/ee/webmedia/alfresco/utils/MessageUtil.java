@@ -6,6 +6,7 @@ import java.util.Collection;
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.ui.common.Utils;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -172,8 +173,10 @@ public class MessageUtil {
     }
 
     /**
-     * Add statusMessage to the faces context(to be shown to the user). Message text is retrieved from message bundle based on key <code>messageData.getMessageKey()</code> and
-     * possible values could be set using <code>messageData.getMessageValuesForHolders()</code>. Severity of message is determined by <code>messageData.getSeverity()</code>
+     * Add statusMessage to the faces context(to be shown to the user). Message text is retrieved from message bundle based on key
+     * <code>messageData.getMessageKey()</code> and
+     * possible values could be set using <code>messageData.getMessageValuesForHolders()</code>. Severity of message is determined by
+     * <code>messageData.getSeverity()</code>
      * 
      * @param facesContext
      * @param messageData - messageData object used to create message
@@ -216,10 +219,10 @@ public class MessageUtil {
      * @param currentInstance
      * @param messageKeys
      */
-    public static void addErrorMessage(FacesContext currentInstance, String[] messageKeys) {
+    public static void addErrorMessage(FacesContext currentInstance, Pair<String, Object[]>[] messageKeysWithValueObjects) {
         final StringBuilder sb = new StringBuilder();
-        for (String messageId : messageKeys) {
-            sb.append(getMessage(currentInstance, messageId)).append(" ");
+        for (Pair<String, Object[]> messageAndValuePair : messageKeysWithValueObjects) {
+            sb.append(getMessage(currentInstance, messageAndValuePair.getFirst(), messageAndValuePair.getSecond())).append(" ");
         }
         Utils.addErrorMessage(sb.toString());
     }

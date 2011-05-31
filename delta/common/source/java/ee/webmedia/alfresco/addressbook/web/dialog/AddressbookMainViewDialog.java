@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -22,6 +23,10 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
+import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
+import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
@@ -38,6 +43,8 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
     private List<Node> people = Collections.emptyList();
     private String searchCriteria = "";
     private boolean search = false;
+    private String groupToAdd;
+    private List<Node> groups;
 
     public AddressbookMainViewDialog() {
         UIContextService.getInstance(FacesContext.getCurrentInstance()).registerBean(this);
@@ -154,6 +161,13 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         return transformNodesToSelectItems(nodes, personLabel, organizationLabel);
     }
 
+    public SelectItem[] searchContactGroups(int filterIndex, String contains) {
+        final String personLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_private_person").toLowerCase();
+        final String organizationLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_org").toLowerCase();
+        List<Node> nodes = getAddressbookService().searchContactGroups(contains);
+        return transformNodesToSelectItems(nodes, personLabel, organizationLabel);
+    }
+
     /**
      * Transforms the list of contact nodes (usually returned by the search) to SelectItems in the following form:
      * OrganizationName (organizationLabel, email) -- if it's an organization
@@ -204,6 +218,15 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         return results;
     }
 
+    public void addToContactGroup(String groupNodeRef) {
+        Node currentNode = getCurrentNode();
+        UserDetails details = new UserDetails(getContactFullName(RepoUtil.toQNameProperties(currentNode.getProperties()), currentNode.getType()),
+                currentNode.getNodeRefAsString());
+        getAddressbookService().addToGroup(new NodeRef(groupNodeRef), Arrays.asList(details));
+        contextUpdated();
+        MessageUtil.addInfoMessage("addressbook_added_to_contactgroup");
+    }
+
     public List<String> getContactData(String nodeRef) {
         List<String> list = new ArrayList<String>();
         Map<QName, Serializable> props = getNodeService().getProperties(new NodeRef(nodeRef));
@@ -229,6 +252,13 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         return name;
     }
 
+    public void removeContactFromGroup(ActionEvent event) {
+        String groupNodeRef = ActionUtil.getParam(event, "nodeRef");
+        getAddressbookService().deleteFromGroup(new NodeRef(groupNodeRef), getCurrentNode().getNodeRef());
+        contextUpdated();
+        MessageUtil.addInfoMessage("addressbook_contactgroup_remove_contact_from_group_success");
+    }
+
     private void clearRichLists() {
         if (getOrgRichList() != null) {
             getOrgRichList().setValue(null);
@@ -239,6 +269,7 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         if (getOrgPeopleRichList() != null) {
             getOrgPeopleRichList().setValue(null);
         }
+        groups = null;
     }
 
     public UIRichList getOrgRichList() {
@@ -296,6 +327,25 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         this.orgPeopleRichList = orgPeopleRichList;
     }
 
+    public void setGroupToAdd(String groupToAdd) {
+        this.groupToAdd = groupToAdd;
+    }
+
+    public String getGroupToAdd() {
+        return groupToAdd;
+    }
+
+    public void setGroups(List<Node> groups) {
+        this.groups = groups;
+    }
+
+    public List<Node> getGroups() {
+        if (groups == null) {
+            groups = getAddressbookService().getContactsGroups(getCurrentNodeRef());
+        }
+        return groups;
+    }
+
     @Override
     protected void reset() {
         super.reset();
@@ -305,6 +355,8 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         organizations = Collections.emptyList();
         people = Collections.emptyList();
         searchCriteria = "";
+        groupToAdd = null;
+        groups = null;
     }
 
 }

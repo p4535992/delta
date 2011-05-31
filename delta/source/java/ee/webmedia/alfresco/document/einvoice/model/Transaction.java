@@ -69,12 +69,12 @@ public class Transaction implements Serializable {
         node.getProperties().put(TransactionModel.Props.ORDER_NUMBER.toString(), orderNumber);
     }
 
-    public String getAssetInventaryNumber() {
-        return (String) node.getProperties().get(TransactionModel.Props.ASSET_INVENTARY_NUMBER);
+    public String getAssetInventoryNumber() {
+        return (String) node.getProperties().get(TransactionModel.Props.ASSET_INVENTORY_NUMBER);
     }
 
-    public void setAssetInventaryNumber(String assetInventaryNumber) {
-        node.getProperties().put(TransactionModel.Props.ASSET_INVENTARY_NUMBER.toString(), assetInventaryNumber);
+    public void setAssetInventoryNumber(String assetInventoryNumber) {
+        node.getProperties().put(TransactionModel.Props.ASSET_INVENTORY_NUMBER.toString(), assetInventoryNumber);
     }
 
     public Double getSumWithoutVat() {
@@ -121,8 +121,8 @@ public class Transaction implements Serializable {
         return (String) node.getProperties().get(TransactionModel.Props.TRADING_PARTNER_CODE);
     }
 
-    public void setTraidingPartnerCode(String traidingPartnerCode) {
-        node.getProperties().put(TransactionModel.Props.TRADING_PARTNER_CODE.toString(), traidingPartnerCode);
+    public void setTradingPartnerCode(String tradingPartnerCode) {
+        node.getProperties().put(TransactionModel.Props.TRADING_PARTNER_CODE.toString(), tradingPartnerCode);
     }
 
     public String getFunctionalAreaCode() {

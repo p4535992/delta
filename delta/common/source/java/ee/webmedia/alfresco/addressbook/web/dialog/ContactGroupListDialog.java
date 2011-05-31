@@ -99,6 +99,10 @@ public class ContactGroupListDialog extends ContactGroupBaseDialog {
         return !getUserService().isAdministrator() && !getUserService().isDocumentManager();
     }
 
+    public boolean getNotAllowedManageableForAdmin() {
+        return !getUserService().isAdministrator() && !getUserService().isDocumentManager();
+    }
+
     public List<Node> getContactGroups() {
         return contactGroups;
     }

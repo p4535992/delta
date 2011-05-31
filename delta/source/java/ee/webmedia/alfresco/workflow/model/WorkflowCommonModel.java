@@ -40,6 +40,7 @@ public interface WorkflowCommonModel {
         QName STOPPED_DATE_TIME = QName.createQName(URI, "stoppedDateTime");
         QName OWNER_ID = QName.createQName(URI, "ownerId"); // username ehk isikukood
         QName OWNER_NAME = QName.createQName(URI, "ownerName");
+        QName PREVIOUS_OWNER_ID = QName.createQName(URI, "previousOwnerId"); // username ehk isikukood
 
         // Compound workflow definition
         QName NAME = QName.createQName(URI, "name");

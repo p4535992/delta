@@ -3,8 +3,12 @@ package ee.webmedia.alfresco.document.einvoice.service;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.Writer;
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
@@ -16,10 +20,12 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.collections.BidiMap;
 import org.apache.commons.collections.bidimap.DualTreeBidiMap;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.account.generated.Ostuarve;
@@ -27,11 +33,15 @@ import ee.webmedia.alfresco.document.einvoice.accountlist.generated.KontoNimekir
 import ee.webmedia.alfresco.document.einvoice.dimensionslist.generated.DimensioonideNimekiri;
 import ee.webmedia.alfresco.document.einvoice.generated.EInvoice;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionModel;
+import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
+import ee.webmedia.alfresco.document.einvoice.model.Transaction;
+import ee.webmedia.alfresco.document.einvoice.model.TransactionModel;
 import ee.webmedia.alfresco.document.einvoice.sellerslist.generated.HankijaNimekiri;
 import ee.webmedia.alfresco.document.einvoice.vatcodelist.generated.KaibemaksuKoodNimekiri;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class EInvoiceUtil {
 
@@ -233,10 +243,6 @@ public class EInvoiceUtil {
         return account;
     }
 
-    /**
-     * Schema is not used because in certain cases jaxb xml generation erroneously fails although valid xml is generated.
-     * After marshalling with this method one should validate generated xml.
-     */
     public static void marshalAccount(Ostuarve ostuarve, OutputStream outputStream) {
         try {
             getAccountMarshaller().marshal(ostuarve, outputStream);
@@ -245,10 +251,6 @@ public class EInvoiceUtil {
         }
     }
 
-    /**
-     * Schema is not used because in certain cases jaxb xml generation erroneously fails although valid xml is generated
-     * After marshalling with this method one should validate generated xml
-     */
     public static void marshalAccount(Ostuarve ostuarve, Writer writer) {
         try {
             getAccountMarshaller().marshal(ostuarve, writer);
@@ -266,6 +268,7 @@ public class EInvoiceUtil {
     private static Marshaller getAccountMarshaller() throws JAXBException {
         Marshaller marshaller = accountJaxbContext.createMarshaller();
         // event handler to print error messages to log
+        marshaller.setSchema(accountJaxbSchema);
         marshaller.setEventHandler(new DefaultValidationEventHandler());
         return marshaller;
     }
@@ -301,4 +304,130 @@ public class EInvoiceUtil {
         }
         return new Pair<File, Integer>(transactionFile, transactionFileCount);
     }
+
+    public static boolean checkTransactionMandatoryFields(List<String> mandatoryProps, List<Pair<String, String>> errorMessages, List<String> addedErrorKeys,
+            Transaction transaction) {
+        boolean result = true;
+        Map<String, Object> transProps = transaction.getNode().getProperties();
+        for (Map.Entry<String, Object> entry : transProps.entrySet()) {
+            String entryKey = entry.getKey();
+            if (mandatoryProps.contains(entryKey) && isEmpty(entry.getValue())) {
+                if (errorMessages != null && addedErrorKeys != null) {
+                    // collect all error messages
+                    if (!addedErrorKeys.contains(entryKey)) {
+                        errorMessages.add(new Pair<String, String>("task_finish_error_transaction_mandatory_not_filled", MessageUtil.getMessage("transaction_" + entryKey)));
+                        addedErrorKeys.add(entryKey);
+                    }
+                    result = false;
+                } else {
+                    // return on first failure
+                    return false;
+                }
+            }
+        }
+        return result;
+    }
+
+    public static boolean isEmpty(Object value) {
+        if (value instanceof String) {
+            return StringUtils.isEmpty((String) value);
+        }
+        return value == null;
+    }
+
+    public static boolean checkTotalSum(List<String> errorMessageKeys, String msgKeyPrefix, Double totalSum, List<Transaction> transactions,
+            Map<NodeRef, Map<QName, Serializable>> originalProperties) {
+        if (totalSum == null) {
+            return false;
+        }
+        if (transactions.size() == 0) {
+            return true;
+        }
+        for (Transaction transaction : transactions) {
+            if (transaction.getSumWithoutVat() == null) {
+                errorMessageKeys.add(msgKeyPrefix + "transMissingSum");
+                return false;
+            }
+            if (transaction.getInvoiceTaxPercent() == null) {
+                errorMessageKeys.add(msgKeyPrefix + "transMissingTaxPercent");
+                return false;
+            }
+        }
+        double transTotalSum = getSumWithoutVat(transactions) + getVatSum(transactions, originalProperties, BeanHelper.getEInvoiceService().getVatCodeDimensionValues());
+        boolean result = Math.abs(totalSum - transTotalSum) <= 0.001;
+        if (!result) {
+            errorMessageKeys.add(msgKeyPrefix + "transSumsNotCorrect");
+        }
+        return result;
+    }
+
+    public static double getSumWithoutVat(List<Transaction> transactions) {
+        BigDecimal sum = new BigDecimal("0.0");
+        for (Transaction transaction : transactions) {
+            Double rowSumWithoutVat = transaction.getSumWithoutVat();
+            if (rowSumWithoutVat != null) {
+                sum = sum.add(new BigDecimal(rowSumWithoutVat));
+            }
+        }
+        return sum.doubleValue();
+    }
+
+    public static double getVatSum(List<Transaction> transactions, Map<NodeRef, Map<QName, Serializable>> originalProperties, List<DimensionValue> vatCodeDimensionValues) {
+        BigDecimal sum = new BigDecimal("0.0");
+        for (Transaction transaction : transactions) {
+            Double rowSumWithoutVat = transaction.getSumWithoutVat();
+            Integer rowVatPercentage = getVatPercentage(transaction, originalProperties, vatCodeDimensionValues);
+            if (rowSumWithoutVat != null) {
+                sum = sum.add((new BigDecimal(rowSumWithoutVat)).multiply(new BigDecimal(rowVatPercentage)).divide(new BigDecimal(100)));
+            }
+        }
+        return sum.doubleValue();
+    }
+
+    // in case of saved and not changed invoice tax code, read percentage from transaction, otherwise from dimension
+    private static Integer getVatPercentage(Transaction transaction, Map<NodeRef, Map<QName, Serializable>> originalProperties, List<DimensionValue> vatCodeDimesnionValues) {
+        if (originalProperties == null) {
+            return transaction.getInvoiceTaxPercent();
+        }
+        Map<QName, Serializable> originalProps = originalProperties.get(transaction.getNode().getNodeRef());
+        String taxCode = transaction.getInvoiceTaxCode();
+        String originalTaxCode = (String) (originalProps == null ? null : originalProps.get(TransactionModel.Props.INVOICE_TAX_CODE));
+        if (originalProps == null || taxCode == null || (taxCode != null && !taxCode.equals(originalTaxCode))) {
+            return getVatPercentageFromDimension(taxCode, vatCodeDimesnionValues);
+        }
+        return transaction.getInvoiceTaxPercent();
+    }
+
+    // For calculations return 0 for null value
+    public static Integer getVatPercentageFromDimension(String invoiceTaxCode, List<DimensionValue> vatCodeDimensionValues) {
+        if (invoiceTaxCode == null) {
+            return 0;
+        }
+        for (DimensionValue dimensionValue : vatCodeDimensionValues) {
+            if (dimensionValue.getValueName().equalsIgnoreCase(invoiceTaxCode)) {
+                try {
+                    return Integer.parseInt(dimensionValue.getValue());
+                } catch (NumberFormatException e) {
+                    LOG.error("Illegal vat percentage: dimensionValue valueName=" + dimensionValue.getValueName() + ", value=" + dimensionValue.getValue()
+                            + " is not valid integer.");
+                    return 0;
+                }
+            }
+        }
+        return 0;
+    }
+
+    public static ArrayList<String> buildSearchableStringProp(QName propName, List<Transaction> transactions) {
+        ArrayList<String> searchableProps = new ArrayList<String>(transactions.size());
+        if (transactions != null) {
+            for (Transaction transaction : transactions) {
+                String propValue = (String) transaction.getNode().getProperties().get(propName);
+                if (StringUtils.isNotEmpty(propValue)) {
+                    searchableProps.add(propValue);
+                }
+            }
+        }
+        return searchableProps;
+    }
+
 }

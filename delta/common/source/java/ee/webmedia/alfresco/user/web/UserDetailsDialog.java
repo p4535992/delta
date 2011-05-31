@@ -1,32 +1,44 @@
 package ee.webmedia.alfresco.user.web;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.security.AuthorityService;
+import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.users.UsersBeanProperties;
 import org.alfresco.web.bean.users.UsersDialog;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 public class UserDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
 
     private transient UserService userService;
     private transient OrganizationStructureService organizationStructureService;
+    private transient AuthorityService authorityService;
     private UsersBeanProperties properties;
+    private List<Map<String, String>> groups;
+    private String groupToAdd;
 
     private SubstituteListDialog substituteListDialog;
 
@@ -40,11 +52,25 @@ public class UserDetailsDialog extends BaseDialogBean {
         substituteListDialog.setUserNodeRef(user.getNodeRef());
         setNotificationSender();
         substituteListDialog.refreshData();
+        setupGroups();
+    }
+
+    protected void setupGroups() {
+        groupToAdd = null;
+        Set<String> authorities = getAuthorityService().getAuthoritiesForUser((String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        // Remove all roles and GROUP_EVERYONE
+        for (Iterator<String> iterator = authorities.iterator(); iterator.hasNext();) {
+            String authority = iterator.next();
+            if (authority.startsWith(PermissionService.ROLE_PREFIX) || PermissionService.ALL_AUTHORITIES.equals(authority)) {
+                iterator.remove();
+            }
+        }
+        groups = UserUtil.getGroupsFromAuthorities(getAuthorityService(), authorities);
     }
 
     private void setNotificationSender() {
         SubstituteListDialog.NotificationSender notificationSender =
-                (SubstituteListDialog.NotificationSender) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), NOTIFICATION_SENDER_LABEL);
+            (SubstituteListDialog.NotificationSender) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), NOTIFICATION_SENDER_LABEL);
         if (notificationSender != null) {
             substituteListDialog.setNotificationSender(notificationSender);
         }
@@ -79,6 +105,10 @@ public class UserDetailsDialog extends BaseDialogBean {
         return false;
     }
 
+    public boolean isRelatedFundsCenterNotEditable() {
+        return !BeanHelper.getUserService().isAdministrator();
+    }
+
     /**
      * Action event called by all actions that need to setup a Person context on
      * the current user before an action page is called. The context will be a
@@ -97,6 +127,28 @@ public class UserDetailsDialog extends BaseDialogBean {
         List<Node> users = new ArrayList<Node>(1);
         users.add(node);
         user = getOrganizationStructureService().setUsersUnit(users).get(0);
+
+        setupGroups();
+    }
+
+    public void removeFromGroup(ActionEvent event) {
+        String group = ActionUtil.getParam(event, "group");
+        if (StringUtils.isBlank(group)) {
+            return;
+        }
+        getAuthorityService().removeAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        setupGroups();
+        MessageUtil.addInfoMessage("user_removed_from_group");
+    }
+
+    public void addToGroup(String group) {
+        if (StringUtils.isBlank(group)) {
+            return;
+        }
+
+        getAuthorityService().addAuthority(group, (String) user.getProperties().get(ContentModel.PROP_USERNAME));
+        setupGroups();
+        MessageUtil.addInfoMessage("user_added_to_group");
     }
 
     /**
@@ -118,6 +170,7 @@ public class UserDetailsDialog extends BaseDialogBean {
         List<Node> users = new ArrayList<Node>(1);
         users.add(new Node(properties.getPersonService().getPerson(userName)));
         user = getOrganizationStructureService().setUsersUnit(users).get(0);
+        setupGroups();
     }
 
     public UsersBeanProperties getProperties() {
@@ -161,12 +214,31 @@ public class UserDetailsDialog extends BaseDialogBean {
         return substituteListDialog.getEmailAddress();
     }
 
+    public void setGroups(List<Map<String, String>> groups) {
+        this.groups = groups;
+    }
+
+    public List<Map<String, String>> getGroups() {
+        if (groups == null) {
+            setupGroups();
+        }
+        return groups;
+    }
+
+    public String getGroupToAdd() {
+        return groupToAdd;
+    }
+
+    public void setGroupToAdd(String groupToAdd) {
+        this.groupToAdd = groupToAdd;
+    }
+
     // ///
 
     protected UserService getUserService() {
         if (userService == null) {
             userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(UserService.BEAN_NAME);
+            .getBean(UserService.BEAN_NAME);
         }
         return userService;
     }
@@ -178,13 +250,20 @@ public class UserDetailsDialog extends BaseDialogBean {
     protected OrganizationStructureService getOrganizationStructureService() {
         if (organizationStructureService == null) {
             organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(OrganizationStructureService.BEAN_NAME);
+            .getBean(OrganizationStructureService.BEAN_NAME);
         }
         return organizationStructureService;
     }
 
     public void setOrganizationStructureService(OrganizationStructureService organizationStructureService) {
         this.organizationStructureService = organizationStructureService;
+    }
+
+    protected AuthorityService getAuthorityService() {
+        if (authorityService == null) {
+            authorityService = BeanHelper.getAuthorityService();
+        }
+        return authorityService;
     }
 
 }

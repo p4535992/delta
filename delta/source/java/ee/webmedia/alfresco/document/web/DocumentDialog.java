@@ -399,6 +399,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             } else {
                 BeanHelper.getDvkService().sendInvoiceFileToSap(node, einvoiceFileAndCount.getFirst());
             }
+            BeanHelper.getDocumentLogService().addDocumentLog(node.getNodeRef(), MessageUtil.getMessage("document_log_status_send_to_sap"));
             BeanHelper.getDocumentService().setDocStatusFinished(node.getNodeRef());
             BeanHelper.getWorkflowService().finishUserActiveResponsibleInProgressTask(node.getNodeRef(), MessageUtil.getMessage("task_comment_sentToSap"));
             reloadDocAndClearPropertySheet();
@@ -421,6 +422,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         node.getProperties().put(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER.toString(), entrySapNumber);
         node.getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
         BeanHelper.getDocumentService().updateDocument(node);
+        BeanHelper.getDocumentLogService().addDocumentLog(node.getNodeRef(), MessageUtil.getMessage("document_log_status_send_to_sap_manually"));
         BeanHelper.getWorkflowService().finishUserActiveResponsibleInProgressTask(node.getNodeRef(), MessageUtil.getMessage("task_comment_sentToSap_manually"));
         reloadDocAndClearPropertySheet();
         MessageUtil.addInfoMessage("save_success");
@@ -493,9 +495,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         logBlockBean.init(node);
         transactionsBlockBean.init(node, this);
 
-        ClearStateNotificationHandler clearStateNotificationHandler //
-        = (ClearStateNotificationHandler) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ClearStateNotificationHandler.BEAN_NAME);
-        clearStateNotificationHandler.addClearStateListener(this);
+        BeanHelper.getClearStateNotificationHandler().addClearStateListener(this);
     }
 
     public void reloadDoc() {

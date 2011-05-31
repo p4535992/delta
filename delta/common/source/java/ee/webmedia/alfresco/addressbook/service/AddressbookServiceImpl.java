@@ -566,6 +566,24 @@ public class AddressbookServiceImpl implements AddressbookService {
         return listNodeChildren(type, getAddressbookNodeRef());
     }
 
+    @Override
+    public List<Node> getContactsGroups(NodeRef memberNodeRef) {
+        QName type = nodeService.getType(memberNodeRef);
+        List<AssociationRef> groupRefs = new ArrayList<AssociationRef>();
+        if (Types.ORGANIZATION.equals(type)) {
+            groupRefs = nodeService.getSourceAssocs(memberNodeRef, Assocs.CONTACT_ORGANIZATION);
+        } else {
+            groupRefs = nodeService.getSourceAssocs(memberNodeRef, Assocs.CONTACT_PERSON_BASE);
+        }
+
+        List<Node> groups = new ArrayList<Node>(groupRefs.size());
+        for (AssociationRef associationRef : groupRefs) {
+            groups.add(getNode(associationRef.getSourceRef()));
+        }
+
+        return groups;
+    }
+
     // ---------- service getters and setters
 
     public void setNodeService(NodeService nodeService) {

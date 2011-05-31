@@ -7,6 +7,7 @@
 <%@ page isELIgnored="false"%>
 
 <h:outputText escape="false" value="#{SubstitutionBean.substitutionMessages}"/>
+<h:outputText escape="false" value="#{AssignResponsibilityBean.assingResponsibilityMessage}"/>
 
 <a:panel id="my-tasks-wrapper">
 <a:panel id="assignment-tasks-panel" styleClass="panel-100 #{(MyTasksBean.assignmentPagerVisible) ? 'with-pager' : ''}" label="#{msg.task_list_assignment_title}" progressive="true" rendered="#{not empty MyTasksBean.assignmentTasks}">

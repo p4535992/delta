@@ -18,6 +18,7 @@ import ee.webmedia.alfresco.document.einvoice.model.Dimension;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
+import ee.webmedia.alfresco.document.einvoice.model.TransactionDescParameter;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
@@ -108,5 +109,15 @@ public interface EInvoiceService {
     Pair<String, String> getDocUrlAndErpDocNumber(String inputStr);
 
     NodeRef updateDocumentEntrySapNumber(String first, String second);
+
+    List<TransactionDescParameter> getAllTransactionDescParameters();
+
+    void updateTransactionDescParameters(List<TransactionDescParameter> transactionDescParameters);
+
+    List<String> getCostManagerMandatoryFields();
+
+    List<String> getOwnerMandatoryFields();
+
+    List<String> getAccountantMandatoryFields();
 
 }

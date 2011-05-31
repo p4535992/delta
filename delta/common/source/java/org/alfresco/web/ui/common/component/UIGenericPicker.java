@@ -41,6 +41,7 @@ import javax.faces.model.SelectItem;
 
 import org.alfresco.web.app.Application;
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
@@ -335,7 +336,18 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       // Contains textbox
       if (getShowContains() == true)
       {
-         out.write("<input name='");
+         out.write("<input");
+         String pickerCallback = (String) getAttributes().get(Search.PICKER_CALLBACK_KEY);
+         if (StringUtils.isBlank(pickerCallback)) {
+             pickerCallback = getQueryCallback().getExpressionString();
+         }
+         if (StringUtils.isNotBlank(pickerCallback)) {
+             if (pickerCallback.contains("#{")) {
+                 pickerCallback = pickerCallback.substring("#{".length(), pickerCallback.length() - 1);
+             }
+             out.write(" datasrc='" + pickerCallback + "'");
+         }
+         out.write(" name='");
          out.write(clientId + FIELD_CONTAINS);
          out.write("' type='text' class=\"genericpicker-input\" maxlength='256' style='width:120px' value=\"");
          out.write(Utils.encode(this.contains));
@@ -362,9 +374,12 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       }
       
       int size = getSize();
-      if(size>0 || currentResults!=null) {
       // results list row
-      out.write("<tr><td>");
+      out.write("<tr");
+      if(size < 1) {
+          out.write(" class='hidden'");
+      }
+      out.write("><td>");
       out.write("<select size=\"" + getSize() + "\"");
       out.write(" style='width:100%;height:auto;' name='");
       out.write(clientId + FIELD_RESULTS);
@@ -378,23 +393,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       out.write(">");
       
       // results
-      if (currentResults != null)
-      {
-         // show each of the items in the results listbox
-         for (int i=0; i<currentResults.length; i++)
-         {
-            out.write("<option value=\"");
-            out.write(currentResults[i].getValue().toString());
-            if (currentResults[i].getDescription() != null)
-            {
-                out.write("\" title=\"");
-                out.write(Utils.encode(currentResults[i].getDescription()));
-            }
-            out.write("\">");
-            out.write(Utils.encode(currentResults[i].getLabel()));
-            out.write("</option>");
-         }
-      }
+      ComponentUtil.renderSelectItems(out, currentResults);
       
       // end results list
       out.write("</select>");
@@ -403,7 +402,11 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       // help text
       if (getMultiSelect() == true)
       {
-          out.write("<tr><td>");
+          out.write("<tr");
+          if(size < 1) {
+              out.write(" class='hidden'");
+          }
+          out.write("><td>");
           out.write(Utils.encode(bundle.getString("help_select_multiple_rows")));
           out.write("</td></tr>");
       }
@@ -411,7 +414,11 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
       // bottom row - add button
       if (getShowAddButton() == true)
       {
-         out.write("<tr><td>");
+         out.write("<tr");
+         if(size < 1) {
+             out.write(" class='hidden'");
+         }
+         out.write("><td>");
          out.write("<input type='submit' value='");
          String msg = getAddButtonLabel();
          if (msg == null || msg.length() == 0)
@@ -430,7 +437,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
          out.write("\">");
          out.write("</td></tr>");
       }
-      }
+
       // end outer table
       out.write("</table>");
    }
@@ -648,22 +655,33 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
     */
    public int getSize()
    {
-      ValueBinding vb = getValueBinding("size");
-      if (vb != null)
-      {
-         this.size = (Integer)vb.getValue(getFacesContext());
-      }
-      
-      if(this.currentResults != null) {
-          if(this.currentResults.length > MAX_SIZE)
-              return MAX_SIZE;
-          
-          if(this.currentResults.length < MIN_SIZE)
-              return MIN_SIZE;
-          
-          return this.currentResults.length;
-      }
-      return size != null ? size.intValue() : DEFAULT_SIZE;
+       ValueBinding vb = getValueBinding("size");
+       if (vb != null)
+       {
+           size = (Integer)vb.getValue(getFacesContext());
+       }
+       
+       if(currentResults != null) {
+           return getResultSize(currentResults);
+       }
+
+       return size != null ? size.intValue() : DEFAULT_SIZE;
+   }
+
+   public static int getResultSize(SelectItem[] items) {
+       if(items != null) {
+           if(items.length > MAX_SIZE) {
+               return MAX_SIZE;
+           }
+
+           if(items.length < MIN_SIZE) {
+               return MIN_SIZE;
+           }
+
+           return items.length;
+       }
+
+       return DEFAULT_SIZE;
    }
 
    /**

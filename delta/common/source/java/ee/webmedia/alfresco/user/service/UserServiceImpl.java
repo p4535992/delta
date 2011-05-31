@@ -10,6 +10,7 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.OWNE
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -46,6 +47,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.model.Authority;
+import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -165,7 +167,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<Node> searchUsers(String input, boolean returnAllUsers, String group) {
-        Set<QName> props = new HashSet<QName>(1);
+        Set<QName> props = new HashSet<QName>(2);
         props.add(ContentModel.PROP_FIRSTNAME);
         props.add(ContentModel.PROP_LASTNAME);
 
@@ -383,6 +385,28 @@ public class UserServiceImpl implements UserService {
     @Override
     public boolean isGroupsEditingAllowed() {
         return groupsEditingAllowed;
+    }
+
+    @Override
+    public boolean markUserLeaving(String leavingUserId, String replacementUserId, boolean isLeaving) {
+        if (!personService.personExists(leavingUserId) || !personService.personExists(replacementUserId)) {
+            return false;
+        }
+        Node leavingUser = getUser(leavingUserId);
+        if (leavingUser == null) {
+            return false;
+        }
+
+        if (isLeaving) {
+            Map<QName, Serializable> properties = new HashMap<QName, Serializable>(2);
+            properties.put(UserModel.Props.LEAVING_DATE_TIME, new Date());
+            properties.put(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID, replacementUserId);
+            nodeService.addAspect(leavingUser.getNodeRef(), UserModel.Aspects.LEAVING, properties);
+        } else {
+            nodeService.removeAspect(leavingUser.getNodeRef(), UserModel.Aspects.LEAVING);
+        }
+
+        return true;
     }
 
     private Authority getAuthority(String authority, boolean returnNull) {

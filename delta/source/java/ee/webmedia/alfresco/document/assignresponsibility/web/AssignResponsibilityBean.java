@@ -1,6 +1,8 @@
 package ee.webmedia.alfresco.document.assignresponsibility.web;
 
 import java.io.Serializable;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
@@ -23,6 +25,7 @@ import ee.webmedia.alfresco.document.assignresponsibility.model.AssignResponsibi
 import ee.webmedia.alfresco.document.assignresponsibility.service.AssignResponsibilityService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
+import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.user.web.UserDetailsDialog;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -44,6 +47,7 @@ public class AssignResponsibilityBean implements Serializable {
 
     private Node node;
     private String fromOwnerId;
+    private boolean leaving;
 
     public Node getNode() {
         if (node == null) {
@@ -53,7 +57,7 @@ public class AssignResponsibilityBean implements Serializable {
     }
 
     public void setOwner(String userName) {
-        String fullName = getUSerService().getUserFullName(userName);
+        String fullName = getUserService().getUserFullName(userName);
         Map<String, Object> props = getNode().getProperties();
         props.put(AssignResponsibilityModel.Props.OWNER_NAME.toString(), fullName);
         props.put(OWNER_ID, userName);
@@ -65,8 +69,36 @@ public class AssignResponsibilityBean implements Serializable {
 
     public void execute(@SuppressWarnings("unused") ActionEvent event) {
         String toOwnerId = (String) getNode().getProperties().get(OWNER_ID);
-        getAssignResponsibilityService().changeOwnerOfAllDocumentsAndTasks(fromOwnerId, toOwnerId);
+        getAssignResponsibilityService().changeOwnerOfAllDocumentsAndTasks(fromOwnerId, toOwnerId, true);
+        leaving = true;
         MessageUtil.addInfoMessage("assign_responsibility_perform_success", UserUtil.getPersonFullName1(getPersonProps(toOwnerId)));
+    }
+
+    public void revert(@SuppressWarnings("unused") ActionEvent event) {
+        String toOwnerId = (String) getUserService().getUserProperties(fromOwnerId).get(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID);
+        getAssignResponsibilityService().changeOwnerOfAllDocumentsAndTasks(fromOwnerId, toOwnerId, false);
+        leaving = false;
+        MessageUtil.addInfoMessage("assign_responsibility_revert_success");
+    }
+
+    public String getAssingResponsibilityMessage() {
+        Node currentUser = getUserService().getUser(AuthenticationUtil.getRunAsUser());
+
+        if (currentUser.hasAspect(UserModel.Aspects.LEAVING)) {
+            Map<String, Object> properties = currentUser.getProperties();
+            DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+            StringBuilder builder = new StringBuilder();
+            builder.append("<div class=\"message message-red\">");
+            builder.append(MessageUtil.getMessage(FacesContext.getCurrentInstance(), "assign_responsibility_message",
+                    dateFormat.format(properties.get(UserModel.Props.LEAVING_DATE_TIME)),
+                    getUserService().getUserFullName((String) properties.get(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID)
+                            )));
+            builder.append("</div>");
+
+            return builder.toString();
+        }
+
+        return "";
     }
 
     public String getInstruction() {
@@ -77,14 +109,29 @@ public class AssignResponsibilityBean implements Serializable {
         return StringUtils.isNotBlank(getInstruction());
     }
 
+    public boolean isNotLeaving() {
+        return !leaving;
+    }
+
+    public boolean isLeavingAndAdmin() {
+        return leaving && getUserService().isAdministrator();
+    }
+
+    public boolean isPanelVisible() {
+        return isNotLeaving() || isLeavingAndAdmin();
+    }
+
     public String getSetFromOwnerUserConsole() {
         fromOwnerId = AuthenticationUtil.getRunAsUser();
+        leaving = getUserService().getUser(fromOwnerId).hasAspect(UserModel.Aspects.LEAVING);
         return "";
     }
 
     public String getSetFromOwnerUserDetails() {
         UserDetailsDialog userDetailsDialog = (UserDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "UserDetailsDialog");
-        fromOwnerId = (String) userDetailsDialog.getUser().getProperties().get(ContentModel.PROP_USERNAME);
+        Node user = userDetailsDialog.getUser();
+        leaving = user.hasAspect(UserModel.Aspects.LEAVING);
+        fromOwnerId = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
         return "";
     }
 
@@ -111,7 +158,7 @@ public class AssignResponsibilityBean implements Serializable {
     protected AssignResponsibilityService getAssignResponsibilityService() {
         if (assignResponsibilityService == null) {
             assignResponsibilityService = (AssignResponsibilityService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(AssignResponsibilityService.BEAN_NAME);
+            .getBean(AssignResponsibilityService.BEAN_NAME);
         }
         return assignResponsibilityService;
     }
@@ -124,7 +171,7 @@ public class AssignResponsibilityBean implements Serializable {
         return parametersService;
     }
 
-    protected UserService getUSerService() {
+    protected UserService getUserService() {
         if (userService == null) {
             userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(UserService.BEAN_NAME);
         }

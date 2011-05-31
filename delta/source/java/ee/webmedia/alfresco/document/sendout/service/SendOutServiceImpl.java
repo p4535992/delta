@@ -109,6 +109,8 @@ public class SendOutServiceImpl implements SendOutService {
         // Collect email data
         List<String> toEmails = new ArrayList<String>();
         List<String> toNames = new ArrayList<String>();
+        List<String> toBccEmails = new ArrayList<String>();
+        List<String> toBccNames = new ArrayList<String>();
 
         // Loop through all recipients, keep a list for DVK sending, a list for email sending and prepare sendInfo properties
         for (int i = 0; i < names.size(); i++) {
@@ -148,6 +150,9 @@ public class SendOutServiceImpl implements SendOutService {
                 } else if (SendMode.EMAIL.equals(modes.get(i))) {
                     toEmails.add(email);
                     toNames.add(recipientName);
+                } else if (SendMode.EMAIL_BCC.equals(modes.get(i))) {
+                    toBccEmails.add(email);
+                    toBccNames.add(recipientName);
                 }
 
                 Map<QName, Serializable> props = new HashMap<QName, Serializable>();
@@ -212,9 +217,10 @@ public class SendOutServiceImpl implements SendOutService {
         }
 
         // Send through email
-        if (toEmails.size() > 0) {
+        if (!toEmails.isEmpty() || !toBccEmails.isEmpty()) {
             try {
-                emailService.sendEmail(toEmails, toNames, fromEmail, subject, content, true, document, fileNodeRefs, zipIt, zipFileName);
+                emailService.sendEmail(toEmails, toNames, toBccEmails, toBccNames, fromEmail, subject, content, true, document, fileNodeRefs, zipIt,
+                        zipFileName);
             } catch (EmailException e) {
                 throw new RuntimeException("Document e-mail sending failed", e);
             }

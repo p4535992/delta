@@ -264,7 +264,13 @@
          <required>false</required>
          <rtexprvalue>true</rtexprvalue>
          <description>Binding to filters.</description>
-      </attribute>       
+      </attribute>
+      <attribute>
+         <name>ajaxParentLevel</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>Level of AjaxUpdateable ancestor to refresh.</description>
+      </attribute>
    </tag>
 
    <tag>

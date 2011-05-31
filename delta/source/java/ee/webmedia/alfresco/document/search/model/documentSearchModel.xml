@@ -219,7 +219,19 @@
             </property> 
             <property name="docsearch:totalSumHighest">
                <type>d:double</type>
-            </property> 
+            </property>
+            <property name="docsearch:fund">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docsearch:fundsCenter">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docsearch:eaCommitmentItem">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>            
          </properties>
       </type>
 

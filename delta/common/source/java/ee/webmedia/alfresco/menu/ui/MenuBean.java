@@ -38,7 +38,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
@@ -474,9 +474,7 @@ public class MenuBean implements Serializable {
         menuBean.resetBreadcrumb();
 
         // let the ClearStateNotificationHandler notify all the interested listeners
-        ClearStateNotificationHandler clearStateNotificationHandler = (ClearStateNotificationHandler) FacesHelper.getManagedBean(context,
-                ClearStateNotificationHandler.BEAN_NAME);
-        clearStateNotificationHandler.notifyClearStateListeners();
+        BeanHelper.getClearStateNotificationHandler().notifyClearStateListeners();
     }
 
     public void clearViewStack(ActionEvent event) {

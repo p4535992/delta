@@ -29,11 +29,11 @@ import javax.faces.event.ActionEvent;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.security.AccessPermission;
 import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.AuthorityType;
 import org.alfresco.service.cmr.security.PermissionService;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
@@ -58,7 +58,6 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
-import ee.webmedia.alfresco.document.permissions.SeriesDocManagerDynamicAuthority;
 import ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener;
 import ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
@@ -589,14 +588,13 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
         } else {
             seriesRef = getGeneralService().getAncestorNodeRefWithType(seriesOrDecendantOfSeriesRef, SeriesModel.Types.SERIES);
         }
-        Set<AccessPermission> seriesPermissions = getPermissionService().getAllSetPermissions(seriesRef);
-        Set<String> seriesAuths = new HashSet<String>();
-        for (AccessPermission seriesPermission : seriesPermissions) {
-            if (SeriesDocManagerDynamicAuthority.SERIES_MANAGEABLE_PERMISSION.equals(seriesPermission.getPermission())
-                    && AccessStatus.ALLOWED.equals(seriesPermission.getAccessStatus()) && authorities.contains(seriesPermission.getAuthority())) {
-                seriesAuths.add(seriesPermission.getAuthority());
-            }
+        Pair<Set<String>, Set<String>> usersAndGroups = BeanHelper.getDocumentService().getSeriesAuthorities(seriesRef);
+        Set<String> seriesAuths = usersAndGroups.getFirst();
+        for (String group : usersAndGroups.getSecond()) {
+            Set<String> groupAuths = authorityService.getContainedAuthorities(AuthorityType.USER, group, true);
+            seriesAuths.addAll(groupAuths);
         }
+        seriesAuths.retainAll(authorities);
         return seriesAuths;
     }
 

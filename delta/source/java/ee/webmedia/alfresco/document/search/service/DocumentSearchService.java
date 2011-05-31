@@ -168,9 +168,9 @@ public interface DocumentSearchService {
 
     List<Document> searchAccessRestictionEndsAfterDate(Date restrictionEndDate);
 
-    List<NodeRef> searchWorkingDocumentsByOwnerId(String ownerId);
+    List<NodeRef> searchWorkingDocumentsByOwnerId(String ownerId, boolean isPreviousOwnerId);
 
-    List<NodeRef> searchNewTasksByOwnerId(String ownerId);
+    List<NodeRef> searchNewTasksByOwnerId(String ownerId, boolean isPreviousOwnerId);
 
     /**
      * Used by ADR web service to search documents.
@@ -230,5 +230,7 @@ public interface DocumentSearchService {
     List<Document> searchInvoiceBaseDocuments(String contractNumber, String sellerPartyName);
 
     List<Document> searchInvoicesWithEmptySapAccount();
+
+    List<NodeRef> searchUsersByRelatedFundsCenter(String relatedFundsCenter);
 
 }

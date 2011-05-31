@@ -431,7 +431,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     @Override
     public List<Task> searchCurrentUsersTasksInProgress(QName taskType) {
         long startTime = System.currentTimeMillis();
-        List<String> queryParts = getTaskQuery(taskType, AuthenticationUtil.getRunAsUser(), Status.IN_PROGRESS);
+        List<String> queryParts = getTaskQuery(taskType, AuthenticationUtil.getRunAsUser(), Status.IN_PROGRESS, false);
         addSubstitutionRestriction(queryParts);
         String query = generateTaskSearchQuery(queryParts);
         List<Task> results = searchTasksImpl(query, false, /* queryName */"CurrentUsersTasksInProgress");
@@ -806,9 +806,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<NodeRef> searchWorkingDocumentsByOwnerId(String ownerId) {
+    public List<NodeRef> searchWorkingDocumentsByOwnerId(String ownerId, boolean isPreviousOwnerId) {
         long startTime = System.currentTimeMillis();
-        String query = getWorkingDocumentsOwnerQuery(ownerId);
+        String query = getWorkingDocumentsOwnerQuery(ownerId, isPreviousOwnerId);
         List<NodeRef> results = searchNodesFromAllStores(query, false, /* queryName */"workingDocumentsByOwnerId");
         if (log.isDebugEnabled()) {
             log.debug("User's " + ownerId + " working documents search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
@@ -817,9 +817,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<NodeRef> searchNewTasksByOwnerId(String ownerId) {
+    public List<NodeRef> searchNewTasksByOwnerId(String ownerId, boolean isPreviousOwnerId) {
         long startTime = System.currentTimeMillis();
-        String query = generateTaskSearchQuery(getTaskQuery(null, ownerId, Status.NEW));
+        String query = generateTaskSearchQuery(getTaskQuery(null, ownerId, Status.NEW, isPreviousOwnerId));
         List<NodeRef> results = searchNodesFromAllStores(query, false, /* queryName */"newTasksByOwnerId");
         if (log.isDebugEnabled()) {
             log.debug("User's " + ownerId + " new tasks search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
@@ -923,20 +923,32 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return searchNodes(query, false, /* queryName */"usersByFirstNameLastName");
     }
 
-    private List<String> getTaskQuery(QName taskType, String ownerId, Status status) {
+    @Override
+    public List<NodeRef> searchUsersByRelatedFundsCenter(String relatedFundsCenter) {
+        Assert.notNull(relatedFundsCenter);
+        List<String> queryParts = new ArrayList<String>(2);
+        queryParts.add(SearchUtil.generateTypeQuery(ContentModel.TYPE_PERSON));
+        queryParts.add(SearchUtil.generateStringExactQuery(relatedFundsCenter, ContentModel.PROP_RELATED_FUNDS_CENTER));
+        String query = SearchUtil.joinQueryPartsAnd(queryParts);
+        return searchNodes(query, false, /* queryName */"usersByRelatedFundsCenter");
+    }
+
+    private List<String> getTaskQuery(QName taskType, String ownerId, Status status, boolean isPreviousOwnerId) {
         if (taskType == null) {
             taskType = WorkflowCommonModel.Types.TASK;
         }
+        QName ownerField = (isPreviousOwnerId) ? WorkflowCommonModel.Props.PREVIOUS_OWNER_ID : WorkflowCommonModel.Props.OWNER_ID;
         List<String> queryParts = new ArrayList<String>();
         queryParts.add(generateTypeQuery(taskType));
         queryParts.add(generateStringExactQuery(status.getName(), WorkflowCommonModel.Props.STATUS));
-        queryParts.add(generateStringExactQuery(ownerId, WorkflowCommonModel.Props.OWNER_ID));
+        queryParts.add(generateStringExactQuery(ownerId, ownerField));
         return queryParts;
     }
 
-    private String getWorkingDocumentsOwnerQuery(String ownerId) {
+    private String getWorkingDocumentsOwnerQuery(String ownerId, boolean isPreviousOwnerId) {
         List<String> queryParts = new ArrayList<String>();
-        queryParts.add(generateStringExactQuery(ownerId, DocumentCommonModel.Props.OWNER_ID));
+        QName ownerField = (isPreviousOwnerId) ? DocumentCommonModel.Props.PREVIOUS_OWNER_ID : DocumentCommonModel.Props.OWNER_ID;
+        queryParts.add(generateStringExactQuery(ownerId, ownerField));
         queryParts.add(generateStringExactQuery(DocumentStatus.WORKING.getValueName(), DocumentCommonModel.Props.DOC_STATUS));
         return generateDocumentSearchQuery(queryParts);
     }
@@ -953,7 +965,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(joinQueryPartsOr(
                 Arrays.asList(
                          joinQueryPartsAnd(Arrays.asList(incomingLetterTypesQuery, hasNoStartedCompoundWorkflowsQuery))
-                         , joinQueryPartsAnd(Arrays.asList(notIncomingLetterTypesQuery, generatePropertyNullQuery(DocumentCommonModel.Props.REG_NUMBER)))
+                         ,
+                        joinQueryPartsAnd(Arrays.asList(notIncomingLetterTypesQuery,
+                                generateStringExactQuery(DocumentStatus.WORKING.getValueName(), DocumentCommonModel.Props.DOC_STATUS)))
                         )
                 ));
         return generateDocumentSearchQuery(queryParts);
@@ -1133,6 +1147,13 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
                         DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER));
         queryParts.add(generateDoublePropertyRangeQuery((Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_LOWEST) //
                 , (Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_HIGHEST), DocumentSpecificModel.Props.TOTAL_SUM));
+        // invoice transaction fields
+        List<String> fund = (List<String>) props.get(DocumentSearchModel.Props.FUND);
+        queryParts.add(generateMultiStringExactQuery(fund, DocumentCommonModel.Props.SEARCHABLE_FUND));
+        List<String> fundsCenter = (List<String>) props.get(DocumentSearchModel.Props.FUNDS_CENTER);
+        queryParts.add(generateMultiStringExactQuery(fundsCenter, DocumentCommonModel.Props.SEARCHABLE_FUNDS_CENTER));
+        List<String> eaCommitmentItem = (List<String>) props.get(DocumentSearchModel.Props.EA_COMMITMENT_ITEM);
+        queryParts.add(generateMultiStringExactQuery(eaCommitmentItem, DocumentCommonModel.Props.SEARCHABLE_EA_COMMITMENT_ITEM));
 
         log.info("Documents search filter: " + WmNode.toString(RepoUtil.getNotEmptyProperties(RepoUtil.toQNameProperties(props)), namespaceService));
 

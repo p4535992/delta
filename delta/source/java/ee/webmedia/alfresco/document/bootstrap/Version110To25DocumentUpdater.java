@@ -38,6 +38,7 @@ public class Version110To25DocumentUpdater extends AbstractNodeUpdater {
     private ShortRegNumberUpdater shortRegNumberUpdater;
     private PostipoissImportDocumentsUpdater postipoissImportDocumentsUpdater;
     private DocumentPrivilegesUpdater documentPrivilegesUpdater;
+    private IncomingLetterADRVisibilityUpdater incomingLetterADRVisibilityUpdater;
 
     private boolean limitForTesting = false;
     private Date limitCreatedBegin;
@@ -104,6 +105,9 @@ public class Version110To25DocumentUpdater extends AbstractNodeUpdater {
             info.add("postipoissImportDocumentsUpdaterDisabled");
         }
 
+        Pair<Boolean, String> incomingLetterADRVisibilityUpdaterResult = incomingLetterADRVisibilityUpdater.updateDocument(nodeRef, origProps);
+        info.add("incomingLetterADRVisibilityUpdater," + incomingLetterADRVisibilityUpdaterResult.getSecond());
+
         // Updaters which consume Map<String, Object> style properties
         Map<String, Object> newProps2 = RepoUtil.toStringProperties(newProps);
 
@@ -112,7 +116,11 @@ public class Version110To25DocumentUpdater extends AbstractNodeUpdater {
 
         // Final save
         newProps2.put(ContentModel.PROP_MODIFIER.toString(), origProps.get(ContentModel.PROP_MODIFIER));
-        newProps2.put(ContentModel.PROP_MODIFIED.toPrefixString(), origProps.get(ContentModel.PROP_MODIFIED));
+        if (incomingLetterADRVisibilityUpdaterResult.getFirst()) {
+            newProps2.put(ContentModel.PROP_MODIFIED.toPrefixString(), new Date());
+        } else {
+            newProps2.put(ContentModel.PROP_MODIFIED.toPrefixString(), origProps.get(ContentModel.PROP_MODIFIED));
+        }
         nodeService.setProperties(nodeRef, RepoUtil.toQNameProperties(newProps2));
 
         // This updater only removes 1 aspect; it fails, with the following error:
@@ -175,6 +183,10 @@ public class Version110To25DocumentUpdater extends AbstractNodeUpdater {
 
     public void setDocumentPrivilegesUpdater(DocumentPrivilegesUpdater documentPrivilegesUpdater) {
         this.documentPrivilegesUpdater = documentPrivilegesUpdater;
+    }
+
+    public void setIncomingLetterADRVisibilityUpdater(IncomingLetterADRVisibilityUpdater incomingLetterADRVisibilityUpdater) {
+        this.incomingLetterADRVisibilityUpdater = incomingLetterADRVisibilityUpdater;
     }
 
     public void setLimitForTesting(boolean limitForTesting) {

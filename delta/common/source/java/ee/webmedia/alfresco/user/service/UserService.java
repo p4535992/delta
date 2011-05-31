@@ -156,4 +156,13 @@ public interface UserService {
      */
     boolean isInAccountantGroup();
 
+    /**
+     * Adds leaving aspect to leavingUserId.
+     * 
+     * @param leavingUserId resigning user
+     * @param replacementUserId user to whom liability is given to
+     * @return true if successful, false otherwise
+     */
+    boolean markUserLeaving(String leavingUserId, String replacementUserId, boolean isLeaving);
+
 }

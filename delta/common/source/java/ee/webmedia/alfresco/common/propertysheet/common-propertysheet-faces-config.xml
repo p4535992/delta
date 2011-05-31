@@ -145,7 +145,7 @@
    
    <managed-bean>
       <description>
-         Bean that generates a selectBox with values of classificator specified using classificatorName attribute on property-sheet/show-property element
+         Bean that generates a selectBox with values of dimension specified using dimensionName attribute on property-sheet/show-property element
       </description>
       <managed-bean-name>DimensionSelectorGenerator</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator</managed-bean-class>
@@ -261,7 +261,7 @@
          <component-family>javax.faces.Panel</component-family>
          <renderer-type>ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRenderer</renderer-type>
          <renderer-class>ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRenderer</renderer-class>
-      </renderer>  
+      </renderer>
       
    </render-kit>
 

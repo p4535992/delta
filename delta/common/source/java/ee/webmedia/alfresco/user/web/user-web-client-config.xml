@@ -8,6 +8,9 @@
          <dialog name="userDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/user-details-dialog.jsp" managed-bean="UserDetailsDialog"
             icon="/images/icons/user_console_large.gif" title-id="user_data" actions-config-id="user_actions" />
 
+         <dialog name="userConsole" page="/jsp/users/user-console.jsp" managed-bean="UserDetailsDialog" icon="/images/icons/user_console_large.gif" 
+            title-id="user_console_info" description-id="user_console_description" show-ok-button="false" actions-config-id="user_add_to_group_actions"/>
+
          <dialog name="permissionsListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-list-dialog.jsp" managed-bean="PermissionsListDialog"
             icon="/images/icons/users_large.gif" title-id="manage_invited_users" actions-config-id="browse_actions_permissions" />
 
@@ -36,13 +39,25 @@
               <image>/images/icons/versioned_properties.gif</image>
               <action-listener>#{UserDetailsDialog.addNewValue}</action-listener>
           </action>
+          
+          <action id="user_add_to_group">
+              <evaluator>ee.webmedia.alfresco.document.web.evaluator.AddUserToGroupEvaluator</evaluator>
+              <label-id>add_to_group</label-id>
+              <image>/images/icons/add_user.gif</image>
+              <onclick>showModal('dialog:dialog-body:userGroupSearch_popup'); return false;</onclick>
+          </action>
 
          <action-group id="browse_actions_permissions">
             <action idref="permissions_add" />
          </action-group>
 
+          <action-group id="user_add_to_group_actions">
+              <action idref="user_add_to_group" />
+          </action-group>
+          
           <action-group id="user_actions">
               <action idref="user_add_substitute"/>
+              <action idref="user_add_to_group" />
           </action-group>
 
       </actions>
@@ -59,6 +74,7 @@
          <show-property name="cm:telephone" display-label-id="telephone" />
          <show-property name="cm:email" display-label-id="user_email" />
          <show-property name="cm:homeFolder" display-label-id="user_home_folder" component-generator="HomespaceLinkGenerator" />
+         <show-property name="cm:relatedFundsCenter" display-label-id="user_relatedFundsCenter" component-generator="DimensionSelectorGenerator" dimensionName="invoiceFundsCenters" readOnlyIf="#{UserDetailsDialog.isRelatedFundsCenterNotEditable}" />
       </property-sheet>
    </config>
 

@@ -87,6 +87,10 @@
          <property-name>delegationBean</property-name>
          <value>#{DelegationBean}</value>
       </managed-property>
+      <managed-property>
+         <property-name>transactionsBlockBean</property-name>
+         <value>#{TransactionsBlockBean}</value>
+      </managed-property>      
    </managed-bean>
 
    <managed-bean>

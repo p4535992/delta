@@ -213,11 +213,20 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             nodeProps.put(PrivilegeModel.Props.GROUP.toString(), privGroups);
         }
         RepoUtil.validateSameSize(privUsers, privGroups, "users", "groups");
-        if (!privUsers.contains(authority)) {
-            privUsers.add(authority);
-            if (group == null) {
-                group = GROUPLESS_GROUP;
+
+        if (group == null) {
+            group = GROUPLESS_GROUP;
+        }
+        boolean found = false;
+        for (int i = 0; i < privUsers.size(); i++) {
+            if (authority.equals(privUsers.get(i)) && group.equals(privGroups.get(i))) {
+                found = true;
+                break;
             }
+        }
+        // Add, if same user+group combination is not yet added
+        if (!found) {
+            privUsers.add(authority);
             privGroups.add(group);
         } else {
             mustSaveUserGroupProps = false;

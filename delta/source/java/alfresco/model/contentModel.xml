@@ -245,6 +245,9 @@
             <property name="cm:instantmsg">
             	<type>d:text</type>
             </property>
+            <property name="cm:relatedFundsCenter">
+               <type>d:text</type>
+            </property>            
             
             <!-- system maintained values -->
             <property name="cm:sizeCurrent">

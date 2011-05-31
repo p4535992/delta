@@ -262,6 +262,18 @@
             <property name="doccom:searchableHasStartedCompoundWorkflows">
                <type>d:boolean</type>
             </property>
+            <property name="doccom:searchableFund">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="doccom:searchableFundsCenter">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property> 
+            <property name="doccom:searchableEaCommitmentItem">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
          </properties>
       </aspect>
 
@@ -315,7 +327,7 @@
       <aspect name="doccom:owner">
          <!--
             Valik DHS kasutajate hulgast (kõik gruppi kuuluvad väljad täidetakse valitud kasutaja andmetega)
-            või sisestatakse tekstina
+            või sisestatakse tekstina va. prevoiusOwnerId väli
          -->
          <properties>
             <property name="doccom:ownerName"><!-- Koostaja -->
@@ -341,6 +353,9 @@
                <type>d:text</type>
             </property>
             <property name="doccom:ownerPhone"><!-- Koostaja telefon -->
+               <type>d:text</type>
+            </property>
+            <property name="doccom:previousOwnerId"><!-- Eelmise omaniku ownerId vastutuse tagasivõtmise jaoks -->
                <type>d:text</type>
             </property>
          </properties>

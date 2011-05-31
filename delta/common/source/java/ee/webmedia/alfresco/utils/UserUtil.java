@@ -1,12 +1,20 @@
 package ee.webmedia.alfresco.utils;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 
@@ -90,6 +98,29 @@ public class UserUtil {
             }
         }
         return firstNameLastName;
+    }
+
+    public static List<Map<String, String>> getGroupsFromAuthorities(AuthorityService authorityService, Set<String> authorities) {
+        Assert.notNull(authorityService, "AuhtorityService cannot be null!");
+        if (CollectionUtils.isEmpty(authorities)) {
+            return Collections.emptyList();
+        }
+
+        List<Map<String, String>> groups = new ArrayList<Map<String, String>>(authorities.size());
+        for (String authority : authorities) {
+            Map<String, String> authMap = new HashMap<String, String>(5, 1.0f);
+
+            String name = authorityService.getShortName(authority);
+            authMap.put("name", name);
+            authMap.put("id", authority);
+            authMap.put("group", authority);
+            authMap.put("groupName", name);
+            authMap.put("displayName", authorityService.getAuthorityDisplayName(authority));
+
+            groups.add(authMap);
+        }
+
+        return groups;
     }
 
 }

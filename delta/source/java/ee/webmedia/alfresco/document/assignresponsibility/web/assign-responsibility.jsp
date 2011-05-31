@@ -7,13 +7,13 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<a:panel id="assign-responsibility-panel" styleClass="column panel-100" label="#{msg.assign_responsibility}" progressive="true">
+<a:panel id="assign-responsibility-panel" styleClass="panel-100" label="#{msg.assign_responsibility}" progressive="true" rendered="#{AssignResponsibilityBean.panelVisible}">
    <a:booleanEvaluator value="#{AssignResponsibilityBean.instructionSet}">
       <f:verbatim><div class="message"></f:verbatim>
       <h:outputText value="#{AssignResponsibilityBean.instruction}" styleClass="medium" />
       <f:verbatim></div></f:verbatim>
    </a:booleanEvaluator>
-
-   <h:commandButton actionListener="#{AssignResponsibilityBean.execute}" value="#{msg.assign_responsibility_perform}" disabled="#{AssignResponsibilityBean.ownerUnset}" style="margin-top: 5px;" />
-   <r:propertySheetGrid labelStyleClass="propertiesLabel" columns="1" mode="edit" value="#{AssignResponsibilityBean.node}" externalConfig="true" var="assignResponsibility" />
+   <r:propertySheetGrid labelStyleClass="propertiesLabel" columns="1" mode="edit" value="#{AssignResponsibilityBean.node}" externalConfig="true" var="assignResponsibility" rendered="#{AssignResponsibilityBean.notLeaving}" />
+   <h:commandButton actionListener="#{AssignResponsibilityBean.execute}" value="#{msg.assign_responsibility_perform}" disabled="#{AssignResponsibilityBean.ownerUnset}" style="margin-top: 5px;" rendered="#{AssignResponsibilityBean.notLeaving}" />
+   <h:commandButton actionListener="#{AssignResponsibilityBean.revert}" value="#{msg.assign_responsibility_revert}" style="margin-top: 5px;" rendered="#{AssignResponsibilityBean.leavingAndAdmin}" />
 </a:panel>

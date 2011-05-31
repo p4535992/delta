@@ -14,6 +14,7 @@
       <property name="documentService" ref="DocumentService" />
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="documentSearchService" ref="DocumentSearchService" />
+      <property name="userService" ref="UserService" />
    </bean>
 
    <bean id="AssignResponsibilityService" class="org.springframework.aop.framework.ProxyFactoryBean">

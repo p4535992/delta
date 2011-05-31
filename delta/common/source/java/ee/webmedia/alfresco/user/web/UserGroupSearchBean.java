@@ -51,6 +51,10 @@ public class UserGroupSearchBean implements Serializable {
         return searchUsersGroups(filterIndex, contains, true);
     }
 
+    public SelectItem[] searchGroupsWithAdminsAndDocManagers(int filterIndex, String contains) {
+        return searchGroups(1, contains, true);
+    }
+
     public SelectItem[] searchGroups(int filterIndex, String contains, boolean withAdminsAndDocManagers) {
         List<Authority> results = getDocumentSearchService().searchAuthorityGroups(contains, true, withAdminsAndDocManagers);
         SelectItem[] selectItems = new SelectItem[results.size()];

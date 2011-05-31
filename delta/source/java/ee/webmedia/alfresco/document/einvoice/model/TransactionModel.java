@@ -22,13 +22,13 @@ public interface TransactionModel {
         QName EA_COMMITMENT_ITEM = QName.createQName(URI, "eaCommitmentItem");
         QName COMMITMENT_ITEM = QName.createQName(URI, "commitmentItem");
         QName ORDER_NUMBER = QName.createQName(URI, "orderNumber");
-        QName ASSET_INVENTARY_NUMBER = QName.createQName(URI, "assetInventaryNumber");
+        QName ASSET_INVENTORY_NUMBER = QName.createQName(URI, "assetInventoryNumber");
         QName SUM_WITHOUT_VAT = QName.createQName(URI, "sumWithoutVat");
         QName POSTING_KEY = QName.createQName(URI, "postingKey");
         QName ACCOUNT = QName.createQName(URI, "account");
         QName INVOICE_TAX_CODE = QName.createQName(URI, "invoiceTaxCode");
         QName INVOICE_TAX_PERCENT = QName.createQName(URI, "invoiceTaxPercent");
-        QName TRADING_PARTNER_CODE = QName.createQName(URI, "traidingPartnerCode");
+        QName TRADING_PARTNER_CODE = QName.createQName(URI, "tradingPartnerCode");
         QName FUNCTIONAL_ARE_CODE = QName.createQName(URI, "functionalAreaCode");
         QName CASH_FLOW_CODE = QName.createQName(URI, "cashFlowCode");
         QName SOURCE = QName.createQName(URI, "source");

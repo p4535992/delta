@@ -278,6 +278,9 @@ public class MultiValueEditorRenderer extends BaseRenderer {
         out.write(Application.getMessage(context, SearchRenderer.CLOSE_WINDOW_MSG));
         out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner\">");
 
+        @SuppressWarnings("unchecked")
+        Map<Object, Object> attributes = picker.getAttributes();
+        attributes.put(Search.PICKER_CALLBACK_KEY, multiValueEditor.getAttributes().get(Search.PICKER_CALLBACK_KEY));
         Utils.encodeRecursive(context, picker);
 
         out.write("</div></div></div>");

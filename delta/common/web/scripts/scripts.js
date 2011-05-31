@@ -280,11 +280,11 @@ function addAutocompleter(inputId, valuesArray){
    });
 }
 
-function addSearchSuggest(clientId, suggestChars, pickerCallback, viewName, containerClientId) {
+function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri) {
    autocompleters.push(function () {
       var jQInput = $jQ("#"+escapeId4JQ(clientId));
       var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
-      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, minChars: suggestChars, suggestAll: 1, delay: 50, 
+      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, minChars: 3, suggestAll: 1, delay: 50, 
       onItemSelect: function (li) {
          processButtonState();
       }, 
@@ -298,19 +298,7 @@ function addSearchSuggest(clientId, suggestChars, pickerCallback, viewName, cont
       });
 
       suggest.bind("autoComplete", function(e, data){
-
-         // Call setter and refresh HTML
-         var uri = getContextPath() + '/ajax/invoke/AjaxSearchBean.setterCallback?clientId=' + clientId + '&containerClientId=' + containerClientId + '&viewName=' + viewName + '&data=' + data.newVal;
-         $jQ.ajax({
-           type: 'POST',
-           url: uri,
-           mode: 'queue',
-           success: function (responseText) {
-             ajaxSuccess(responseText, clientId, containerClientId); 
-           },
-           error: ajaxError,
-           datatype: 'html'
-         });
+      	ajaxSubmit(clientId, containerClientId, [], submitUri, {data : data.newVal});
       });
       jQInput.focus(function() {
          jQInput.keydown();
@@ -345,7 +333,7 @@ function setPageScrollY() {
 	$jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
 }
 
-function webdavOpen() {
+function webdavOpen(url) {
    var showDoc = true;
    // if the link represents an Office document and we are in IE try and
    // open the file directly to get WebDAV editing capabilities
@@ -360,7 +348,7 @@ function webdavOpen() {
    }
    if (showDoc == true)
    {
-      window.open(this.href, '_blank');
+      window.open(url, '_blank');
    }
    return false;
 }
@@ -369,7 +357,7 @@ function webdavOpen() {
  * Open file in read-only mode (TODO: with webdav, if file is office document)
  * @return false
  */
-function webdavOpenReadOnly() {
+function webdavOpenReadOnly(url) {
    // TODO: at the moment it just alwais provides a download link even for office documents
 //   // if the link represents an Office document and we are in IE try and
 //   // open the file directly to get WebDAV editing capabilities
@@ -396,7 +384,7 @@ function webdavOpenReadOnly() {
 //      alert("To open using webdaw you must have IE compatible browser(for example firefox with IEtab or Internet Explorer)");
 //   }
 //   alert("regular file download");
-   window.open(this.href, '_blank');// regular file saveAs/open by downloading it to HD
+   window.open(url, '_blank');// regular file saveAs/open by downloading it to HD
    return false;
 }
 
@@ -633,11 +621,13 @@ function ajaxErrorHidden(request, textStatus, errorThrown) {
    $jQ.log('Error during AJAX query: ' + textStatus);
 }
 
-function ajaxSubmit(componentId, componentClientId, componentContainerId, formClientId, viewName, submittableParams) {
+function ajaxSubmit(componentClientId, componentContainerId, submittableParams, uri) {
+   ajaxSubmit(componentClientId, componentContainerId, submittableParams, uri, null);
+}
+
+function ajaxSubmit(componentClientId, componentContainerId, submittableParams, uri, payload) {
    // When page is submitted, user sees an hourglass cursor
    $jQ(".submit-protection-layer").show().focus();
-
-   var uri = getContextPath() + '/ajax/invoke/AjaxBean.submit?componentId=' + componentId + '&componentClientId=' + componentClientId + '&viewName=' + viewName;
 
    // Find all form fields that are inside this component
    var componentChildFormElements = $jQ('#' + escapeId4JQ(componentContainerId)).find('input,select,textarea');
@@ -647,10 +637,15 @@ function ajaxSubmit(componentId, componentClientId, componentContainerId, formCl
       return componentClientId == this.name.substring(0, componentClientId.length) || $jQ.inArray(this.name, submittableParams) >= 0;
    });
 
+   var postData = componentChildFormElements.add(hiddenFormElements).serialize();
+   if (payload != null) {
+      postData += "&" + $jQ.param(payload);
+   }
+   
    $jQ.ajax({
       type: 'POST',
       url: uri,
-      data: componentChildFormElements.add(hiddenFormElements).serialize(),
+      data: postData,
       success: function (responseText) {
          ajaxSuccess(responseText, componentClientId, componentContainerId)
       },
@@ -851,8 +846,26 @@ $jQ(document).ready(function() {
    
    $jQ(".genericpicker-input").live('keyup', function (event) {
       var input = $jQ(this);
-      if (input.val() && input.val().length % 3 == 0) {
-         input.next().click();
+      var value = input.val();
+      var callback = input.attr('datasrc');
+      if (value && value.length % 3 == 0) {
+         $jQ.ajax({
+            type: 'POST',
+            url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",
+            data: $jQ.param({contains : value, pickerCallback : callback}),
+            mode: 'queue',
+            success: function(responseText) {
+               var tbody = input.closest('tbody');
+               var select = tbody.find('select');
+               select.children().remove();
+               var index = responseText.indexOf("|");
+               select.attr("size", responseText.substring(0, index))
+               select.append(responseText.substring(index + 1, responseText.length));
+               tbody.find('.hidden').toggleClass('hidden');
+            },
+            error: ajaxError,
+            dataType: 'html'
+         });
       }
    });
 
@@ -1172,8 +1185,30 @@ function handleHtmlLoaded(context, selects) {
    /**
     * Open Office documents directly from server
     */
-   $jQ('a.webdav-open', context).click(webdavOpen);
-   $jQ('a.webdav-readOnly', context).click(webdavOpenReadOnly);
+   $jQ('a.webdav-open', context).click(function () {
+      var path = $jQ(this).attr('href');
+      var uri = getContextPath() + '/ajax/invoke/AjaxBean.isFileLocked?path=' + path;
+      $jQ.ajax({
+        type: 'POST',
+        url: uri,
+        mode: 'queue',
+        success: function (responseText) {
+          if (responseText.indexOf("NOT_LOCKED") > -1) {
+             webdavOpen(path);
+          } else if (confirm(getTranslation("webdav_openReadOnly").replace("#", responseText))) {
+             webdavOpenReadOnly(path);
+          } else {
+             return false;
+          }
+        },
+        error: ajaxError,
+        datatype: 'html'
+      });
+      return false;
+   });
+   $jQ('a.webdav-readOnly', context).click(function () {
+      webdavOpenReadOnly($jQ(this).attr('href'));
+   });
 
    $jQ(".modalwrap select option", context).tooltip();
 

@@ -628,7 +628,8 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         return getDocument(docNodeRef);
     }
 
-    private Pair<Set<String> /* users */, Set<String> /* groups */> getSeriesAuthorities(NodeRef seriesRef) {
+    @Override
+    public Pair<Set<String> /* users */, Set<String> /* groups */> getSeriesAuthorities(NodeRef seriesRef) {
         Set<String> users = new HashSet<String>();
         Set<String> groups = new HashSet<String>();
         for (Authority authority : userService.getAuthorities(seriesRef, SeriesDocManagerDynamicAuthority.SERIES_MANAGEABLE_PERMISSION)) {
@@ -1744,6 +1745,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     @Override
     public void setDocumentOwner(NodeRef document, String userName) {
+        setDocumentOwner(document, userName, false);
+    }
+
+    @Override
+    public void setDocumentOwner(NodeRef document, String userName, boolean retainPreviousOwnerId) {
         if (!dictionaryService.isSubClass(nodeService.getType(document), DocumentCommonModel.Types.DOCUMENT)) {
             throw new RuntimeException("Node is not a document: " + document);
         }
@@ -1753,13 +1759,21 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             }
             return;
         }
+        String documentOwnerId = getDocumentOwner(document);
         if (log.isDebugEnabled()) {
-            log.debug("Setting document owner from " + getDocumentOwner(document) + " to " + userName + " - " + document);
+            log.debug("Setting document owner from " + documentOwnerId + " to " + userName + " - " + document);
         }
         Map<QName, Serializable> personProps = userService.getUserProperties(userName);
         Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
         // same logic as OwnerPropertiesModifierCallback#doWithProperties
         userService.setOwnerPropsFromUser(properties, personProps);
+
+        String previousOwnerId = null;
+        if (retainPreviousOwnerId) {
+            previousOwnerId = documentOwnerId;
+        }
+        properties.put(DocumentCommonModel.Props.PREVIOUS_OWNER_ID, previousOwnerId);
+
         generalService.setPropertiesIgnoringSystem(properties, document);
     }
 
@@ -1974,7 +1988,8 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             }
 
             if (!documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER)
-                    && !documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV)) {
+                    && !documentType.getId().equals(DocumentSubtypeModel.Types.INCOMING_LETTER_MV)
+                    && !documentType.getId().equals(DocumentSubtypeModel.Types.INVOICE)) {
                 props.put(DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
                 propertyChangesMonitorHelper.addIgnoredProps(props, DOC_STATUS);
                 documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_registered"));

@@ -196,6 +196,9 @@
             <property name="wfc:ownerName">
                <type>d:text</type>
             </property>
+            <property name="wfc:previousOwnerId">
+               <type>d:text</type>
+            </property>
          </properties>
       </aspect>
 

@@ -60,6 +60,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 
 /**
  * Backing Bean for the Groups Management pages.
@@ -349,9 +350,9 @@ public class GroupsDialog extends BaseDialogBean
     * @return The list of group objects to display. Returns the list of root groups or the
     *         list of sub-groups for the current group if set.
     */
-   public List<Map> getGroups()
+   public List<Map<String, String>> getGroups()
    {
-      List<Map> groups;
+      List<Map<String,String>> groups;
       
       UserTransaction tx = null;
       try
@@ -379,20 +380,7 @@ public class GroupsDialog extends BaseDialogBean
             // sub-group of an existing group
             authorities = this.getAuthorityService().getContainedAuthorities(AuthorityType.GROUP, this.group, immediate);
          }
-         groups = new ArrayList<Map>(authorities.size());
-         for (String authority : authorities)
-         {
-            Map<String, String> authMap = new HashMap<String, String>(3, 1.0f);
-
-            String name = this.getAuthorityService().getShortName(authority);
-            authMap.put("name", name);
-            authMap.put("id", authority);
-            authMap.put("group", authority);
-            authMap.put("groupName", name);
-            authMap.put("displayName", this.getAuthorityService().getAuthorityDisplayName(authority));
-            
-            groups.add(authMap);
-         }
+         groups = UserUtil.getGroupsFromAuthorities(this.getAuthorityService(), authorities); 
          
          // commit the transaction
          tx.commit();
@@ -401,7 +389,7 @@ public class GroupsDialog extends BaseDialogBean
       {
          Utils.addErrorMessage(MessageFormat.format(Application.getMessage(
                FacesContext.getCurrentInstance(), Repository.ERROR_GENERIC), err.getMessage()), err);
-         groups = Collections.<Map>emptyList();
+         groups = Collections.<Map<String, String>>emptyList();
          try { if (tx != null) {tx.rollback();} } catch (Exception tex) {}
       }
       

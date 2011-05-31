@@ -20,23 +20,28 @@ import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.cases.web.CaseDetailsDialog;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.AddFileDialog;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
+import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
+import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
-import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.document.web.VisitedDocumentsBean;
+import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManagePrivilegesDialog;
 import ee.webmedia.alfresco.series.web.SeriesDetailsDialog;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.volume.web.VolumeDetailsDialog;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
@@ -53,6 +58,10 @@ public class BeanHelper {
 
     public static ManagePrivilegesDialog getManagePrivilegesDialog() {
         return (ManagePrivilegesDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ManagePrivilegesDialog.BEAN_NAME);
+    }
+
+    public static DocumentSendOutDialog getDocumentSendOutDialog() {
+        return (DocumentSendOutDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DocumentSendOutDialog.BEAN_NAME);
     }
 
     public static MetadataBlockBean getMetadataBlockBean() {
@@ -85,6 +94,14 @@ public class BeanHelper {
 
     public static VisitedDocumentsBean getVisitedDocumentsBean() {
         return (VisitedDocumentsBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), VisitedDocumentsBean.BEAN_NAME);
+    }
+
+    public static UserListDialog getUserListDialog() {
+        return (UserListDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserListDialog.BEAN_NAME);
+    }
+
+    public static ClearStateNotificationHandler getClearStateNotificationHandler() {
+        return (ClearStateNotificationHandler) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ClearStateNotificationHandler.BEAN_NAME);
     }
 
     // END: web beans
@@ -130,7 +147,8 @@ public class BeanHelper {
     }
 
     public static DocumentSearchService getDocumentSearchService() {
-        return (DocumentSearchService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DocumentSearchService.BEAN_NAME);
+        return (DocumentSearchService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
+                DocumentSearchService.BEAN_NAME);
     }
 
     public static UserService getUserService() {
@@ -171,6 +189,14 @@ public class BeanHelper {
 
     public static DvkService getDvkService() {
         return (DvkService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DvkService.BEAN_NAME);
+    }
+
+    public static DocumentLogService getDocumentLogService() {
+        return (DocumentLogService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DocumentLogService.BEAN_NAME);
+    }
+
+    public static DocLockService getDocLockService() {
+        return (DocLockService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DocLockService.BEAN_NAME);
     }
 
     // END: delta services

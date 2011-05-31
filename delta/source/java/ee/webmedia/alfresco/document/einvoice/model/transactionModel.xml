@@ -73,7 +73,7 @@
                <type>d:text</type>
                <mandatory enforced="true">false</mandatory>
             </property>
-            <property name="trn:assetInventaryNumber">
+            <property name="trn:assetInventoryNumber">
                <type>d:text</type>
                <mandatory enforced="true">false</mandatory>
             </property>
@@ -97,7 +97,7 @@
                <type>d:int</type>
                <mandatory enforced="true">false</mandatory>
             </property>            
-            <property name="trn:traidingPartnerCode">
+            <property name="trn:tradingPartnerCode">
                <type>d:text</type>
                <mandatory enforced="true">false</mandatory>
             </property>

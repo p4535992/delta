@@ -7,11 +7,21 @@ import org.alfresco.repo.lock.LockServiceImpl;
 import org.alfresco.service.cmr.lock.LockStatus;
 import org.alfresco.service.cmr.lock.LockType;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.springframework.util.Assert;
 
 public class DocLockServiceImpl extends LockServiceImpl implements DocLockService {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocLockServiceImpl.class);
     /** timeOut in seconds how long lock is kept after creation(refreshing) before expiring */
     private final int lockTimeout = 180;
+
+    @Override
+    public String getLockOwnerIfLocked(NodeRef nodeRef) {
+        Assert.notNull(nodeRef, "NodeRef cannot be null!");
+        if (isLockByOther(nodeRef)) {
+            return (String) nodeService.getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER);
+        }
+        return null;
+    }
 
     /**
      * Gets the lock statuc for a node and a user name. <br>

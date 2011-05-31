@@ -181,4 +181,6 @@ public interface AddressbookService {
 
     List<Node> getContactsWithSapAccount();
 
+    List<Node> getContactsGroups(NodeRef contactNodeRef);
+
 }

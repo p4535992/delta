@@ -76,6 +76,9 @@ public interface DocumentCommonModel {
         QName SEARCHABLE_ERRAND_COUNTY = QName.createQName(URI, "searchableErrandCounty");
         QName SEARCHABLE_ERRAND_CITY = QName.createQName(URI, "searchableErrandCity");
         QName SEARCHABLE_PARTY_NAME = QName.createQName(URI, "searchablePartyName");
+        QName SEARCHABLE_FUND = QName.createQName(URI, "searchableFund");
+        QName SEARCHABLE_FUNDS_CENTER = QName.createQName(URI, "searchableFundsCenter");
+        QName SEARCHABLE_EA_COMMITMENT_ITEM = QName.createQName(URI, "searchableEaCommitmentItem");
 
         QName DOC_NAME = QName.createQName(URI, "docName");
         QName DOC_STATUS = QName.createQName(URI, "docStatus");
@@ -88,6 +91,7 @@ public interface DocumentCommonModel {
         QName OWNER_ORG_STRUCT_UNIT = QName.createQName(URI, "ownerOrgStructUnit");
         QName OWNER_EMAIL = QName.createQName(URI, "ownerEmail");
         QName OWNER_PHONE = QName.createQName(URI, "ownerPhone");
+        QName PREVIOUS_OWNER_ID = QName.createQName(URI, "previousOwnerId");
 
         QName SIGNER_NAME = QName.createQName(URI, "signerName");
         QName SIGNER_JOB_TITLE = QName.createQName(URI, "signerJobTitle");

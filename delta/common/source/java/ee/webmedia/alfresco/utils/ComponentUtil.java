@@ -438,6 +438,25 @@ public class ComponentUtil {
         return results;
     }
 
+    public static void renderSelectItems(ResponseWriter responseWriter, SelectItem[] items) throws IOException {
+        if (items != null)
+        {
+            // show each of the items in the results listbox
+            for (SelectItem item : items) {
+                responseWriter.write("<option value=\"");
+                responseWriter.write(item.getValue().toString());
+                if (item.getDescription() != null)
+                {
+                    responseWriter.write("\" title=\"");
+                    responseWriter.write(Utils.encode(item.getDescription()));
+                }
+                responseWriter.write("\">");
+                responseWriter.write(Utils.encode(item.getLabel()));
+                responseWriter.write("</option>");
+            }
+        }
+    }
+
     /**
      * Generate JavaScript that sets a hidden parameter. Implementation based on
      * {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
@@ -493,6 +512,11 @@ public class ComponentUtil {
 
     public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value //
             , Map<String, String> params, int parentLevel) {
+        return generateAjaxFormSubmit(context, component, fieldId, value, params, parentLevel, null);
+    }
+
+    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value //
+            , Map<String, String> params, int parentLevel, String uri) {
         Assert.isTrue(parentLevel >= 0, "parentLevel cannot be negative");
         // Find parent AJAX component to update and find out parent level.
         Pair<Integer, UIComponent> levelAndComponent = findAncestorAjaxComponent(component, null, parentLevel);
@@ -537,11 +561,12 @@ public class ComponentUtil {
             }
         }
 
-        s.append("ajaxSubmit('").append(ajaxComponent.getId()).append("','");
-        s.append(clientId).append("','");
-        s.append(((AjaxUpdateable) ajaxComponent).getAjaxClientId(context)).append("','");
-        s.append(form.getClientId(context)).append("','");
-        s.append(context.getViewRoot().getViewId()).append("',[");
+        if(StringUtils.isBlank(uri)) {
+            uri = context.getExternalContext().getRequestContextPath() + "/ajax/invoke/AjaxBean.submit?componentClientId=" + clientId + "&viewName=" + context.getViewRoot().getViewId();
+        }
+
+        s.append("ajaxSubmit('").append(clientId).append("','");
+        s.append(((AjaxUpdateable) ajaxComponent).getAjaxClientId(context)).append("', [");
         for (Iterator<String> i = submittableParams.iterator(); i.hasNext();) {
             String submittableParam = i.next();
             s.append("'").append(submittableParam).append("'");
@@ -549,7 +574,7 @@ public class ComponentUtil {
                 s.append(",");
             }
         }
-        s.append("]);return false;");
+        s.append("], '").append(uri).append("');return false;");
         return s.toString();
     }
 
@@ -614,11 +639,16 @@ public class ComponentUtil {
             throw new RuntimeException("Couldn't find parent ajax component to update for " + clientId + "!");
         }
 
+        String containerClientId = ancestorAjaxComponent.getClientId(context);
+        String submitUri = context.getExternalContext().getRequestContextPath() + "/ajax/invoke/AjaxSearchBean.setterCallback?componentClientId=" + clientId + "&containerClientId=" + containerClientId + "&viewName=" + context.getViewRoot().getViewId();
+
         String sep = "\", \"";
         StringBuffer sb = new StringBuffer("<script type=\"text/javascript\">");
-        sb.append("addSearchSuggest(\"").append(clientId).append(sep).append(3).append(sep).append(pickerCallback).append(sep)
-                .append(context.getViewRoot().getViewId());
-        sb.append(sep).append(ancestorAjaxComponent.getClientId(context)).append("\");");
+        sb.append("addSearchSuggest(\"")
+        .append(clientId).append(sep)
+        .append(containerClientId).append(sep)
+        .append(pickerCallback).append(sep)
+        .append(submitUri).append("\");");
         sb.append("</script>");
         out.write(sb.toString());
     }
@@ -815,16 +845,16 @@ public class ComponentUtil {
         return component;
     }
 
-    public static UIComponent findChildComponentById(FacesContext context, UIComponent component, String id, String clientId) {
+    public static UIComponent findChildComponentById(FacesContext context, UIComponent component, String clientId) {
         if (component == null) {
             return null;
         }
-        if (id.equals(component.getId()) && clientId.equals(component.getClientId(context))) {
+        if (clientId.equals(component.getClientId(context))) {
             return component;
         }
         for (int i = 0; i < component.getChildCount(); i++) {
             UIComponent child = (UIComponent) component.getChildren().get(i);
-            UIComponent result = findChildComponentById(context, child, id, clientId);
+            UIComponent result = findChildComponentById(context, child, clientId);
             if (result != null) {
                 return result;
             }

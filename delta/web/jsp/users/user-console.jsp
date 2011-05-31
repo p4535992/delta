@@ -56,7 +56,8 @@
 
 <h:outputText value="#{AssignResponsibilityBean.setFromOwnerUserConsole}" />
 
-<f:verbatim><div class="panel panel-65"></f:verbatim>
+<f:verbatim><div style="overflow:auto;"></f:verbatim>
+<f:verbatim><div class="column panel panel-65"></f:verbatim>
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/assignresponsibility/web/assign-responsibility.jsp" />
 <f:verbatim></div></f:verbatim>
 
@@ -79,3 +80,6 @@
       style="margin-top: 20px; display: block;" />
 
 </a:panel>
+<f:verbatim></div></f:verbatim>
+
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/users-groups.jsp" />

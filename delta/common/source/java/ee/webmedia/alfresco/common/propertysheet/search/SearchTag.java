@@ -26,6 +26,7 @@ public class SearchTag extends UIComponentTag {
     private String readonly;
     private Boolean showFilter;
     private String filters;
+    private Integer ajaxParentLevel;
 
     @Override
     public String getComponentType() {
@@ -57,6 +58,9 @@ public class SearchTag extends UIComponentTag {
         if (setterCallback != null) {
             attributes.put("setterCallback", setterCallback);
         }
+        if (ajaxParentLevel != null) {
+            attributes.put(Search.AJAX_PARENT_LEVEL_KEY, ajaxParentLevel);
+        }
         if (dialogTitleId != null) {
             attributes.put(Search.DIALOG_TITLE_ID_KEY, dialogTitleId);
         }
@@ -84,6 +88,7 @@ public class SearchTag extends UIComponentTag {
         dialogTitleId = null;
         editable = null;
         readonly = null;
+        ajaxParentLevel = null;
     }
 
     public void setValue(String value) {
@@ -132,5 +137,13 @@ public class SearchTag extends UIComponentTag {
 
     public String getFilters() {
         return filters;
+    }
+
+    public void setAjaxParentLevel(Integer ajaxParentLevel) {
+        this.ajaxParentLevel = ajaxParentLevel;
+    }
+
+    public Integer getAjaxParentLevel() {
+        return ajaxParentLevel;
     }
 }

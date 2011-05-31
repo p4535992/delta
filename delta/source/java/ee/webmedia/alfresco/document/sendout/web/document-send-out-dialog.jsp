@@ -115,4 +115,6 @@
       
    </h:panelGrid>
 
+   <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/metadata/web/metadata-block-lockRefresh.jsp" />
+
 </a:panel>

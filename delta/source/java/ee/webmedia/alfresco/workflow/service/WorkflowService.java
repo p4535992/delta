@@ -135,7 +135,7 @@ public interface WorkflowService {
 
     Set<Task> getTasks(NodeRef docRef, Predicate<Task> predicate);
 
-    void setTaskOwner(NodeRef task, String ownerId);
+    void setTaskOwner(NodeRef task, String ownerId, boolean retainPreviousOwnerId);
 
     // Filtering
 

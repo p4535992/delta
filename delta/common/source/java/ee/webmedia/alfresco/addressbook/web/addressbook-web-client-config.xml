@@ -162,6 +162,13 @@
             <action>dialog:addressbookCreateContactGroup</action>
          </action>
 
+         <action id="addressbook_add_to_group">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator</evaluator>
+            <label-id>addressbook_add_to_contactgroup</label-id>
+            <image>/images/icons/add_group.gif</image>
+            <onclick>showModal('dialog:dialog-body:addressbook_add_to_group_popup'); return false;</onclick>
+         </action>
+
          <!-- Action menu for Addressbook-->
          <action-group id="addressbook_menu">
             <action idref="addressbook_add_org" />
@@ -171,10 +178,12 @@
          <action-group id="addressbook_org_menu">
             <action idref="addressbook_edit_org" />
             <action idref="addressbook_add_org_person" />
+            <action idref="addressbook_add_to_group" />
          </action-group>
 
          <action-group id="addressbook_person_menu">
             <action idref="addressbook_edit_person" />
+            <action idref="addressbook_add_to_group" />
          </action-group>
 
          <action-group id="addressbook_contactgroup_menu">

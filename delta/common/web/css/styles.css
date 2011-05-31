@@ -2080,11 +2080,6 @@ TH A.header-wrap {
 }
 */
 
-#assign-responsibility-panel .panel-border > input {
-	display: inline;
-	float: right;
-}
-
 #add-authority-search table.generic-picker select {
 	min-width: 160px;
 }
@@ -2378,3 +2373,7 @@ DIV.trans-scroll TABLE {
 }
 
 /* End transaction block styles */
+
+.hidden {
+	display: none;
+}

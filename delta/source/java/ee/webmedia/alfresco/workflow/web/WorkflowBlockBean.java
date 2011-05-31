@@ -4,6 +4,7 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
@@ -39,11 +41,16 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.einvoice.model.Transaction;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
+import ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
+import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.dvk.service.DvkService;
@@ -82,11 +89,13 @@ public class WorkflowBlockBean implements Serializable {
     private static final String DROPDOWN_MENU_ITEM_ICON = "/images/icons/versioned_properties.gif";
     private static final String MSG_WORKFLOW_ACTION_GROUP = "workflow_compound_start_workflow";
     private static final String ATTRIB_OUTCOME_INDEX = "outcomeIndex";
+
     /** task index attribute name */
     private static final String ATTRIB_INDEX = "index";
     private FileBlockBean fileBlockBean;
     private MetadataBlockBean metadataBlockBean;
     private DelegationBean delegationBean;
+    private TransactionsBlockBean transactionsBlockBean;
 
     private transient DocumentService documentService;
     private transient WorkflowService workflowService;
@@ -260,9 +269,16 @@ public class WorkflowBlockBean implements Serializable {
             }
         }
 
-        String validationMsg = null;
-        if ((validationMsg = validate(task, outcomeIndex)) != null) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), validationMsg);
+        List<Pair<String, String>> validationMsgs = null;
+        if ((validationMsgs = validate(task, outcomeIndex)) != null) {
+            for (Pair<String, String> validationMsg : validationMsgs) {
+                if (validationMsg.getSecond() == null) {
+                    MessageUtil.addErrorMessage(validationMsg.getFirst());
+                } else {
+                    MessageUtil.addErrorMessage(validationMsg.getFirst(), validationMsg.getSecond());
+                }
+
+            }
             return;
         }
 
@@ -283,30 +299,61 @@ public class WorkflowBlockBean implements Serializable {
         metadataBlockBean.viewDocument(getDocumentService().getDocument(metadataBlockBean.getDocument().getNodeRef()));
     }
 
-    private String validate(Task task, Integer outcomeIndex) {
+    @SuppressWarnings("unchecked")
+    private List<Pair<String, String>> validate(Task task, Integer outcomeIndex) {
         QName taskType = task.getNode().getType();
         if (WorkflowSpecificModel.Types.SIGNATURE_TASK.equals(taskType)) {
             if (outcomeIndex == 0 && StringUtils.isBlank(task.getComment())) {
-                return "task_validation_signatureTask_comment";
+                return Arrays.asList(new Pair<String, String>("task_validation_signatureTask_comment", null));
             }
         } else if (WorkflowSpecificModel.Types.REVIEW_TASK.equals(taskType)) {
             if ((outcomeIndex == 1 || outcomeIndex == 2) && StringUtils.isBlank(task.getComment())) {
-                return "task_validation_reviewTask_comment";
+                return Arrays.asList(new Pair<String, String>("task_validation_reviewTask_comment", null));
+            }
+            if (DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
+                return checkTransactionCostManagers();
             }
         } else if (WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK.equals(taskType)) {
             if (outcomeIndex == 1 && StringUtils.isBlank(task.getComment())) {
-                return "task_validation_externalReviewTask_comment";
+                return Arrays.asList(new Pair<String, String>("task_validation_externalReviewTask_comment", null));
             }
         } else if (WorkflowSpecificModel.Types.ASSIGNMENT_TASK.equals(taskType)) {
             if (StringUtils.isBlank(task.getComment())) {
-                return "task_validation_assignmentTask_comment";
+                return Arrays.asList(new Pair<String, String>("task_validation_assignmentTask_comment", null));
             }
         } else if (WorkflowSpecificModel.Types.OPINION_TASK.equals(taskType)) {
             if (StringUtils.isBlank(task.getComment()) && task.getProp(WorkflowSpecificModel.Props.FILE) == null) {
-                return "task_validation_opinionTask_comment";
+                return Arrays.asList(new Pair<String, String>("task_validation_opinionTask_comment", null));
             }
         }
         return null;
+    }
+
+    private List<Pair<String, String>> checkTransactionCostManagers() {
+        List<Transaction> transactions = transactionsBlockBean.getTransactions();
+        if (transactions == null) {
+            return null;
+        }
+        String relatedFundsCenter = (String) BeanHelper.getNodeService().getProperty(userService.getCurrentUser(), ContentModel.PROP_RELATED_FUNDS_CENTER);
+        if (relatedFundsCenter == null) {
+            return null;
+        }
+        List<String> mandatoryForCostManager = BeanHelper.getEInvoiceService().getCostManagerMandatoryFields();
+        if (mandatoryForCostManager.isEmpty()) {
+            return null;
+        }
+        List<Pair<String, String>> errorMessages = new ArrayList<Pair<String, String>>();
+        List<String> addedErrorKeys = new ArrayList<String>();
+        for (Transaction transaction : transactions) {
+            String costCenter = transaction.getCostCenter();
+            if (costCenter != null && costCenter.equalsIgnoreCase(relatedFundsCenter)) {
+                EInvoiceUtil.checkTransactionMandatoryFields(mandatoryForCostManager, errorMessages, addedErrorKeys, transaction);
+            }
+        }
+        if (errorMessages.isEmpty()) {
+            return null;
+        }
+        return errorMessages;
     }
 
     public List<CompoundWorkflow> getCompoundWorkflows() {
@@ -573,12 +620,12 @@ public class WorkflowBlockBean implements Serializable {
 
     private boolean checkRights(Workflow workflow) {
         boolean localRights = getUserService().isDocumentManager()
-        || getDocumentService().isDocumentOwner(docRef, AuthenticationUtil.getRunAsUser())
-        || getWorkflowService().isOwner(workflow.getParent())
-        || getWorkflowService().isOwnerOfInProgressAssignmentTask(workflow.getParent());
+                || getDocumentService().isDocumentOwner(docRef, AuthenticationUtil.getRunAsUser())
+                || getWorkflowService().isOwner(workflow.getParent())
+                || getWorkflowService().isOwnerOfInProgressAssignmentTask(workflow.getParent());
         boolean externalReviewRights = !workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)
-        || !Boolean.TRUE.equals(document.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE))
-        || !hasCurrentInstitutionTask(workflow);
+                || !Boolean.TRUE.equals(document.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE))
+                || !hasCurrentInstitutionTask(workflow);
         return localRights && externalReviewRights;
     }
 
@@ -602,6 +649,10 @@ public class WorkflowBlockBean implements Serializable {
 
     public void setMetadataBlockBean(MetadataBlockBean metadataBlockBean) {
         this.metadataBlockBean = metadataBlockBean;
+    }
+
+    public void setTransactionsBlockBean(TransactionsBlockBean transactionsBlockBean) {
+        this.transactionsBlockBean = transactionsBlockBean;
     }
 
     public void setDelegationBean(DelegationBean delegationBean) {
@@ -636,7 +687,7 @@ public class WorkflowBlockBean implements Serializable {
     protected UserService getUserService() {
         if (userService == null) {
             userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(UserService.BEAN_NAME);
+                    .getBean(UserService.BEAN_NAME);
         }
         return userService;
     }
@@ -644,7 +695,7 @@ public class WorkflowBlockBean implements Serializable {
     protected DocumentService getDocumentService() {
         if (documentService == null) {
             documentService = (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(DocumentService.BEAN_NAME);
+                    .getBean(DocumentService.BEAN_NAME);
         }
         return documentService;
     }
@@ -660,7 +711,7 @@ public class WorkflowBlockBean implements Serializable {
     protected FileService getFileService() {
         if (fileService == null) {
             fileService = (FileService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-            .getBean(FileService.BEAN_NAME);
+                    .getBean(FileService.BEAN_NAME);
         }
         return fileService;
     }

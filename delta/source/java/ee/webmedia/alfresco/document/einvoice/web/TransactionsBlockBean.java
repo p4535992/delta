@@ -5,13 +5,14 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
@@ -25,6 +26,7 @@ import javax.faces.context.FacesContext;
 import javax.faces.el.MethodBinding;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
@@ -35,7 +37,6 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.apache.commons.collections.Predicate;
-import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter;
@@ -43,10 +44,10 @@ import ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSele
 import ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGridCustomChildAttrRenderer;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRenderer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionModel;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.utils.ActionUtil;
@@ -56,7 +57,6 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 
 public class TransactionsBlockBean implements Serializable {
 
-    private static final String EA_PREFIX = "EA";
     public static final String TAX_CODE_ATTR = "taxCode";
     private static final String TRANS_COMPONENT_ID_PREFIX = "trans-";
     public static final DecimalFormat INVOICE_DECIMAL_FORMAT = new DecimalFormat("#,##0.00");
@@ -66,14 +66,13 @@ public class TransactionsBlockBean implements Serializable {
     private static final String TRANSACTION_INDEX = "transIndex";
 
     private static final List<String> mainHeadingKeys = new ArrayList<String>(Arrays.asList("", "transaction_fundsCenter", "transaction_costCenter", "transaction_fund",
-            "transaction_eaCommitmentItem", "transaction_commitmentItem", "transaction_orderNumber", "transaction_assetInventaryNumber", "transaction_sumWithoutVat", ""));
+            "transaction_eaCommitmentItem", "transaction_commitmentItem", "transaction_orderNumber", "transaction_assetInventoryNumber", "transaction_sumWithoutVat", ""));
     private static final List<String> secondaryHeadingKeys = new ArrayList<String>(Arrays.asList("transaction_postingKey", "transaction_account",
-            "transaction_invoiceTaxCode", "transaction_traidingPartnerCode", "transaction_functionalAreaCode", "transaction_cashFlowCode", "transaction_source",
+            "transaction_invoiceTaxCode", "transaction_tradingPartnerCode", "transaction_functionalAreaCode", "transaction_cashFlowCode", "transaction_source",
             "transaction_paymentMethod", "transaction_houseBank", "transaction_entryContent"));
 
     private Node document;
     private List<Transaction> transactions;
-    /** Contains properties of saved transactions (where nodeRef != null) before last submit **/
     private final Map<NodeRef, Map<QName, Serializable>> originalProperties = new HashMap<NodeRef, Map<QName, Serializable>>();
     private List<Transaction> removedTransactions = new ArrayList<Transaction>();
     private transient HtmlPanelGroup transactionPanelGroup;
@@ -122,7 +121,7 @@ public class TransactionsBlockBean implements Serializable {
                 if (taxCode == null) {
                     transaction.setInvoiceTaxPercent(null);
                 } else {
-                    transaction.setInvoiceTaxPercent(getVatPercentageFromDimension(taxCode));
+                    transaction.setInvoiceTaxPercent(EInvoiceUtil.getVatPercentageFromDimension(taxCode, BeanHelper.getEInvoiceService().getVatCodeDimensionValues()));
                 }
             }
         }
@@ -270,21 +269,30 @@ public class TransactionsBlockBean implements Serializable {
         String rowClasses = "";
         final String rowClassesValue = "trans-recordSetRowAlt2,trans-subrow,"; // transaction list row and subrow classes
         final String styleDisplayNone = "display: none;";
+
+        Set<String> generalMandatoryFields = getMandatoryFields();
         for (Transaction transaction : transactions) {
+            Set<String> transMandatoryProps = getCostManagerMandatoryFields(transaction);
+            transMandatoryProps.addAll(generalMandatoryFields);
             // First row inputs
             HtmlOutputLink outputLink = createOutputLink(application, transMainGridChildren, transRowCounter);
             childrenStyleClassAttribute.put(outputLink.getId(), "trans-toggle-subrow");
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS_CENTERS, TransactionModel.Props.FUNDS_CENTER, transRowCounter);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COST_CENTERS, TransactionModel.Props.COST_CENTER, transRowCounter);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS, TransactionModel.Props.FUND, transRowCounter);
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS_CENTERS, TransactionModel.Props.FUNDS_CENTER, transRowCounter,
+                    transMandatoryProps);
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COST_CENTERS, TransactionModel.Props.COST_CENTER, transRowCounter,
+                    transMandatoryProps);
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS, TransactionModel.Props.FUND, transRowCounter,
+                    transMandatoryProps);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.EA_COMMITMENT_ITEM, transRowCounter,
-                    getEAExclusivePredicate());
+                    DimensionSelectorGenerator.getEAExclusivePredicate(), transMandatoryProps);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.COMMITMENT_ITEM, transRowCounter,
-                    getEAInclusivePredicate());
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_INTERNAL_ORDERS, TransactionModel.Props.ORDER_NUMBER, transRowCounter);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, TransactionModel.Props.ASSET_INVENTARY_NUMBER,
-                    transRowCounter);
-            addDoubleInput(context, transMainGridChildren, transRowCounter, TransactionModel.Props.SUM_WITHOUT_VAT, childrenStyleClassAttribute);
+                    DimensionSelectorGenerator.getEAInclusivePredicate(), transMandatoryProps);
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_INTERNAL_ORDERS, TransactionModel.Props.ORDER_NUMBER, transRowCounter,
+                    transMandatoryProps);
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, TransactionModel.Props.ASSET_INVENTORY_NUMBER,
+                    transRowCounter, transMandatoryProps);
+            addDoubleInput(context, transMainGridChildren, transRowCounter, TransactionModel.Props.SUM_WITHOUT_VAT, childrenStyleClassAttribute,
+                    transMandatoryProps);
             // actions
             transMainGridChildren.add(createTransActions(application, listId, transRowCounter));
 
@@ -307,18 +315,26 @@ public class TransactionsBlockBean implements Serializable {
             List tranRowSecondaryGridChildren = tranRowSecondaryGrid.getChildren();
 
             // Second row inputs
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_POSTING_KEY, TransactionModel.Props.POSTING_KEY, transRowCounter);
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_ACCOUNTS, TransactionModel.Props.ACCOUNT, transRowCounter, "small");
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.TAX_CODE_ITEMS, TransactionModel.Props.INVOICE_TAX_CODE, transRowCounter, "small");
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_TRADING_PARTNER_CODES, TransactionModel.Props.TRADING_PARTNER_CODE,
-                    transRowCounter);
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_FUNCTIONAL_AREA_CODE, TransactionModel.Props.FUNCTIONAL_ARE_CODE, transRowCounter);
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_CASH_FLOW_CODES, TransactionModel.Props.CASH_FLOW_CODE, transRowCounter, "small");
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_SOURCE_CODES, TransactionModel.Props.SOURCE, transRowCounter, "small");
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_POSTING_KEY, TransactionModel.Props.POSTING_KEY, transRowCounter,
+                    transMandatoryProps);
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_ACCOUNTS, TransactionModel.Props.ACCOUNT, transRowCounter, "small",
+                    transMandatoryProps);
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.TAX_CODE_ITEMS, TransactionModel.Props.INVOICE_TAX_CODE, transRowCounter, "small",
+                    transMandatoryProps);
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_TRADING_PARTNER_CODES, TransactionModel.Props.TRADING_PARTNER_CODE, transRowCounter,
+                    transMandatoryProps);
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_FUNCTIONAL_AREA_CODE, TransactionModel.Props.FUNCTIONAL_ARE_CODE, transRowCounter,
+                    transMandatoryProps);
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_CASH_FLOW_CODES, TransactionModel.Props.CASH_FLOW_CODE, transRowCounter, "small",
+                    transMandatoryProps);
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_SOURCE_CODES, TransactionModel.Props.SOURCE, transRowCounter, "small",
+                    transMandatoryProps);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_PAYMENT_METHOD_CODES, TransactionModel.Props.PAYMENT_METHOD, transRowCounter,
-                    "small");
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_HOUSE_BANK_CODES, TransactionModel.Props.HOUSE_BANK, transRowCounter);
-            addTextareaInput(context, tranRowSecondaryGridChildren, transRowCounter, TransactionModel.Props.ENTRY_CONTENT, secondaryChildrenStyleClassAttribute);
+                    "small", transMandatoryProps);
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_HOUSE_BANK_CODES, TransactionModel.Props.HOUSE_BANK, transRowCounter,
+                    transMandatoryProps);
+            addTextareaInput(context, tranRowSecondaryGridChildren, transRowCounter, TransactionModel.Props.ENTRY_CONTENT, secondaryChildrenStyleClassAttribute,
+                    transMandatoryProps);
 
             rowClasses = rowClasses + rowClassesValue;
             transRowCounter++;
@@ -330,8 +346,8 @@ public class TransactionsBlockBean implements Serializable {
             createAddTransLink(application, listId, transRowsMainGrid.getFacets());
         }
 
-        double sumWithoutVatValue = getSumWithoutVat();
-        double vatSumValue = getVatSum();
+        double sumWithoutVatValue = EInvoiceUtil.getSumWithoutVat(transactions);
+        double vatSumValue = EInvoiceUtil.getVatSum(transactions, originalProperties, BeanHelper.getEInvoiceService().getVatCodeDimensionValues());
 
         footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_sumWithoutVat"), new Pair<String, String>(INVOICE_DECIMAL_FORMAT
                 .format(sumWithoutVatValue),
@@ -346,82 +362,36 @@ public class TransactionsBlockBean implements Serializable {
 
     }
 
+    private boolean isMandatory(QName propName, Set<String> transMandatoryProps) {
+        return transMandatoryProps.contains(propName.getLocalName());
+    }
+
+    private Set<String> getCostManagerMandatoryFields(Transaction transaction) {
+        Set<String> mandatoryFields = new HashSet<String>();
+        Map<QName, Serializable> userProps = BeanHelper.getUserService().getCurrentUserProperties();
+        String userRelatedFundsCenter = (String) userProps.get(ContentModel.PROP_RELATED_FUNDS_CENTER);
+        if (transaction.getFundsCenter() != null && userRelatedFundsCenter != null && transaction.getFundsCenter().equalsIgnoreCase(userRelatedFundsCenter)) {
+            mandatoryFields.addAll(BeanHelper.getEInvoiceService().getCostManagerMandatoryFields());
+        }
+        return mandatoryFields;
+    }
+
+    private Set<String> getMandatoryFields() {
+        Set<String> mandatoryFields = new HashSet<String>();
+        mandatoryFields.addAll(BeanHelper.getEInvoiceService().getAccountantMandatoryFields());
+        mandatoryFields.addAll(BeanHelper.getEInvoiceService().getOwnerMandatoryFields());
+        return mandatoryFields;
+    }
+
     public boolean checkTotalSum() {
-        Double totalSum = (Double) document.getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM);
-        if (totalSum == null) {
-            return false;
-        }
-        if (transactions.size() == 0) {
-            return true;
-        }
-        for (Transaction transaction : transactions) {
-            if (transaction.getSumWithoutVat() == null) {
-                MessageUtil.addErrorMessage("document_sendToSap_transMissingSum");
-                return false;
-            }
-            if (transaction.getInvoiceTaxPercent() == null) {
-                MessageUtil.addErrorMessage("document_sendToSap_transMissingTaxPercent");
-                return false;
-            }
-        }
-        double transTotalSum = getSumWithoutVat() + getVatSum();
-        boolean result = Math.abs(totalSum - transTotalSum) <= 0.001;
-        if (!result) {
-            MessageUtil.addErrorMessage("document_sendToSap_transSumsNotCorrect");
+        List<String> errorMessageKeys = new ArrayList<String>();
+        boolean result = EInvoiceUtil.checkTotalSum(errorMessageKeys, "document_sendToSap_", (Double) document.getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM),
+                transactions,
+                originalProperties);
+        for (String msgKey : errorMessageKeys) {
+            MessageUtil.addErrorMessage(msgKey);
         }
         return result;
-    }
-
-    private double getSumWithoutVat() {
-        BigDecimal sum = new BigDecimal("0.0");
-        for (Transaction transaction : transactions) {
-            Double rowSumWithoutVat = transaction.getSumWithoutVat();
-            if (rowSumWithoutVat != null) {
-                sum = sum.add(new BigDecimal(rowSumWithoutVat));
-            }
-        }
-        return sum.doubleValue();
-    }
-
-    private double getVatSum() {
-        BigDecimal sum = new BigDecimal("0.0");
-        for (Transaction transaction : transactions) {
-            Double rowSumWithoutVat = transaction.getSumWithoutVat();
-            Integer rowVatPercentage = getVatPercentage(transaction);
-            if (rowSumWithoutVat != null) {
-                sum = sum.add((new BigDecimal(rowSumWithoutVat)).multiply(new BigDecimal(rowVatPercentage)).divide(new BigDecimal(100)));
-            }
-        }
-        return sum.doubleValue();
-    }
-
-    // in case of saved and not changed invoice tax code, read percentage from transaction, otherwise from dimension
-    private Integer getVatPercentage(Transaction transaction) {
-        Map<QName, Serializable> originalProps = originalProperties.get(transaction.getNode().getNodeRef());
-        String taxCode = transaction.getInvoiceTaxCode();
-        String originalTaxCode = (String) (originalProps == null ? null : originalProps.get(TransactionModel.Props.INVOICE_TAX_CODE));
-        if (originalProps == null || taxCode == null || (taxCode != null && !taxCode.equals(originalTaxCode))) {
-            return getVatPercentageFromDimension(taxCode);
-        }
-        return transaction.getInvoiceTaxPercent();
-    }
-
-    // For calculations return 0 for null value
-    private Integer getVatPercentageFromDimension(String invoiceTaxCode) {
-        if (invoiceTaxCode == null) {
-            return 0;
-        }
-        for (DimensionValue dimensionValue : BeanHelper.getEInvoiceService().getVatCodeDimensionValues()) {
-            if (dimensionValue.getValueName().equalsIgnoreCase(invoiceTaxCode)) {
-                try {
-                    return Integer.parseInt(dimensionValue.getValue());
-                } catch (NumberFormatException e) {
-                    // TODO: report error?
-                    return 0;
-                }
-            }
-        }
-        return 0;
     }
 
     @SuppressWarnings("unchecked")
@@ -516,21 +486,26 @@ public class TransactionsBlockBean implements Serializable {
         return outputLink;
     }
 
-    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex) {
-        addDimensionSelector(context, siblings, dimensions, propName, transactionIndex, null, null);
+    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, Set<String> mandatoryProps) {
+        addDimensionSelector(context, siblings, dimensions, propName, transactionIndex, null, null, mandatoryProps);
     }
 
-    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, Predicate filter) {
-        addDimensionSelector(context, siblings, dimensions, propName, transactionIndex, null, filter);
+    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, Predicate filter,
+            Set<String> mandatoryProps) {
+        addDimensionSelector(context, siblings, dimensions, propName, transactionIndex, null, filter, mandatoryProps);
     }
 
-    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, String styleClass) {
-        addDimensionSelector(context, siblings, dimensions, propName, transactionIndex, styleClass, null);
+    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, String styleClass,
+            Set<String> mandatoryProps) {
+        addDimensionSelector(context, siblings, dimensions, propName, transactionIndex, styleClass, null, mandatoryProps);
     }
 
-    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, String styleClass, Predicate filter) {
+    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, String styleClass, Predicate filter,
+            Set<String> mandatoryProps) {
         UIComponent dimensionSelector;
         if (isInEditMode()) {
+            final HtmlPanelGroup dimensionSelectorPanel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
+            dimensionSelectorPanel.setId(TRANS_COMPONENT_ID_PREFIX + "trans-panel-" + propName.getLocalName() + "-" + transactionIndex);
             DimensionSelectorGenerator dimensionGenerator;
             if (filter != null) {
                 dimensionGenerator = new DimensionSelectorGenerator(filter);
@@ -541,65 +516,86 @@ public class TransactionsBlockBean implements Serializable {
             dimensionGenerator.getCustomAttributes().put(DimensionSelectorGenerator.ATTR_DIMENSION_NAME, dimensions.getDimensionName());
             dimensionGenerator.setupSelectComponent(context, null, null, null, dimensionSelector, false);
             dimensionSelector.getAttributes().put(CustomAttributeNames.STYLE_CLASS, styleClass == null ? "width120" : styleClass);
+            // dimensionSelector.setRendererType(arg0);
+            dimensionSelector.getAttributes().put("displayMandatoryMark", true);
+            setIdAndValueBinding(context, transactionIndex, propName, dimensionSelector);
+            dimensionSelectorPanel.getChildren().add(dimensionSelector);
+
+            if (isMandatory(propName, mandatoryProps)) {
+                addMandatorySpan(context, propName, transactionIndex, dimensionSelectorPanel);
+            }
+            siblings.add(dimensionSelectorPanel);
         } else {
             dimensionSelector = context.getApplication().createComponent(UIOutput.COMPONENT_TYPE);
+            setIdAndValueBinding(context, transactionIndex, propName, dimensionSelector);
+            siblings.add(dimensionSelector);
         }
-        setIdAndValueBinding(context, transactionIndex, propName, dimensionSelector);
-        siblings.add(dimensionSelector);
+
     }
 
-    private Predicate getEAInclusivePredicate() {
-        return getEAPredicate(false);
+    private void addMandatorySpan(FacesContext context, QName propName, int transactionIndex, final HtmlPanelGroup dimensionSelectorPanel) {
+        UIOutput span = (UIOutput) context.getApplication().createComponent(UIOutput.COMPONENT_TYPE);
+        span.setId("trans-panel-mandatory-" + propName.getLocalName() + "-" + transactionIndex);
+        span.setValue(" *");
+        span.getAttributes().put("style", "color: red;");
+        dimensionSelectorPanel.getChildren().add(span);
     }
 
-    private Predicate getEAExclusivePredicate() {
-        return getEAPredicate(true);
-    }
-
-    private Predicate getEAPredicate(final boolean negate) {
-        return new Predicate() {
-            @Override
-            public boolean evaluate(Object arg0) {
-                String valueName = ((DimensionValue) arg0).getValueName();
-                return negate ? !StringUtils.startsWith(valueName, EA_PREFIX) : StringUtils.startsWith(valueName, EA_PREFIX);
-            }
-        };
-    }
-
-    private void addDoubleInput(FacesContext context, List siblings, int transactionIndex, QName propName, Map<String, String> childrenStyleClassAttribute) {
+    private void addDoubleInput(FacesContext context, List siblings, int transactionIndex, QName propName, Map<String, String> childrenStyleClassAttribute,
+            Set<String> mandatoryProps) {
         UIComponent doubleInput;
         if (isInEditMode()) {
+            final HtmlPanelGroup dimensionSelectorPanel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
+            dimensionSelectorPanel.setId(TRANS_COMPONENT_ID_PREFIX + "trans-panel-" + propName.getLocalName() + "-" + transactionIndex);
             doubleInput = context.getApplication().createComponent(HtmlInputText.COMPONENT_TYPE);
             ((HtmlInputText) doubleInput).setConverter(new DoubleCurrencyConverter());
             setIdAndValueBinding(context, transactionIndex, propName, doubleInput);
             doubleInput.getAttributes().put("maxlength", 16);
+            dimensionSelectorPanel.getChildren().add(doubleInput);
+
+            if (isMandatory(propName, mandatoryProps)) {
+                addMandatorySpan(context, propName, transactionIndex, dimensionSelectorPanel);
+            }
+
+            siblings.add(dimensionSelectorPanel);
         } else {
             doubleInput = context.getApplication().createComponent(UIOutput.COMPONENT_TYPE);
             Double value = (Double) transactions.get(transactionIndex).getNode().getProperties().get(propName);
             ((UIOutput) doubleInput).setValue(value != null ? INVOICE_DECIMAL_FORMAT.format(value.doubleValue()) : "");
             doubleInput.setId(getComponentId(transactionIndex, propName));
             childrenStyleClassAttribute.put(doubleInput.getId(), "trans-align-right");
+            siblings.add(doubleInput);
         }
         doubleInput.getAttributes().put(CustomAttributeNames.STYLE_CLASS, "margin-left-4 width120");
         doubleInput.getAttributes().put("style", "text-align: right");
-        siblings.add(doubleInput);
+
     }
 
-    private void addTextareaInput(FacesContext context, List siblings, int transactionIndex, QName propName, Map<String, String> secondaryChildrenStyleClassAttribute) {
+    private void addTextareaInput(FacesContext context, List siblings, int transactionIndex, QName propName, Map<String, String> secondaryChildrenStyleClassAttribute,
+            Set<String> mandatoryProps) {
         UIComponent textareaInput;
         String id = getComponentId(transactionIndex, propName);
         if (isInEditMode()) {
+            final HtmlPanelGroup dimensionSelectorPanel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
+            dimensionSelectorPanel.setId(TRANS_COMPONENT_ID_PREFIX + "trans-panel-" + propName.getLocalName() + "-" + transactionIndex);
             TextAreaGenerator textAreaGenerator = new TextAreaGenerator();
             textareaInput = textAreaGenerator.generate(context, id);
+            dimensionSelectorPanel.getChildren().add(textareaInput);
+
+            if (isMandatory(propName, mandatoryProps)) {
+                addMandatorySpan(context, propName, transactionIndex, dimensionSelectorPanel);
+            }
+
+            siblings.add(dimensionSelectorPanel);
         } else {
             textareaInput = context.getApplication().createComponent(UIOutput.COMPONENT_TYPE);
             textareaInput.setId(id);
             textareaInput.getAttributes().put("style", "whitespace: normal;");
             secondaryChildrenStyleClassAttribute.put(id, "trans-width-10");
+            siblings.add(textareaInput);
         }
         setValueBinding(context, transactionIndex, propName, textareaInput);
         textareaInput.getAttributes().put(CustomAttributeNames.STYLE_CLASS, "expand19-200 medium");
-        siblings.add(textareaInput);
     }
 
     private void setIdAndValueBinding(FacesContext context, int transactionIndex, QName propName, final UIComponent doubleInput) {

@@ -6,6 +6,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.service.DocumentService;
+import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
@@ -17,25 +18,30 @@ public class AssignResponsibilityServiceImpl implements AssignResponsibilityServ
     private DocumentService documentService;
     private WorkflowService workflowService;
     private DocumentSearchService documentSearchService;
+    private UserService userService;
 
     @Override
-    public void changeOwnerOfAllDocumentsAndTasks(String fromOwnerId, String toOwnerId) {
+    public void changeOwnerOfAllDocumentsAndTasks(String fromOwnerId, String toOwnerId, boolean isLeaving) {
         if (log.isDebugEnabled()) {
             log.debug("Assigning responsibility of working documents and new tasks from " + fromOwnerId + " to " + toOwnerId);
         }
         long startTime = System.currentTimeMillis();
-        List<NodeRef> documents = documentSearchService.searchWorkingDocumentsByOwnerId(fromOwnerId);
+        List<NodeRef> documents = documentSearchService.searchWorkingDocumentsByOwnerId(fromOwnerId, !isLeaving);
+        String newOwnerId = (isLeaving) ? toOwnerId : fromOwnerId;
         for (NodeRef document : documents) {
-            documentService.setDocumentOwner(document, toOwnerId);
+            documentService.setDocumentOwner(document, newOwnerId, isLeaving);
         }
-        List<NodeRef> tasks = documentSearchService.searchNewTasksByOwnerId(fromOwnerId);
+        List<NodeRef> tasks = documentSearchService.searchNewTasksByOwnerId(fromOwnerId, !isLeaving);
         for (NodeRef task : tasks) {
-            workflowService.setTaskOwner(task, toOwnerId);
+            workflowService.setTaskOwner(task, newOwnerId, isLeaving);
         }
         if (log.isDebugEnabled()) {
             log.debug("Assigning responsibility of " + documents.size() + " working documents and " + tasks.size() + " new tasks from " + fromOwnerId + " to "
                     + toOwnerId + " took " + (System.currentTimeMillis() - startTime) + " ms");
         }
+
+        // Mark or remove the leaving aspect
+        userService.markUserLeaving(fromOwnerId, toOwnerId, isLeaving);
     }
 
     // START: getters / setters
@@ -50,6 +56,10 @@ public class AssignResponsibilityServiceImpl implements AssignResponsibilityServ
 
     public void setDocumentSearchService(DocumentSearchService documentSearchService) {
         this.documentSearchService = documentSearchService;
+    }
+
+    public void setUserService(UserService userService) {
+        this.userService = userService;
     }
 
     // END: getters / setters

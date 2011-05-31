@@ -145,6 +145,10 @@
                <type>d:text</type>
                <mandatory>true</mandatory>
             </property>
+            <property name="ab:manageableForAdmin">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
          </properties>
          <mandatory-aspects>
             <aspect>ab:taskCapable</aspect>

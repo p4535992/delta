@@ -62,6 +62,7 @@ import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean;
@@ -70,6 +71,7 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
+import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
 import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.service.DocumentService.TransientProps;
@@ -106,7 +108,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 /**
  * @author Alar Kvell
  */
-public class MetadataBlockBean implements Serializable {
+public class MetadataBlockBean implements ClearStateListener {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MetadataBlockBean.class);
     private static final long serialVersionUID = 1L;
 
@@ -908,7 +910,7 @@ public class MetadataBlockBean implements Serializable {
             MessageUtil.addInfoMessage("document_invoice_no_seller_sap_account");
         }
         for (Transaction transaction : documentDialog.getTransactionsBlockBean().getTransactions()) {
-            if (transaction.getAssetInventaryNumber() != null) {
+            if (transaction.getAssetInventoryNumber() != null) {
                 MessageUtil.addInfoMessage("document_invoice_assetInventoryNumberFilled");
                 break;
             }
@@ -1444,6 +1446,7 @@ public class MetadataBlockBean implements Serializable {
                 new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
                 new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")),
         };
+        BeanHelper.getClearStateNotificationHandler().addClearStateListener(this);
     }
 
     public void reloadDoc() {
@@ -1461,7 +1464,7 @@ public class MetadataBlockBean implements Serializable {
 
     public void reset() {
         inEditMode = false;
-        lockOrUnlockIfNeeded(inEditMode);
+        lockOrUnlockIfNeeded(false);
         document = null;
         propertySheet = null;
         documentTypeName = null;
@@ -1499,7 +1502,7 @@ public class MetadataBlockBean implements Serializable {
         }
         document = doc;
         inEditMode = true;
-        lockOrUnlockIfNeeded(inEditMode);
+        lockOrUnlockIfNeeded(isLockingAllowed());
         propertySheet.setMode(getMode());
         clearPropertySheet();
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
@@ -1535,6 +1538,7 @@ public class MetadataBlockBean implements Serializable {
         }
         if (validate()) {
             removeEmptyParties();
+            calculateInvoiceSums();
             try {
                 log.debug("save: doc NodeRef=" + document.getNodeRefAsString());
                 document.getProperties().put(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT, isDraft);
@@ -1564,7 +1568,7 @@ public class MetadataBlockBean implements Serializable {
                 return true;
 
             } finally {
-                lockOrUnlockIfNeeded(inEditMode);
+                lockOrUnlockIfNeeded(isLockingAllowed());
                 reloadTransientProperties();
             }
             propertySheet.setMode(getMode());
@@ -1574,6 +1578,17 @@ public class MetadataBlockBean implements Serializable {
             return true;
         }
         return false;
+    }
+
+    private void calculateInvoiceSums() {
+        if (DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
+            Double totalSum = (Double) document.getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM);
+            Double vat = (Double) document.getProperties().get(DocumentSpecificModel.Props.VAT);
+            if (totalSum != null && vat != null) {
+                BigDecimal sumWithoutVat = new BigDecimal(totalSum).subtract(new BigDecimal(vat));
+                document.getProperties().put(DocumentSpecificModel.Props.INVOICE_SUM.toString(), sumWithoutVat.doubleValue());
+            }
+        }
     }
 
     private void removeEmptyParties() {
@@ -1868,7 +1883,7 @@ public class MetadataBlockBean implements Serializable {
         }
         document = getDocumentService().getDocument(document.getNodeRef());
         inEditMode = false;
-        lockOrUnlockIfNeeded(inEditMode);
+        lockOrUnlockIfNeeded(isLockingAllowed());
         propertySheet.setMode(getMode());
         clearPropertySheet();
         reloadTransientProperties();
@@ -1931,8 +1946,9 @@ public class MetadataBlockBean implements Serializable {
             errMsg = "Form is reset";
         } else {
             synchronized (document) { // to avoid extending lock after unlock(save/cancel)
-                if (inEditMode) {
-                    lockSuccessfullyRefreshed = lockOrUnlockIfNeeded(inEditMode);
+                boolean lockingAllowed = isLockingAllowed();
+                if (lockingAllowed) {
+                    lockSuccessfullyRefreshed = lockOrUnlockIfNeeded(lockingAllowed);
                 } else {
                     errMsg = "Can't refresh lock - page not in editMode";
                     log.warn(errMsg);
@@ -1956,7 +1972,7 @@ public class MetadataBlockBean implements Serializable {
      * @param mustLock4Edit
      * @return true if current user holds the lock after execution of this function
      */
-    private boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) {
+    public boolean lockOrUnlockIfNeeded(boolean mustLock4Edit) {
         if (document == null) {
             return false;
         }
@@ -1971,7 +1987,8 @@ public class MetadataBlockBean implements Serializable {
                 if (log.isDebugEnabled()) {
                     log.warn("failed to lock: document_validation_alreadyLocked");
                 }
-                MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "document_validation_alreadyLocked");
+                MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "document_validation_alreadyLocked",
+                        getUserService().getUserFullName((String) getNodeService().getProperty(docRef, ContentModel.PROP_LOCK_OWNER)));
                 inEditMode = false; // don't allow going to editMode
                 return false;
             }
@@ -2075,6 +2092,23 @@ public class MetadataBlockBean implements Serializable {
 
     public boolean isInEditMode() {
         return inEditMode;
+    }
+
+    /**
+     * Returns true if required conditions are met for locking.
+     * a) document is in edit mode
+     * OR
+     * b) current document is opened in send out dialog
+     * 
+     * @return true if we can lock, false otherwise.
+     */
+    public boolean isLockingAllowed() {
+        boolean allowed = isInEditMode();
+        DocumentSendOutDialog sendOut = null;
+        if (document != null && (sendOut = BeanHelper.getDocumentSendOutDialog()) != null && sendOut.getModel() != null) {
+            allowed |= document.getNodeRef().equals(sendOut.getModel().getNodeRef());
+        }
+        return allowed;
     }
 
     public boolean isDraft() {
@@ -2292,4 +2326,10 @@ public class MetadataBlockBean implements Serializable {
     }
 
     // END: getters / setters
+
+    @Override
+    public void clearState() {
+        // When user has locked the document and click on a menu link this is called and the lock is freed.
+        reset();
+    }
 }

@@ -179,13 +179,13 @@
    </item>
 
    <!-- ADMINISTRATOR -->
-   <item title-id="menu_administrator" accountant="true">
+   <item title-id="menu_administrator" accountant="true" document-manager="true">
       <outcome>dialog:userListDialog</outcome>
       <subitems>
-         <item id="userManagement" title-id="menu_user_management" admin="true">
+         <item id="userManagement" title-id="menu_user_management" document-manager="true">
             <outcome>dialog:userListDialog</outcome>
          </item>
-         <item id="userGroupManagement" title-id="menu_user_group_management" admin="true">
+         <item id="userGroupManagement" title-id="menu_user_group_management" document-manager="true">
             <outcome>dialog:manageGroups</outcome>
             <action-listener>#{GroupsDialog.reset}</action-listener>
          </item>
@@ -194,7 +194,10 @@
          </item>
          <item id="dimensions" title-id="menu_dimensions" accountant="true">
             <outcome>dialog:dimensionListDialog</outcome>
-         </item>         
+         </item>
+         <item id="transactionDescParameters" title-id="menu_transactionDescParameters" accountant="true">
+            <outcome>dialog:transactionDescParameterListDialog</outcome>
+         </item>  
          <item id="parameters" title-id="menu_parameters" admin="true">
             <outcome>dialog:parametersListDialog</outcome>
          </item>

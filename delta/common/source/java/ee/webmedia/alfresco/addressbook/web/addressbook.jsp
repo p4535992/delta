@@ -39,9 +39,9 @@ function updateButtonState()
             <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" style="margin-left: 5px;"/>
             <h:commandButton id="show-all-button" value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" style="margin-left: 5px;"/>
             </a:panel>
-            <a:panel id="ab-org-panel" styleClass="column panel-50 with-pager" label="#{msg.addressbook_organizations}">
+            <a:panel id="ab-org-panel" styleClass="with-pager" label="#{msg.addressbook_organizations}">
 
-                        <a:richList id="ab-organizations-list" viewMode="details" binding="#{DialogManager.bean.orgRichList}"
+                        <a:richList id="ab-organizations-list" viewMode="details" binding="#{DialogManager.bean.orgRichList}" width="100%"
                            rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" pageSize="#{BrowseBean.pageSizeContent}"
                            value="#{DialogManager.bean.organizations}" var="r" initialSortColumn="name" initialSortDescending="false">
 
@@ -60,6 +60,24 @@ function updateButtonState()
                                  action="dialog:addressbookViewEntry" actionListener="#{DialogManager.bean.setupViewEntry}">
                                  <f:param id="ab-org-list-param1" name="nodeRef" value="#{r.nodeRef}" />
                               </a:actionLink>
+                           </a:column>
+                           
+                           <%-- e-mail --%>
+                           <a:column id="ab-org-list-email-column">
+                              <f:facet name="header">
+                                 <h:outputText value="#{msg.document_email}" />
+                              </f:facet>
+                              <h:outputText id="ab-org-list-email" value="#{r['ab:email']}" />
+                           </a:column>
+                           
+                           <%-- DVK --%>
+                           <a:column id="ab-org-list-dvk-column">
+                              <f:facet name="header">
+                                 <h:outputText value="#{msg.addressbook_dvk_capable}" />
+                              </f:facet>
+                              <h:outputText id="ab-org-list-dvk" value="#{r['ab:dvkCapable']}">
+                                 <a:convertBoolean />
+                              </h:outputText>
                            </a:column>
 
                            <%-- Actions column --%>
@@ -89,7 +107,7 @@ function updateButtonState()
 
                      </a:panel>
                      
-                     <a:panel id="ab-person-panel" styleClass="column panel-50 with-pager" label="#{msg.addressbook_private_persons}">
+                     <a:panel id="ab-person-panel" styleClass="with-pager" label="#{msg.addressbook_private_persons}">
 
                         <a:richList id="ab-people-list" viewMode="details" binding="#{DialogManager.bean.peopleRichList}" pageSize="#{BrowseBean.pageSizeContent}"
                            headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
@@ -110,6 +128,14 @@ function updateButtonState()
                                  showLink="false" action="dialog:addressbookViewEntryPerson" actionListener="#{DialogManager.bean.setupViewEntry}">
                                  <f:param id="ab-people-list-link1-param" name="nodeRef" value="#{r.nodeRef}" />
                               </a:actionLink>
+                           </a:column>
+                           
+                           <%-- e-mail --%>
+                           <a:column id="ab-people-list-email-column">
+                              <f:facet name="header">
+                                 <h:outputText value="#{msg.document_email}" />
+                              </f:facet>
+                              <h:outputText id="ab-people-list-email" value="#{r['ab:email']}" />
                            </a:column>
 
                            <%-- Actions column --%>

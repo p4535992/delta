@@ -86,6 +86,9 @@ public interface DocumentSearchModel {
         QName SELLER_PARTY_REG_NUMBER = QName.createQName(URI, "sellerPartyRegNumber");
         QName TOTAL_SUM_LOWEST = QName.createQName(URI, "totalSumLowest");
         QName TOTAL_SUM_HIGHEST = QName.createQName(URI, "totalSumHighest");
+        QName FUND = QName.createQName(URI, "fund");
+        QName FUNDS_CENTER = QName.createQName(URI, "fundsCenter");
+        QName EA_COMMITMENT_ITEM = QName.createQName(URI, "eaCommitmentItem");
     }
 
 }

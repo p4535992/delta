@@ -328,6 +328,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                             log.error(message);
                             throw new RuntimeException(message);
                         }
+                        documentLogService.addDocumentLog(updatedDoc, I18NUtil.getMessage("document_log_status_add_sap_entry_number"));
                         return updatedDoc;
                     }
                 }

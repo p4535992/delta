@@ -151,6 +151,9 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         node.getProperties().put(DocumentSearchModel.Props.COST_MANAGER.toString(), new ArrayList<String>());
         node.getProperties().put(DocumentSearchModel.Props.ERRAND_COUNTY.toString(), new ArrayList<String>());
         node.getProperties().put(DocumentSearchModel.Props.PROCUREMENT_TYPE.toString(), new ArrayList<String>());
+        node.getProperties().put(DocumentSearchModel.Props.FUND.toString(), new ArrayList<String>());
+        node.getProperties().put(DocumentSearchModel.Props.FUNDS_CENTER.toString(), new ArrayList<String>());
+        node.getProperties().put(DocumentSearchModel.Props.EA_COMMITMENT_ITEM.toString(), new ArrayList<String>());
 
         return node;
     }

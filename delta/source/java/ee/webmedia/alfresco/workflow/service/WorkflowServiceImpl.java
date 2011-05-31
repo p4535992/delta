@@ -1240,11 +1240,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public void setTaskOwner(NodeRef task, String ownerId) {
+    public void setTaskOwner(NodeRef task, String ownerId, boolean retainPreviousOwnerId) {
         if (!dictionaryService.isSubClass(nodeService.getType(task), WorkflowCommonModel.Types.TASK)) {
             throw new RuntimeException("Node is not a task: " + task);
         }
-        Serializable existingOwnerId = nodeService.getProperty(task, WorkflowCommonModel.Props.OWNER_ID);
+        String existingOwnerId = (String) nodeService.getProperty(task, WorkflowCommonModel.Props.OWNER_ID);
         if (ownerId.equals(existingOwnerId)) {
             if (log.isDebugEnabled()) {
                 log.debug("Task owner is already set to " + ownerId + ", not overwriting properties");
@@ -1262,6 +1262,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         props.put(WorkflowCommonModel.Props.OWNER_ORGANIZATION_NAME, organizationStructureService.getOrganizationStructure(
                 (String) personProps.get(ContentModel.PROP_ORGID)));
         props.put(WorkflowCommonModel.Props.OWNER_JOB_TITLE, personProps.get(ContentModel.PROP_JOBTITLE));
+        String previousOwnerId = (retainPreviousOwnerId) ? existingOwnerId : null;
+        props.put(WorkflowCommonModel.Props.PREVIOUS_OWNER_ID, previousOwnerId);
         nodeService.addProperties(task, props);
     }
 

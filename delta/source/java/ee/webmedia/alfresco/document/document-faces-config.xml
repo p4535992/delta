@@ -291,6 +291,12 @@
       <managed-bean-class>ee.webmedia.alfresco.document.log.web.LogBlockBean</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
    </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>TransactionsBlockBean</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+   </managed-bean>   
 
    <managed-bean>
       <managed-bean-name>DeleteAssocDialog</managed-bean-name>
@@ -326,7 +332,17 @@
          <property-name>navigator</property-name>
          <value>#{NavigationBean}</value>
       </managed-property>
-   </managed-bean>   
+   </managed-bean>
+   
+   <managed-bean>
+      <managed-bean-name>TransactionDescParameterListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.TransactionDescParameterListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>  
 
    <!-- ==================== [ COMPONENT GENERATORS ] =================================== -->
 

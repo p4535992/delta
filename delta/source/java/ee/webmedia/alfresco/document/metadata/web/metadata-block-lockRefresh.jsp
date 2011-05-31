@@ -11,8 +11,8 @@
 <f:verbatim>
 <script type="text/javascript" id="metaLockRefreshScript" >
 $jQ(document).ready(function(){
-   var inEditMode = <%= BeanHelper.getMetadataBlockBean().isInEditMode() %>;
-   if(inEditMode){
+   var lockingAllowed = <%= BeanHelper.getMetadataBlockBean().isLockingAllowed() %>;
+   if(lockingAllowed){
       var clientLockRefreshFrequency = <%= BeanHelper.getMetadataBlockBean().getClientLockRefreshFrequency() %>;
       setTimeout(requestForLockRefresh, clientLockRefreshFrequency/3);
    }

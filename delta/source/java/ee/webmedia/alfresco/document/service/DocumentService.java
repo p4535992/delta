@@ -11,6 +11,7 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -328,6 +329,15 @@ public interface DocumentService {
     void setDocumentOwner(NodeRef document, String userName);
 
     /**
+     * Updates documents ownerId. If retainPreviousOwnerId is true, current owner is stored on the previousOwnerId field.
+     * 
+     * @param document
+     * @param userName
+     * @param retainPreviousOwnerId
+     */
+    void setDocumentOwner(NodeRef document, String userName, boolean retainPreviousOwnerId);
+
+    /**
      * @param docNode
      * @return true when docNode is registered.
      */
@@ -437,5 +447,7 @@ public interface DocumentService {
      * @return groups that have {@link SeriesDocManagerDynamicAuthority#SERIES_MANAGEABLE_PERMISSION}
      */
     Set<String> addPrivilegesBasedOnSeries(NodeRef docRef, Map<String, Object> docProps, NodeRef parentRef);
+
+    Pair<Set<String> /* users */, Set<String> /* groups */> getSeriesAuthorities(NodeRef seriesRef);
 
 }

@@ -5,6 +5,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import javax.mail.Address;
@@ -19,6 +20,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.core.io.InputStreamSource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.util.CollectionUtils;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.GeneralService;
@@ -39,11 +41,17 @@ public class EmailServiceImpl implements EmailService {
     @Override
     public void sendEmail(List<String> toEmails, List<String> toNames, String fromEmail, String subject, String content, boolean isHtml, NodeRef document,
             List<String> fileNodeRefs, boolean zipIt, String zipFileName) throws EmailException {
+        sendEmail(toEmails, toNames, null, null, fromEmail, subject, content, isHtml, document, fileNodeRefs, zipIt, zipFileName);
+    }
+
+    @Override
+    public void sendEmail(List<String> toEmails, List<String> toNames, List<String> toBccEmails, List<String> toBccNames, String fromEmail, String subject,
+            String content, boolean isHtml, NodeRef document, List<String> fileNodeRefs, boolean zipIt, String zipFileName) throws EmailException {
 
         long step0 = System.currentTimeMillis();
 
-        if (toEmails == null || toEmails.isEmpty()) {
-            throw new EmailException("Parameter toEmails is mandatory.");
+        if (CollectionUtils.isEmpty(toEmails) && CollectionUtils.isEmpty(toBccEmails)) {
+            throw new EmailException("At least one of toEmails and toBccEmails is mandatory.");
         }
         if (fromEmail == null) {
             throw new EmailException("Parameter fromEmail is mandatory.");
@@ -55,6 +63,13 @@ public class EmailServiceImpl implements EmailService {
             throw new EmailException("Parameter content is mandatory.");
         }
 
+        // Avoid NPE
+        if (toEmails == null) {
+            toEmails = Collections.emptyList();
+        } else if (toBccEmails == null) {
+            toBccEmails = Collections.emptyList();
+        }
+
         MimeMessage message;
         try {
             message = mailService.createMimeMessage();
@@ -62,47 +77,20 @@ public class EmailServiceImpl implements EmailService {
             throw new EmailException(e);
         }
         MimeMessageHelper helper;
-        String encoding;
-        boolean hasFiles = fileNodeRefs != null && fileNodeRefs.size() > 0;
+        boolean hasFiles = fileNodeRefs != null && !fileNodeRefs.isEmpty();
         try {
             helper = new MimeMessageHelper(message, hasFiles, AppConstants.CHARSET);
             helper.setValidateAddresses(true);
-            encoding = helper.getEncoding();
             helper.setFrom(fromEmail);
         } catch (Exception e) {
             throw new EmailException(e);
         }
 
-        for (int i = 0; i < toEmails.size(); i++) {
-            String toEmail = toEmails.get(i);
-            InternetAddress toAddr;
-            try {
-                toAddr = new InternetAddress(toEmail);
-            } catch (Exception e) {
-                throw new EmailException(e);
-            }
-            if (toNames != null && toNames.size() == toEmails.size()) {
-                String name = toNames.get(i);
-                if (StringUtils.isNotBlank(encoding)) {
-                    try {
-                        toAddr.setPersonal(name, encoding);
-                    } catch (Exception e) {
-                        throw new EmailException(e);
-                    }
-                } else {
-                    try {
-                        toAddr.setPersonal(name);
-                    } catch (Exception e) {
-                        throw new EmailException(e);
-                    }
-                }
-            }
-            try {
-                helper.addTo(toAddr);
-            } catch (Exception e) {
-                throw new EmailException(e);
-            }
-        }
+        // To field
+        addEmailRecipients(toEmails, toNames, helper, false);
+        // Bcc field
+        addEmailRecipients(toBccEmails, toBccNames, helper, true);
+
         try {
             helper.setSubject(subject);
             helper.setText(content, isHtml);
@@ -161,6 +149,47 @@ public class EmailServiceImpl implements EmailService {
         } catch (Exception e) {
             throw new EmailException(e);
         }
+    }
+
+    protected MimeMessageHelper addEmailRecipients(List<String> toEmails, List<String> toNames, MimeMessageHelper helper, boolean asBcc) throws EmailException {
+        String encoding = helper.getEncoding();
+
+        for (int i = 0; i < toEmails.size(); i++) {
+            String toEmail = toEmails.get(i);
+            InternetAddress toAddr;
+            try {
+                toAddr = new InternetAddress(toEmail);
+            } catch (Exception e) {
+                throw new EmailException(e);
+            }
+            if (toNames != null && toNames.size() == toEmails.size()) {
+                String name = toNames.get(i);
+                if (StringUtils.isNotBlank(encoding)) {
+                    try {
+                        toAddr.setPersonal(name, encoding);
+                    } catch (Exception e) {
+                        throw new EmailException(e);
+                    }
+                } else {
+                    try {
+                        toAddr.setPersonal(name);
+                    } catch (Exception e) {
+                        throw new EmailException(e);
+                    }
+                }
+            }
+            try {
+                if (asBcc) {
+                    helper.addBcc(toAddr);
+                } else {
+                    helper.addTo(toAddr);
+                }
+            } catch (Exception e) {
+                throw new EmailException(e);
+            }
+        }
+
+        return helper;
     }
 
     // /// PRIVATE METHODS

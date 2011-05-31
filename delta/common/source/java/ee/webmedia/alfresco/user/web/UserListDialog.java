@@ -22,6 +22,7 @@ import ee.webmedia.alfresco.utils.WebUtil;
 
 public class UserListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "UserListDialog";
 
     private transient UserService userService;
     private transient OrganizationStructureService organizationStructureService;

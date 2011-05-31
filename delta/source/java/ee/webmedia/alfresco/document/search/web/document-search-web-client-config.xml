@@ -96,7 +96,10 @@
          <show-property name="docsearch:sellerPartyName" display-label-id="document_sellerPartyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{DocumentSearchDialog.setSellerPartyName}" dialogTitleId="contacts_search_title" />
          <show-property name="docsearch:sellerPartyRegNumber" display-label-id="document_sellerPartyRegNumber" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docsearch:totalSumLowest" display-label-id="document_totalSum" optionsSeparator="¤" component-generator="InlinePropertyGroupGenerator" props="docsearch:totalSumLowest¤¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤styleClass=medium,docsearch:totalSumHighest¤¤jsfConverter=ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter¤styleClass=medium" textId="document_search_from_to" />
-         <show-property name="docsearch:output" display-label-id="document_search_output" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getSearchOutput}" />         
+         <show-property name="docsearch:fund" display-label-id="transaction_fund" component-generator="DimensionSelectorGenerator" dimensionName="invoiceFunds" />
+         <show-property name="docsearch:fundsCenter" display-label-id="transaction_fundsCenter" component-generator="DimensionSelectorGenerator" dimensionName="invoiceFundsCenters" />
+         <show-property name="docsearch:eaCommitmentItem" display-label-id="transaction_eaCommitmentItem" component-generator="DimensionSelectorGenerator" dimensionName="invoiceCommitmentItem" filter="eaPrefixInclude" />
+         <show-property name="docsearch:output" display-label-id="document_search_output" component-generator="GeneralSelectorGenerator" selectionItems="#{DocumentSearchDialog.getSearchOutput}" />
       </property-sheet>
    </config>
 

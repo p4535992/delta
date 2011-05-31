@@ -30,6 +30,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.service.cmr.model.FileFolderService;
@@ -80,7 +81,10 @@ import ee.webmedia.alfresco.document.einvoice.model.Dimension;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionModel;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
+import ee.webmedia.alfresco.document.einvoice.model.InvoiceType;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
+import ee.webmedia.alfresco.document.einvoice.model.TransactionDescParameter;
+import ee.webmedia.alfresco.document.einvoice.model.TransactionDescParameterModel;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionModel;
 import ee.webmedia.alfresco.document.einvoice.sellerslist.generated.HankijaInfo;
 import ee.webmedia.alfresco.document.einvoice.sellerslist.generated.HankijaNimekiri;
@@ -89,6 +93,7 @@ import ee.webmedia.alfresco.document.einvoice.vatcodelist.generated.KaibemaksuKo
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
@@ -114,12 +119,11 @@ import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
 
 public class EInvoiceServiceImpl implements EInvoiceService {
 
+    private static final String TRANSACTION_DISPLAY_LABEL_PREFIX = "transaction_";
     private static final String XXL_INVOICE_TEXT = "XXL";
     private static final String EXTENSION_RECORD_TYPE = "LIIK";
     private static final String ERP_NAMESPACE_URI = "erp";
     private static final String XML_FILE_EXTENSION = "xml";
-    private static final String TRANSACTION_XML_CRE = "K";
-    private static final String TRANSACTION_XML_DEB = "D";
     private static final String PAYMENT_INFO_NAME_TEXT = "MKSelgitus";
     private static final String ACCOUNT_VALUE_YES = "JAH";
     private static final String PURCHASE_ORDER_SAP_NUMBER_PREFIX = "OT4";
@@ -137,11 +141,13 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     private DocumentTemplateService documentTemplateService;
     private FileService fileService;
     private DvkService dvkService;
+    private DocumentLogService documentLogService;
     private static final Map<NodeRef, List<DimensionValue>> activeDimensionValueCache = new ConcurrentHashMap<NodeRef, List<DimensionValue>>();
     private static final Map<NodeRef, List<DimensionValue>> allDimensionValueCache = new ConcurrentHashMap<NodeRef, List<DimensionValue>>();
     private static List<DimensionValue> vatCodeDimesnionValues = null;
 
     private String dimensionsPath;
+    private String transactionDescParametersPath;
 
     @Override
     public List<NodeRef> importInvoiceFromXml(NodeRef folderNodeRef, InputStream input, TransmittalMode transmittalMode) {
@@ -344,6 +350,10 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     @Override
     public List<DimensionValue> getAllDimensionValues(NodeRef dimensionRef) {
+        // may occur if dimensions are not imported and dimension path doesn't exist
+        if (dimensionRef == null) {
+            return new ArrayList<DimensionValue>();
+        }
         if (allDimensionValueCache.containsKey(dimensionRef)) {
             return allDimensionValueCache.get(dimensionRef);
         }
@@ -392,6 +402,70 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             vatCodeDimesnionValues = Collections.unmodifiableList(tmpValues);
         }
         return vatCodeDimesnionValues;
+    }
+
+    @Override
+    public List<TransactionDescParameter> getAllTransactionDescParameters() {
+        List<ChildAssociationRef> childRefs = getAllTransactionDescparametersAssocRefs();
+        List<TransactionDescParameter> transactionDescParameters = new ArrayList<TransactionDescParameter>(childRefs.size());
+        for (ChildAssociationRef childRef : childRefs) {
+            Node node = new Node(childRef.getChildRef());
+            node.getProperties();
+            transactionDescParameters.add(new TransactionDescParameter(node));
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("TransactionDescParameters found: " + transactionDescParameters);
+        }
+        return transactionDescParameters;
+    }
+
+    private List<ChildAssociationRef> getAllTransactionDescparametersAssocRefs() {
+        NodeRef root = generalService.getNodeRef(transactionDescParametersPath);
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
+        return childRefs;
+    }
+
+    @Override
+    public List<String> getCostManagerMandatoryFields() {
+        List<ChildAssociationRef> transactionDescParameters = getAllTransactionDescparametersAssocRefs();
+        List<String> mandatoryForCostManager = new ArrayList<String>();
+        for (ChildAssociationRef transactionDescParameter : transactionDescParameters) {
+            if (Boolean.TRUE.equals(nodeService.getProperty(transactionDescParameter.getChildRef(), TransactionDescParameterModel.Props.MANDATORY_FOR_COST_MANAGER))) {
+                mandatoryForCostManager.add(transactionDescParameter.getQName().getLocalName());
+            }
+        }
+        return mandatoryForCostManager;
+    }
+
+    @Override
+    public List<String> getOwnerMandatoryFields() {
+        List<ChildAssociationRef> transactionDescParameters = getAllTransactionDescparametersAssocRefs();
+        List<String> mandatoryForOwner = new ArrayList<String>();
+        for (ChildAssociationRef transactionDescParameter : transactionDescParameters) {
+            if (Boolean.TRUE.equals(nodeService.getProperty(transactionDescParameter.getChildRef(), TransactionDescParameterModel.Props.MANDATORY_FOR_OWNER))) {
+                mandatoryForOwner.add(transactionDescParameter.getQName().getLocalName());
+            }
+        }
+        return mandatoryForOwner;
+    }
+
+    @Override
+    public List<String> getAccountantMandatoryFields() {
+        List<ChildAssociationRef> transactionDescParameters = getAllTransactionDescparametersAssocRefs();
+        List<String> mandatoryForAccountant = new ArrayList<String>();
+        for (ChildAssociationRef transactionDescParameter : transactionDescParameters) {
+            if (Boolean.TRUE.equals(nodeService.getProperty(transactionDescParameter.getChildRef(), TransactionDescParameterModel.Props.MANDATORY_FOR_ACCOUNTANT))) {
+                mandatoryForAccountant.add(transactionDescParameter.getQName().getLocalName());
+            }
+        }
+        return mandatoryForAccountant;
+    }
+
+    @Override
+    public void updateTransactionDescParameters(List<TransactionDescParameter> transactionDescParameters) {
+        for (TransactionDescParameter transactionDescParameter : transactionDescParameters) {
+            nodeService.setProperties(transactionDescParameter.getNode().getNodeRef(), RepoUtil.toQNameProperties(transactionDescParameter.getNode().getProperties()));
+        }
     }
 
     @Override
@@ -555,7 +629,6 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                                     }
                                     ostuarve.setArveidKokku(BigInteger.ONE);
                                     Writer writer = new StringWriter();
-                                    // FIXME: validate generated xml
                                     EInvoiceUtil.marshalAccount(ostuarve, writer);
                                     Ostuarve testOstuarve = EInvoiceUtil.unmarshalAccount(new StringReader(writer.toString()));
                                     newDataFile.setStringValue(writer.toString());
@@ -643,19 +716,33 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         for (Transaction removedTransaction : removedTransactions) {
             if (removedTransaction.getNode().getNodeRef() != null) {
                 nodeService.deleteNode(removedTransaction.getNode().getNodeRef());
+                documentLogService.addDocumentLog(invoiceRef, I18NUtil.getMessage("document_log_status_transaction_deleted"));
             }
         }
         for (Transaction transaction : transactions) {
             NodeRef nodeRef = transaction.getNode().getNodeRef();
-            Map<String, Object> properties = transaction.getNode().getProperties();
+            Map<QName, Serializable> properties = RepoUtil.toQNameProperties(transaction.getNode().getProperties());
             if (transaction.getNode().isUnsaved()) {
                 // create new transaction
-                createTransaction(invoiceRef, RepoUtil.toQNameProperties(properties));
+                createTransaction(invoiceRef, properties);
+                documentLogService.addDocumentLog(invoiceRef, I18NUtil.getMessage("document_log_status_transaction_added"));
             } else {
                 // update existing transaction
-                nodeService.addProperties(nodeRef, RepoUtil.toQNameProperties(properties));
+                Map<QName, Serializable> originalProps = nodeService.getProperties(transaction.getNode().getNodeRef());
+                nodeService.addProperties(nodeRef, properties);
+                for (Map.Entry<QName, Serializable> entry : properties.entrySet()) {
+                    QName propName = entry.getKey();
+                    Serializable originalValue = originalProps.get(propName);
+                    if (!RepoUtil.isExistingPropertyValueEqualTo(transaction.getNode(), propName, originalValue)) {
+                        documentLogService.addDocumentLog(
+                                invoiceRef,
+                                I18NUtil.getMessage("document_log_status_transaction_modified",
+                                        I18NUtil.getMessage(TRANSACTION_DISPLAY_LABEL_PREFIX + propName.getLocalName(), originalValue)));
+                    }
+                }
             }
         }
+        updateTransSearchableProperties(invoiceRef, transactions);
     }
 
     @Override
@@ -719,7 +806,6 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         writer.setMimetype(MimetypeMap.MIMETYPE_XML);
         final OutputStream os = writer.getContentOutputStream();
         try {
-            // FIXME: validate generated xml
             EInvoiceUtil.marshalAccount(ostuarve, os);
         } finally {
             os.close();
@@ -782,7 +868,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         for (Transaction transaction : transactions) {
             Kanne kanne = new Kanne();
             Double sumWithoutVat = transaction.getSumWithoutVat();
-            kanne.setKandeTuup(sumWithoutVat == null || sumWithoutVat >= 0 ? TRANSACTION_XML_DEB : TRANSACTION_XML_CRE);
+            kanne.setKandeTuup(sumWithoutVat == null || sumWithoutVat >= 0 ? InvoiceType.DEB.getTransactionXmlValue() : InvoiceType.CRE.getTransactionXmlValue());
             kanne.setPearaamatuKonto(transaction.getAccount());
             kanne.setKaibemaksuKood(transaction.getInvoiceTaxCode());
 
@@ -798,7 +884,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             createXmlDimension(Dimensions.INVOICE_FUNDS, transaction.getFund(), dimensioonList);
             createXmlDimension(Dimensions.INVOICE_COMMITMENT_ITEM, transaction.getCommitmentItem(), dimensioonList);
             createXmlDimension(Dimensions.INVOICE_INTERNAL_ORDERS, transaction.getOrderNumber(), dimensioonList);
-            createXmlDimension(Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, transaction.getAssetInventaryNumber(), dimensioonList);
+            createXmlDimension(Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, transaction.getAssetInventoryNumber(), dimensioonList);
             createXmlDimension(Dimensions.INVOICE_POSTING_KEY, transaction.getPostingKey(), dimensioonList);
             createXmlDimension(Dimensions.INVOICE_TRADING_PARTNER_CODES, transaction.getTradingPartnerCode(), dimensioonList);
             createXmlDimension(Dimensions.INVOICE_FUNCTIONAL_AREA_CODE, transaction.getFunctionalAreaCode(), dimensioonList);
@@ -846,14 +932,9 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         return null;
     }
 
-    private String getAccountType(String invoiceType) {
-        if ("DEB".equalsIgnoreCase(invoiceType)) {
-            return TRANSACTION_XML_DEB;
-        }
-        if ("CRE".equalsIgnoreCase(invoiceType)) {
-            return TRANSACTION_XML_CRE;
-        }
-        return "KS";
+    private String getAccountType(String invoiceTypeValue) {
+        InvoiceType invoiceType = InvoiceType.getInvoiceTypeByValueName(invoiceTypeValue);
+        return invoiceType == null ? null : invoiceType.getTransactionXmlValue();
     }
 
     private void emptyDimensionValueChache() {
@@ -992,6 +1073,16 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         return null;
     }
 
+    private void updateTransSearchableProperties(NodeRef document, List<Transaction> transactions) {
+        Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
+        properties.put(DocumentCommonModel.Props.SEARCHABLE_FUND, EInvoiceUtil.buildSearchableStringProp(TransactionModel.Props.FUND, transactions));
+        properties.put(DocumentCommonModel.Props.SEARCHABLE_FUNDS_CENTER,
+                EInvoiceUtil.buildSearchableStringProp(TransactionModel.Props.FUNDS_CENTER, transactions));
+        properties.put(DocumentCommonModel.Props.SEARCHABLE_EA_COMMITMENT_ITEM,
+                EInvoiceUtil.buildSearchableStringProp(TransactionModel.Props.EA_COMMITMENT_ITEM, transactions));
+        nodeService.addProperties(document, properties);
+    }
+
     // START: getters / setters
 
     public interface XmlDimensionListsValueWrapper {
@@ -1124,6 +1215,10 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         this.dimensionsPath = dimensionsPath;
     }
 
+    public void setTransactionDescParametersPath(String transactionDescParametersPath) {
+        this.transactionDescParametersPath = transactionDescParametersPath;
+    }
+
     public void setGeneralService(GeneralService generalService) {
         this.generalService = generalService;
     }
@@ -1146,6 +1241,10 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     public void setDvkService(DvkService dvkService) {
         this.dvkService = dvkService;
+    }
+
+    public void setDocumentLogService(DocumentLogService documentLogService) {
+        this.documentLogService = documentLogService;
     }
 
     // END: getters / setters

@@ -259,12 +259,14 @@ public class MenuItem implements Serializable {
     }
 
     public boolean hasPermissions(UserService userService) {
-        if (isAdmin()) {
-            return userService.isAdministrator();
-        } else if (isDocManager()) {
-            return userService.isDocumentManager();
-        } else if (isAccountant()) {
-            return userService.isAccountant();
+        if (userService.isAdministrator()) { // Access all areas
+            return true;
+        }
+        if (isDocManager() && userService.isDocumentManager()) {
+            return true;
+        }
+        if (isAccountant() && userService.isAccountant()) {
+            return true;
         }
         return false;
 

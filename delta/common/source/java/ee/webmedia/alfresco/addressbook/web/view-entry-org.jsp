@@ -60,4 +60,5 @@
 
          </a:booleanEvaluator>
          
+         <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/addressbook/web/manage-contactgroups.jsp" />
          <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-finish-button.jsp" />

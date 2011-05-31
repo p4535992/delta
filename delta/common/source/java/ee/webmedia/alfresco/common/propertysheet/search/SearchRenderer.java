@@ -277,6 +277,9 @@ public class SearchRenderer extends BaseRenderer {
         }
         out.write("\">");
 
+        @SuppressWarnings("unchecked")
+        Map<Object, Object> attributes = picker.getAttributes();
+        attributes.put(Search.PICKER_CALLBACK_KEY, search.getAttributes().get(Search.PICKER_CALLBACK_KEY));
         Utils.encodeRecursive(context, picker);
 
         out.write("</div></div></div>");

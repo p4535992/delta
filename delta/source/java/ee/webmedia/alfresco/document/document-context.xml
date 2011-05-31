@@ -484,6 +484,19 @@
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
    </bean>
+   
+   <!-- Changes modified time to make registered but not finished incoming letters visible in ADR. -->
+   <bean id="incomingLetterADRVisibilityUpdater" class="ee.webmedia.alfresco.document.bootstrap.IncomingLetterADRVisibilityUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="incomingLetterADRVisibilityUpdater" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="incomingLetterDummyWorkflowUpdater" />
+         </list>
+      </property>
+      <property name="disabled" value="${updater.version110To25Combined}" />
+   </bean>
 
    <bean id="version110To25DocumentUpdater" class="ee.webmedia.alfresco.document.bootstrap.Version110To25DocumentUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
@@ -504,6 +517,7 @@
       <property name="shortRegNumberUpdater" ref="shortRegNumberUpdater" />
       <property name="postipoissImportDocumentsUpdater" ref="postipoissImportDocumentsUpdater" />
       <property name="documentPrivilegesUpdater" ref="documentPrivilegesUpdater" />
+      <property name="incomingLetterADRVisibilityUpdater" ref="incomingLetterADRVisibilityUpdater" />
       <property name="limitForTesting" value="${updater.limitForTesting}" />
       <property name="limitCreatedBegin" value="01.03.2011" />
       <property name="limitCreatedEnd" value="31.03.2011" />
