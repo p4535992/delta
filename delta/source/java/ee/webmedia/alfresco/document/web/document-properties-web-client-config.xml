@@ -141,7 +141,7 @@
          <show-property name="docspec:paymentTerm" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
          <show-property name="{temp}invoiceTotalSum" show-in-edit-mode="false" display-label-id="document_invoiceTotalSum" />
          <show-property name="docspec:totalSum" show-in-view-mode="false" styleClass="medium invoiceTotalSum" forcedMandatory="true" display="inline" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
-         <show-property name="docspec:currency" component-generator="ClassificatorSelectorGenerator" classificatorName="currency" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />         
+         <show-property name="docspec:currency" show-in-view-mode="false" component-generator="ClassificatorSelectorGenerator" classificatorName="currency" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />         
          <show-property name="docspec:invoiceSum" show-in-view-mode="false" styleClass="medium invoiceSum editable" read-only="true" display="inline" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" />
          <show-property name="docspec:vat" show-in-view-mode="false" styleClass="medium invoiceVat" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>         
          <show-property name="docspec:paymentReferenceNumber" styleClass="medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>

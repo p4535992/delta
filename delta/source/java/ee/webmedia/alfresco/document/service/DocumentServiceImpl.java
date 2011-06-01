@@ -1158,21 +1158,20 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                     initProps.get(DocumentSpecificModel.Props.RECEIVER_STRUCT_UNIT.toString()));
 
         }
-        if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(baseDocType)) {
+        if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(baseDocType)) { // only INCOMING_LETTER not INCOMING_LETTER_*
             propsToCopy.addAll(Arrays.asList(
                     DocumentSpecificModel.Props.SENDER_REG_NUMBER.toString()
                     , DocumentSpecificModel.Props.SENDER_REG_DATE.toString()
                     , DocumentSpecificModel.Props.SENDER_DETAILS_NAME.toString()
                     , DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL.toString()
                     ));
-            propsToCopy.addAll(DocumentPropertySets.ownerProperties);
+            userService.setOwnerPropsFromUser(followUpProps);
             if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(followupType)) {
                 propsToCopy.add(DocumentSpecificModel.Props.TRANSMITTAL_MODE.toString());
             }
         }
         if (DocumentTypeHelper.isOutgoingLetter(baseDocType)) {
-            Map<QName, Serializable> userProps = userService.getUserProperties(AuthenticationUtil.getRunAsUser());
-            userService.setOwnerPropsFromUser2(followUpProps, userProps);
+            userService.setOwnerPropsFromUser(followUpProps);
         }
         if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(baseDocType)) { // only OUTGOING_LETTER not OUTGOING_LETTER_*
             propsToCopy.addAll(Arrays.asList(
@@ -1327,7 +1326,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         Set<String> copiedProps = null;
 
         /** Substitute and choose properties */
-        if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(docType) || DocumentSubtypeModel.Types.OUTGOING_LETTER_MV.equals(docType)) {
+        if (DocumentTypeHelper.isOutgoingLetter(docType)) {
             @SuppressWarnings("unchecked")
             List<String> recipientNames = (List<String>) props.get(RECIPIENT_NAME);
             if (recipientNames.size() > 0) {
@@ -1341,10 +1340,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             }
             recipientEmails.add((String) docProps.get(DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL.toString()));
             copiedProps = DocumentPropertySets.incomingAndOutgoingLetterProperties;
-
-        } else if (DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT.equals(docType)
-                || DocumentSubtypeModel.Types.INSTRUMENT_OF_DELIVERY_AND_RECEIPT_MV.equals(docType)) {
-
+        } else if (DocumentTypeHelper.isInstrumentOfDeliveryAndReciept(docType)) {
             props.put(DocumentSpecificModel.Props.SECOND_PARTY_REG_NUMBER.toString(), docProps.get(
                     DocumentSpecificModel.Props.SECOND_PARTY_CONTRACT_NUMBER));
             props.put(DocumentSpecificModel.Props.SECOND_PARTY_REG_DATE.toString(), docProps.get(

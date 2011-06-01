@@ -42,6 +42,7 @@ import ee.webmedia.alfresco.document.einvoice.vatcodelist.generated.KaibemaksuKo
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 public class EInvoiceUtil {
 
@@ -74,6 +75,7 @@ public class EInvoiceUtil {
 
     public static final Dimensions ACCOUNT_DIMENSION = Dimensions.INVOICE_ACCOUNTS;
     public static final Dimensions VAT_CODE_DIMENSION = Dimensions.TAX_CODE_ITEMS;
+    public static final Dimensions notImportedDimension = Dimensions.INVOICE_POSTING_KEY;
     /** TODO: actually it would be better to use generic bidirectional map (from guava? refactored Commons-Collections?) here */
     public static final BidiMap /* <Parameters, Dimensions> */DIMENSION_PARAMETERS;
 
@@ -428,6 +430,16 @@ public class EInvoiceUtil {
             }
         }
         return searchableProps;
+    }
+
+    public static void copyTransactionProperties(Transaction transaction, Map<QName, Serializable> newProps) {
+        Map<QName, Serializable> props = RepoUtil.toQNameProperties(transaction.getNode().getProperties());
+        for (Map.Entry<QName, Serializable> entry : props.entrySet()) {
+            QName propName = entry.getKey();
+            if (propName.getNamespaceURI().equals(TransactionModel.URI)) {
+                newProps.put(propName, entry.getValue());
+            }
+        }
     }
 
 }

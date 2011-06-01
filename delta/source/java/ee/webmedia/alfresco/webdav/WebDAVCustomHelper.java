@@ -57,10 +57,10 @@ public class WebDAVCustomHelper extends WebDAVHelper {
         }
 
         try {
-            NodeRef nodeRef = new NodeRef(Repository.getStoreRef(), pathElements.get(1));
+            NodeRef nodeRef = new NodeRef(Repository.getStoreRef(), pathElements.get(2));
             boolean subContent = false;
-            if (pathElements.size() > 2) {
-                nodeRef = getNodeService().getChildByName(nodeRef, ContentModel.ASSOC_CONTAINS, pathElements.get(2));
+            if (pathElements.size() > 3) {
+                nodeRef = getNodeService().getChildByName(nodeRef, ContentModel.ASSOC_CONTAINS, pathElements.get(3));
                 subContent = true;
             }
             FileInfo fi = getFileFolderService().getFileInfo(nodeRef);

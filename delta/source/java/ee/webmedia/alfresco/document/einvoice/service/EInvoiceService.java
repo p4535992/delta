@@ -19,6 +19,7 @@ import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionDescParameter;
+import ee.webmedia.alfresco.document.einvoice.model.TransactionTemplate;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.xtee.client.dhl.DhlXTeeService.ContentToSend;
 import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
@@ -43,7 +44,21 @@ public interface EInvoiceService {
 
     List<Dimension> getAllDimensions();
 
-    List<DimensionValue> getAllDimensionValues(NodeRef dimensionRef);
+    /**
+     * Try to read all dimension's values from cache, if cache is empty, read dimension values from repo
+     * using getAllDimensionValuesFromCache and update service cache
+     */
+    List<DimensionValue> getAllDimensionValuesFromCache(NodeRef dimensionRef);
+
+    /**
+     * Read all dimension values from repo; service cache is not updated
+     */
+    List<DimensionValue> getAllDimensionValuesFromRepo(NodeRef dimensionRef);
+
+    /**
+     * Get active dimension values from service cache using getAllDimensionValuesFromCache
+     */
+    List<DimensionValue> getActiveDimensionValues(NodeRef dimension);
 
     Collection<NodeRef> importDimensionsList(InputStream input);
 
@@ -68,21 +83,18 @@ public interface EInvoiceService {
     void updateDimensions(List<Dimension> dimensions);
 
     /**
-     * Currently used for testing purposes only
+     * Currently used for development/internal testing only
      */
     void deleteAllDimensions();
+
+    /**
+     * Currently used for development/internal testing only
+     */
+    void deleteAllImportedDimensions();
 
     List<Transaction> getInvoiceTransactions(NodeRef invoiceRef);
 
     void updateDimensionValues(List<DimensionValue> dimensionValues, Node selectedDimension);
-
-    /**
-     * Get active dimension values from service cache
-     * 
-     * @param dimension
-     * @return
-     */
-    List<DimensionValue> getActiveDimensionValues(NodeRef dimension);
 
     NodeRef createTransaction(NodeRef parentRef, Map<QName, Serializable> properties);
 
@@ -119,5 +131,27 @@ public interface EInvoiceService {
     List<String> getOwnerMandatoryFields();
 
     List<String> getAccountantMandatoryFields();
+
+    boolean isEditableDimension(NodeRef nodeRef);
+
+    void deleteTransactionTemplate(NodeRef transactionTemplateRef);
+
+    List<TransactionTemplate> getAllTransactionTemplates();
+
+    NodeRef updateTransactionTemplate(TransactionTemplate transactionTemplate);
+
+    List<TransactionTemplate> getActiveTransactionTemplates();
+
+    List<String> getActiveTransactionTemplateNames();
+
+    List<Transaction> getTemplateTransactions(String templateName);
+
+    TransactionTemplate getTransactionTemplateByName(String templateName);
+
+    TransactionTemplate createTransactionTemplate(String templateName);
+
+    void removeTransactions(NodeRef nodeRef);
+
+    void copyTransactions(TransactionTemplate template, List<Transaction> transactions);
 
 }

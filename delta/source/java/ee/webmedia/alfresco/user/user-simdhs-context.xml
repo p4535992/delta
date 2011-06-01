@@ -31,7 +31,18 @@
       <property name="moduleId" value="simdhs" />
       <property name="name" value="accountantsGroupBootstrap" />
       <property name="executeOnceOnly" value="true" />
-   </bean>   
+   </bean>
+   
+   <bean id="accountantsGroupNameChangeBootstrap" class="ee.webmedia.alfresco.user.bootstrap.AccountantsGroupNameChangeBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="name" value="accountantsGroupNameChangeBootstrap" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="accountantsGroupBootstrap" />
+         </list>
+      </property>      
+   </bean> 
 
    <bean id="deleteDummyUserBootstrap" class="ee.webmedia.alfresco.user.bootstrap.DeleteDummyUserBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />

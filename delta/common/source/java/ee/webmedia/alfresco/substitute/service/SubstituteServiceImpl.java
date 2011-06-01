@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -24,6 +25,7 @@ import org.alfresco.service.cmr.search.ResultSetRow;
 import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.QName;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -147,6 +149,17 @@ public class SubstituteServiceImpl implements SubstituteService {
             resultSet.close();
         }
         return substitutes;
+    }
+
+    @Override
+    public boolean canBeSubstituting(String otherUserName) {
+        String fullyAuthenticatedUser = AuthenticationUtil.getFullyAuthenticatedUser();
+        for (Substitute substitute : findActiveSubstitutionDuties(fullyAuthenticatedUser)) {
+            if (StringUtils.equals(substitute.getReplacedPersonUserName(), otherUserName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override

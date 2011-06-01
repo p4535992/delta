@@ -111,12 +111,18 @@
                <f:param name="ref" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
-         <wm:docPermissionEvaluator value="#{r.node}" allow="WriteContent">
+         <wm:docPermissionEvaluator value="#{r.node}" allow="editDocumentFiles">
             <a:actionLink id="col7-act4" value="#{r.name}" actionListener="#{FileBlockBean.transformToPdf}" showLink="false"
                image="/images/filetypes/pdf.gif" tooltip="#{msg.file_generate_pdf}" rendered="#{r.transformableToPdf && !DocumentDialog.notEditable}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
+            <a:actionLink id="col7-act5" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false"
+               image="/images/icons/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
+               <f:param name="nodeRef" value="#{r.nodeRef}" />
+            </a:actionLink>
+         </wm:docPermissionEvaluator>         
       </a:column>
       
       <a:column id="col1-ddoc" primary="true" rendered="#{r.activeDigiDoc}">
@@ -277,6 +283,12 @@
                <f:param name="ref" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
+         <wm:docPermissionEvaluator value="#{r.node}" allow="WriteContent">
+            <a:actionLink id="col27-act5" value="#{r.name}" actionListener="#{FileBlockBean.viewPdf}" showLink="false"
+               image="/images/filetypes/file-small-gray.png" tooltip="#{msg.file_view_pdf}" rendered="#{r.pdf}">
+               <f:param name="nodeRef" value="#{r.nodeRef}" />
+            </a:actionLink>
+         </wm:docPermissionEvaluator>         
       </a:column>
       
       <a:column id="col21-ddoc" primary="true" rendered="#{r.notActiveAndDigiDoc}">

@@ -127,6 +127,13 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         super.setupMandatoryPropertyIfNecessary(context, propertySheet, property, propertyDef, component);
 
         // Must do this after component has beed added to tree
+        setupValueChangeListener(context, component);
+    }
+
+    /**
+     * Must do this after component has beed added to tree
+     */
+    public void setupValueChangeListener(FacesContext context, UIComponent component) {
         String valueChangeListener = getCustomAttributes().get("valueChangeListener");
         if (StringUtils.isNotBlank(valueChangeListener) && component instanceof UIInput) {
             ((UIInput) component).setValueChangeListener(context.getApplication().createMethodBinding(valueChangeListener,

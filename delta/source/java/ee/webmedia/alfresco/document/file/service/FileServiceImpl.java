@@ -97,6 +97,7 @@ public class FileServiceImpl implements FileService {
             boolean isDdoc = signatureService.isDigiDocContainer(item.getNodeRef());
             item.setDigiDocContainer(isDdoc);
             item.setTransformableToPdf(isTransformableToPdf(fi.getContentData()));
+            item.setPdf(isPdfFile(fi.getContentData()));
             if (item.isActive() || !onlyActive) {
                 files.add(item);
             }
@@ -171,11 +172,15 @@ public class FileServiceImpl implements FileService {
         if (contentData == null) {
             return false;
         }
-        if (MimetypeMap.MIMETYPE_PDF.equals(contentData.getMimetype())) {
+        if (isPdfFile(contentData)) {
             return false;
         }
         ContentTransformer transformer = contentService.getTransformer(contentData.getMimetype(), MimetypeMap.MIMETYPE_PDF);
         return transformer != null;
+    }
+
+    private boolean isPdfFile(ContentData contentData) {
+        return MimetypeMap.MIMETYPE_PDF.equals(contentData.getMimetype());
     }
 
     @Override
@@ -390,6 +395,8 @@ public class FileServiceImpl implements FileService {
             ticket = ticket.substring(InMemoryTicketComponentImpl.GRANTED_AUTHORITY_TICKET_PREFIX.length());
         }
         path.append("/").append(URLEncoder.encode(ticket));
+
+        path.append("/").append(URLEncoder.encode(AuthenticationUtil.getRunAsUser())); // maybe substituting
 
         NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();
         path.append("/").append(URLEncoder.encode(parent.getId()));

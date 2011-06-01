@@ -142,7 +142,7 @@ public interface UserService {
 
     void setOwnerPropsFromUser(Map<QName, Serializable> docProps, Map<QName, Serializable> userProps);
 
-    void setOwnerPropsFromUser2(Map<String, Object> docProps, Map<QName, Serializable> userProps);
+    void setOwnerPropsFromUser(Map<String, Object> docProps);
 
     String getAccountantsGroup();
 

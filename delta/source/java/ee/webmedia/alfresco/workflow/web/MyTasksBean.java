@@ -93,7 +93,7 @@ public class MyTasksBean extends BaseDialogBean {
         return null;
     }
 
-    public void setupAssignmentTasks(ActionEvent event) {
+    public void setupAssignmentTasks(@SuppressWarnings("unused") ActionEvent event) {
         reset();
         dialogTitle = MessageUtil.getMessage("assignmentWorkflow");
         listTitle = MessageUtil.getMessage("task_list_assignment_title");
@@ -102,7 +102,7 @@ public class MyTasksBean extends BaseDialogBean {
         loadTasks();
     }
 
-    public void setupInformationTasks(ActionEvent event) {
+    public void setupInformationTasks(@SuppressWarnings("unused") ActionEvent event) {
         reset();
         dialogTitle = MessageUtil.getMessage("informationWorkflow");
         listTitle = MessageUtil.getMessage("task_list_information_title");
@@ -111,7 +111,7 @@ public class MyTasksBean extends BaseDialogBean {
         loadTasks();
     }
 
-    public void setupOpinionTasks(ActionEvent event) {
+    public void setupOpinionTasks(@SuppressWarnings("unused") ActionEvent event) {
         reset();
         dialogTitle = MessageUtil.getMessage("opinionWorkflow");
         listTitle = MessageUtil.getMessage("task_list_opinion_title");
@@ -120,7 +120,7 @@ public class MyTasksBean extends BaseDialogBean {
         loadTasks();
     }
 
-    public void setupReviewTasks(ActionEvent event) {
+    public void setupReviewTasks(@SuppressWarnings("unused") ActionEvent event) {
         reset();
         dialogTitle = MessageUtil.getMessage("reviewWorkflow");
         listTitle = MessageUtil.getMessage("task_list_review_title");
@@ -129,7 +129,7 @@ public class MyTasksBean extends BaseDialogBean {
         loadTasks();
     }
 
-    public void setupSignatureTasks(ActionEvent event) {
+    public void setupSignatureTasks(@SuppressWarnings("unused") ActionEvent event) {
         reset();
         dialogTitle = MessageUtil.getMessage("signatureWorkflow");
         listTitle = MessageUtil.getMessage("task_list_signature_title");
@@ -138,7 +138,7 @@ public class MyTasksBean extends BaseDialogBean {
         loadTasks();
     }
 
-    public void setupExternalReviewTasks(ActionEvent event) {
+    public void setupExternalReviewTasks(@SuppressWarnings("unused") ActionEvent event) {
         reset();
         dialogTitle = MessageUtil.getMessage("externalReviewWorkflow");
         listTitle = MessageUtil.getMessage("task_list_external_review_title");

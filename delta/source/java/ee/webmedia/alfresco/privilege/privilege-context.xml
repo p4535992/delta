@@ -30,6 +30,7 @@
       <property name="userService" ref="UserService" />
       <property name="permissionService" ref="PermissionService" />
       <property name="nodeService" ref="NodeService" />
+      <property name="generalService" ref="GeneralService" />
    </bean>
 
    <bean id="PrivilegeService" class="org.springframework.aop.framework.ProxyFactoryBean">

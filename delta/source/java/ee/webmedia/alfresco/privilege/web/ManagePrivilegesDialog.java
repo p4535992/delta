@@ -95,9 +95,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     private static final String PARAM_CURRENT_GROUP = "currentGroup";
     private Comparator<UserPrivilegesRow> tableRowComparator;
 
-    private static final Set<String> dynamicPrivilegesGroups = new HashSet<String>(Arrays.asList(UserService.AUTH_ADMINISTRATORS_GROUP
-            , "curSeries_" + UserService.AUTH_DOCUMENT_MANAGERS_GROUP, UserService.AUTH_DOCUMENT_MANAGERS_GROUP));
-    private static final String CUR_SER_DOC_MANAGERS_GROUP_CODE = "curSeries_" + UserService.AUTH_DOCUMENT_MANAGERS_GROUP;
+    private static final Set<String> dynamicPrivilegesGroups = new HashSet<String>(Arrays.asList(UserService.AUTH_ADMINISTRATORS_GROUP, UserService.AUTH_DOCUMENT_MANAGERS_GROUP));
 
     private static final String USERGROUP_MARKER_CLASS = "tbGroup";
 
@@ -485,8 +483,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             FixedOrderComparator grouplessFirstComp = new FixedOrderComparator(groupOrderHigh);
             grouplessFirstComp.setUnknownObjectBehavior(FixedOrderComparator.UNKNOWN_AFTER);
 
-            List<String> groupOrderLow = Arrays.asList(groupNamesByCode.get(UserService.AUTH_DOCUMENT_MANAGERS_GROUP), groupNamesByCode.get(UserService.AUTH_ADMINISTRATORS_GROUP),
-                    groupNamesByCode.get(CUR_SER_DOC_MANAGERS_GROUP_CODE));
+            List<String> groupOrderLow = Arrays.asList(groupNamesByCode.get(UserService.AUTH_DOCUMENT_MANAGERS_GROUP), groupNamesByCode.get(UserService.AUTH_ADMINISTRATORS_GROUP));
             Collections.sort(groupOrderLow);
             FixedOrderComparator specialGroupsLastComp = new FixedOrderComparator(groupOrderLow);
             specialGroupsLastComp.setUnknownObjectBehavior(FixedOrderComparator.UNKNOWN_BEFORE);
@@ -529,9 +526,8 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             String group = UserService.AUTH_DOCUMENT_MANAGERS_GROUP;
             Set<String> authorities = getAuthorityService().getContainedAuthorities(AuthorityType.USER, group, immediate);
             Set<String> seriesDocManagerAuths = filterSeriesAuthorities(authorities, manageableRef);
-            String groupPreffix = "curSeries_";
             String extraPrivilegeReason = MessageUtil.getMessage("manage_permissions_extraInfo_userIsDocManagerOfCurSeries");
-            addRows(groupPreffix + group, manageablePermissions, seriesDocManagerAuths, extraPrivilegeReason);
+            addRows(group, manageablePermissions, seriesDocManagerAuths, extraPrivilegeReason);
 
             Collection<String> privileges = Arrays.asList(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA
                     , DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA, DocumentCommonModel.Privileges.DELETE_DOCUMENT_META_DATA);
@@ -571,8 +567,8 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             if (StringUtils.equals(accessRestriction, AccessRestriction.OPEN.getValueName())) {
                 String docIsPublic = MessageUtil.getMessage("manage_permissions_extraInfo_documentIsPublic");
                 for (UserPrivilegesRow row : userPrivilegesRows) {
-                    // row.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, docIsPublic);
-                    // row.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
+                    row.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA, docIsPublic);
+                    row.addDynamicPrivilege(DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES, docIsPublic);
                 }
             }
         }
@@ -647,11 +643,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
                 if (GROUPLESS_GROUP.equals(key)) {
                     value = MessageUtil.getMessage("manage_permissions_group_groupless");
                 } else {
-                    if (CUR_SER_DOC_MANAGERS_GROUP_CODE.equals(groupCode)) {
-                        value = MessageUtil.getMessage(groupCode);
-                    } else {
-                        value = getAuthorityService().getAuthorityDisplayName(groupCode);
-                    }
+                    value = getAuthorityService().getAuthorityDisplayName(groupCode);
                 }
                 put(groupCode, value);
             }

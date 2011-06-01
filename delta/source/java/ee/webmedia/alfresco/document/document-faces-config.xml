@@ -343,6 +343,26 @@
          <value>#{NavigationBean}</value>
       </managed-property>
    </managed-bean>  
+   
+   <managed-bean>
+      <managed-bean-name>TransactionTemplateListDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.TransactionTemplateListDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>   
+   
+   <managed-bean>
+      <managed-bean-name>TransactionsTemplateDetailsDialog</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.document.einvoice.web.TransactionsTemplateDetailsDialog</managed-bean-class>
+      <managed-bean-scope>session</managed-bean-scope>
+      <managed-property>
+         <property-name>navigator</property-name>
+         <value>#{NavigationBean}</value>
+      </managed-property>
+   </managed-bean>   
 
    <!-- ==================== [ COMPONENT GENERATORS ] =================================== -->
 

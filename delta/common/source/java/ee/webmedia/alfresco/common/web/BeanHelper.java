@@ -20,8 +20,9 @@ import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.cases.web.CaseDetailsDialog;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
+import ee.webmedia.alfresco.document.einvoice.web.DimensionDetailsDialog;
+import ee.webmedia.alfresco.document.einvoice.web.DimensionListDialog;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.AddFileDialog;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -36,10 +37,14 @@ import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.document.web.VisitedDocumentsBean;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog;
+import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManagePrivilegesDialog;
 import ee.webmedia.alfresco.series.web.SeriesDetailsDialog;
+import ee.webmedia.alfresco.substitute.service.SubstituteService;
+import ee.webmedia.alfresco.substitute.web.SubstitutionBean;
+import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.volume.web.VolumeDetailsDialog;
@@ -104,6 +109,18 @@ public class BeanHelper {
         return (ClearStateNotificationHandler) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ClearStateNotificationHandler.BEAN_NAME);
     }
 
+    public static SubstitutionBean getSubstitutionBean() {
+        return ((SubstitutionBean) AppConstants.getBeanFactory().getBean(SubstitutionBean.BEAN_NAME));
+    }
+
+    public static DimensionDetailsDialog getDimensionDetailsDialog() {
+        return (DimensionDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DimensionDetailsDialog.BEAN_NAME);
+    }
+
+    public static DimensionListDialog getDimensionListDialog() {
+        return (DimensionListDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DimensionListDialog.BEAN_NAME);
+    }
+
     // END: web beans
 
     // START: alfresco services
@@ -156,7 +173,7 @@ public class BeanHelper {
     }
 
     public static GeneralService getGeneralService() {
-        return (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(GeneralService.BEAN_NAME);
+        return (GeneralService) AppConstants.getBeanFactory().getBean(GeneralService.BEAN_NAME);
     }
 
     public static DocumentService getDocumentService() {
@@ -197,6 +214,18 @@ public class BeanHelper {
 
     public static DocLockService getDocLockService() {
         return (DocLockService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DocLockService.BEAN_NAME);
+    }
+
+    public static SubstituteService getSubstituteService() {
+        return (SubstituteService) AppConstants.getBeanFactory().getBean(SubstituteService.BEAN_NAME);
+    }
+
+    public static DocumentTemplateService getDocumentTemplateService() {
+        return (DocumentTemplateService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DocumentTemplateService.BEAN_NAME);
+    }
+
+    public static ImapServiceExt getImapServiceExt() {
+        return (ImapServiceExt) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(ImapServiceExt.BEAN_NAME);
     }
 
     // END: delta services

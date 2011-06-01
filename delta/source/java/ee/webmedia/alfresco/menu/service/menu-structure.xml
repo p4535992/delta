@@ -195,6 +195,9 @@
          <item id="dimensions" title-id="menu_dimensions" accountant="true">
             <outcome>dialog:dimensionListDialog</outcome>
          </item>
+         <item id="transactionTemplates" title-id="menu_transactionTemplate" accountant="true">
+            <outcome>dialog:transactionTemplateListDialog</outcome>
+         </item>           
          <item id="transactionDescParameters" title-id="menu_transactionDescParameters" accountant="true">
             <outcome>dialog:transactionDescParameterListDialog</outcome>
          </item>  

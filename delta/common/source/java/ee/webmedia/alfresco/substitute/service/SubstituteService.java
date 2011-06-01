@@ -52,6 +52,12 @@ public interface SubstituteService {
     List<Substitute> findActiveSubstitutionDuties(String userName);
 
     /**
+     * @param otherUserName
+     * @return true if authenticated user can substitute <code>otherUserName</code> at the moment
+     */
+    boolean canBeSubstituting(String otherUserName);
+
+    /**
      * Finds list of substitution duties for given user that overlap given time-frame.
      * 
      * @param userName

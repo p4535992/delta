@@ -13,6 +13,7 @@ public interface TransactionModel {
 
     interface Associations {
         QName TRANSACTION = QName.createQName(URI, "transaction");
+        QName TRANSACTION_TEMPLATE = QName.createQName(URI, "transactionTemplate");
     }
 
     interface Props {
@@ -36,6 +37,9 @@ public interface TransactionModel {
         QName HOUSE_BANK = QName.createQName(URI, "houseBank");
         QName ENTRY_CONTENT = QName.createQName(URI, "entryContent");
 
+        // transaction template properties
+        QName NAME = QName.createQName(URI, "name");
+        QName ACTIVE = QName.createQName(URI, "active");
     }
 
 }

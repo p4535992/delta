@@ -12,6 +12,7 @@ import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.app.servlet.DownloadContentServlet;
 import org.alfresco.web.bean.NavigationBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
@@ -38,6 +39,7 @@ public class FileBlockBean implements Serializable {
     private NavigationBean navigationBean;
     private List<File> files;
     private NodeRef nodeRef;
+    private String pdfUrl;
 
     public void toggleActive(ActionEvent event) {
         NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
@@ -69,6 +71,15 @@ public class FileBlockBean implements Serializable {
         }
     }
 
+    public void viewPdf(ActionEvent event) {
+        NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+        pdfUrl = DownloadContentServlet.generateBrowserURL(nodeRef, getFileName(nodeRef));
+    }
+
+    public String getPdfUrl() {
+        return pdfUrl;
+    }
+
     public void init(Node node) {
         nodeRef = node.getNodeRef();
         Assert.notNull(nodeRef, "nodeRef is null - node: " + node);
@@ -82,6 +93,7 @@ public class FileBlockBean implements Serializable {
         files = null;
         nodeRef = null;
         navigationBean.setCurrentNodeId(getDocumentService().getDrafts().getId());
+        pdfUrl = null;
     }
 
     public void restore() {
@@ -140,4 +152,5 @@ public class FileBlockBean implements Serializable {
         this.navigationBean = navigationBean;
     }
     // END: getters / setters
+
 }

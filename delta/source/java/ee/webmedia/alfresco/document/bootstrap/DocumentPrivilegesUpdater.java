@@ -98,7 +98,7 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
         if (result.getFirst()) {
             docProps.put(ContentModel.PROP_MODIFIER.toString(), origDocProps.get(ContentModel.PROP_MODIFIER));
             docProps.put(ContentModel.PROP_MODIFIED.toString(), origDocProps.get(ContentModel.PROP_MODIFIED));
-            nodeService.setProperties(docRef, RepoUtil.toQNameProperties(docProps));
+            nodeService.setProperties(docRef, generalService.getPropertiesIgnoringSystem(docProps));
         }
 
         return new String[] { result.getSecond() };

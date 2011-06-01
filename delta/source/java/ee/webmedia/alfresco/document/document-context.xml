@@ -72,7 +72,7 @@
       <property name="permissionService" ref="PermissionService" />
       <property name="fromDvkXPath" value="${dvk.received.parent.folder.xpath}${dvk.received.folder.name}" />
       <property name="incomingEmailPath" value="${imap.config.home.rootPath}/imap-ext:incoming"/>
-      <property name="receivedInvoicePath" value="/imap-ext:receivedInvoices" />
+      <property name="receivedInvoicePath" value="/imap-ext:imap-root/imap-ext:receivedInvoices" />
       <property name="sentEmailPath" value="${imap.config.home.rootPath}/imap-ext:sent"/>
    </bean>
 

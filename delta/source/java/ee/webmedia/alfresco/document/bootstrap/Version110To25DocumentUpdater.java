@@ -121,7 +121,7 @@ public class Version110To25DocumentUpdater extends AbstractNodeUpdater {
         } else {
             newProps2.put(ContentModel.PROP_MODIFIED.toPrefixString(), origProps.get(ContentModel.PROP_MODIFIED));
         }
-        nodeService.setProperties(nodeRef, RepoUtil.toQNameProperties(newProps2));
+        nodeService.setProperties(nodeRef, generalService.getPropertiesIgnoringSystem(newProps2));
 
         // This updater only removes 1 aspect; it fails, with the following error:
         // Found 2 integrity violations:

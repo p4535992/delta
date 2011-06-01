@@ -35,6 +35,7 @@ public class UserPrivileges implements Serializable {
     /** privileges added dynamically */
     private final Map<String /* privilege */, String /* reason */> dynamicPrivReasons = new LinkedHashMap<String, String>();
     private final Map<String /* privilege */, Boolean /* alsoStatic */> dynamicPrivileges = new HashMap<String, Boolean>();
+
     /** static privileges (already saved) */
     private Set<String> staticPrivilegesBeforeChanges;
     private final Map<String/* privilege */, Boolean/* active */> privileges = new HashMap<String, Boolean>();
@@ -50,7 +51,7 @@ public class UserPrivileges implements Serializable {
 
     public void addDynamicPrivilege(String privilege, String reason) {
         boolean hasPriv = BooleanUtils.isTrue(privileges.get(privilege));
-        boolean hasStaticPriv = hasPriv && !dynamicPrivileges.containsKey(privilege);
+        boolean hasStaticPriv = hasPriv && (!dynamicPrivileges.containsKey(privilege) || dynamicPrivileges.get(privilege));
         dynamicPrivileges.put(privilege, hasStaticPriv);
         String newReason = dynamicPrivReasons.get(privilege);
         if (newReason == null) {
@@ -121,17 +122,20 @@ public class UserPrivileges implements Serializable {
             return staticPrivilegesBeforeChanges;// remove all static privileges that user had
         }
         Set<String> privilegesToDelete = new HashSet<String>(staticPrivilegesBeforeChanges);
-        privilegesToDelete.removeAll(getStaticPrivileges());
+        privilegesToDelete.removeAll(getStaticPrivileges(false));
         return privilegesToDelete;
     }
 
     public Set<String> getStaticPrivileges() {
+        return getStaticPrivileges(true);
+    }
+
+    private Set<String> getStaticPrivileges(boolean considerDynamic) {
         Set<String> activePrivileges = new HashSet<String>();
         for (Entry<String, Boolean> entry : privileges.entrySet()) {
             String privilege = entry.getKey();
             if (entry.getValue()) {
-                if (!dynamicPrivileges.containsKey(privilege) || dynamicPrivileges.get(privilege)) {
-                    // no dynamic privilege or has both dynamic and static privilege
+                if (!considerDynamic || !dynamicPrivileges.containsKey(privilege) || dynamicPrivileges.get(privilege)) {
                     activePrivileges.add(privilege);
                 }
             }
@@ -143,7 +147,7 @@ public class UserPrivileges implements Serializable {
      * @return true if user has at least one static privilege(managed by this VO)
      */
     public boolean hasManageablePrivileges() {
-        return !getStaticPrivileges().isEmpty();
+        return !getStaticPrivileges(false).isEmpty();
     }
 
     public void addGroup(String group) {

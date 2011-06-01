@@ -233,4 +233,6 @@ public interface DocumentSearchService {
 
     List<NodeRef> searchUsersByRelatedFundsCenter(String relatedFundsCenter);
 
+    List<Document> searchDocumentsByDvkId(String dvkId);
+
 }

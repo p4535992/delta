@@ -52,7 +52,7 @@
                </source>
                <target>
                   <class>dim:dimensionValue</class>
-                  <mandatory>true</mandatory>
+                  <mandatory>false</mandatory>
                   <many>true</many>
                </target>
             </child-association>

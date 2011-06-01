@@ -45,6 +45,7 @@ public class File implements Serializable {
     private boolean active;
     private boolean isTransformableToPdf;
     private long nrOfChildren; // used to show childCount if the file represents folder
+    private boolean isPdf;
 
     public File() {
     }
@@ -272,6 +273,14 @@ public class File implements Serializable {
 
     public boolean isNotActiveAndNotDigiDoc() {
         return !isActive() && !isDigiDocItem();
+    }
+
+    public void setPdf(boolean isPdf) {
+        this.isPdf = isPdf;
+    }
+
+    public boolean isPdf() {
+        return isPdf;
     }
 
 }

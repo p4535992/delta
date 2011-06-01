@@ -39,6 +39,7 @@ import javax.transaction.UserTransaction;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.authentication.AuthenticationException;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.InMemoryTicketComponentImpl;
 import org.alfresco.repo.web.filter.beans.DependencyInjectedFilter;
 import org.alfresco.repo.webdav.WebDAV;
@@ -52,6 +53,9 @@ import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.transaction.TransactionService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.substitute.service.SubstituteService;
 
 /**
  * WebDAV Authentication Filter Class
@@ -150,7 +154,6 @@ public class AuthenticationFilter implements DependencyInjectedFilter {
                 // Need to create the User instance if not already available
 
                 String currentUsername = authService.getCurrentUserName();
-
                 // Start a transaction
 
                 tx = transactionService.getUserTransaction();
@@ -166,6 +169,15 @@ public class AuthenticationFilter implements DependencyInjectedFilter {
                     throw new InvalidNodeRefException(homeRef);
                 }
                 user.setHomeNode(homeRef);
+
+                // set runas user based on link if fully authenticated user can be substituting given user
+                if (pathElements.size() > 1) {
+                    String runAsUser = pathElements.get(1);
+                    SubstituteService substituteService = BeanHelper.getSubstituteService();
+                    if (substituteService.canBeSubstituting(runAsUser)) {
+                        AuthenticationUtil.setRunAsUser(runAsUser);
+                    }
+                }
 
                 tx.commit();
                 tx = null;

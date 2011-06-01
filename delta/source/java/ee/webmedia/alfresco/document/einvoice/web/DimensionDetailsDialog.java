@@ -16,6 +16,7 @@ import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.Dimension;
+import ee.webmedia.alfresco.document.einvoice.model.DimensionModel;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -23,6 +24,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 public class DimensionDetailsDialog extends BaseDialogBean implements IContextListener {
 
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "DimensionDetailsDialog";
 
     private static final Log log = LogFactory.getLog(DimensionDetailsDialog.class);
 
@@ -30,6 +32,7 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
 
     private List<DimensionValue> dimensionValues;
     private Dimension selectedDimension;
+    private boolean isEditableDimension;
 
     public DimensionDetailsDialog() {
         UIContextService.getInstance(FacesContext.getCurrentInstance()).registerBean(this);
@@ -69,6 +72,7 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
             BeanHelper.getEInvoiceService().updateDimension(selectedDimension);
             BeanHelper.getEInvoiceService().updateDimensionValues(dimensionValues, selectedDimension.getNode());
             resetData();
+            BeanHelper.getDimensionListDialog().reload();
             MessageUtil.addInfoMessage("save_success");
             return outcome;
         }
@@ -122,7 +126,16 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
      */
     public void select(ActionEvent event) {
         selectedDimension = new Dimension(new Node(new NodeRef(ActionUtil.getParam(event, "nodeRef"))));
+        isEditableDimension = BeanHelper.getEInvoiceService().isEditableDimension(selectedDimension.getNode().getNodeRef());
         loadDimensionValues();
+    }
+
+    public void addNewValue(ActionEvent event) {
+        dimensionValues.add(getNewUnsavedDimensionValue());
+    }
+
+    private DimensionValue getNewUnsavedDimensionValue() {
+        return new DimensionValue(BeanHelper.getGeneralService().createNewUnSaved(DimensionModel.Types.DIMENSION_VALUE, null));
     }
 
     @Override
@@ -154,13 +167,17 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
 
     private void loadDimensionValues() {
         if (selectedDimension != null) {
-            dimensionValues = BeanHelper.getEInvoiceService().getAllDimensionValues(selectedDimension.getNode().getNodeRef());
+            dimensionValues = BeanHelper.getEInvoiceService().getAllDimensionValuesFromRepo(selectedDimension.getNode().getNodeRef());
         }
     }
 
     @Override
     public Object getActionsContext() {
         return null;
+    }
+
+    public boolean isEditableDimension() {
+        return isEditableDimension;
     }
 
 }

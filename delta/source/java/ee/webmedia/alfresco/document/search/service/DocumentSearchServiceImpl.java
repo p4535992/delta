@@ -736,6 +736,19 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
+    public List<Document> searchDocumentsByDvkId(String dvkId) {
+        if (StringUtils.isBlank(dvkId)) {
+            return new ArrayList<Document>();
+        }
+        List<String> queryParts = new ArrayList<String>();
+        queryParts.add(generateTypeQuery(DocumentCommonModel.Types.SEND_INFO));
+        queryParts.add(generateStringExactQuery(dvkId, DocumentCommonModel.Props.SEND_INFO_DVK_ID));
+        String query = joinQueryPartsAnd(queryParts, false);
+        log.debug("searchDocumentsByDvkId with query '" + query + "'");
+        return searchDocumentsBySendInfoImpl(query, false, /* queryName */"documentsInOutbox");
+    }
+
+    @Override
     public int searchDocumentsInOutboxCount() {
         String query = getDvkOutboxQuery();
         log.debug("searchDocumentsInOutboxCount with query '" + query + "'");

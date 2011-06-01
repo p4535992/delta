@@ -404,7 +404,9 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             BeanHelper.getWorkflowService().finishUserActiveResponsibleInProgressTask(node.getNodeRef(), MessageUtil.getMessage("task_comment_sentToSap"));
             reloadDocAndClearPropertySheet();
         } catch (Exception e) {
-            MessageUtil.addErrorMessage("document_sendToSap_errorSendingOrGeneratingXml");
+            String messageKey = "document_sendToSap_errorSendingOrGeneratingXml";
+            log.error(MessageUtil.getMessage(messageKey), e);
+            MessageUtil.addErrorMessage(messageKey);
             return;
         }
     }
@@ -425,6 +427,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         BeanHelper.getDocumentLogService().addDocumentLog(node.getNodeRef(), MessageUtil.getMessage("document_log_status_send_to_sap_manually"));
         BeanHelper.getWorkflowService().finishUserActiveResponsibleInProgressTask(node.getNodeRef(), MessageUtil.getMessage("task_comment_sentToSap_manually"));
         reloadDocAndClearPropertySheet();
+        logBlockBean.restore();
         MessageUtil.addInfoMessage("save_success");
     }
 
@@ -540,11 +543,12 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 /** It's possible to change the type of the node that came from DVK */
                 getDocumentService().changeType(node);
             }
-            if (transactionsBlockBean.save()) {
+            if (transactionsBlockBean.saveTransactions()) {
                 metadataBlockBean.save(isDraft, newInvoiceDocuments);
                 notifyModeChanged();
             }
             logBlockBean.restore();
+            transactionsBlockBean.restore();
             isDraft = false;
             isFinished = false;
             ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItems(); // Update UserWorkingDocuments number

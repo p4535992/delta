@@ -9,18 +9,21 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.Dimension;
-import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 
 public class DimensionListDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "DimensionListDialog";
 
-    private transient EInvoiceService einvoiceService;
     private List<Dimension> dimensions;
 
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
+        reload();
+    }
+
+    public void reload() {
         dimensions = BeanHelper.getEInvoiceService().getAllDimensions();
     }
 
@@ -47,4 +50,10 @@ public class DimensionListDialog extends BaseDialogBean {
         return null;
     }
 
+    /**
+     * Used only in development/internal testing
+     */
+    public void deleteAllImportedDimensions(javax.faces.event.ActionEvent event) {
+        BeanHelper.getEInvoiceService().deleteAllDimensions();
+    }
 }

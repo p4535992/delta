@@ -1625,6 +1625,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private void unfinishTasksIfNeeded(WorkflowEventQueue queue, Workflow workflow) {
+        // CL task 164814 raames välja kommenteeritud kood. Maiga: tõenäoline on, et lisatakse kunagi analoogne kontroll,
+        // kuid kontrolli tulemusena kuvatakse lihtsalt hoiatusteade, mitte ei hakata automaatselt tööülesandeid katkestama
+        //@formatter:off
+        /*
         ReviewWorkflow sequentalReviewWorkflow = null;
         if (workflow instanceof ReviewWorkflow && !workflow.isParallelTasks()) {
             sequentalReviewWorkflow = (ReviewWorkflow) workflow;
@@ -1666,6 +1670,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 saveWorkflow(queue, workflowToFinish);
             }
         }
+        */
+        // @formatter:on
     }
 
     private void setStatus(WorkflowEventQueue queue, Task task, Status status) {

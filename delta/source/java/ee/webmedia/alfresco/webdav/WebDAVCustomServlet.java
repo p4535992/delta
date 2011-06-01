@@ -74,7 +74,11 @@ public class WebDAVCustomServlet extends WebDAVServlet {
             is.close();
         }
         String responseText = sb.toString();
-        responseText = StringUtils.replace(responseText, "{webdav_error_}", I18NUtil.getMessage("webdav_error_" + error.getHttpStatusCode()));
+        String errMessage = I18NUtil.getMessage("webdav_error_" + error.getHttpStatusCode());
+        if (errMessage == null) {
+            errMessage = I18NUtil.getMessage("webdav_error_unknownCode", error.getHttpStatusCode());
+        }
+        responseText = StringUtils.replace(responseText, "{webdav_error_}", errMessage);
         return responseText;
     }
 }

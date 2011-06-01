@@ -22,7 +22,6 @@ public class GetMethod extends org.alfresco.repo.webdav.GetMethod {
 
     @Override
     protected void checkPreConditions(FileInfo nodeInfo) throws WebDAVServerException {
-        super.checkPreConditions(nodeInfo);
         NodeRef fileRef = nodeInfo.getNodeRef();
         NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(fileRef, DocumentCommonModel.Types.DOCUMENT, true);
         if (docRef == null && !isAdminOrDocumentManager()) {
@@ -32,6 +31,7 @@ public class GetMethod extends org.alfresco.repo.webdav.GetMethod {
         if (AccessStatus.ALLOWED != BeanHelper.getPermissionService().hasPermission(docRef, permission)) {
             throw new AccessDeniedException("permission " + permission + " denied for file of document " + docRef);
         }
+        super.checkPreConditions(nodeInfo);
     }
 
     protected boolean isAdminOrDocumentManager() {

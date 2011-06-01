@@ -5,18 +5,21 @@ import static org.alfresco.util.EqualsHelper.nullSafeEquals;
 import java.io.Serializable;
 import java.util.Date;
 
-import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorValueProvider;
+import ee.webmedia.alfresco.common.web.WmNode;
 
+/**
+ * @author Riina Tens
+ */
 public class DimensionValue implements Comparable<DimensionValue>, ClassificatorSelectorValueProvider, Serializable {
 
     private static final long serialVersionUID = 1L;
-    private final Node node;
+    private final WmNode node;
 
-    public DimensionValue(Node node) {
+    public DimensionValue(WmNode node) {
         Assert.notNull(node);
         this.node = node;
     }
@@ -77,7 +80,7 @@ public class DimensionValue implements Comparable<DimensionValue>, Classificator
         return (Boolean) node.getProperties().get(DimensionModel.Props.DEFAULT_VALUE.toString());
     }
 
-    public Node getNode() {
+    public WmNode getNode() {
         return node;
     }
 

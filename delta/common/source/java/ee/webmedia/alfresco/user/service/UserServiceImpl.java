@@ -365,7 +365,9 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public void setOwnerPropsFromUser2(Map<String, Object> docProps, Map<QName, Serializable> userProps) {
+    public void setOwnerPropsFromUser(Map<String, Object> docProps) {
+        Map<QName, Serializable> userProps = getUserProperties(AuthenticationUtil.getRunAsUser());
+
         Map<QName, Serializable> qNameDocProps = new HashMap<QName, Serializable>();
         setOwnerPropsFromUser(qNameDocProps, userProps);
         Map<String, Object> stringDocProps = RepoUtil.toStringProperties(qNameDocProps);

@@ -25,6 +25,7 @@ import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -38,6 +39,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
     private PermissionService permissionService;
     private NodeService nodeService;
     private UserService userService;
+    private GeneralService generalService;
     private final Map<QName, PrivilegesChangedListener> privilegesChangedListeners = new HashMap<QName, PrivilegeServiceImpl.PrivilegesChangedListener>();
     @SuppressWarnings("unchecked")
     private static final Comparator<String> MEMBERS_BY_GROUP_COMPARATOR = new NullComparator(ComparableComparator.getInstance());
@@ -189,15 +191,26 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             privilegesChangedListener.onAddPrivileges(nodeRef, permissions);
         }
 
-        for (String permission : permissions) {
-            permissionService.setPermission(nodeRef, authority, permission, true);
-        }
         boolean mustSaveUserGroupProps = false;
         if (nodeProps == null) {
             nodeProps = new HashMap<String, Object>();
             mustSaveUserGroupProps = true;
             nodeProps.put(PrivilegeModel.Props.USER.toString(), nodeService.getProperty(nodeRef, PrivilegeModel.Props.USER));
             nodeProps.put(PrivilegeModel.Props.GROUP.toString(), nodeService.getProperty(nodeRef, PrivilegeModel.Props.GROUP));
+        }
+
+        for (String permission : permissions) {
+            @SuppressWarnings("unchecked")
+            Set<String> addedPrivileges = (Set<String>) nodeProps.get("{temp}addedPrivileges");
+            if (addedPrivileges == null) {
+                addedPrivileges = new HashSet<String>();
+                nodeProps.put("{temp}addedPrivileges", addedPrivileges);
+            }
+            String key = authority + permission;
+            if (!addedPrivileges.contains(key)) {
+                addedPrivileges.add(key);
+                permissionService.setPermission(nodeRef, authority, permission, true);
+            }
         }
         @SuppressWarnings("unchecked")
         List<String> privUsers = (List<String>) nodeProps.get(PrivilegeModel.Props.USER.toString());
@@ -232,7 +245,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             mustSaveUserGroupProps = false;
         }
         if (mustSaveUserGroupProps) {
-            nodeService.addProperties(nodeRef, RepoUtil.toQNameProperties(nodeProps));
+            nodeService.addProperties(nodeRef, generalService.getPropertiesIgnoringSystem(nodeProps));
         }
     }
 
@@ -294,6 +307,10 @@ public class PrivilegeServiceImpl implements PrivilegeService {
 
     public void setNodeService(NodeService nodeService) {
         this.nodeService = nodeService;
+    }
+
+    public void setGeneralService(GeneralService generalService) {
+        this.generalService = generalService;
     }
     // END: getters / setters
 

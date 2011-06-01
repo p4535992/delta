@@ -434,7 +434,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         } else if (IncomingFolderAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
             return new IncomingFolderAppendBehaviour(this);
         } else if (IncomingEInvoiceCreateBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
-            return new IncomingFolderAppendBehaviour(this);
+            return new IncomingEInvoiceCreateBehaviour(this);
         } else if (AttachmentsFolderAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
             return new AttachmentsFolderAppendBehaviour(this);
         } else if (SentFolderAppendBehaviour.BEHAVIOUR_NAME.equals(behaviour)) {
@@ -481,7 +481,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
     }
 
     private String getIncomingInvoiceFolderName() {
-        return I18NUtil.getMessage("imap-folders.incomingInvoice");
+        return I18NUtil.getMessage("imap.folder_incomingInvoice");
     }
 
     public void setImapService(ImapService imapService) {

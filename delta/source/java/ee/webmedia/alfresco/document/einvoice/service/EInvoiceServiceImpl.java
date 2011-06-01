@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.MathContext;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -86,6 +85,7 @@ import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionDescParameter;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionDescParameterModel;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionModel;
+import ee.webmedia.alfresco.document.einvoice.model.TransactionTemplate;
 import ee.webmedia.alfresco.document.einvoice.sellerslist.generated.HankijaInfo;
 import ee.webmedia.alfresco.document.einvoice.sellerslist.generated.HankijaNimekiri;
 import ee.webmedia.alfresco.document.einvoice.vatcodelist.generated.KaibemaksuKoodInfo;
@@ -103,7 +103,6 @@ import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
-import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.FilenameUtil;
@@ -142,12 +141,18 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     private FileService fileService;
     private DvkService dvkService;
     private DocumentLogService documentLogService;
-    private static final Map<NodeRef, List<DimensionValue>> activeDimensionValueCache = new ConcurrentHashMap<NodeRef, List<DimensionValue>>();
-    private static final Map<NodeRef, List<DimensionValue>> allDimensionValueCache = new ConcurrentHashMap<NodeRef, List<DimensionValue>>();
-    private static List<DimensionValue> vatCodeDimesnionValues = null;
+    /**
+     * From CL change 165080 code review by Ats Uiboupin:
+     * millalgi, kui klasterdamie toe lisamine päevakorda tuleb, siis see ilmselt ei tööta õigesti, kuna puudub võimalus klastri nodede vahel seisu sünkimiseks - aga sellega peab
+     * ilmselt siis tegelema, kui klasterdamine aktuaalseks muutub(kasutama echcache vms teeki) ?
+     */
+    private final Map<NodeRef, List<DimensionValue>> activeDimensionValueCache = new ConcurrentHashMap<NodeRef, List<DimensionValue>>();
+    private final Map<NodeRef, List<DimensionValue>> allDimensionValueCache = new ConcurrentHashMap<NodeRef, List<DimensionValue>>();
+    private List<DimensionValue> vatCodeDimesnionValues = null;
 
     private String dimensionsPath;
     private String transactionDescParametersPath;
+    private String transactionTemplatesPath;
 
     @Override
     public List<NodeRef> importInvoiceFromXml(NodeRef folderNodeRef, InputStream input, TransmittalMode transmittalMode) {
@@ -300,12 +305,33 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
+    public boolean isEditableDimension(NodeRef nodeRef) {
+        ChildAssociationRef childAssoc = nodeService.getPrimaryParent(nodeRef);
+        return EInvoiceUtil.notImportedDimension.getDimensionName().equalsIgnoreCase(childAssoc.getQName().getLocalName());
+    }
+
+    @Override
     public void deleteAllDimensions() {
         NodeRef root = generalService.getNodeRef(dimensionsPath);
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
         List<Dimension> dimensions = new ArrayList<Dimension>(childRefs.size());
         for (ChildAssociationRef childRef : childRefs) {
             nodeService.deleteNode(childRef.getChildRef());
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Dimensions found: " + dimensions);
+        }
+    }
+
+    @Override
+    public void deleteAllImportedDimensions() {
+        NodeRef root = generalService.getNodeRef(dimensionsPath);
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
+        List<Dimension> dimensions = new ArrayList<Dimension>(childRefs.size());
+        for (ChildAssociationRef childRef : childRefs) {
+            if (!EInvoiceUtil.notImportedDimension.getDimensionName().equalsIgnoreCase(childRef.getQName().getLocalName())) {
+                nodeService.deleteNode(childRef.getChildRef());
+            }
         }
         if (LOG.isDebugEnabled()) {
             LOG.debug("Dimensions found: " + dimensions);
@@ -349,7 +375,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
-    public List<DimensionValue> getAllDimensionValues(NodeRef dimensionRef) {
+    public List<DimensionValue> getAllDimensionValuesFromCache(NodeRef dimensionRef) {
         // may occur if dimensions are not imported and dimension path doesn't exist
         if (dimensionRef == null) {
             return new ArrayList<DimensionValue>();
@@ -357,12 +383,20 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         if (allDimensionValueCache.containsKey(dimensionRef)) {
             return allDimensionValueCache.get(dimensionRef);
         }
+        return getAllDimensionValuesFromRepo(dimensionRef);
+    }
+
+    @Override
+    public List<DimensionValue> getAllDimensionValuesFromRepo(NodeRef dimensionRef) {
+        Assert.notNull(dimensionRef);
         List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(dimensionRef, DimensionModel.Associations.DIMENSION_VALUE,
                 RegexQNamePattern.MATCH_ALL);
         List<DimensionValue> dimensionValues = new ArrayList<DimensionValue>(childRefs.size());
         for (ChildAssociationRef childRef : childRefs) {
-            Node dimensionValue = new Node(childRef.getChildRef());
-            dimensionValue.getProperties();
+            NodeRef dimensionValueRef = childRef.getChildRef();
+            WmNode dimensionValue = new WmNode(dimensionValueRef, DimensionModel.Types.DIMENSION_VALUE, RepoUtil.toStringProperties(nodeService.getProperties(dimensionValueRef)),
+                    new HashSet<QName>(
+                            nodeService.getAspects(dimensionValueRef)));
             dimensionValues.add(new DimensionValue(dimensionValue));
         }
         if (LOG.isDebugEnabled()) {
@@ -377,7 +411,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         if (activeDimensionValueCache.containsKey(dimension)) {
             return activeDimensionValueCache.get(dimension);
         }
-        List<DimensionValue> allDimensionValues = getAllDimensionValues(dimension);
+        List<DimensionValue> allDimensionValues = getAllDimensionValuesFromCache(dimension);
         List<DimensionValue> activeDimensionValues = new ArrayList<DimensionValue>(allDimensionValues.size());
         Date now = new Date();
         for (DimensionValue dimensionValue : allDimensionValues) {
@@ -398,7 +432,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         List<DimensionValue> tmpValues = null;
         if (vatCodeDimesnionValues == null) {
             final NodeRef nodeRef = generalService.getNodeRef(Dimensions.TAX_CODE_ITEMS.toString());
-            tmpValues = new ArrayList<DimensionValue>(getAllDimensionValues(nodeRef));
+            tmpValues = new ArrayList<DimensionValue>(getAllDimensionValuesFromCache(nodeRef));
             vatCodeDimesnionValues = Collections.unmodifiableList(tmpValues);
         }
         return vatCodeDimesnionValues;
@@ -469,12 +503,126 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
+    public List<TransactionTemplate> getAllTransactionTemplates() {
+        NodeRef root = generalService.getNodeRef(transactionTemplatesPath);
+        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
+        List<TransactionTemplate> transactionTemplates = new ArrayList<TransactionTemplate>(childRefs.size());
+        for (ChildAssociationRef childRef : childRefs) {
+            NodeRef nodeRef = childRef.getChildRef();
+            WmNode node = new WmNode(nodeRef, TransactionModel.Types.TRANSACTION_TEMPLATE, RepoUtil.toStringProperties(nodeService.getProperties(nodeRef)),
+                    new HashSet<QName>(
+                            nodeService.getAspects(nodeRef)));
+            transactionTemplates.add(new TransactionTemplate(node));
+        }
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Dimensions found: " + transactionTemplates);
+        }
+        return transactionTemplates;
+    }
+
+    @Override
+    public List<TransactionTemplate> getActiveTransactionTemplates() {
+        List<TransactionTemplate> allTransactionTemplates = getAllTransactionTemplates();
+        List<TransactionTemplate> activeTransactionTemplates = new ArrayList<TransactionTemplate>();
+        for (TransactionTemplate transactionTemplate : allTransactionTemplates) {
+            if (Boolean.TRUE.equals(transactionTemplate.getActive())) {
+                activeTransactionTemplates.add(transactionTemplate);
+            }
+        }
+        return activeTransactionTemplates;
+    }
+
+    @Override
+    public List<String> getActiveTransactionTemplateNames() {
+        List<TransactionTemplate> allTransactionTemplates = getAllTransactionTemplates();
+        List<String> activeTransactionTemplates = new ArrayList<String>();
+        for (TransactionTemplate transactionTemplate : allTransactionTemplates) {
+            if (Boolean.TRUE.equals(transactionTemplate.getActive())) {
+                activeTransactionTemplates.add(transactionTemplate.getName());
+            }
+        }
+        return activeTransactionTemplates;
+    }
+
+    @Override
+    public List<Transaction> getTemplateTransactions(String templateName) {
+        List<Transaction> transactions = new ArrayList<Transaction>();
+        TransactionTemplate template = getTransactionTemplateByName(templateName);
+        if (template != null) {
+            transactions.addAll(getInvoiceTransactions(template.getNode().getNodeRef()));
+        }
+        return transactions;
+    }
+
+    @Override
+    public TransactionTemplate getTransactionTemplateByName(String templateName) {
+        List<TransactionTemplate> transactionTemplates = getAllTransactionTemplates();
+        for (TransactionTemplate transactionTemplate : transactionTemplates) {
+            if (StringUtils.equalsIgnoreCase(transactionTemplate.getName(), templateName)) {
+                return transactionTemplate;
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public NodeRef updateTransactionTemplate(TransactionTemplate transactionTemplate) {
+        Map<QName, Serializable> qNameProperties = RepoUtil.toQNameProperties(transactionTemplate.getNode().getProperties());
+        if (transactionTemplate.getNode().isUnsaved()) {
+            return createTransactionTemplate(qNameProperties);
+        } else {
+            nodeService.addProperties(transactionTemplate.getNode().getNodeRef(), qNameProperties);
+            return transactionTemplate.getNode().getNodeRef();
+        }
+    }
+
+    @Override
+    public TransactionTemplate createTransactionTemplate(String templateName) {
+        Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
+        properties.put(TransactionModel.Props.NAME, templateName);
+        NodeRef nodeRef = createTransactionTemplate(properties);
+        WmNode node = new WmNode(nodeRef, TransactionModel.Types.TRANSACTION_TEMPLATE, RepoUtil.toStringProperties(nodeService.getProperties(nodeRef)),
+                new HashSet<QName>(
+                        nodeService.getAspects(nodeRef)));
+        return new TransactionTemplate(node);
+    }
+
+    private NodeRef createTransactionTemplate(Map<QName, Serializable> properties) {
+        return nodeService.createNode(generalService.getNodeRef(transactionTemplatesPath), TransactionModel.Associations.TRANSACTION_TEMPLATE,
+                TransactionModel.Associations.TRANSACTION_TEMPLATE
+                , TransactionModel.Types.TRANSACTION_TEMPLATE, properties).getChildRef();
+    }
+
+    @Override
+    public void removeTransactions(NodeRef nodeRef) {
+        List<Transaction> transactions = getInvoiceTransactions(nodeRef);
+        for (Transaction transaction : transactions) {
+            nodeService.deleteNode(transaction.getNode().getNodeRef());
+        }
+    }
+
+    @Override
+    public void copyTransactions(TransactionTemplate template, List<Transaction> transactions) {
+        if (transactions == null) {
+            return;
+        }
+        NodeRef parentRef = template.getNode().getNodeRef();
+        copyTransactions(transactions, parentRef);
+    }
+
+    private void copyTransactions(List<Transaction> transactions, NodeRef parentRef) {
+        for (Transaction transaction : transactions) {
+            Map<QName, Serializable> newProps = new HashMap<QName, Serializable>();
+            EInvoiceUtil.copyTransactionProperties(transaction, newProps);
+            createTransaction(parentRef, newProps);
+        }
+    }
+
+    @Override
     public Collection<NodeRef> importDimensionsList(InputStream input) {
         DimensioonideNimekiri xmlDimensionsList = EInvoiceUtil.unmarshalDimensionsList(input);
         List<NodeRef> result = new ArrayList<NodeRef>();
         if (xmlDimensionsList != null) {
-            // TODO: optimize - could empty only cache for updated dimensions
-            emptyDimensionValueChache();
             @SuppressWarnings("unchecked")
             Map<Parameters, Dimensions> dimensionParameters = EInvoiceUtil.DIMENSION_PARAMETERS;
             Map<String, Set<Parameters>> dimParameterValues = parametersService.getSwappedStringParameters(new ArrayList<Parameters>(dimensionParameters.keySet()));
@@ -501,6 +649,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             if (result.size() == 0) {
                 result.add(generalService.getNodeRef(dimensionsPath));
             }
+            // TODO: optimize - could empty only cache for updated dimensions
+            emptyDimensionValueChache();
         }
         return result;
     }
@@ -510,8 +660,6 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         KontoNimekiri accountsList = EInvoiceUtil.unmarshalAccountsList(input);
         List<NodeRef> result = new ArrayList<NodeRef>();
         if (accountsList != null) {
-            // TODO: optimize - could empty only cache for account list dimension
-            emptyDimensionValueChache();
             @SuppressWarnings("unchecked")
             Collection<XmlDimensionListsValueWrapper> dimensionListsValueWrappers = CollectionUtils.collect(accountsList.getKontoInfo(), new Transformer() {
 
@@ -523,6 +671,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
             });
             result.add(updateDimensionValuesFromXml(EInvoiceUtil.ACCOUNT_DIMENSION, dimensionListsValueWrappers, EInvoiceUtil.ACCOUNT_DIMENSION.getDimensionName()));
+            // TODO: optimize - could empty only cache for account list dimension
+            emptyDimensionValueChache();
         }
         return result;
     }
@@ -532,8 +682,6 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         KaibemaksuKoodNimekiri vatCodesList = EInvoiceUtil.unmarshalVatCodesList(input);
         List<NodeRef> result = new ArrayList<NodeRef>();
         if (vatCodesList != null) {
-            // TODO: optimize - could empty only cache for vat code list dimension
-            emptyDimensionValueChache();
             @SuppressWarnings("unchecked")
             Collection<XmlDimensionListsValueWrapper> dimensionListsValueWrappers = CollectionUtils.collect(vatCodesList.getKaibemaksuKoodInfo(), new Transformer() {
 
@@ -545,6 +693,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
             });
             result.add(updateDimensionValuesFromXml(EInvoiceUtil.VAT_CODE_DIMENSION, dimensionListsValueWrappers, EInvoiceUtil.VAT_CODE_DIMENSION.getDimensionName()));
+            // TODO: optimize - could empty only cache for vat code list dimension
+            emptyDimensionValueChache();
         }
         return result;
     }
@@ -713,10 +863,13 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     @Override
     public void updateTransactions(NodeRef invoiceRef, List<Transaction> transactions, List<Transaction> removedTransactions) {
+        boolean isDocumentParent = !TransactionModel.Types.TRANSACTION_TEMPLATE.equals(nodeService.getType(invoiceRef));
         for (Transaction removedTransaction : removedTransactions) {
             if (removedTransaction.getNode().getNodeRef() != null) {
                 nodeService.deleteNode(removedTransaction.getNode().getNodeRef());
-                documentLogService.addDocumentLog(invoiceRef, I18NUtil.getMessage("document_log_status_transaction_deleted"));
+                if (isDocumentParent) {
+                    documentLogService.addDocumentLog(invoiceRef, I18NUtil.getMessage("document_log_status_transaction_deleted"));
+                }
             }
         }
         for (Transaction transaction : transactions) {
@@ -725,19 +878,23 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             if (transaction.getNode().isUnsaved()) {
                 // create new transaction
                 createTransaction(invoiceRef, properties);
-                documentLogService.addDocumentLog(invoiceRef, I18NUtil.getMessage("document_log_status_transaction_added"));
+                if (isDocumentParent) {
+                    documentLogService.addDocumentLog(invoiceRef, I18NUtil.getMessage("document_log_status_transaction_added"));
+                }
             } else {
                 // update existing transaction
                 Map<QName, Serializable> originalProps = nodeService.getProperties(transaction.getNode().getNodeRef());
                 nodeService.addProperties(nodeRef, properties);
-                for (Map.Entry<QName, Serializable> entry : properties.entrySet()) {
-                    QName propName = entry.getKey();
-                    Serializable originalValue = originalProps.get(propName);
-                    if (!RepoUtil.isExistingPropertyValueEqualTo(transaction.getNode(), propName, originalValue)) {
-                        documentLogService.addDocumentLog(
-                                invoiceRef,
-                                I18NUtil.getMessage("document_log_status_transaction_modified",
-                                        I18NUtil.getMessage(TRANSACTION_DISPLAY_LABEL_PREFIX + propName.getLocalName(), originalValue)));
+                if (isDocumentParent) {
+                    for (Map.Entry<QName, Serializable> entry : properties.entrySet()) {
+                        QName propName = entry.getKey();
+                        Serializable originalValue = originalProps.get(propName);
+                        if (!RepoUtil.isExistingPropertyValueEqualTo(transaction.getNode(), propName, originalValue)) {
+                            documentLogService.addDocumentLog(
+                                    invoiceRef,
+                                    I18NUtil.getMessage("document_log_status_transaction_modified",
+                                            I18NUtil.getMessage(TRANSACTION_DISPLAY_LABEL_PREFIX + propName.getLocalName()), originalValue));
+                        }
                     }
                 }
             }
@@ -747,17 +904,22 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     @Override
     public void updateDimensionValues(List<DimensionValue> dimensionValues, Node selectedDimension) {
-        emptyDimensionValueChache();
         // for optimizing update, save only dimensions that have changed
         List<DimensionValue> originalDimensionValues = new ArrayList<DimensionValue>();
         if (selectedDimension != null) {
-            originalDimensionValues = getAllDimensionValues(selectedDimension.getNodeRef());
+            originalDimensionValues = getAllDimensionValuesFromRepo(selectedDimension.getNodeRef());
         }
         for (DimensionValue dimensionValue : dimensionValues) {
-            if (hasDimensionValueChanged(dimensionValue, originalDimensionValues)) {
-                nodeService.setProperties(dimensionValue.getNode().getNodeRef(), RepoUtil.toQNameProperties(dimensionValue.getNode().getProperties()));
+            if (dimensionValue.getNode().isUnsaved()) {
+                // create new dimension
+                createDimensionValue(selectedDimension.getNodeRef(), RepoUtil.toQNameProperties(dimensionValue.getNode().getProperties()));
+            } else {
+                if (hasDimensionValueChanged(dimensionValue, originalDimensionValues)) {
+                    nodeService.setProperties(dimensionValue.getNode().getNodeRef(), RepoUtil.toQNameProperties(dimensionValue.getNode().getProperties()));
+                }
             }
         }
+        emptyDimensionValueChache();
     }
 
     @Override
@@ -849,7 +1011,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         MathContext mc = new MathContext(4);
         arveInfo.setArveSumma(new BigDecimal((Double) props.get(DocumentSpecificModel.Props.TOTAL_SUM)).round(mc));
         Double vat = (Double) props.get(DocumentSpecificModel.Props.VAT);
-        arveInfo.setKaibemaksKokku(vat == null ? null : new BigDecimal(vat).round(mc));
+        arveInfo.setKaibemaksKokku(vat == null ? BigDecimal.ZERO : new BigDecimal(vat).round(mc));
         arveInfo.setValuuta((String) props.get(DocumentSpecificModel.Props.CURRENCY));
         arveInfo.setSisemineId(documentTemplateService.getDocumentUrl(node.getNodeRef()));
 
@@ -875,7 +1037,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             // it is assumed that all numeric values are present
             BigDecimal transSumWithoutVat = new BigDecimal(transaction.getSumWithoutVat()).round(mc);
             BigDecimal vatPercent = new BigDecimal(transaction.getInvoiceTaxPercent());
-            kanne.setSumma(transSumWithoutVat.add(transSumWithoutVat.multiply(vatPercent).divide(new BigDecimal(100))).round(mc));
+            BigDecimal vatSum = transSumWithoutVat.multiply(vatPercent).divide(new BigDecimal(100));
+            kanne.setSumma(transSumWithoutVat.add(vatSum).round(mc));
             kanne.setNetoSumma(new BigDecimal(transaction.getSumWithoutVat()).round(mc));
             kanne.setKandeKommentaar(transaction.getEntryContent());
             List<ee.webmedia.alfresco.document.einvoice.account.generated.Dimensioon> dimensioonList = kanne.getDimensioon();
@@ -923,7 +1086,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     private DimensionValue getDimensionValue(NodeRef dimensionRef, String transDimensionValue) {
-        List<DimensionValue> dimensionValues = getAllDimensionValues(dimensionRef);
+        List<DimensionValue> dimensionValues = getAllDimensionValuesFromCache(dimensionRef);
         for (DimensionValue dimensionValue : dimensionValues) {
             if (dimensionValue.getValueName().equals(transDimensionValue)) {
                 return dimensionValue;
@@ -957,8 +1120,11 @@ public class EInvoiceServiceImpl implements EInvoiceService {
      * no null check is performed if xsd states that element is required
      */
     private NodeRef updateDimensionValuesFromXml(Dimensions dimensions, Collection<XmlDimensionListsValueWrapper> xmlDimensionValues, String xmlDimensionId) {
+        if (EInvoiceUtil.notImportedDimension.equals(dimensions)) {
+            return null;
+        }
         NodeRef dimensionRef = getOrCreateDimension(dimensions, xmlDimensionId);
-        List<DimensionValue> dimensionValues = getAllDimensionValues(dimensionRef);
+        List<DimensionValue> dimensionValues = getAllDimensionValuesFromRepo(dimensionRef);
         // List xmlDimension values that already exist in application
         List<Integer> existingDimensionValues = new ArrayList<Integer>();
         // List dimensions that exist both in xmlDimensions and dimensions
@@ -1000,6 +1166,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             properties.put(DimensionModel.Props.NAME, xmlDimensionId);
             properties.put(DimensionModel.Props.COMMENT, null);
             dimensionRef = createDimension(dimensions.getDimensionName(), properties);
+        } else {
+            nodeService.setProperty(dimensionRef, DimensionModel.Props.NAME, xmlDimensionId);
         }
         return dimensionRef;
     }
@@ -1050,15 +1218,13 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
-    public NodeRef updateDocumentEntrySapNumber(String docUrl, String erpDocNumber) {
+    public NodeRef updateDocumentEntrySapNumber(String dvkId, String erpDocNumber) {
         try {
-            Pair<String, String[]> outcomeAndArgs = ExternalAccessServlet.getDocumentUriTokens(0, docUrl);
-            if (!ExternalAccessServlet.OUTCOME_DOCUMENT.equals(outcomeAndArgs.getFirst())) {
+            List<Document> documents = documentSearchService.searchDocumentsByDvkId(dvkId);
+            if (documents == null || documents.size() != 1) {
                 return null;
             }
-            // TODO: unify with ExternalAccessServlet
-            List<String> storeNames = new ArrayList<String>(Arrays.asList("workspace://SpacesStore", "workspace://ArchivalsStore"));
-            NodeRef nodeRef = ExternalAccessServlet.getNodeRefFromNodeId(outcomeAndArgs.getSecond()[0], nodeService, storeNames);
+            NodeRef nodeRef = documents.get(0).getNodeRef();
             if (nodeRef == null || !DocumentSubtypeModel.Types.INVOICE.equals(nodeService.getType(nodeRef))) {
                 return null;
             }
@@ -1081,6 +1247,11 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         properties.put(DocumentCommonModel.Props.SEARCHABLE_EA_COMMITMENT_ITEM,
                 EInvoiceUtil.buildSearchableStringProp(TransactionModel.Props.EA_COMMITMENT_ITEM, transactions));
         nodeService.addProperties(document, properties);
+    }
+
+    @Override
+    public void deleteTransactionTemplate(NodeRef transactionTemplateRef) {
+        nodeService.deleteNode(transactionTemplateRef);
     }
 
     // START: getters / setters
@@ -1245,6 +1416,10 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     public void setDocumentLogService(DocumentLogService documentLogService) {
         this.documentLogService = documentLogService;
+    }
+
+    public void setTransactionTemplatesPath(String transactionTemplatesPath) {
+        this.transactionTemplatesPath = transactionTemplatesPath;
     }
 
     // END: getters / setters
