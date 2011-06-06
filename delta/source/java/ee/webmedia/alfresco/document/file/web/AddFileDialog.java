@@ -262,6 +262,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 Node doc = getDocumentService().createDocument(DocumentSubtypeModel.Types.INVOICE);
                 NodeRef docRef = doc.getNodeRef();
                 getEInvoiceService().setDocPropsFromInvoice(invoice, docRef, null, false);
+                getDocumentService().setTransientProperties(doc, getDocumentService().getAncestorNodesByDocument(originalDocument));
                 List<String> existingFilenames = new ArrayList<String>();
                 if (isFileSelected) {
                     for (int i = 0; i < selectedFileNodeRef.size(); i++) {

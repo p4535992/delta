@@ -126,30 +126,32 @@
    <config evaluator="aspect-name" condition="docspec:invoice">
       <property-sheet>
          <separator name="invoice-separator" component-generator="SeparatorGenerator" />
-         <show-property name="docspec:sellerPartyName" styleClass="expand19-200 medium" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchOrgContacts}" setterCallback="#{MetadataBlockBean.setSellerPartyName}" dialogTitleId="contacts_search_title" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" ajaxParentLevel="1" />
-         <show-property name="docspec:sellerPartyRegNumber" styleClass="expand19-200 medium" forcedMandatory="true" display="inline" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
-         <show-property name="docspec:sellerPartySapAccount" styleClass="expand19-200 medium" editable="false" />
+         <show-property name="docspec:sellerPartyName" show-in-view-mode="false" styleClass="expand19-200 medium" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchOrgContacts}" setterCallback="#{MetadataBlockBean.setSellerPartyName}" dialogTitleId="contacts_search_title" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" ajaxParentLevel="1" />
+         <show-property name="docspec:sellerPartyRegNumber" show-in-view-mode="false" styleClass="expand19-200 medium" forcedMandatory="true" display="inline" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:sellerPartySapAccount" show-in-view-mode="false" styleClass="expand19-200 medium" read-only="true" />
+         <show-property name="{temp}invoiceSeller" show-in-edit-mode="false" display-label-id="document_invoiceSeller" />
          <show-property name="docspec:sellerPartyContactName" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
          <show-property name="docspec:sellerPartyContactPhoneNumber" styleClass="width250" display="inline" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:sellerPartyContactEmailAddress" styleClass="medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
          <show-property name="{temp}invoiceNumberDate" show-in-edit-mode="false" display-label-id="document_invoiceNumberDate" />
          <show-property name="docspec:invoiceDate" component-generator="DatePickerGenerator" show-in-view-mode="false" display="inline" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:invoiceNumber" show-in-view-mode="false" styleClass="medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
-         <show-property name="docspec:invoiceType" component-generator="ClassificatorSelectorGenerator" classificatorName="invoiceTypes" descriptionAsLabel="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
+         <show-property name="docspec:invoiceType" component-generator="ClassificatorSelectorGenerator" classificatorName="invoiceTypes" descriptionAsLabel="true" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}" />
          <show-property name="{temp}xxlInvoice" show-in-edit-mode="false" display-label-id="document_empty_label" component-generator="UnescapedOutputTextGenerator" />
-         <show-property name="docspec:invoiceDueDate" component-generator="DatePickerGenerator" display="inline" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" forcedMandatory="true" />
-         <show-property name="docspec:paymentTerm" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
+         <show-property name="{temp}invoiceDueDatePaymentTerm" show-in-edit-mode="false" display-label-id="document_invoiceDueDatePaymentTerm" />
+         <show-property name="docspec:invoiceDueDate" show-in-view-mode="false" component-generator="DatePickerGenerator" display="inline" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}" forcedMandatory="true" />
+         <show-property name="docspec:paymentTerm" show-in-view-mode="false" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
          <show-property name="{temp}invoiceTotalSum" show-in-edit-mode="false" display-label-id="document_invoiceTotalSum" />
          <show-property name="docspec:totalSum" show-in-view-mode="false" styleClass="medium invoiceTotalSum" forcedMandatory="true" display="inline" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:currency" show-in-view-mode="false" component-generator="ClassificatorSelectorGenerator" classificatorName="currency" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />         
          <show-property name="docspec:invoiceSum" show-in-view-mode="false" styleClass="medium invoiceSum editable" read-only="true" display="inline" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" />
-         <show-property name="docspec:vat" show-in-view-mode="false" styleClass="medium invoiceVat" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>         
+         <show-property name="docspec:vat" show-in-view-mode="false" styleClass="medium invoiceVat" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>         
          <show-property name="docspec:paymentReferenceNumber" styleClass="medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:additionalInformationContent" styleClass="expand19-200 medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
          <show-property name="docspec:purchaseOrderSapNumber" styleClass="width250" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}"/>
          <show-property name="{temp}entrySapDateAndNumber" show-in-edit-mode="false" display-label-id="document_invoiceEntrySapDateAndNumber" />
          <show-property name="docspec:entryDate" show-in-view-mode="false" component-generator="DatePickerGenerator" readOnlyIf="#{DocumentDialog.isNotEditable}"/>
-         <show-property name="docspec:entrySapNumber" show-in-view-mode="false" editable="false" />
+         <show-property name="docspec:entrySapNumber" show-in-view-mode="false" read-only="true" />
       </property-sheet>      
    </config>
 

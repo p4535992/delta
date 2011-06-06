@@ -148,6 +148,7 @@ public class MetadataBlockBean implements ClearStateListener {
     /** timeOut in seconds how often lock should be refreshed to avoid expiring */
     private Integer lockRefreshTimeout;
     private NodeRef nodeRef;
+    private boolean skipInvoiceMessages;
 
     public MetadataBlockBean() {
         String datePattern = Application.getMessage(FacesContext.getCurrentInstance(), "date_pattern");
@@ -216,6 +217,10 @@ public class MetadataBlockBean implements ClearStateListener {
 
         Map<String, Object> docProps = applicantNode.getProperties();
         docProps.put(DocumentSpecificModel.Props.ERRAND_SUBSTITUTE_NAME.toString(), UserUtil.getPersonFullName1(personProps));
+    }
+
+    public void setSkipInvoiceMessages(boolean skipInvoiceMessages) {
+        this.skipInvoiceMessages = skipInvoiceMessages;
     }
 
     private String getAddressbookOrgOrName(NodeRef nodeRef) {
@@ -632,9 +637,24 @@ public class MetadataBlockBean implements ClearStateListener {
             }
 
             if (document.hasAspect(DocumentSpecificModel.Aspects.INVOICE)) {
+                String sellerName = (String) props.get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
+                String sellerRegNumber = (String) props.get(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER);
+                String sellerSapAccount = (String) props.get(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT);
+                props.put("{temp}invoiceSeller",
+                        MessageUtil.getMessage("document_invoiceSellerParty_text", sellerName, sellerRegNumber, sellerSapAccount == null ? "" : sellerSapAccount));
+
+                String sellerContactName = (String) props.get(DocumentSpecificModel.Props.SELLER_PARTY_CONTACT_NAME);
+                String sellerContactPhone = (String) props.get(DocumentSpecificModel.Props.SELLER_PARTY_CONTACT_PHONE_NUMBER);
+                String sellerContactEmail = (String) props.get(DocumentSpecificModel.Props.SELLER_PARTY_CONTACT_EMAIL_ADDRESS);
+                props.put("{temp}invoiceSellerContact", joinStringAndStringWithComma(joinStringAndStringWithComma(sellerContactName, sellerContactPhone), sellerContactEmail));
+
+                Date dueDate = (Date) props.get(DocumentSpecificModel.Props.INVOICE_DUE_DATE);
+                String paymentTerm = (String) props.get(DocumentSpecificModel.Props.PAYMENT_TERM);
+                props.put("{temp}invoiceDueDatePaymentTerm", joinDateAndStringWithComma(dueDate, paymentTerm));
+
                 String invoiceNumber = (String) props.get(DocumentSpecificModel.Props.INVOICE_NUMBER);
                 Date invoiceDate = (Date) props.get(DocumentSpecificModel.Props.INVOICE_DATE);
-                props.put("{temp}invoiceNumberDate", joinStringAndDateWithSpace(invoiceNumber, invoiceDate));
+                props.put("{temp}invoiceNumberDate", joinStringAndDateWithComma(invoiceNumber, invoiceDate));
 
                 String currency = (String) props.get(DocumentSpecificModel.Props.CURRENCY);
                 if (currency == null) {
@@ -885,12 +905,16 @@ public class MetadataBlockBean implements ClearStateListener {
                 props.put(DocumentSpecificModel.Props.FIRST_PARTY_NAME.toString(), MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_smit"));
             }
         }
-        if (DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
-            addInvoiceMessages();
-        }
     }
 
-    private void addInvoiceMessages() {
+    public void addInvoiceMessages() {
+        if (isDraft || !DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
+            return;
+        }
+        if (skipInvoiceMessages) {
+            skipInvoiceMessages = false;
+            return;
+        }
         String sellerPartyRegNumber = (String) document.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER);
         if (StringUtils.isNotBlank(sellerPartyRegNumber)) {
             List<Node> contacts = getAddressbookService().getContactsByRegNumber(sellerPartyRegNumber);
@@ -910,7 +934,7 @@ public class MetadataBlockBean implements ClearStateListener {
             MessageUtil.addInfoMessage("document_invoice_no_seller_sap_account");
         }
         for (Transaction transaction : documentDialog.getTransactionsBlockBean().getTransactions()) {
-            if (transaction.getAssetInventoryNumber() != null) {
+            if (StringUtils.isNotBlank(transaction.getAssetInventoryNumber())) {
                 MessageUtil.addInfoMessage("document_invoice_assetInventoryNumberFilled");
                 break;
             }
@@ -1415,6 +1439,11 @@ public class MetadataBlockBean implements ClearStateListener {
         return "<a href=\"mailto:" + encode(email) + "\">" + encode(email) + "</a>";
     }
 
+    protected String joinDateAndStringWithComma(Date date, String value2) {
+        String value1 = getDateString(date);
+        return joinStringAndStringWithComma(value1, value2);
+    }
+
     protected String joinStringAndDateWithComma(String value1, Date date) {
         String value2 = getDateString(date);
         return joinStringAndStringWithComma(value1, value2);
@@ -1455,6 +1484,7 @@ public class MetadataBlockBean implements ClearStateListener {
             lockOrUnlockIfNeeded(inEditMode);
         }
         afterModeChange();
+        addInvoiceMessages();
     }
 
     public void reloadDocAndClearPropertySheet() {
@@ -1471,7 +1501,7 @@ public class MetadataBlockBean implements ClearStateListener {
     }
 
     public void saveAndRegister(boolean isDraft, List<NodeRef> newInvoiceDocuments) {
-        if (save(isDraft, newInvoiceDocuments)) {
+        if (save(isDraft, newInvoiceDocuments, false)) {
             document.getProperties().put(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT, isDraft);
             EventsLoggingHelper.disableLogging(document, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
             registerDocument(null);
@@ -1508,6 +1538,7 @@ public class MetadataBlockBean implements ClearStateListener {
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
         documentTypeName = documentType != null ? documentType.getName() : null;
         afterModeChange();
+        addInvoiceMessages();
         documentDialog.notifyModeChanged();
     }
 
@@ -1528,10 +1559,15 @@ public class MetadataBlockBean implements ClearStateListener {
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
         documentTypeName = documentType != null ? documentType.getName() : null;
         afterModeChange();
+        addInvoiceMessages();
         documentDialog.notifyModeChanged();
     }
 
     public boolean save(boolean isDraft, List<NodeRef> newInvoiveDocuments) {
+        return save(isDraft, newInvoiveDocuments, true);
+    }
+
+    public boolean save(boolean isDraft, List<NodeRef> newInvoiveDocuments, boolean addInvoiceMessages) {
         log.debug("save: docNodeRef=" + document.getNodeRefAsString());
         if (!inEditMode) {
             throw new RuntimeException("Document metadata block is not in edit mode");
@@ -1565,15 +1601,17 @@ public class MetadataBlockBean implements ClearStateListener {
                 return false;
             } catch (ExternalReviewException e) {
                 MessageUtil.addInfoMessage("dvk_sending_failed");
-                return true;
-
             } finally {
                 lockOrUnlockIfNeeded(isLockingAllowed());
                 reloadTransientProperties();
             }
             propertySheet.setMode(getMode());
+            this.isDraft = false;
             clearPropertySheet();
             afterModeChange();
+            if (addInvoiceMessages) {
+                addInvoiceMessages();
+            }
             MessageUtil.addInfoMessage("save_success");
             return true;
         }
@@ -1888,6 +1926,7 @@ public class MetadataBlockBean implements ClearStateListener {
         clearPropertySheet();
         reloadTransientProperties();
         afterModeChange();
+        addInvoiceMessages();
     }
 
     public String getMode() {

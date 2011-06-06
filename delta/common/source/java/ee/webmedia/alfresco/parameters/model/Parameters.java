@@ -100,7 +100,6 @@ public enum Parameters {
     DIMENSION_CODE_INVOICE_COMMITMENT_ITEM("dimensionCodeInvoiceCommitmentItem"),
     DIMENSION_CODE_INVOICE_INTERNAL_ORDERS("dimensionCodeInvoiceInternalOrders"),
     DIMENSION_CODE_INVOICE_ASSET_INVENTORY_NUMBERS("dimensionCodeInvoiceAssetInventoryNumbers"),
-    DIMENSION_CODE_INVOICE_POSTING_KEY("dimensionCodeInvoicePostingKey"),
     DIMENSION_CODE_INVOICE_TRADING_PARTNER_CODES("dimensionCodeInvoiceTradingPartnerCodes"),
     DIMENSION_CODE_INVOICE_FUNCTIONAL_AREA_CODE("dimensionCodeInvoiceFunctionalAreaCode"),
     DIMENSION_CODE_INVOICE_CASH_FLOW_CODES("dimensionCodeInvoiceCashFlowCodes"),

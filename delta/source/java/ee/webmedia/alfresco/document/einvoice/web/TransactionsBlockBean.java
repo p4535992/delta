@@ -2,16 +2,21 @@ package ee.webmedia.alfresco.document.einvoice.web;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.faces.application.Application;
+import javax.faces.component.UIInput;
 import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.context.FacesContext;
 import javax.faces.el.MethodBinding;
+import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
+import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.namespace.QName;
@@ -23,6 +28,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGridCustomChildAttrRenderer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
+import ee.webmedia.alfresco.document.einvoice.model.TransactionTemplate;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
@@ -71,6 +77,9 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
         return transRowsMainGrid;
     }
 
+    /**
+     * jsp listener
+     */
     public void templateSelected(ValueChangeEvent event) {
         String templateName = (String) event.getNewValue();
         if (StringUtils.isNotBlank(templateName)) {
@@ -78,6 +87,67 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
             transactions.clear();
             transactions.addAll(templateTransactions);
         }
+        addInvoiceMessages();
+    }
+
+    public List<SelectItem> getTransactionTemplates(FacesContext context, UIInput selectComponent) {
+        if (transactionTemplates == null) {
+            transactionTemplates = BeanHelper.getEInvoiceService().getActiveTransactionTemplates();
+        }
+        List<SelectItem> selectItems = new ArrayList<SelectItem>();
+        selectItems.add(new SelectItem("", MessageUtil.getMessage("transactions_useTemplate")));
+        for (TransactionTemplate transactionTemplate : transactionTemplates) {
+            selectItems.add(new SelectItem(transactionTemplate.getName(), transactionTemplate.getName()));
+        }
+        return selectItems;
+    }
+
+    @Override
+    protected void addInvoiceMessages() {
+        if (documentDialog != null) {
+            documentDialog.getMeta().addInvoiceMessages();
+        }
+    }
+
+    /**
+     * jsp listener
+     */
+    public void saveAsTemplate(ActionEvent event) {
+        UIInput component = (UIInput) event.getComponent().getParent().findComponent(SAVEAS_TEMPLATE_NAME);
+        String templateName = (String) component.getValue();
+        if (StringUtils.isBlank(templateName)) {
+            return;
+        }
+        TransactionTemplate template = BeanHelper.getEInvoiceService().getTransactionTemplateByName(templateName);
+        if (template == null) {
+            template = BeanHelper.getEInvoiceService().createTransactionTemplate(templateName);
+        } else {
+            BeanHelper.getEInvoiceService().removeTransactions(template.getNode().getNodeRef());
+        }
+        BeanHelper.getEInvoiceService().copyTransactions(template, transactions);
+    }
+
+    /**
+     * jsp listener
+     */
+    public void copyFromTemplate(ActionEvent event) {
+        UIInput component = (UIInput) event.getComponent().getParent().findComponent(SELECT_TEMPLATE_NAME);
+        String templateName = (String) component.getValue();
+        if (StringUtils.isBlank(templateName)) {
+            return;
+        }
+        TransactionTemplate template = BeanHelper.getEInvoiceService().getTransactionTemplateByName(templateName);
+        if (template != null) {
+            removedTransactions.addAll(transactions);
+            transactions.clear();
+            List<Transaction> templateTransactions = BeanHelper.getEInvoiceService().getInvoiceTransactions(template.getNode().getNodeRef());
+            for (Transaction transaction : templateTransactions) {
+                Map<QName, Serializable> newProps = new HashMap<QName, Serializable>();
+                EInvoiceUtil.copyTransactionProperties(transaction, newProps);
+                transactions.add(getNewUnsavedTransaction(newProps));
+            }
+        }
+        constructTransactionPanelGroup();
     }
 
     @SuppressWarnings("unchecked")

@@ -32,6 +32,7 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.alfresco.i18n.I18NUtil;
 import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -41,6 +42,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
+import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
@@ -126,6 +128,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     private static final String PAYMENT_INFO_NAME_TEXT = "MKSelgitus";
     private static final String ACCOUNT_VALUE_YES = "JAH";
     private static final String PURCHASE_ORDER_SAP_NUMBER_PREFIX = "OT4";
+    private static final int TRANSACTION_SIZE = 50;
 
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(EInvoiceServiceImpl.class);
 
@@ -141,6 +144,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     private FileService fileService;
     private DvkService dvkService;
     private DocumentLogService documentLogService;
+    private TransactionService transactionService;
     /**
      * From CL change 165080 code review by Ats Uiboupin:
      * millalgi, kui klasterdamie toe lisamine päevakorda tuleb, siis see ilmselt ei tööta õigesti, kuna puudub võimalus klastri nodede vahel seisu sünkimiseks - aga sellega peab
@@ -1023,7 +1027,14 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         arveInfo.setLisaInfo(lisainfo);
 
         Konteering konteering = new Konteering();
-        konteering.setKandeKuupaev(XmlUtil.getXmlGregorianCalendar((Date) props.get(DocumentSpecificModel.Props.ENTRY_DATE)));
+        XMLGregorianCalendar entryDate = XmlUtil.getXmlGregorianCalendar((Date) props.get(DocumentSpecificModel.Props.ENTRY_DATE));
+        entryDate.setHour(DatatypeConstants.FIELD_UNDEFINED);
+        entryDate.setMinute(DatatypeConstants.FIELD_UNDEFINED);
+        entryDate.setSecond(DatatypeConstants.FIELD_UNDEFINED);
+        entryDate.setMillisecond(DatatypeConstants.FIELD_UNDEFINED);
+        entryDate.setTimezone(DatatypeConstants.FIELD_UNDEFINED);
+        konteering.setKandeKuupaev(entryDate);
+
         arve.setKonteering(konteering);
 
         List<Kanne> kanded = konteering.getKanne();
@@ -1124,11 +1135,11 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             return null;
         }
         NodeRef dimensionRef = getOrCreateDimension(dimensions, xmlDimensionId);
-        List<DimensionValue> dimensionValues = getAllDimensionValuesFromRepo(dimensionRef);
+        final List<DimensionValue> dimensionValues = getAllDimensionValuesFromRepo(dimensionRef);
         // List xmlDimension values that already exist in application
         List<Integer> existingDimensionValues = new ArrayList<Integer>();
         // List dimensions that exist both in xmlDimensions and dimensions
-        List<NodeRef> updatedDimensionValues = new ArrayList<NodeRef>();
+        final List<NodeRef> updatedDimensionValues = new ArrayList<NodeRef>();
         int xmlDimValueCounter = 0;
         for (XmlDimensionListsValueWrapper xmlDimensionValue : xmlDimensionValues) {
             for (DimensionValue dimensionValue : dimensionValues) {
@@ -1141,12 +1152,16 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             }
             xmlDimValueCounter++;
         }
-        // remove existing dimensions not found in xml
-        for (DimensionValue dimensionValue : dimensionValues) {
-            if (!updatedDimensionValues.contains(dimensionValue.getNode().getNodeRef())) {
-                nodeService.deleteNode(dimensionValue.getNode().getNodeRef());
-            }
+        // Remove existing dimensions not found in xml,
+        // delete TRANSACTION_SIZE nodes during one transaction:
+        // Alfresco has performance issue when large number of nodes is deleted in one transaction
+        RetryingTransactionHelper retryingTransactionHelper = transactionService.getRetryingTransactionHelper();
+        Iterator<DimensionValue> i = dimensionValues.iterator();
+        DeleteDimensionCallback deleteDimensionCallback = new DeleteDimensionCallback(i, updatedDimensionValues);
+        while (i.hasNext()) {
+            retryingTransactionHelper.doInTransaction(deleteDimensionCallback, false, true);
         }
+
         // add dimensions from xml that don't exist in application
         xmlDimValueCounter = 0;
         for (XmlDimensionListsValueWrapper xmlDimensionValue : xmlDimensionValues) {
@@ -1157,6 +1172,29 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             xmlDimValueCounter++;
         }
         return dimensionRef;
+    }
+
+    private class DeleteDimensionCallback implements RetryingTransactionHelper.RetryingTransactionCallback<Iterator<DimensionValue>> {
+        private final Iterator<DimensionValue> iterator;
+        List<NodeRef> updatedDimensionValues;
+
+        public DeleteDimensionCallback(Iterator<DimensionValue> iterator, List<NodeRef> updatedDimensionValues) {
+            this.iterator = iterator;
+            this.updatedDimensionValues = updatedDimensionValues;
+        }
+
+        @Override
+        public Iterator<DimensionValue> execute() throws Throwable {
+            int transactionCommitCounter = 0;
+            for (; iterator.hasNext() && transactionCommitCounter < TRANSACTION_SIZE;) {
+                DimensionValue dimensionValue = iterator.next();
+                if (!updatedDimensionValues.contains(dimensionValue.getNode().getNodeRef())) {
+                    nodeService.deleteNode(dimensionValue.getNode().getNodeRef());
+                    transactionCommitCounter++;
+                }
+            }
+            return null;
+        }
     }
 
     private NodeRef getOrCreateDimension(Dimensions dimensions, String xmlDimensionId) {
@@ -1420,6 +1458,10 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     public void setTransactionTemplatesPath(String transactionTemplatesPath) {
         this.transactionTemplatesPath = transactionTemplatesPath;
+    }
+
+    public void setTransactionService(TransactionService transactionService) {
+        this.transactionService = transactionService;
     }
 
     // END: getters / setters

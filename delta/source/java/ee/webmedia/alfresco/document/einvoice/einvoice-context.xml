@@ -30,6 +30,7 @@
       <property name="fileService" ref="FileService" />
       <property name="dvkService" ref="DvkService" />
       <property name="documentLogService" ref="DocumentLogService" />
+      <property name="transactionService" ref="TransactionService" />
       <property name="dimensionsPath" value="${dimensions.parent.folder.xpath}${dimensions.folder.name}" />
       <property name="transactionDescParametersPath" value="${transactionDescParameters.parent.folder.xpath}${transactionDescParameters.folder.name}" />
       <property name="transactionTemplatesPath" value="${transaction.templates.parent.folder.xpath}${transaction.templates.folder.name}" />
@@ -152,6 +153,7 @@
       <property name="dependsOn">
          <list>
             <ref bean="documentReceivedInvoicesSpacesBootstrap" />
+            <ref bean="imapSpacesBootstrap" />
          </list>
       </property>       
    </bean>    
@@ -209,7 +211,20 @@
             </props>
          </list>
       </property>
-   </bean>  
+   </bean>
+   
+   <bean id="deleteInvoicePostingKeyParameterBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="nodeXPath" value="/param:parameters/param:dimensionCodeInvoicePostingKey" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="einvoiceParametersBootstrap" />
+         </list>
+      </property>       
+   </bean>
    
    <bean id="dimensionModelBootstrap" parent="dictionaryModelBootstrap" depends-on="dictionaryBootstrap">
       <property name="models">

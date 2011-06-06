@@ -2246,6 +2246,10 @@ div.panel.tooltip{
 
 /* Transaction block styles */
 
+TR.trans-recordSetRow2 TD {
+	padding: 5px;
+}
+
 TR.trans-recordSetRowAlt2 TD {
 	padding: 5px;
 	background: #f8f8f8;
@@ -2270,12 +2274,22 @@ DIV.trans-subrow-toggle SPAN {
 	color: #999;
 }
 
-TR.trans-subrow TD {
+TR.trans-subrowAlt TD {
 	padding: 10px 31px;
 	background: #f8f8f8 url("../images/icons/bg_subrow.gif") repeat-x 0 100%;
 }
 
+TR.trans-subrow TD {
+	padding: 10px 31px;
+	background: url("../images/icons/bg_subrow.gif") repeat-x 0 100%;
+}
+
 TR.trans-subrow TD TD {
+	padding: 2px 5px;
+	background: none;
+}
+
+TR.trans-subrowAlt TD TD {
 	padding: 2px 5px;
 	background: none;
 }
@@ -2285,11 +2299,27 @@ TR.trans-subrow P {
 	line-height: normal;
 }
 
+TR.trans-subrowAlt P {
+	margin: 0;
+	line-height: normal;
+}
+
 TR.trans-subrow TABLE {
 	width: 100%;
 }
 
+TR.trans-subrowAlt TABLE {
+	width: 100%;
+}
+
 TR.trans-subrow TH {
+	font-weight: bold;
+	padding-left: 7px;
+	border: none !important;
+	color: #666;
+}
+
+TR.trans-subrowAlt TH {
 	font-weight: bold;
 	padding-left: 7px;
 	border: none !important;

@@ -1063,7 +1063,7 @@ var toggleSubrowToggle = {
       clickIt : function(){
          var table = $jQ(this).parent().nextAll("div.trans-scroll:first").find("table:first");
          var anchor = table.find("td.trans-toggle-subrow").find("a");
-         var subrow = table.find(".trans-subrow");
+         var subrow = table.find(".trans-subrow,.trans-subrowAlt");
 
          if($jQ(this).hasClass("open")) {
             subrow.css("display","");
@@ -1083,7 +1083,7 @@ var toggleSubrow = {
       clickIt : function(){
          var anchor = $jQ(this);
          var row    = anchor.parents("tr:eq(0)");
-         var subrow = row.next("tr.trans-subrow");
+         var subrow = row.next("tr.trans-subrow,.trans-subrowAlt");
 
          if(subrow.is(":hidden")) {
             subrow.css("display","");

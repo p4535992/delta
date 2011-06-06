@@ -16,7 +16,6 @@ import java.util.Set;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
-import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandButton;
@@ -27,7 +26,6 @@ import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.el.MethodBinding;
 import javax.faces.event.ActionEvent;
-import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -41,7 +39,6 @@ import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.apache.commons.collections.Predicate;
-import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
@@ -65,15 +62,17 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 
 public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements Serializable {
 
+    private static final String NO_OPTION_TITLE = "noOptionTitle";
+
     protected String getBeanName() {
         return "TransactionsTemplateDetailsDialog";
     }
 
     public static final String TAX_CODE_ATTR = "taxCode";
     private static final String TRANS_COMPONENT_ID_PREFIX = "trans-";
-    private static final String SELECT_TEMPLATE_NAME = TRANS_COMPONENT_ID_PREFIX + "template-selector";
+    protected static final String SELECT_TEMPLATE_NAME = TRANS_COMPONENT_ID_PREFIX + "template-selector";
 
-    private static final String SAVEAS_TEMPLATE_NAME = TRANS_COMPONENT_ID_PREFIX + "-template-name";
+    protected static final String SAVEAS_TEMPLATE_NAME = TRANS_COMPONENT_ID_PREFIX + "-template-name";
     public static final DecimalFormat INVOICE_DECIMAL_FORMAT = new DecimalFormat("#,##0.00");
 
     private static final long serialVersionUID = 1L;
@@ -90,11 +89,11 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
     protected Node parentNode;
     protected List<Transaction> transactions;
     protected final Map<NodeRef, Map<QName, Serializable>> originalProperties = new HashMap<NodeRef, Map<QName, Serializable>>();
-    private List<Transaction> removedTransactions = new ArrayList<Transaction>();
+    protected List<Transaction> removedTransactions = new ArrayList<Transaction>();
     private transient HtmlPanelGroup transactionPanelGroup;
     private NodeRef taskPanelControlNodeRef;
     private TransactionTemplate transactionTemplate;
-    private List<TransactionTemplate> transactionTemplates;
+    protected List<TransactionTemplate> transactionTemplates;
 
     public void init(Node node) {
         reset();
@@ -229,7 +228,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         return getNewUnsavedTransaction(null);
     }
 
-    private Transaction getNewUnsavedTransaction(Map<QName, Serializable> props) {
+    protected Transaction getNewUnsavedTransaction(Map<QName, Serializable> props) {
         return new Transaction(BeanHelper.getGeneralService().createNewUnSaved(TransactionModel.Types.TRANSACTION, props));
     }
 
@@ -256,6 +255,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
     public void addTransaction(ActionEvent event) {
         transactions.add(getNewUnsavedTransaction());
         updateTransactionPanelGroup();
+        addInvoiceMessages();
     }
 
     /**
@@ -267,6 +267,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         transactions.add(getNewUnsavedTransaction(RepoUtil.getPropertiesIgnoringSystem(RepoUtil.toQNameProperties(originalTransaction.getNode().getProperties(), true),
                 BeanHelper.getDictionaryService())));
         updateTransactionPanelGroup();
+        addInvoiceMessages();
     }
 
     /**
@@ -276,57 +277,15 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         int transIndex = Integer.parseInt(ActionUtil.getParam(event, TRANSACTION_INDEX));
         removedTransactions.add(transactions.remove(transIndex));
         updateTransactionPanelGroup();
+        addInvoiceMessages();
     }
 
     public TransactionTemplate getTransactionTemplate() {
         return transactionTemplate;
     }
 
-    public List<SelectItem> getTransactionTemplates(FacesContext context, UIInput selectComponent) {
-        if (transactionTemplates == null) {
-            transactionTemplates = BeanHelper.getEInvoiceService().getActiveTransactionTemplates();
-        }
-        List<SelectItem> selectItems = new ArrayList<SelectItem>();
-        selectItems.add(new SelectItem("", "-kasuta malli-"));
-        for (TransactionTemplate transactionTemplate : transactionTemplates) {
-            selectItems.add(new SelectItem(transactionTemplate.getName(), transactionTemplate.getName()));
-        }
-        return selectItems;
-    }
-
-    public void saveAsTemplate(ActionEvent event) {
-        UIInput component = (UIInput) event.getComponent().getParent().findComponent(SAVEAS_TEMPLATE_NAME);
-        String templateName = (String) component.getValue();
-        if (StringUtils.isBlank(templateName)) {
-            return;
-        }
-        TransactionTemplate template = BeanHelper.getEInvoiceService().getTransactionTemplateByName(templateName);
-        if (template == null) {
-            template = BeanHelper.getEInvoiceService().createTransactionTemplate(templateName);
-        } else {
-            BeanHelper.getEInvoiceService().removeTransactions(template.getNode().getNodeRef());
-        }
-        BeanHelper.getEInvoiceService().copyTransactions(template, transactions);
-    }
-
-    public void copyFromTemplate(ActionEvent event) {
-        UIInput component = (UIInput) event.getComponent().getParent().findComponent(SELECT_TEMPLATE_NAME);
-        String templateName = (String) component.getValue();
-        if (StringUtils.isBlank(templateName)) {
-            return;
-        }
-        TransactionTemplate template = BeanHelper.getEInvoiceService().getTransactionTemplateByName(templateName);
-        if (template != null) {
-            removedTransactions.addAll(transactions);
-            transactions.clear();
-            List<Transaction> templateTransactions = BeanHelper.getEInvoiceService().getInvoiceTransactions(template.getNode().getNodeRef());
-            for (Transaction transaction : templateTransactions) {
-                Map<QName, Serializable> newProps = new HashMap<QName, Serializable>();
-                EInvoiceUtil.copyTransactionProperties(transaction, newProps);
-                transactions.add(getNewUnsavedTransaction(newProps));
-            }
-        }
-        constructTransactionPanelGroup();
+    protected void addInvoiceMessages() {
+        // do nothing, override in subclassing TransactionsBlockBean
     }
 
     private void updateTransactionPanelGroup() {
@@ -404,7 +363,8 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         // transaction rows
         int transRowCounter = 0;
         String rowClasses = "";
-        final String rowClassesValue = "trans-recordSetRowAlt2,trans-subrow,"; // transaction list row and subrow classes
+        final String rowClassesEvenValue = "trans-recordSetRow2,trans-subrow,"; // transaction list row and subrow classes
+        final String rowClassesOddValue = "trans-recordSetRowAlt2,trans-subrowAlt,";
         Set<String> generalMandatoryFields = getMandatoryFields();
         for (Transaction transaction : transactions) {
             Set<String> transMandatoryProps = getCostManagerMandatoryFields(transaction);
@@ -419,9 +379,9 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS, TransactionModel.Props.FUND, transRowCounter,
                     transMandatoryProps);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.EA_COMMITMENT_ITEM, transRowCounter,
-                    DimensionSelectorGenerator.getEAExclusivePredicate(), transMandatoryProps);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.COMMITMENT_ITEM, transRowCounter,
                     DimensionSelectorGenerator.getEAInclusivePredicate(), transMandatoryProps);
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.COMMITMENT_ITEM, transRowCounter,
+                    DimensionSelectorGenerator.getEAExclusivePredicate(), transMandatoryProps);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_INTERNAL_ORDERS, TransactionModel.Props.ORDER_NUMBER, transRowCounter,
                     transMandatoryProps);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, TransactionModel.Props.ASSET_INVENTORY_NUMBER,
@@ -471,7 +431,11 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             addTextareaInput(context, tranRowSecondaryGridChildren, transRowCounter, TransactionModel.Props.ENTRY_CONTENT, secondaryChildrenStyleClassAttribute,
                     transMandatoryProps);
 
-            rowClasses = rowClasses + rowClassesValue;
+            if ((transRowCounter & 1) == 0) {
+                rowClasses = rowClasses + rowClassesEvenValue;
+            } else {
+                rowClasses = rowClasses + rowClassesOddValue;
+            }
             transRowCounter++;
         }
         transRowsMainGrid.getAttributes().put(JSFAttr.ROW_CLASSES_ATTR, rowClasses);
@@ -716,9 +680,10 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             dimensionSelector = dimensionGenerator.generateSelectComponent(context, null, false);
             dimensionGenerator.getCustomAttributes().put(DimensionSelectorGenerator.ATTR_DIMENSION_NAME, dimensions.getDimensionName());
             dimensionGenerator.setupSelectComponent(context, null, null, null, dimensionSelector, false);
-            dimensionSelector.getAttributes().put(CustomAttributeNames.STYLE_CLASS, styleClass == null ? "width120" : styleClass);
-            // dimensionSelector.setRendererType(arg0);
+            dimensionSelector.getAttributes().put(CustomAttributeNames.STYLE_CLASS, styleClass == null ? "width120 " + NO_OPTION_TITLE : styleClass + " " + NO_OPTION_TITLE);
+
             dimensionSelector.getAttributes().put("displayMandatoryMark", true);
+
             setIdAndValueBinding(context, transactionIndex, propName, dimensionSelector);
             dimensionSelectorPanel.getChildren().add(dimensionSelector);
 

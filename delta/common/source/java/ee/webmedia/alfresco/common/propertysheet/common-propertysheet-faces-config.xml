@@ -262,7 +262,7 @@
          <renderer-type>ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRenderer</renderer-type>
          <renderer-class>ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRenderer</renderer-class>
       </renderer>
-      
+     
    </render-kit>
 
 </faces-config>

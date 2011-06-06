@@ -14,6 +14,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorValueProvider;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.einvoice.model.DimensionModel;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 
@@ -27,6 +28,7 @@ public class DimensionSelectorGenerator extends ClassificatorSelectorGenerator {
 
     private static final String EA_PREFIX = "EA";
     private Predicate filter = null;
+    private String selectedValue = null;
 
     static {
         predefinedFilters.put(EA_PREFIX_INCLUDE_FILTER_KEY, getEAInclusivePredicate());
@@ -53,7 +55,29 @@ public class DimensionSelectorGenerator extends ClassificatorSelectorGenerator {
                 valueProviders.addAll(dimensions);
             }
         }
+        if (selectedValue != null) {
+            addSelectedDimensionIfNeeded(valueProviders, dimensionRef);
+        }
         return valueProviders;
+    }
+
+    private void addSelectedDimensionIfNeeded(List<ClassificatorSelectorValueProvider> valueProviders, NodeRef dimensionRef) {
+        if (selectedValue == null) {
+            return;
+        }
+        int insertIndex = 0;
+        for (ClassificatorSelectorValueProvider valueProvider : valueProviders) {
+            DimensionValue dimensionValue = (DimensionValue) valueProvider;
+            String selectorValueName = dimensionValue.getSelectorValueName();
+            if (StringUtils.equals(selectorValueName, selectedValue)) {
+                return;
+            }
+        }
+        // at the moment there is no need that we search for actually existing dimensionValue with given name,
+        // just create dummy dimension value for selectbox data provider
+        DimensionValue selectedDimensionValue = new DimensionValue(BeanHelper.getGeneralService().createNewUnSaved(DimensionModel.Types.DIMENSION_VALUE, null));
+        selectedDimensionValue.setValueName(selectedValue);
+        valueProviders.add(0, selectedDimensionValue);
     }
 
     private Predicate getFilter() {
@@ -84,6 +108,10 @@ public class DimensionSelectorGenerator extends ClassificatorSelectorGenerator {
                 return StringUtils.startsWith(valueName, EA_PREFIX);
             }
         };
+    }
+
+    public void setSelectedValue(String selectedValue) {
+        this.selectedValue = selectedValue;
     }
 
 }

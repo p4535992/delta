@@ -54,6 +54,6 @@ public class DimensionListDialog extends BaseDialogBean {
      * Used only in development/internal testing
      */
     public void deleteAllImportedDimensions(javax.faces.event.ActionEvent event) {
-        BeanHelper.getEInvoiceService().deleteAllDimensions();
+        BeanHelper.getEInvoiceService().deleteAllImportedDimensions();
     }
 }

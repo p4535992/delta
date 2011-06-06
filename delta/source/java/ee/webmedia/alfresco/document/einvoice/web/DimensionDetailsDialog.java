@@ -71,10 +71,8 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
         if (validate()) {
             BeanHelper.getEInvoiceService().updateDimension(selectedDimension);
             BeanHelper.getEInvoiceService().updateDimensionValues(dimensionValues, selectedDimension.getNode());
-            resetData();
             BeanHelper.getDimensionListDialog().reload();
             MessageUtil.addInfoMessage("save_success");
-            return outcome;
         }
         isFinished = false;
         return null;
