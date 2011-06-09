@@ -16,9 +16,15 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.faces.event.ActionEvent;
 
 import org.alfresco.repo.module.AbstractModuleComponent;
 import org.alfresco.repo.policy.BehaviourFilter;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
@@ -74,12 +80,86 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         behaviourFilter = (BehaviourFilter) serviceRegistry.getService(QName.createQName(null, "policyBehaviourFilter"));
     }
 
+    private AtomicBoolean updaterRunning = new AtomicBoolean(false);
+    private AtomicBoolean stopFlag = new AtomicBoolean(false);
+    private AtomicInteger sleepTime = new AtomicInteger(0);
+
+    public boolean isUpdaterRunning() {
+        return updaterRunning.get();
+    }
+
+    public boolean isUpdaterStopping() {
+        return isUpdaterRunning() && stopFlag.get();
+    }
+
+    public int getSleepTime() {
+        return sleepTime.get();
+    }
+
+    public void setSleepTime(int sleepTime) {
+        if (this.sleepTime.getAndSet(sleepTime) != sleepTime) {
+            log.info("Set sleepTime to " + sleepTime + " ms");
+        }
+    }
+
+    /** @param event */
+    public synchronized void stopUpdater(ActionEvent event) {
+        stopUpdater();
+    }
+
+    public void stopUpdater() {
+        stopFlag.set(true);
+        log.info("Stop requested. Stopping after current batch.");
+    }
+
+    /** @param event */
+    public void updateSleepTime(ActionEvent event) {
+        // sleepTime is actually updated in setSleepTime method
+    }
+
+    /** @param event */
+    public synchronized void executeUpdaterInBackground(ActionEvent event) {
+        executeUpdaterInBackground();
+    }
+
+    public synchronized void executeUpdaterInBackground() {
+        if (!isUpdaterRunning()) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        updaterRunning.set(true);
+                        try {
+                            AuthenticationUtil.runAs(new RunAsWork<Void>() {
+                                @Override
+                                public Void doWork() throws Exception {
+                                    executeUpdater();
+                                    return null;
+                                }
+                            }, AuthenticationUtil.getSystemUserName());
+                        } catch (Exception e) {
+                            log.error("Background updater error", e);
+                        }
+                    } finally {
+                        updaterRunning.set(false);
+                    }
+                }
+            }, getBaseFileName() + "Thread").start();
+        } else {
+            log.warn("Updater is already running");
+        }
+    }
+
     @Override
     protected void executeInternal() throws Throwable {
         if (!enabled) {
             log.info("Skipping node updater, because it is disabled" + (isExecuteOnceOnly() ? ". It will not be executed again, because executeOnceOnly=true" : ""));
             return;
         }
+        executeUpdater();
+    }
+
+    protected void executeUpdater() throws Exception {
         log.info("Starting node updater");
         nodesFile = new File(inputFolder, getNodesCsvFileName());
         nodes = loadNodesFromFile(nodesFile, false);
@@ -103,6 +183,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         if (nodes.size() > 0) {
             UpdateNodesBatchProgress batchProgress = new UpdateNodesBatchProgress();
             try {
+                stopFlag.set(false);
                 batchProgress.run();
             } finally {
                 log.info("Completed nodes have been written to file " + completedNodesFile.getAbsolutePath());
@@ -227,6 +308,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
             } catch (Exception e) {
                 throw new Exception("Error updating node " + nodeRef + ": " + e.getMessage(), e);
             }
+            int sleepTime2 = getSleepTime();
+            if (sleepTime2 > 0) {
+                Thread.sleep(sleepTime2);
+            }
         }
         File rollbackNodesFile = new File(inputFolder, getRollbackNodesCsvFileName());
         bindCsvWriteAfterCommit(completedNodesFile, rollbackNodesFile, new CsvWriterClosure() {
@@ -281,9 +366,10 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         }
 
         private boolean isStopRequested() {
-            boolean f = stopFile.exists();
+            boolean f = stopFlag.get() || stopFile.exists();
             if (f) {
                 log.info("Stop requested. Stopping.");
+                stopFlag.set(true);
             }
             return f;
         }
@@ -324,7 +410,12 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                 eta = etaHours + "h " + eta;
             }
             i = 0;
-            log.info(String.format("%s: %6.2f%% completed - %7d of %7d, %5.1f docs per second (last), %5.1f (total), ETA %s", processName,
+            String info = "%s: %6.2f%% completed - %7d of %7d, %5.1f docs per second (last), %5.1f (total), ETA %s";
+            int sleepTime2 = getSleepTime();
+            if (sleepTime2 > 0) {
+                info += ", sleep n * " + sleepTime2 + " ms";
+            }
+            log.info(String.format(info, processName,
                     completedPercent, completedSize, totalSize, lastDocsPerSec, totalDocsPerSec, eta));
             startTime = endTime;
         }

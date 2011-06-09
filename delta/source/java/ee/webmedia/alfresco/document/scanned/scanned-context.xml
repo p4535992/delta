@@ -12,8 +12,6 @@
 
    <bean id="scannedSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="imapSpacesBootstrap" />
-      <property name="sinceVersion" value="1.4.1.16" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="bootstrapViews">
@@ -30,8 +28,6 @@
 
    <bean id="scannedOcrBootstrap" class="ee.webmedia.alfresco.document.scanned.bootstrap.ScannedOcrBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="scannedOcrBootstrap" />
-      <property name="sinceVersion" value="1.8.1.1" />
       <property name="executeOnceOnly" value="false" />
       <property name="dependsOn">
          <list>
@@ -45,8 +41,6 @@
 
    <bean id="scannedDocumentManagersPermissionsBootstrap" class="ee.webmedia.alfresco.document.scanned.bootstrap.ScannedDocumentManagersPermissionsBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="scannedDocumentManagersPermissionsBootstrap" />
-      <property name="sinceVersion" value="1.9.1.14" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>

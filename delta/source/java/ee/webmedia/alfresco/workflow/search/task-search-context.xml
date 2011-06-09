@@ -48,8 +48,6 @@
 
    <bean id="taskSearchFiltersSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="taskSearchFiltersSpacesBootstrap" />
-      <property name="sinceVersion" value="1.4.1.23" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="bootstrapViews">

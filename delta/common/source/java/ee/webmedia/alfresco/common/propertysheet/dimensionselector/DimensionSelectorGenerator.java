@@ -5,6 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
@@ -39,6 +42,13 @@ public class DimensionSelectorGenerator extends ClassificatorSelectorGenerator {
     }
 
     public DimensionSelectorGenerator() {
+    }
+
+    @Override
+    public UIComponent generateSelectComponent(FacesContext context, String id, boolean multiValued) {
+        final UIComponent selectComponent = super.generateSelectComponent(context, id, multiValued);
+        selectComponent.setRendererType(DimensionSelectorRenderer.DIMENSION_SELECTOR_RENDERER_TYPE);
+        return selectComponent;
     }
 
     @SuppressWarnings("unchecked")

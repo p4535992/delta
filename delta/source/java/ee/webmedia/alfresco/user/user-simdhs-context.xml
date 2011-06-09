@@ -22,20 +22,16 @@
 
    <bean id="documentManagersGroupBootstrap" class="ee.webmedia.alfresco.user.bootstrap.DocumentManagersGroupBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="documentManagersGroupBootstrap" />
-      <property name="sinceVersion" value="1.1.1.23" />
       <property name="executeOnceOnly" value="true" />
    </bean>
    
    <bean id="accountantsGroupBootstrap" class="ee.webmedia.alfresco.user.bootstrap.AccountantsGroupBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="accountantsGroupBootstrap" />
       <property name="executeOnceOnly" value="true" />
    </bean>
    
    <bean id="accountantsGroupNameChangeBootstrap" class="ee.webmedia.alfresco.user.bootstrap.AccountantsGroupNameChangeBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="accountantsGroupNameChangeBootstrap" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -46,15 +42,11 @@
 
    <bean id="deleteDummyUserBootstrap" class="ee.webmedia.alfresco.user.bootstrap.DeleteDummyUserBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="deleteDummyUserBootstrap" />
-      <property name="sinceVersion" value="1.8.1.1" />
       <property name="executeOnceOnly" value="true" />
    </bean>
 
    <bean id="userHomesSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="userHomesSpacesBootstrap" />
-      <property name="sinceVersion" value="1.1.1.25" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="bootstrapViews">

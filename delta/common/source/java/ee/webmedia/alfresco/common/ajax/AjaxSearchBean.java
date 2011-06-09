@@ -45,7 +45,7 @@ public class AjaxSearchBean extends AjaxBean {
             return;
         }
 
-        SelectItem[] result = getSelectItems(context, callback, query);
+        SelectItem[] result = getSelectItems(context, callback, query, null);
         if (result == null || result.length < 1) {
             return;
         }
@@ -57,22 +57,29 @@ public class AjaxSearchBean extends AjaxBean {
         context.getResponseWriter().write(sb.toString());
     }
 
-    private SelectItem[] getSelectItems(FacesContext context, String callback, String contains) {
-        MethodBinding b = context.getApplication().createMethodBinding("#{" + callback + "}", new Class[] { int.class, String.class });
-        SelectItem[] result = (SelectItem[]) b.invoke(context, new Object[] { 0, contains });
-        return result;
-    }
-
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)
     public void searchPickerResults() throws IOException {
         FacesContext context = FacesContext.getCurrentInstance();
+
         @SuppressWarnings("unchecked")
         Map<String, String> params = context.getExternalContext().getRequestParameterMap();
-        SelectItem[] results = getSelectItems(context, getParam(params, Search.PICKER_CALLBACK_KEY), getParam(params, CONTAINS));
+        SelectItem[] results = getSelectItems(context, getParam(params, Search.PICKER_CALLBACK_KEY), getParam(params, CONTAINS),
+                getParam(params, "filterValue"));
 
         ResponseWriter responseWriter = context.getResponseWriter();
         responseWriter.write(UIGenericPicker.getResultSize(results) + "|");
         ComponentUtil.renderSelectItems(responseWriter, results);
+    }
+
+    private SelectItem[] getSelectItems(FacesContext context, String callback, String contains, String filterValue) {
+        int filter = 0;
+        if (StringUtils.isNotBlank(filterValue) && !"undefined".equals(filterValue)) {
+            filter = Integer.parseInt(filterValue);
+        }
+
+        MethodBinding b = context.getApplication().createMethodBinding("#{" + callback + "}", new Class[] { int.class, String.class });
+        SelectItem[] result = (SelectItem[]) b.invoke(context, new Object[] { filter, contains });
+        return result;
     }
 
     @ResponseMimetype(MimetypeMap.MIMETYPE_HTML)

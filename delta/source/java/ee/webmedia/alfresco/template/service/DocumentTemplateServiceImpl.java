@@ -638,6 +638,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
             if (template != null) {
                 return template;
             }
+            if (StringUtils.endsWith(templateName, ".html")) {
+                // try alternative ".htm" that is default when adding system template through GUI
+                templateName = templateName.substring(0, templateName.length() - 1);
+                return getSystemTemplateByName(templateName);
+            }
         }
         return null;
     }

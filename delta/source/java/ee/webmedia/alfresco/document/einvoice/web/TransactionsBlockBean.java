@@ -183,9 +183,16 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
     protected Set<String> getCostManagerMandatoryFields(Transaction transaction) {
         Set<String> mandatoryFields = new HashSet<String>();
         Map<QName, Serializable> userProps = BeanHelper.getUserService().getCurrentUserProperties();
-        String userRelatedFundsCenter = (String) userProps.get(ContentModel.PROP_RELATED_FUNDS_CENTER);
-        if (transaction.getFundsCenter() != null && userRelatedFundsCenter != null && transaction.getFundsCenter().equalsIgnoreCase(userRelatedFundsCenter)) {
-            mandatoryFields.addAll(BeanHelper.getEInvoiceService().getCostManagerMandatoryFields());
+        @SuppressWarnings("unchecked")
+        List<String> userRelatedFundsCenters = (List<String>) userProps.get(ContentModel.PROP_RELATED_FUNDS_CENTER);
+        if (userRelatedFundsCenters == null) {
+            return mandatoryFields;
+        }
+        for (String userRelatedFundsCenter : userRelatedFundsCenters) {
+            if (transaction.getFundsCenter() != null && userRelatedFundsCenter != null && transaction.getFundsCenter().equalsIgnoreCase(userRelatedFundsCenter)) {
+                mandatoryFields.addAll(BeanHelper.getEInvoiceService().getCostManagerMandatoryFields());
+                break;
+            }
         }
         return mandatoryFields;
     }

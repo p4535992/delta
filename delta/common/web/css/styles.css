@@ -2220,6 +2220,11 @@ table.privileges{
 	margin-top: 10px;
 }
 
+/* hack for IE for rows that don't have remove link */
+table.privileges .linkReplacement{
+	height: 16px;
+}
+
 /* hack with JS to show tooltips for disabled checkboxes */
 div.panel.tooltip{
 	position: absolute;

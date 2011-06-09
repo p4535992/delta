@@ -60,8 +60,6 @@
    Not needed, because menu is reloaded anyway when user first logs in
    <bean id="menuLoaderBootstrap" class="ee.webmedia.alfresco.menu.bootstrap.MenuLoaderBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="menuLoaderBootstrap" />
-      <property name="sinceVersion" value="1.1.1.29" />
       <property name="executeOnceOnly" value="false" />
       <property name="menuService" ref="MenuService" />
       <property name="dependsOn">
@@ -87,7 +85,6 @@
    <!-- Changes shortcut to menuItemId (CL task 158558) -->
    <bean id="shortcutToMenuItemIdUpdater" class="ee.webmedia.alfresco.menu.bootstrap.ShortcutToMenuItemIdUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="shortcutToMenuItemIdUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>

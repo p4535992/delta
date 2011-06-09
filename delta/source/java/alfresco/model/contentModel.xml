@@ -247,6 +247,7 @@
             </property>
             <property name="cm:relatedFundsCenter">
                <type>d:text</type>
+               <multiple>true</multiple>
             </property>            
             
             <!-- system maintained values -->

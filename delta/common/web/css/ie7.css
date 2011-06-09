@@ -380,3 +380,9 @@ hr {
 table.detailsMultiTbody input[type='checkbox']{
 	height: 14px;
 }
+
+/* hack for IE for rows that don't have remove link */
+table.privileges .linkReplacement{
+	height: 16px;
+	padding-bottom: 1px;
+}

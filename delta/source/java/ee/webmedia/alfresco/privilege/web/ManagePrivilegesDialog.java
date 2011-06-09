@@ -37,13 +37,13 @@ import org.alfresco.util.Pair;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIGenericPicker;
+import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.common.component.data.UIColumn;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.FixedOrderComparator;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
@@ -61,9 +61,9 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener;
 import ee.webmedia.alfresco.document.web.evaluator.IsAdminOrDocManagerEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.IsOwnerEvaluator;
+import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
-import ee.webmedia.alfresco.privilege.service.PrivilegeServiceImpl.PrivilegeMappings;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.user.model.Authority;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -93,22 +93,25 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
     public static final String BEAN_NAME = "ManagePrivilegesDialog";
 
     private static final String PARAM_CURRENT_GROUP = "currentGroup";
-    private Comparator<UserPrivilegesRow> tableRowComparator;
 
     private static final Set<String> dynamicPrivilegesGroups = new HashSet<String>(Arrays.asList(UserService.AUTH_ADMINISTRATORS_GROUP, UserService.AUTH_DOCUMENT_MANAGERS_GROUP));
 
     private static final String USERGROUP_MARKER_CLASS = "tbGroup";
 
+    private transient Comparator<UserPrivilegesRow> tableRowComparator;
+
+    // Services
     private transient GeneralService generalService;
     private transient PermissionService permissionService;
     private transient PrivilegeService privilegeService;
     private transient UserService userService;
     private transient AuthorityService authorityService;
+    // UIComponents
+    private transient UIRichList permissionsRichList;
+    private transient UIGenericPicker picker;
 
     private boolean editable;
     private boolean markPrivilegesBaseState;
-    private UIRichList permissionsRichList;
-    private UIGenericPicker picker;
     private NodeRef manageableRef;
     private Collection<String> manageablePermissions;
 
@@ -737,10 +740,11 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             UIComponentTagUtils.setValueBinding(context, removePersonLink, "rendered", "#{!r.readOnly}");
             addChildren(removePersonLink, createUIParam("userName", "#{r.userName}", application));
 
-            HtmlOutputText nbsp = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
-            nbsp.setValue(StringEscapeUtils.unescapeHtml("&nbsp;")); // workaround for IE7 - otherwise if removePersonLink is not rendered, then underline is not rendered either
+            UIPanel empty = new UIPanel();// workaround for IE7 - otherwise if removePersonLink is not rendered, then underline is not rendered either
+            ComponentUtil.putAttribute(empty, "styleClass", "linkReplacement"); // workaround for IE make lines without remove link the same height as rest of them
+            UIComponentTagUtils.setValueBinding(context, empty, "rendered", "#{r.readOnly}");
 
-            addChildren(column, removePersonLink, nbsp);
+            addChildren(column, removePersonLink, empty);
         }
         return column;
     }

@@ -6,11 +6,13 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
@@ -33,7 +35,8 @@ public class UserPrivileges implements Serializable {
     private boolean deleted;
 
     /** privileges added dynamically */
-    private final Map<String /* privilege */, String /* reason */> dynamicPrivReasons = new LinkedHashMap<String, String>();
+    private Map<String /* privilege */, String /* reason */> dynamicPrivReasonsCached = new LinkedHashMap<String, String>();
+    private final Map<String /* privilege */, Set<String> /* reason */> dynamicPrivReasons = new LinkedHashMap<String, Set<String>>();
     private final Map<String /* privilege */, Boolean /* alsoStatic */> dynamicPrivileges = new HashMap<String, Boolean>();
 
     /** static privileges (already saved) */
@@ -53,13 +56,14 @@ public class UserPrivileges implements Serializable {
         boolean hasPriv = BooleanUtils.isTrue(privileges.get(privilege));
         boolean hasStaticPriv = hasPriv && (!dynamicPrivileges.containsKey(privilege) || dynamicPrivileges.get(privilege));
         dynamicPrivileges.put(privilege, hasStaticPriv);
-        String newReason = dynamicPrivReasons.get(privilege);
-        if (newReason == null) {
-            newReason = reason;
-        } else {
-            newReason += "; " + reason;
+        Set<String> privReasons = dynamicPrivReasons.get(privilege);
+        if (privReasons == null) {
+            privReasons = new LinkedHashSet<String>();
+            dynamicPrivReasons.put(privilege, privReasons);
         }
-        dynamicPrivReasons.put(privilege, newReason);
+        if (privReasons.add(reason)) {
+            dynamicPrivReasonsCached = null;
+        }
         if (hasPriv) {
             return;
         }
@@ -160,7 +164,16 @@ public class UserPrivileges implements Serializable {
     }
 
     public Map<String, String> getDynamicPrivReasons() {
-        return dynamicPrivReasons;
+        if (dynamicPrivReasonsCached == null) {
+            Set<Entry<String, Set<String>>> entrySet = dynamicPrivReasons.entrySet();
+            dynamicPrivReasonsCached = new HashMap<String, String>(entrySet.size());
+            for (Entry<String, Set<String>> entry : entrySet) {
+                String priv = entry.getKey();
+                Set<String> reasons = entry.getValue();
+                dynamicPrivReasonsCached.put(priv, StringUtils.join(reasons, "; "));
+            }
+        }
+        return dynamicPrivReasonsCached;
     }
 
     public Map<String, Boolean> getDynamicPrivileges() {

@@ -380,7 +380,7 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable
           out.write(" class='hidden'");
       }
       out.write("><td>");
-      out.write("<select size=\"" + getSize() + "\"");
+      out.write("<select class=\"genericpicker-results\" size=\"" + getSize() + "\"");
       out.write(" style='width:100%;height:auto;' name='");
       out.write(clientId + FIELD_RESULTS);
       out.write("' id='");

@@ -214,6 +214,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             isDraft = false;
         }
         metadataBlockBean.init(docRef, false, this);
+        metadataBlockBean.setSkipInvoiceMessages(true);
     }
 
     public void copy(@SuppressWarnings("unused") ActionEvent event) {
@@ -484,9 +485,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         super.init(params);
         metadataBlockBean.init(node.getNodeRef(), isDraft, this);
         if (isFromDVK() || isFromImap() || isIncomingInvoice()) {
-            if (!isIncomingInvoice()) {
-                metadataBlockBean.setOwnerCurrentUser();
-            }
+            metadataBlockBean.setOwnerCurrentUser();
             showDocsAndCasesAssocs = false;
         }
         fileBlockBean.init(node);
@@ -772,7 +771,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         saveAssocNow(caseRef, node.getNodeRef(), assocType);
     }
 
-    private void saveAssocNow(NodeRef sourceRef, NodeRef targetRef, final QName assocType) {
+    private void saveAssocNow(final NodeRef sourceRef, final NodeRef targetRef, final QName assocType) {
         final List<AssociationRef> targetAssocs = getNodeService().getTargetAssocs(sourceRef, assocType);
         for (AssociationRef associationRef : targetAssocs) {
             if (associationRef.getTargetRef().equals(targetRef) && associationRef.getTypeQName().equals(assocType)) {
@@ -780,7 +779,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 return;
             }
         }
-        getNodeService().createAssociation(sourceRef, targetRef, assocType);
+        getDocumentService().createAssoc(sourceRef, targetRef, assocType);
         assocsBlockBean.restore();
         MessageUtil.addInfoMessage("document_assocAdd_success");
     }

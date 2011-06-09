@@ -76,12 +76,10 @@ public class UserDetailsDialog extends BaseDialogBean {
         }
     }
 
-    /*
-     * This is a read-only dialog, so we have nothing to do here (Save/OK button isn't displayed)
-     */
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
         substituteListDialog.save(context);
+        BeanHelper.getUserService().updateUser(user);
         isFinished = false;
         return null;
     }
@@ -106,7 +104,11 @@ public class UserDetailsDialog extends BaseDialogBean {
     }
 
     public boolean isRelatedFundsCenterNotEditable() {
-        return !BeanHelper.getUserService().isAdministrator();
+        return !isRelatedFundsCenterEditable();
+    }
+
+    public boolean isRelatedFundsCenterEditable() {
+        return BeanHelper.getUserService().isAdministrator();
     }
 
     /**
@@ -126,9 +128,16 @@ public class UserDetailsDialog extends BaseDialogBean {
 
         List<Node> users = new ArrayList<Node>(1);
         users.add(node);
-        user = getOrganizationStructureService().setUsersUnit(users).get(0);
+        fillUserProps(users);
+    }
 
+    private void fillUserProps(List<Node> users) {
+        user = getOrganizationStructureService().setUsersUnit(users).get(0);
         setupGroups();
+        if (user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER) == null) {
+            user.getProperties().put(ContentModel.PROP_RELATED_FUNDS_CENTER.toString(), new ArrayList<String>());
+        }
+        user.getProperties().put("{temp}relatedFundsCenter", user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER));
     }
 
     public void removeFromGroup(ActionEvent event) {
@@ -169,7 +178,7 @@ public class UserDetailsDialog extends BaseDialogBean {
     public void setupUser(String userName) {
         List<Node> users = new ArrayList<Node>(1);
         users.add(new Node(properties.getPersonService().getPerson(userName)));
-        user = getOrganizationStructureService().setUsersUnit(users).get(0);
+        fillUserProps(users);
         setupGroups();
     }
 

@@ -8,11 +8,13 @@ import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.bean.users.UsersBeanProperties;
 import org.alfresco.web.ui.common.component.data.UIRichList;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
@@ -109,12 +111,29 @@ public class UserListDialog extends BaseDialogBean {
      * @return An array of SelectItem objects containing the results to display in the picker.
      */
     public SelectItem[] searchUsers(int filterIndex, String contains) {
+        return searchUsers(contains, false);
+    }
+
+    /**
+     * @see #searchUsers(int, String)
+     * @return SelectItems representing users. Current user is excluded.
+     */
+    public SelectItem[] searchOtherUsers(int filterIndex, String contains) {
+        return searchUsers(contains, true);
+    }
+
+    private SelectItem[] searchUsers(String contains, boolean excludeCurrentUser) {
         List<Node> nodes = getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(contains, true));
-        SelectItem[] results = new SelectItem[nodes.size()];
+        int nodesSize = nodes.size();
+        SelectItem[] results = new SelectItem[excludeCurrentUser ? nodesSize - 1 : nodesSize];
         int i = 0;
+        String currentUser = excludeCurrentUser ? AuthenticationUtil.getRunAsUser() : null;
         for (Node node : nodes) {
-            String label = UserUtil.getPersonFullNameWithUnitName(node.getProperties());
-            results[i++] = new SelectItem(node.getProperties().get(ContentModel.PROP_USERNAME), label);
+            String userName = (String) node.getProperties().get(ContentModel.PROP_USERNAME);
+            if (!excludeCurrentUser || !StringUtils.equals(userName, currentUser)) {
+                String label = UserUtil.getPersonFullNameWithUnitName(node.getProperties());
+                results[i++] = new SelectItem(userName, label);
+            }
         }
 
         WebUtil.sort(results);

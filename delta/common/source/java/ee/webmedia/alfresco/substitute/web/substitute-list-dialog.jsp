@@ -23,7 +23,7 @@
                        value="#{r.substituteName}"
                        dataMultiValued="false"
                        dataMandatory="true"
-                       pickerCallback="#{UserListDialog.searchUsers}"
+                       pickerCallback="#{UserListDialog.searchOtherUsers}"
                        setterCallback="#{DialogManager.bean.setPersonToSubstitute}"
                        dialogTitleId="users_search_title"
                        editable="false"

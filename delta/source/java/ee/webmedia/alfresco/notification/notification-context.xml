@@ -68,8 +68,6 @@
    
    <bean id="notificationImportBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent" abstract="true">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="notificationParametersBootstrap" />
-      <property name="sinceVersion" value="1.4.1.14" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>

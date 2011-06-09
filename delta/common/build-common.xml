@@ -112,6 +112,8 @@
 		<delete file="${common.dir.lib.server}/commons-io-1.1.jar" />
 		<!-- Newer version (1.6.2) of joda-time is added from common/lib folder -->
 		<delete file="${common.dir.lib.server}/joda-time-1.2.1.jar" />
+		<!-- Newer version (1.4.4) of javax.mail is added from common/lib folder -->
+		<delete file="${common.dir.lib.server}/mail.jar" />
 	</target>
 
 	<target name="setup-project-done">

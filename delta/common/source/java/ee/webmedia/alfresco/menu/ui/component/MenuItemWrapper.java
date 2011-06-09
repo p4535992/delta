@@ -123,8 +123,6 @@ public class MenuItemWrapper extends SelfRenderingComponent {
         }
     }
 
-    // TODO Save and restore state?
-
     public boolean isDropdownWrapper() {
         return dropdownWrapper;
     }

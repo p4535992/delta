@@ -65,6 +65,7 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -1578,6 +1579,9 @@ public class MetadataBlockBean implements ClearStateListener {
             try {
                 log.debug("save: doc NodeRef=" + document.getNodeRefAsString());
                 document.getProperties().put(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT, isDraft);
+                if (DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
+                    document.getProperties().putAll(EInvoiceUtil.getTransSearchableProperties(BeanHelper.getEInvoiceService().getInvoiceTransactions(nodeRef)));
+                }
                 document = getDocumentService().updateDocument(document);
                 NodeRef volume = (NodeRef) document.getProperties().get(TransientProps.VOLUME_NODEREF);
                 NodeRef series = (NodeRef) document.getProperties().get(TransientProps.SERIES_NODEREF);

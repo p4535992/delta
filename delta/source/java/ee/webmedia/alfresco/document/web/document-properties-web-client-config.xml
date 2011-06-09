@@ -136,7 +136,7 @@
          <show-property name="{temp}invoiceNumberDate" show-in-edit-mode="false" display-label-id="document_invoiceNumberDate" />
          <show-property name="docspec:invoiceDate" component-generator="DatePickerGenerator" show-in-view-mode="false" display="inline" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:invoiceNumber" show-in-view-mode="false" styleClass="medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
-         <show-property name="docspec:invoiceType" component-generator="ClassificatorSelectorGenerator" classificatorName="invoiceTypes" descriptionAsLabel="true" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}" />
+         <show-property name="docspec:invoiceType" component-generator="ClassificatorSelectorGenerator" classificatorName="invoiceTypes" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}" />
          <show-property name="{temp}xxlInvoice" show-in-edit-mode="false" display-label-id="document_empty_label" component-generator="UnescapedOutputTextGenerator" />
          <show-property name="{temp}invoiceDueDatePaymentTerm" show-in-edit-mode="false" display-label-id="document_invoiceDueDatePaymentTerm" />
          <show-property name="docspec:invoiceDueDate" show-in-view-mode="false" component-generator="DatePickerGenerator" display="inline" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}" forcedMandatory="true" />
@@ -504,7 +504,7 @@
             "
          />
          <show-property name="docspec:expensesTotalSum" styleClass="expensesTotalSumField editable" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" read-only="true" />
-         <show-property name="docspec:expensesFinancingSource" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+         <show-property name="docspec:expensesFinancingSource" component-generator="TextAreaGenerator" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200" />
       </property-sheet>
    </config>
    
@@ -642,7 +642,7 @@
             "
          />
          <show-property name="docspec:expensesTotalSum" styleClass="expensesTotalSumField editable" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" read-only="true" />
-         <show-property name="docspec:expensesFinancingSource" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+         <show-property name="docspec:expensesFinancingSource" component-generator="TextAreaGenerator" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200" />
       </property-sheet>
    </config>
    
@@ -680,7 +680,7 @@
             "
          />
          <show-property name="docspec:expensesTotalSum" styleClass="expensesTotalSumField editable" converter="ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter" read-only="true" />
-         <show-property name="docspec:expensesFinancingSource" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+         <show-property name="docspec:expensesFinancingSource" component-generator="TextAreaGenerator" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200" />
       </property-sheet>
    </config>
          
@@ -1250,7 +1250,7 @@
    
    <config evaluator="node-type" condition="docspec:contractPartyType">
       <property-sheet>
-         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display="inline" styleClass="medium" />
+         <show-property name="docspec:partyName" component-generator="SearchGenerator" pickerCallback="#{AddressbookDialog.searchContacts}" setterCallback="#{MetadataBlockBean.setPartyName}" setterCallbackTakesNode="true" editable="true" dialogTitleId="contacts_search_title" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" display="inline" styleClass="medium" forcedMandatory="true" />
          <show-property name="docspec:partySigner" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" labelStyleClass="secondary" styleClass="expand19-200 medium" component-generator="TextAreaGenerator" />
          <show-property name="docspec:partyContactPerson" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary" display="inline" />
          <show-property name="docspec:partyEmail" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" styleClass="expand19-200 medium" labelStyleClass="secondary"/>

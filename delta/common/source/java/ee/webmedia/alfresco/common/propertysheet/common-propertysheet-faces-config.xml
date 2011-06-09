@@ -151,6 +151,15 @@
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>   
+   
+   <managed-bean>
+      <description>
+         Same as DimensionSelectorGenerator, is always editable, even if propertysheet is in view mode
+      </description>
+      <managed-bean-name>DimensionSelectorAlwaysEditGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorAlwaysEditGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>    
 
    <managed-bean>
       <managed-bean-name>ParameterTextAreaGenerator</managed-bean-name>
@@ -262,6 +271,18 @@
          <renderer-type>ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRenderer</renderer-type>
          <renderer-class>ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRenderer</renderer-class>
       </renderer>
+      
+      <renderer>
+          <component-family>javax.faces.SelectOne</component-family>
+          <renderer-type>ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorRenderer</renderer-type>
+          <renderer-class>ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorRenderer</renderer-class>
+      </renderer>
+
+      <renderer>
+          <component-family>javax.faces.SelectMany</component-family>
+          <renderer-type>ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorRenderer</renderer-type>
+          <renderer-class>ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorRenderer</renderer-class>
+      </renderer>      
      
    </render-kit>
 

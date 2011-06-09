@@ -33,6 +33,8 @@ import org.springframework.util.FileCopyUtils;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
@@ -148,7 +150,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         }
     }
 
-    private void processDigiDocDownloadRequest(HttpServletRequest req, HttpServletResponse res, boolean redirectToLogin, NodeRef nodeRef, int dataFileId)
+    private void processDigiDocDownloadRequest(HttpServletRequest req, HttpServletResponse res, boolean redirectToLogin, NodeRef dDocRef, int dataFileId)
             throws SocketException, IOException {
         Log logger = getLogger();
 
@@ -157,9 +159,10 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         PermissionService permissionService = serviceRegistry.getPermissionService();
         // check that the user has at least READ_CONTENT access - else redirect to the login
         // page
-        if (permissionService.hasPermission(nodeRef, PermissionService.READ_CONTENT) == AccessStatus.DENIED) {
+        NodeRef docRef = BeanHelper.getGeneralService().getAncestorNodeRefWithType(dDocRef, DocumentCommonModel.Types.DOCUMENT, true, false);
+        if (permissionService.hasPermission(docRef, DocumentCommonModel.Privileges.VIEW_DOCUMENT_FILES) == AccessStatus.DENIED) {
             if (logger.isDebugEnabled()) {
-                logger.debug("User does not have permissions to read content for NodeRef: " + nodeRef.toString());
+                logger.debug("User does not have permissions to read content for NodeRef: " + dDocRef.toString());
             }
 
             if (redirectToLogin) {
@@ -183,7 +186,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         }
 
         // check If-Modified-Since header and set Last-Modified header as appropriate
-        Date modified = (Date) nodeService.getProperty(nodeRef, ContentModel.PROP_MODIFIED);
+        Date modified = (Date) nodeService.getProperty(dDocRef, ContentModel.PROP_MODIFIED);
         if (modified != null) {
             long modifiedSince = req.getDateHeader("If-Modified-Since");
             if (modifiedSince > 0L) {
@@ -210,7 +213,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
         try {
             WebApplicationContext webAppContext = WebApplicationContextUtils.getWebApplicationContext(getServletContext());
             SignatureService signatureService = (SignatureService) webAppContext.getBean(SignatureService.BEAN_NAME);
-            SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(nodeRef, true);
+            SignatureItemsAndDataItems items = signatureService.getDataItemsAndSignatureItems(dDocRef, true);
             DataItem item = items.getDataItems().get(dataFileId);
 
             long size = item.getSize();
@@ -224,7 +227,7 @@ public class DownloadDigiDocContentServlet extends DownloadContentServlet {
             ServletOutputStream os = res.getOutputStream();
             FileCopyUtils.copy(item.getData(), os); // closes both streams
         } catch (SignatureException e) {
-            logger.error("Failed to fetch a document from .ddoc, noderef: " + nodeRef + ", id = " + dataFileId, e);
+            logger.error("Failed to fetch a document from .ddoc, noderef: " + dDocRef + ", id = " + dataFileId, e);
         }
     }
 

@@ -8,6 +8,7 @@ import javax.faces.event.ActionEvent;
 import javax.faces.event.FacesEvent;
 
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
 
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
@@ -64,6 +65,7 @@ public class UIMenuComponent extends UIComponentBase {
             // We mustn't clear the stack and therefore reset breadcrumb for browse MenuItems
             if ((!(link.getActionListener() != null && link.getActionListener().getExpressionString() != null && link.getActionListener().getExpressionString()
                     .equals(MenuBean.UPDATE_TREE_ACTTIONLISTENER)) && !createNewDocument) || forceReset) {
+                Utils.setRequestValidationDisabled(context); // Disable validation if user is navigating away
                 MenuBean.clearViewStack(menuBean.getActiveItemId(), clientId);
             }
 

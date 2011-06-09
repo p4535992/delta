@@ -163,7 +163,7 @@ function fixIESelectMinWidth(context) {
          context = $jQ('#container-content');
       }
 
-      $jQ("td select").not('.with-pager select').not(".modalpopup-content-inner select[name$='_results']").not("#aoscModal-container-modalpopup select").each(function() {
+      $jQ("td select").not('.with-pager select').not(".modalpopup-content-inner select[name$='_results']").not("#aoscModal-container-modalpopup select").not(".genericpicker-results").each(function() {
 			var select = $jQ(this);
 			if(select.outerWidth() < 165) {
 				select.css('width', '170px');
@@ -284,10 +284,10 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
    autocompleters.push(function () {
       var jQInput = $jQ("#"+escapeId4JQ(clientId));
       var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
-      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, minChars: 3, suggestAll: 1, delay: 50, 
+      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, minChars: 3, suggestAll: 1, delay: 50,
       onItemSelect: function (li) {
          processButtonState();
-      }, 
+      },
       formatResult: function (data) {
          var end = data.indexOf("<");
          if (end > 0) {
@@ -298,7 +298,7 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
       });
 
       suggest.bind("autoComplete", function(e, data){
-      	ajaxSubmit(clientId, containerClientId, [], submitUri, {data : data.newVal});
+      	ajaxSubmit(clientId, containerClientId, [], submitUri, {'data' : data.newVal});
       });
       jQInput.focus(function() {
          jQInput.keydown();
@@ -641,7 +641,7 @@ function ajaxSubmit(componentClientId, componentContainerId, submittableParams, 
    if (payload != null) {
       postData += "&" + $jQ.param(payload);
    }
-   
+
    $jQ.ajax({
       type: 'POST',
       url: uri,
@@ -843,20 +843,26 @@ $jQ(document).ready(function() {
 			return false;
 	   }
 	});
-   
+
    $jQ(".genericpicker-input").live('keyup', function (event) {
       var input = $jQ(this);
       var value = input.val();
       var callback = input.attr('datasrc');
+      // If possible, submit filter value
+      var filterValue = 0;
+      var filter = input.prev();
+      if (filter != null) {
+         filterValue = filter.attr('value');
+      }
       if (value && value.length % 3 == 0) {
          $jQ.ajax({
             type: 'POST',
             url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",
-            data: $jQ.param({contains : value, pickerCallback : callback}),
+            data: $jQ.param({'contains' : value, 'pickerCallback' : callback, 'filterValue' : filterValue}),
             mode: 'queue',
             success: function(responseText) {
                var tbody = input.closest('tbody');
-               var select = tbody.find('select');
+               var select = tbody.find('.genericpicker-results');
                select.children().remove();
                var index = responseText.indexOf("|");
                select.attr("size", responseText.substring(0, index))
@@ -972,7 +978,11 @@ $jQ(document).ready(function() {
       var jqSelect = $jQ(this);
       if(!jqSelect.hasClass('noValChangeTooltip')) {
          var selected = jqSelect.find("option:selected");
-         jqSelect.attr("title", selected.text());
+         if(!jqSelect.hasClass('noOptionTitle')){
+            jqSelect.attr("title", selected.text());
+         } else {
+            jqSelect.attr("title", selected.attr("title"));
+         }
       }
    });
 
@@ -1112,7 +1122,11 @@ function initSelectTooltips(selects) {
          var existingTooltip = jqSelect.attr("title");
          if(existingTooltip==null || existingTooltip.trim().length == 0) {
             var selected = jqSelect.find("option:selected");
-            jqSelect.attr("title", selected.text());
+            if(!jqSelect.hasClass('noOptionTitle')){
+               jqSelect.attr("title", selected.text());
+            } else {
+               jqSelect.attr("title", selected.attr("title"));
+            }
          }
       }
    });
@@ -1169,6 +1183,14 @@ function handleHtmlLoaded(context, selects) {
    jQuery("input.date", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', yearRange: '-100:+100', duration: '' });
    jQuery("input.sysdate", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', defaultDate: +7, yearRange: '-100:+100', duration: '' });
 
+   // trigger keyup event (for validation & textarea resize) on paste. Can't use live() because of IE
+   $jQ("textarea, input[type='text']", context).bind("paste", function(){
+      var input = $jQ(this);// pasted value not jet assigned
+      setTimeout(function() {
+         input.keyup();
+      }, 100);
+   });
+
    // Darn IE7 bugs...
    fixIESelectMinWidth(context);
    fixIEDropdownMinWidth("#titlebar .extra-actions .dropdown-menu", "#titlebar .extra-actions .dropdown-menu li", context);
@@ -1177,9 +1199,15 @@ function handleHtmlLoaded(context, selects) {
    zIndexWorkaround(context);
 
    if(isIE()) {
-	   $jQ("option").each(function() {
-		   $jQ(this).attr('title', $jQ(this).text());
-	   });
+      var jqSelects = (selects==undefined) ? $jQ("select") : selects;
+      jqSelects.each(function(){
+         var jqSelect = $jQ(this);
+         if(!jqSelect.hasClass('noOptionTitle')) {
+            jqSelect.children().each(function() {
+               $jQ(this).attr('title', $jQ(this).text());
+            });
+         }
+      });
    }
 
    /**

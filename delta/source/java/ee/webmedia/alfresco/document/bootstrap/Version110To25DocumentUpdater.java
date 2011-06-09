@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.bootstrap;
 
+import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateDatePropertyRangeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
 import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
 
@@ -24,8 +26,10 @@ import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.bootstrap.AbstractNodeUpdater;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 
 public class Version110To25DocumentUpdater extends AbstractNodeUpdater {
 
@@ -45,6 +49,63 @@ public class Version110To25DocumentUpdater extends AbstractNodeUpdater {
     private Date limitCreatedEnd;
     private Date limitRegisteredBegin;
     private Date limitRegisteredEnd;
+    private final Set<NodeRef> additionalDocumentsForPrivilegeUpdater = new HashSet<NodeRef>();
+
+    @Override
+    protected void executeUpdater() throws Exception {
+        NodeRef moduleComponentNodeRef = generalService.getNodeRef("/sys:system-registry/module:modules/module:simdhs/module:components/module:documentPrivilegesUpdater",
+                new StoreRef("system://system"));
+        if (moduleComponentNodeRef == null) {
+            log.info("Module component documentPrivilegesUpdater not found in system-registry");
+        } else {
+            Date executionDate = (Date) nodeService.getProperty(moduleComponentNodeRef, QName.createQName("module", "executionDate", serviceRegistry.getNamespaceService()));
+            log.info("Found module component documentPrivilegesUpdater with executionDate = " + executionDate);
+            if (executionDate != null) {
+                Date now = new Date();
+
+                List<String> queryParts = new ArrayList<String>();
+                queryParts.add(generateTypeQuery(DocumentCommonModel.Types.DOCUMENT));
+                queryParts.add(generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE));
+                queryParts.add(generateDatePropertyRangeQuery(executionDate, now, ContentModel.PROP_MODIFIED));
+                String query = joinQueryPartsAnd(queryParts);
+                log.info("Searching additional documents for DocumentPrivilegesUpdater; query: " + query);
+                ResultSet resultSet = searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query);
+                try {
+                    log.info("Found " + resultSet.length() + " nodes from repository store "
+                            + resultSet.getResultSetMetaData().getSearchParameters().getStores().get(0).getIdentifier()
+                            + ", loading...");
+                    additionalDocumentsForPrivilegeUpdater.addAll(resultSet.getNodeRefs());
+                } finally {
+                    resultSet.close();
+                }
+
+                queryParts = new ArrayList<String>();
+                queryParts.add(generateTypeQuery(WorkflowCommonModel.Types.TASK));
+                queryParts.add(SearchUtil.joinQueryPartsOr(Arrays.asList(generateDatePropertyRangeQuery(executionDate, now, WorkflowCommonModel.Props.STARTED_DATE_TIME),
+                        generateDatePropertyRangeQuery(executionDate, now, WorkflowCommonModel.Props.STOPPED_DATE_TIME))));
+                query = joinQueryPartsAnd(queryParts);
+                log.info("Searching additional documents (by tasks) for DocumentPrivilegesUpdater; query: " + query);
+                resultSet = searchService.query(generalService.getStore(), SearchService.LANGUAGE_LUCENE, query);
+                try {
+                    log.info("Found " + resultSet.length() + " nodes from repository store "
+                            + resultSet.getResultSetMetaData().getSearchParameters().getStores().get(0).getIdentifier()
+                            + ", loading...");
+                    for (NodeRef nodeRef : resultSet.getNodeRefs()) {
+                        NodeRef documentRef = generalService.getAncestorNodeRefWithType(nodeRef, DocumentCommonModel.Types.DOCUMENT, true, true);
+                        if (documentRef != null) {
+                            additionalDocumentsForPrivilegeUpdater.add(documentRef);
+                        }
+                    }
+                } finally {
+                    resultSet.close();
+                }
+
+                log.info("Loaded total " + additionalDocumentsForPrivilegeUpdater.size() + " nodes from repository");
+            }
+        }
+
+        super.executeUpdater();
+    }
 
     @Override
     protected List<ResultSet> getNodeLoadingResultSet() throws Exception {
@@ -56,8 +117,8 @@ public class Version110To25DocumentUpdater extends AbstractNodeUpdater {
             log.warn("Limit is enabled, so only the following documents are updated in document store (archival store is skipped):"
                     + "\n  * documents created between " + dateFormat.format(limitCreatedBegin) + " and " + dateFormat.format(limitCreatedEnd)
                     + "\n  * documents registered between " + dateFormat.format(limitRegisteredBegin) + " and " + dateFormat.format(limitRegisteredEnd));
-            queryParts.add(SearchUtil.joinQueryPartsOr(Arrays.asList(SearchUtil.generateDatePropertyRangeQuery(limitCreatedBegin, limitCreatedEnd, ContentModel.PROP_CREATED),
-                    SearchUtil.generateDatePropertyRangeQuery(limitRegisteredBegin, limitRegisteredEnd, DocumentCommonModel.Props.REG_DATE_TIME))));
+            queryParts.add(SearchUtil.joinQueryPartsOr(Arrays.asList(generateDatePropertyRangeQuery(limitCreatedBegin, limitCreatedEnd, ContentModel.PROP_CREATED),
+                    generateDatePropertyRangeQuery(limitRegisteredBegin, limitRegisteredEnd, DocumentCommonModel.Props.REG_DATE_TIME))));
         } else {
             stores.add(generalService.getArchivalsStoreRef());
         }
@@ -111,15 +172,28 @@ public class Version110To25DocumentUpdater extends AbstractNodeUpdater {
         // Updaters which consume Map<String, Object> style properties
         Map<String, Object> newProps2 = RepoUtil.toStringProperties(newProps);
 
-        Pair<Boolean, String> documentPrivilegesUpdaterResult = documentPrivilegesUpdater.updatePrivileges(nodeRef, aspects, newProps2);
-        info.add("documentPrivilegesUpdater," + documentPrivilegesUpdaterResult.getSecond());
+        if (!aspects.contains(PrivilegeModel.Aspects.USER_GROUP_MAPPING)) {
+            nodeService.addAspect(nodeRef, PrivilegeModel.Aspects.USER_GROUP_MAPPING, null);
+            info.add("userGroupMappingAspectAdded");
+        } else {
+            info.add("userGroupMappingAspectExists");
+        }
+
+        // DocumentPrivilegeUpdater is run separately
+        // Only run it here for certain documents
+        if (additionalDocumentsForPrivilegeUpdater.contains(nodeRef)) {
+            Pair<Boolean, String> documentPrivilegesUpdaterResult = documentPrivilegesUpdater.updatePrivileges(nodeRef, aspects, newProps2);
+            info.add("documentPrivilegesUpdater," + documentPrivilegesUpdaterResult.getSecond());
+        } else {
+            info.add("documentPrivilegesUpdaterSkipped");
+        }
 
         // Final save
         newProps2.put(ContentModel.PROP_MODIFIER.toString(), origProps.get(ContentModel.PROP_MODIFIER));
         if (incomingLetterADRVisibilityUpdaterResult.getFirst()) {
-            newProps2.put(ContentModel.PROP_MODIFIED.toPrefixString(), new Date());
+            newProps2.put(ContentModel.PROP_MODIFIED.toString(), new Date());
         } else {
-            newProps2.put(ContentModel.PROP_MODIFIED.toPrefixString(), origProps.get(ContentModel.PROP_MODIFIED));
+            newProps2.put(ContentModel.PROP_MODIFIED.toString(), origProps.get(ContentModel.PROP_MODIFIED));
         }
         nodeService.setProperties(nodeRef, generalService.getPropertiesIgnoringSystem(newProps2));
 

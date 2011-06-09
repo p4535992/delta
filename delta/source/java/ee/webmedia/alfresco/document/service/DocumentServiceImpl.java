@@ -53,6 +53,7 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.i18n.I18NUtil;
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.content.transform.ContentTransformer;
 import org.alfresco.repo.node.NodeServicePolicies;
@@ -132,11 +133,11 @@ import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.imap.model.ImapModel;
+import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService.PrivilegesChangedListener;
-import ee.webmedia.alfresco.privilege.service.PrivilegeServiceImpl.PrivilegeMappings;
 import ee.webmedia.alfresco.register.model.Register;
 import ee.webmedia.alfresco.register.service.RegisterService;
 import ee.webmedia.alfresco.series.model.Series;
@@ -153,6 +154,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -510,6 +512,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         boolean propsChanged = saveChildNodes(docNode);
         // add any associations added in the UI
         propsChanged |= generalService.saveAddedAssocs(docNode) > 0;
+        for (Map<String, AssociationRef> typedAssoc : docNode.getAddedAssociations().values()) {
+            for (AssociationRef assoc : typedAssoc.values()) {
+                updateModifiedDateTime(assoc.getSourceRef(), assoc.getTargetRef());
+            }
+        }
 
         makeChildNodesSearchable(docNodeRef);
 
@@ -1305,11 +1312,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
     /** Add association from new to original doc */
     protected void addFollowupAssoc(NodeRef followUpDocRef, NodeRef initialDocRef) {
-        nodeService.createAssociation(followUpDocRef, initialDocRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
+        createAssoc(followUpDocRef, initialDocRef, DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP);
     }
 
     protected void addReplyAssoc(NodeRef replyDocRef, NodeRef initialDocRef) {
-        nodeService.createAssociation(replyDocRef, initialDocRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
+        createAssoc(replyDocRef, initialDocRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
     }
 
     @Override
@@ -1525,6 +1532,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         assocs.addAll(nodeService.getSourceAssocs(nodeRef, RegexQNamePattern.MATCH_ALL));
         for (AssociationRef assoc : assocs) {
             nodeService.removeAssociation(assoc.getSourceRef(), assoc.getTargetRef(), assoc.getTypeQName());
+            updateModifiedDateTime(assoc.getSourceRef(), assoc.getTargetRef());
         }
         updateParentNodesContainingDocsCount(nodeRef, false);
         nodeService.deleteNode(nodeRef);
@@ -1602,7 +1610,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
      * NOTE: association with case is defined differently
      */
     @Override
-    public void deleteAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef, QName assocQName) {
+    public void deleteAssoc(final NodeRef sourceNodeRef, final NodeRef targetNodeRef, QName assocQName) {
         if (assocQName == null) {
             assocQName = DocumentCommonModel.Assocs.DOCUMENT_2_DOCUMENT;
         }
@@ -1611,6 +1619,31 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             nodeService.removeAssociation(targetNodeRef, sourceNodeRef, assocQName);
         } else {
             nodeService.removeAssociation(sourceNodeRef, targetNodeRef, assocQName);
+        }
+        updateModifiedDateTime(sourceNodeRef, targetNodeRef);
+    }
+
+    @Override
+    public void createAssoc(final NodeRef sourceNodeRef, final NodeRef targetNodeRef, QName assocQName) {
+        nodeService.createAssociation(sourceNodeRef, targetNodeRef, assocQName);
+        updateModifiedDateTime(sourceNodeRef, targetNodeRef);
+    }
+
+    /*
+     * If associations between two documents are added/deleted, then update modified time of both documents.
+     * Because we need ADR to detect changes based on modified time.
+     */
+    private void updateModifiedDateTime(final NodeRef firstDocNodeRef, final NodeRef secondDocNodeRef) {
+        if (dictionaryService.isSubClass(nodeService.getType(firstDocNodeRef), DocumentCommonModel.Types.DOCUMENT)
+                && dictionaryService.isSubClass(nodeService.getType(secondDocNodeRef), DocumentCommonModel.Types.DOCUMENT)) {
+            AuthenticationUtil.runAs(new RunAsWork<Void>() {
+                @Override
+                public Void doWork() throws Exception {
+                    nodeService.setProperty(firstDocNodeRef, ContentModel.PROP_MODIFIED, null);
+                    nodeService.setProperty(secondDocNodeRef, ContentModel.PROP_MODIFIED, null);
+                    return null;
+                }
+            }, AuthenticationUtil.getSystemUserName());
         }
     }
 

@@ -28,8 +28,6 @@
    
    <bean id="documentTemplatesRootBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="documentTemplateRootBootstrap" />
-      <property name="sinceVersion" value="1.1.1.27" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="bootstrapViews">

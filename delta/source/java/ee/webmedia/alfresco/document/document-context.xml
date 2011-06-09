@@ -159,8 +159,6 @@
 
    <bean id="documentDraftsSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="documentDraftsSpacesBootstrap" />
-      <property name="sinceVersion" value="1.1.1.15" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="bootstrapViews">
@@ -177,8 +175,6 @@
 
    <bean id="documentParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="parametersSpacesBootstrap" />
-      <property name="sinceVersion" value="1.2.1.6" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -199,8 +195,6 @@
    
    <bean id="documentParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="parametersSpacesBootstrap3" />
-      <property name="sinceVersion" value="2.1.1" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -221,8 +215,6 @@
    
    <bean id="documentParametersBootstrap4" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="parametersSpacesBootstrap4" />
-      <property name="sinceVersion" value="2.2.1.15" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -243,8 +235,6 @@
    
    <bean id="documentParametersBootstrap5" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="parametersSpacesBootstrap5" />
-      <property name="sinceVersion" value="2.3.1.12" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -299,7 +289,6 @@
    <!-- Used to remove sequences of document copying bug (CL task 131723) -->
    <bean id="searchableSendModeUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableSendModeUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="searchableSendModeUpdater" />
       <property name="executeOnceOnly" value="false" />
       <property name="sendOutService" ref="sendOutService" />
       <property name="searchableSendModeUpdateBeginDate" value="${searchableSendModeUpdate.begin.date}" />
@@ -309,7 +298,6 @@
    <!-- Normally should be run only once, execution depends on searchablePropertiesUpdater.enabled value -->
    <bean id="searchablePropertiesUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchablePropertiesUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="searchablePropertiesUpdater" />
       <property name="executeOnceOnly" value="false" />
       <property name="sendOutService" ref="sendOutService" />
       <property name="documentService" ref="documentService" />
@@ -319,7 +307,6 @@
    <!-- Used to fix mimeType on files (CL task 122959) -->
    <bean id="fileMimeTypeUpdater" class="ee.webmedia.alfresco.document.bootstrap.FileMimeTypeUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="fileMimeTypeUpdater" />
       <property name="executeOnceOnly" value="false" />
       <property name="mimetypeService" ref="mimetypeService" />
       <property name="beginDate" value="${fileMimeTypeUpdater.begin.date}" />
@@ -328,7 +315,6 @@
    <!-- Used to fix mimeType on files (CL task 122959) -->
    <bean id="generatedFileMimeTypeUpdater" class="ee.webmedia.alfresco.document.bootstrap.GeneratedFileMimeTypeUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="generatedFileMimeTypeUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="mimetypeService" ref="mimetypeService" />
    </bean>    
@@ -340,14 +326,12 @@
    <!-- Perform document model changes that were introduced in 2.1, on existing data -->
    <bean id="version21DocumentUpdater" class="ee.webmedia.alfresco.document.bootstrap.Version21DocumentUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="version21DocumentUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="disabled" value="${updater.version110To25Combined}" />
    </bean>    
    
    <bean id="errandAspectUpdater" class="ee.webmedia.alfresco.document.bootstrap.ErrandAspectUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="errandAspectUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -360,7 +344,6 @@
    <!-- Removes docspec:template aspect from docsub:vacationOrder documents -->
    <bean id="vacationOrderTemplateAspectUpdater" class="ee.webmedia.alfresco.document.bootstrap.VacationOrderTemplateAspectUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="vacationOrderTemplateAspectUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -374,7 +357,6 @@
    <!-- Used to update contract party model (CL task 152368) -->
    <bean id="contractPartyUpdater" class="ee.webmedia.alfresco.document.bootstrap.ContractPartyUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="contractPartyUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -386,7 +368,6 @@
    <!-- Used to update contract party model (CL task 152368) -->
    <bean id="contractDetailsUpdater" class="ee.webmedia.alfresco.document.bootstrap.ContractDetailsUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="contractDetailsUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -399,7 +380,6 @@
    <!-- Used to add sendinfos to contracts (CL task 156770) -->
    <bean id="contractSendInfoUpdater" class="ee.webmedia.alfresco.document.bootstrap.ContractSendInfoUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="contractSendInfoUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -412,7 +392,6 @@
    <!-- Used to add dummy workflow to old incoming letters to prevent them from appearing in "Menetluses" menu (CL task 158704) -->
    <bean id="incomingLetterDummyWorkflowUpdater" class="ee.webmedia.alfresco.document.bootstrap.IncomingLetterDummyWorkflowUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="incomingLetterDummyWorkflowUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -425,7 +404,6 @@
    <!-- Populates shortRegNumber field for registered documents. -->
    <bean id="shortRegNumberUpdater" class="ee.webmedia.alfresco.document.bootstrap.ShortRegNumberUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="shortRegNumberUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -438,7 +416,6 @@
    <!-- Update documents that are imported from Postipoiss. (CL task 153829) -->
    <bean id="postipoissImportDocumentsUpdater" class="ee.webmedia.alfresco.document.bootstrap.PostipoissImportDocumentsUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="postipoissImportDocumentsUpdater" />
       <property name="executeOnceOnly" value="false" />
       <property name="dependsOn">
          <list>
@@ -468,27 +445,24 @@
 
    <bean id="documentPrivilegesUpdater" class="ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="documentPrivilegesUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
             <ref bean="postipoissImportDocumentsUpdater" />
          </list>
       </property>
-      <property name="disabled" value="${updater.version110To25Combined}" />
+      <property name="disabled" value="true" />
 
-      <property name="permissionService" ref="PermissionService" />
       <property name="privilegeService" ref="PrivilegeService" />
       <property name="documentService" ref="DocumentService" />
       <property name="fileService" ref="FileService" />
       <property name="workflowService" ref="WmWorkflowService" />
-      <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
+      <property name="batchSize" value="10" /><!-- for each document all tasks are considered and all related documents -->
    </bean>
    
    <!-- Changes modified time to make registered but not finished incoming letters visible in ADR. -->
    <bean id="incomingLetterADRVisibilityUpdater" class="ee.webmedia.alfresco.document.bootstrap.IncomingLetterADRVisibilityUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="incomingLetterADRVisibilityUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -500,7 +474,6 @@
 
    <bean id="version110To25DocumentUpdater" class="ee.webmedia.alfresco.document.bootstrap.Version110To25DocumentUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="version110To25DocumentUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -530,7 +503,6 @@
    <!-- this bean id was named by mistake with capital letter, but shouldn't be changed, because it has been run on some environments -->
    <bean id="SearchableHasStartedCompoundWorkflowsUpdater" class="ee.webmedia.alfresco.document.bootstrap.SearchableHasStartedCompoundWorkflowsUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="searchableHasStartedCompoundWorkflowsUpdater" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -540,6 +512,17 @@
    </bean>
 
    <!-- =================================================================== -->
+
+   <bean id="documentInheritPermissionsUpdater" class="ee.webmedia.alfresco.document.bootstrap.DocumentInheritPermissionsUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="SearchableHasStartedCompoundWorkflowsUpdater" />
+         </list>
+      </property>
+      <property name="disabled" value="true" />
+   </bean>
 
    <bean id="documentWorkflowStatusEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener">
       <property name="workflowService" ref="WmWorkflowService" />

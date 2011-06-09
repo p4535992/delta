@@ -11,7 +11,6 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.search.ResultSet;
 import org.alfresco.service.cmr.search.SearchService;
-import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
@@ -41,7 +40,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
  */
 public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentPrivilegesUpdater.class);
-    private PermissionService permissionService;
     private PrivilegeService privilegeService;
     private DocumentService documentService;
     private FileService fileService;
@@ -159,12 +157,9 @@ public class DocumentPrivilegesUpdater extends AbstractNodeUpdater {
             }
         }
 
-        permissionService.setInheritParentPermissions(docRef, false);
+        // This is not done in 1.10
+        // permissionService.setInheritParentPermissions(docRef, false);
         return new Pair<Boolean, String>(true, "privilegesUpdated");
-    }
-
-    public void setPermissionService(PermissionService permissionService) {
-        this.permissionService = permissionService;
     }
 
     public void setPrivilegeService(PrivilegeService privilegeService) {

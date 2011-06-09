@@ -99,8 +99,6 @@
 
    <bean id="documentSearchFiltersSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="documentSearchFiltersSpacesBootstrap" />
-      <property name="sinceVersion" value="1.4.1.18" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="bootstrapViews">

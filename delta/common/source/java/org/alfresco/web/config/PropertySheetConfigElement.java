@@ -1,3 +1,4 @@
+//@formatter: off
 /*
  * Copyright (C) 2005-2007 Alfresco Software Limited.
  *
@@ -152,10 +153,10 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
     */
    protected void addProperty(String name, String displayLabel, String displayLabelId, String readOnly, 
                                 String converter, String inView, String inEdit, String compGenerator,
-                                String ignoreIfMissing)
+                                String ignoreIfMissing, String isRendered)
    {
       addItem(new PropertyConfig(name, displayLabel, displayLabelId, Boolean.parseBoolean(readOnly), 
-            converter, inView, inEdit, compGenerator, ignoreIfMissing));
+            converter, inView, inEdit, compGenerator, ignoreIfMissing, isRendered));
    }
    
    /**
@@ -286,6 +287,7 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
       protected boolean showInViewMode = true;
       protected boolean showInEditMode = true;
       protected boolean ignoreIfMissing = true;
+      protected boolean rendered = true;
       
         public ItemConfig(String name) {//
             if (name == null || name.length() == 0) {
@@ -296,7 +298,7 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
 
       public ItemConfig(String name, String displayLabel, String displayLabelId, 
             boolean readOnly, String converter, String inView, String inEdit, 
-            String compGenerator, String ignoreIfMissing)
+            String compGenerator, String ignoreIfMissing, String isRendered)
       {
          this(name);
          this.displayLabel = displayLabel;
@@ -313,6 +315,9 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
          {
             this.showInEditMode = Boolean.parseBoolean(inEdit);
          }
+         if (isRendered != null) {
+             rendered = Boolean.parseBoolean(isRendered);
+         }         
          if (ignoreIfMissing != null)
          {
             this.ignoreIfMissing = Boolean.parseBoolean(ignoreIfMissing);
@@ -375,6 +380,10 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
          return this.showInEditMode;
       }
       
+      public boolean isRendered() {
+          return rendered;
+      }      
+      
       /**
        * @return The name of a bean that generates a component to represent this item
        */
@@ -418,10 +427,10 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
    {
       public PropertyConfig(String name, String displayLabel, String displayLabelId, 
             boolean readOnly, String converter, String inView, String inEdit, 
-            String compGenerator, String ignoreIfMissing)
+            String compGenerator, String ignoreIfMissing, String isRendered)
       {
          super(name, displayLabel, displayLabelId, readOnly, converter, 
-               inView, inEdit, compGenerator, ignoreIfMissing);
+               inView, inEdit, compGenerator, ignoreIfMissing, isRendered);
       }
    }
    
@@ -435,7 +444,7 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
             String compGenerator)
       {
          super(name, displayLabel, displayLabelId, readOnly, converter, 
-               inView, inEdit, compGenerator, null);
+               inView, inEdit, compGenerator, null, null);
       }
    }
    
@@ -449,7 +458,7 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
             String compGenerator)
       {
          super(name, displayLabel, displayLabelId, readOnly, converter, 
-               inView, inEdit, compGenerator, null);
+               inView, inEdit, compGenerator, null, null);
       }
    }
    
@@ -462,7 +471,8 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
             String inView, String inEdit, String compGenerator)
       {
          super(name, displayLabel, displayLabelId, false, null, 
-               inView, inEdit, compGenerator, null);
+               inView, inEdit, compGenerator, null, null);
       }
    }
 }
+//@formatter: on

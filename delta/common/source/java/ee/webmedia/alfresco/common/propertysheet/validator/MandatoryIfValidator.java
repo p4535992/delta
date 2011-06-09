@@ -148,7 +148,7 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
             }
         }
 
-        boolean required = allMandatory && operands.contains(Boolean.FALSE);
+        boolean required = allMandatory && operands.contains(Boolean.FALSE) || !operands.contains(Boolean.FALSE);
         input.setRequired(required);
         if (!required) {
             return;

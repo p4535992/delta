@@ -7,16 +7,18 @@ package ee.webmedia.alfresco.document.einvoice.model;
  */
 
 public enum InvoiceType {
-    ETT("ETT", null),
-    DEB("DEB", "D"),
-    CRE("CRE", "K"),
-    ETP("ETP", "KS");
+    ETT("Ettemaksuarve", "ETT", null),
+    DEB("Ostuarve", "DEB", "D"),
+    CRE("Kreeditarve", "CRE", "K"),
+    ETP("Erineva TP arve", "ETP", "KS");
 
     private String value;
+    private String comment;
     private String transactionXmlValue;
 
-    InvoiceType(String value, String transactionXmlValue) {
+    InvoiceType(String value, String comment, String transactionXmlValue) {
         this.value = value;
+        this.comment = comment;
         this.transactionXmlValue = transactionXmlValue;
     }
 
@@ -35,5 +37,18 @@ public enum InvoiceType {
             }
         }
         return null;
+    }
+
+    public static InvoiceType getInvoiceTypeByComment(String comment) {
+        for (InvoiceType invoiceType : InvoiceType.values()) {
+            if (invoiceType.getComment().equalsIgnoreCase(comment)) {
+                return invoiceType;
+            }
+        }
+        return null;
+    }
+
+    public String getComment() {
+        return comment;
     }
 }

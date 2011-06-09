@@ -29,8 +29,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
    <bean id="documentTypeSpacesBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="documentTypeSpacesBootstrap" />
-      <property name="sinceVersion" value="1.1.1.20" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="bootstrapViews">
@@ -46,8 +44,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
    
    <bean id="documentTypeSpacesBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="documentTypeSpacesBootstrap2" />
-      <property name="sinceVersion" value="2.1.1" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
@@ -95,8 +91,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
 
    <bean id="changeVacationOrderNameBootstrap" class="ee.webmedia.alfresco.document.type.bootstrap.ChangeVacationOrderNameBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="changeVacationOrderNameBootstrap" />
-      <property name="sinceVersion" value="1.9.1.13" />
       <property name="executeOnceOnly" value="true" />
       <property name="generalService" ref="GeneralService" />
       <property name="dependsOn">
@@ -108,8 +102,6 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
    
    <bean id="changeMinistersOrderNameBootstrap" class="ee.webmedia.alfresco.document.type.bootstrap.ChangeMinistersOrderNameBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="changeMinistersOrderNameBootstrap" />
-      <property name="sinceVersion" value="2.2.1.1" />
       <property name="executeOnceOnly" value="true" />
       <property name="generalService" ref="GeneralService" />
       <property name="dependsOn">

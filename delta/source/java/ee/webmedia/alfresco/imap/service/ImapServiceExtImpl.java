@@ -195,7 +195,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
                 properties.put(DocumentSpecificModel.Props.TRANSMITTAL_MODE, TransmittalMode.EMAIL.getValueName());
 
                 properties.put(DocumentCommonModel.Props.DOC_STATUS, DocumentStatus.WORKING.getValueName());
-                properties.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.DIGITAL.getValueName());
+                properties.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.XML.getValueName());
                 NodeRef nodeRef = docInfo.getNodeRef();
                 nodeService.addProperties(nodeRef, properties);
                 newInvoices.add(nodeRef);
@@ -203,7 +203,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
             for (NodeRef docRef : newInvoices) {
                 // TODO: optimize?
-                saveAttachments(docRef, mimeMessage, true, invoiceRefToAttachment);
+                saveAttachments(docRef, mimeMessage, false, invoiceRefToAttachment);
                 documentLogService.addDocumentLog(docRef, I18NUtil.getMessage("document_log_status_imported", I18NUtil.getMessage("document_log_creator_imap")) //
                         , I18NUtil.getMessage("document_log_creator_imap"));
             }

@@ -70,8 +70,6 @@
 
    <bean id="addressbookRootBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="addressbookRootBootstrap" />
-      <property name="sinceVersion" value="1.1.1.1" />
       <property name="executeOnceOnly" value="true" />
 
       <property name="importer" ref="spacesBootstrap" />
@@ -88,7 +86,6 @@
    
    <bean id="taskCapablePropertyUpdater4" class="ee.webmedia.alfresco.addressbook.bootstrap.TaskCapablePropertyUpdaterV2" parent="abstractNodeUpdater" >
       <property name="moduleId" value="common" />
-      <property name="name" value="taskCapablePropertyUpdater4" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -97,6 +94,15 @@
       </property>
    </bean>     
 
+   <bean id="addressbookPermissionsUpdateBootstrap" class="ee.webmedia.alfresco.addressbook.bootstrap.AddressbookPermissionsUpdateBootstrap" parent="module.baseComponent" >
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="addressbookRootBootstrap" />
+         </list>
+      </property>
+   </bean>
 
    <!-- START: web beans: -->
 

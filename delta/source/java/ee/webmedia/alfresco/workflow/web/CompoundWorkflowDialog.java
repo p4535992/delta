@@ -515,6 +515,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         Boolean missingInformationTasks = null;
         Set<String> missingOwnerMessageKeys = null;
         boolean hasForbiddenFlowsForFinished = false;
+        DueDateRegressionHelper regressionTest = new DueDateRegressionHelper();
         for (Workflow block : compoundWorkflow.getWorkflows()) {
             boolean foundOwner = false;
             QName blockType = block.getNode().getType();
@@ -592,8 +593,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                         MessageUtil.addErrorMessage(context, "task_name_and_due_required", taskOwnerMsg);
                         break;
                     }
-
                 }
+                regressionTest.checkDueDate(task);
             }
             if (activeResponsibleAssigneeNeeded && !activeResponsibleAssigneeAssigned) {
                 missingOwnerAssignment = true;
@@ -621,6 +622,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                 }
             }
         }
+        valid &= regressionTest.valid;
         if (missingOwnerAssignment) {
             valid = false;
             MessageUtil.addErrorMessage(context, "workflow_save_error_missingOwner_assignmentWorkflow1");
@@ -643,6 +645,54 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         }
 
         return valid;
+    }
+
+    /**
+     * Helper class that validates that dueDates are not getting smaller for consecutive tasks(that run after each other)
+     * 
+     * @author Ats Uiboupin
+     */
+    private static class DueDateRegressionHelper {
+        boolean valid = true;
+        Date earliestAllowedDueDate;
+        Date latestDueDateParallel;
+
+        private void checkDueDate(Task task) {
+            Date taskDueDate = task.getDueDate();
+            if (taskDueDate == null) {
+                return;
+            }
+            if (earliestAllowedDueDate == null) {
+                earliestAllowedDueDate = taskDueDate;
+                return;
+            }
+            if (task.getParent().isType(WorkflowSpecificModel.CAN_START_PARALLEL)) {
+                if (latestDueDateParallel == null || latestDueDateParallel.before(taskDueDate)) {
+                    latestDueDateParallel = taskDueDate;
+                }
+            } else {
+                if (latestDueDateParallel != null) {
+                    if (earliestAllowedDueDate.before(latestDueDateParallel)) {
+                        earliestAllowedDueDate = latestDueDateParallel;
+                    }
+                    if (taskDueDate.after(earliestAllowedDueDate)) {
+                        earliestAllowedDueDate = taskDueDate;
+                    }
+                    latestDueDateParallel = null;
+                }
+            }
+            if (taskDueDate.before(earliestAllowedDueDate)) {
+                invalid("workflow_save_error_dueDate_decreaseNotAllowed");
+                return;
+            }
+        }
+
+        private void invalid(String msg) {
+            if (valid) {
+                MessageUtil.addErrorMessage(msg);
+            }
+            valid = false;
+        }
     }
 
     private boolean validateInvoice() {

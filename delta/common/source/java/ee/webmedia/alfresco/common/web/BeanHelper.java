@@ -16,6 +16,7 @@ import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.repository.Repository;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.cases.web.CaseDetailsDialog;
 import ee.webmedia.alfresco.common.service.ApplicationService;
@@ -174,6 +175,10 @@ public class BeanHelper {
 
     public static GeneralService getGeneralService() {
         return (GeneralService) AppConstants.getBeanFactory().getBean(GeneralService.BEAN_NAME);
+    }
+
+    public static AddressbookService getAddressbookService() {
+        return (AddressbookService) AppConstants.getBeanFactory().getBean(AddressbookService.BEAN_NAME);
     }
 
     public static DocumentService getDocumentService() {

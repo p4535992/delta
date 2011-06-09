@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.dvk.service;
 
-import static ee.webmedia.alfresco.utils.XmlUtil.findChildByName;
+import static ee.webmedia.alfresco.utils.XmlUtil.findChildByQName;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -205,10 +205,10 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         final Metaxml metaxml = dhlDokument.getMetaxml();
         org.w3c.dom.Node node = metaxml.newDomNode();
 
-        org.w3c.dom.Node deltaNode = findChildByName(DELTA_QNAME, node.getFirstChild());
+        org.w3c.dom.Node deltaNode = findChildByQName(DELTA_QNAME, node.getFirstChild());
         if (deltaNode != null) {
             // TODO: log version element?
-            org.w3c.dom.Node externalReviewNode = findChildByName(dhsNodeName, deltaNode);
+            org.w3c.dom.Node externalReviewNode = findChildByQName(dhsNodeName, deltaNode);
             if (externalReviewNode != null) {
                 NodeList childNodes = externalReviewNode.getChildNodes();
                 for (int i = 0; i < childNodes.getLength(); i++) {
@@ -319,7 +319,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
             for (DataFileType dataFile : dataFileList) {
                 if (isXmlMimetype(dataFile)) {
                     InputStream input = new ByteArrayInputStream(Base64.decode(dataFile.getStringValue()));
-                    Pair<String, String> docUrlAndErpDocNumber = einvoiceService.getDocUrlAndErpDocNumber(dataFile.getStringValue());
+                    Pair<String, String> docUrlAndErpDocNumber = einvoiceService.getDocUrlAndErpDocNumber(input);
                     if (docUrlAndErpDocNumber != null) {
                         NodeRef updatedDoc = einvoiceService.updateDocumentEntrySapNumber(docUrlAndErpDocNumber.getFirst(), docUrlAndErpDocNumber.getSecond());
                         if (updatedDoc == null) {

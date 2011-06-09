@@ -22,7 +22,6 @@
 
    <bean id="orgstructureRootBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="orgstructureRootBootstrap" />
       <property name="executeOnceOnly" value="true" />
 
       <property name="importer" ref="spacesBootstrap" />
@@ -39,8 +38,6 @@
 
    <bean id="orgstructureParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="orgstructureParametersBootstrap" />
-      <property name="sinceVersion" value="1.1.1.25" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -108,13 +105,9 @@
       </property>
    </bean>
 
-   <bean id="deleteEmployeeRegOrganisationIdParameterBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="module.baseComponent">
+   <bean id="deleteEmployeeRegOrganisationIdParameterBootstrap" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="abstractDeleteNodeByXPathBootstrap">
       <property name="moduleId" value="common" />
-      <property name="name" value="deleteEmployeeRegOrganisationIdParameterBootstrap" />
-      <property name="executeOnceOnly" value="true" />
       <property name="nodeXPath" value="/param:parameters/param:employeeRegOrganisationId" />
-      <property name="generalService" ref="GeneralService" />
-      <property name="nodeService" ref="NodeService" />
    </bean>
 
 </beans>

@@ -4,8 +4,6 @@
 
    <bean id="notificationParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent" abstract="true">
       <property name="moduleId" value="common" />
-      <property name="name" value="notificationParametersBootstrap" />
-      <property name="sinceVersion" value="1.10.1.4" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>

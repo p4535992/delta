@@ -7,9 +7,9 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 
+import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
-import ee.webmedia.alfresco.privilege.service.PrivilegeServiceImpl.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.web.ManagePrivilegesDialog;
 
 /**

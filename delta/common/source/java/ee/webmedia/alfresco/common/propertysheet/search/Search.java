@@ -47,6 +47,8 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String OPEN_DIALOG_KEY = "openDialog";
     public static final String DATA_TYPE_KEY = "dataType";
     public static final String DATA_MULTI_VALUED = "dataMultiValued";
+    /** determines if only unique values should be added to multiValued property values. Default value (if attribute is missing) is true */
+    public static final String ALLOW_DUPLICATES_KEY = "allowDuplicates";
     public static final String DIALOG_TITLE_ID_KEY = "dialogTitleId";
     public static final String CONVERTER_KEY = "converter";
     public static final String PICKER_CALLBACK_KEY = "pickerCallback";
@@ -255,14 +257,20 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         if (isMultiValued()) {
             @SuppressWarnings("unchecked")
             List<Object> list = (List<Object>) getList(context);
-            list.add(convertedValue);
-            appendRowComponent(context, list.size() - 1);
+            if (isAllowDuplicates() || !list.contains(convertedValue)) {
+                list.add(convertedValue);
+                appendRowComponent(context, list.size() - 1);
+            }
         } else {
             if (!isChildOfUIRichList()) { // only setter callback can be used with UIRichList
                 setValue(context, convertedValue);
             }
             appendRowComponent(context, -1);
         }
+    }
+
+    private boolean isAllowDuplicates() {
+        return (Boolean) getAttributes().get(ALLOW_DUPLICATES_KEY);
     }
 
     protected void removeRow(FacesContext context, int removeIndex) {

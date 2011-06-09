@@ -416,11 +416,11 @@ public class DocumentImportServiceImpl extends DocumentServiceImpl implements Do
         }
     }
 
-    private static Map<Class<? extends ImportDocument>, BeanPropertyMapper> mappers = new HashMap<Class<? extends ImportDocument>, BeanPropertyMapper>();
+    private static Map<Class<? extends ImportDocument>, BeanPropertyMapper<?>> mappers = new HashMap<Class<? extends ImportDocument>, BeanPropertyMapper<?>>();
 
     private Map<QName, Serializable> getDocProperties(ImportDocument doc) {
         @SuppressWarnings("unchecked")
-        BeanPropertyMapper<ImportDocument> mapper = mappers.get(doc.getClass());
+        BeanPropertyMapper<ImportDocument> mapper = (BeanPropertyMapper<ImportDocument>) mappers.get(doc.getClass());
         if (mapper == null) {
             @SuppressWarnings("unchecked")
             BeanPropertyMapper<ImportDocument> propertyMapper = (BeanPropertyMapper<ImportDocument>) BeanPropertyMapper.newInstance(doc.getClass());

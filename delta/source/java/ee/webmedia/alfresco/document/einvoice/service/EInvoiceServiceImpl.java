@@ -56,6 +56,7 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
+import ee.webmedia.alfresco.classificator.enums.StorageType;
 import ee.webmedia.alfresco.classificator.enums.TransmittalMode;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -231,6 +232,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         props.put(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER, purchaseOrderSapNumber);
         props.put(DocumentSpecificModel.Props.CONTRACT_NUMBER, invoiceInformation.getContractNumber());
         props.put(DocumentSpecificModel.Props.INVOICE_XML, Boolean.TRUE);
+        props.put(DocumentCommonModel.Props.STORAGE_TYPE, StorageType.XML.getValueName());
 
         if (setOwnerFromInvoice) {
             findAndSetInvoiceOwner(invoice, props);
@@ -903,7 +905,6 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                 }
             }
         }
-        updateTransSearchableProperties(invoiceRef, transactions);
     }
 
     @Override
@@ -1225,20 +1226,20 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
-    public Pair<String, String> getDocUrlAndErpDocNumber(String inputStr) {
+    public Pair<String, String> getDocUrlAndErpDocNumber(InputStream input) {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         try {
             DocumentBuilder db = dbf.newDocumentBuilder();
-            org.w3c.dom.Document document = db.parse(inputStr);
+            org.w3c.dom.Document document = db.parse(input);
             org.w3c.dom.Node root = XmlUtil.findChildByName(new javax.xml.namespace.QName(ERP_NAMESPACE_URI, "BuyInvoiceRegisteredRequest"), document);
             if (root != null && root.getChildNodes().getLength() > 0) {
-                org.w3c.dom.Node regInvoiceNode = XmlUtil.findChildByName(new javax.xml.namespace.QName(ERP_NAMESPACE_URI, "RegisteredInvoice"), document);
+                org.w3c.dom.Node regInvoiceNode = XmlUtil.findChildByName(new javax.xml.namespace.QName(ERP_NAMESPACE_URI, "RegisteredInvoice"), root);
                 if (regInvoiceNode != null) {
                     org.w3c.dom.Node invoiceUrlNode = regInvoiceNode.getAttributes().getNamedItem("invoiceId");
                     if (invoiceUrlNode != null) {
                         String invoiceUrl = invoiceUrlNode.getNodeValue();
                         if (StringUtils.isNotBlank(invoiceUrl)) {
-                            org.w3c.dom.Node erpDocNumberNode = XmlUtil.findChildByName(new javax.xml.namespace.QName(ERP_NAMESPACE_URI, "ErpDocumentNumber"), document);
+                            org.w3c.dom.Node erpDocNumberNode = XmlUtil.findChildByName(new javax.xml.namespace.QName(ERP_NAMESPACE_URI, "ErpDocumentNumber"), regInvoiceNode);
                             if (erpDocNumberNode != null) {
                                 String erpDocNumber = StringUtils.strip(erpDocNumberNode.getTextContent());
                                 if (StringUtils.isNotBlank(erpDocNumber)) {
@@ -1275,16 +1276,6 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             LOG.error("Document uri could not be parsed to valid uri tokens");
         }
         return null;
-    }
-
-    private void updateTransSearchableProperties(NodeRef document, List<Transaction> transactions) {
-        Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
-        properties.put(DocumentCommonModel.Props.SEARCHABLE_FUND, EInvoiceUtil.buildSearchableStringProp(TransactionModel.Props.FUND, transactions));
-        properties.put(DocumentCommonModel.Props.SEARCHABLE_FUNDS_CENTER,
-                EInvoiceUtil.buildSearchableStringProp(TransactionModel.Props.FUNDS_CENTER, transactions));
-        properties.put(DocumentCommonModel.Props.SEARCHABLE_EA_COMMITMENT_ITEM,
-                EInvoiceUtil.buildSearchableStringProp(TransactionModel.Props.EA_COMMITMENT_ITEM, transactions));
-        nodeService.addProperties(document, properties);
     }
 
     @Override

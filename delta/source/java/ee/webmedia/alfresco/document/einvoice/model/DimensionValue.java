@@ -10,6 +10,7 @@ import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorValueProvider;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.utils.TextUtil;
 
 /**
  * @author Riina Tens
@@ -101,7 +102,7 @@ public class DimensionValue implements Comparable<DimensionValue>, Classificator
 
     @Override
     public String getClassificatorDescription() {
-        return getValueComment();
+        return TextUtil.joinStringAndStringWithSeparator(getValue(), getValueComment(), "; ");
     }
 
     @Override

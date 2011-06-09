@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.io.Writer;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +41,7 @@ import ee.webmedia.alfresco.document.einvoice.model.TransactionModel;
 import ee.webmedia.alfresco.document.einvoice.sellerslist.generated.HankijaNimekiri;
 import ee.webmedia.alfresco.document.einvoice.vatcodelist.generated.KaibemaksuKoodNimekiri;
 import ee.webmedia.alfresco.document.file.model.File;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -439,6 +441,14 @@ public class EInvoiceUtil {
                 newProps.put(propName, entry.getValue());
             }
         }
+    }
+
+    public static Map<String, Object> getTransSearchableProperties(List<Transaction> transactions) {
+        Map<String, Object> properties = new HashMap<String, Object>();
+        properties.put(DocumentCommonModel.Props.SEARCHABLE_FUND.toString(), buildSearchableStringProp(TransactionModel.Props.FUND, transactions));
+        properties.put(DocumentCommonModel.Props.SEARCHABLE_FUNDS_CENTER.toString(), buildSearchableStringProp(TransactionModel.Props.FUNDS_CENTER, transactions));
+        properties.put(DocumentCommonModel.Props.SEARCHABLE_EA_COMMITMENT_ITEM.toString(), buildSearchableStringProp(TransactionModel.Props.EA_COMMITMENT_ITEM, transactions));
+        return properties;
     }
 
 }

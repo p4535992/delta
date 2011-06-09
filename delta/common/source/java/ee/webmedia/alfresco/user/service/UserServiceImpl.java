@@ -411,6 +411,11 @@ public class UserServiceImpl implements UserService {
         return true;
     }
 
+    @Override
+    public void updateUser(Node user) {
+        nodeService.addProperties(user.getNodeRef(), RepoUtil.toQNameProperties(user.getProperties()));
+    }
+
     private Authority getAuthority(String authority, boolean returnNull) {
         AuthorityType authorityType = AuthorityType.getAuthorityType(authority);
         return getAuthority(authority, authorityType, returnNull);

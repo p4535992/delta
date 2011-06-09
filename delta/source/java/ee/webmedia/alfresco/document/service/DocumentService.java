@@ -145,6 +145,8 @@ public interface DocumentService {
      */
     void deleteAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef, QName assocQName);
 
+    void createAssoc(NodeRef sourceNodeRef, NodeRef targetNodeRef, QName assocQName);
+
     DocAssocInfo getDocAssocInfo(AssociationRef assocRef, boolean isSourceAssoc);
 
     /**

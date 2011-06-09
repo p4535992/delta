@@ -158,7 +158,6 @@
 
    <bean id="applicationParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="applicationParametersBootstrap" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>
@@ -179,6 +178,12 @@
 
    <bean id="abstractNodeUpdater" abstract="true" parent="module.baseComponent">
       <property name="inputFolderPath" value="${dir.root}" />
+   </bean>
+
+   <bean id="abstractDeleteNodeByXPathBootstrap" abstract="true" class="ee.webmedia.alfresco.common.bootstrap.DeleteNodeByXPathBootstrap" parent="module.baseComponent">
+      <property name="executeOnceOnly" value="true" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
    </bean>
 
    <!-- START: web beans: -->

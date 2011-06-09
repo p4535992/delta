@@ -10,7 +10,7 @@
 
    <%-- Main List --%>
    <a:richList id="casesList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
-      width="100%" value="#{CaseListDialog.entries}" var="r">
+      width="100%" value="#{CaseListDialog.entries}" var="r" initialSortColumn="title">
 
       <%-- Title --%>
       <a:column id="col2">

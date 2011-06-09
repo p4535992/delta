@@ -30,8 +30,6 @@
 
     <bean id="substituteParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="substituteParametersBootstrap" />
-      <property name="sinceVersion" value="1.4.1.7" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>

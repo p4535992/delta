@@ -51,8 +51,6 @@
 
    <bean id="volumeParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="volumeParametersBootstrap" />
-      <property name="sinceVersion" value="2.1.1.17" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>

@@ -21,6 +21,7 @@ public interface ClassificatorModel {
         QName DESCRIPTION = QName.createQName(URI, "description");
         /** description of the classificator value */
         QName CL_VALUE_DESCRIPTION = QName.createQName(URI, "classificatorDescription");
+        QName CL_VALUE_NAME = QName.createQName(URI, "valueName");
         /** should classificator values be sorted alfabetically? */
         QName ALFABETIC_ORDER = QName.createQName(URI, "alfabeticOrder");
     }

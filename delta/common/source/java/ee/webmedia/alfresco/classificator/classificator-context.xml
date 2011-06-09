@@ -31,8 +31,6 @@
 
    <bean id="classificatorRootBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="classificatorRootBootstrap" />
-      <property name="sinceVersion" value="1.1.1.8" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="bootstrapViews">
@@ -49,7 +47,6 @@
    
    <bean id="classificatorRootBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="classificatorRootBootstrap2" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
@@ -71,7 +68,6 @@
    
    <bean id="classificatorRootBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="classificatorRootBootstrap3" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
@@ -93,7 +89,6 @@
    
    <bean id="classificatorRootBootstrap4" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="classificatorRootBootstrap4" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
@@ -115,7 +110,6 @@
    
    <bean id="classificatorRootBootstrap5" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="classificatorRootBootstrap5" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
@@ -138,7 +132,6 @@
    
    <bean id="classificatorRootBootstrap6" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="classificatorRootBootstrap6" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
@@ -160,7 +153,6 @@
    
    <bean id="invoiceTypesClassificatorValueBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="invoiceTypesClassificatorValueBootstrap" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
@@ -204,7 +196,6 @@
    
    <bean id="invoiceTypesClassificatorValueBootstrap1" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />
-      <property name="name" value="invoiceTypesClassificatorValueBootstrap1" />
       <property name="executeOnceOnly" value="true" />
       <property name="importer" ref="spacesBootstrap" />
       <property name="dependsOn">
@@ -222,7 +213,40 @@
             </props>
          </list>
       </property>
+   </bean>
+   
+   <bean id="renameInvoiceTypeClassificatorValuesBootstrap" class="ee.webmedia.alfresco.classificator.bootstrap.RenameInvoiceTypeClassificatorValuesBootstrap" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="invoiceTypesClassificatorValueBootstrap1" />
+         </list>
+      </property>       
    </bean>    
+   
+   <bean id="storageTypeClassificatorValueBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="classificatorRootBootstrap" />
+         </list>
+      </property>      
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">${classificators.parent.folder.xpath}${classificators.folder.name}/cl:storageType</prop>
+               <prop key="location">ee/webmedia/alfresco/classificator/bootstrap/storageTypeClassificatorValues.xml</prop>
+               <prop key="messages">ee/webmedia/alfresco/classificator/bootstrap/classificators-bootstrap</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
 
    <bean id="classificatorResourceBundleBootstrap" class="org.alfresco.web.app.ResourceBundleBootstrap">
       <property name="resourceBundles">

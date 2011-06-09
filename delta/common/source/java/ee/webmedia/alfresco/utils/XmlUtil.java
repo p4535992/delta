@@ -45,11 +45,19 @@ public class XmlUtil {
         }
     }
 
+    public static org.w3c.dom.Node findChildByQName(javax.xml.namespace.QName qName, org.w3c.dom.Node possibleDeltaNode) {
+        return findChildByName(qName, possibleDeltaNode, true);
+    }
+
     public static org.w3c.dom.Node findChildByName(javax.xml.namespace.QName qName, org.w3c.dom.Node possibleDeltaNode) {
+        return findChildByName(qName, possibleDeltaNode, false);
+    }
+
+    private static org.w3c.dom.Node findChildByName(javax.xml.namespace.QName qName, org.w3c.dom.Node possibleDeltaNode, boolean useQName) {
         org.w3c.dom.Node externalReviewNode = null;
         NodeList nodeList = possibleDeltaNode.getChildNodes();
         for (int i = 0; i < nodeList.getLength(); i++) {
-            if (compareNodeQName(qName, nodeList.item(i))) {
+            if (useQName ? compareNodeQName(qName, nodeList.item(i)) : compareNodeName(qName, nodeList.item(i))) {
                 externalReviewNode = nodeList.item(i);
                 break;
             }
@@ -78,9 +86,20 @@ public class XmlUtil {
     }
 
     private static boolean compareNodeQName(javax.xml.namespace.QName qName, org.w3c.dom.Node node) {
-        if (node.getNamespaceURI() != null && node.getLocalName() != null) {
-            return qName.equals(new javax.xml.namespace.QName(node.getNamespaceURI(), node.getLocalName()));
+        String namespaceURI = node.getNamespaceURI();
+        String localName = node.getLocalName();
+        if (namespaceURI != null && localName != null) {
+            return qName.equals(new javax.xml.namespace.QName(namespaceURI, localName));
         }
         return false;
     }
+
+    private static boolean compareNodeName(javax.xml.namespace.QName qName, org.w3c.dom.Node node) {
+        String nodeName = node.getNodeName();
+        if (nodeName != null) {
+            return nodeName.equalsIgnoreCase(qName.getNamespaceURI() + ":" + qName.getLocalPart());
+        }
+        return false;
+    }
+
 }

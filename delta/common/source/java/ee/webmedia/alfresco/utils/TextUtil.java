@@ -31,7 +31,7 @@ public class TextUtil {
         return joinStringAndStringWithSeparator(value1, value2, separator);
     }
 
-    private static String joinStringAndStringWithSeparator(String value1, String value2, String separator) {
+    public static String joinStringAndStringWithSeparator(String value1, String value2, String separator) {
         String result = "";
         if (StringUtils.isNotBlank(value1)) {
             result += value1;

@@ -26,6 +26,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
 import ee.webmedia.alfresco.user.service.UserService;
@@ -75,10 +76,10 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                     }
                     String user = privUsers.get(i);
 
-                    Set<String> curUserGroups = privMappings.userGroups.get(user);
+                    Set<String> curUserGroups = privMappings.getUserGroups().get(user);
                     if (curUserGroups == null) {
                         curUserGroups = new HashSet<String>();
-                        privMappings.userGroups.put(user, curUserGroups);
+                        privMappings.getUserGroups().put(user, curUserGroups);
                     }
                     curUserGroups.add(group);
 
@@ -92,7 +93,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 }
             }
         }
-        privMappings.membersByGroups = membersByGroup;
+        privMappings.setMembersByGroups(membersByGroup);
         return privMappings;
     }
 
@@ -109,7 +110,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
                 userPrivileges = new UserPrivileges(authority, userService.getUserFullName(authority));
                 privilegesByUsername.put(authority, userPrivileges);
 
-                Set<String> curUserGroups = privMappings.userGroups.get(authority);
+                Set<String> curUserGroups = privMappings.getUserGroups().get(authority);
                 if (curUserGroups != null) {
                     userPrivileges.getGroups().addAll(curUserGroups);
                 }
@@ -118,7 +119,7 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             Assert.isTrue(allowed, "Expected to see only allowed permissions. accessPermission=" + accessPermission + "\nmanageableRef=" + privMappings.getManageableRef());
             userPrivileges.addPrivilege(accessPermission.getPermission());
         }
-        privMappings.privilegesByUsername = privilegesByUsername;
+        privMappings.setPrivilegesByUsername(privilegesByUsername);
         return privilegesByUsername;
     }
 
@@ -200,11 +201,13 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         }
 
         for (String permission : permissions) {
-            @SuppressWarnings("unchecked")
-            Set<String> addedPrivileges = (Set<String>) nodeProps.get("{temp}addedPrivileges");
-            if (addedPrivileges == null) {
+            Set<String> addedPrivileges;
+            Object addedPrivilegesObject = nodeProps.get("{temp}addedPrivileges");
+            if (addedPrivilegesObject == null || !(addedPrivilegesObject instanceof Set)) {
                 addedPrivileges = new HashSet<String>();
                 nodeProps.put("{temp}addedPrivileges", addedPrivileges);
+            } else {
+                addedPrivileges = (Set<String>) addedPrivilegesObject;
             }
             String key = authority + permission;
             if (!addedPrivileges.contains(key)) {
@@ -246,53 +249,6 @@ public class PrivilegeServiceImpl implements PrivilegeService {
         }
         if (mustSaveUserGroupProps) {
             nodeService.addProperties(nodeRef, generalService.getPropertiesIgnoringSystem(nodeProps));
-        }
-    }
-
-    /**
-     * Holds information about user privileges and user-group mappings
-     * 
-     * @author Ats Uiboupin
-     */
-    public class PrivilegeMappings implements Serializable {
-        private static final long serialVersionUID = 1L;
-        private final NodeRef manageableRef;
-        private final Map<String/* user */, Set<String> /* groups */> userGroups = new HashMap<String, Set<String>>();
-        private Map<String/* groupCode */, Set<String> /* members */> membersByGroups;
-        private Map<String/* userName */, UserPrivileges> privilegesByUsername;
-
-        private PrivilegeMappings(NodeRef manageableRef) {
-            this.manageableRef = manageableRef;
-        }
-
-        private NodeRef getManageableRef() {
-            return manageableRef;
-        }
-
-        public Set<String> getMembersByGroup(String group) {
-            Set<String> curGroupMembers = membersByGroups.get(group);
-            if (curGroupMembers == null) {
-                curGroupMembers = new HashSet<String>();
-                membersByGroups.put(group, curGroupMembers);
-            }
-            return curGroupMembers;
-        }
-
-        public UserPrivileges getOrCreateUserPrivilegesVO(String userName) {
-            UserPrivileges privs = privilegesByUsername.get(userName);
-            if (privs == null) {
-                privs = new UserPrivileges(userName, userService.getUserFullName(userName));
-                privilegesByUsername.put(userName, privs);
-            }
-            return privs;
-        }
-
-        public Map<String, Set<String>> getMembersByGroups() {
-            return membersByGroups;
-        }
-
-        public Map<String, UserPrivileges> getPrivilegesByUsername() {
-            return privilegesByUsername;
         }
     }
 

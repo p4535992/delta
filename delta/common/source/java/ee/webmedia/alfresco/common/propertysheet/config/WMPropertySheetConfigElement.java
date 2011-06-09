@@ -99,6 +99,10 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             this.showInEditMode = showInEditMode;
         }
 
+        private void setRendered(boolean rendered) {
+            this.rendered = rendered;
+        }
+
         public boolean isIgnoreIfMissing() {
             return ignoreIfMissing;
         }
@@ -125,6 +129,7 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             copy.setReadOnly(readOnly);
             copy.setShowInViewMode(showInViewMode);
             copy.setShowInEditMode(showInEditMode);
+            copy.setRendered(rendered);
             copy.setIgnoreIfMissing(ignoreIfMissing);
             copy.setConfigItemType(configItemType);
             return copy;

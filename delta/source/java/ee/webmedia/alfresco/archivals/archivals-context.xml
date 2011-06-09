@@ -12,7 +12,6 @@
 
     <bean id="archivalsTempBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="archivalsTempBootstrap" />
       <property name="executeOnceOnly" value="true" />
 
       <property name="importer" ref="spacesBootstrap" />
@@ -62,8 +61,6 @@
 
     <bean id="archivalsParametersBootstrap" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
-      <property name="name" value="parametersSpacesBootstrap" />
-      <property name="sinceVersion" value="1.4.1.11" />
       <property name="executeOnceOnly" value="true" />
       <property name="dependsOn">
          <list>

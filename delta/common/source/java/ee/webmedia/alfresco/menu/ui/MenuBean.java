@@ -116,7 +116,7 @@ public class MenuBean implements Serializable {
             dialog = (IDialogBean) bean;
         } else {
             throw new AlfrescoRuntimeException("Failed to start dialog as managed bean '" + beanName +
-                    "' does not implement the required IDialogBean interface");
+            "' does not implement the required IDialogBean interface");
         }
 
         try {
@@ -316,7 +316,17 @@ public class MenuBean implements Serializable {
             throw new RuntimeException(msg);
         }
 
-        String[] path = lastLinkId.substring(MenuRenderer.SECONDARY_MENU_PREFIX.length()).split(UIMenuComponent.VALUE_SEPARATOR);
+        String lastLinkPath = lastLinkId.substring(MenuRenderer.SECONDARY_MENU_PREFIX.length());
+        String[] path = lastLinkPath.split(UIMenuComponent.VALUE_SEPARATOR);
+
+        // If we toggle browse items to collapse, we don't need further processing
+        String menuItemFullPath = getActiveItemId() + UIMenuComponent.VALUE_SEPARATOR + lastLinkPath;
+        MenuItem activeMenuItem = MenuBean.getMenuItemFromShortcut(menuItemFullPath, getMenu());
+
+        if (activeMenuItem instanceof DropdownMenuItem && ((DropdownMenuItem) activeMenuItem).isBrowse() && ((DropdownMenuItem) activeMenuItem).isExpanded()) {
+            ((DropdownMenuItem) activeMenuItem).setExpanded(false);
+            return;
+        }
 
         MenuItem item = getActiveMainMenuItem();
         if (Integer.parseInt(activeItemId) == DOCUMENT_REGISTER_ID) {
@@ -572,7 +582,8 @@ public class MenuBean implements Serializable {
             return false;
         }
         MenuItem item = menuItemAndPath.getFirst();
-        MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, "shortcut-" + shortcutsPanelGroup.getChildCount(), getUserService(), getWorkflowService(),
+        MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, "shortcut-" + shortcutsPanelGroup.getChildCount(), getUserService(),
+                getWorkflowService(),
                 getEinvoiceService(), false);
         wrapper.setPlain(true);
 
@@ -793,7 +804,7 @@ public class MenuBean implements Serializable {
     protected GeneralService getGeneralService() {
         if (generalService == null) {
             generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(GeneralService.BEAN_NAME);
+            .getBean(GeneralService.BEAN_NAME);
         }
         return generalService;
     }
@@ -805,7 +816,7 @@ public class MenuBean implements Serializable {
     protected UserService getUserService() {
         if (userService == null) {
             userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(UserService.BEAN_NAME);
+            .getBean(UserService.BEAN_NAME);
         }
         return userService;
     }
@@ -813,7 +824,7 @@ public class MenuBean implements Serializable {
     protected WorkflowService getWorkflowService() {
         if (workflowService == null) {
             workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(WorkflowService.BEAN_NAME);
+            .getBean(WorkflowService.BEAN_NAME);
         }
         return workflowService;
     }
@@ -821,7 +832,7 @@ public class MenuBean implements Serializable {
     public EInvoiceService getEinvoiceService() {
         if (einvoiceService == null) {
             einvoiceService = (EInvoiceService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(EInvoiceService.BEAN_NAME);
+            .getBean(EInvoiceService.BEAN_NAME);
         }
         return einvoiceService;
     }

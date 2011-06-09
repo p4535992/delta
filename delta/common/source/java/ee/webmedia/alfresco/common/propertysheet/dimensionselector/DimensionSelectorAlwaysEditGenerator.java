@@ -1,0 +1,40 @@
+package ee.webmedia.alfresco.common.propertysheet.dimensionselector;
+
+import java.util.List;
+
+import javax.faces.component.UIComponent;
+import javax.faces.context.FacesContext;
+
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
+import ee.webmedia.alfresco.utils.ComponentUtil;
+
+/**
+ * Generator for a dimension selector which is editable even if the propertySheet is not in edit mode.
+ * 
+ * @author Riina Tens
+ */
+public class DimensionSelectorAlwaysEditGenerator extends DimensionSelectorGenerator implements GeneratorsWrapper {
+
+    @Override
+    protected void setupProperty(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, PropertyDefinition propertyDef,
+            UIComponent component) {
+        super.setupProperty(context, propertySheet, item, propertyDef, component);
+        unsetReadOnly(component);
+    }
+
+    private void unsetReadOnly(UIComponent component) {
+        ComponentUtil.putAttribute(component, "readonly", Boolean.FALSE);
+        List<UIComponent> children = ComponentUtil.getChildren(component);
+        if (children == null) {
+            return;
+        }
+        for (UIComponent childComponent : children) {
+            unsetReadOnly(childComponent);
+        }
+    }
+
+}

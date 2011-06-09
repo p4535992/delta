@@ -6,7 +6,6 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +24,9 @@ import org.alfresco.web.ui.common.component.data.UISortLink;
 import org.alfresco.web.ui.common.converter.XMLDateConverter;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.apache.commons.collections.comparators.ComparatorChain;
+import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 import org.springframework.web.jsf.FacesContextUtils;
@@ -32,6 +34,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.Transformer;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -47,24 +50,35 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
     private static final QName TMP_MAIN_OWNER = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "mainOwner");
     private static final QName TMP_CO_OWNER = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "coOwner");
     private static final QName TMP_STYLE_CLASS = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "styleClass");
-    /** expects that both tasks have startedDateTime set */
-    private static final Comparator<Task> delegationHistoryComparator = new Comparator<Task>() {
-        @Override
-        public int compare(Task t1, Task t2) {
-            Date t1Started = t1.getStartedDateTime();
-            Date t2Started = t2.getStartedDateTime();
-            if (t1Started == null && t2Started == null) {
-                return 0;
+    public static final Comparator<Task> COMPARATOR;
+    static {
+        COMPARATOR = getTaskComparator();
+    }
+
+    private static Comparator<Task> getTaskComparator() {
+        ComparatorChain chain = new ComparatorChain();
+        chain.addComparator(new TransformingComparator(new Transformer<Task>() {
+            @Override
+            public Object tr(Task input) {
+                return input.getStartedDateTime();
             }
-            if (t1Started == null) {
-                return -1;
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new Transformer<Task>() {
+            @Override
+            public Object tr(Task input) {
+                return input.getDueDate();
             }
-            if (t2Started == null) {
-                return 1;
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new Transformer<Task>() {
+            @Override
+            public Object tr(Task input) {
+                return input.getOwnerName();
             }
-            return t1Started.compareTo(t2Started);
-        }
-    };
+        }, new NullComparator()));
+        @SuppressWarnings("unchecked")
+        Comparator<Task> tmp = chain;
+        return tmp;
+    }
 
     @Override
     protected UIComponent createComponent(FacesContext context, UIPropertySheet propertySheet, final PropertySheetItem item) {
@@ -135,7 +149,7 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
                 }
             }
         }
-        Collections.sort(tasks4History, delegationHistoryComparator);
+        Collections.sort(tasks4History, COMPARATOR);
         List<Node> delegationHistories = new ArrayList<Node>(tasks4History.size());
         for (Task task : tasks4History) {
             WmNode taskNode = task.getNode();

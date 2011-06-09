@@ -42,6 +42,7 @@ import org.apache.commons.collections.Predicate;
 import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 
 import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter;
 import ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
@@ -677,6 +678,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             } else {
                 dimensionGenerator = new DimensionSelectorGenerator();
             }
+            dimensionGenerator.getCustomAttributes().put(ClassificatorSelectorGenerator.ATTR_DESCRIPTION_AS_LABEL, "true");
             dimensionSelector = dimensionGenerator.generateSelectComponent(context, null, false);
             dimensionGenerator.getCustomAttributes().put(DimensionSelectorGenerator.ATTR_DIMENSION_NAME, dimensions.getDimensionName());
             dimensionGenerator.setupSelectComponent(context, null, null, null, dimensionSelector, false);

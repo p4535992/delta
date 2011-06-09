@@ -74,7 +74,8 @@
          <show-property name="cm:telephone" display-label-id="telephone" />
          <show-property name="cm:email" display-label-id="user_email" />
          <show-property name="cm:homeFolder" display-label-id="user_home_folder" component-generator="HomespaceLinkGenerator" />
-         <show-property name="cm:relatedFundsCenter" display-label-id="user_relatedFundsCenter" component-generator="DimensionSelectorGenerator" dimensionName="invoiceFundsCenters" readOnlyIf="#{UserDetailsDialog.isRelatedFundsCenterNotEditable}" />
+         <show-property name="cm:relatedFundsCenter" display-label-id="user_relatedFundsCenter" component-generator="DimensionSelectorAlwaysEditGenerator" dimensionName="invoiceFundsCenters" rendered="#{UserDetailsDialog.isRelatedFundsCenterEditable}" styleClass="noOptionTitle" descriptionAsLabel="true" converter="" />
+         <show-property name="{temp}relatedFundsCenter" display-label-id="user_relatedFundsCenter" component-generator="DimensionSelectorGenerator" dimensionName="invoiceFundsCenters" rendered="#{UserDetailsDialog.isRelatedFundsCenterNotEditable}" styleClass="noOptionTitle" descriptionAsLabel="true" converter="" />
       </property-sheet>
    </config>
 

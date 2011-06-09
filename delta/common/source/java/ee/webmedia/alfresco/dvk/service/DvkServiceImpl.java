@@ -458,7 +458,7 @@ public abstract class DvkServiceImpl implements DvkService {
 
     abstract protected Pair<Location, Boolean> getDvkWorkflowDocLocation(String senderName, NodeRef dvkDefaultIncomingFolder);
 
-    abstract protected List<NodeRef> importInvoiceData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList);
+    abstract protected List<NodeRef> importInvoiceData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList) throws IOException;
 
     abstract protected List<NodeRef> importDimensionData(DvkReceivedLetterDocument rd, DhlDokumentType dhlDokument, String dhlId, List<DataFileType> dataFileList);
 

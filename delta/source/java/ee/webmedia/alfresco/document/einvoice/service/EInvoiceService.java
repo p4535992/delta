@@ -118,7 +118,10 @@ public interface EInvoiceService {
 
     File generateTransactionXmlFile(Node node, List<Transaction> transactions) throws IOException;
 
-    Pair<String, String> getDocUrlAndErpDocNumber(String inputStr);
+    /**
+     * Retrieve dvk id and SAP document number from xml input (see Liidestused - e-arved for input xml format)
+     */
+    Pair<String, String> getDocUrlAndErpDocNumber(InputStream input);
 
     NodeRef updateDocumentEntrySapNumber(String first, String second);
 

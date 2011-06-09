@@ -1,3 +1,4 @@
+//@formatter: off
 /*
  * Copyright (C) 2005-2007 Alfresco Software Limited.
  *
@@ -96,7 +97,8 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
    protected Map<String, String> propertySheetItemAttributes;
    
    private static final String READONLY_IF = "readOnlyIf";
-
+   private static final String RENDERED = "rendered";
+   
    /**
     * when using readOnlyIf attribute on subPropertySheet, you can refer to property of some ancestor node using this constant. For example <br>
     * <code>readOnlyIf="parent.parent.doccom:docStatus=lõpetatud||peatatud"</code>
@@ -128,6 +130,11 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
       
       if (item instanceof UIProperty)
       {
+          
+          if (!isComponentRendered(component, item, context, propertySheet)) {
+              return component;
+          }
+          
          // get the property definition
          PropertyDefinition propertyDef = getPropertyDefinition(context,
                propertySheet.getNode(), item.getName());
@@ -301,6 +308,16 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             }
         }
     }
+    
+    private boolean isComponentRendered(UIComponent component, PropertySheetItem item, FacesContext context, UIPropertySheet propertySheet) {
+        if (item instanceof CustomAttributes) {
+            String expression = ((CustomAttributes) item).getCustomAttributes().get(RENDERED);
+            if (isNotBlank(expression)) {
+                return checkCustomPropertyExpression(context, propertySheet, expression, RENDERED, item.getName());
+            }
+        }
+        return true;
+    }    
    
     /**
      * Refactored custom property expression checking into separate method. 
@@ -444,12 +461,21 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     }
 
     protected void addValueFromCustomAttributes(String key, Map<String, Object> attributes, Class<?> clazz) {
+        addValueFromCustomAttributes(key, attributes, clazz, null);
+    }
+
+    protected <T> void addValueFromCustomAttributes(String key, Map<String, Object> attributes, Class<T> clazz, T defaultValue) {
         if (getCustomAttributes().containsKey(key)) {
             Object value = getCustomAttributes().get(key);
             if (clazz != null) {
                 value = DefaultTypeConverter.INSTANCE.convert(clazz, value);
             }
+            if (value == null) {
+                value = defaultValue;
+            }
             attributes.put(key, value);
+        } else if (defaultValue != null) {
+            attributes.put(key, defaultValue);
         }
     }
 
@@ -1133,3 +1159,4 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     }
     // END: getters / setters
 }
+//@formatter: on

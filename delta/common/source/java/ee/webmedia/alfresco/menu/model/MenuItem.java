@@ -156,9 +156,6 @@ public class MenuItem implements Serializable {
             attributes.put("styleClass", "active");
         }
 
-        // We need to apply styleClass in apply request values phase
-        link.setImmediate(true);
-
         Config config = Application.getConfigService(context).getGlobalConfig();
         ActionDefinition actionDef = ((ActionsConfigElement) config.getConfigElement(ActionsConfigElement.CONFIG_ELEMENT_ID))
                 .getActionDefinition(outcome2);
