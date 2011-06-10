@@ -153,10 +153,16 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
     */
    protected void addProperty(String name, String displayLabel, String displayLabelId, String readOnly, 
                                 String converter, String inView, String inEdit, String compGenerator,
-                                String ignoreIfMissing, String isRendered)
-   {
+                                String ignoreIfMissing, String isRendered){
       addItem(new PropertyConfig(name, displayLabel, displayLabelId, Boolean.parseBoolean(readOnly), 
             converter, inView, inEdit, compGenerator, ignoreIfMissing, isRendered));
+   }
+   
+   protected void addProperty(String name, String displayLabel, String displayLabelId, String readOnly, 
+           String converter, String inView, String inEdit, String compGenerator,
+           String ignoreIfMissing){
+       addItem(new PropertyConfig(name, displayLabel, displayLabelId, Boolean.parseBoolean(readOnly), 
+               converter, inView, inEdit, compGenerator, ignoreIfMissing, null));
    }
    
    /**

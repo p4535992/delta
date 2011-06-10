@@ -45,9 +45,11 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xml.security.transforms.TransformationException;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
 import org.springframework.util.FileCopyUtils;
 
+import com.icegreen.greenmail.imap.commands.AppendCommand;
 import com.icegreen.greenmail.store.FolderException;
 import com.icegreen.greenmail.store.MailFolder;
 
@@ -76,7 +78,7 @@ import ee.webmedia.alfresco.imap.model.ImapModel;
  * 
  * @author Romet Aidla
  */
-public class ImapServiceExtImpl implements ImapServiceExt {
+public class ImapServiceExtImpl implements ImapServiceExt, InitializingBean {
     private static final Log log = LogFactory.getLog(ImapServiceExtImpl.class);
 
     private ImapService imapService;
@@ -90,8 +92,15 @@ public class ImapServiceExtImpl implements ImapServiceExt {
     private DocumentTypeService documentTypeService;
     private EInvoiceService einvoiceService;
 
+    private String messageCopyFolder;
+
     // todo: make this configurable with spring
     private Set<String> allowedFolders = null;
+
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        AppendCommand.setMessageCopyFolder(messageCopyFolder);
+    }
 
     @Override
     public MailFolder getFolder(AlfrescoImapUser user, String folderName) {
@@ -239,11 +248,12 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
     private void saveAttachments(NodeRef document, MimeMessage originalMessage, boolean saveBody, Map<NodeRef, Integer> invoiceRefToAttachment)
             throws IOException, MessagingException, TransformationException {
+        Part bodyPart = null;
         if (saveBody) {
-            Part p = getText(originalMessage);
-            createBody(document, originalMessage);
+            bodyPart = createBody(document, originalMessage);
         }
 
+        List<Part> attachments = new ArrayList<Part>();
         Object content = originalMessage.getContent();
         if (content instanceof Multipart) {
             Multipart multipart = (Multipart) content;
@@ -253,10 +263,13 @@ public class ImapServiceExtImpl implements ImapServiceExt {
                 if (invoiceRefToAttachment == null || !invoiceRefToAttachment.containsValue(i) || invoiceRefToAttachment.get(document).equals(i)) {
                     if ("attachment".equalsIgnoreCase(part.getDisposition())) {
                         createAttachment(document, part, null);
+                        attachments.add(part);
                     }
                 }
             }
         }
+
+        log.info("MimeMessage:" + getPartDebugInfo(originalMessage, bodyPart, attachments));
     }
 
     @Override
@@ -314,11 +327,11 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         return mimeType;
     }
 
-    private void createBody(NodeRef document, MimeMessage originalMessage) throws MessagingException, IOException {
+    private Part createBody(NodeRef document, MimeMessage originalMessage) throws MessagingException, IOException {
         Part p = getText(originalMessage);
         if (p == null) {
             log.debug("No body part found from message, skipping body PDF creation");
-            return;
+            return p;
         }
 
         String mimeType;
@@ -327,13 +340,13 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         } else if (p.isMimeType(MimetypeMap.MIMETYPE_TEXT_PLAIN)) {
             mimeType = MimetypeMap.MIMETYPE_TEXT_PLAIN;
         } else {
-            log.debug("Found body part from message, but don't know how to handle it, skipping body PDF creation, contentType=" + p.getContentType());
-            return;
+            log.info("Found body part from message, but don't know how to handle it, skipping body PDF creation, contentType=" + p.getContentType());
+            return p;
         }
         // We assume that content-type header also contains charset; so far there haven't been different cases
         // If content-type header doesn't contain charset, we use UTF-8 as default
         String encoding = getEncoding(p);
-        log.debug("Found body part from message, parsed mimeType=" + mimeType + " and encoding=" + encoding + " from contentType=" + p.getContentType());
+        log.info("Found body part from message, parsed mimeType=" + mimeType + " and encoding=" + encoding + " from contentType=" + p.getContentType());
 
         ContentWriter tempWriter = contentService.getTempWriter();
         tempWriter.setMimetype(mimeType);
@@ -353,6 +366,7 @@ public class ImapServiceExtImpl implements ImapServiceExt {
         if (createdFile == null) {
             createAttachment(document, p, filename);
         }
+        return p;
     }
 
     // Workaround for getting encoding from content type
@@ -411,6 +425,50 @@ public class ImapServiceExtImpl implements ImapServiceExt {
             }
         }
         return null;
+    }
+
+    private String getPartDebugInfo(Part p, Part bodyPart, List<Part> attachments) throws MessagingException, IOException {
+        String debugInfo = "\n¤Part:";
+        // Compare by reference
+        if (p == bodyPart) {
+            debugInfo += " BODY";
+        }
+        for (Part attachment : attachments) {
+            if (p == attachment) {
+                debugInfo += " ATTACHMENT";
+            }
+        }
+        debugInfo += " disposition=" + p.getDisposition();
+        debugInfo += " contentType=" + p.getContentType();
+        debugInfo += " fileName=" + p.getFileName();
+        debugInfo += " size=" + p.getSize();
+
+        if (p.isMimeType("text/plain")) {
+            debugInfo += " isMimeType('text/plain')";
+        } else if (p.isMimeType("text/html")) {
+            debugInfo += " isMimeType('text/html')";
+        }
+        Object content = p.getContent();
+        if (p.isMimeType("text/*")) {
+            debugInfo += " isMimeType('text/*')";
+        } else {
+            if (content instanceof Multipart) {
+                debugInfo += " isInstanceOfMultipart";
+                if (p.isMimeType("multipart/alternative")) {
+                    debugInfo += " isMimeType('multipart/alternative')";
+                } else if (p.isMimeType("multipart/*")) {
+                    debugInfo += " isMimeType('multipart/*')";
+                }
+                Multipart mp = (Multipart) content;
+                debugInfo += " multiPartContentType=" + mp.getContentType();
+                debugInfo += " multiPartCount=" + mp.getCount();
+                for (int i = 0; i < mp.getCount(); i++) {
+                    Part bp = mp.getBodyPart(i);
+                    debugInfo += StringUtils.replace(getPartDebugInfo(bp, bodyPart, attachments), "\n¤", "\n¤  ");
+                }
+            }
+        }
+        return debugInfo;
     }
 
     private MailFolder addBehaviour(AlfrescoImapFolder folder) {
@@ -522,6 +580,10 @@ public class ImapServiceExtImpl implements ImapServiceExt {
 
     public void setEinvoiceService(EInvoiceService einvoiceService) {
         this.einvoiceService = einvoiceService;
+    }
+
+    public void setMessageCopyFolder(String messageCopyFolder) {
+        this.messageCopyFolder = messageCopyFolder;
     }
 
 }

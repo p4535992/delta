@@ -215,7 +215,7 @@
       </property>
    </bean>
    
-   <bean id="renameInvoiceTypeClassificatorValuesBootstrap" class="ee.webmedia.alfresco.classificator.bootstrap.RenameInvoiceTypeClassificatorValuesBootstrap" parent="module.baseComponent">
+   <bean id="renameInvoiceTypeClassificatorValuesBootstrap1" class="ee.webmedia.alfresco.classificator.bootstrap.RenameInvoiceTypeClassificatorValuesBootstrap" parent="module.baseComponent">
       <property name="moduleId" value="common" />
       <property name="executeOnceOnly" value="true" />
       <property name="generalService" ref="GeneralService" />

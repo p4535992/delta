@@ -91,9 +91,7 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
     }
 
     public List<SelectItem> getTransactionTemplates(FacesContext context, UIInput selectComponent) {
-        if (transactionTemplates == null) {
-            transactionTemplates = BeanHelper.getEInvoiceService().getActiveTransactionTemplates();
-        }
+        transactionTemplates = BeanHelper.getEInvoiceService().getActiveTransactionTemplates();
         List<SelectItem> selectItems = new ArrayList<SelectItem>();
         selectItems.add(new SelectItem("", MessageUtil.getMessage("transactions_useTemplate")));
         for (TransactionTemplate transactionTemplate : transactionTemplates) {

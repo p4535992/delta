@@ -244,6 +244,16 @@
             <action-listener>#{MetadataBlockBean.addParty}</action-listener>
          </action>
 
+         <action id="document_contractParty_remove">
+            <label-id>document_contract_deleteParty</label-id>
+            <tooltip-id>document_contract_deleteParty_tooltip</tooltip-id>
+            <image>/images/icons/remove_user.gif</image>
+            <action-listener>#{MetadataBlockBean.removeParty}</action-listener>
+            <params>
+               <param name="subPropsheetsRequiredCount">1</param><!-- contract must have at least 2 parties(1 main party + 1 additional party) -->
+            </params>
+         </action>
+
          <action-group id="document_errandOrderApplicant">
             <action idref="document_errandOrderApplicant_remove" />
             <action idref="document_errandOrderApplicant_add" />
@@ -256,6 +266,7 @@
          
          <action-group id="document_contractMvParty">
             <action idref="document_contractMvParty_add" />
+            <action idref="document_contractParty_remove" />
          </action-group>         
 
           <action id="document_end">

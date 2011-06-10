@@ -485,7 +485,13 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         super.init(params);
         metadataBlockBean.init(node.getNodeRef(), isDraft, this);
         if (isFromDVK() || isFromImap() || isIncomingInvoice()) {
-            metadataBlockBean.setOwnerCurrentUser();
+            String ownerName = (String) node.getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
+            if (StringUtils.isEmpty(ownerName) || !isIncomingInvoice()) {
+                metadataBlockBean.setOwnerCurrentUser();
+            }
+            if (isIncomingInvoice() && ownerName == null) {
+                MessageUtil.addErrorMessage("document_errorMsg_invoice_owner_not_found");
+            }
             showDocsAndCasesAssocs = false;
         }
         fileBlockBean.init(node);

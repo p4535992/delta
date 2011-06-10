@@ -77,6 +77,7 @@
       <property name="mimetypeService" ref="MimetypeService" />
       <property name="documentTypeService" ref="DocumentTypeService" />
       <property name="einvoiceService" ref="EInvoiceService" />
+      <property name="messageCopyFolder" value="${imap.messageFolder}" />
    </bean>
 
    <bean id="ImapServiceExt" class="org.springframework.aop.framework.ProxyFactoryBean">

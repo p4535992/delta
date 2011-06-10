@@ -6,6 +6,12 @@
  */
 package com.icegreen.greenmail.imap.commands;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.FastDateFormat;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.icegreen.greenmail.util.GreenMailUtil;
 import com.icegreen.greenmail.imap.ImapRequestLineReader;
 import com.icegreen.greenmail.imap.ImapResponse;
@@ -21,6 +27,8 @@ import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Date;
 
 /**
@@ -29,7 +37,17 @@ import java.util.Date;
  * @author Darrell DeBoer <darrell@apache.org>
  * @version $Revision: 109034 $
  */
-class AppendCommand extends AuthenticatedStateCommand {
+public class AppendCommand extends AuthenticatedStateCommand {
+    private static final Log log = LogFactory.getLog(AppendCommand.class);
+
+    private static final FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy-MM-dd-HH-mm-ss-SSSZ");
+
+    private static String messageCopyFolder = null;
+
+    public static void setMessageCopyFolder(String value) {
+        messageCopyFolder = value;
+    }
+
     public static final String NAME = "APPEND";
     public static final String ARGS = "<mailbox> [<flag_list>] [<date_time>] literal";
 
@@ -126,7 +144,23 @@ class AppendCommand extends AuthenticatedStateCommand {
             byte[] mail = consumeLiteralAsBytes(request);
 
             try {
-                return GreenMailUtil.newMimeMessage(new ByteArrayInputStream(mail));
+                MimeMessage message = GreenMailUtil.newMimeMessage(new ByteArrayInputStream(mail));
+                if (StringUtils.isNotBlank(messageCopyFolder)) {
+                    try {
+                        String filename = "ImapMessage-" + dateFormat.format(new Date());
+                        File messageFile = new File(messageCopyFolder, filename);
+                        FileOutputStream messageOutputStream = new FileOutputStream(messageFile);
+                        try {
+                            IOUtils.write(mail, messageOutputStream);
+                        } finally {
+                            IOUtils.closeQuietly(messageOutputStream);
+                        }
+                        log.info("Wrote message to file " + messageFile);
+                    } catch (Exception e) {
+                        log.error("Error copying message contents to file", e);
+                    }
+                }
+                return message;
             } catch (Exception e) {
                 throw new ProtocolException("UnexpectedException: " + e.getMessage());
             }

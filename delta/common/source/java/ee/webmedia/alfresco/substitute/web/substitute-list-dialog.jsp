@@ -73,7 +73,7 @@
     <script type="text/javascript">
     $jQ(function() {
        $jQ(document).keyup(function (event) {
-          if (event.keyCode == 13) {
+          if (event.keyCode == 13 && $jQ("#overlay:visible").length < 1) {
              $jQ("#"+escapeId4JQ("dialog:finish-button")).click();
           }
         });

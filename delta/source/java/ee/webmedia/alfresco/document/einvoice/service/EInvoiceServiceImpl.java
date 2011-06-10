@@ -278,7 +278,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                 }
             }
             if (!ownerSet && StringUtils.isNotBlank(contactName)) {
-                props.put(DocumentCommonModel.Props.OWNER_NAME, contactName);
+                props.put(DocumentCommonModel.Props.COMMENT, contactName);
             }
         }
     }

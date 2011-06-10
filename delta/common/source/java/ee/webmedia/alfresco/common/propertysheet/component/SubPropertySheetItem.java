@@ -61,7 +61,6 @@ import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
-import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
@@ -260,19 +259,8 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
             if (isActionDisabled(actionDef, actionGroupId)) {
                 continue;
             }
-            UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
-            link.setRendererType(UIActions.RENDERER_ACTIONLINK);
-            link.setImage(actionDef.Image);
-            FacesHelper.setupComponentId(context, link, actionId);
-            String lblMessage = actionDef.LabelMsg != null ? MessageUtil.getMessage(context, actionDef.LabelMsg) : actionDef.Label;
-            link.setValue(lblMessage);
-            link.setActionListener(application.createMethodBinding(actionDef.ActionListener, new Class[] { javax.faces.event.ActionEvent.class }));
-            String tooltip = actionDef.TooltipMsg != null ? MessageUtil.getMessage(context, actionDef.TooltipMsg) : actionDef.Tooltip;
-            link.setTooltip(tooltip);
+            UIActionLink link = ComponentUtil.createActionFromConf(actionDef, application, context, null);
 
-            final AddRemoveActionListener listener = new AddRemoveActionListener();
-            link.addActionListener(listener);
-            link.setShowLink(actionDef.ShowLink);
             @SuppressWarnings("unchecked")
             List<UIComponent> parameters = link.getChildren();
 
@@ -301,6 +289,16 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
         final String actionId = actionDef.getId();
         final boolean isRemoveAction = actionId.startsWith(actionGroupId) && actionId.endsWith(ACTION_REMOVE_SUFFIX)
                 && actionId.length() == actionGroupId.length() + ACTION_REMOVE_SUFFIX.length();
+        Map<String, String> params = actionDef.getParams();
+        if (params != null) {
+            String requiredCountStr = params.get("subPropsheetsRequiredCount");
+            if (StringUtils.isNotBlank(requiredCountStr)) {
+                int requiredCount = Integer.parseInt(requiredCountStr);
+                if (subPropSheetCounter < requiredCount) {
+                    return true;
+                }
+            }
+        }
         if (isRemoveAction && !isDeleteEnabled()) {
             return true; // can't remove mandatory association
         }

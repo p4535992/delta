@@ -48,6 +48,14 @@
       </property>
    </bean>
 
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/document/web/document-webclient</value>
+         </list>
+      </property>
+   </bean>
+
    <bean id="documentService" class="ee.webmedia.alfresco.document.service.DocumentServiceImpl">
       <property name="dictionaryService" ref="DictionaryService" />
       <property name="namespaceService" ref="NamespaceService" />

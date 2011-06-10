@@ -34,12 +34,16 @@ import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.service.cmr.repository.datatype.TypeConversionException;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
+import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
+import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
+import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.repo.RepoConstants;
+import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
@@ -53,6 +57,7 @@ import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.component.NodeAssocBrand;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
+import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem.AddRemoveActionListener;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
@@ -134,6 +139,34 @@ public class ComponentUtil {
             param.setValue(paramValue);
         }
         return param;
+    }
+
+    /**
+     * @param actionDef
+     * @param application
+     * @param context
+     * @param evaluationCheckNode - optional, but if present, then null is returned when there is evaluator and evaluation fails
+     * @return
+     */
+    public static UIActionLink createActionFromConf(ActionDefinition actionDef, Application application, FacesContext context, Node evaluationCheckNode) {
+        if (evaluationCheckNode != null && actionDef.Evaluator != null && !actionDef.Evaluator.evaluate(evaluationCheckNode)) {
+            return null;
+        }
+        String actionId = actionDef.getId();
+        UIActionLink link = (UIActionLink) application.createComponent(UIActions.COMPONENT_ACTIONLINK);
+        link.setRendererType(UIActions.RENDERER_ACTIONLINK);
+        link.setImage(actionDef.Image);
+        FacesHelper.setupComponentId(context, link, actionId);
+        String lblMessage = actionDef.LabelMsg != null ? MessageUtil.getMessage(context, actionDef.LabelMsg) : actionDef.Label;
+        link.setValue(lblMessage);
+        link.setActionListener(application.createMethodBinding(actionDef.ActionListener, new Class[] { javax.faces.event.ActionEvent.class }));
+        String tooltip = actionDef.TooltipMsg != null ? MessageUtil.getMessage(context, actionDef.TooltipMsg) : actionDef.Tooltip;
+        link.setTooltip(tooltip);
+
+        final AddRemoveActionListener listener = new AddRemoveActionListener();
+        link.addActionListener(listener);
+        link.setShowLink(actionDef.ShowLink);
+        return link;
     }
 
     public static UIComponent setTooltip(final UIComponent component, final String tooltip) {
@@ -439,14 +472,12 @@ public class ComponentUtil {
     }
 
     public static void renderSelectItems(ResponseWriter responseWriter, SelectItem[] items) throws IOException {
-        if (items != null)
-        {
+        if (items != null) {
             // show each of the items in the results listbox
             for (SelectItem item : items) {
                 responseWriter.write("<option value=\"");
                 responseWriter.write(item.getValue().toString());
-                if (item.getDescription() != null)
-                {
+                if (item.getDescription() != null) {
                     responseWriter.write("\" title=\"");
                     responseWriter.write(Utils.encode(item.getDescription()));
                 }
@@ -458,8 +489,7 @@ public class ComponentUtil {
     }
 
     /**
-     * Generate JavaScript that sets a hidden parameter. Implementation based on
-     * {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
+     * Generate JavaScript that sets a hidden parameter. Implementation based on {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
      */
     public static String generateFieldSetter(FacesContext context, UIComponent component, String value) {
         String fieldId = component.getClientId(context);
@@ -467,8 +497,7 @@ public class ComponentUtil {
     }
 
     /**
-     * Generate JavaScript that sets a hidden parameter. Implementation based on
-     * {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
+     * Generate JavaScript that sets a hidden parameter. Implementation based on {@link Utils#generateFormSubmit(FacesContext, UIComponent, String, String, boolean, Map)}.
      */
     public static String generateFieldSetter(FacesContext context, UIComponent component, String fieldId, String value) {
         UIForm form = Utils.getParentForm(context, component);
@@ -561,8 +590,9 @@ public class ComponentUtil {
             }
         }
 
-        if(StringUtils.isBlank(uri)) {
-            uri = context.getExternalContext().getRequestContextPath() + "/ajax/invoke/AjaxBean.submit?componentClientId=" + clientId + "&viewName=" + context.getViewRoot().getViewId();
+        if (StringUtils.isBlank(uri)) {
+            uri = context.getExternalContext().getRequestContextPath() + "/ajax/invoke/AjaxBean.submit?componentClientId="
+                    + clientId + "&viewName=" + context.getViewRoot().getViewId();
         }
 
         s.append("ajaxSubmit('").append(clientId).append("','");
@@ -640,15 +670,16 @@ public class ComponentUtil {
         }
 
         String containerClientId = ancestorAjaxComponent.getClientId(context);
-        String submitUri = context.getExternalContext().getRequestContextPath() + "/ajax/invoke/AjaxSearchBean.setterCallback?componentClientId=" + clientId + "&containerClientId=" + containerClientId + "&viewName=" + context.getViewRoot().getViewId();
+        String submitUri = context.getExternalContext().getRequestContextPath() + "/ajax/invoke/AjaxSearchBean.setterCallback?componentClientId="
+                + clientId + "&containerClientId=" + containerClientId + "&viewName=" + context.getViewRoot().getViewId();
 
         String sep = "\", \"";
         StringBuffer sb = new StringBuffer("<script type=\"text/javascript\">");
         sb.append("addSearchSuggest(\"")
-        .append(clientId).append(sep)
-        .append(containerClientId).append(sep)
-        .append(pickerCallback).append(sep)
-        .append(submitUri).append("\");");
+                .append(clientId).append(sep)
+                .append(containerClientId).append(sep)
+                .append(pickerCallback).append(sep)
+                .append(submitUri).append("\");");
         sb.append("</script>");
         out.write(sb.toString());
     }
@@ -672,8 +703,8 @@ public class ComponentUtil {
      * @param componentPropVO
      * @param propertySheet
      * @param children
-     * @return component generated based on <code>singlePropVO</code> that is added to list of given <code>children</code> that must come from given
-     *         <code>propertySheet</code> where the generated component is added.
+     * @return component generated based on <code>singlePropVO</code> that is added to list of given <code>children</code> that must come from given <code>propertySheet</code>
+     *         where the generated component is added.
      */
     public static UIComponent generateAndAddComponent(FacesContext context, ComponentPropVO componentPropVO, UIPropertySheet propertySheet,
             final List<UIComponent> children) {

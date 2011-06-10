@@ -137,11 +137,12 @@ public class MultiValueEditor extends UIComponentBase implements AjaxUpdateable,
 
     private void pickerFinish(UIGenericPicker picker) {
         String[] results = picker.getSelectedResults();
-        if (results == null) {
+        String strRowIndex = (String) getAttributes().get(Search.OPEN_DIALOG_KEY);
+        if (results == null || StringUtils.isBlank(strRowIndex)) {
             return;
         }
 
-        int rowIndex = Integer.parseInt((String) getAttributes().get(Search.OPEN_DIALOG_KEY));
+        int rowIndex = Integer.parseInt(strRowIndex);
         innerPickerFinish(picker.getFilterIndex(), rowIndex, results, FacesContext.getCurrentInstance());
 
         getAttributes().remove(Search.OPEN_DIALOG_KEY);

@@ -33,8 +33,11 @@ public class RenameInvoiceTypeClassificatorValuesBootstrap extends AbstractModul
                 NodeRef classificatorValueRef = childAssocRef.getChildRef();
                 Map<QName, Serializable> clValueProps = nodeService.getProperties(classificatorValueRef);
                 InvoiceType invoiceType = InvoiceType.getInvoiceTypeByComment((String) clValueProps.get(ClassificatorModel.Props.CL_VALUE_NAME));
-                clValueProps.put(ClassificatorModel.Props.CL_VALUE_NAME, invoiceType.getValue());
-                clValueProps.put(ClassificatorModel.Props.CL_VALUE_DESCRIPTION, invoiceType.getComment());
+                if (invoiceType != null) {
+                    clValueProps.put(ClassificatorModel.Props.CL_VALUE_NAME, invoiceType.getValue());
+                    clValueProps.put(ClassificatorModel.Props.CL_VALUE_DESCRIPTION, invoiceType.getComment());
+                    nodeService.addProperties(classificatorValueRef, clValueProps);
+                }
             }
         }
     }

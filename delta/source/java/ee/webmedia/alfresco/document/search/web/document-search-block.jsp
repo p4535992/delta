@@ -45,7 +45,7 @@
       </a:panel>
 
       <a:panel id="docsearch-results-panel" styleClass="panel-100 with-pager" label="#{msg.search}" progressive="true" rendered="#{DocumentDialog.search.count > 0}">
-         <a:richList id="documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
+         <a:richList id="search-documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow"
             altRowStyleClass="recordSetRowAlt" width="100%" value="#{DocumentDialog.search.documents}" var="r" refreshOnBind="true" >
 
             <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/web/document-list-dialog-columns.jsp" />

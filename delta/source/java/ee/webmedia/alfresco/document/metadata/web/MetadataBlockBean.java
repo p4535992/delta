@@ -819,6 +819,11 @@ public class MetadataBlockBean implements ClearStateListener {
                 if (StringUtils.isNotBlank(sb.toString())) {
                     props.put("{temp}vacationChangeText", sb.toString());
                 }
+            }
+
+            if (document.hasAspect(DocumentSpecificModel.Aspects.VACATION_ORDER_COMMON)
+                    || document.hasAspect(DocumentSpecificModel.Aspects.VACATION_ORDER_COMMON_V2)) {
+                FacesContext context = FacesContext.getCurrentInstance();
 
                 StringBuilder table = new StringBuilder("<table cellspacing='0' cellpadding='0' class='recipient padding'><thead><tr><th>");
                 table.append(MessageUtil.getMessage(context, "document_vacationSubstitute2"));
@@ -1735,6 +1740,13 @@ public class MetadataBlockBean implements ClearStateListener {
         validateErrandAbroadDailyCatering(messages);
         validateDailyAllowanceV2(messages);
         validateExpensesV2TotalSum(messages);
+
+        if (DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
+            String paymentRefNumber = (String) props.get(DocumentSpecificModel.Props.PAYMENT_REFERENCE_NUMBER);
+            if (paymentRefNumber != null && !StringUtils.isNumeric(paymentRefNumber)) {
+                messages.add("document_errorMsg_payment_ref_number_not_numeric");
+            }
+        }
 
         if (messages.size() > 0) {
             for (String message : messages) {

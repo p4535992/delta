@@ -6,8 +6,10 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -251,9 +253,15 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         String templateText = fileFolderService.getReader(template).getContentString();
         String endDateFormula = "{accessRestrEndDateNotificationData}";
         if (templateText.indexOf(endDateFormula) > -1) {
+            StringBuilder debugInfo = new StringBuilder("AccessRestrictionEndDate date formatting:");
+            debugInfo.append("\n  dateFormat.timeZone=").append(dateFormat.getTimeZone());
+            debugInfo.append("\n  dateFormat.timeZoneOverridesCalendar=").append(dateFormat.getTimeZoneOverridesCalendar());
+            debugInfo.append("\n  Locale.default=").append(Locale.getDefault());
+            debugInfo.append("\n  TimeZone.default=").append(TimeZone.getDefault());
             StringBuilder sb = new StringBuilder();
             for (Document doc : documents) {
-                if (doc.getAccessRestrictionEndDate() != null) {
+                Date endDate = doc.getAccessRestrictionEndDate();
+                if (endDate != null) {
                     String regNr = "";
                     if (doc.getRegNumber() != null) {
                         regNr = doc.getRegNumber();
@@ -261,18 +269,22 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                         regNr = I18NUtil.getMessage("notification_document_not_registered", doc.getDocName());
                     }
 
+                    String formattedDate = dateFormat.format(endDate);
                     sb.append(regNr)
                             .append(" (")
                             .append(I18NUtil.getMessage("notification_access_restriction_end"))
                             .append(": ")
-                            .append(dateFormat.format(doc.getAccessRestrictionEndDate()))
+                            .append(formattedDate)
                             .append(")")
                             .append("<br>\n");
+                    debugInfo.append("\n  * ").append(endDate.getTime()).append(" ").append(endDate.toString()).append(" -> ").append(formattedDate).append(" - ")
+                            .append(doc.getNodeRefAsString());
                 }
             }
             if (sb.length() > 0) {
                 templateText = templateText.replaceAll("\\{accessRestrEndDateNotificationData\\}", sb.toString());
             }
+            log.info(debugInfo.toString());
         }
 
         String noEndDateFormula = "{accessRestrNoEndDateNotificationData}";

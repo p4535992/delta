@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.user.web;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -125,19 +126,20 @@ public class UserListDialog extends BaseDialogBean {
     private SelectItem[] searchUsers(String contains, boolean excludeCurrentUser) {
         List<Node> nodes = getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(contains, true));
         int nodesSize = nodes.size();
-        SelectItem[] results = new SelectItem[excludeCurrentUser ? nodesSize - 1 : nodesSize];
-        int i = 0;
+        List<SelectItem> results = new ArrayList<SelectItem>(nodesSize);
         String currentUser = excludeCurrentUser ? AuthenticationUtil.getRunAsUser() : null;
         for (Node node : nodes) {
             String userName = (String) node.getProperties().get(ContentModel.PROP_USERNAME);
-            if (!excludeCurrentUser || !StringUtils.equals(userName, currentUser)) {
-                String label = UserUtil.getPersonFullNameWithUnitName(node.getProperties());
-                results[i++] = new SelectItem(userName, label);
+            if (excludeCurrentUser && StringUtils.equals(userName, currentUser)) {
+                continue;
             }
+
+            String label = UserUtil.getPersonFullNameWithUnitName(node.getProperties());
+            results.add(new SelectItem(userName, label));
         }
 
         WebUtil.sort(results);
-        return results;
+        return results.toArray(new SelectItem[results.size()]);
     }
 
     public void setProperties(UsersBeanProperties properties) {
@@ -159,7 +161,7 @@ public class UserListDialog extends BaseDialogBean {
     protected UserService getUserService() {
         if (userService == null) {
             userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(UserService.BEAN_NAME);
+            .getBean(UserService.BEAN_NAME);
         }
         return userService;
     }
@@ -171,7 +173,7 @@ public class UserListDialog extends BaseDialogBean {
     protected OrganizationStructureService getOrganizationStructureService() {
         if (organizationStructureService == null) {
             organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(OrganizationStructureService.BEAN_NAME);
+            .getBean(OrganizationStructureService.BEAN_NAME);
         }
         return organizationStructureService;
     }

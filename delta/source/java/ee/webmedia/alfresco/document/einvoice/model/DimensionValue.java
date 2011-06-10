@@ -97,7 +97,7 @@ public class DimensionValue implements Comparable<DimensionValue>, Classificator
 
     @Override
     public boolean isByDefault() {
-        return getDefaultValue();
+        return Boolean.TRUE.equals(getDefaultValue());
     }
 
     @Override

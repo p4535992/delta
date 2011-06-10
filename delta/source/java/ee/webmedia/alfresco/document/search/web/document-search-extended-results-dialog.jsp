@@ -12,7 +12,7 @@
    
    <a:panel id="document-panel-search-results" styleClass="overflow-wrapper">   
    <%-- Main List --%>
-   <a:richList id="documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
+   <a:richList id="search-extended-documentList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt"
       value="#{DialogManager.bean.documents}" var="r">
       
       <%-- Registration date --%>

@@ -522,7 +522,7 @@ public class GroupsDialog extends BaseDialogBean
             
             // refresh UI after change
             contextUpdated();
-            MessageUtil.addInfoMessage("addressbook_contactgroup_remove_contact_success");
+            MessageUtil.addInfoMessage("delete_user_from_group");
          }
          catch (Throwable err)
          {

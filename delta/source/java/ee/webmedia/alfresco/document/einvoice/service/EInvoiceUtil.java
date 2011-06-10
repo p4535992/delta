@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
@@ -311,15 +312,16 @@ public class EInvoiceUtil {
     public static boolean checkTransactionMandatoryFields(List<String> mandatoryProps, List<Pair<String, String>> errorMessages, List<String> addedErrorKeys,
             Transaction transaction) {
         boolean result = true;
-        Map<String, Object> transProps = transaction.getNode().getProperties();
-        for (Map.Entry<String, Object> entry : transProps.entrySet()) {
-            String entryKey = entry.getKey();
-            if (mandatoryProps.contains(entryKey) && isEmpty(entry.getValue())) {
+        Map<QName, Serializable> transProps = RepoUtil.toQNameProperties(transaction.getNode().getProperties());
+        for (Entry<QName, Serializable> entry : transProps.entrySet()) {
+            QName entryKey = entry.getKey();
+            String propName = entryKey.getLocalName();
+            if (mandatoryProps.contains(propName) && isEmpty(entry.getValue())) {
                 if (errorMessages != null && addedErrorKeys != null) {
                     // collect all error messages
-                    if (!addedErrorKeys.contains(entryKey)) {
-                        errorMessages.add(new Pair<String, String>("task_finish_error_transaction_mandatory_not_filled", MessageUtil.getMessage("transaction_" + entryKey)));
-                        addedErrorKeys.add(entryKey);
+                    if (!addedErrorKeys.contains(propName)) {
+                        errorMessages.add(new Pair<String, String>("task_finish_error_transaction_mandatory_not_filled", MessageUtil.getMessage("transaction_" + propName)));
+                        addedErrorKeys.add(propName);
                     }
                     result = false;
                 } else {

@@ -467,7 +467,6 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         tranSaveAsTemplateGrid.setCellspacing("0");
         tranSaveAsTemplateGrid.setWidth("100%");
         tranSaveAsTemplateGrid.setColumns(3);
-        tranSaveAsTemplateGrid.setStyleClass("column panel-100");
 
         UIOutput selectTemplatelabel = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
         selectTemplatelabel.setValue(MessageUtil.getMessage("transactions_saveas_template") + ": ");
@@ -679,6 +678,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
                 dimensionGenerator = new DimensionSelectorGenerator();
             }
             dimensionGenerator.getCustomAttributes().put(ClassificatorSelectorGenerator.ATTR_DESCRIPTION_AS_LABEL, "true");
+            dimensionGenerator.setSelectedValue((String) transactions.get(transactionIndex).getNode().getProperties().get(propName));
             dimensionSelector = dimensionGenerator.generateSelectComponent(context, null, false);
             dimensionGenerator.getCustomAttributes().put(DimensionSelectorGenerator.ATTR_DIMENSION_NAME, dimensions.getDimensionName());
             dimensionGenerator.setupSelectComponent(context, null, null, null, dimensionSelector, false);

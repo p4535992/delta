@@ -2,11 +2,14 @@ package ee.webmedia.alfresco.classificator.service;
 
 import java.io.Serializable;
 import java.io.Writer;
+import java.text.Collator;
+import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -17,7 +20,6 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.ISO9075;
-import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,13 +48,14 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         classificatorBeanPropertyMapper = BeanPropertyMapper.newInstance(Classificator.class);
         classificatorValueBeanPropertyMapper = BeanPropertyMapper.newInstance(ClassificatorValue.class);
 
+        RuleBasedCollator et_EECollator = (RuleBasedCollator) Collator.getInstance(new Locale("et", "EE", ""));
         @SuppressWarnings("unchecked")
         Comparator<ClassificatorValue> tmp = new TransformingComparator(new Transformer<ClassificatorValue>() {
             @Override
             public Object tr(ClassificatorValue c) {
-                return c.getValueName();
+                return c.getValueName() == null ? "" : c.getValueName();
             }
-        }, new NullComparator());
+        }, et_EECollator);
         CLASSIFICATOR_VALUES_ALFABETIC_ORDER_COMPARATOR = tmp;
     }
 
