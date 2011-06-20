@@ -63,7 +63,8 @@ public interface AdrService {
     // aga dokumendi identifitseerimine käib nodeRef järgi
     // + lisaväljad
     // ja failid on ilma sisuta
-    List<DokumentDetailidegaV2> koikDokumendidLisatudMuudetudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
+    List<DokumentDetailidegaV2> koikDokumendidLisatudMuudetudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev, int jataAlgusestVahele,
+            int tulemustePiirang);
 
     // XXX kui dokumenti on muudetud pärast perioodiLoppKuupaev'a, siis ta ei ole näha siin vastuses, olenemata sellest et registreeriti ta näiteks selles vahemikus
     // Aga ei tohiks olla oluline, sest ADR võtab samal öösel eelmise kuupäeva kohta, ehk vahemik on ainult paar tundi ja keegi siis enam ei muuda
@@ -77,7 +78,7 @@ public interface AdrService {
 
     // sama mis eelmine
     // aga dokumendi identifitseerimine käib nodeRef järgi
-    List<DokumentId> koikDokumendidKustutatudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev);
+    List<DokumentId> koikDokumendidKustutatudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev, int jataAlgusestVahele, int tulemustePiirang);
 
     // ---------- Internal use -----------
 

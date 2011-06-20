@@ -101,6 +101,25 @@
          <h:commandButton id="updateDocumentInheritPermissionsUpdaterSleepTime" value="Uuenda" type="submit"
             actionListener="#{documentInheritPermissionsUpdater.updateSleepTime}" />
 
+         <br/>
+         <br/>
+         <br/>
+         <u>Lepingute väljasaatmise kirjete tekitamise skript (ContractSendInfoUpdater)</u>
+         <br/>
+         <br/>
+         <h:commandButton id="startContractSendInfoUpdater" value="Käivita dokumendi õiguste optimeerimise skript" type="submit"
+            actionListener="#{contractSendInfoUpdater.executeUpdaterInBackground}"
+            rendered="#{contractSendInfoUpdater.updaterRunning == false}" />
+         <h:commandButton id="stopContractSendInfoUpdater" value="Peata dokumendi õiguste optimeerimise skript" type="submit"
+            actionListener="#{contractSendInfoUpdater.stopUpdater}"
+            rendered="#{contractSendInfoUpdater.updaterRunning == true}"
+            disabled="#{contractSendInfoUpdater.updaterStopping == true}" />
+         <br/>
+         <h:outputText value="Paus pärast iga dokumendi töötlemist (ms): "/>
+         <h:inputText id="contractSendInfoUpdaterSleepTime" value="#{contractSendInfoUpdater.sleepTime}" size="4" />
+         <h:commandButton id="updateContractSendInfoUpdaterSleepTime" value="Uuenda" type="submit"
+            actionListener="#{contractSendInfoUpdater.updateSleepTime}" />
+
       <hr/>
       <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/><br/>
 

@@ -104,6 +104,7 @@ public enum Parameters {
     DIMENSION_CODE_INVOICE_FUNCTIONAL_AREA_CODE("dimensionCodeInvoiceFunctionalAreaCode"),
     DIMENSION_CODE_INVOICE_CASH_FLOW_CODES("dimensionCodeInvoiceCashFlowCodes"),
     DIMENSION_CODE_INVOICE_SOURCE_CODES("dimensionCodeInvoiceSourceCodes"),
+    DIMENSION_CODE_INVOICE_POSTING_KEY("dimensionCodeInvoicePostingKey"),
     DIMENSION_CODE_INVOICE_PAYMENT_METHOD_CODES("dimensionCodeInvoicePaymentMethodCodes"),
     DIMENSION_CODE_INVOICE_HOUSE_BANK_CODES("dimensionCodeInvoiceHouseBankCodes");
 

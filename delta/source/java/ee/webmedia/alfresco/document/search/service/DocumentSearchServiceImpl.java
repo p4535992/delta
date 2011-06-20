@@ -172,7 +172,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     @Override
-    public List<Document> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<QName> documentTypes) {
+    public List<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<QName> documentTypes) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(3);
         if (modifiedDateBegin != null && modifiedDateEnd != null) {
@@ -180,8 +180,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         }
 
         String query = generateAdrDocumentSearchQuery(queryParts, documentTypes);
-        List<Document> results = searchDocumentsImpl(query, false, /* queryName */"adrDocumentByModified1");
-        results.addAll(searchDocumentsImpl(query, false, /* queryName */"adrDocumentByModified2", Arrays.asList(generalService.getArchivalsStoreRef())));
+        List<NodeRef> results = searchNodes(query, false, /* queryName */"adrDocumentByModified1");
+        results.addAll(searchNodes(query, false, /* queryName */"adrDocumentByModified2", generalService.getArchivalsStoreRef()));
         if (log.isDebugEnabled()) {
             log.debug("ADR document details search total time " + (System.currentTimeMillis() - startTime) + " ms, results " + results.size() //
                     + ", query: " + query);
@@ -1447,7 +1447,11 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private List<NodeRef> searchNodes(String query, boolean limited, String queryName) {
-        ResultSet resultSet = doSearch(query, limited, queryName);
+        return searchNodes(query, limited, queryName, null);
+    }
+
+    private List<NodeRef> searchNodes(String query, boolean limited, String queryName, StoreRef storeRef) {
+        ResultSet resultSet = doSearch(query, limited, queryName, storeRef);
         try {
             return limitResults(resultSet.getNodeRefs(), limited);
         } finally {

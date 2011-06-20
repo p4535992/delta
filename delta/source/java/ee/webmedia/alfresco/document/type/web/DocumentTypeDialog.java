@@ -40,7 +40,8 @@ public class DocumentTypeDialog extends BaseDialogBean {
         documentTypes = null;
         MessageUtil.addInfoMessage("save_success");
         // We need to stay on the same dialog
-        return "dialog:close:dialog:documentTypeDialog";
+        init(null);
+        return null;
     }
 
     @Override
@@ -119,7 +120,7 @@ public class DocumentTypeDialog extends BaseDialogBean {
     public DocumentTypeService getDocumentTypeService() {
         if (documentTypeService == null) {
             documentTypeService = (DocumentTypeService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(DocumentTypeService.BEAN_NAME);
+            .getBean(DocumentTypeService.BEAN_NAME);
         }
         return documentTypeService;
     }

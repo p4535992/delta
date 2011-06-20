@@ -52,7 +52,7 @@
             <a:sortLink label="#{msg.first_name}" value="firstName" mode="case-insensitive" styleClass="header" />
          </f:facet>
          <f:facet name="small-icon">
-            <h:graphicImage url="/images/icons/person.gif" />
+            <h:graphicImage styleClass="up4px" url="/images/icons/person.gif" />
          </f:facet>
          <h:outputText value="#{u.firstName}" />
       </a:column>

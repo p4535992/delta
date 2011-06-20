@@ -52,6 +52,7 @@ public class UIProperty extends PropertySheetItem
 {
    private static Log logger = LogFactory.getLog(UIProperty.class);
    private static Log missingPropsLogger = LogFactory.getLog("alfresco.missingProperties");
+   public static final String ALLOW_COMMA_AS_DECIMAL_SEPARATOR_ATTR = "allowCommaAsDecimalSeparator";
 
    /**
     * Default constructor

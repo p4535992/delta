@@ -108,7 +108,7 @@ public class ParametersListDialog extends BaseDialogBean {
     public ParametersService getParametersService() {
         if (parametersService == null) {
             parametersService = (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())//
-                    .getBean(ParametersService.BEAN_NAME);
+            .getBean(ParametersService.BEAN_NAME);
         }
         return parametersService;
     }

@@ -40,8 +40,10 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
 
     public static final String ATTR_SELECTION_ITEMS = "selectionItems";
     // The following variables' values are also hardcoded in scripts.js, so change the values simultaneously here and in javascript
-    public static final String ONCHANGE_SCRIPT_START_MARKER = "====";
+    public static final String ONCHANGE_SCRIPT_START_MARKER = "¤¤¤¤";
     public static final String ONCHANGE_MARKER_CLASS = "selectWithOnchangeEvent";
+    //call javascript function that takes current element id as parameter 
+    public static final String ONCHANGE_PARAM_MARKER_CLASS = "selectWithOnchangeEventParam";
 
     @Override
     public UIComponent generate(FacesContext context, String id) {

@@ -5,6 +5,7 @@ import static ee.webmedia.alfresco.workflow.web.TaskListCommentComponent.TASK_IN
 import static ee.webmedia.alfresco.workflow.web.TaskListGenerator.WF_INDEX;
 
 import java.io.Serializable;
+import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,11 +24,13 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
+import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
@@ -72,6 +75,8 @@ import ee.webmedia.alfresco.workflow.web.evaluator.WorkflowNewEvaluator;
  */
 public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
 
+    private static final String CONTINUE_VALIDATED_WORKFLOW = "continueValidatedWorkflow";
+    private static final String START_VALIDATED_WORKFLOW = "startValidatedWorkflow";
     private static final long serialVersionUID = 1L;
     public static final String BEAN_NAME = "CompoundWorkflowDialog";
 
@@ -201,27 +206,69 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     public void startWorkflow() {
         log.debug("startWorkflow");
         if (validate(FacesContext.getCurrentInstance(), true, false, true)) {
-            try {
-                removeEmptyTasks();
-                if (isUnsavedWorkFlow) {
-                    getDocumentLogService().addDocumentLog(compoundWorkflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
-                }
-                compoundWorkflow = getWorkflowService().saveAndStartCompoundWorkflow(compoundWorkflow);
-                if (isUnsavedWorkFlow) {
-                    isUnsavedWorkFlow = false;
-                }
-                MessageUtil.addInfoMessage("workflow_compound_start_success");
-            } catch (Exception e) {
-                handleException(e, "workflow_compound_start_workflow_failed");
+            List<String> confirmationMessages = getConfirmationMessages();
+            if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
+                updatePanelGroup(confirmationMessages, START_VALIDATED_WORKFLOW);
+                return;
             }
-            updatePanelGroup();
+            startValidatedWorkflow(null);
         }
+    }
+
+    /**
+     * This method assumes that workflows has been validated
+     */
+    public void startValidatedWorkflow(ActionEvent event) {
+        try {
+            removeEmptyTasks();
+            if (isUnsavedWorkFlow) {
+                getDocumentLogService().addDocumentLog(compoundWorkflow.getParent(), MessageUtil.getMessage("document_log_status_workflow"));
+            }
+            compoundWorkflow = getWorkflowService().saveAndStartCompoundWorkflow(compoundWorkflow);
+            if (isUnsavedWorkFlow) {
+                isUnsavedWorkFlow = false;
+            }
+            MessageUtil.addInfoMessage("workflow_compound_start_success");
+        } catch (Exception e) {
+            handleException(e, "workflow_compound_start_workflow_failed");
+        }
+        updatePanelGroup();
+    }
+
+    private List<String> getConfirmationMessages() {
+        NodeService nodeService = BeanHelper.getNodeService();
+        NodeRef docRef = compoundWorkflow.getParent();
+        if (!DocumentSubtypeModel.Types.INVOICE.equals(nodeService.getType(docRef))) {
+            return null;
+        }
+        Date invoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.INVOICE_DATE);
+        if (invoiceDueDate == null) {
+            return null;
+        }
+        List<String> messages = new ArrayList<String>();
+        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+            for (Task task : workflow.getTasks()) {
+                Date taskDueDate = task.getDueDate();
+                if (taskDueDate != null && invoiceDueDate != null) {
+                    Date invoiceDueDateMinus3Days = DateUtils.addDays(invoiceDueDate, -3);
+                    if (!DateUtils.isSameDay(invoiceDueDateMinus3Days, taskDueDate) && taskDueDate.after(invoiceDueDateMinus3Days)) {
+                        FacesContext fc = FacesContext.getCurrentInstance();
+                        DateFormat dateFormat = Utils.getDateFormat(fc);
+                        String invoiceTaskDueDateConfirmationMsg = MessageUtil.getMessage("task_confirm_invoice_task_due_date",
+                                MessageUtil.getMessage(workflow.getType().getLocalName()),
+                                dateFormat.format(taskDueDate), dateFormat.format(invoiceDueDate));
+                        messages.add(invoiceTaskDueDateConfirmationMsg);
+                    }
+                }
+            }
+        }
+        return messages;
     }
 
     /**
      * Action listener for JSP.
      */
-    public void stopWorkflow(@SuppressWarnings("unused") ActionEvent event) {
+    public void stopWorkflow(ActionEvent event) {
         log.debug("stopWorkflow");
         try {
             removeEmptyTasks();
@@ -238,15 +285,39 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     /**
      * Action listener for JSP.
      */
-    public void continueWorkflow(@SuppressWarnings("unused") ActionEvent event) {
+    public void continueWorkflow(ActionEvent event) {
         log.debug("continueWorkflow");
         try {
             removeEmptyTasks();
             if (validate(FacesContext.getCurrentInstance(), true, false, true)) {
-                compoundWorkflow = getWorkflowService().saveAndContinueCompoundWorkflow(compoundWorkflow);
-                MessageUtil.addInfoMessage("workflow_compound_continue_success");
+                List<String> confirmationMessages = getConfirmationMessages();
+                if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
+                    updatePanelGroup(confirmationMessages, CONTINUE_VALIDATED_WORKFLOW);
+                    return;
+                }
+                continueValidatedWorkflow(true);
             }
         } catch (Exception e) {
+            handleException(e, "workflow_compound_continue_workflow_failed");
+        }
+    }
+
+    /**
+     * This method assumes that compound workflow has been validated
+     */
+    public void continueValidatedWorkflow() {
+        continueValidatedWorkflow(false);
+    }
+
+    private void continueValidatedWorkflow(boolean throwException) {
+        try {
+            compoundWorkflow = getWorkflowService().saveAndContinueCompoundWorkflow(compoundWorkflow);
+            MessageUtil.addInfoMessage("workflow_compound_continue_success");
+        } catch (Exception e) {
+            // let calling method handle error
+            if (throwException) {
+                throw new RuntimeException(e);
+            }
             handleException(e, "workflow_compound_continue_workflow_failed");
         }
         updatePanelGroup();
@@ -733,15 +804,6 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             valid = false;
             for (String validationMsg : errorMessageKeys) {
                 MessageUtil.addErrorMessage(validationMsg);
-            }
-        }
-        for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-            for (Task task : workflow.getTasks()) {
-                Date taskDueDate = task.getDueDate();
-                Date invoiceDueDate = (Date) docProps.get(DocumentSpecificModel.Props.INVOICE_DUE_DATE);
-                if (taskDueDate != null && invoiceDueDate != null) {
-                    Date invoiceDueDateMinus3Days = DateUtils.addDays(invoiceDueDate, -3);
-                }
             }
         }
         return valid;

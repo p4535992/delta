@@ -1028,13 +1028,17 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         arveInfo.setLisaInfo(lisainfo);
 
         Konteering konteering = new Konteering();
-        XMLGregorianCalendar entryDate = XmlUtil.getXmlGregorianCalendar((Date) props.get(DocumentSpecificModel.Props.ENTRY_DATE));
-        entryDate.setHour(DatatypeConstants.FIELD_UNDEFINED);
-        entryDate.setMinute(DatatypeConstants.FIELD_UNDEFINED);
-        entryDate.setSecond(DatatypeConstants.FIELD_UNDEFINED);
-        entryDate.setMillisecond(DatatypeConstants.FIELD_UNDEFINED);
-        entryDate.setTimezone(DatatypeConstants.FIELD_UNDEFINED);
-        konteering.setKandeKuupaev(entryDate);
+        Date entryDate = (Date) props.get(DocumentSpecificModel.Props.ENTRY_DATE);
+        XMLGregorianCalendar xmlEntryDate = null;
+        if (entryDate != null) {
+            xmlEntryDate = XmlUtil.getXmlGregorianCalendar(entryDate);
+            xmlEntryDate.setHour(DatatypeConstants.FIELD_UNDEFINED);
+            xmlEntryDate.setMinute(DatatypeConstants.FIELD_UNDEFINED);
+            xmlEntryDate.setSecond(DatatypeConstants.FIELD_UNDEFINED);
+            xmlEntryDate.setMillisecond(DatatypeConstants.FIELD_UNDEFINED);
+            xmlEntryDate.setTimezone(DatatypeConstants.FIELD_UNDEFINED);
+        }
+        konteering.setKandeKuupaev(xmlEntryDate);
 
         arve.setKonteering(konteering);
 
@@ -1258,12 +1262,13 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
     @Override
     public NodeRef updateDocumentEntrySapNumber(String dvkId, String erpDocNumber) {
+        NodeRef nodeRef = null;
         try {
             List<Document> documents = documentSearchService.searchDocumentsByDvkId(dvkId);
             if (documents == null || documents.size() != 1) {
                 return null;
             }
-            NodeRef nodeRef = documents.get(0).getNodeRef();
+            nodeRef = documents.get(0).getNodeRef();
             if (nodeRef == null || !DocumentSubtypeModel.Types.INVOICE.equals(nodeService.getType(nodeRef))) {
                 return null;
             }
@@ -1275,7 +1280,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         } catch (IllegalArgumentException e) {
             LOG.error("Document uri could not be parsed to valid uri tokens");
         }
-        return null;
+        return nodeRef;
     }
 
     @Override

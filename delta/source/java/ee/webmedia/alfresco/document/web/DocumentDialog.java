@@ -554,6 +554,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             }
             logBlockBean.restore();
             transactionsBlockBean.restore();
+            searchBlockBean.reset();
             isDraft = false;
             isFinished = false;
             ((MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME)).processTaskItems(); // Update UserWorkingDocuments number
@@ -695,7 +696,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         return getDocumentService().isIncomingInvoice(node.getNodeRef());
     }
 
-    // doccom:docStatus=suletud
+    // doccom:docStatus=lõpetatud
     public boolean isClosedOrNotEditable() {
         return DocumentStatus.FINISHED.getValueName().equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS))
                 || isNotEditable();

@@ -174,12 +174,14 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
     @ResponseWrapper(localName = "koikDokumendidLisatudMuudetudV2Response", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.ws.KoikDokumendidLisatudMuudetudV2Response")
     public List<DokumentDetailidegaV2> koikDokumendidLisatudMuudetudV2(
             @WebParam(name = "perioodiAlgusKuupaev", targetNamespace = "") final XMLGregorianCalendar perioodiAlgusKuupaev,
-            @WebParam(name = "perioodiLoppKuupaev", targetNamespace = "") final XMLGregorianCalendar perioodiLoppKuupaev) {
+            @WebParam(name = "perioodiLoppKuupaev", targetNamespace = "") final XMLGregorianCalendar perioodiLoppKuupaev,
+            @WebParam(name = "jataAlgusestVahele", targetNamespace = "") final int jataAlgusestVahele,
+            @WebParam(name = "tulemustePiirang", targetNamespace = "") final int tulemustePiirang) {
 
         return AuthenticationUtil.runAs(new RunAsWork<List<DokumentDetailidegaV2>>() {
             @Override
             public List<DokumentDetailidegaV2> doWork() throws Exception {
-                return getAdrService().koikDokumendidLisatudMuudetudV2(perioodiAlgusKuupaev, perioodiLoppKuupaev);
+                return getAdrService().koikDokumendidLisatudMuudetudV2(perioodiAlgusKuupaev, perioodiLoppKuupaev, jataAlgusestVahele, tulemustePiirang);
             }
         }, AuthenticationUtil.getSystemUserName());
     }
@@ -208,12 +210,14 @@ public class AvalikDokumendiRegisterEndpoint implements AvalikDokumendiRegister 
     @ResponseWrapper(localName = "koikDokumendidKustutatudV2Response", targetNamespace = "http://alfresco/avalikdokumendiregister", className = "ee.webmedia.alfresco.adr.ws.KoikDokumendidKustutatudV2Response")
     public List<DokumentId> koikDokumendidKustutatudV2(
             @WebParam(name = "perioodiAlgusKuupaev", targetNamespace = "") final XMLGregorianCalendar perioodiAlgusKuupaev,
-            @WebParam(name = "perioodiLoppKuupaev", targetNamespace = "") final XMLGregorianCalendar perioodiLoppKuupaev) {
+            @WebParam(name = "perioodiLoppKuupaev", targetNamespace = "") final XMLGregorianCalendar perioodiLoppKuupaev,
+            @WebParam(name = "jataAlgusestVahele", targetNamespace = "") final int jataAlgusestVahele,
+            @WebParam(name = "tulemustePiirang", targetNamespace = "") final int tulemustePiirang) {
 
         return AuthenticationUtil.runAs(new RunAsWork<List<DokumentId>>() {
             @Override
             public List<DokumentId> doWork() throws Exception {
-                return getAdrService().koikDokumendidKustutatudV2(perioodiAlgusKuupaev, perioodiLoppKuupaev);
+                return getAdrService().koikDokumendidKustutatudV2(perioodiAlgusKuupaev, perioodiLoppKuupaev, jataAlgusestVahele, tulemustePiirang);
             }
         }, AuthenticationUtil.getSystemUserName());
     }

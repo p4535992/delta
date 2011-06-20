@@ -20,7 +20,7 @@ public interface ParametersService {
     String BEAN_NAME = "ParametersService";
 
     public interface ParameterChangedCallback {
-        void doWithParameter(Serializable serializable);
+        void doWithParameter(Serializable paramValue);
     }
 
     Parameter<?> getParameter(Parameters parameter);

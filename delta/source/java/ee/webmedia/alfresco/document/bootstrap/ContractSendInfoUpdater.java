@@ -116,8 +116,8 @@ public class ContractSendInfoUpdater extends AbstractNodeUpdater {
 
         @SuppressWarnings("unchecked")
         List<String> searchableSendMode = (List<String>) origProps.get(DocumentCommonModel.Props.SEARCHABLE_SEND_MODE);
-        if (searchableSendMode != null) {
-            return new Pair<Boolean, String[]>(false, new String[] { "searchableSendModeIsNotNull", StringUtils.join(searchableSendMode, ',') });
+        if (!TextUtil.isBlank(searchableSendMode)) {
+            return new Pair<Boolean, String[]>(false, new String[] { "searchableSendModeIsNotBlank", StringUtils.join(searchableSendMode, ',') });
         }
         Date regDateTime = (Date) origProps.get(DocumentCommonModel.Props.REG_DATE_TIME);
         if (regDateTime == null || (!dayBeforeYesterday.after(regDateTime) && !DateUtils.isSameDay(regDateTime, dayBeforeYesterday))) {

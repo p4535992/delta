@@ -16,7 +16,10 @@ import java.util.TreeMap;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIInput;
+import javax.faces.component.UISelectItem;
+import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.el.MethodBinding;
 import javax.faces.event.ActionEvent;
@@ -40,6 +43,7 @@ import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
+import org.apache.myfaces.shared_impl.renderkit.RendererUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 import org.springframework.web.jsf.FacesContextUtils;
 
@@ -602,8 +606,12 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         return "workflow-settings";
     }
 
-    @SuppressWarnings("unchecked")
     protected void updatePanelGroup() {
+        updatePanelGroup(null, null);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected void updatePanelGroup(List<String> confirmationMessages, String validatedAction) {
         Application application = FacesContext.getCurrentInstance().getApplication();
 
         panelGroup.getChildren().clear();
@@ -724,6 +732,27 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             panelW.getChildren().add(sheetW);
 
             wfCounter++;
+        }
+        if (confirmationMessages != null && !confirmationMessages.isEmpty()) {
+            HtmlSelectOneMenu messageInput = (HtmlSelectOneMenu) application.createComponent(HtmlSelectOneMenu.COMPONENT_TYPE);
+            messageInput.setId("workflow-confirmation-messages");
+            messageInput.setStyleClass("workflow-confirmation-messages");
+            for (String message : confirmationMessages) {
+                UISelectItem selectItem = (UISelectItem) application.createComponent(UISelectItem.COMPONENT_TYPE);
+                selectItem.setItemValue(RendererUtils.getConvertedUIOutputValue(FacesContext.getCurrentInstance(), messageInput, message));
+                messageInput.getChildren().add(selectItem);
+            }
+            messageInput.setStyle("display: none;");
+            panelC.getChildren().add(messageInput);
+
+            // hidden link for submitting form when transTemplateSelector onchange event occurs
+            HtmlCommandLink workflowConfirmationLink = new HtmlCommandLink();
+            workflowConfirmationLink.setId("workflow-after-confirmation-link");
+            workflowConfirmationLink.setStyleClass("workflow-after-confirmation-link");
+            workflowConfirmationLink.setActionListener(application.createMethodBinding("#{CompoundWorkflowDialog." + validatedAction + "}", UIActions.ACTION_CLASS_ARGS));
+            workflowConfirmationLink.setStyle("display: none;");
+            panelC.getChildren().add(workflowConfirmationLink);
+
         }
     }
 

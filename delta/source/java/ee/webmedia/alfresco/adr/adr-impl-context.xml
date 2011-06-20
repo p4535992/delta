@@ -13,6 +13,7 @@
       <property name="nodeService" ref="nodeService" />
       <property name="generalService" ref="generalService" />
       <property name="namespaceService" ref="namespaceService" />
+      <property name="dataSource" ref="dataSource" />
    </bean>
 
 </beans>

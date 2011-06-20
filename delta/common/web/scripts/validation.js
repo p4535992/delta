@@ -126,6 +126,27 @@ function validateIsNumber(control, message, showMessage)
 }
 
 /**
+ * Ensures the value of the 'control' is a number.
+ * Allow both comma and dot as decimal separator - before converting to number replace commas with dots 
+ * Allow spaces between digits - support grouping
+ * @return true if the value is a number
+ */
+function validateIsNumber_EE_EN(control, message, showMessage)
+{
+   var result = true;
+
+   var numberStr = control.value.replace(/\s/g, '');
+   numberStr = numberStr.replace(",", ".");
+   if (isNaN(numberStr))
+   {
+      informUser(control, message, showMessage);
+      result = false;
+   }
+   
+   return result;
+}
+
+/**
  * Ensures the value of the 'control' has a string length more than 'min' and less than 'max'.
  *
  * @return true if the string length validation passed

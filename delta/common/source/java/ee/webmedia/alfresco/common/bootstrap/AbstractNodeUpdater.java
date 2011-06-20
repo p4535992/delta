@@ -80,9 +80,9 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         behaviourFilter = (BehaviourFilter) serviceRegistry.getService(QName.createQName(null, "policyBehaviourFilter"));
     }
 
-    private AtomicBoolean updaterRunning = new AtomicBoolean(false);
-    private AtomicBoolean stopFlag = new AtomicBoolean(false);
-    private AtomicInteger sleepTime = new AtomicInteger(0);
+    private final AtomicBoolean updaterRunning = new AtomicBoolean(false);
+    private final AtomicBoolean stopFlag = new AtomicBoolean(false);
+    private final AtomicInteger sleepTime = new AtomicInteger(0);
 
     public boolean isUpdaterRunning() {
         return updaterRunning.get();
@@ -129,17 +129,24 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
                 public void run() {
                     try {
                         updaterRunning.set(true);
-                        try {
-                            AuthenticationUtil.runAs(new RunAsWork<Void>() {
-                                @Override
-                                public Void doWork() throws Exception {
-                                    executeUpdater();
-                                    return null;
+                        stopFlag.set(false);
+                        AuthenticationUtil.runAs(new RunAsWork<Void>() {
+                            @Override
+                            public Void doWork() throws Exception {
+                                while (true) {
+                                    try {
+                                        executeUpdater();
+                                        return null;
+                                    } catch (Exception e) {
+                                        log.error("Background updater error", e);
+                                        if (stopFlag.get()) {
+                                            return null;
+                                        }
+                                        Thread.sleep(5000);
+                                    }
                                 }
-                            }, AuthenticationUtil.getSystemUserName());
-                        } catch (Exception e) {
-                            log.error("Background updater error", e);
-                        }
+                            }
+                        }, AuthenticationUtil.getSystemUserName());
                     } finally {
                         updaterRunning.set(false);
                     }
@@ -183,7 +190,6 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
         if (nodes.size() > 0) {
             UpdateNodesBatchProgress batchProgress = new UpdateNodesBatchProgress();
             try {
-                stopFlag.set(false);
                 batchProgress.run();
             } finally {
                 log.info("Completed nodes have been written to file " + completedNodesFile.getAbsolutePath());
@@ -512,7 +518,7 @@ public abstract class AbstractNodeUpdater extends AbstractModuleComponent implem
     /** RetryingTransactionHelper that only tries to do things once. */
     private RetryingTransactionHelper getTransactionHelper() {
         RetryingTransactionHelper helper = new RetryingTransactionHelper();
-        helper.setMaxRetries(1);
+        helper.setMaxRetries(3);
         helper.setTransactionService(serviceRegistry.getTransactionService());
         return helper;
     }

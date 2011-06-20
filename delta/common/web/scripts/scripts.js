@@ -851,7 +851,7 @@ $jQ(document).ready(function() {
       // If possible, submit filter value
       var filterValue = 0;
       var filter = input.prev();
-      if (filter != null) {
+      if (filter != null && filter.attr('value') != undefined) {
          filterValue = filter.attr('value');
       }
       if (value && value.length % 3 == 0) {
@@ -977,12 +977,7 @@ $jQ(document).ready(function() {
    selects.live("change", function(){
       var jqSelect = $jQ(this);
       if(!jqSelect.hasClass('noValChangeTooltip')) {
-         var selected = jqSelect.find("option:selected");
-         if(!jqSelect.hasClass('noOptionTitle')){
-            jqSelect.attr("title", selected.text());
-         } else {
-            jqSelect.attr("title", selected.attr("title"));
-         }
+         setSelectTooltips(jqSelect);
       }
    });
 
@@ -1121,15 +1116,19 @@ function initSelectTooltips(selects) {
       if(!jqSelect.hasClass('noValChangeTooltip')) {
          var existingTooltip = jqSelect.attr("title");
          if(existingTooltip==null || existingTooltip.trim().length == 0) {
-            var selected = jqSelect.find("option:selected");
-            if(!jqSelect.hasClass('noOptionTitle')){
-               jqSelect.attr("title", selected.text());
-            } else {
-               jqSelect.attr("title", selected.attr("title"));
-            }
+            setSelectTooltips(jqSelect);
          }
       }
    });
+}
+
+function setSelectTooltips(jqSelect){
+   var selected = jqSelect.find("option:selected");
+   if(!jqSelect.hasClass('noOptionTitle')){
+      jqSelect.attr("title", selected.text());
+   } else {
+      jqSelect.attr("title", selected.attr("title"));
+   }
 }
 /**
  * extend jQuery Condence plugin so that
@@ -1290,23 +1289,16 @@ function handleHtmlLoaded(context, selects) {
     * Add onChange functionality to jQuery change event (we can't use onChange attribute because of jQuery bug in IE)
     * @author Riina Tens
     */
-   $jQ("[class^=selectWithOnchangeEvent]", context).each(function (intIndex)
+   $jQ("[class^=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
    {
-      var selectId = $(this).id;
-      var selectElement = $jQ("#" + escapeId4JQ(selectId));
-      var classString = selectElement.attr('class');
-      var onChangeJavascript = classString.substring(classString.lastIndexOf('====') + 4);
+      var classString = selectElement.className;
+      var onChangeJavascript = classString.substring(classString.lastIndexOf('¤¤¤¤') + 4);
       if(onChangeJavascript != ""){
-         //XXX: maybe remove script part from class atribute after reading it into function?
-         //selectElement.setAttribute('class', classString.substring(0, lastIndexOf('====')));
-
-         var selectBaseId = $(this).id.substring(selectId.lastIndexOf(':') + 1);
-         if(selectBaseId == 'select_user' || selectBaseId == 'selPageSize'){
+         if(classString.indexOf('selectWithOnchangeEventParam') == 0){
             $jQ(this).bind("change", function()
             {
                //assume onChangeJavascript contains valid function body
-               //eval("(function() {" + onChangeJavascript + "}) ();");
-               eval("(function(currElId) {" + onChangeJavascript + "}) ('" + $(this).id + "');");
+               eval("(function(currElId) {" + onChangeJavascript + "}) ('" + selectElement.id + "');");
             });
          }
          else{
@@ -1328,6 +1320,9 @@ function handleHtmlLoaded(context, selects) {
    $jQ(".genericpicker-input:visible").focus();
 
 	propSheetValidateOnDocumentReady();
+
+	// this method should be called last in handleHtmlLoaded as it displays alerts and possibly submits page
+	confirmWorkflow();
 }
 
 //-----------------------------------------------------------------------------
@@ -1509,4 +1504,17 @@ function isActiveXOK(plugin) {
 
 function sendToSapManually(){
    return showModal('entrySapNumber_popup');
+}
+
+function confirmWorkflow(){
+   var confirmationMessagesSelect = $jQ("[class='workflow-confirmation-messages']").get(0);
+   if(confirmationMessagesSelect == undefined){
+      return false;
+   }
+   for (i = confirmationMessagesSelect.children.length - 1; i >= 0; i--) {
+      if (!confirm(confirmationMessagesSelect.children[i].value)){
+         return false;
+      }
+   }
+   $jQ("[class='workflow-after-confirmation-link']").get(0).click();   
 }

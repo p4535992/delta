@@ -66,7 +66,6 @@ import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateL
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
-import ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
@@ -495,7 +494,7 @@ public class MetadataBlockBean implements ClearStateListener {
         if (dbl == null) {
             return "";
         }
-        return TransactionsBlockBean.INVOICE_DECIMAL_FORMAT.format(dbl.doubleValue());
+        return EInvoiceUtil.getInvoiceNumberFormat().format(dbl.doubleValue());
     }
 
     protected void afterModeChange() {

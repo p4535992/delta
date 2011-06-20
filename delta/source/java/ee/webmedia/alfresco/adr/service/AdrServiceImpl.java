@@ -4,9 +4,12 @@ import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithParenth
 import static ee.webmedia.alfresco.utils.XmlUtil.getDate;
 
 import java.io.Serializable;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -15,15 +18,25 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.sql.DataSource;
 import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.collections.Transformer;
+import org.apache.commons.collections.comparators.ComparatorChain;
+import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.collections.comparators.TransformingComparator;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.FastDateFormat;
+import org.springframework.jdbc.core.simple.ParameterizedRowMapper;
+import org.springframework.jdbc.core.simple.SimpleJdbcTemplate;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.model.AdrModel;
 import ee.webmedia.alfresco.adr.ws.Dokumendiliik;
@@ -67,11 +80,14 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(AdrServiceImpl.class);
 
+    public static FastDateFormat dateFormat = FastDateFormat.getInstance("yyyy-MM-dd");
+
     private DocumentSearchService documentSearchService;
     private FileService fileService;
     private DocumentTypeService documentTypeService;
     private DocumentService documentService;
     private NamespaceService namespaceService;
+    private SimpleJdbcTemplate jdbcTemplate;
 
     // ========================================================================
     // =========================== REAL-TIME QUERYING =========================
@@ -640,11 +656,12 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             public DokumentDetailidega buildDocument(Document doc, Set<QName> documentTypes) {
                 return buildDokumentDetailidega(doc, false, true, documentTypes);
             }
-        }, false);
+        }, 0, 0, false);
     }
 
     @Override
-    public List<DokumentDetailidegaV2> koikDokumendidLisatudMuudetudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev) {
+    public List<DokumentDetailidegaV2> koikDokumendidLisatudMuudetudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev, int jataAlgusestVahele,
+            int tulemustePiirang) {
         final Map<NodeRef, Map<QName, Serializable>> functionsCache = new HashMap<NodeRef, Map<QName, Serializable>>();
         final Map<NodeRef, Map<QName, Serializable>> seriesCache = new HashMap<NodeRef, Map<QName, Serializable>>();
         final Map<NodeRef, Map<QName, Serializable>> volumesCache = new HashMap<NodeRef, Map<QName, Serializable>>();
@@ -654,47 +671,44 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             public DokumentDetailidegaV2 buildDocument(Document doc, Set<QName> documentTypes) {
                 return buildDokumentDetailidegaV2(doc, false, documentTypes, functionsCache, seriesCache, volumesCache);
             }
-        }, true);
+        }, jataAlgusestVahele, tulemustePiirang, true);
     }
 
     private static interface BuildDocumentCallback<T> {
         T buildDocument(Document doc, Set<QName> documentTypes);
     }
 
-    private <T> List<T> koikDokumendidLisatudMuudetud(XMLGregorianCalendar perioodiAlgusKuupaev
-            , XMLGregorianCalendar perioodiLoppKuupaev, BuildDocumentCallback<T> buildDocumentCallback, boolean compareByNodeRef) {
+    private <T> List<T> koikDokumendidLisatudMuudetud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev,
+            BuildDocumentCallback<T> buildDocumentCallback, int skip, int limit, boolean compareByNodeRef) {
         long startTime = System.currentTimeMillis();
 
         Date modifiedDateBegin = getDate(perioodiAlgusKuupaev);
         Date modifiedDateEnd = getDate(perioodiLoppKuupaev);
+        log.info("Starting koikDokumendidLisatudMuudetud" + (compareByNodeRef ? "V2" : "") + ", arguments:"
+                + "\n  modifiedDateBegin = " + dateFormat.format(modifiedDateBegin)
+                + "\n  modifiedDateEnd = " + dateFormat.format(modifiedDateEnd)
+                + "\n  skip = " + skip
+                + "\n  limit = " + limit);
 
         List<T> list;
 
         if (modifiedDateBegin == null || modifiedDateEnd == null) {
             list = Collections.emptyList();
         } else {
-            Map<AdrDocument, T> results = new HashMap<AdrDocument, T>();
+
+            // ============= Get all documents from database sorted by modified
+
+            List<NodeRef> documentsByModified = getDocumentsSortedByModified();
 
             // ============= Search for documents that were modified during specified period
 
             Set<QName> publicAdrDocumentTypes = Collections.unmodifiableSet(documentTypeService.getPublicAdrDocumentTypeQNames());
 
-            List<Document> docs = documentSearchService.searchAdrDocuments(modifiedDateBegin, modifiedDateEnd, publicAdrDocumentTypes);
-            if (log.isDebugEnabled()) {
-                log.debug("Found " + docs.size() + " documents that were modified during specified period");
-            }
-            for (Document doc : docs) {
-                if (StringUtils.isEmpty(doc.getRegNumber()) || doc.getRegDateTime() == null) {
-                    log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + doc.getNodeRefAsString() + "\nproperties="
-                            + WmNode.toString(RepoUtil.toQNameProperties(doc.getProperties()), namespaceService));
-                    continue; // should not happen!
-                }
-                AdrDocument adrDocument = new AdrDocument(doc.getNodeRef(), doc.getRegNumber(), doc.getRegDateTime(), compareByNodeRef);
-                if (!results.containsKey(adrDocument)) {
-                    log.debug("Constructing document " + (results.size() + 1));
-                    results.put(adrDocument, buildDocumentCallback.buildDocument(doc, publicAdrDocumentTypes));
-                }
-            }
+            log.info("Executing lucene query to find all public ADR documents, modified between " + dateFormat.format(modifiedDateBegin) + " and "
+                    + dateFormat.format(modifiedDateEnd) + " (inclusive)");
+            List<NodeRef> docs1 = documentSearchService.searchAdrDocuments(modifiedDateBegin, modifiedDateEnd, publicAdrDocumentTypes);
+            log.info("Found " + docs1.size() + " documents that were modified during specified period");
+            Set<NodeRef> docs = new HashSet<NodeRef>(docs1);
 
             // ============= Search for document types that were changed to publicAdr=true during specified period
             // ============= and add ALL documents that belong to these types to results
@@ -702,34 +716,109 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             List<QName> addedDocumentTypes = documentSearchService.searchAdrAddedDocumentTypes(modifiedDateBegin, modifiedDateEnd);
             Set<QName> documentTypes = new HashSet<QName>(publicAdrDocumentTypes); // Currently allowed docTypes
             documentTypes.retainAll(addedDocumentTypes); // Result: docTypes that were added during this period AND are currently allowed
-
-            docs = documentSearchService.searchAdrDocuments((Date) null, (Date) null, documentTypes);
-            if (log.isDebugEnabled()) {
-                log.debug("Found " + docs.size() + " documents that belong to " + documentTypes.size()
-                        + " document types that were changed to publicAdr=TRUE during specified period");
+            if (documentTypes.size() > 0) {
+                log.info("Executing lucene query to find all documents of the following document types whose publicAdr was changed during specified period: "
+                        + WmNode.toString(documentTypes, namespaceService));
+                List<NodeRef> docs2 = documentSearchService.searchAdrDocuments((Date) null, (Date) null, documentTypes);
+                log.info("Found " + docs2.size() + " documents that belong to " + documentTypes.size()
+                        + " document types whose publicAdr was changed during specified period");
+                docs.addAll(docs2);
             }
-            for (Document doc : docs) {
+
+            log.info("Total found " + docs.size() + " documents");
+
+            log.info("Starting document construction");
+            int skipped = 0;
+            Map<AdrDocument, T> results = new HashMap<AdrDocument, T>();
+            for (NodeRef nodeRef : documentsByModified) {
+                if (!docs.contains(nodeRef)) {
+                    continue;
+                }
+                if (compareByNodeRef) { // skip
+                    if (skip > 0 && skipped < skip) {
+                        skipped++;
+                        continue;
+                    }
+                }
+                Document doc = documentService.getDocumentByNodeRef(nodeRef);
                 if (StringUtils.isEmpty(doc.getRegNumber()) || doc.getRegDateTime() == null) {
                     log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + doc.getNodeRefAsString() + "\nproperties="
                             + WmNode.toString(RepoUtil.toQNameProperties(doc.getProperties()), namespaceService));
                     continue; // should not happen!
+                    // this may move the results according to skip, and the next request has some overlapping results;
+                    // this should not be a problem, as long as there are less of these warning documents than limit
                 }
                 AdrDocument adrDocument = new AdrDocument(doc.getNodeRef(), doc.getRegNumber(), doc.getRegDateTime(), compareByNodeRef);
-                if (!results.containsKey(adrDocument)) {
+                if (compareByNodeRef || !results.containsKey(adrDocument)) {
                     log.debug("Constructing document " + (results.size() + 1));
                     results.put(adrDocument, buildDocumentCallback.buildDocument(doc, publicAdrDocumentTypes));
+                    if (limit > 0 && results.size() >= limit) {
+                        log.info("Limit reached, breaking");
+                        break;
+                    }
                 }
             }
+
+            docs.removeAll(documentsByModified);
+            log.info("There are " + docs.size() + " documents in the lucene response that are not in the sql response");
 
             list = new ArrayList<T>(results.values());
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("ADR koikDokumendidLisatudMuudetud finished, time " + (System.currentTimeMillis() - startTime)
-                    + " ms, results " + list.size() + ", arguments:\n    perioodiAlgusKuupaev=" + perioodiAlgusKuupaev + "\n    perioodiLoppKuupaev="
-                    + perioodiLoppKuupaev);
-        }
+        log.info("Finished koikDokumendidLisatudMuudetud" + (compareByNodeRef ? "V2" : "")
+                + ", time " + (System.currentTimeMillis() - startTime) + " ms"
+                + ", results " + list.size());
         return list;
+    }
+
+    private List<NodeRef> getDocumentsSortedByModified() {
+        StoreRef spacesStoreRef = generalService.getStore();
+        StoreRef archivalsStoreRef = generalService.getArchivalsStoreRef();
+        Long spacesStoreId = null;
+        Long archivalsStoreId = null;
+        List<Map<String, Object>> storeRowList = jdbcTemplate.queryForList("SELECT id, protocol, identifier FROM alf_store");
+        for (Map<String, Object> storeRow : storeRowList) {
+            if (matchesStore(spacesStoreRef, storeRow)) {
+                spacesStoreId = (Long) storeRow.get("id");
+            } else if (matchesStore(archivalsStoreRef, storeRow)) {
+                archivalsStoreId = (Long) storeRow.get("id");
+            }
+        }
+        Assert.notNull(spacesStoreId, "Store " + spacesStoreRef + " not found in alf_store");
+        Assert.notNull(archivalsStoreId, "Store " + archivalsStoreRef + " not found in alf_store");
+        Map<Long, StoreRef> storesById = new HashMap<Long, StoreRef>();
+        storesById.put(spacesStoreId, spacesStoreRef);
+        storesById.put(archivalsStoreId, archivalsStoreRef);
+
+        // TODO document types
+        log.info("Executing SQL query to find all public ADR documents, sorted by modified time");
+        String query = "SELECT store_id, uuid FROM alf_node WHERE node_deleted = false AND store_id IN(?, ?) AND audit_modified IS NOT NULL ORDER BY audit_modified ASC, store_id ASC, uuid ASC";
+        long queryStart = System.nanoTime();
+        List<NodeRef> documentsByModified = jdbcTemplate.query(query, new NodeRefRowMapper(storesById), spacesStoreId, archivalsStoreId);
+        long queryEnd = System.nanoTime();
+        log.info("Executed SQL query, time " + ((queryEnd - queryStart) / 1000000L) + " ms, result " + documentsByModified.size() + " rows");
+        return documentsByModified;
+    }
+
+    protected boolean matchesStore(StoreRef storeRef, Map<String, Object> storeRow) {
+        return storeRow.get("protocol").equals(storeRef.getProtocol()) && storeRow.get("identifier").equals(storeRef.getIdentifier());
+    }
+
+    public static class NodeRefRowMapper implements ParameterizedRowMapper<NodeRef> {
+
+        private final Map<Long, StoreRef> storesById;
+
+        public NodeRefRowMapper(Map<Long, StoreRef> storesById) {
+            this.storesById = storesById;
+        }
+
+        @Override
+        public NodeRef mapRow(ResultSet rs, int rowNum) throws SQLException {
+            Long storeId = rs.getLong("store_id");
+            String uuid = rs.getString("uuid");
+            return new NodeRef(storesById.get(storeId), uuid);
+        }
+
     }
 
     private static interface BuildDeletedDocumentCallback<T> {
@@ -749,18 +838,6 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         }, false);
     }
 
-    @Override
-    public List<DokumentId> koikDokumendidKustutatudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev) {
-        return koikDokumendidKustutatud(perioodiAlgusKuupaev, perioodiLoppKuupaev, new BuildDeletedDocumentCallback<DokumentId>() {
-            @Override
-            public DokumentId buildDocument(AdrDocument doc) {
-                DokumentId dokument = new DokumentId();
-                dokument.setId(doc.nodeRef.toString());
-                return dokument;
-            }
-        }, true);
-    }
-
     private <T> List<T> koikDokumendidKustutatud(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev,
             BuildDeletedDocumentCallback<T> buildDeletedDocumentCallback, boolean compareByNodeRef) {
 
@@ -777,9 +854,10 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
 
             // ============= Search for documents that were deleted during specified period
 
-            List<Document> existingDocs = documentSearchService.searchAdrDocuments(deletedDateBegin, deletedDateEnd, documentTypeService.getPublicAdrDocumentTypeQNames());
+            List<NodeRef> existingDocs = documentSearchService.searchAdrDocuments(deletedDateBegin, deletedDateEnd, documentTypeService.getPublicAdrDocumentTypeQNames());
             Set<AdrDocument> existingDocsSet = new HashSet<AdrDocument>(existingDocs.size());
-            for (Document document : existingDocs) {
+            for (NodeRef documentRef : existingDocs) {
+                Document document = documentService.getDocumentByNodeRef(documentRef);
                 if (StringUtils.isEmpty(document.getRegNumber()) || document.getRegDateTime() == null) {
                     log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + document.getNodeRefAsString() + "\nproperties="
                             + WmNode.toString(RepoUtil.toQNameProperties(document.getProperties()), namespaceService));
@@ -819,12 +897,13 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
             // Result: docTypes that were deleted during this period AND are not currently allowed
             deletedDocumentTypes.removeAll(documentTypeService.getPublicAdrDocumentTypeQNames());
 
-            List<Document> docs = documentSearchService.searchAdrDocuments((Date) null, (Date) null, deletedDocumentTypes);
+            List<NodeRef> docs = documentSearchService.searchAdrDocuments((Date) null, (Date) null, deletedDocumentTypes);
             if (log.isDebugEnabled()) {
                 log.debug("Found " + docs.size() + " documents that belong to " + deletedDocumentTypes.size()
                         + " document types that were changed to publicAdr=FALSE during specified period");
             }
-            for (Document doc : docs) {
+            for (NodeRef docRef : docs) {
+                Document doc = documentService.getDocumentByNodeRef(docRef);
                 if (StringUtils.isEmpty(doc.getRegNumber()) || doc.getRegDateTime() == null) {
                     log.warn("ADR document regNumber or regDateTime is missing: nodeRef=" + doc.getNodeRefAsString() + "\nproperties="
                             + WmNode.toString(RepoUtil.toQNameProperties(doc.getProperties()), namespaceService));
@@ -847,6 +926,136 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                     + perioodiLoppKuupaev);
         }
         return list;
+    }
+
+    @Override
+    public List<DokumentId> koikDokumendidKustutatudV2(XMLGregorianCalendar perioodiAlgusKuupaev, XMLGregorianCalendar perioodiLoppKuupaev, int skip,
+            int limit) {
+
+        long startTime = System.currentTimeMillis();
+
+        Date deletedDateBegin = getDate(perioodiAlgusKuupaev);
+        Date deletedDateEnd = getDate(perioodiLoppKuupaev);
+        log.info("Starting koikDokumendidKustutatudV2, arguments:"
+                + "\n  deletedDateBegin = " + dateFormat.format(deletedDateBegin)
+                + "\n  deletedDateEnd = " + dateFormat.format(deletedDateEnd)
+                + "\n  skip = " + skip
+                + "\n  limit = " + limit);
+
+        List<DokumentId> list;
+
+        if (deletedDateBegin == null || deletedDateEnd == null) {
+            list = Collections.emptyList();
+        } else {
+
+            // ============= Search for documents that were deleted during specified period
+
+            log.info("Executing lucene query to find documents that were deleted between " + dateFormat.format(deletedDateBegin) + " and " + dateFormat.format(deletedDateEnd)
+                    + " (inclusive)");
+            List<NodeRef> deletedDocRefs = documentSearchService.searchAdrDeletedDocuments(deletedDateBegin, deletedDateEnd);
+            log.info("Found " + deletedDocRefs.size() + " documents that were deleted during specified period; loading properties ...");
+            List<AdrDocument> deletedDocs = new ArrayList<AdrDocument>(deletedDocRefs.size());
+            for (NodeRef deletedDoc : deletedDocRefs) {
+                Map<QName, Serializable> props = nodeService.getProperties(deletedDoc);
+                NodeRef nodeRef = (NodeRef) props.get(AdrModel.Props.NODEREF);
+                if (nodeRef == null) {
+                    // Older data doesn't have nodeRef property
+                    continue;
+                }
+                Date deletedDateTime = (Date) props.get(AdrModel.Props.DELETED_DATE_TIME);
+                // Use regDateTime field to store deletedDateTime
+                deletedDocs.add(new AdrDocument(nodeRef, "", deletedDateTime, true));
+            }
+            log.info("List contains " + deletedDocs.size() + " documents that were deleted during specified period");
+
+            // ============= Search for documents that exist (were modified) during specified period
+
+            log.info("Executing lucene query to find documents that were modified during specified period");
+            List<NodeRef> existingDocRefs = documentSearchService.searchAdrDocuments(deletedDateBegin, deletedDateEnd, documentTypeService.getPublicAdrDocumentTypeQNames());
+            log.info("Found " + existingDocRefs.size() + " documents that were modified during specified period");
+            for (Iterator<AdrDocument> i = deletedDocs.iterator(); i.hasNext();) {
+                AdrDocument deletedDoc = i.next();
+                if (existingDocRefs.contains(deletedDoc.nodeRef)) {
+                    i.remove();
+                }
+            }
+            log.info("Removing existing docs, list now contains " + deletedDocs.size() + " documents that were deleted during specified period");
+
+            Collections.sort(deletedDocs, ADR_DOCUMENT_BY_REG_DATE_TIME_COMPARATOR);
+            deletedDocRefs = new ArrayList<NodeRef>(deletedDocs.size());
+            for (AdrDocument deletedDoc : deletedDocs) {
+                deletedDocRefs.add(deletedDoc.nodeRef);
+            }
+
+            // ============= Search for document types that were changed to publicAdr=false during specified period
+            // ============= and add ALL documents that belong to these types to results
+
+            Set<QName> deletedDocumentTypes = new HashSet<QName>(documentSearchService.searchAdrDeletedDocumentTypes(deletedDateBegin, deletedDateEnd));
+            // Result: docTypes that were deleted during this period AND are not currently allowed
+            deletedDocumentTypes.removeAll(documentTypeService.getPublicAdrDocumentTypeQNames());
+            log.info("Found " + deletedDocumentTypes.size() + " document types, which were changed to publicAdr=false during specified period: "
+                    + WmNode.toString(deletedDocumentTypes, namespaceService));
+            if (deletedDocumentTypes.size() > 0) {
+                log.info("Executing lucene query to find all documents that belong to " + deletedDocumentTypes.size()
+                        + " document types which were changed to publicAdr=false during specified period");
+                List<NodeRef> docs = documentSearchService.searchAdrDocuments((Date) null, (Date) null, deletedDocumentTypes);
+                log.info("Found " + docs.size() + " documents that belong to " + deletedDocumentTypes.size()
+                        + " document types which were changed to publicAdr=false during specified period");
+                docs.removeAll(deletedDocRefs);
+
+                // ============= Get all documents from database sorted by modified
+                List<NodeRef> documentsByModified = getDocumentsSortedByModified();
+                documentsByModified.retainAll(docs);
+
+                deletedDocRefs.addAll(documentsByModified);
+
+                docs.removeAll(documentsByModified);
+                log.info("There are " + docs.size() + " documents in the lucene response that are not in the sql response");
+            }
+
+            // ============= Build results
+
+            log.info("Total found " + deletedDocRefs.size() + " deleted documents");
+            int skipped = 0;
+            list = new ArrayList<DokumentId>(deletedDocRefs.size());
+            for (NodeRef deletedDocRef : deletedDocRefs) {
+                if (skip > 0 && skipped < skip) {
+                    skipped++;
+                    continue;
+                }
+                DokumentId dokument = new DokumentId();
+                dokument.setId(deletedDocRef.toString());
+                list.add(dokument);
+                if (limit > 0 && list.size() >= limit) {
+                    log.info("Limit reached, breaking");
+                    break;
+                }
+            }
+        }
+
+        log.info("Finished koikDokumendidKustutatudV2"
+                    + ", time " + (System.currentTimeMillis() - startTime) + " ms"
+                    + ", results " + list.size());
+        return list;
+    }
+
+    private static final Comparator<AdrDocument> ADR_DOCUMENT_BY_REG_DATE_TIME_COMPARATOR;
+    static {
+        // ComparatorChain is not thread-safe at construction time, but it is thread-safe to perform multiple comparisons after all the setup operations are complete.
+        ComparatorChain chain = new ComparatorChain();
+        chain.addComparator(new TransformingComparator(new Transformer() {
+            @Override
+            public Object transform(Object input) {
+                return ((AdrDocument) input).regDateTime;
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new Transformer() {
+            @Override
+            public Object transform(Object input) {
+                return ((AdrDocument) input).nodeRef;
+            }
+        }, new NullComparator()));
+        ADR_DOCUMENT_BY_REG_DATE_TIME_COMPARATOR = chain;
     }
 
     // ========================================================================
@@ -882,5 +1091,8 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
         this.namespaceService = namespaceService;
     }
 
+    public void setDataSource(DataSource dataSource) {
+        jdbcTemplate = new SimpleJdbcTemplate(dataSource);
+    }
     // END: getters / setters
 }

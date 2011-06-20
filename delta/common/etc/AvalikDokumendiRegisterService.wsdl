@@ -94,6 +94,8 @@
             <xs:sequence>
                <xs:element name="perioodiAlgusKuupaev" type="xs:date" />
                <xs:element name="perioodiLoppKuupaev" type="xs:date" />
+               <xs:element name="jataAlgusestVahele" type="xs:int" />
+               <xs:element name="tulemustePiirang" type="xs:int" />
             </xs:sequence>
          </xs:complexType>
 
@@ -268,6 +270,8 @@
             <xs:sequence>
                <xs:element name="perioodiAlgusKuupaev" type="xs:date" />
                <xs:element name="perioodiLoppKuupaev" type="xs:date" />
+               <xs:element name="jataAlgusestVahele" type="xs:int" />
+               <xs:element name="tulemustePiirang" type="xs:int" />
             </xs:sequence>
          </xs:complexType>
 

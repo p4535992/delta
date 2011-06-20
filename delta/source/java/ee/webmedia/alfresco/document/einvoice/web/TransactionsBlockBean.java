@@ -60,7 +60,7 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
     @Override
     protected boolean isInEditMode() {
         if (documentDialog != null) {
-            return documentDialog.isInEditMode();
+            return documentDialog.isInEditMode() && !documentDialog.isClosedOrNotEditable();
         }
         return false;
     }
@@ -155,15 +155,15 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
 
         List<Pair<String, Pair<String, String>>> footerSums = new ArrayList<Pair<String, Pair<String, String>>>();
         transRowsMainGrid.getAttributes().put(HtmlGridCustomChildAttrRenderer.FOOTER_SUMS_ATTR, footerSums);
-        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_sumWithoutVat"), new Pair<String, String>(INVOICE_DECIMAL_FORMAT
+        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_sumWithoutVat"), new Pair<String, String>(EInvoiceUtil.getInvoiceNumberFormat()
                 .format(sumWithoutVatValue),
                 null)));
-        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_total_vatSum"), new Pair<String, String>(INVOICE_DECIMAL_FORMAT
+        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_total_vatSum"), new Pair<String, String>(EInvoiceUtil.getInvoiceNumberFormat()
                 .format(vatSumValue), null)));
         Double totalSum = (Double) parentNode.getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM);
         double transTotalSum = sumWithoutVatValue + vatSumValue;
         String color = totalSum != null && Math.abs(totalSum - transTotalSum) > 0.001 ? "red" : null;
-        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_sumWithVat"), new Pair<String, String>(INVOICE_DECIMAL_FORMAT
+        footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_sumWithVat"), new Pair<String, String>(EInvoiceUtil.getInvoiceNumberFormat()
                 .format(transTotalSum), color)));
     }
 

@@ -18,3 +18,4 @@
 <h:outputText value="#{AssignResponsibilityBean.setFromOwnerUserDetails}" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/document/assignresponsibility/web/assign-responsibility.jsp" />
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/users-groups.jsp" />
+<f:verbatim><div class="clear"></div></f:verbatim>

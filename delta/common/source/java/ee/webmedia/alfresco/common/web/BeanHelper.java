@@ -47,6 +47,7 @@ import ee.webmedia.alfresco.substitute.service.SubstituteService;
 import ee.webmedia.alfresco.substitute.web.SubstitutionBean;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.user.web.UserDetailsDialog;
 import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.volume.web.VolumeDetailsDialog;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
@@ -108,6 +109,10 @@ public class BeanHelper {
 
     public static ClearStateNotificationHandler getClearStateNotificationHandler() {
         return (ClearStateNotificationHandler) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), ClearStateNotificationHandler.BEAN_NAME);
+    }
+
+    public static UserDetailsDialog getUserDetailsDialog() {
+        return (UserDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), UserDetailsDialog.BEAN_NAME);
     }
 
     public static SubstitutionBean getSubstitutionBean() {

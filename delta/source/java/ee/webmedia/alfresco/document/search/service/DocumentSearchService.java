@@ -192,7 +192,7 @@ public interface DocumentSearchService {
      */
     List<Document> searchAdrDocuments(String regNumber, Date regDate, Set<QName> documentTypes);
 
-    List<Document> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<QName> documentTypes);
+    List<NodeRef> searchAdrDocuments(Date modifiedDateBegin, Date modifiedDateEnd, Set<QName> documentTypes);
 
     List<NodeRef> searchAdrDeletedDocuments(Date deletedDateBegin, Date deletedDateEnd);
 

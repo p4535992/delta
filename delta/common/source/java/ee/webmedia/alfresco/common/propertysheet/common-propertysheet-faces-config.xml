@@ -69,6 +69,11 @@
       <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter</converter-id>
       <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter</converter-class>
    </converter>
+   
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter_ET_EN</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter_ET_EN</converter-class>
+   </converter>
 
    <validator>
       <description>MandatoryIfValidator can be used to set UIInput required if some other UIInput is filled(i.e. checkbox checked, text input filled, selection

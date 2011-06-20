@@ -223,6 +223,7 @@ public interface DocumentSpecificModel {
         QName TEMPLATE_NAME = QName.createQName(URI, "templateName");
         QName RAPPORTEUR_NAME = QName.createQName(URI, "rapporteur");
 
+        QName COMPLIENCE_NOTATION = QName.createQName(URI, "complienceNotation");
         QName COMPLIENCE_DATE = QName.createQName(URI, "complienceDate");
         QName DUE_DATE = QName.createQName(URI, "dueDate");
 

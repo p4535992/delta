@@ -65,7 +65,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
         parametersService.addParameterChangeListener(parameterName, new ParametersService.ParameterChangedCallback() {
             @Override
             public void doWithParameter(Serializable newValue) {
-                reschedule(DefaultTypeConverter.INSTANCE.convert(String.class, newValue));
+                reschedule(parameterName, DefaultTypeConverter.INSTANCE.convert(String.class, newValue));
             }
         });
     }
@@ -81,7 +81,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
             if (startupCompleted) {
                 throw new RuntimeException("Job wit trigger name '" + getBeanName() + "' has alredy been started.");
             }
-            resolveSchedule(getParamValue(parameterName));
+            resolveSchedule(parameterName, getParamValue(parameterName));
             super.afterPropertiesSet();
             info(getTrigger(), null, false);
         } catch (Exception e) {
@@ -143,7 +143,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
         }, AuthenticationUtil.getSystemUserName());
     }
 
-    private void reschedule(String newValue) {
+    private void reschedule(String paramName, String newValue) {
         Scheduler scheduler = getScheduler();
         String thisTriggerName = getBeanName();
         if (log.isDebugEnabled()) {
@@ -156,7 +156,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
                     Trigger trigger = scheduler.getTrigger(triggerName, triggerGroupName);
                     if (trigger != null && trigger.getName().equals(thisTriggerName)) {
                         info(trigger, null, true);
-                        resolveSchedule(newValue);
+                        resolveSchedule(paramName, newValue);
                         if (trigger instanceof CronTrigger) {
                             ((CronTrigger) trigger).setCronExpression(cron);
                         } else if (trigger instanceof PersistentTrigger) {
@@ -221,7 +221,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
      * 
      * @param paramValue value of the {@link #parameterName}
      */
-    private void resolveSchedule(String paramValue) {
+    private void resolveSchedule(String paramName, String paramValue) {
         long multiplier = 1;
         if (parameterFormat.equals("H:mm") || parameterFormat.equals("H:m")) {// hours and minutes
             SimpleDateFormat df = new SimpleDateFormat(parameterFormat);
@@ -231,7 +231,7 @@ public class ParameterRescheduledTriggerBean extends AbstractTriggerBean {
                 cron = "0 " + cal.get(Calendar.MINUTE) + " " + cal.get(Calendar.HOUR_OF_DAY) + " * * ?";
                 // Trigger trigger = new CronTrigger(getBeanName(), Scheduler.DEFAULT_GROUP, cron);
             } catch (ParseException e) {
-                throw new RuntimeException(e);
+                throw new UnableToPerformException("parameter_date_value_missing", paramName);
             }
         } else { // repeatInterval is set using timeunit specified in format (format notation is similar to SimpleDateFormat)
             if (parameterFormat.equals("S")) {// ms

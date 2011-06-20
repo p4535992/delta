@@ -91,9 +91,11 @@ public class Version110To25DocumentUpdater extends AbstractNodeUpdater {
                             + resultSet.getResultSetMetaData().getSearchParameters().getStores().get(0).getIdentifier()
                             + ", loading...");
                     for (NodeRef nodeRef : resultSet.getNodeRefs()) {
-                        NodeRef documentRef = generalService.getAncestorNodeRefWithType(nodeRef, DocumentCommonModel.Types.DOCUMENT, true, true);
-                        if (documentRef != null) {
-                            additionalDocumentsForPrivilegeUpdater.add(documentRef);
+                        if (nodeService.exists(nodeRef)) {
+                            NodeRef documentRef = generalService.getAncestorNodeRefWithType(nodeRef, DocumentCommonModel.Types.DOCUMENT, true, true);
+                            if (documentRef != null) {
+                                additionalDocumentsForPrivilegeUpdater.add(documentRef);
+                            }
                         }
                     }
                 } finally {

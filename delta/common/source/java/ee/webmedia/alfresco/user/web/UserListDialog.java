@@ -18,6 +18,7 @@ import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UserUtil;
@@ -127,7 +128,17 @@ public class UserListDialog extends BaseDialogBean {
         List<Node> nodes = getOrganizationStructureService().setUsersUnit(getUserService().searchUsers(contains, true));
         int nodesSize = nodes.size();
         List<SelectItem> results = new ArrayList<SelectItem>(nodesSize);
-        String currentUser = excludeCurrentUser ? AuthenticationUtil.getRunAsUser() : null;
+
+        String currentUser = null;
+        if (excludeCurrentUser) {
+            Node user = BeanHelper.getUserDetailsDialog().getUser();
+            if (user != null) {
+                currentUser = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
+            } else {
+                currentUser = AuthenticationUtil.getRunAsUser();
+            }
+        }
+
         for (Node node : nodes) {
             String userName = (String) node.getProperties().get(ContentModel.PROP_USERNAME);
             if (excludeCurrentUser && StringUtils.equals(userName, currentUser)) {

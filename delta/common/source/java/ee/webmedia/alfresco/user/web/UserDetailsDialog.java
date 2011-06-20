@@ -32,6 +32,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
 
 public class UserDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "UserDetailsDialog";
 
     private transient UserService userService;
     private transient OrganizationStructureService organizationStructureService;
@@ -180,6 +181,16 @@ public class UserDetailsDialog extends BaseDialogBean {
         users.add(new Node(properties.getPersonService().getPerson(userName)));
         fillUserProps(users);
         setupGroups();
+    }
+
+    public void refreshCurrentUser() {
+        if (user == null) {
+            return;
+        }
+        String username = (String) user.getProperties().get(ContentModel.PROP_USERNAME);
+        if (StringUtils.isNotBlank(username)) {
+            setupUser(username);
+        }
     }
 
     public UsersBeanProperties getProperties() {

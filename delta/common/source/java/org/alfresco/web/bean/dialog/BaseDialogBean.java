@@ -65,84 +65,84 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
  * 
  * @author gavinc
  */
-public abstract class BaseDialogBean implements IDialogBean, Serializable {
-    private static final long serialVersionUID = 1L;
-    protected Map<String, String> parameters;
-    protected boolean isFinished = false;
+public abstract class BaseDialogBean implements IDialogBean, Serializable
+{
+   private static final long serialVersionUID = 1L;
+   protected Map<String, String> parameters;
+   protected boolean isFinished = false;
+   
+   // services common to most dialogs
+   protected BrowseBean browseBean;
+   protected NavigationBean navigator;
+   
+   transient private TransactionService transactionService;
+   transient private NodeService nodeService;
+   transient private FileFolderService fileFolderService;
+   transient private SearchService searchService;
+   transient private DictionaryService dictionaryService;
+   transient private NamespaceService namespaceService;
 
-    // services common to most dialogs
-    protected BrowseBean browseBean;
-    protected NavigationBean navigator;
+   private Map<String, Object> customAttributes = new HashMap<String, Object>();
 
-    transient private TransactionService transactionService;
-    transient private NodeService nodeService;
-    transient private FileFolderService fileFolderService;
-    transient private SearchService searchService;
-    transient private DictionaryService dictionaryService;
-    transient private NamespaceService namespaceService;
+   public Object getCustomAttribute(String key) {
+       return customAttributes.get(key);
+   }
 
-    private Map<String, Object> customAttributes = new HashMap<String, Object>();
+   public void addCustomAttribute(String key, Object value) {
+       customAttributes.put(key, value);
+   }
 
-    @Override
-    public Object getCustomAttribute(String key) {
-        return customAttributes.get(key);
-    }
-
-    @Override
-    public void addCustomAttribute(String key, Object value) {
-        customAttributes.put(key, value);
-    }
-
-    private void clearCustomAttributes() {
-        customAttributes = new HashMap<String, Object>();
-    }
-
-    @Override
-    public void init(Map<String, String> parameters) {
-        // tell any beans to update themselves so the UI gets refreshed
-        UIContextService.getInstance(FacesContext.getCurrentInstance()).notifyBeans();
-
-        // store the parameters, create empty map if necessary
-        this.parameters = parameters;
-
-        if (this.parameters == null) {
-            this.parameters = Collections.<String, String> emptyMap();
-        }
-
-        // reset the isFinished flag
-        isFinished = false;
-    }
-
-    @Override
-    public void restored() {
-        // do nothing by default, subclasses can override if necessary
-    }
-
-    @Override
-    public String cancel() {
-        // remove container variable
-        FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove(
+   private void clearCustomAttributes() {
+       customAttributes = new HashMap<String, Object>();
+   }
+   
+   public void init(Map<String, String> parameters)
+   {
+      // tell any beans to update themselves so the UI gets refreshed
+      UIContextService.getInstance(FacesContext.getCurrentInstance()).notifyBeans();
+      
+      // store the parameters, create empty map if necessary
+      this.parameters = parameters;
+      
+      if (this.parameters == null)
+      {
+         this.parameters = Collections.<String, String>emptyMap();
+      }
+      
+      // reset the isFinished flag
+      this.isFinished = false;
+   }
+   
+   public void restored()
+   {
+      // do nothing by default, subclasses can override if necessary
+   }
+   
+   public String cancel()
+   {
+      // remove container variable
+      FacesContext.getCurrentInstance().getExternalContext().getSessionMap().remove(
                 AlfrescoNavigationHandler.EXTERNAL_CONTAINER_SESSION);
-        clearCustomAttributes();
-        return getDefaultCancelOutcome();
-    }
-
-    @Override
-    public String finish() {
-        final FacesContext context = FacesContext.getCurrentInstance();
-        final String defaultOutcome = getDefaultFinishOutcome();
-        String outcome = null;
-
-        // check the isFinished flag to stop the finish button
-        // being pressed multiple times
-        if (isFinished == false) {
-            isFinished = true;
-
-            RetryingTransactionHelper txnHelper = Repository.getRetryingTransactionHelper(context);
-            RetryingTransactionCallback<String> callback = new RetryingTransactionCallback<String>()
-            {
-                @Override
-                public String execute() throws Throwable
+      clearCustomAttributes();
+      return getDefaultCancelOutcome();
+   }
+   
+   public String finish()
+   {
+      final FacesContext context = FacesContext.getCurrentInstance();
+      final String defaultOutcome = getDefaultFinishOutcome();
+      String outcome = null;
+      
+      // check the isFinished flag to stop the finish button
+      // being pressed multiple times
+      if (this.isFinished == false)
+      {
+         this.isFinished = true;
+      
+         RetryingTransactionHelper txnHelper = Repository.getRetryingTransactionHelper(context);
+         RetryingTransactionCallback<String> callback = new RetryingTransactionCallback<String>()
+         {
+            public String execute() throws Throwable
             {
                 try {
                     // call the actual implementation
@@ -152,299 +152,331 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable {
                     return null;
                 }
             }
-            };
-            try {
-                // Execute
-                outcome = txnHelper.doInTransaction(callback, false, true);
-
-                // allow any subclasses to perform post commit processing
-                // i.e. resetting state or setting status messages
-                outcome = doPostCommitProcessing(context, outcome);
-
-                // remove container variable
-                context.getExternalContext().getSessionMap().remove(
-                        AlfrescoNavigationHandler.EXTERNAL_CONTAINER_SESSION);
-                clearCustomAttributes();
-            } catch (Throwable e) {
-                // reset the flag so we can re-attempt the operation
-                isFinished = false;
-                outcome = getErrorOutcome(e);
-                if (outcome == null && e instanceof ReportedException == false) {
-                    Utils.addErrorMessage(formatErrorMessage(e), e);
-                }
-                ReportedException.throwIfNecessary(e);
+         };
+         try
+         {
+            // Execute
+            outcome = txnHelper.doInTransaction(callback, false, true);
+            
+            // allow any subclasses to perform post commit processing 
+            // i.e. resetting state or setting status messages
+            outcome = doPostCommitProcessing(context, outcome);
+            
+            // remove container variable
+            context.getExternalContext().getSessionMap().remove(
+                    AlfrescoNavigationHandler.EXTERNAL_CONTAINER_SESSION);
+            clearCustomAttributes();
+         }
+         catch (Throwable e)
+         {
+            // reset the flag so we can re-attempt the operation
+            isFinished = false;
+            outcome = getErrorOutcome(e);
+            if (outcome == null && e instanceof ReportedException == false)
+            {
+                Utils.addErrorMessage(formatErrorMessage(e), e);
             }
-        } else {
-            Utils.addErrorMessage(Application.getMessage(context, "error_wizard_completed_already"));
-        }
+            ReportedException.throwIfNecessary(e);
+         }
+      }
+      else
+      {
+         Utils.addErrorMessage(Application.getMessage(context, "error_wizard_completed_already"));
+      }
+      
+      return outcome;
+   }
+   
+   public boolean isFinished()
+   {
+      return isFinished;
+   }
+   
+   public List<DialogButtonConfig> getAdditionalButtons()
+   {
+      // none by default, subclasses can override if necessary
+      
+      return null;
+   }
 
-        return outcome;
-    }
+   public String getCancelButtonLabel()
+   {
+      return Application.getMessage(FacesContext.getCurrentInstance(), "back_button");
+   }
 
-    @Override
-    public boolean isFinished() {
-        return isFinished;
-    }
+   public String getFinishButtonLabel()
+   {
+      return Application.getMessage(FacesContext.getCurrentInstance(), "ok");
+   }
+   
+   public boolean getFinishButtonDisabled()
+   {
+      return true;
+   }
 
-    @Override
-    public List<DialogButtonConfig> getAdditionalButtons() {
-        // none by default, subclasses can override if necessary
+   public String getContainerTitle()
+   {
+      // nothing by default, subclasses can override if necessary
+      
+      return null;
+   }
+   
+   public String getContainerSubTitle()
+   {
+      // nothing by default, subclasses can override if necessary
+      
+      return null;
+   }
+   
+   public String getContainerDescription()
+   {
+      // nothing by default, subclasses can override if necessary
+      
+      return null;
+   }
+   
+   public Object getActionsContext()
+   {
+      // return the current node as the context for actions be default
+      // dialog implementations can override this method to return the
+      // appropriate object for their use case
+      
+      if (this.navigator == null)
+      {
+         throw new AlfrescoRuntimeException("To use actions in the dialog the 'navigator' " +
+                  "property must be injected with an instance of NavigationBean!");
+      }
+      
+      return this.navigator.getCurrentNode();
+   }
 
-        return null;
-    }
+   public String getActionsConfigId()
+   {
+      // nothing by default, subclasses can override if necessary
+      
+      return null;
+   }
 
-    @Override
-    public String getCancelButtonLabel() {
-        return Application.getMessage(FacesContext.getCurrentInstance(), "back_button");
-    }
+   public String getMoreActionsConfigId()
+   {
+      // nothing by default, subclasses can override if necessary
+      
+      return null;
+   }
 
-    @Override
-    public String getFinishButtonLabel() {
-        return Application.getMessage(FacesContext.getCurrentInstance(), "ok");
-    }
+   /**
+    * @param browseBean The BrowseBean to set.
+    */
+   public void setBrowseBean(BrowseBean browseBean)
+   {
+      this.browseBean = browseBean;
+   }
+   
+   /**
+    * @param navigator The NavigationBean to set.
+    */
+   public void setNavigator(NavigationBean navigator)
+   {
+      this.navigator = navigator;
+   }
+   
+   protected TransactionService getTransactionService()
+   {
+      if (this.transactionService == null)
+      {
+         this.transactionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getTransactionService();
+      }
+      return this.transactionService;
+   }
+   
+   /**
+    * @param nodeService The nodeService to set.
+    */
+   public void setNodeService(NodeService nodeService)
+   {
+      this.nodeService = nodeService;
+   }
+   
+   protected NodeService getNodeService()
+   {
+      if (this.nodeService == null)
+      {
+         this.nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
+      }
+      return this.nodeService;
+   }
+   
+   /**
+    * @param fileFolderService used to manipulate folder/folder model nodes
+    */
+   public void setFileFolderService(FileFolderService fileFolderService)
+   {
+      this.fileFolderService = fileFolderService;
+   }
+   
+   protected FileFolderService getFileFolderService()
+   {
+      if (this.fileFolderService == null)
+      {
+         this.fileFolderService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getFileFolderService();
+      }
+      return this.fileFolderService;
+   }
 
-    @Override
-    public boolean getFinishButtonDisabled() {
-        return true;
-    }
+   /**
+    * @param searchService the service used to find nodes
+    */
+   public void setSearchService(SearchService searchService)
+   {
+      this.searchService = searchService;
+   }
+   
+   protected SearchService getSearchService()
+   {
+      if (this.searchService == null)
+      {
+         this.searchService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getSearchService();
+      }
+      return this.searchService;
+   }
+   
+   /**
+    * Sets the dictionary service
+    * 
+    * @param dictionaryService  the dictionary service
+    */
+   public void setDictionaryService(DictionaryService dictionaryService)
+   {
+      this.dictionaryService = dictionaryService;
+   }
+   
+   protected DictionaryService getDictionaryService()
+   {
+      if (this.dictionaryService == null)
+      {
+         this.dictionaryService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getDictionaryService();
+      }
+      return this.dictionaryService;
+   }
+   
+   /**
+    * @param namespaceService The NamespaceService
+    */
+   public void setNamespaceService(NamespaceService namespaceService)
+   {
+      this.namespaceService = namespaceService;
+   }
+   
+   protected NamespaceService getNamespaceService()
+   {
+      if (this.namespaceService == null)
+      {
+         this.namespaceService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService();
+      }
+      return this.namespaceService;
+   }
+   
+   /**
+    * Returns the default cancel outcome
+    * 
+    * @return Default close outcome, dialog:close by default
+    */
+   protected String getDefaultCancelOutcome()
+   {
+      return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
+   }
+   
+   /**
+    * Returns the default finish outcome
+    * 
+    * @return Default finish outcome, dialog:close by default
+    */
+   protected String getDefaultFinishOutcome()
+   {
+      return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
+   }
+   
+   /**
+    * Performs the actual processing for the wizard.
+    * NOTE: This method is called within the context of a transaction
+    * so no transaction handling is required
+    * 
+    * @param context FacesContext
+    * @param outcome The default outcome
+    * @return The outcome
+    */
+   protected abstract String finishImpl(FacesContext context, String outcome)
+      throws Throwable;
 
-    @Override
-    public String getContainerTitle() {
-        // nothing by default, subclasses can override if necessary
+   /**
+    * Performs any post commit processing subclasses may want to provide
+    * 
+    * @param context FacesContext
+    * @param outcome The default outcome
+    * @return The outcome
+    */
+   protected String doPostCommitProcessing(FacesContext context, String outcome)
+   {
+      // do nothing by default, subclasses can override if necessary
+      
+      return outcome;
+   }
+   
+   /**
+    * The default message id to use in error messages
+    * 
+    * @return The error message lookup id
+    */
+   protected String getErrorMessageId()
+   {
+      return Repository.ERROR_GENERIC;
+   }
+   
+   /**
+    * The outcome to return if the given exception occurs
+    * 
+    * @param exception The exception that got thrown
+    * @return The error outcome, null by default
+    */
+   protected String getErrorOutcome(Throwable exception)
+   {
+      return null;
+   }
+   
+   /**
+    * Returns a formatted exception string for the given exception
+    * 
+    * @param exception The exception that got thrown
+    * @return The formatted message
+    */
+   protected String formatErrorMessage(Throwable exception)
+   {
+      return MessageFormat.format(Application.getMessage(
+            FacesContext.getCurrentInstance(), getErrorMessageId()), 
+            exception.getMessage());
+   }
 
-        return null;
-    }
+   public static void validatePermission(Node documentNode, String permission) {
+       validatePermission(documentNode, null, permission);
+   }
 
-    @Override
-    public String getContainerSubTitle() {
-        // nothing by default, subclasses can override if necessary
+   public static void validatePermission(Node documentNode, String errMsg, String permission) {
+       if (errMsg == null) {
+           errMsg = "action_failed_missingPermission";
+       }
+       if (!documentNode.hasPermission(permission)) {
+           throw new UnableToPerformException(errMsg, new MessageDataImpl("permission_" + permission));
+       }
+   }
 
-        return null;
-    }
+   public static void validatePermission(NodeRef documentNodeRef, String permission) {
+       if (!hasPermission(documentNodeRef, permission)) {
+           throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_" + permission));
+       }
+   }
 
-    @Override
-    public String getContainerDescription() {
-        // nothing by default, subclasses can override if necessary
-
-        return null;
-    }
-
-    @Override
-    public Object getActionsContext() {
-        // return the current node as the context for actions be default
-        // dialog implementations can override this method to return the
-        // appropriate object for their use case
-
-        if (navigator == null) {
-            throw new AlfrescoRuntimeException("To use actions in the dialog the 'navigator' " +
-                    "property must be injected with an instance of NavigationBean!");
-        }
-
-        return navigator.getCurrentNode();
-    }
-
-    @Override
-    public String getActionsConfigId() {
-        // nothing by default, subclasses can override if necessary
-
-        return null;
-    }
-
-    @Override
-    public String getMoreActionsConfigId() {
-        // nothing by default, subclasses can override if necessary
-
-        return null;
-    }
-
-    /**
-     * @param browseBean The BrowseBean to set.
-     */
-    public void setBrowseBean(BrowseBean browseBean) {
-        this.browseBean = browseBean;
-    }
-
-    /**
-     * @param navigator The NavigationBean to set.
-     */
-    public void setNavigator(NavigationBean navigator) {
-        this.navigator = navigator;
-    }
-
-    protected TransactionService getTransactionService() {
-        if (transactionService == null) {
-            transactionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getTransactionService();
-        }
-        return transactionService;
-    }
-
-    /**
-     * @param nodeService The nodeService to set.
-     */
-    public void setNodeService(NodeService nodeService) {
-        this.nodeService = nodeService;
-    }
-
-    protected NodeService getNodeService() {
-        if (nodeService == null) {
-            nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
-        }
-        return nodeService;
-    }
-
-    /**
-     * @param fileFolderService used to manipulate folder/folder model nodes
-     */
-    public void setFileFolderService(FileFolderService fileFolderService) {
-        this.fileFolderService = fileFolderService;
-    }
-
-    protected FileFolderService getFileFolderService() {
-        if (fileFolderService == null) {
-            fileFolderService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getFileFolderService();
-        }
-        return fileFolderService;
-    }
-
-    /**
-     * @param searchService the service used to find nodes
-     */
-    public void setSearchService(SearchService searchService) {
-        this.searchService = searchService;
-    }
-
-    protected SearchService getSearchService() {
-        if (searchService == null) {
-            searchService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getSearchService();
-        }
-        return searchService;
-    }
-
-    /**
-     * Sets the dictionary service
-     * 
-     * @param dictionaryService the dictionary service
-     */
-    public void setDictionaryService(DictionaryService dictionaryService) {
-        this.dictionaryService = dictionaryService;
-    }
-
-    protected DictionaryService getDictionaryService() {
-        if (dictionaryService == null) {
-            dictionaryService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getDictionaryService();
-        }
-        return dictionaryService;
-    }
-
-    /**
-     * @param namespaceService The NamespaceService
-     */
-    public void setNamespaceService(NamespaceService namespaceService) {
-        this.namespaceService = namespaceService;
-    }
-
-    protected NamespaceService getNamespaceService() {
-        if (namespaceService == null) {
-            namespaceService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService();
-        }
-        return namespaceService;
-    }
-
-    /**
-     * Returns the default cancel outcome
-     * 
-     * @return Default close outcome, dialog:close by default
-     */
-    protected String getDefaultCancelOutcome() {
-        return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
-    }
-
-    /**
-     * Returns the default finish outcome
-     * 
-     * @return Default finish outcome, dialog:close by default
-     */
-    protected String getDefaultFinishOutcome() {
-        return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
-    }
-
-    /**
-     * Performs the actual processing for the wizard.
-     * NOTE: This method is called within the context of a transaction
-     * so no transaction handling is required
-     * 
-     * @param context FacesContext
-     * @param outcome The default outcome
-     * @return The outcome
-     */
-    protected abstract String finishImpl(FacesContext context, String outcome)
-            throws Throwable;
-
-    /**
-     * Performs any post commit processing subclasses may want to provide
-     * 
-     * @param context FacesContext
-     * @param outcome The default outcome
-     * @return The outcome
-     */
-    protected String doPostCommitProcessing(FacesContext context, String outcome) {
-        // do nothing by default, subclasses can override if necessary
-
-        return outcome;
-    }
-
-    /**
-     * The default message id to use in error messages
-     * 
-     * @return The error message lookup id
-     */
-    protected String getErrorMessageId() {
-        return Repository.ERROR_GENERIC;
-    }
-
-    /**
-     * The outcome to return if the given exception occurs
-     * 
-     * @param exception The exception that got thrown
-     * @return The error outcome, null by default
-     */
-    protected String getErrorOutcome(Throwable exception) {
-        return null;
-    }
-
-    /**
-     * Returns a formatted exception string for the given exception
-     * 
-     * @param exception The exception that got thrown
-     * @return The formatted message
-     */
-    protected String formatErrorMessage(Throwable exception) {
-        return MessageFormat.format(Application.getMessage(
-                FacesContext.getCurrentInstance(), getErrorMessageId()),
-                exception.getMessage());
-    }
-
-    public static void validatePermission(Node documentNode, String permission) {
-        validatePermission(documentNode, null, permission);
-    }
-
-    public static void validatePermission(Node documentNode, String errMsg, String permission) {
-        if (errMsg == null) {
-            errMsg = "action_failed_missingPermission";
-        }
-        if (!documentNode.hasPermission(permission)) {
-            throw new UnableToPerformException(errMsg, new MessageDataImpl("permission_" + permission));
-        }
-    }
-
-    public static void validatePermission(NodeRef documentNodeRef, String permission) {
-        if (!hasPermission(documentNodeRef, permission)) {
-            throw new UnableToPerformException("action_failed_missingPermission", new MessageDataImpl("permission_" + permission));
-        }
-    }
-
-    public static boolean hasPermission(NodeRef nodeRef, String permission) {
-        return AccessStatus.ALLOWED == BeanHelper.getPermissionService().hasPermission(nodeRef, permission);
-    }
+   public static boolean hasPermission(NodeRef nodeRef, String permission) {
+       return AccessStatus.ALLOWED == BeanHelper.getPermissionService().hasPermission(nodeRef, permission);
+   }
 
 }

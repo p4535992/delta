@@ -5,7 +5,6 @@ import static ee.webmedia.alfresco.utils.ComponentUtil.createUIParam;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
 import java.io.Serializable;
-import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -19,10 +18,12 @@ import javax.faces.component.UIComponent;
 import javax.faces.component.UIOutput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandButton;
+import javax.faces.component.html.HtmlCommandLink;
 import javax.faces.component.html.HtmlInputText;
 import javax.faces.component.html.HtmlOutputLink;
 import javax.faces.component.html.HtmlPanelGrid;
 import javax.faces.component.html.HtmlPanelGroup;
+import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.el.MethodBinding;
 import javax.faces.event.ActionEvent;
@@ -38,12 +39,12 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.repo.component.UIActions;
+import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.apache.commons.collections.Predicate;
 import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 
-import ee.webmedia.alfresco.common.ajax.AjaxUpdateable;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
-import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter;
+import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter_ET_EN;
 import ee.webmedia.alfresco.common.propertysheet.dimensionselector.DimensionSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGridCustomChildAttrRenderer;
@@ -63,6 +64,7 @@ import ee.webmedia.alfresco.utils.RepoUtil;
 
 public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements Serializable {
 
+    protected static final String TRANS_TEMPLATE_SELECTOR = "trans-template-selector";
     private static final String NO_OPTION_TITLE = "noOptionTitle";
 
     protected String getBeanName() {
@@ -74,7 +76,6 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
     protected static final String SELECT_TEMPLATE_NAME = TRANS_COMPONENT_ID_PREFIX + "template-selector";
 
     protected static final String SAVEAS_TEMPLATE_NAME = TRANS_COMPONENT_ID_PREFIX + "-template-name";
-    public static final DecimalFormat INVOICE_DECIMAL_FORMAT = new DecimalFormat("#,##0.00");
 
     private static final long serialVersionUID = 1L;
 
@@ -312,7 +313,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         String listId = context.getViewRoot().createUniqueId();
 
         if (isShowTransactionTemplates()) {
-            // addTransTemplateSelector(context, application, transactionPanel, listId);
+            addTransTemplateSelector(context, application, transactionPanel, listId);
         }
 
         // popup to manually enter sap entry number
@@ -463,10 +464,10 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
 
         final HtmlPanelGrid tranSaveAsTemplateGrid = (HtmlPanelGrid) application.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
         tranSaveAsTemplateGrid.setId(TRANS_COMPONENT_ID_PREFIX + "saveas-template-" + listId);
-        tranSaveAsTemplateGrid.setCellpadding("0");
-        tranSaveAsTemplateGrid.setCellspacing("0");
         tranSaveAsTemplateGrid.setWidth("100%");
         tranSaveAsTemplateGrid.setColumns(3);
+        tranSaveAsTemplateGrid.setStyleClass("trans-template-saveas");
+        tranSaveAsTemplateGrid.setColumnClasses("propertiesLabel");
 
         UIOutput selectTemplatelabel = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
         selectTemplatelabel.setValue(MessageUtil.getMessage("transactions_saveas_template") + ": ");
@@ -477,9 +478,11 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         UIComponent suggester = suggesterGenerator.generate(context, SAVEAS_TEMPLATE_NAME);
         tranSaveAsTemplateGrid.getChildren().add(suggester);
 
-        addTransTemplateSelector(context, application, tranSaveAsTemplateGrid, listId);
-
         UIOutput selectDummy = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+        selectDummy.setValue("");
+        tranSaveAsTemplateGrid.getChildren().add(selectDummy);
+
+        selectDummy = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
         selectDummy.setValue("");
         tranSaveAsTemplateGrid.getChildren().add(selectDummy);
 
@@ -488,7 +491,6 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         saveAsButton.setActionListener(application.createMethodBinding("#{" + getBeanName() + ".saveAsTemplate}", new Class[] { ActionEvent.class }));
         saveAsButton.setValue(MessageUtil.getMessage("transactions_saveas_template_button"));
         tranSaveAsTemplateGrid.getChildren().add(saveAsButton);
-        // Map<String, Object> outcomeBtnAttributes = ComponentUtil.putAttribute(saveAsButton, "styleClass", "taskOutcome");
 
         tranSaveAsTemplatePanel.getChildren().add(tranSaveAsTemplateGrid);
         transactionPanel.getChildren().add(tranSaveAsTemplatePanel);
@@ -500,45 +502,37 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
     }
 
     @SuppressWarnings("unchecked")
-    private void addTransTemplateSelector(FacesContext context, Application application, HtmlPanelGrid transactionPanel, String listId) {
+    private void addTransTemplateSelector(FacesContext context, Application application, UIPanel transactionPanel, String listId) {
         UIPanel transTemplateSelectGroup = (UIPanel) application.createComponent("org.alfresco.faces.Panel");
         transTemplateSelectGroup.setId(TRANS_COMPONENT_ID_PREFIX + "setTemplate-panel");
         transTemplateSelectGroup.setRendererType(HtmlGroupCustomRenderer.HTML_GROUP_CUSTOM_RENDERER_TYPE);
-        // transTemplateSelectGroup.getAttributes().put(HtmlGroupCustomRenderer.LAYOUT_ATTR, HtmlGroupCustomRenderer.LAYOUT_TYPE_BLOCK);
 
-        // final HtmlPanelGrid tranSaveAsTemplateGrid = (HtmlPanelGrid) application.createComponent(HtmlPanelGrid.COMPONENT_TYPE);
-        // tranSaveAsTemplateGrid.setId(TRANS_COMPONENT_ID_PREFIX + "setTemplate-template-" + listId);
-        // tranSaveAsTemplateGrid.setCellpadding("0");
-        // tranSaveAsTemplateGrid.setCellspacing("0");
-        // tranSaveAsTemplateGrid.setWidth("100%");
-        // tranSaveAsTemplateGrid.setColumns(3);
-        // tranSaveAsTemplateGrid.setStyleClass("column panel-100");
-        //
-        // transTemplateSelectGroup.getChildren().add(tranSaveAsTemplateGrid);
-
-        // transaction template selectbox with label
-        // final HtmlPanelGroup transTemplateSelectGroup = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
         transTemplateSelectGroup.setId(TRANS_COMPONENT_ID_PREFIX + "select-template-panel-" + listId);
         UIOutput selectTemplatelabel = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
         selectTemplatelabel.setValue(MessageUtil.getMessage("transactions_select_tempalte") + ": ");
         transTemplateSelectGroup.getChildren().add(selectTemplatelabel);
 
         GeneralSelectorGenerator selectorGenerator = new GeneralSelectorGenerator();
-        UIComponent transTemplateSelector = selectorGenerator.generateSelectComponent(context, SELECT_TEMPLATE_NAME, false);
+        HtmlSelectOneMenu transTemplateSelector = (HtmlSelectOneMenu) selectorGenerator.generateSelectComponent(context, SELECT_TEMPLATE_NAME, false);
         selectorGenerator.getCustomAttributes().put("selectionItems", "#{" + getBeanName() + ".getTransactionTemplates}");
-        selectorGenerator.getCustomAttributes().put("valueChangeListener", "#{" + getBeanName() + ".templateSelected}");
-        selectorGenerator.getCustomAttributes().put(AjaxUpdateable.AJAX_DISABLED_ATTR, "true");
         selectorGenerator.setupSelectComponent(context, null, null, null, transTemplateSelector, false);
+        transTemplateSelector.setId(TRANS_TEMPLATE_SELECTOR);
+        // transTemplateSelector.setValueChangeListener(application.createMethodBinding("#{" + getBeanName() + ".copyFromTemplate}", new Class[] { ValueChangeEvent.class }));
+        transTemplateSelector.getAttributes().put(
+                "styleClass",
+                GeneralSelectorGenerator.ONCHANGE_PARAM_MARKER_CLASS + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
+                        + "var link = jQuery('#' + escapeId4JQ(currElId)).nextAll('a').get(0); link.click();");
         transTemplateSelectGroup.getChildren().add(transTemplateSelector);
 
-        HtmlCommandButton setTemplateButton = new HtmlCommandButton();
-        setTemplateButton.setId(TRANS_COMPONENT_ID_PREFIX + "-template-setTemplate-button-" + listId);
-        setTemplateButton.setActionListener(application.createMethodBinding("#{" + getBeanName() + ".copyFromTemplate}", new Class[] { ActionEvent.class }));
-        setTemplateButton.setValue(MessageUtil.getMessage("transactions_setTemplate_template_button"));
-        transTemplateSelectGroup.getChildren().add(setTemplateButton);
+        // hidden link for submitting form when transTemplateSelector onchange event occurs
+        HtmlCommandLink transTemplateSelectorHiddenLink = new HtmlCommandLink();
+        transTemplateSelectorHiddenLink.setId(TRANS_COMPONENT_ID_PREFIX + "trans-select-template-link-" + listId);
+        transTemplateSelectorHiddenLink.setActionListener(application.createMethodBinding("#{" + getBeanName() + ".copyFromTemplate}", new Class[] { ActionEvent.class }));
+        transTemplateSelectorHiddenLink.setStyle("display: none;");
 
-        transactionPanel.getChildren().add(transTemplateSelectGroup);
-        // transactionPanel.getFacets().put("title", transTemplateSelectGroup);
+        transTemplateSelectGroup.getChildren().add(transTemplateSelectorHiddenLink);
+
+        transactionPanel.getFacets().put("title", transTemplateSelectGroup);
     }
 
     protected boolean isMandatory(QName propName, Set<String> transMandatoryProps) {
@@ -718,9 +712,10 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             final HtmlPanelGroup dimensionSelectorPanel = (HtmlPanelGroup) context.getApplication().createComponent(HtmlPanelGroup.COMPONENT_TYPE);
             dimensionSelectorPanel.setId(TRANS_COMPONENT_ID_PREFIX + "trans-panel-" + propName.getLocalName() + "-" + transactionIndex);
             doubleInput = context.getApplication().createComponent(HtmlInputText.COMPONENT_TYPE);
-            ((HtmlInputText) doubleInput).setConverter(new DoubleCurrencyConverter());
+            ((HtmlInputText) doubleInput).setConverter(new DoubleCurrencyConverter_ET_EN());
             setIdAndValueBinding(context, transactionIndex, propName, doubleInput);
             doubleInput.getAttributes().put("maxlength", 16);
+            doubleInput.getAttributes().put(UIProperty.ALLOW_COMMA_AS_DECIMAL_SEPARATOR_ATTR, "true");
             dimensionSelectorPanel.getChildren().add(doubleInput);
 
             if (isMandatory(propName, mandatoryProps)) {
@@ -731,7 +726,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         } else {
             doubleInput = context.getApplication().createComponent(UIOutput.COMPONENT_TYPE);
             Double value = (Double) transactions.get(transactionIndex).getNode().getProperties().get(propName);
-            ((UIOutput) doubleInput).setValue(value != null ? INVOICE_DECIMAL_FORMAT.format(value.doubleValue()) : "");
+            ((UIOutput) doubleInput).setValue(value != null ? EInvoiceUtil.getInvoiceNumberFormat().format(value.doubleValue()) : "");
             doubleInput.setId(getComponentId(transactionIndex, propName));
             childrenStyleClassAttribute.put(doubleInput.getId(), "trans-align-right");
             siblings.add(doubleInput);

@@ -49,9 +49,11 @@ import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.repo.component.UIMultiValueEditor;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
+import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet.ClientValidation;
 
+import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
 
 /**
@@ -63,6 +65,7 @@ public class TextFieldGenerator extends BaseComponentGenerator
 {
    private int size = 35;
    private int maxLength = 1024;
+   private static final String NUMBER_VALIDATION_EE_ET_SUFFIX = "_EE_EN";
    
    /**
     * @return Returns the default size for a text field
@@ -256,6 +259,10 @@ public class TextFieldGenerator extends BaseComponentGenerator
             
             String msg;
             String jsValidatingFunctionName;
+            boolean isCommaAllowed = false;
+            if (property instanceof WMUIProperty) {
+                isCommaAllowed = Boolean.parseBoolean(((WMUIProperty) property).getCustomAttributes().get(UIProperty.ALLOW_COMMA_AS_DECIMAL_SEPARATOR_ATTR));
+            }            
             if (propertyDef.getDataType().getName().equals(DataTypeDefinition.INT) ||
                     propertyDef.getDataType().getName().equals(DataTypeDefinition.LONG)) {
                 msg = Application.getMessage(context, "validation_is_int_number");
@@ -263,9 +270,15 @@ public class TextFieldGenerator extends BaseComponentGenerator
             } else if (propertyDef.getDataType().getName().equals(DataTypeDefinition.DOUBLE)) {
                 msg = Application.getMessage(context, "validation_is_double_number");
                 jsValidatingFunctionName = "validateIsNumber";
+                if (isCommaAllowed) {
+                    jsValidatingFunctionName += NUMBER_VALIDATION_EE_ET_SUFFIX;
+                }                
             } else {
                 msg = Application.getMessage(context, "validation_is_number");
                 jsValidatingFunctionName = "validateIsNumber";
+                if (isCommaAllowed) {
+                    jsValidatingFunctionName += NUMBER_VALIDATION_EE_ET_SUFFIX;
+                }                
             }
             
             // add the validation failed message to show

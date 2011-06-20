@@ -129,6 +129,7 @@ public class AssignResponsibilityBean implements Serializable {
 
     public String getSetFromOwnerUserDetails() {
         UserDetailsDialog userDetailsDialog = (UserDetailsDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), "UserDetailsDialog");
+        userDetailsDialog.refreshCurrentUser();
         Node user = userDetailsDialog.getUser();
         leaving = user.hasAspect(UserModel.Aspects.LEAVING);
         fromOwnerId = (String) user.getProperties().get(ContentModel.PROP_USERNAME);

@@ -6,9 +6,12 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.io.Writer;
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -96,11 +99,21 @@ public class EInvoiceUtil {
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_FUNCTIONAL_AREA_CODE, Dimensions.INVOICE_FUNCTIONAL_AREA_CODE);
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_CASH_FLOW_CODES, Dimensions.INVOICE_CASH_FLOW_CODES);
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_SOURCE_CODES, Dimensions.INVOICE_SOURCE_CODES);
+        DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_POSTING_KEY, Dimensions.INVOICE_POSTING_KEY);
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_PAYMENT_METHOD_CODES, Dimensions.INVOICE_PAYMENT_METHOD_CODES);
         DIMENSION_PARAMETERS.put(Parameters.DIMENSION_CODE_INVOICE_HOUSE_BANK_CODES, Dimensions.INVOICE_HOUSE_BANK_CODES);
         // turn on jaxb debug
         // TODO: turn off when jaxb import has been tested in client environment (or make switchable by general log settings)
         System.setProperty("jaxb.debug", "true");
+    }
+
+    public static NumberFormat getInvoiceNumberFormat() {
+        NumberFormat invoiceDecimalFormat = DecimalFormat.getInstance(new Locale("et", "EE", ""));
+        invoiceDecimalFormat.setMinimumIntegerDigits(1);
+        invoiceDecimalFormat.setMinimumFractionDigits(2);
+        invoiceDecimalFormat.setMaximumFractionDigits(2);
+        invoiceDecimalFormat.setGroupingUsed(true);
+        return invoiceDecimalFormat;
     }
 
     public static JAXBContext initJaxbContext(String destPackage) {

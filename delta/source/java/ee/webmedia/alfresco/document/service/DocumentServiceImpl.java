@@ -154,7 +154,6 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
-import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.volume.model.Volume;
 import ee.webmedia.alfresco.volume.model.VolumeModel;
 import ee.webmedia.alfresco.volume.service.VolumeService;
@@ -1171,7 +1170,11 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                     , DocumentSpecificModel.Props.SENDER_REG_DATE.toString()
                     , DocumentSpecificModel.Props.SENDER_DETAILS_NAME.toString()
                     , DocumentSpecificModel.Props.SENDER_DETAILS_EMAIL.toString()
-                    ));
+                    , DocumentSpecificModel.Props.DUE_DATE.toString()
+                    , DocumentSpecificModel.Props.COMPLIENCE_NOTATION.toString()
+                    , DocumentSpecificModel.Props.COMPLIENCE_DATE.toString()
+                    , DocumentCommonModel.Props.COMMENT.toString()
+            ));
             userService.setOwnerPropsFromUser(followUpProps);
             if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(followupType)) {
                 propsToCopy.add(DocumentSpecificModel.Props.TRANSMITTAL_MODE.toString());
