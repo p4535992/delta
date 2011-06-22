@@ -22,6 +22,7 @@ import org.springframework.core.io.ResourceLoader;
 import com.thoughtworks.xstream.XStream;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.menu.model.BrowseMenuItem;
 import ee.webmedia.alfresco.menu.model.DropdownMenuItem;
 import ee.webmedia.alfresco.menu.model.Menu;
@@ -29,6 +30,7 @@ import ee.webmedia.alfresco.menu.model.MenuItem;
 import ee.webmedia.alfresco.menu.model.MenuModel;
 import ee.webmedia.alfresco.menu.ui.component.UIMenuComponent;
 import ee.webmedia.alfresco.user.service.UserService;
+import ee.webmedia.alfresco.workflow.service.WorkflowService;
 
 /**
  * @author Kaarel Jõgeva
@@ -41,6 +43,8 @@ public class MenuServiceImpl implements MenuService {
     private GeneralService generalService;
     private NodeService nodeService;
     private UserService userService;
+    private WorkflowService workflowService;
+    private EInvoiceService einvoiceService;
 
     private int updateCount;
 
@@ -267,6 +271,14 @@ public class MenuServiceImpl implements MenuService {
 
     public void setMenuItemFilters(Map<String, MenuItemFilter> menuItemFilters) {
         this.menuItemFilters = menuItemFilters;
+    }
+
+    public void setWorkflowService(WorkflowService workflowService) {
+        this.workflowService = workflowService;
+    }
+
+    public void setEinvoiceService(EInvoiceService einvoiceService) {
+        this.einvoiceService = einvoiceService;
     }
 
     // END: getters / setters

@@ -375,16 +375,25 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             // transactionBlockBean is responsible for setting error messages
             return;
         }
-        Pair<File, Integer> transFileAndCount = EInvoiceUtil.getTransOrInvoiceFileAndCount(fileBlockBean.getFiles(), true);
-        if (transFileAndCount.getSecond() > 1) {
-            MessageUtil.addErrorMessage("document_sendToSap_transMultipleXmlFiles");
-            return;
-        }
+        Pair<File, Integer> transFileAndCount = null;
         Pair<File, Integer> einvoiceFileAndCount = null;
-        if (transactionsBlockBean.getTransactions().size() == 0) {
+        boolean sendTransactions = !Boolean.TRUE.equals(metadataBlockBean.getDocument().getProperties().get(DocumentSpecificModel.Props.XXL_INVOICE))
+                && StringUtils.isEmpty((String) metadataBlockBean.getDocument().getProperties().get(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER));
+        if (sendTransactions) {
+            transFileAndCount = EInvoiceUtil.getTransOrInvoiceFileAndCount(fileBlockBean.getFiles(), true);
+            Integer transactionFileCount = transFileAndCount.getSecond();
+            if (transactionFileCount > 1) {
+                MessageUtil.addErrorMessage("document_sendToSap_transMultipleXmlFiles");
+                return;
+            }
+            if (transactionFileCount == 0 && transactionsBlockBean.getTransactions().isEmpty()) {
+                MessageUtil.addErrorMessage("document_sendToSap_noTransactionData");
+                return;
+            }
+        } else {
             einvoiceFileAndCount = EInvoiceUtil.getTransOrInvoiceFileAndCount(fileBlockBean.getFiles(), false);
             if (einvoiceFileAndCount.getSecond() == 0) {
-                MessageUtil.addErrorMessage("document_sendToSap_noSapData");
+                MessageUtil.addErrorMessage("document_sendToSap_noEInvoiceData");
                 return;
             }
             if (einvoiceFileAndCount.getSecond() > 1) {
@@ -393,17 +402,19 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             }
         }
         try {
-            if (transFileAndCount.getSecond() == 1) {
-                BeanHelper.getDvkService().sendInvoiceFileToSap(node, transFileAndCount.getFirst());
-            } else if (transactionsBlockBean.getTransactions().size() > 0) {
-                BeanHelper.getDvkService().generateAndSendInvoiceFileToSap(node, transactionsBlockBean.getTransactions());
+            if (sendTransactions) {
+                if (transFileAndCount.getSecond() > 0) {
+                    BeanHelper.getDvkService().sendInvoiceFileToSap(metadataBlockBean.getDocument(), transFileAndCount.getFirst());
+                } else {
+                    BeanHelper.getDvkService().generateAndSendInvoiceFileToSap(metadataBlockBean.getDocument(), transactionsBlockBean.getTransactions());
+                }
             } else {
-                BeanHelper.getDvkService().sendInvoiceFileToSap(node, einvoiceFileAndCount.getFirst());
+                BeanHelper.getDvkService().sendInvoiceFileToSap(metadataBlockBean.getDocument(), einvoiceFileAndCount.getFirst());
             }
             BeanHelper.getDocumentLogService().addDocumentLog(node.getNodeRef(), MessageUtil.getMessage("document_log_status_send_to_sap"));
             BeanHelper.getDocumentService().setDocStatusFinished(node.getNodeRef());
             BeanHelper.getWorkflowService().finishUserActiveResponsibleInProgressTask(node.getNodeRef(), MessageUtil.getMessage("task_comment_sentToSap"));
-            reloadDocAndClearPropertySheet();
+            reloadDocAndClearPropertySheet(false);
         } catch (Exception e) {
             String messageKey = "document_sendToSap_errorSendingOrGeneratingXml";
             log.error(MessageUtil.getMessage(messageKey), e);
@@ -422,12 +433,12 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         if (StringUtils.isBlank(entrySapNumber)) {
             return;
         }
-        node.getProperties().put(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER.toString(), entrySapNumber);
-        node.getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
-        BeanHelper.getDocumentService().updateDocument(node);
+        metadataBlockBean.getDocument().getProperties().put(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER.toString(), entrySapNumber);
+        metadataBlockBean.getDocument().getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
+        BeanHelper.getDocumentService().updateDocument(metadataBlockBean.getDocument());
         BeanHelper.getDocumentLogService().addDocumentLog(node.getNodeRef(), MessageUtil.getMessage("document_log_status_send_to_sap_manually"));
         BeanHelper.getWorkflowService().finishUserActiveResponsibleInProgressTask(node.getNodeRef(), MessageUtil.getMessage("task_comment_sentToSap_manually"));
-        reloadDocAndClearPropertySheet();
+        reloadDocAndClearPropertySheet(false);
         logBlockBean.restore();
         MessageUtil.addInfoMessage("save_success");
     }
@@ -511,7 +522,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         metadataBlockBean.reloadDoc();
     }
 
-    public void reloadDocAndClearPropertySheet() {
+    public void reloadDocAndClearPropertySheet(boolean addInvoiceMessages) {
         node = getDocumentService().getDocument(node.getNodeRef());
         metadataBlockBean.reloadDocAndClearPropertySheet();
     }
@@ -523,7 +534,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             BeanHelper.getVisitedDocumentsBean().getVisitedDocuments().add(node.getNodeRef());
             if (!snapshotRestored) {
                 if (!docReloadDisabled) {
-                    reloadDocAndClearPropertySheet();
+                    reloadDocAndClearPropertySheet(true);
                 } else {
                     docReloadDisabled = false;
                 }
@@ -553,7 +564,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 notifyModeChanged();
             }
             logBlockBean.restore();
-            transactionsBlockBean.restore();
+            transactionsBlockBean.restore(metadataBlockBean.getDocument());
             searchBlockBean.reset();
             isDraft = false;
             isFinished = false;

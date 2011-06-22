@@ -53,6 +53,11 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
         super.init(node);
     }
 
+    public void restore(Node document) {
+        parentNode = document;
+        super.restore();
+    }
+
     public void onModeChanged() {
         constructTransactionPanelGroup();
     }

@@ -233,11 +233,11 @@ public class MenuItem implements Serializable {
         return wrap;
     }
 
-    private boolean isEinvoiceFunctionalityEnabled(EInvoiceService einvoiceService) {
+    protected boolean isEinvoiceFunctionalityEnabled(EInvoiceService einvoiceService) {
         return einvoiceService.isEinvoiceEnabled();
     }
 
-    private boolean isEinvoiceFunctionality() {
+    protected boolean isEinvoiceFunctionality() {
         return "dimensions".equals(id) || "incomingEInvoice".equals(id);
     }
 
@@ -275,6 +275,10 @@ public class MenuItem implements Serializable {
 
     public boolean isExternalReview() {
         return "externalReviewTasks".equals(id);
+    }
+
+    public boolean isIncomingEinvoice() {
+        return "incomingEInvoice".equals(id);
     }
 
     public boolean isExternalReviewEnabled(WorkflowService workflowService) {

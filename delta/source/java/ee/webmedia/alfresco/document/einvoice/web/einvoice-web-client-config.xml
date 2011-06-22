@@ -10,12 +10,17 @@
             <action-listener>#{DimensionDetailsDialog.addNewValue}</action-listener>
          </action>
          
-         <action id="dimensions_delete_all_imported">
-            <label-id>dimensions_delete_all_imported</label-id>
+         <action id="dimensions_set_inactive">
+            <label-id>dimensions_set_all_inactive</label-id>
             <image>/images/icons/project-icon-emailarchive-16.gif</image>
-            <evaluator>ee.webmedia.alfresco.dvk.web.DevelopmentEvaluator</evaluator>
-            <action-listener>#{DimensionListDialog.deleteAllImportedDimensions}</action-listener>
-         </action>  
+            <action-listener>#{DimensionDetailsDialog.setDimensionValuesInactive}</action-listener>
+         </action>
+         
+         <action id="dimensions_set_active">
+            <label-id>dimensions_set_all_active</label-id>
+            <image>/images/icons/project-icon-emailarchive-16.gif</image>
+            <action-listener>#{DimensionDetailsDialog.setDimensionValuesActive}</action-listener>
+         </action>         
          
          <action id="transaction_template_add">
             <label-id>transaction_template_add</label-id>
@@ -25,11 +30,12 @@
          </action>
    
         <action-group id="dimension_actions">
-           <action idref="dimensions_delete_all_imported" />
         </action-group>
         
          <action-group id="dimension_detail_actions">
             <action idref="dimension_add_value" />
+           <action idref="dimensions_set_active" />              
+           <action idref="dimensions_set_inactive" />
          </action-group>   
          
         <action-group id="transaction_template_actions">

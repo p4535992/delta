@@ -47,6 +47,10 @@ public class BrowseMenuItem extends MenuItem {
             return null;
         }
 
+        if (isEinvoiceFunctionality() && !isEinvoiceFunctionalityEnabled(einvoiceService)) {
+            return null;
+        }
+
         NodeRef nodeRef = getNodeRefForXPath(context, getOutcome());
         if (nodeRef == null) {
             return null;

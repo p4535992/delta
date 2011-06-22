@@ -665,9 +665,7 @@ public class MetadataBlockBean implements ClearStateListener {
                 String vatStr = formatDoubleOrEmpty((Double) props.get(DocumentSpecificModel.Props.VAT));
                 props.put("{temp}invoiceTotalSum", MessageUtil.getMessage("document_invoice_total_sum_text", totalSumStr, currency, sumWithoutVatStr, currency, vatStr, currency));
 
-                String entryDateStr = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.ENTRY_DATE));
-                String entrySapNumber = (String) props.get(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER);
-                props.put("{temp}entrySapDateAndNumber", joinStringAndStringWithComma(entryDateStr, entrySapNumber));
+                addEntrySapDateAndNumber(props);
 
                 props.put("{temp}xxlInvoice", Boolean.TRUE.equals(props.get(DocumentSpecificModel.Props.XXL_INVOICE)) ? MessageUtil.getMessage("document_invoiceXxlInvoice") : "");
             }
@@ -910,6 +908,12 @@ public class MetadataBlockBean implements ClearStateListener {
                 props.put(DocumentSpecificModel.Props.FIRST_PARTY_NAME.toString(), MessageUtil.getMessage(FacesContext.getCurrentInstance(), "document_smit"));
             }
         }
+    }
+
+    private void addEntrySapDateAndNumber(Map<String, Object> props) {
+        String entryDateStr = formatDateOrEmpty((Date) props.get(DocumentSpecificModel.Props.ENTRY_DATE));
+        String entrySapNumber = (String) props.get(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER);
+        props.put("{temp}entrySapDateAndNumber", joinStringAndStringWithComma(entryDateStr, entrySapNumber));
     }
 
     public void addInvoiceMessages() {
@@ -1484,16 +1488,26 @@ public class MetadataBlockBean implements ClearStateListener {
     }
 
     public void reloadDoc() {
+        reloadDoc(true);
+    }
+
+    public void reloadDoc(boolean addInvoiceMessages) {
         document = getDocumentService().getDocument(nodeRef);
         if (!inEditMode) {// only create lock for existing doc
             lockOrUnlockIfNeeded(inEditMode);
         }
         afterModeChange();
-        addInvoiceMessages();
+        if (addInvoiceMessages) {
+            addInvoiceMessages();
+        }
     }
 
     public void reloadDocAndClearPropertySheet() {
-        reloadDoc();
+        reloadDocAndClearPropertySheet(true);
+    }
+
+    public void reloadDocAndClearPropertySheet(boolean addInvoiceMessages) {
+        reloadDoc(addInvoiceMessages);
         clearPropertySheet();
     }
 
@@ -1630,6 +1644,9 @@ public class MetadataBlockBean implements ClearStateListener {
         if (DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
             Double totalSum = (Double) document.getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM);
             Double vat = (Double) document.getProperties().get(DocumentSpecificModel.Props.VAT);
+            if (vat == null) {
+                vat = new Double(0);
+            }
             if (totalSum != null && vat != null) {
                 BigDecimal sumWithoutVat = new BigDecimal(totalSum).subtract(new BigDecimal(vat));
                 document.getProperties().put(DocumentSpecificModel.Props.INVOICE_SUM.toString(), sumWithoutVat.doubleValue());
@@ -1660,6 +1677,7 @@ public class MetadataBlockBean implements ClearStateListener {
     public void clearPropertySheet() {
         propertySheet.getChildren().clear();
         propertySheet.getClientValidations().clear();
+        addEntrySapDateAndNumber(document.getProperties());
     }
 
     private boolean validate() throws ValidatorException {

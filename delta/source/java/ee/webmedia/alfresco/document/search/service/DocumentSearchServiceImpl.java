@@ -941,7 +941,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         Assert.notNull(relatedFundsCenter);
         List<String> queryParts = new ArrayList<String>(2);
         queryParts.add(SearchUtil.generateTypeQuery(ContentModel.TYPE_PERSON));
-        queryParts.add(SearchUtil.generateStringExactQuery(relatedFundsCenter, ContentModel.PROP_RELATED_FUNDS_CENTER));
+        queryParts.add(SearchUtil.generatePropertyWildcardQuery(ContentModel.PROP_RELATED_FUNDS_CENTER, relatedFundsCenter, true, true, true));
         String query = SearchUtil.joinQueryPartsAnd(queryParts);
         return searchNodes(query, false, /* queryName */"usersByRelatedFundsCenter");
     }

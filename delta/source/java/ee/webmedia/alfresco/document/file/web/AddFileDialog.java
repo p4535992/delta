@@ -206,7 +206,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 getDocumentService().updateSearchableFiles(documentNodeRef);
 
                 if (invoiceAdded) {
-                    documentDialog.reloadDocAndClearPropertySheet();
+                    documentDialog.reloadDocAndClearPropertySheet(true);
                 }
 
                 // generate new invoice files in case of multiple uploaded invoice xmls

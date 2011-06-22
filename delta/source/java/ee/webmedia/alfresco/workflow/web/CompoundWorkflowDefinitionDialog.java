@@ -203,9 +203,9 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
         List<Transaction> transactions = BeanHelper.getEInvoiceService().getInvoiceTransactions(docRef);
         Map<NodeRef, Node> taskOwners = new HashMap<NodeRef, Node>();
         for (Transaction transaction : transactions) {
-            String costCenter = transaction.getCostCenter();
-            if (StringUtils.isNotBlank(costCenter)) {
-                List<NodeRef> users = BeanHelper.getDocumentSearchService().searchUsersByRelatedFundsCenter(costCenter);
+            String fundsCenter = transaction.getFundsCenter();
+            if (StringUtils.isNotBlank(fundsCenter)) {
+                List<NodeRef> users = BeanHelper.getDocumentSearchService().searchUsersByRelatedFundsCenter(fundsCenter);
                 for (NodeRef userRef : users) {
                     taskOwners.put(userRef, new Node(userRef));
                 }

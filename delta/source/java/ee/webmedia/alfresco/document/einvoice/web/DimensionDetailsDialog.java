@@ -178,4 +178,16 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
         return isEditableDimension;
     }
 
+    public void setDimensionValuesInactive(javax.faces.event.ActionEvent event) {
+        BeanHelper.getEInvoiceService().setDimensionValuesActiveOrInactive(selectedDimension, false);
+        loadDimensionValues();
+        clearRichList();
+    }
+
+    public void setDimensionValuesActive(javax.faces.event.ActionEvent event) {
+        BeanHelper.getEInvoiceService().setDimensionValuesActiveOrInactive(selectedDimension, true);
+        loadDimensionValues();
+        clearRichList();
+    }
+
 }

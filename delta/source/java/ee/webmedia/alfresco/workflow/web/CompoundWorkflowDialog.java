@@ -241,7 +241,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         if (!DocumentSubtypeModel.Types.INVOICE.equals(nodeService.getType(docRef))) {
             return null;
         }
-        Date invoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.INVOICE_DATE);
+        Date invoiceDueDate = (Date) nodeService.getProperty(docRef, DocumentSpecificModel.Props.INVOICE_DUE_DATE);
         if (invoiceDueDate == null) {
             return null;
         }

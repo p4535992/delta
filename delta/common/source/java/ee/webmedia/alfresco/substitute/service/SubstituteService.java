@@ -60,11 +60,11 @@ public interface SubstituteService {
     /**
      * Finds list of substitution duties for given user that overlap given time-frame.
      * 
-     * @param userName
+     * @param user nodeRef
      * @param startDate if null, return empty list
      * @param endDate if null, return empty list
      * @return list of substitutes
      */
-    List<Substitute> findSubstitutionDutiesInPeriod(String userName, Date startDate, Date endDate);
+    List<Substitute> findSubstitutionDutiesInPeriod(NodeRef userNodeRef, Date startDate, Date endDate);
 
 }

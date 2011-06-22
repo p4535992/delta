@@ -82,16 +82,6 @@ public interface EInvoiceService {
 
     void updateDimensions(List<Dimension> dimensions);
 
-    /**
-     * Currently used for development/internal testing only
-     */
-    void deleteAllDimensions();
-
-    /**
-     * Currently used for development/internal testing only
-     */
-    void deleteAllImportedDimensions();
-
     List<Transaction> getInvoiceTransactions(NodeRef invoiceRef);
 
     void updateDimensionValues(List<DimensionValue> dimensionValues, Node selectedDimension);
@@ -156,5 +146,7 @@ public interface EInvoiceService {
     void removeTransactions(NodeRef nodeRef);
 
     void copyTransactions(TransactionTemplate template, List<Transaction> transactions);
+
+    void setDimensionValuesActiveOrInactive(Dimension dimension, boolean active);
 
 }

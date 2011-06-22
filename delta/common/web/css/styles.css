@@ -927,9 +927,54 @@ span.small input, input.small, textarea.small, select.small {
 	min-width: 80px !important;
 }
 
+.width40 {
+	width: 40px !important;
+	min-width: 40px !important; 
+}
+
+.width50 {
+	width: 50px !important;
+	min-width: 50px !important; 
+}
+
+.width60 {
+	width: 60px !important;
+	min-width: 60px !important; 
+}
+
+.width70 {
+	width: 70px !important;
+	min-width: 70px !important; 
+}
+
+.width80 {
+	width: 80px !important;
+	min-width: 80px !important; 
+}
+
+.width100 {
+	width: 100px !important;
+	min-width: 100px !important; 
+}
+
 .width120 {
 	width: 120px !important;
 	min-width: 120px !important; 
+}
+
+.width140 {
+	width: 140px !important;
+	min-width: 140px !important; 
+}
+
+.width160 {
+	width: 160px !important;
+	min-width: 160px !important; 
+}
+
+.width180 {
+	width: 180px !important;
+	min-width: 180px !important; 
 }
 
 .width250 {

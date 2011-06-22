@@ -334,8 +334,9 @@ public class WorkflowBlockBean implements Serializable {
         if (transactions == null) {
             return null;
         }
-        String relatedFundsCenter = (String) BeanHelper.getNodeService().getProperty(userService.getCurrentUser(), ContentModel.PROP_RELATED_FUNDS_CENTER);
-        if (relatedFundsCenter == null) {
+        @SuppressWarnings("unchecked")
+        List<String> relatedFundsCenters = (List<String>) BeanHelper.getNodeService().getProperty(userService.getCurrentUser(), ContentModel.PROP_RELATED_FUNDS_CENTER);
+        if (relatedFundsCenters == null || relatedFundsCenters.isEmpty()) {
             return null;
         }
         List<String> mandatoryForCostManager = BeanHelper.getEInvoiceService().getCostManagerMandatoryFields();
@@ -345,9 +346,11 @@ public class WorkflowBlockBean implements Serializable {
         List<Pair<String, String>> errorMessages = new ArrayList<Pair<String, String>>();
         List<String> addedErrorKeys = new ArrayList<String>();
         for (Transaction transaction : transactions) {
-            String costCenter = transaction.getCostCenter();
-            if (costCenter != null && costCenter.equalsIgnoreCase(relatedFundsCenter)) {
-                EInvoiceUtil.checkTransactionMandatoryFields(mandatoryForCostManager, errorMessages, addedErrorKeys, transaction);
+            String costCenter = transaction.getFundsCenter();
+            for (String relatedFundsCenter : relatedFundsCenters) {
+                if (costCenter != null && costCenter.equalsIgnoreCase(relatedFundsCenter)) {
+                    EInvoiceUtil.checkTransactionMandatoryFields(mandatoryForCostManager, errorMessages, addedErrorKeys, transaction);
+                }
             }
         }
         if (errorMessages.isEmpty()) {

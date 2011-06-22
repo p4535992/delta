@@ -13,6 +13,7 @@ import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
 import ee.webmedia.alfresco.parameters.model.Parameters;
+import ee.webmedia.xtee.client.dhl.DhlXTeeService.SendStatus;
 
 public class SendEInvoiceToSapManuallyEvaluator extends BaseActionEvaluator {
 
@@ -27,7 +28,7 @@ public class SendEInvoiceToSapManuallyEvaluator extends BaseActionEvaluator {
                 && (docNode.getProperties().get(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER) != null || Boolean.TRUE.equals(docNode
                         .getProperties().get(DocumentSpecificModel.Props.XXL_INVOICE)) || mandatoryTransactionFieldsFilled(docNode))
                 && StringUtils.isNotBlank((String) docNode.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT))
-                && (!hasSendInfo(docNode) || docNode.getProperties().get(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER) != null)
+                && (!hasSendInfo(docNode) && StringUtils.isEmpty((String) docNode.getProperties().get(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER)))
                 && !BeanHelper.getWorkflowService().hasUnfinishedReviewTasks(docNode.getNodeRef())
                 && BeanHelper.getEInvoiceService().isEinvoiceEnabled();
 
@@ -40,7 +41,7 @@ public class SendEInvoiceToSapManuallyEvaluator extends BaseActionEvaluator {
             return false;
         }
         for (SendInfo sendInfo : sendInfos) {
-            if (dvkCode.equalsIgnoreCase(sendInfo.getRecipient())) {
+            if (!SendStatus.CANCELLED.toString().equalsIgnoreCase(sendInfo.getSendStatus()) && dvkCode.equalsIgnoreCase(sendInfo.getRecipient())) {
                 return true;
             }
         }

@@ -317,31 +317,15 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     }
 
     @Override
-    public void deleteAllDimensions() {
-        NodeRef root = generalService.getNodeRef(dimensionsPath);
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
-        List<Dimension> dimensions = new ArrayList<Dimension>(childRefs.size());
-        for (ChildAssociationRef childRef : childRefs) {
-            nodeService.deleteNode(childRef.getChildRef());
+    public void setDimensionValuesActiveOrInactive(Dimension dimension, boolean active) {
+        List<DimensionValue> dimensionValues = getAllDimensionValuesFromRepo(dimension.getNode().getNodeRef());
+        RetryingTransactionHelper retryingTransactionHelper = transactionService.getRetryingTransactionHelper();
+        Iterator<NodeRef> i = getNodeRefIterator(dimensionValues);
+        SetActiveOrInactiveDimensionCallback setActiveOrInactiveDimensionCallback = new SetActiveOrInactiveDimensionCallback(i, active);
+        while (i.hasNext()) {
+            retryingTransactionHelper.doInTransaction(setActiveOrInactiveDimensionCallback, false, true);
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Dimensions found: " + dimensions);
-        }
-    }
-
-    @Override
-    public void deleteAllImportedDimensions() {
-        NodeRef root = generalService.getNodeRef(dimensionsPath);
-        List<ChildAssociationRef> childRefs = nodeService.getChildAssocs(root);
-        List<Dimension> dimensions = new ArrayList<Dimension>(childRefs.size());
-        for (ChildAssociationRef childRef : childRefs) {
-            if (!EInvoiceUtil.notImportedDimension.getDimensionName().equalsIgnoreCase(childRef.getQName().getLocalName())) {
-                nodeService.deleteNode(childRef.getChildRef());
-            }
-        }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Dimensions found: " + dimensions);
-        }
+        emptyDimensionValueChache();
     }
 
     @Override
@@ -1091,13 +1075,11 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         String dimensionXmlId = parametersService.getStringParameter(parameter);
         dimensioon.setDimensiooniId(dimensionXmlId);
         DimensionValue dimensionValue = getDimensionValue(getDimension(dimension), transDimensionValue);
+        dimensioon.setDimensiooniVaartuseId(transDimensionValue);
+        dimensioon.setDimensiooniVaartuseNimetus(dimensionValue == null ? "" : dimensionValue.getValue());
         if (dimensionValue == null) {
-            String message = "No dimension value was found for dimension='" + dimensionXmlId + "', value name='" + transDimensionValue + "'";
-            LOG.error(message);
-            throw new RuntimeException(message);
+            LOG.debug("No dimension value was found for dimension='" + dimensionXmlId + "', value name='" + transDimensionValue + "', sending empty value.");
         }
-        dimensioon.setDimensiooniVaartuseId(dimensionValue.getValueName());
-        dimensioon.setDimensiooniVaartuseNimetus(dimensionValue.getValue());
         dimensioonList.add(dimensioon);
     }
 
@@ -1161,7 +1143,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         // delete TRANSACTION_SIZE nodes during one transaction:
         // Alfresco has performance issue when large number of nodes is deleted in one transaction
         RetryingTransactionHelper retryingTransactionHelper = transactionService.getRetryingTransactionHelper();
-        Iterator<DimensionValue> i = dimensionValues.iterator();
+        Iterator<NodeRef> i = getNodeRefIterator(dimensionValues);
         DeleteDimensionCallback deleteDimensionCallback = new DeleteDimensionCallback(i, updatedDimensionValues);
         while (i.hasNext()) {
             retryingTransactionHelper.doInTransaction(deleteDimensionCallback, false, true);
@@ -1179,26 +1161,68 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         return dimensionRef;
     }
 
-    private class DeleteDimensionCallback implements RetryingTransactionHelper.RetryingTransactionCallback<Iterator<DimensionValue>> {
-        private final Iterator<DimensionValue> iterator;
-        List<NodeRef> updatedDimensionValues;
+    @SuppressWarnings("unchecked")
+    private Iterator<NodeRef> getNodeRefIterator(final List<DimensionValue> dimensionValues) {
+        return ((Collection<NodeRef>) CollectionUtils.collect(dimensionValues, new Transformer() {
 
-        public DeleteDimensionCallback(Iterator<DimensionValue> iterator, List<NodeRef> updatedDimensionValues) {
+            @Override
+            public Object transform(Object arg0) {
+                return ((DimensionValue) arg0).getNode().getNodeRef();
+            }
+
+        })).iterator();
+    }
+
+    private abstract class ProcessNodeRefCallback implements RetryingTransactionHelper.RetryingTransactionCallback<Iterator<DimensionValue>> {
+        private final Iterator<NodeRef> iterator;
+
+        public ProcessNodeRefCallback(Iterator<NodeRef> iterator) {
             this.iterator = iterator;
-            this.updatedDimensionValues = updatedDimensionValues;
         }
 
         @Override
         public Iterator<DimensionValue> execute() throws Throwable {
             int transactionCommitCounter = 0;
             for (; iterator.hasNext() && transactionCommitCounter < TRANSACTION_SIZE;) {
-                DimensionValue dimensionValue = iterator.next();
-                if (!updatedDimensionValues.contains(dimensionValue.getNode().getNodeRef())) {
-                    nodeService.deleteNode(dimensionValue.getNode().getNodeRef());
-                    transactionCommitCounter++;
-                }
+                transactionCommitCounter = processNodeRef(iterator.next(), transactionCommitCounter);
             }
             return null;
+        }
+
+        protected abstract int processNodeRef(NodeRef nodeRef, int transactionCommitCounter);
+
+    }
+
+    private class DeleteDimensionCallback extends ProcessNodeRefCallback {
+        List<NodeRef> updatedDimensionValues;
+
+        public DeleteDimensionCallback(Iterator<NodeRef> iterator, List<NodeRef> updatedDimensionValues) {
+            super(iterator);
+            this.updatedDimensionValues = updatedDimensionValues;
+        }
+
+        @Override
+        protected int processNodeRef(NodeRef nodeRef, int transactionCommitCounter) {
+            if (!updatedDimensionValues.contains(nodeRef)) {
+                nodeService.deleteNode(nodeRef);
+                return transactionCommitCounter + 1;
+            }
+            return transactionCommitCounter;
+        }
+    }
+
+    private class SetActiveOrInactiveDimensionCallback extends ProcessNodeRefCallback {
+        boolean active;
+
+        public SetActiveOrInactiveDimensionCallback(Iterator<NodeRef> iterator, boolean active) {
+            super(iterator);
+            this.active = active;
+        }
+
+        @Override
+        protected int processNodeRef(NodeRef nodeRef, int transactionCommitCounter) {
+            nodeService.setProperty(nodeRef, DimensionModel.Props.ACTIVE, active);
+            return transactionCommitCounter + 1;
         }
     }
 
@@ -1344,7 +1368,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
 
         @Override
         public String getValue() {
-            return value.getKaibemaksuKood();
+            return value.getSelgitus();
         }
 
         @Override

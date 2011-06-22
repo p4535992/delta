@@ -854,15 +854,21 @@ $jQ(document).ready(function() {
       if (filter != null && filter.attr('value') != undefined) {
          filterValue = filter.attr('value');
       }
-      if (value && value.length % 3 == 0) {
+
+      if (!value) {
+         return;
+      }
+
+      var backspace = event.keyCode == 8;
+      var tbody = input.closest('tbody');
+      var select = tbody.find('.genericpicker-results');
+      if (value.length == 3 && !backspace) {
          $jQ.ajax({
             type: 'POST',
             url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",
             data: $jQ.param({'contains' : value, 'pickerCallback' : callback, 'filterValue' : filterValue}),
             mode: 'queue',
             success: function(responseText) {
-               var tbody = input.closest('tbody');
-               var select = tbody.find('.genericpicker-results');
                select.children().remove();
                var index = responseText.indexOf("|");
                select.attr("size", responseText.substring(0, index))
@@ -871,6 +877,15 @@ $jQ(document).ready(function() {
             },
             error: ajaxError,
             dataType: 'html'
+         });
+      } else if (value.length > 3 || backspace) {
+         select.children().each(function (i) {
+            var option = $jQ(this);
+            if (option.text().toLowerCase().indexOf(value.toLowerCase()) < 0) {
+               option.hide();
+            } else {
+               option.show();
+            }
          });
       }
    });
@@ -1104,6 +1119,7 @@ var toggleSubrow = {
 
 function getFloatOrNull(originalSumString){
    var sumString = originalSumString.replace(",", ".");
+   sumString = sumString.replace(" ", "");
    if(sumString == ""){
       return 0;
    }

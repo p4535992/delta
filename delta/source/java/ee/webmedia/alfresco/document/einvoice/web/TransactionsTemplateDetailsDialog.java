@@ -374,20 +374,20 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             // First row inputs
             HtmlOutputLink outputLink = createOutputLink(application, transMainGridChildren, transRowCounter);
             childrenStyleClassAttribute.put(outputLink.getId(), "trans-toggle-subrow");
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS_CENTERS, TransactionModel.Props.FUNDS_CENTER, transRowCounter,
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS_CENTERS, TransactionModel.Props.FUNDS_CENTER, transRowCounter, "width180 ",
                     transMandatoryProps);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COST_CENTERS, TransactionModel.Props.COST_CENTER, transRowCounter,
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COST_CENTERS, TransactionModel.Props.COST_CENTER, transRowCounter, "width120 ",
                     transMandatoryProps);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS, TransactionModel.Props.FUND, transRowCounter,
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS, TransactionModel.Props.FUND, transRowCounter, "width120 ",
                     transMandatoryProps);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.EA_COMMITMENT_ITEM, transRowCounter,
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.EA_COMMITMENT_ITEM, transRowCounter, "width180 ",
                     DimensionSelectorGenerator.getEAInclusivePredicate(), transMandatoryProps);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.COMMITMENT_ITEM, transRowCounter,
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.COMMITMENT_ITEM, transRowCounter, "width160 ",
                     DimensionSelectorGenerator.getEAExclusivePredicate(), transMandatoryProps);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_INTERNAL_ORDERS, TransactionModel.Props.ORDER_NUMBER, transRowCounter,
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_INTERNAL_ORDERS, TransactionModel.Props.ORDER_NUMBER, transRowCounter, "width140 ",
                     transMandatoryProps);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, TransactionModel.Props.ASSET_INVENTORY_NUMBER,
-                    transRowCounter, transMandatoryProps);
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, TransactionModel.Props.ASSET_INVENTORY_NUMBER, transRowCounter,
+                    "width140 ", transMandatoryProps);
             addDoubleInput(context, transMainGridChildren, transRowCounter, TransactionModel.Props.SUM_WITHOUT_VAT, childrenStyleClassAttribute,
                     transMandatoryProps);
             // actions
@@ -412,23 +412,23 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             List tranRowSecondaryGridChildren = tranRowSecondaryGrid.getChildren();
 
             // Second row inputs
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_POSTING_KEY, TransactionModel.Props.POSTING_KEY, transRowCounter,
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_POSTING_KEY, TransactionModel.Props.POSTING_KEY, transRowCounter, "width40 ",
                     transMandatoryProps);
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_ACCOUNTS, TransactionModel.Props.ACCOUNT, transRowCounter, "small",
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_ACCOUNTS, TransactionModel.Props.ACCOUNT, transRowCounter, "width120 ",
                     transMandatoryProps);
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.TAX_CODE_ITEMS, TransactionModel.Props.INVOICE_TAX_CODE, transRowCounter, "small",
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.TAX_CODE_ITEMS, TransactionModel.Props.INVOICE_TAX_CODE, transRowCounter, "width40 ",
                     transMandatoryProps);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_TRADING_PARTNER_CODES, TransactionModel.Props.TRADING_PARTNER_CODE, transRowCounter,
-                    transMandatoryProps);
+                    "width80 ", transMandatoryProps);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_FUNCTIONAL_AREA_CODE, TransactionModel.Props.FUNCTIONAL_ARE_CODE, transRowCounter,
+                    "width180 ", transMandatoryProps);
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_CASH_FLOW_CODES, TransactionModel.Props.CASH_FLOW_CODE, transRowCounter, "width50 ",
                     transMandatoryProps);
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_CASH_FLOW_CODES, TransactionModel.Props.CASH_FLOW_CODE, transRowCounter, "small",
-                    transMandatoryProps);
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_SOURCE_CODES, TransactionModel.Props.SOURCE, transRowCounter, "small",
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_SOURCE_CODES, TransactionModel.Props.SOURCE, transRowCounter, "width60 ",
                     transMandatoryProps);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_PAYMENT_METHOD_CODES, TransactionModel.Props.PAYMENT_METHOD, transRowCounter,
-                    "small", transMandatoryProps);
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_HOUSE_BANK_CODES, TransactionModel.Props.HOUSE_BANK, transRowCounter,
+                    "width40 ", transMandatoryProps);
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_HOUSE_BANK_CODES, TransactionModel.Props.HOUSE_BANK, transRowCounter, "width70 ",
                     transMandatoryProps);
             addTextareaInput(context, tranRowSecondaryGridChildren, transRowCounter, TransactionModel.Props.ENTRY_CONTENT, secondaryChildrenStyleClassAttribute,
                     transMandatoryProps);

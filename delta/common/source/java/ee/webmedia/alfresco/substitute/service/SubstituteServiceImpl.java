@@ -163,11 +163,12 @@ public class SubstituteServiceImpl implements SubstituteService {
     }
 
     @Override
-    public List<Substitute> findSubstitutionDutiesInPeriod(String userName, Date startDate, Date endDate) {
+    public List<Substitute> findSubstitutionDutiesInPeriod(NodeRef userNodeRef, Date startDate, Date endDate) {
         List<Substitute> substitutes = new ArrayList<Substitute>();
         if (startDate == null || endDate == null) {
             return substitutes;
         }
+        String userName = (String) nodeService.getProperty(userNodeRef, ContentModel.PROP_USERNAME);
 
         String query = joinQueryPartsAnd(Arrays.asList(
                 generateTypeQuery(SubstituteModel.Types.SUBSTITUTE),
