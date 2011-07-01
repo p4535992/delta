@@ -11,6 +11,7 @@ import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
@@ -48,6 +49,8 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
+
+import com.ibm.icu.util.GregorianCalendar;
 
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
@@ -1647,8 +1650,8 @@ public class MetadataBlockBean implements ClearStateListener {
             if (vat == null) {
                 vat = new Double(0);
             }
-            if (totalSum != null && vat != null) {
-                BigDecimal sumWithoutVat = new BigDecimal(totalSum).subtract(new BigDecimal(vat));
+            if (totalSum != null) {
+                BigDecimal sumWithoutVat = BigDecimal.valueOf(totalSum).subtract(BigDecimal.valueOf(vat));
                 document.getProperties().put(DocumentSpecificModel.Props.INVOICE_SUM.toString(), sumWithoutVat.doubleValue());
             }
         }
@@ -1763,6 +1766,18 @@ public class MetadataBlockBean implements ClearStateListener {
             if (paymentRefNumber != null && !StringUtils.isNumeric(paymentRefNumber)) {
                 messages.add("document_errorMsg_payment_ref_number_not_numeric");
             }
+            Date entryDate = (Date) props.get(DocumentSpecificModel.Props.ENTRY_DATE);
+            if (entryDate != null) {
+                int currentYear = Calendar.getInstance().get(Calendar.YEAR);
+                GregorianCalendar calendar = new GregorianCalendar();
+                calendar.setTime(entryDate);
+                int entryYear = calendar.get(Calendar.YEAR);
+                if (currentYear != entryYear && Boolean.parseBoolean(BeanHelper.getParametersService().getStringParameter(Parameters.INVOICE_ENTRY_DATE_ONLY_IN_CURRENT_YEAR))) {
+                    messages.add("document_errorMsg_entryDate_current_year");
+                } else if (currentYear != entryYear && currentYear - 1 != entryYear) {
+                    messages.add("document_errorMsg_entryDate_current_or_previous_year");
+                }
+            }
         }
 
         if (messages.size() > 0) {
@@ -1831,7 +1846,7 @@ public class MetadataBlockBean implements ClearStateListener {
                         iterator.remove();
                     }
                 } else if (sum instanceof Double) {
-                    totalSum = totalSum.add(new BigDecimal((Double) sum));
+                    totalSum = totalSum.add(BigDecimal.valueOf((Double) sum));
                 }
             }
             expensesV2Node.getProperties().put(DocumentSpecificModel.Props.EXPENSES_TOTAL_SUM.toString(), totalSum.doubleValue());
@@ -1901,13 +1916,13 @@ public class MetadataBlockBean implements ClearStateListener {
         // Calculate daily allowance sums and total daily allowance sum (don't trust JS)
         final int size = allowanceDays.size();
         List<Double> dailySums = new ArrayList<Double>(size);
-        BigDecimal totalDailySum = new BigDecimal(0.0);
+        BigDecimal totalDailySum = new BigDecimal("0.0");
         @SuppressWarnings("unchecked")
         final List<Integer> rates = getIntegerList((List<Serializable>) props.get(DocumentSpecificModel.Props.DAILY_ALLOWANCE_RATE));
 
         for (int i = 0; i < size; i++) {
             // Multiply days by parameter value and the multiply by rate percent
-            final BigDecimal dailySum = dailyAllowanceSum.multiply(new BigDecimal(allowanceDays.get(i))).multiply(new BigDecimal(rates.get(i) / 100.0))
+            final BigDecimal dailySum = dailyAllowanceSum.multiply(BigDecimal.valueOf(allowanceDays.get(i))).multiply(BigDecimal.valueOf(rates.get(i) / 100.0))
                     .setScale(2, BigDecimal.ROUND_HALF_UP);
             totalDailySum = totalDailySum.add(dailySum);
             dailySums.add(dailySum.doubleValue());

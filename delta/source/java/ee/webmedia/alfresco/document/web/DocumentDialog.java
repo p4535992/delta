@@ -272,7 +272,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         if (!StringUtils.equals(docStatusBeforeReopen, docStatusAfterReopen)) {
             MessageUtil.addInfoMessage("document_reopen_success");
         }
-        transactionsBlockBean.init(node, this);
+        transactionsBlockBean.init(metadataBlockBean.getDocument(), this);
     }
 
     public void deleteDocument(@SuppressWarnings("unused") ActionEvent event) {
@@ -415,6 +415,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             BeanHelper.getDocumentService().setDocStatusFinished(node.getNodeRef());
             BeanHelper.getWorkflowService().finishUserActiveResponsibleInProgressTask(node.getNodeRef(), MessageUtil.getMessage("task_comment_sentToSap"));
             reloadDocAndClearPropertySheet(false);
+            MessageUtil.addInfoMessage("document_send_to_sap_success");
         } catch (Exception e) {
             String messageKey = "document_sendToSap_errorSendingOrGeneratingXml";
             log.error(MessageUtil.getMessage(messageKey), e);
@@ -455,7 +456,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         workflowBlockBean.init(node);
         sendOutBlockBean.init(node, workflowBlockBean.getCompoundWorkflows());
         logBlockBean.init(node);
-        transactionsBlockBean.init(node, this);
+        transactionsBlockBean.init(metadataBlockBean.getDocument(), this);
     }
 
     @Override
@@ -512,7 +513,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         workflowBlockBean.init(node);
         sendOutBlockBean.init(node, workflowBlockBean.getCompoundWorkflows());
         logBlockBean.init(node);
-        transactionsBlockBean.init(node, this);
+        transactionsBlockBean.init(metadataBlockBean.getDocument(), this);
 
         BeanHelper.getClearStateNotificationHandler().addClearStateListener(this);
     }
@@ -524,7 +525,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     public void reloadDocAndClearPropertySheet(boolean addInvoiceMessages) {
         node = getDocumentService().getDocument(node.getNodeRef());
-        metadataBlockBean.reloadDocAndClearPropertySheet();
+        metadataBlockBean.reloadDocAndClearPropertySheet(addInvoiceMessages);
+        transactionsBlockBean.restore(metadataBlockBean.getDocument());
     }
 
     @Override

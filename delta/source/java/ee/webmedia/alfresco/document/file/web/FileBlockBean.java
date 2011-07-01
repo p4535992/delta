@@ -38,14 +38,14 @@ public class FileBlockBean implements Serializable {
     private transient DocumentService documentService;
     private NavigationBean navigationBean;
     private List<File> files;
-    private NodeRef nodeRef;
+    private NodeRef docRef;
     private String pdfUrl;
 
     public void toggleActive(ActionEvent event) {
         NodeRef fileNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
 
         try {
-            BaseDialogBean.validatePermission(fileNodeRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
+            BaseDialogBean.validatePermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
             final boolean active = getFileService().toggleActive(fileNodeRef);
             restore(); // refresh the files list
             MessageUtil.addInfoMessage(active ? "file_toggle_active_success" : "file_toggle_deactive_success", getFileName(fileNodeRef));
@@ -81,28 +81,29 @@ public class FileBlockBean implements Serializable {
     }
 
     public void init(Node node) {
-        nodeRef = node.getNodeRef();
-        Assert.notNull(nodeRef, "nodeRef is null - node: " + node);
+        docRef = node.getNodeRef();
+        Assert.notNull(docRef, "nodeRef is null - node: " + node);
         restore();
         // Alfresco's AddContentDialog.saveContent uses
         // navigationBean.getCurrentNodeId() for getting the folder to save to
         navigationBean.setCurrentNodeId(node.getId());
+        pdfUrl = null;
     }
 
     public void reset() {
         files = null;
-        nodeRef = null;
+        docRef = null;
         navigationBean.setCurrentNodeId(getDocumentService().getDrafts().getId());
         pdfUrl = null;
     }
 
     public void restore() {
-        files = getFileService().getAllFiles(nodeRef);
+        files = getFileService().getAllFiles(docRef);
     }
 
     public boolean moveAllFiles(NodeRef toRef) {
         try {
-            getFileService().moveAllFiles(nodeRef, toRef);
+            getFileService().moveAllFiles(docRef, toRef);
             return true;
         } catch (DuplicateChildNodeNameException e) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "add_file_existing_file", e.getName());

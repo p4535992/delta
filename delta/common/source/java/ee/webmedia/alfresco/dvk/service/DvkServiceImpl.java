@@ -108,8 +108,6 @@ public abstract class DvkServiceImpl implements DvkService {
 
     private String noTitleSpacePrefix;
 
-    // private SendOutService sendOutService;
-
     @Override
     public int updateOrganizationsDvkCapability() {
         final Map<String /* regNum */, String /* orgName */> sendingOptions = getSendingOptions();
@@ -185,7 +183,7 @@ public abstract class DvkServiceImpl implements DvkService {
         log.debug("received " + receiveDocuments.size() + " documents from DVK");
         List<String> sortedKeys = new ArrayList<String>(receiveDocuments.keySet());
         // sort descending to avoid unnecessary version overwrite
-        // when recieving for example external review workflow documents
+        // when receiving for example external review workflow documents
         Collections.sort(sortedKeys, new Comparator<String>() {
             @Override
             public int compare(String o1, String o2) {

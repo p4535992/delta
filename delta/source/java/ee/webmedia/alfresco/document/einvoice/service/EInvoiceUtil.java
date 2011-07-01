@@ -379,27 +379,33 @@ public class EInvoiceUtil {
         return result;
     }
 
+    /**
+     * @return sum without vat rounded to two decimal places
+     */
     public static double getSumWithoutVat(List<Transaction> transactions) {
         BigDecimal sum = new BigDecimal("0.0");
         for (Transaction transaction : transactions) {
             Double rowSumWithoutVat = transaction.getSumWithoutVat();
             if (rowSumWithoutVat != null) {
-                sum = sum.add(new BigDecimal(rowSumWithoutVat));
+                sum = sum.add(BigDecimal.valueOf(rowSumWithoutVat));
             }
         }
-        return sum.doubleValue();
+        return roundDouble2Decimals(sum.doubleValue());
     }
 
+    /**
+     * @return vat sum rounded to two decimal places
+     */
     public static double getVatSum(List<Transaction> transactions, Map<NodeRef, Map<QName, Serializable>> originalProperties, List<DimensionValue> vatCodeDimensionValues) {
         BigDecimal sum = new BigDecimal("0.0");
         for (Transaction transaction : transactions) {
             Double rowSumWithoutVat = transaction.getSumWithoutVat();
             Integer rowVatPercentage = getVatPercentage(transaction, originalProperties, vatCodeDimensionValues);
             if (rowSumWithoutVat != null) {
-                sum = sum.add((new BigDecimal(rowSumWithoutVat)).multiply(new BigDecimal(rowVatPercentage)).divide(new BigDecimal(100)));
+                sum = sum.add((BigDecimal.valueOf(rowSumWithoutVat)).multiply(BigDecimal.valueOf(rowVatPercentage)).divide(BigDecimal.valueOf(100)));
             }
         }
-        return sum.doubleValue();
+        return roundDouble2Decimals(sum.doubleValue());
     }
 
     // in case of saved and not changed invoice tax code, read percentage from transaction, otherwise from dimension
@@ -414,6 +420,20 @@ public class EInvoiceUtil {
             return getVatPercentageFromDimension(taxCode, vatCodeDimesnionValues);
         }
         return transaction.getInvoiceTaxPercent();
+    }
+
+    public static double roundDouble2Decimals(Double exactDouble) {
+        return roundDouble(exactDouble, 2).doubleValue();
+
+    }
+
+    public static BigDecimal roundDouble4Decimals(Double exactDouble) {
+        return roundDouble(exactDouble, 4);
+    }
+
+    private static BigDecimal roundDouble(Double exactDouble, int scale) {
+        // don't use new BigDecimal(exactDouble) as it may lead to rounding errors
+        return (BigDecimal.valueOf(exactDouble)).setScale(scale, BigDecimal.ROUND_HALF_UP);
     }
 
     // For calculations return 0 for null value

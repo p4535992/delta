@@ -11,13 +11,13 @@
          <show-property name="doccom:accessRestriction" component-generator="ClassificatorSelectorGenerator" classificatorName="accessRestriction" readOnlyIf="#{DocumentDialog.isNotEditable}" />
          <show-property name="doccom:accessRestrictionReason" mandatoryIf="accessRestriction" component-generator="ClassificatorSelectorAndTextGenerator" classificatorName="accessRestrictionReason" styleClass="expand19-200" readOnlyIf="#{DocumentDialog.isNotEditable}" />
          <show-property name="accessRestrictionDate" show-in-edit-mode="false" display-label-id="document_accessRestrictionDate" />
-         <show-property name="doccom:accessRestrictionBeginDate" display-label-id="document_accessRestrictionDate" textId="document_eventDates_templateText"  readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}" show-in-view-mode="false"
+         <show-property name="doccom:accessRestrictionBeginDate" display-label-id="document_accessRestrictionDate" textId="document_eventDates_templateText" readOnlyIf="#{DocumentDialog.isNotEditable}" show-in-view-mode="false"
          component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" propertiesSeparator="£" props="
-            doccom:accessRestrictionBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isClosedOrNotEditable}¤mandatoryIf=accessRestriction
-            £doccom:accessRestrictionEndDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isClosedOrNotEditable}¤mandatoryIf=accessRestriction,accessRestrictionEndDesc=null¤mandatoryIfLabelId=document_accessRestrictionEndDate_mandatoryIf
+            doccom:accessRestrictionBeginDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotEditable}¤mandatoryIf=accessRestriction
+            £doccom:accessRestrictionEndDate¤¤styleClass=date inline¤readOnlyIf=#{DocumentDialog.isNotEditable}¤mandatoryIf=accessRestriction,accessRestrictionEndDesc=null¤mandatoryIfLabelId=document_accessRestrictionEndDate_mandatoryIf
             "
          />
-         <show-property name="doccom:accessRestrictionEndDesc" readOnlyIf="#{DocumentDialog.isClosedOrNotEditable}" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="doccom:accessRestrictionEndDesc" readOnlyIf="#{DocumentDialog.isNotEditable}" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <separator name="sep1" component-generator="SeparatorGenerator" />
       </property-sheet>
    </config>

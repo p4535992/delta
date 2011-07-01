@@ -467,7 +467,7 @@
       <property name="workflowService" ref="WmWorkflowService" />
       <property name="batchSize" value="5" /><!-- for each document all tasks are considered and all related documents -->
    </bean>
-   
+
    <!-- Changes modified time to make registered but not finished incoming letters visible in ADR. -->
    <bean id="incomingLetterADRVisibilityUpdater" class="ee.webmedia.alfresco.document.bootstrap.IncomingLetterADRVisibilityUpdater" parent="abstractNodeUpdater">
       <property name="moduleId" value="simdhs" />
@@ -530,6 +530,16 @@
          </list>
       </property>
       <property name="disabled" value="true" />
+   </bean>
+
+   <bean id="incomingLetterRecipientsRemoverUpdater" class="ee.webmedia.alfresco.document.bootstrap.IncomingLetterRecipientsRemoverUpdater" parent="abstractNodeUpdater">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="version110To25DocumentUpdater" />
+         </list>
+      </property>
    </bean>
 
    <bean id="documentWorkflowStatusEventListener" class="ee.webmedia.alfresco.document.service.event.DocumentWorkflowStatusEventListener">

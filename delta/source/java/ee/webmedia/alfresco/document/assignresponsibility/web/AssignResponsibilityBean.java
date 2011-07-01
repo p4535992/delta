@@ -37,6 +37,7 @@ import ee.webmedia.alfresco.utils.UserUtil;
 public class AssignResponsibilityBean implements Serializable {
     private static final long serialVersionUID = 1L;
 
+    public static final String BEAN_NAME = "AssignResponsibilityBean";
     private final String OWNER_ID = "{temp}ownerId";
 
     private transient AssignResponsibilityService assignResponsibilityService;
@@ -63,6 +64,10 @@ public class AssignResponsibilityBean implements Serializable {
         props.put(OWNER_ID, userName);
     }
 
+    public void unsetOwner() {
+        node = null;
+    }
+
     public boolean isOwnerUnset() {
         return StringUtils.isBlank((String) getNode().getProperties().get(OWNER_ID));
     }
@@ -78,6 +83,7 @@ public class AssignResponsibilityBean implements Serializable {
         String toOwnerId = (String) getUserService().getUserProperties(fromOwnerId).get(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID);
         getAssignResponsibilityService().changeOwnerOfAllDocumentsAndTasks(fromOwnerId, toOwnerId, false);
         leaving = false;
+        unsetOwner();
         MessageUtil.addInfoMessage("assign_responsibility_revert_success");
     }
 
@@ -136,6 +142,19 @@ public class AssignResponsibilityBean implements Serializable {
         return "";
     }
 
+    public void updateLiabilityGivenToPerson(Node user) {
+        leaving = user.hasAspect(UserModel.Aspects.LEAVING);
+        if (leaving) {
+            String liabilityGivenToPersonId = (String) user.getProperties().get(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID);
+            String fullName = getUserService().getUserFullName(liabilityGivenToPersonId);
+            Map<String, Object> props = getNode().getProperties();
+            props.put(AssignResponsibilityModel.Props.OWNER_NAME.toString(), fullName);
+            props.put(OWNER_ID, liabilityGivenToPersonId);
+        } else {
+            unsetOwner();
+        }
+    }
+
     private Map<QName, Serializable> getPersonProps(String userName) {
         NodeRef person = getPersonService().getPerson(userName);
         Map<QName, Serializable> personProps = getNodeService().getProperties(person);
@@ -159,7 +178,7 @@ public class AssignResponsibilityBean implements Serializable {
     protected AssignResponsibilityService getAssignResponsibilityService() {
         if (assignResponsibilityService == null) {
             assignResponsibilityService = (AssignResponsibilityService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean(AssignResponsibilityService.BEAN_NAME);
+                    .getBean(AssignResponsibilityService.BEAN_NAME);
         }
         return assignResponsibilityService;
     }

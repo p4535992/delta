@@ -18,6 +18,15 @@
       </property>
    </bean>
    
+   <!-- Same translation properties file to be used by I18NUtil by *Service classes -->
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee.webmedia.alfresco.template.web.document-template-webclient</value>
+         </list>
+      </property>
+   </bean>   
+   
    <bean id="documentTemplateWebClientConfigBootstrap" class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init">
       <property name="configs">
          <list>

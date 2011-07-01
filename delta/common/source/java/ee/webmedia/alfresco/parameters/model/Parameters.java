@@ -92,6 +92,7 @@ public enum Parameters {
     SEND_INVOICE_TO_DVK_FOLDER("sendInvoiceToDvkFolder"),
     SEND_PURCHASE_ORDER_INVOICE_TO_DVK_FOLDER("sendPurchaseOrderInvoiceToDvkFolder"),
     REVIEW_WORKFLOW_COST_MANAGER_WORKFLOW_NUMBER("reviewWorkflowCostManagerWorkflowNumber"),
+    INVOICE_ENTRY_DATE_ONLY_IN_CURRENT_YEAR("invoiceEntryDateOnlyInCurrentYear"),
 
     // dimension parameters
     DIMENSION_CODE_INVOICE_FUNDS_CENTERS("dimensionCodeInvoiceFundsCenters"),

@@ -24,7 +24,7 @@ public class ExpensesV2PropertyModifier extends PropertiesModifierCallback {
         BigDecimal sum = new BigDecimal("0.0");
         if (expenses != null) {
             for (Double expense : expenses) {
-                sum = sum.add(new BigDecimal(expense));
+                sum = sum.add(BigDecimal.valueOf(expense));
             }
         }
 

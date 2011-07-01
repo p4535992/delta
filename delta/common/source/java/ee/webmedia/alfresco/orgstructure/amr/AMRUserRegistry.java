@@ -53,7 +53,11 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     @Override
     public Iterator<NodeDescription> getPersonByIdCode(String idCode) {
-        throw new UnsupportedOperationException();
+        Ametnik ametnik = amrService.getAmetnikByIsikukood(idCode);
+        if (ametnik == null) {
+            return Collections.<NodeDescription> emptyList().iterator();
+        }
+        return Collections.singleton(mergePersonDescription(ametnik)).iterator();
     }
 
     @Override

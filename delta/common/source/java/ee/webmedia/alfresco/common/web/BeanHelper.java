@@ -9,18 +9,18 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.cmr.security.AuthorityService;
 import org.alfresco.service.cmr.security.PermissionService;
+import org.alfresco.service.cmr.security.PersonService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.dialog.DialogManager;
-import org.alfresco.web.bean.repository.Repository;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.addressbook.service.AddressbookService;
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.cases.web.CaseDetailsDialog;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.document.assignresponsibility.web.AssignResponsibilityBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.einvoice.web.DimensionDetailsDialog;
 import ee.webmedia.alfresco.document.einvoice.web.DimensionListDialog;
@@ -127,6 +127,10 @@ public class BeanHelper {
         return (DimensionListDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DimensionListDialog.BEAN_NAME);
     }
 
+    public static AssignResponsibilityBean getAssignResponsibilityBean() {
+        return (AssignResponsibilityBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), AssignResponsibilityBean.BEAN_NAME);
+    }
+
     // END: web beans
 
     // START: alfresco services
@@ -135,15 +139,15 @@ public class BeanHelper {
     }
 
     public static AuthorityService getAuthorityService() {
-        return Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getAuthorityService();
+        return (AuthorityService) AppConstants.getBeanFactory().getBean(ServiceRegistry.AUTHORITY_SERVICE.getLocalName());
     }
 
     public static SearchService getSearchService() {
-        return Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getSearchService();
+        return (SearchService) AppConstants.getBeanFactory().getBean(ServiceRegistry.SEARCH_SERVICE.getLocalName());
     }
 
     public static TransactionService getTransactionService() {
-        return Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getTransactionService();
+        return (TransactionService) AppConstants.getBeanFactory().getBean(ServiceRegistry.TRANSACTION_SERVICE.getLocalName());
     }
 
     public static PermissionService getPermissionService() {
@@ -155,27 +159,30 @@ public class BeanHelper {
     }
 
     public static FileFolderService getFileFolderService() {
-        return Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getFileFolderService();
+        return (FileFolderService) AppConstants.getBeanFactory().getBean(ServiceRegistry.FILE_FOLDER_SERVICE.getLocalName());
     }
 
     public static NamespaceService getNamespaceService() {
         return (NamespaceService) AppConstants.getBeanFactory().getBean(ServiceRegistry.NAMESPACE_SERVICE.getLocalName());
     }
 
+    public static PersonService getPersonService() {
+        return (PersonService) AppConstants.getBeanFactory().getBean(ServiceRegistry.PERSON_SERVICE.getLocalName());
+    }
+
     // END: alfresco services
 
     // START: delta services
     public static PrivilegeService getPrivilegeService() {
-        return (PrivilegeService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(PrivilegeService.BEAN_NAME);
+        return (PrivilegeService) AppConstants.getBeanFactory().getBean(PrivilegeService.BEAN_NAME);
     }
 
     public static DocumentSearchService getDocumentSearchService() {
-        return (DocumentSearchService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(
-                DocumentSearchService.BEAN_NAME);
+        return (DocumentSearchService) AppConstants.getBeanFactory().getBean(DocumentSearchService.BEAN_NAME);
     }
 
     public static UserService getUserService() {
-        return (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(UserService.BEAN_NAME);
+        return (UserService) AppConstants.getBeanFactory().getBean(UserService.BEAN_NAME);
     }
 
     public static GeneralService getGeneralService() {
@@ -187,43 +194,43 @@ public class BeanHelper {
     }
 
     public static DocumentService getDocumentService() {
-        return (DocumentService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DocumentService.BEAN_NAME);
+        return (DocumentService) AppConstants.getBeanFactory().getBean(DocumentService.BEAN_NAME);
     }
 
     public static ApplicationService getApplicationService() {
-        return (ApplicationService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(ApplicationService.BEAN_NAME);
+        return (ApplicationService) AppConstants.getBeanFactory().getBean(ApplicationService.BEAN_NAME);
     }
 
     public static WorkflowService getWorkflowService() {
-        return (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(WorkflowService.BEAN_NAME);
+        return (WorkflowService) AppConstants.getBeanFactory().getBean(WorkflowService.BEAN_NAME);
     }
 
     public static FileService getFileService() {
-        return (FileService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(FileService.BEAN_NAME);
+        return (FileService) AppConstants.getBeanFactory().getBean(FileService.BEAN_NAME);
     }
 
     public static EInvoiceService getEInvoiceService() {
-        return (EInvoiceService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(EInvoiceService.BEAN_NAME);
+        return (EInvoiceService) AppConstants.getBeanFactory().getBean(EInvoiceService.BEAN_NAME);
     }
 
     public static ParametersService getParametersService() {
-        return (ParametersService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(ParametersService.BEAN_NAME);
+        return (ParametersService) AppConstants.getBeanFactory().getBean(ParametersService.BEAN_NAME);
     }
 
     public static SendOutService getSendOutService() {
-        return (SendOutService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(SendOutService.BEAN_NAME);
+        return (SendOutService) AppConstants.getBeanFactory().getBean(SendOutService.BEAN_NAME);
     }
 
     public static DvkService getDvkService() {
-        return (DvkService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DvkService.BEAN_NAME);
+        return (DvkService) AppConstants.getBeanFactory().getBean(DvkService.BEAN_NAME);
     }
 
     public static DocumentLogService getDocumentLogService() {
-        return (DocumentLogService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DocumentLogService.BEAN_NAME);
+        return (DocumentLogService) AppConstants.getBeanFactory().getBean(DocumentLogService.BEAN_NAME);
     }
 
     public static DocLockService getDocLockService() {
-        return (DocLockService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DocLockService.BEAN_NAME);
+        return (DocLockService) AppConstants.getBeanFactory().getBean(DocLockService.BEAN_NAME);
     }
 
     public static SubstituteService getSubstituteService() {
@@ -231,11 +238,11 @@ public class BeanHelper {
     }
 
     public static DocumentTemplateService getDocumentTemplateService() {
-        return (DocumentTemplateService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(DocumentTemplateService.BEAN_NAME);
+        return (DocumentTemplateService) AppConstants.getBeanFactory().getBean(DocumentTemplateService.BEAN_NAME);
     }
 
     public static ImapServiceExt getImapServiceExt() {
-        return (ImapServiceExt) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance()).getBean(ImapServiceExt.BEAN_NAME);
+        return (ImapServiceExt) AppConstants.getBeanFactory().getBean(ImapServiceExt.BEAN_NAME);
     }
 
     // END: delta services

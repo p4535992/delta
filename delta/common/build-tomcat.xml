@@ -12,7 +12,7 @@
 
    <target name="tomcat-start" depends="setup-tomcat" description="Start Tomcat server">
       <condition property="tomcat.start.done">
-         <http url="http://${server.host}:${server.domain.port}/" />
+         <http url="https://${server.host}:${server.domain.port}/" />
       </condition>
       <fail if="tomcat.start.done" message="Tomcat server is already started, please stop it first" />
 
@@ -20,13 +20,13 @@
       <exec executable="${dir.tomcat}/tomcat${executable.tomcat.extension}" failonerror="true">
          <arg value="start" />
       </exec>
-      <echo message="Wait for the server start (see ${dir.tomcat}/logs/catalina.out)" />
-      <waitfor maxwait="120" maxwaitunit="second" checkevery="2" checkeveryunit="second" timeoutproperty="wait.timeout">
-         <http url="http://${server.host}:${server.domain.port}/" />
+      <echo message="Wait for the server start (see ${dir.tomcat}/logs/catalina.out) - https://${server.host}:${server.domain.port}/" />
+      <waitfor maxwait="1800" maxwaitunit="second" checkevery="2" checkeveryunit="second" timeoutproperty="wait.timeout">
+         <http url="https://${server.host}:${server.domain.port}/" />
       </waitfor>
       <fail if="wait.timeout"
-            message="Didn't get response from deployment management url: http://${server.host}:${server.domain.port}." />
-      <echo message="Server started - see http://${server.host}:${server.domain.port}" />
+            message="Didn't get response from url: https://${server.host}:${server.domain.port}." />
+      <echo message="Server started - see https://${server.host}:${server.domain.port}" />
    </target>
 
    <target name="tomcat-stop" depends="load-conf" description="Stop tomcat server domain">
@@ -36,7 +36,15 @@
       </exec>
    </target>
 
-   <target name="deploy" depends="compile, tomcat-start" description="Compile sources and start Tomcat server" />
+   <target name="tomcat-deploy" depends="tomcat-stop, war">
+      <move file="${project.build.result.war}" tofile="${dir.tomcat}/webapps/dhs.war" />
+      <delete dir="${dir.tomcat}/webapps/dhs" />
+      <delete dir="${dir.tomcat}/work/Catalina/localhost/dhs" />
+      <delete dir="${dir.tomcat}/temp/Alfresco" />
+      <delete file="${dir.tomcat}/conf/Catalina/localhost/dhs.xml" />
+   </target>
+
+   <target name="deploy" depends="tomcat-deploy, tomcat-start" description="Compile sources and start Tomcat server" />
 
    <target name="redeploy" depends="tomcat-stop, deploy" description="Stop Tomcat, compile sources and start Tomcat" />
 

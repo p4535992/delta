@@ -26,6 +26,7 @@ import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.filter.model.FilterVO;
 import ee.webmedia.alfresco.filter.service.FilterService;
@@ -131,7 +132,8 @@ public abstract class AbstractSearchFilterBlockBean<T extends FilterService> ext
 
     public List<SelectItem> getAllFilters() {
         // Must be called after component is added to component tree
-        selectedFilterMenu.setOnchange(Utils.generateFormSubmit(FacesContext.getCurrentInstance(), selectedFilterMenu));
+        selectedFilterMenu.setStyleClass(GeneralSelectorGenerator.ONCHANGE_MARKER_CLASS + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
+                + Utils.generateFormSubmit(FacesContext.getCurrentInstance(), selectedFilterMenu));
         if (allFilters == null) {
             loadAllFilters();
         }

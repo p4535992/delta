@@ -13,6 +13,7 @@ import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
  * Number converter that allows both dot and comma as decimal separator
  * and allows whitespaces (including non-breaking space) between digits (i.e. grouping is supported).
  * In output string replaces non-breaking spaces with regular spaces to avoid dealing with non-breaking spaces in javascript.
+ * Round both input and output to two decimal numbers (i.e. saving more than two decimal places is not allowed)
  * 
  * @author Riina Tens
  */
@@ -26,7 +27,10 @@ public class DoubleCurrencyConverter_ET_EN extends DoubleConverter {
             modifiedValue = StringUtils.deleteWhitespace(modifiedValue);
             modifiedValue = replaceNonBreakingSpace(modifiedValue, false);
         }
-        return super.getAsObject(facesContext, uiComponent, modifiedValue);
+        // assume that super.getAsObject performs no rounding
+        Double exactDouble = (Double) super.getAsObject(facesContext, uiComponent, modifiedValue);
+
+        return exactDouble != null ? EInvoiceUtil.roundDouble2Decimals(exactDouble) : null;
     }
 
     private String replaceNonBreakingSpace(String modifiedValue, boolean addSpace) {
@@ -57,7 +61,7 @@ public class DoubleCurrencyConverter_ET_EN extends DoubleConverter {
         }
         try {
             double number = ((Number) value).doubleValue();
-            number = Math.round(number * 100) / 100.0;
+            number = EInvoiceUtil.roundDouble2Decimals(number);
             String numberStr = EInvoiceUtil.getInvoiceNumberFormat().format(number);
             return replaceNonBreakingSpace(numberStr, true);
         } catch (Exception e) {

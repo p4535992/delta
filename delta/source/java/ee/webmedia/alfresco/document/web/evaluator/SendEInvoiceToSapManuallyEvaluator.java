@@ -9,6 +9,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.sendout.model.SendInfo;
@@ -41,7 +42,8 @@ public class SendEInvoiceToSapManuallyEvaluator extends BaseActionEvaluator {
             return false;
         }
         for (SendInfo sendInfo : sendInfos) {
-            if (!SendStatus.CANCELLED.toString().equalsIgnoreCase(sendInfo.getSendStatus()) && dvkCode.equalsIgnoreCase(sendInfo.getRecipient())) {
+            if (!SendStatus.CANCELLED.toString().equalsIgnoreCase(sendInfo.getSendStatus())
+                    && dvkCode.equalsIgnoreCase((String) sendInfo.getNode().getProperties().get(DocumentCommonModel.Props.SEND_INFO_RECIPIENT_REG_NR))) {
                 return true;
             }
         }

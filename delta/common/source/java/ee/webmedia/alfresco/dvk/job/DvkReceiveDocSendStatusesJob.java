@@ -5,10 +5,10 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.StatefulJob;
 
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.dvk.service.DvkServiceImpl;
@@ -20,7 +20,7 @@ import ee.webmedia.alfresco.dvk.service.DvkServiceImpl;
  * 
  * @author Ats Uiboupin
  */
-public class DvkReceiveDocSendStatusesJob implements Job {
+public class DvkReceiveDocSendStatusesJob implements StatefulJob {
     private static Log log = LogFactory.getLog(DvkReceiveDocSendStatusesJob.class);
 
     @Override

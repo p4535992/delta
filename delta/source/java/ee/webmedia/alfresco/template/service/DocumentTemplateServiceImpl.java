@@ -13,7 +13,6 @@ import java.util.TimeZone;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.faces.context.FacesContext;
 import javax.servlet.ServletContext;
 
 import org.alfresco.i18n.I18NUtil;
@@ -53,7 +52,6 @@ import ee.webmedia.alfresco.template.model.DocumentTemplate;
 import ee.webmedia.alfresco.template.model.DocumentTemplateModel;
 import ee.webmedia.alfresco.utils.FilenameUtil;
 import ee.webmedia.alfresco.utils.ISOLatin1Util;
-import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
@@ -504,7 +502,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         List<Date> startDates = (List<Date>) properties.get(DocumentSpecificModel.Props.SUBSTITUTION_BEGIN_DATE);
         @SuppressWarnings("unchecked")
         List<Date> endDates = (List<Date>) properties.get(DocumentSpecificModel.Props.SUBSTITUTION_END_DATE);
-        String until = MessageUtil.getMessage(FacesContext.getCurrentInstance(), "template_until"); // FIXME - peaksin kasutama I18NUtilit
+        String until = I18NUtil.getMessage("template_until");
 
         int size = 0;
         if (names != null) {

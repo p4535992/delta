@@ -6,6 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
+import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -16,6 +18,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.filter.model.FilterVO;
 import ee.webmedia.alfresco.user.service.UserService;
 
@@ -29,6 +32,7 @@ public abstract class AbstractFilterServiceImpl implements FilterService {
     protected GeneralService generalService;
     protected NodeService nodeService;
     protected UserService userService;
+    protected DictionaryService dictionaryService;
 
     @Override
     public Node createOrSaveFilter(Node filter, boolean isPrivate) {
@@ -60,7 +64,26 @@ public abstract class AbstractFilterServiceImpl implements FilterService {
 
     @Override
     public Node getFilter(NodeRef filter) {
-        return generalService.fetchNode(filter);
+        Node filterNode = generalService.fetchNode(filter);
+        initFilterProperties(filterNode.getProperties());
+        return filterNode;
+    }
+
+    // add empty list as initial value to properties
+    // that may potentially be connected to multiselect controls
+    @SuppressWarnings("rawtypes")
+    private void initFilterProperties(Map<String, Object> properties) {
+        Map<QName, PropertyDefinition> propDefs = BeanHelper.getDictionaryService().getPropertyDefs(getFilterNodeType());
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
+            Object value = entry.getValue();
+            if (value == null) {
+                PropertyDefinition propDef = propDefs.get(QName.createQName(entry.getKey()));
+                if (propDef.isMultiValued()) {
+                    entry.setValue(new ArrayList());
+                }
+            }
+
+        }
     }
 
     @Override
@@ -141,6 +164,10 @@ public abstract class AbstractFilterServiceImpl implements FilterService {
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setDictionaryService(DictionaryService dictionaryService) {
+        this.dictionaryService = dictionaryService;
     }
     // END: getters / setters
 

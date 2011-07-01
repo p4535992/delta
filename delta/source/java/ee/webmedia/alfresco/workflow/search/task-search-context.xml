@@ -30,6 +30,7 @@
       <property name="generalService" ref="GeneralService" />
       <property name="nodeService" ref="NodeService" />
       <property name="userService" ref="UserService" />
+      <property name="dictionaryService" ref="DictionaryService" />
    </bean>
 
    <bean id="TaskSearchFilterService" class="org.springframework.aop.framework.ProxyFactoryBean">

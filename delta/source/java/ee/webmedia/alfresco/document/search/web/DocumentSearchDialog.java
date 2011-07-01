@@ -15,8 +15,8 @@ import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.repository.Node;
@@ -27,6 +27,7 @@ import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
 import ee.webmedia.alfresco.cases.model.Case;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.search.model.DocumentSearchModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchFilterService;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -142,19 +143,13 @@ public class DocumentSearchDialog extends AbstractSearchFilterBlockBean<Document
         Node node = new TransientNode(DocumentSearchModel.Types.FILTER, null, null);
 
         // UISelectMany components don't want null as initial value
-        node.getProperties().put(DocumentSearchModel.Props.STORE.toString(), new ArrayList<StoreRef>());
-        node.getProperties().put(DocumentSearchModel.Props.DOCUMENT_TYPE.toString(), new ArrayList<QName>());
-        node.getProperties().put(DocumentSearchModel.Props.DOC_STATUS.toString(), new ArrayList<String>());
-        node.getProperties().put(DocumentSearchModel.Props.ACCESS_RESTRICTION.toString(), new ArrayList<String>());
-        node.getProperties().put(DocumentSearchModel.Props.STORAGE_TYPE.toString(), new ArrayList<String>());
-        node.getProperties().put(DocumentSearchModel.Props.SEND_MODE.toString(), new ArrayList<String>());
-        node.getProperties().put(DocumentSearchModel.Props.COST_MANAGER.toString(), new ArrayList<String>());
-        node.getProperties().put(DocumentSearchModel.Props.ERRAND_COUNTY.toString(), new ArrayList<String>());
-        node.getProperties().put(DocumentSearchModel.Props.PROCUREMENT_TYPE.toString(), new ArrayList<String>());
-        node.getProperties().put(DocumentSearchModel.Props.FUND.toString(), new ArrayList<String>());
-        node.getProperties().put(DocumentSearchModel.Props.FUNDS_CENTER.toString(), new ArrayList<String>());
-        node.getProperties().put(DocumentSearchModel.Props.EA_COMMITMENT_ITEM.toString(), new ArrayList<String>());
-
+        Map<QName, PropertyDefinition> propDefs = BeanHelper.getDictionaryService().getPropertyDefs(DocumentSearchModel.Types.FILTER);
+        for (Map.Entry<QName, PropertyDefinition> entry : propDefs.entrySet()) {
+            PropertyDefinition propDef = entry.getValue();
+            if (propDef.isMultiValued()) {
+                node.getProperties().put(entry.getKey().toString(), new ArrayList<Object>());
+            }
+        }
         return node;
     }
 

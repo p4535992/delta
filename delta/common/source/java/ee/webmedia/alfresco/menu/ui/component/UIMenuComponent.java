@@ -67,6 +67,8 @@ public class UIMenuComponent extends UIComponentBase {
                     .equals(MenuBean.UPDATE_TREE_ACTTIONLISTENER)) && !createNewDocument) || forceReset) {
                 Utils.setRequestValidationDisabled(context); // Disable validation if user is navigating away
                 MenuBean.clearViewStack(menuBean.getActiveItemId(), clientId);
+            } else if (createNewDocument) {
+                Utils.setRequestValidationDisabled(context); // Disable validation if user is navigating away
             }
 
         }

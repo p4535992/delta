@@ -71,7 +71,7 @@ public class UserDetailsDialog extends BaseDialogBean {
 
     private void setNotificationSender() {
         SubstituteListDialog.NotificationSender notificationSender =
-            (SubstituteListDialog.NotificationSender) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), NOTIFICATION_SENDER_LABEL);
+                (SubstituteListDialog.NotificationSender) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), NOTIFICATION_SENDER_LABEL);
         if (notificationSender != null) {
             substituteListDialog.setNotificationSender(notificationSender);
         }
@@ -130,6 +130,7 @@ public class UserDetailsDialog extends BaseDialogBean {
         List<Node> users = new ArrayList<Node>(1);
         users.add(node);
         fillUserProps(users);
+        BeanHelper.getAssignResponsibilityBean().updateLiabilityGivenToPerson(node);
     }
 
     private void fillUserProps(List<Node> users) {
@@ -168,7 +169,9 @@ public class UserDetailsDialog extends BaseDialogBean {
      * UsersDialog.getPerson().
      */
     public void setupUser(ActionEvent event) {
-        setupUser(ActionUtil.getParam(event, "id"));
+        String userName = ActionUtil.getParam(event, "id");
+        setupUser(userName);
+        BeanHelper.getAssignResponsibilityBean().updateLiabilityGivenToPerson(new Node(BeanHelper.getPersonService().getPerson(userName)));
     }
 
     /**
@@ -258,7 +261,7 @@ public class UserDetailsDialog extends BaseDialogBean {
     protected UserService getUserService() {
         if (userService == null) {
             userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean(UserService.BEAN_NAME);
+                    .getBean(UserService.BEAN_NAME);
         }
         return userService;
     }
@@ -270,7 +273,7 @@ public class UserDetailsDialog extends BaseDialogBean {
     protected OrganizationStructureService getOrganizationStructureService() {
         if (organizationStructureService == null) {
             organizationStructureService = (OrganizationStructureService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean(OrganizationStructureService.BEAN_NAME);
+                    .getBean(OrganizationStructureService.BEAN_NAME);
         }
         return organizationStructureService;
     }

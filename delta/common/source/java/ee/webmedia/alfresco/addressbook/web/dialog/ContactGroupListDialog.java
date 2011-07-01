@@ -29,6 +29,15 @@ public class ContactGroupListDialog extends ContactGroupBaseDialog {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
+        initContactGroups();
+    }
+
+    @Override
+    public void restored() {
+        initContactGroups();
+    }
+
+    private void initContactGroups() {
         contactGroups = getAddressbookService().listContactGroups();
         for (Node contactGroup : contactGroups) {
             originalTaskCapableValues.put(contactGroup.getNodeRef(), Boolean.TRUE.equals(contactGroup.getProperties().get(AddressbookModel.Props.TASK_CAPABLE)));

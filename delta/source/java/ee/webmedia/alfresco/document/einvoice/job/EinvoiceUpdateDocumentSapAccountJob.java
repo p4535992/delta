@@ -5,14 +5,14 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.StatefulJob;
 
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 
-public class EinvoiceUpdateDocumentSapAccountJob implements Job {
+public class EinvoiceUpdateDocumentSapAccountJob implements StatefulJob {
     private static final Log LOG = LogFactory.getLog(EinvoiceUpdateDocumentSapAccountJob.class);
 
     @Override

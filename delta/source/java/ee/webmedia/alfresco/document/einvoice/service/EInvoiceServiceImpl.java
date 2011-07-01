@@ -11,7 +11,6 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.MathContext;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -207,7 +206,9 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         props.put(DocumentSpecificModel.Props.PAYMENT_TERM, invoiceInformation.getPaymentTerm());
         List<InvoiceSumGroup> invoiceSumGroups = invoice.getInvoiceSumGroup();
         InvoiceSumGroup invoivceSumGroup = invoiceSumGroups.get(0);
-        props.put(DocumentSpecificModel.Props.INVOICE_SUM, invoivceSumGroup.getInvoiceSum());
+        props.put(DocumentSpecificModel.Props.INVOICE_SUM,
+                invoivceSumGroup.getInvoiceSum() != null ? EInvoiceUtil.roundDouble2Decimals(invoivceSumGroup.getInvoiceSum().doubleValue())
+                        : null);
         props.put(DocumentSpecificModel.Props.VAT, invoivceSumGroup.getTotalVATSum());
         props.put(DocumentSpecificModel.Props.TOTAL_SUM, invoivceSumGroup.getTotalSum());
         props.put(DocumentSpecificModel.Props.CURRENCY, invoivceSumGroup.getCurrency());
@@ -322,10 +323,13 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         RetryingTransactionHelper retryingTransactionHelper = transactionService.getRetryingTransactionHelper();
         Iterator<NodeRef> i = getNodeRefIterator(dimensionValues);
         SetActiveOrInactiveDimensionCallback setActiveOrInactiveDimensionCallback = new SetActiveOrInactiveDimensionCallback(i, active);
-        while (i.hasNext()) {
-            retryingTransactionHelper.doInTransaction(setActiveOrInactiveDimensionCallback, false, true);
+        try {
+            while (i.hasNext()) {
+                retryingTransactionHelper.doInTransaction(setActiveOrInactiveDimensionCallback, false, true);
+            }
+        } finally {
+            emptyDimensionValueChache();
         }
-        emptyDimensionValueChache();
     }
 
     @Override
@@ -616,31 +620,34 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             @SuppressWarnings("unchecked")
             Map<Parameters, Dimensions> dimensionParameters = EInvoiceUtil.DIMENSION_PARAMETERS;
             Map<String, Set<Parameters>> dimParameterValues = parametersService.getSwappedStringParameters(new ArrayList<Parameters>(dimensionParameters.keySet()));
-            for (Dimensioon xmlDimension : xmlDimensionsList.getDimensioon()) {
-                Set<Parameters> parameters = dimParameterValues.get(xmlDimension.getId());
-                if (parameters != null) {
-                    for (Parameters parameter : parameters) {
-                        @SuppressWarnings("unchecked")
-                        Collection<XmlDimensionListsValueWrapper> dimensionListsValueWrappers = CollectionUtils.collect(xmlDimension.getVaartus(), new Transformer() {
+            try {
+                for (Dimensioon xmlDimension : xmlDimensionsList.getDimensioon()) {
+                    Set<Parameters> parameters = dimParameterValues.get(xmlDimension.getId());
+                    if (parameters != null) {
+                        for (Parameters parameter : parameters) {
+                            @SuppressWarnings("unchecked")
+                            Collection<XmlDimensionListsValueWrapper> dimensionListsValueWrappers = CollectionUtils.collect(xmlDimension.getVaartus(), new Transformer() {
 
-                            @Override
-                            public Object transform(Object paramObject) {
-                                Vaartus value = (Vaartus) paramObject;
-                                return new XmlDimensionValueWrapper(value);
-                            }
+                                @Override
+                                public Object transform(Object paramObject) {
+                                    Vaartus value = (Vaartus) paramObject;
+                                    return new XmlDimensionValueWrapper(value);
+                                }
 
-                        });
-                        result.add(updateDimensionValuesFromXml(dimensionParameters.get(parameter), dimensionListsValueWrappers, xmlDimension.getId()));
+                            });
+                            result.add(updateDimensionValuesFromXml(dimensionParameters.get(parameter), dimensionListsValueWrappers, xmlDimension.getId()));
+                        }
                     }
                 }
+                // add dimension root nodeRef to indicate successful import in case no dimensions were actually modified
+                // (may theoretically occur if xml contains no dimensions that we want to import)
+                if (result.size() == 0) {
+                    result.add(generalService.getNodeRef(dimensionsPath));
+                }
+            } finally {
+                // TODO: optimize - could empty only cache for updated dimensions
+                emptyDimensionValueChache();
             }
-            // add dimension root nodeRef to indicate successful import in case no dimensions were actually modified
-            // (may theoretically occur if xml contains no dimensions that we want to import)
-            if (result.size() == 0) {
-                result.add(generalService.getNodeRef(dimensionsPath));
-            }
-            // TODO: optimize - could empty only cache for updated dimensions
-            emptyDimensionValueChache();
         }
         return result;
     }
@@ -660,9 +667,12 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                 }
 
             });
-            result.add(updateDimensionValuesFromXml(EInvoiceUtil.ACCOUNT_DIMENSION, dimensionListsValueWrappers, EInvoiceUtil.ACCOUNT_DIMENSION.getDimensionName()));
-            // TODO: optimize - could empty only cache for account list dimension
-            emptyDimensionValueChache();
+            try {
+                result.add(updateDimensionValuesFromXml(EInvoiceUtil.ACCOUNT_DIMENSION, dimensionListsValueWrappers, EInvoiceUtil.ACCOUNT_DIMENSION.getDimensionName()));
+            } finally {
+                // TODO: optimize - could empty only cache for account list dimension
+                emptyDimensionValueChache();
+            }
         }
         return result;
     }
@@ -682,9 +692,12 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                 }
 
             });
-            result.add(updateDimensionValuesFromXml(EInvoiceUtil.VAT_CODE_DIMENSION, dimensionListsValueWrappers, EInvoiceUtil.VAT_CODE_DIMENSION.getDimensionName()));
-            // TODO: optimize - could empty only cache for vat code list dimension
-            emptyDimensionValueChache();
+            try {
+                result.add(updateDimensionValuesFromXml(EInvoiceUtil.VAT_CODE_DIMENSION, dimensionListsValueWrappers, EInvoiceUtil.VAT_CODE_DIMENSION.getDimensionName()));
+                // TODO: optimize - could empty only cache for vat code list dimension
+            } finally {
+                emptyDimensionValueChache();
+            }
         }
         return result;
     }
@@ -997,10 +1010,9 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         arveInfo.setViitenumber((String) props.get(DocumentSpecificModel.Props.PAYMENT_REFERENCE_NUMBER));
         arveInfo.setTellimuseNumber((String) props.get(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER));
 
-        MathContext mc = new MathContext(4);
-        arveInfo.setArveSumma(new BigDecimal((Double) props.get(DocumentSpecificModel.Props.TOTAL_SUM)).round(mc));
+        arveInfo.setArveSumma(EInvoiceUtil.roundDouble4Decimals(((Double) props.get(DocumentSpecificModel.Props.TOTAL_SUM))));
         Double vat = (Double) props.get(DocumentSpecificModel.Props.VAT);
-        arveInfo.setKaibemaksKokku(vat == null ? BigDecimal.ZERO : new BigDecimal(vat).round(mc));
+        arveInfo.setKaibemaksKokku(vat == null ? BigDecimal.ZERO : EInvoiceUtil.roundDouble4Decimals(vat));
         arveInfo.setValuuta((String) props.get(DocumentSpecificModel.Props.CURRENCY));
         arveInfo.setSisemineId(documentTemplateService.getDocumentUrl(node.getNodeRef()));
 
@@ -1035,11 +1047,11 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             kanne.setKaibemaksuKood(transaction.getInvoiceTaxCode());
 
             // it is assumed that all numeric values are present
-            BigDecimal transSumWithoutVat = new BigDecimal(transaction.getSumWithoutVat()).round(mc);
-            BigDecimal vatPercent = new BigDecimal(transaction.getInvoiceTaxPercent());
-            BigDecimal vatSum = transSumWithoutVat.multiply(vatPercent).divide(new BigDecimal(100));
-            kanne.setSumma(transSumWithoutVat.add(vatSum).round(mc));
-            kanne.setNetoSumma(new BigDecimal(transaction.getSumWithoutVat()).round(mc));
+            BigDecimal transSumWithoutVat = EInvoiceUtil.roundDouble4Decimals(transaction.getSumWithoutVat());
+            BigDecimal vatPercent = BigDecimal.valueOf(transaction.getInvoiceTaxPercent());
+            BigDecimal vatSum = transSumWithoutVat.multiply(vatPercent).divide(BigDecimal.valueOf(100));
+            kanne.setSumma(EInvoiceUtil.roundDouble4Decimals(transSumWithoutVat.add(vatSum).doubleValue()));
+            kanne.setNetoSumma(EInvoiceUtil.roundDouble4Decimals(transaction.getSumWithoutVat()));
             kanne.setKandeKommentaar(transaction.getEntryContent());
             List<ee.webmedia.alfresco.document.einvoice.account.generated.Dimensioon> dimensioonList = kanne.getDimensioon();
             createXmlDimension(Dimensions.INVOICE_FUNDS_CENTERS, transaction.getFundsCenter(), dimensioonList);
@@ -1184,12 +1196,15 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         public Iterator<DimensionValue> execute() throws Throwable {
             int transactionCommitCounter = 0;
             for (; iterator.hasNext() && transactionCommitCounter < TRANSACTION_SIZE;) {
-                transactionCommitCounter = processNodeRef(iterator.next(), transactionCommitCounter);
+                transactionCommitCounter += processNodeRef(iterator.next());
             }
             return null;
         }
 
-        protected abstract int processNodeRef(NodeRef nodeRef, int transactionCommitCounter);
+        /**
+         * Process node ref and return number of nodes changed
+         */
+        protected abstract int processNodeRef(NodeRef nodeRef);
 
     }
 
@@ -1202,12 +1217,12 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         }
 
         @Override
-        protected int processNodeRef(NodeRef nodeRef, int transactionCommitCounter) {
+        protected int processNodeRef(NodeRef nodeRef) {
             if (!updatedDimensionValues.contains(nodeRef)) {
                 nodeService.deleteNode(nodeRef);
-                return transactionCommitCounter + 1;
+                return 1;
             }
-            return transactionCommitCounter;
+            return 0;
         }
     }
 
@@ -1220,9 +1235,9 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         }
 
         @Override
-        protected int processNodeRef(NodeRef nodeRef, int transactionCommitCounter) {
+        protected int processNodeRef(NodeRef nodeRef) {
             nodeService.setProperty(nodeRef, DimensionModel.Props.ACTIVE, active);
-            return transactionCommitCounter + 1;
+            return 1;
         }
     }
 

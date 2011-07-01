@@ -4,10 +4,10 @@ import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.Job;
 import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.StatefulJob;
 
 import ee.webmedia.alfresco.archivals.service.ArchivalsService;
 
@@ -18,7 +18,7 @@ import ee.webmedia.alfresco.archivals.service.ArchivalsService;
  * 
  * @author Romet Aidla
  */
-public class DestroyVolumesJob implements Job {
+public class DestroyVolumesJob implements StatefulJob {
     private static Log log = LogFactory.getLog(DestroyVolumesJob.class);
 
     @Override

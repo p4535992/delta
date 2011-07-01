@@ -760,7 +760,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             if (parties != null && parties.size() >= 0) {
                 for (int i = 0; i < parties.size(); i++) {
                     Node partyNode = parties.get(i);
-                    propsChanged |= saveRemovedChildAssocsAndReturnCount(docNode) > 0;
+                    propsChanged |= saveRemovedChildAssocsAndReturnCount(partyNode) > 0;
                     Node newPartyNode = saveChildNode(docNode, partyNode, partyAssoc, parties, i);
                     if (newPartyNode == null) {
                         propsChanged |= propertyChangesMonitorHelper.setPropertiesIgnoringSystemAndReturnIfChanged(partyNode.getNodeRef(), partyNode
@@ -1174,7 +1174,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                     , DocumentSpecificModel.Props.COMPLIENCE_NOTATION.toString()
                     , DocumentSpecificModel.Props.COMPLIENCE_DATE.toString()
                     , DocumentCommonModel.Props.COMMENT.toString()
-            ));
+                    ));
             userService.setOwnerPropsFromUser(followUpProps);
             if (DocumentSubtypeModel.Types.INCOMING_LETTER.equals(followupType)) {
                 propsToCopy.add(DocumentSpecificModel.Props.TRANSMITTAL_MODE.toString());
@@ -1187,12 +1187,12 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             propsToCopy.addAll(Arrays.asList(
                     DocumentSpecificModel.Props.SENDER_REG_NUMBER.toString()
                     , DocumentSpecificModel.Props.SENDER_REG_DATE.toString()
-                    , DocumentCommonModel.Props.RECIPIENT_NAME.toString()
-                    , DocumentCommonModel.Props.RECIPIENT_EMAIL.toString()
-                    , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.toString()
-                    , DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.toString()
                     ));
             if (DocumentSubtypeModel.Types.OUTGOING_LETTER.equals(followupType)) { // only OUTGOING_LETTER not OUTGOING_LETTER_*
+                propsToCopy.add(DocumentCommonModel.Props.RECIPIENT_NAME.toString());
+                propsToCopy.add(DocumentCommonModel.Props.RECIPIENT_EMAIL.toString());
+                propsToCopy.add(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_NAME.toString());
+                propsToCopy.add(DocumentCommonModel.Props.ADDITIONAL_RECIPIENT_EMAIL.toString());
                 propsToCopy.add(DocumentCommonModel.Props.SIGNER_NAME.toString());
                 propsToCopy.add(DocumentCommonModel.Props.SIGNER_JOB_TITLE.toString());
             }
@@ -2935,7 +2935,9 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
         { // add all permissions to the user of document that is owner of other document
             String otherDocOwner = (String) nodeService.getProperty(fromRef, DocumentCommonModel.Props.OWNER_ID);
-            privilegeService.addPrivilege(toRef, toNodeUserGroupMapping, null, otherDocOwner, Privileges.VIEW_DOCUMENT_META_DATA);
+            if (StringUtils.isNotBlank(otherDocOwner)) {
+                privilegeService.addPrivilege(toRef, toNodeUserGroupMapping, null, otherDocOwner, Privileges.VIEW_DOCUMENT_META_DATA);
+            }
         }
         PrivilegeMappings privMappingsFrom = privilegeService.getPrivilegeMappings(fromRef);
         Collection<UserPrivileges> fromNodeUserPrivileges = privMappingsFrom.getPrivilegesByUsername().values();
