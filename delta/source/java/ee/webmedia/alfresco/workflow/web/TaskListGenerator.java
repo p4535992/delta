@@ -140,6 +140,14 @@ public class TaskListGenerator extends BaseComponentGenerator {
                 ownerNameHeading.setValue(MessageUtil.getMessage("workflow_task_owner_name"));
                 taskGridChildren.add(ownerNameHeading);
 
+                if (workflow.isType(WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW)) {
+                    taskGrid.setColumns(5);
+                    UIOutput sendStatusHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+                    putAttribute(sendStatusHeading, "styleClass", "th");
+                    sendStatusHeading.setValue(MessageUtil.getMessage("task_property_resolution_assignmentTask"));
+                    taskGridChildren.add(sendStatusHeading);
+                }
+
                 UIOutput dueDateHeading = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
                 putAttribute(dueDateHeading, "styleClass", "th");
                 dueDateHeading.setValue(MessageUtil.getMessage("task_property_due_date"));
@@ -204,6 +212,13 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     taskGridChildren.add(nameInput);
 
                     if (dialogManager.getBean() instanceof CompoundWorkflowDialog) {
+                        if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {
+                            UIOutput resolutionInput = (UIOutput) application.createComponent(UIOutput.COMPONENT_TYPE);
+                            resolutionInput.setValue(task.getResolutionOfTask() == null ? "" : task.getResolutionOfTask());
+                            putAttribute(resolutionInput, "styleClass", "condence50");
+                            taskGridChildren.add(resolutionInput);
+                        }
+
                         final HtmlInputText dueDateInput = (HtmlInputText) application.createComponent(HtmlInputText.COMPONENT_TYPE);
                         taskGridChildren.add(dueDateInput);
                         dueDateInput.setId("task-duedate-" + listId + "-" + counter);

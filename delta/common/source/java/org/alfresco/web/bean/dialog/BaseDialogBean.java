@@ -144,13 +144,8 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
          {
             public String execute() throws Throwable
             {
-                try {
-                    // call the actual implementation
-                    return finishImpl(context, defaultOutcome);
-                } catch (UnableToPerformException e) {
-                    MessageUtil.addStatusMessage(e);
-                    return null;
-                }
+                // call the actual implementation
+                return finishImpl(context, defaultOutcome);
             }
          };
          try
@@ -166,17 +161,13 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
             context.getExternalContext().getSessionMap().remove(
                     AlfrescoNavigationHandler.EXTERNAL_CONTAINER_SESSION);
             clearCustomAttributes();
+         } catch (UnableToPerformException e) {
+             MessageUtil.addStatusMessage(e);
+             outcome = handleException(e);
          }
          catch (Throwable e)
          {
-            // reset the flag so we can re-attempt the operation
-            isFinished = false;
-            outcome = getErrorOutcome(e);
-            if (outcome == null && e instanceof ReportedException == false)
-            {
-                Utils.addErrorMessage(formatErrorMessage(e), e);
-            }
-            ReportedException.throwIfNecessary(e);
+            outcome = handleException(e);
          }
       }
       else
@@ -186,6 +177,19 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       
       return outcome;
    }
+
+    private String handleException(Throwable e) {
+        String outcome;
+        // reset the flag so we can re-attempt the operation
+        isFinished = false;
+        outcome = getErrorOutcome(e);
+        if (outcome == null && e instanceof ReportedException == false && !(e instanceof UnableToPerformException))
+        {
+            Utils.addErrorMessage(formatErrorMessage(e), e);
+        }
+        ReportedException.throwIfNecessary(e);
+        return outcome;
+    }
    
    public boolean isFinished()
    {

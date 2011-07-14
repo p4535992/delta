@@ -777,7 +777,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             cb.setDisabled(true);
         }
         UIComponentTagUtils.setValueBinding(context, cb, "title", "#{r.dynamicPrivReasons['" + privilege + "']}");
-        UIComponentTagUtils.setValueBinding(context, cb, "styleClass", "userId_#{r.userName} tooltip permission_" + privilege);
+        UIComponentTagUtils.setValueBinding(context, cb, "styleClass", "userId_#{r.userName} permission_" + privilege + " tooltip");
 
         addChildren(column, cb);
         return column;

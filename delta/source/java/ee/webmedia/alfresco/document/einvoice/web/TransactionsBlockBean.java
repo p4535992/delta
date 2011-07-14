@@ -15,7 +15,6 @@ import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.el.MethodBinding;
 import javax.faces.event.ActionEvent;
-import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.model.ContentModel;
@@ -54,7 +53,7 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
     }
 
     public void restore(Node document) {
-        parentNode = document;
+        setParentNode(document);
         super.restore();
     }
 
@@ -82,24 +81,11 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
         return transRowsMainGrid;
     }
 
-    /**
-     * jsp listener
-     */
-    public void templateSelected(ValueChangeEvent event) {
-        String templateName = (String) event.getNewValue();
-        if (StringUtils.isNotBlank(templateName)) {
-            List<Transaction> templateTransactions = BeanHelper.getEInvoiceService().getTemplateTransactions(templateName);
-            transactions.clear();
-            transactions.addAll(templateTransactions);
-        }
-        addInvoiceMessages();
-    }
-
     public List<SelectItem> getTransactionTemplates(FacesContext context, UIInput selectComponent) {
-        transactionTemplates = BeanHelper.getEInvoiceService().getActiveTransactionTemplates();
+        setTransactionTemplates(BeanHelper.getEInvoiceService().getActiveTransactionTemplates());
         List<SelectItem> selectItems = new ArrayList<SelectItem>();
         selectItems.add(new SelectItem("", MessageUtil.getMessage("transactions_useTemplate")));
-        for (TransactionTemplate transactionTemplate : transactionTemplates) {
+        for (TransactionTemplate transactionTemplate : getTransactionTemplates()) {
             selectItems.add(new SelectItem(transactionTemplate.getName(), transactionTemplate.getName()));
         }
         return selectItems;
@@ -127,7 +113,7 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
         } else {
             BeanHelper.getEInvoiceService().removeTransactions(template.getNode().getNodeRef());
         }
-        BeanHelper.getEInvoiceService().copyTransactions(template, transactions);
+        BeanHelper.getEInvoiceService().copyTransactions(template, getTransactions());
     }
 
     /**
@@ -141,7 +127,8 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
         }
         TransactionTemplate template = BeanHelper.getEInvoiceService().getTransactionTemplateByName(templateName);
         if (template != null) {
-            removedTransactions.addAll(transactions);
+            List<Transaction> transactions = getTransactions();
+            getRemovedTransactions().addAll(transactions);
             transactions.clear();
             List<Transaction> templateTransactions = BeanHelper.getEInvoiceService().getInvoiceTransactions(template.getNode().getNodeRef());
             for (Transaction transaction : templateTransactions) {
@@ -155,8 +142,8 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
 
     @SuppressWarnings("unchecked")
     private void addFooterSums(final HtmlPanelGrid transRowsMainGrid) {
-        double sumWithoutVatValue = EInvoiceUtil.getSumWithoutVat(transactions);
-        double vatSumValue = EInvoiceUtil.getVatSum(transactions, originalProperties, BeanHelper.getEInvoiceService().getVatCodeDimensionValues());
+        double sumWithoutVatValue = EInvoiceUtil.getSumWithoutVat(getTransactions());
+        double vatSumValue = EInvoiceUtil.getVatSum(getTransactions(), getOriginalProperties(), BeanHelper.getEInvoiceService().getVatCodeDimensionValues());
 
         List<Pair<String, Pair<String, String>>> footerSums = new ArrayList<Pair<String, Pair<String, String>>>();
         transRowsMainGrid.getAttributes().put(HtmlGridCustomChildAttrRenderer.FOOTER_SUMS_ATTR, footerSums);
@@ -165,7 +152,7 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
                 null)));
         footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_total_vatSum"), new Pair<String, String>(EInvoiceUtil.getInvoiceNumberFormat()
                 .format(vatSumValue), null)));
-        Double totalSum = (Double) parentNode.getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM);
+        Double totalSum = (Double) getParentNode().getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM);
         double transTotalSum = sumWithoutVatValue + vatSumValue;
         String color = totalSum != null && Math.abs(totalSum - transTotalSum) > 0.001 ? "red" : null;
         footerSums.add(new Pair<String, Pair<String, String>>(MessageUtil.getMessage("transactions_sumWithVat"), new Pair<String, String>(EInvoiceUtil.getInvoiceNumberFormat()
@@ -210,9 +197,8 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
 
     public boolean checkTotalSum() {
         List<String> errorMessageKeys = new ArrayList<String>();
-        boolean result = EInvoiceUtil.checkTotalSum(errorMessageKeys, "document_sendToSap_", (Double) parentNode.getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM),
-                transactions,
-                originalProperties);
+        boolean result = EInvoiceUtil.checkTotalSum(errorMessageKeys, "document_sendToSap_", (Double) getParentNode().getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM),
+                getTransactions(), getOriginalProperties());
         for (String msgKey : errorMessageKeys) {
             MessageUtil.addErrorMessage(msgKey);
         }

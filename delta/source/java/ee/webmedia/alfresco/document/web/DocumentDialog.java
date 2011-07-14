@@ -378,7 +378,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         Pair<File, Integer> transFileAndCount = null;
         Pair<File, Integer> einvoiceFileAndCount = null;
         boolean sendTransactions = !Boolean.TRUE.equals(metadataBlockBean.getDocument().getProperties().get(DocumentSpecificModel.Props.XXL_INVOICE))
-                && StringUtils.isEmpty((String) metadataBlockBean.getDocument().getProperties().get(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER));
+                && StringUtils.isBlank((String) metadataBlockBean.getDocument().getProperties().get(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER));
         if (sendTransactions) {
             transFileAndCount = EInvoiceUtil.getTransOrInvoiceFileAndCount(fileBlockBean.getFiles(), true);
             Integer transactionFileCount = transFileAndCount.getSecond();

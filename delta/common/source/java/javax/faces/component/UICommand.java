@@ -28,9 +28,11 @@ import javax.faces.el.ValueBinding;
 import javax.faces.event.*;
 
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListenerLogColumn;
 import ee.webmedia.alfresco.common.listener.StatisticsPhaseListener;
+import ee.webmedia.alfresco.menu.ui.MenuBean;
 
 /**
  * see Javadoc of <a href="http://java.sun.com/j2ee/javaserverfaces/1.1_01/docs/api/index.html">JSF Specification</a>
@@ -45,7 +47,7 @@ public class UICommand
     private MethodBinding _action = null;
     private MethodBinding _actionListener = null;
     private static List<String> disableValidationActions = Arrays.asList("#{AddFileDialog.start}", "#{DocumentQuickSearchResultsDialog.setup}"
-            , "#{DocumentDialog.searchDocsAndCases}", "#{DocumentDialog.search.setup}");
+            , "#{DocumentDialog.searchDocsAndCases}", "#{DocumentDialog.search.setup}", "#{MenuBean.closeBreadcrumbItem}");
 
     public void setAction(MethodBinding action)
     {
@@ -141,6 +143,8 @@ public class UICommand
             }
             if(getActionListener() != null){
                 disableRequestValidationIfNeeded(getActionListener().getExpressionString());
+            } else if (StringUtils.startsWith(getId(), MenuBean.SHORTCUT_MENU_ITEM_PREFIX)) {
+                Utils.setRequestValidationDisabled(FacesContext.getCurrentInstance());
             }
         }
         super.queueEvent(event);

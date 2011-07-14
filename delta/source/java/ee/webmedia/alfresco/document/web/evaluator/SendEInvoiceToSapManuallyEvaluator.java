@@ -26,7 +26,7 @@ public class SendEInvoiceToSapManuallyEvaluator extends BaseActionEvaluator {
         return isInViewState
                 && DocumentSubtypeModel.Types.INVOICE.equals(docNode.getType())
                 && BeanHelper.getUserService().isInAccountantGroup()
-                && (docNode.getProperties().get(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER) != null || Boolean.TRUE.equals(docNode
+                && (StringUtils.isNotBlank((String) docNode.getProperties().get(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER)) || Boolean.TRUE.equals(docNode
                         .getProperties().get(DocumentSpecificModel.Props.XXL_INVOICE)) || mandatoryTransactionFieldsFilled(docNode))
                 && StringUtils.isNotBlank((String) docNode.getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT))
                 && (!hasSendInfo(docNode) && StringUtils.isEmpty((String) docNode.getProperties().get(DocumentSpecificModel.Props.ENTRY_SAP_NUMBER)))

@@ -57,6 +57,7 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
  */
 public class MenuBean implements Serializable {
 
+    public static final String SHORTCUT_MENU_ITEM_PREFIX = "shortcut-";
     private static final long serialVersionUID = 1L;
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(MenuBean.class);
 
@@ -116,7 +117,7 @@ public class MenuBean implements Serializable {
             dialog = (IDialogBean) bean;
         } else {
             throw new AlfrescoRuntimeException("Failed to start dialog as managed bean '" + beanName +
-            "' does not implement the required IDialogBean interface");
+                    "' does not implement the required IDialogBean interface");
         }
 
         try {
@@ -582,9 +583,11 @@ public class MenuBean implements Serializable {
             return false;
         }
         MenuItem item = menuItemAndPath.getFirst();
-        MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, "shortcut-" + shortcutsPanelGroup.getChildCount(), getUserService(),
-                getWorkflowService(),
-                getEinvoiceService(), false);
+        MenuItemWrapper wrapper = (MenuItemWrapper) item.createComponent(context, SHORTCUT_MENU_ITEM_PREFIX + shortcutsPanelGroup.getChildCount()
+                , getUserService(), getWorkflowService(), getEinvoiceService(), false);
+        if (wrapper == null) {
+            return false; // no permissions or for some other reason wrapper is not created
+        }
         wrapper.setPlain(true);
 
         UIActionLink link = (UIActionLink) wrapper.getChildren().get(0);
@@ -804,7 +807,7 @@ public class MenuBean implements Serializable {
     protected GeneralService getGeneralService() {
         if (generalService == null) {
             generalService = (GeneralService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean(GeneralService.BEAN_NAME);
+                    .getBean(GeneralService.BEAN_NAME);
         }
         return generalService;
     }
@@ -816,7 +819,7 @@ public class MenuBean implements Serializable {
     protected UserService getUserService() {
         if (userService == null) {
             userService = (UserService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean(UserService.BEAN_NAME);
+                    .getBean(UserService.BEAN_NAME);
         }
         return userService;
     }
@@ -824,7 +827,7 @@ public class MenuBean implements Serializable {
     protected WorkflowService getWorkflowService() {
         if (workflowService == null) {
             workflowService = (WorkflowService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean(WorkflowService.BEAN_NAME);
+                    .getBean(WorkflowService.BEAN_NAME);
         }
         return workflowService;
     }
@@ -832,7 +835,7 @@ public class MenuBean implements Serializable {
     public EInvoiceService getEinvoiceService() {
         if (einvoiceService == null) {
             einvoiceService = (EInvoiceService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean(EInvoiceService.BEAN_NAME);
+                    .getBean(EInvoiceService.BEAN_NAME);
         }
         return einvoiceService;
     }

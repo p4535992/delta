@@ -149,4 +149,6 @@ public interface EInvoiceService {
 
     void setDimensionValuesActiveOrInactive(Dimension dimension, boolean active);
 
+    DimensionValue getDimensionValue(NodeRef dimensionRef, String transDimensionValue);
+
 }

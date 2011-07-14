@@ -46,6 +46,7 @@
 	<td>//option[@value='{http://alfresco.webmedia.ee/model/document/subtype/1.0}instrumentOfDeliveryAndReceipt']</td>
 	<td></td>
 </tr>
+<!--TODO: järgmine rida esimesel katsel ebaõnnestub (ajax) - proovi järgmist rida kohe uuesti käivitada-->
 <tr>
 	<td>addSelection</td>
 	<td>dialog:dialog-body:ser-metatada:prop_serx003a_docType:serx003a_docType:picker_serx003a_docType_results</td>
@@ -98,23 +99,18 @@
 </tr>
 <tr>
 	<td>addSelection</td>
-	<td>dialog:dialog-body:ser-metatada:prop_serx003a_docType:picker_results</td>
+	<td>dialog:dialog-body:ser-metatada:prop_serx003a_docType:serx003a_docType:picker_serx003a_docType_results</td>
 	<td>label=Memo</td>
 </tr>
 <tr>
-	<td>addSelection</td>
-	<td>dialog:dialog-body:ser-metatada:prop_serx003a_docType:picker_results</td>
-	<td>label=Ministri käskkiri</td>
+	<td>removeSelection</td>
+	<td>dialog:dialog-body:ser-metatada:prop_serx003a_docType:serx003a_docType:picker_serx003a_docType_results</td>
+	<td>label=Muu majasisene taotlus</td>
 </tr>
 <tr>
 	<td>addSelection</td>
-	<td>dialog:dialog-body:ser-metatada:prop_serx003a_docType:picker_results</td>
+	<td>dialog:dialog-body:ser-metatada:prop_serx003a_docType:serx003a_docType:picker_serx003a_docType_results</td>
 	<td>label=Määrus</td>
-</tr>
-<tr>
-	<td>addSelection</td>
-	<td>dialog:dialog-body:ser-metatada:prop_serx003a_docType:picker_results</td>
-	<td>label=Personali käskkiri</td>
 </tr>
 <tr>
 	<td>addSelection</td>
@@ -171,6 +167,7 @@
 	<td>//option[@value='{http://alfresco.webmedia.ee/model/document/subtype/1.0}regulation']</td>
 	<td></td>
 </tr>
+<!--peale dokumendi liikide valimist vajuta käivita järgnev käsk-->
 <tr>
 	<td>clickAndWait</td>
 	<td>//input[@value='Lisa']</td>

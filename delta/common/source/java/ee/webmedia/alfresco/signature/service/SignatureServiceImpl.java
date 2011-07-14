@@ -45,15 +45,12 @@ import ee.sk.digidoc.SignedProperties;
 import ee.sk.digidoc.factory.SAXDigiDocFactory;
 import ee.sk.utils.ConfigManager;
 import ee.webmedia.alfresco.app.AppConstants;
-import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
 import ee.webmedia.alfresco.signature.model.SignatureDigest;
 import ee.webmedia.alfresco.signature.model.SignatureItem;
 import ee.webmedia.alfresco.signature.model.SignatureItemsAndDataItems;
-import ee.webmedia.alfresco.utils.FilenameUtil;
-import ee.webmedia.alfresco.utils.ISOLatin1Util;
 import ee.webmedia.alfresco.utils.Timer;
 
 public class SignatureServiceImpl implements SignatureService, InitializingBean {
@@ -176,8 +173,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             SignatureDigest signatureDigest = getSignatureDigest(signedDoc, certHex);
             return signatureDigest;
         } catch (Exception e) {
-            throw new SignatureException("Failed to calculate signed info digest of ddoc file, nodeRef = " + nodeRef + ", certHex = "
-                    + (certHex == null ? "null" : org.apache.commons.lang.StringUtils.left(certHex, 16) + "...[" + certHex.length() + "]"), e);
+            throw new SignatureException("Failed to calculate signed info digest of ddoc file, nodeRef = " + nodeRef + ", certHex = " + certHex, e);
         }
     }
 
@@ -189,8 +185,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
             SignatureDigest signatureDigest = getSignatureDigest(signedDoc, certHex);
             return signatureDigest;
         } catch (Exception e) {
-            throw new SignatureException("Failed to calculate signed info digest from selected nodeRefs " + selectedNodeRefs + ", certHex = "
-                    + (certHex == null ? "null" : org.apache.commons.lang.StringUtils.left(certHex, 16) + "...[" + certHex.length() + "]"), e);
+            throw new SignatureException("Failed to calculate signed info digest from selected nodeRefs " + selectedNodeRefs + ", certHex = " + certHex, e);
         }
     }
 
@@ -245,7 +240,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         sig.getSignedInfo().getReferenceForSignedProperties(sig.getSignedProperties()).setDigestValue(sig.getSignedProperties().calculateDigest());
 
         if (!signatureDigest.getDigestHex().equals(SignedDoc.bin2hex(sig.calculateSignedInfoDigest()))) {
-            throw new SignatureException("Signed info digest does not match, files were modified between " + signatureDigest.getDate()
+            throw new SignatureException("Signed info digest does not match, files were modified between " + signatureDigest.getDate() + " " + signatureDigest.getDate().getTime()
                     + " and now");
         }
 
@@ -524,14 +519,12 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
         }
     }
 
-    protected String getFileName(NodeRef nodeRef) {
-        FileInfo fileInfo = fileFolderService.getFileInfo(nodeRef);
-        String displayName = (String) fileInfo.getProperties().get(FileModel.Props.DISPLAY_NAME);
-        if (org.apache.commons.lang.StringUtils.isBlank(displayName)) {
-            return fileInfo.getName();
-        }
-
-        return FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(displayName));
+    /**
+     * @param fileRef
+     * @return short file name by fileRef
+     */
+    protected String getFileName(NodeRef fileRef) {
+        return fileFolderService.getFileInfo(fileRef).getName();
     }
 
     public void setTest(boolean test) {

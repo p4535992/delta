@@ -56,6 +56,8 @@ public class SearchBlockBean implements Serializable {
 
     public void reset() {
         searchValue = null;
+        regDateTimeBegin = null;
+        regDateTimeEnd = null;
         documents = null;
         show = true;
         foundSimilar = false;
@@ -100,6 +102,9 @@ public class SearchBlockBean implements Serializable {
 
         private final Node node;
         private final String searchValue;
+        private final Date regDateTimeBegin;
+        private final Date regDateTimeEnd;
+        private final List<QName> selectedDocumentTypes;
         private final List<Document> documents;
         private final boolean show;
         private final boolean foundSimilar;
@@ -108,6 +113,10 @@ public class SearchBlockBean implements Serializable {
         private Snapshot(SearchBlockBean bean) {
             node = bean.node;
             searchValue = bean.searchValue;
+            regDateTimeBegin = bean.regDateTimeBegin;
+            regDateTimeEnd = bean.regDateTimeEnd;
+            selectedDocumentTypes = bean.selectedDocumentTypes;
+
             documents = bean.documents;
             show = bean.show;
             foundSimilar = bean.foundSimilar;
@@ -117,6 +126,9 @@ public class SearchBlockBean implements Serializable {
         private void restoreState(SearchBlockBean bean) {
             bean.node = node;
             bean.searchValue = searchValue;
+            bean.regDateTimeBegin = regDateTimeBegin;
+            bean.regDateTimeEnd = regDateTimeEnd;
+            bean.selectedDocumentTypes = selectedDocumentTypes;
             bean.documents = documents;
             bean.show = show;
             bean.foundSimilar = foundSimilar;

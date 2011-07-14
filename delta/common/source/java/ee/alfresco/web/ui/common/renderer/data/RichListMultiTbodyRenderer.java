@@ -200,6 +200,8 @@ public class RichListMultiTbodyRenderer extends RichListRenderer {
                 }
             }
             out.write("</td></tr>");
+            // when we only have one group then without this line after refreshing group header would not be created
+            ComponentUtil.putAttribute(richList, ATTR_GROUP_PREVIOUS, NULL);
         }
 
     }

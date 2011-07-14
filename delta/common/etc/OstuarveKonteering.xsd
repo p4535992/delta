@@ -82,9 +82,9 @@
 						<xs:documentation>Element arve staatuse fikseerimiseks (kinnitatud või mitte). Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
 					</xs:annotation>
 				</xs:element>
-				<xs:element minOccurs="0" name="ArveTuup" type="DKType">
+				<xs:element minOccurs="0" name="ArveTuup" type="ArveTuupType">
 					<xs:annotation>
-						<xs:documentation>Element arve tüübi fikseerimiseks. D – deebetarve; K - kreeditarve. Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
+						<xs:documentation>Element arve tüübi fikseerimiseks. D – deebetarve; K - kreeditarve; KS - erinevate tehingupartneri koodidega arve (SAP). Kui antud andmed on süsteemis olemas ja teada, siis on selle välja täitmine kohustuslik</xs:documentation>
 					</xs:annotation>
 				</xs:element>
 				<xs:element name="ArveNumber" type="NormaalTekstType">
@@ -266,11 +266,21 @@
 	</xs:element>
 	<xs:simpleType name="DKType">
 		<xs:annotation>
-			<xs:documentation>Element arve tüübi fikseerimiseks. D – deebetarve; K - kreeditarve</xs:documentation>
+			<xs:documentation>Element kande tüübi fikseerimiseks. D – deebetkanne; K - kreeditkanne</xs:documentation>
 		</xs:annotation>
 		<xs:restriction base="xs:NMTOKEN">
 			<xs:pattern value="D" />
 			<xs:pattern value="K" />
+		</xs:restriction>
+	</xs:simpleType>
+	<xs:simpleType name="ArveTuupType">
+		<xs:annotation>
+			<xs:documentation>Element arve tüübi fikseerimiseks. D – deebetarve; K - kreeditarve; KS - erinevate tehingupartneri koodidega arve (SAP)</xs:documentation>
+		</xs:annotation>
+		<xs:restriction base="xs:NMTOKEN">
+			<xs:pattern value="D" />
+			<xs:pattern value="K" />
+			<xs:pattern value="KS" />
 		</xs:restriction>
 	</xs:simpleType>
 	<xs:simpleType name="JahEiType">

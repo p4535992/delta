@@ -188,4 +188,6 @@ public interface WorkflowService {
 
     boolean hasUnfinishedReviewTasks(NodeRef docNode);
 
+    boolean hasReviewTask(Node docNode);
+
 }

@@ -20,6 +20,7 @@ import org.springframework.ws.client.WebServiceTransportException;
 import org.springframework.ws.soap.client.SoapFaultClientException;
 
 import smit.ametnik.services.Ametnik;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
 import ee.webmedia.alfresco.user.service.UserNotFoundException;
 
@@ -54,7 +55,12 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
         try {
             Ametnik user = amrService.getAmetnikByIsikukood(userName);
             if (user == null) {
-                log.debug("Didn't manage to get user with id '" + userName + "' from AMRService.");
+                String msg = "Didn't manage to get user with id '" + userName + "' from AMRService.";
+                if (BeanHelper.getApplicationService().isTest()) {
+                    log.warn(msg);
+                    return;
+                }
+                log.debug(msg);
                 throw new UserNotFoundException("Didn't manage to get user with id '" + userName + "' from AMRService.");
             } else {
                 log.debug("Found user with id '" + userName + "'");

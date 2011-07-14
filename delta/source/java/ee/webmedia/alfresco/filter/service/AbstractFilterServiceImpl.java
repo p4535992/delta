@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.filter.service;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -74,16 +75,18 @@ public abstract class AbstractFilterServiceImpl implements FilterService {
     @SuppressWarnings("rawtypes")
     private void initFilterProperties(Map<String, Object> properties) {
         Map<QName, PropertyDefinition> propDefs = BeanHelper.getDictionaryService().getPropertyDefs(getFilterNodeType());
-        for (Map.Entry<String, Object> entry : properties.entrySet()) {
-            Object value = entry.getValue();
-            if (value == null) {
-                PropertyDefinition propDef = propDefs.get(QName.createQName(entry.getKey()));
-                if (propDef.isMultiValued()) {
-                    entry.setValue(new ArrayList());
+        Map<String, Object> propsToAdd = new HashMap<String, Object>();
+        for (Map.Entry<QName, PropertyDefinition> entry : propDefs.entrySet()) {
+            PropertyDefinition propDef = entry.getValue();
+            if (propDef.isMultiValued()) {
+                String propName = propDef.getName().toString();
+                Object value = properties.get(propName);
+                if (value == null) {
+                    propsToAdd.put(propName, new ArrayList<Object>());
                 }
             }
-
         }
+        properties.putAll(propsToAdd);
     }
 
     @Override

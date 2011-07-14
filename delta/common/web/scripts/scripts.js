@@ -333,21 +333,23 @@ function setPageScrollY() {
 	$jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
 }
 
-function webdavOpen(url) {
-   var showDoc = true;
-   // if the link represents an Office document and we are in IE try and
-   // open the file directly to get WebDAV editing capabilities
+function getSharePointObject() {
    var agent = navigator.userAgent.toLowerCase();
-   if (agent.indexOf('msie') != -1)
-   {
-         var wordDoc = new ActiveXObject('SharePoint.OpenDocuments.1');
-         if (wordDoc)
-         {
-            showDoc = !wordDoc.EditDocument(this.href);
-         }
+   if (agent.indexOf('msie') != -1) {
+      var sharePointObject = new ActiveXObject('SharePoint.OpenDocuments.1');
+      return sharePointObject;
    }
-   if (showDoc == true)
-   {
+   return null;
+}
+
+function webdavOpen(url, sharePointObject) {
+   var showDoc = true;
+   if (sharePointObject) {
+      // if the link represents an Office document and we are in IE try and
+      // open the file directly to get WebDAV editing capabilities
+      showDoc = !sharePointObject.EditDocument(url);
+   }
+   if (showDoc == true) {
       window.open(url, '_blank');
    }
    return false;
@@ -846,49 +848,65 @@ $jQ(document).ready(function() {
 
    $jQ(".genericpicker-input").live('keyup', function (event) {
       var input = $jQ(this);
-      var value = input.val();
-      var callback = input.attr('datasrc');
-      // If possible, submit filter value
-      var filterValue = 0;
       var filter = input.prev();
+      var filterValue;
       if (filter != null && filter.attr('value') != undefined) {
          filterValue = filter.attr('value');
       }
 
+      var tbody = input.closest('tbody');
+      var select = tbody.find('.genericpicker-results');
+
+      var successCallback = function(responseText) {
+         select.children().remove();
+         var index = responseText.indexOf("|");
+         select.attr("size", responseText.substring(0, index));
+         select.append(responseText.substring(index + 1, responseText.length));
+         tbody.find('.hidden').toggleClass('hidden');
+      };
+
+      var backSpaceCallback = function(inputValue){
+         select.children().each(function (i) {
+            var option = $jQ(this);
+            if (option.text().toLowerCase().indexOf(inputValue.toLowerCase()) < 0) {
+               option.hide();
+            } else {
+               option.show();
+            }
+         });
+      };
+
+      doSearch(input, filterValue, event, successCallback, backSpaceCallback);
+   });
+
+   function doSearch(input, filterValue, event, successCallback, backSpaceCallback) {
+      var callback = input.attr('datasrc');
+      if(!callback){
+         alert("no search callback found");
+      }
+      var value = input.val();
       if (!value) {
          return;
       }
+      if(!filterValue){
+         filterValue = 0;
+      }
 
       var backspace = event.keyCode == 8;
-      var tbody = input.closest('tbody');
-      var select = tbody.find('.genericpicker-results');
       if (value.length == 3 && !backspace) {
          $jQ.ajax({
             type: 'POST',
             url: getContextPath() + "/ajax/invoke/AjaxSearchBean.searchPickerResults",
             data: $jQ.param({'contains' : value, 'pickerCallback' : callback, 'filterValue' : filterValue}),
             mode: 'queue',
-            success: function(responseText) {
-               select.children().remove();
-               var index = responseText.indexOf("|");
-               select.attr("size", responseText.substring(0, index))
-               select.append(responseText.substring(index + 1, responseText.length));
-               tbody.find('.hidden').toggleClass('hidden');
-            },
+            success: successCallback,
             error: ajaxError,
             dataType: 'html'
          });
       } else if (value.length > 3 || backspace) {
-         select.children().each(function (i) {
-            var option = $jQ(this);
-            if (option.text().toLowerCase().indexOf(value.toLowerCase()) < 0) {
-               option.hide();
-            } else {
-               option.show();
-            }
-         });
+         backSpaceCallback(value);
       }
-   });
+   };
 
    $jQ(".errandReportDateBase").live('change', function (event) {
       // Get the date
@@ -1119,7 +1137,7 @@ var toggleSubrow = {
 
 function getFloatOrNull(originalSumString){
    var sumString = originalSumString.replace(",", ".");
-   sumString = sumString.replace(" ", "");
+   sumString = sumString.replace(/ /g, "");
    if(sumString == ""){
       return 0;
    }
@@ -1229,28 +1247,41 @@ function handleHtmlLoaded(context, selects) {
     * Open Office documents directly from server
     */
    $jQ('a.webdav-open', context).click(function () {
-      var path = $jQ(this).attr('href');
-      var uri = getContextPath() + '/ajax/invoke/AjaxBean.isFileLocked?path=' + path;
-      $jQ.ajax({
-        type: 'POST',
-        url: uri,
-        mode: 'queue',
-        success: function (responseText) {
-          if (responseText.indexOf("NOT_LOCKED") > -1) {
-             webdavOpen(path);
-          } else if (confirm(getTranslation("webdav_openReadOnly").replace("#", responseText))) {
-             webdavOpenReadOnly(path);
-          } else {
-             return false;
-          }
-        },
-        error: ajaxError,
-        datatype: 'html'
-      });
+      // 1) this.href = 'https://dhs.example.com/dhs/webdav/xxx/yyy/zzz/abc.doc'
+      // 2) $jQ(this).attr('href') = '/dhs/webdav/xxx/yyy/zzz/abc.doc'
+      var path = this.href; // SharePoint ActiveXObject methods need to get full URL
+
+      var sharePointObject = getSharePointObject();
+      if (sharePointObject) {
+         // When page is submitted, user sees an hourglass cursor
+         $jQ(".submit-protection-layer").show().focus();
+         var uri = getContextPath() + '/ajax/invoke/AjaxBean.isFileLocked';
+         $jQ.ajax({
+           type: 'POST',
+           url: uri,
+           data: $jQ.param({'path' : path}),
+           mode: 'queue',
+           success: function (responseText) {
+              $jQ(".submit-protection-layer").hide();
+              if (responseText.indexOf("NOT_LOCKED") > -1) {
+                webdavOpen(path, sharePointObject);
+             } else if (confirm(getTranslation("webdav_openReadOnly").replace("#", responseText))) {
+                webdavOpen(path, sharePointObject);
+             } else {
+                return false;
+             }
+           },
+           error: ajaxError,
+           datatype: 'html'
+         });
+      } else {
+         webdavOpen(path, sharePointObject);
+      }
       return false;
    });
    $jQ('a.webdav-readOnly', context).click(function () {
-      webdavOpenReadOnly($jQ(this).attr('href'));
+      webdavOpenReadOnly(this.href);
+      return false;
    });
 
    $jQ(".modalwrap select option", context).tooltip();
@@ -1532,5 +1563,5 @@ function confirmWorkflow(){
          return false;
       }
    }
-   $jQ("[class='workflow-after-confirmation-link']").get(0).click();   
+   $jQ("[class='workflow-after-confirmation-link']").get(0).click();
 }

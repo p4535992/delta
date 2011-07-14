@@ -329,7 +329,7 @@ public class EInvoiceUtil {
         for (Entry<QName, Serializable> entry : transProps.entrySet()) {
             QName entryKey = entry.getKey();
             String propName = entryKey.getLocalName();
-            if (mandatoryProps.contains(propName) && isEmpty(entry.getValue())) {
+            if (mandatoryProps.contains(propName) && isBlank(entry.getValue())) {
                 if (errorMessages != null && addedErrorKeys != null) {
                     // collect all error messages
                     if (!addedErrorKeys.contains(propName)) {
@@ -346,9 +346,9 @@ public class EInvoiceUtil {
         return result;
     }
 
-    public static boolean isEmpty(Object value) {
+    public static boolean isBlank(Object value) {
         if (value instanceof String) {
-            return StringUtils.isEmpty((String) value);
+            return StringUtils.isBlank((String) value);
         }
         return value == null;
     }

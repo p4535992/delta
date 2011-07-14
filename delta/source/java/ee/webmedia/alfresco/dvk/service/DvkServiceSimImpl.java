@@ -773,7 +773,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                     // NB! it is assumed that with each dvk call
                     // only one new (i.e. with empty originalDvkId) in progress external review task is sent!!
                     if (externalReviewTask.isStatus(Status.IN_PROGRESS)
-                            && StringUtils.isEmpty((String) externalReviewTask.getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID))) {
+                            && StringUtils.isBlank((String) externalReviewTask.getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID))) {
                         nodeService.setProperty(taskNodeRef, WorkflowSpecificModel.Props.ORIGINAL_DVK_ID, dvkId);
                     }
                     nodeService.setProperty(taskNodeRef, WorkflowSpecificModel.Props.SEND_STATUS, SendStatus.SENT);

@@ -765,7 +765,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                             if (invoiceNumber.equalsIgnoreCase(arveInfo.getArveNumber())
                                     && (invoiceDate != null && xmlInvoiceDate != null && DateUtils.isSameDay(invoiceDate, xmlInvoiceDate))
                                     && sellerName.equalsIgnoreCase(arve.getHankija().getHankijaNimi())
-                                    && ((StringUtils.isEmpty(sellerRegNumber) && StringUtils.isEmpty(registrikood)) || (sellerRegNumber != null && sellerRegNumber
+                                    && ((StringUtils.isBlank(sellerRegNumber) && StringUtils.isBlank(registrikood)) || (sellerRegNumber != null && sellerRegNumber
                                             .equalsIgnoreCase(registrikood)))) {
                                 // if ostuarve contains one arve that maches invoice, use original DataFileType as transactions file
                                 // otherwise generate separate DataFileType for each matched arve element
@@ -868,8 +868,9 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     public void updateTransactions(NodeRef invoiceRef, List<Transaction> transactions, List<Transaction> removedTransactions) {
         boolean isDocumentParent = !TransactionModel.Types.TRANSACTION_TEMPLATE.equals(nodeService.getType(invoiceRef));
         for (Transaction removedTransaction : removedTransactions) {
-            if (removedTransaction.getNode().getNodeRef() != null) {
-                nodeService.deleteNode(removedTransaction.getNode().getNodeRef());
+            WmNode removedTransNode = removedTransaction.getNode();
+            if (removedTransNode.getNodeRef() != null && !removedTransNode.isUnsaved()) {
+                nodeService.deleteNode(removedTransNode.getNodeRef());
                 if (isDocumentParent) {
                     documentLogService.addDocumentLog(invoiceRef, I18NUtil.getMessage("document_log_status_transaction_deleted"));
                 }
@@ -942,7 +943,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     @Override
     public String getTransactionDvkFolder(Node document) {
         Map<String, Object> props = document.getProperties();
-        if (props.get(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER) == null) {
+        if (StringUtils.isNotEmpty((String) props.get(DocumentSpecificModel.Props.PURCHASE_ORDER_SAP_NUMBER))) {
             if (!Boolean.TRUE.equals(props.get(DocumentSpecificModel.Props.XXL_INVOICE))) {
                 return parametersService.getStringParameter(Parameters.SEND_INVOICE_TO_DVK_FOLDER);
             } else {
@@ -1095,7 +1096,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         dimensioonList.add(dimensioon);
     }
 
-    private DimensionValue getDimensionValue(NodeRef dimensionRef, String transDimensionValue) {
+    @Override
+    public DimensionValue getDimensionValue(NodeRef dimensionRef, String transDimensionValue) {
         List<DimensionValue> dimensionValues = getAllDimensionValuesFromCache(dimensionRef);
         for (DimensionValue dimensionValue : dimensionValues) {
             if (dimensionValue.getValueName().equals(transDimensionValue)) {

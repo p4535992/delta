@@ -17,14 +17,17 @@ import ee.webmedia.xtee.client.dhl.types.ee.sk.digiDoc.v13.DataFileType;
  * @author Kaarel Jõgeva
  */
 public class FilenameUtil {
-
+    private static final int FILE_MAX_LENGTH = 50;
+    private static final String FILE_MAX_LENGTH_SUFFIX = "....";
+    private static final String FILE_NON_ASCII_REPLACEMENT = "_";
+    private static final String FILE_AMPERSAND_REPLACEMENT = " ja ";
     private static final Pattern NON_ASCII = Pattern.compile("[^\\x00-\\x7f]");
 
     public static String buildFileName(String title, String extension) {
         return buildFileName(title, extension, true);
     }
 
-    public static String buildFileName(String title, String extension, boolean extensionRequired) {
+    private static String buildFileName(String title, String extension, boolean extensionRequired) {
         if (extension == null) {
             extension = "";
         }
@@ -33,7 +36,7 @@ public class FilenameUtil {
         }
         extension = StringUtils.deleteWhitespace(stripForbiddenWindowsCharacters(extension));
         int maxLength = 254 - extension.length();
-        String nameWithoutExtension = stripDotsAndSpaces(stripForbiddenWindowsCharacters(title));
+        String nameWithoutExtension = trimDotsAndSpaces(stripForbiddenWindowsCharacters(title));
         if (nameWithoutExtension.length() > maxLength) {
             nameWithoutExtension = nameWithoutExtension.substring(0, maxLength);
         }
@@ -56,7 +59,7 @@ public class FilenameUtil {
         return name;
     }
 
-    public static String stripDotsAndSpaces(String filename) {
+    public static String trimDotsAndSpaces(String filename) {
         // In Windows the space and the period are not allowed as the final character of a filename
 
         // remove dots and spaces from beginning and end of string
@@ -64,7 +67,7 @@ public class FilenameUtil {
     }
 
     public static String replaceAmpersand(String filename) {
-        return filename.replaceAll(" & ", " ja ").replaceAll("&", " ja ");
+        return filename.replaceAll(" & ", FILE_AMPERSAND_REPLACEMENT).replaceAll("&", FILE_AMPERSAND_REPLACEMENT);
     }
 
     public static String generateUniqueFileDisplayName(String displayName, List<String> existingDisplayNames) {
@@ -83,8 +86,8 @@ public class FilenameUtil {
         return baseName + suffix + "." + extension;
     }
 
-    public static String replaceNonAsciiCharacters(String filename, String replace) {
-        return NON_ASCII.matcher(filename).replaceAll(replace);
+    public static String replaceNonAsciiCharacters(String filename) {
+        return NON_ASCII.matcher(filename).replaceAll(FILE_NON_ASCII_REPLACEMENT);
     }
 
     public static String getDvkFilename(DataFileType dataFile) {
@@ -96,40 +99,34 @@ public class FilenameUtil {
      * 
      * @param filename name to shorten
      * @param maxLength maximum length of the name including extension
-     * @param marker string to insert between base name and extension, if <code>null</code>, defaults to "..."
      * @return shortened filename or <code>null</code> if given name is <code>null</code>
      */
-    public static String limitFileNameLength(String filename, int maxLength, String marker) {
-        marker = (marker == null) ? "...." : marker;
-
-        if (filename != null && filename.length() > maxLength) {
+    public static String limitFileNameLength(String filename) {
+        if (filename != null && filename.length() > FILE_MAX_LENGTH) {
             String baseName = FilenameUtils.getBaseName(filename);
             String extension = FilenameUtils.getExtension(filename);
-            baseName = baseName.substring(0, maxLength - extension.length() - marker.length());
-            filename = baseName + marker + extension;
+            baseName = baseName.substring(0, FILE_MAX_LENGTH - extension.length() - FILE_MAX_LENGTH_SUFFIX.length());
+            filename = baseName + FILE_MAX_LENGTH_SUFFIX + extension;
         }
         return filename;
     }
 
     public static String makeSafeFilename(String name) {
-        return makeSafeFilename(name, 50, null, "_", null);
+        return makeSafeFilename(name, null);
     }
 
     public static String makeSafeUniqueFilename(String name, List<String> existingFileNames) {
-        return makeSafeFilename(name, 50, null, "_", existingFileNames);
+        return makeSafeFilename(name, existingFileNames);
     }
 
-    public static String makeSafeFilename(String name, int maxLength, String maxLengthSufix, String nonAsciiReplacement, List<String> existingFileNames) {
-        maxLengthSufix = (maxLengthSufix == null) ? "...." : maxLengthSufix;
-        nonAsciiReplacement = (nonAsciiReplacement == null) ? "_" : nonAsciiReplacement;
-
+    private static String makeSafeFilename(String name, List<String> existingFileNames) {
         String safeName = replaceNonAsciiCharacters(
                             removeAccents(
                             replaceAmpersand(
-                            stripDotsAndSpaces(
+                            trimDotsAndSpaces(
                             stripForbiddenWindowsCharacters(
-                            limitFileNameLength(name, maxLength, null)
-                            )))), nonAsciiReplacement);
+                            limitFileNameLength(name)
+                            )))));
 
         if (existingFileNames != null && !existingFileNames.isEmpty()) {
             safeName = generateUniqueFileDisplayName(safeName, existingFileNames);

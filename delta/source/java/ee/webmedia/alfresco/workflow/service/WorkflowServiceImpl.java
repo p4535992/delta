@@ -1222,6 +1222,21 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
+    public boolean hasReviewTask(Node docNode) {
+        for (CompoundWorkflow compoundWorkflow : getCompoundWorkflows(docNode.getNodeRef())) {
+            for (Workflow workflow : compoundWorkflow.getWorkflows()) {
+                if (!workflow.isType(WorkflowSpecificModel.Types.REVIEW_WORKFLOW, WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
+                    continue;
+                }
+                if (!workflow.getTasks().isEmpty()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @Override
     public void finishUserActiveResponsibleInProgressTask(NodeRef docRef, String comment) {
         for (CompoundWorkflow compoundWorkflow : getCompoundWorkflows(docRef)) {
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {

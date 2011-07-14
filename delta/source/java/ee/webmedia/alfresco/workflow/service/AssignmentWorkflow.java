@@ -30,7 +30,8 @@ public class AssignmentWorkflow extends Workflow {
         super.preSave();
         for (Task task : getTasks()) {
             if (task.isStatus(Status.NEW, Status.IN_PROGRESS)
-                    && StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))) {
+                    && StringUtils.isBlank((String) task.getProp(WorkflowSpecificModel.Props.RESOLUTION))
+                    && !WorkflowUtil.isGeneratedByDelegation(task)) {
                 task.setProp(WorkflowSpecificModel.Props.RESOLUTION, getProp(WorkflowSpecificModel.Props.RESOLUTION));
             }
         }

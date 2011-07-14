@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head profile="http://selenium-ide.openqa.org/profiles/test-case">
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="selenium.base" href="https://ats-pc.webmedia.int:8181/" />
+<title>editDocTypes</title>
+</head>
+<body>
+<table cellpadding="1" cellspacing="1" border="1">
+<thead>
+<tr><td rowspan="1" colspan="3">editDocTypes</td></tr>
+</thead><tbody>
+<tr>
+	<td>clickAndWait</td>
+	<td>pm4</td>
+	<td></td>
+</tr>
+<tr>
+	<td>clickAndWait</td>
+	<td>sm10</td>
+	<td></td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:documentTypeList:1:documentTypeNameCol-input</td>
+	<td>Akt(MV)</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:documentTypeList:3:documentTypeNameCol-input</td>
+	<td>Aruanne(MV)</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:documentTypeList:12:documentTypeNameCol-input</td>
+	<td>Leping(SIM)</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:documentTypeList:13:documentTypeNameCol-input</td>
+	<td>Leping(SMIT)</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:documentTypeList:14:documentTypeNameCol-input</td>
+	<td>Leping(MV)</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:documentTypeList:22:documentTypeNameCol-input</td>
+	<td>Personali käskkiri(SMIT)</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:documentTypeList:23:documentTypeNameCol-input</td>
+	<td>Personali käskkiri(SIM)</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:documentTypeList:25:documentTypeNameCol-input</td>
+	<td>Protokoll(MV)</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:documentTypeList:33:documentTypeNameCol-input</td>
+	<td>Sissetulev kiri(MV)</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:documentTypeList:37:documentTypeNameCol-input</td>
+	<td>Väljaminev kiri(MV)</td>
+</tr>
+<tr>
+	<td>type</td>
+	<td>dialog:dialog-body:documentTypeList:39:documentTypeNameCol-input</td>
+	<td>Üldkäskkiri(regulation)</td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>dialog:dialog-body:documentTypeList:8:_idJsp32</td>
+	<td></td>
+</tr>
+<tr>
+	<td>click</td>
+	<td>dialog:finish-button</td>
+	<td></td>
+</tr>
+
+</tbody></table>
+</body>
+</html>

@@ -41,6 +41,7 @@ public class UserPrivileges implements Serializable {
 
     /** static privileges (already saved) */
     private Set<String> staticPrivilegesBeforeChanges;
+    /** static & dynamic privileges (some privileges that have neither been added nor removed are not included in this map) */
     private final Map<String/* privilege */, Boolean/* active */> privileges = new HashMap<String, Boolean>();
 
     public UserPrivileges(String userName, String userDisplayName) {
@@ -126,20 +127,26 @@ public class UserPrivileges implements Serializable {
             return staticPrivilegesBeforeChanges;// remove all static privileges that user had
         }
         Set<String> privilegesToDelete = new HashSet<String>(staticPrivilegesBeforeChanges);
-        privilegesToDelete.removeAll(getStaticPrivileges(false));
+        privilegesToDelete.removeAll(getActivePrivileges(false));
         return privilegesToDelete;
     }
 
     public Set<String> getStaticPrivileges() {
-        return getStaticPrivileges(true);
+        return getActivePrivileges(true);
     }
 
-    private Set<String> getStaticPrivileges(boolean considerDynamic) {
+    /**
+     * @param staticOnly - could be also read as "staticOnly"
+     * @return
+     *         if !considerDynamic then all active privileges are returned,
+     *         if considerDynamic (no dynamic priv or both bynamic and static)
+     */
+    private Set<String> getActivePrivileges(boolean staticOnly) {
         Set<String> activePrivileges = new HashSet<String>();
         for (Entry<String, Boolean> entry : privileges.entrySet()) {
             String privilege = entry.getKey();
             if (entry.getValue()) {
-                if (!considerDynamic || !dynamicPrivileges.containsKey(privilege) || dynamicPrivileges.get(privilege)) {
+                if (!staticOnly || !dynamicPrivileges.containsKey(privilege) || dynamicPrivileges.get(privilege)) {
                     activePrivileges.add(privilege);
                 }
             }
@@ -151,7 +158,7 @@ public class UserPrivileges implements Serializable {
      * @return true if user has at least one static privilege(managed by this VO)
      */
     public boolean hasManageablePrivileges() {
-        return !getStaticPrivileges(false).isEmpty();
+        return !getActivePrivileges(true).isEmpty();
     }
 
     public void addGroup(String group) {

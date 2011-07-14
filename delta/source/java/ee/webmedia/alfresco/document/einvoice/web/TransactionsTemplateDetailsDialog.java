@@ -52,15 +52,18 @@ import ee.webmedia.alfresco.common.propertysheet.renderkit.HtmlGroupCustomRender
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.document.einvoice.model.Dimensions;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionModel;
 import ee.webmedia.alfresco.document.einvoice.model.TransactionTemplate;
+import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 
 public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements Serializable {
 
@@ -88,14 +91,14 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             "transaction_paymentMethod", "transaction_houseBank", "transaction_entryContent"));
 
     /** transaction template node or (in subclassing TransactionBlockBean) document node) */
-    protected Node parentNode;
-    protected List<Transaction> transactions;
-    protected final Map<NodeRef, Map<QName, Serializable>> originalProperties = new HashMap<NodeRef, Map<QName, Serializable>>();
-    protected List<Transaction> removedTransactions = new ArrayList<Transaction>();
+    private Node parentNode;
+    private List<Transaction> transactions;
+    private final Map<NodeRef, Map<QName, Serializable>> originalProperties = new HashMap<NodeRef, Map<QName, Serializable>>();
+    private List<Transaction> removedTransactions = new ArrayList<Transaction>();
     private transient HtmlPanelGroup transactionPanelGroup;
     private NodeRef taskPanelControlNodeRef;
     private TransactionTemplate transactionTemplate;
-    protected List<TransactionTemplate> transactionTemplates;
+    private List<TransactionTemplate> transactionTemplates;
 
     public void init(Node node) {
         reset();
@@ -158,6 +161,14 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
 
     public NodeRef getParentNodeRef() {
         return parentNode.getNodeRef();
+    }
+
+    public Node getParentNode() {
+        return parentNode;
+    }
+
+    public void setParentNode(Node parentNode) {
+        this.parentNode = parentNode;
     }
 
     public boolean isShowTransactionTemplates() {
@@ -517,7 +528,6 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         selectorGenerator.getCustomAttributes().put("selectionItems", "#{" + getBeanName() + ".getTransactionTemplates}");
         selectorGenerator.setupSelectComponent(context, null, null, null, transTemplateSelector, false);
         transTemplateSelector.setId(TRANS_TEMPLATE_SELECTOR);
-        // transTemplateSelector.setValueChangeListener(application.createMethodBinding("#{" + getBeanName() + ".copyFromTemplate}", new Class[] { ValueChangeEvent.class }));
         transTemplateSelector.getAttributes().put(
                 "styleClass",
                 GeneralSelectorGenerator.ONCHANGE_PARAM_MARKER_CLASS + GeneralSelectorGenerator.ONCHANGE_SCRIPT_START_MARKER
@@ -690,6 +700,11 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         } else {
             dimensionSelector = context.getApplication().createComponent(UIOutput.COMPONENT_TYPE);
             setIdAndValueBinding(context, transactionIndex, propName, dimensionSelector);
+            String dimensionValueName = (String) transactions.get(transactionIndex).getNode().getProperties().get(propName);
+            EInvoiceService eInvoiceService = BeanHelper.getEInvoiceService();
+            DimensionValue dimensionValue = eInvoiceService.getDimensionValue(eInvoiceService.getDimension(dimensions), dimensionValueName);
+            String tooltip = dimensionValue != null ? TextUtil.joinStringAndStringWithSeparator(dimensionValue.getValue(), dimensionValue.getValueComment(), "; ") : "";
+            dimensionSelector.getAttributes().put("title", tooltip);
             siblings.add(dimensionSelector);
         }
 
@@ -787,6 +802,25 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             transactions = new ArrayList<Transaction>();
         }
         return transactions;
+    }
+
+    public List<Transaction> getRemovedTransactions() {
+        if (removedTransactions == null) {
+            removedTransactions = new ArrayList<Transaction>();
+        }
+        return removedTransactions;
+    }
+
+    public List<TransactionTemplate> getTransactionTemplates() {
+        return transactionTemplates;
+    }
+
+    public void setTransactionTemplates(List<TransactionTemplate> transactionTemplates) {
+        this.transactionTemplates = transactionTemplates;
+    }
+
+    public Map<NodeRef, Map<QName, Serializable>> getOriginalProperties() {
+        return originalProperties;
     }
 
     @Override

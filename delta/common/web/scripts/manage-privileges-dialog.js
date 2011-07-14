@@ -26,33 +26,75 @@ $jQ(document).ready(function() {
       }
    }
 
-   // check/uncheck checkboxes of all group rows when group header checkbox is changed
-   // and synchronize checkboxes of the same person on each group
-   $jQ(".privileges td input[type='checkbox']:enabled").change(function() {
-      var jqCheckBox = $jQ(this)
+   var privilegesTable = $jQ(".privileges");
+   var headerCheckBoxes = $jQ(".grHeader td input[type='checkbox']:enabled", privilegesTable);
+   headerCheckBoxes.change(headerCheckBoxChanged);
+   var groups = $jQ(".tbGroup", privilegesTable);
+   var updateHeaderCheckboxStateDisabled = false;
+
+   function headerCheckBoxChanged() {
+      if (updateHeaderCheckboxStateDisabled) {
+         return;
+      }
+      updateHeaderCheckboxStateDisabled = true;
+      var originalCheckBox = this;
+      var jqCheckBox = $jQ(originalCheckBox);
       var isChecked = jqCheckBox.is(":checked");
       var allClasses = jqCheckBox.attr('class');
       var classes = allClasses.split(' ');
       var byClassSelector = "." + classes.join('.');
-      var relatedCBs;
-      var isGroup = jqCheckBox.closest("tr").hasClass("grHeader");
-      if (isGroup) {
-         relatedCBs = $jQ(byClassSelector + ":enabled", jqCheckBox.closest("tbody"));
-         var excluded = $jQ(".grHeader input[type='checkbox']");
-         relatedCBs.not(excluded);
-      } else {
-         relatedCBs = $jQ(byClassSelector + ":enabled");
+      var curGroupCurPermCBs = $jQ(byClassSelector + ":enabled", jqCheckBox.closest("tbody"));
+      curGroupCurPermCBs.attr('checked', isChecked);
+      curGroupCurPermCBs.each(function(index) {
+         if (this != originalCheckBox) {
+            $jQ(this).change();
+         }
+      });
+      updateHeaderCheckboxStateDisabled = false;
+      updateHeaderCheckboxState(false);
+   }
+
+   var bodyCheckBoxes = $jQ("td input[type='checkbox']:enabled", privilegesTable).filter(function(index) {
+      return !$jQ(this).closest("tr").hasClass("grHeader");
+   });
+   bodyCheckBoxes.change(bodyCheckBoxChanged);
+   function bodyCheckBoxChanged() {
+      var jqCheckBox = $jQ(this);
+      var isChecked = jqCheckBox.is(":checked");
+      var allClasses = jqCheckBox.attr('class');
+
+      var classes = allClasses.split(' ');
+      // rest of this method used to be following 3 lines, but they are 20 times slower than next 25 lines
+      // var byClassSelector = "." + classes.join('.');
+      // var relatedCBs = $jQ(byClassSelector + ":enabled", privilegesTable);
+      // relatedCBs.attr('checked', isChecked);
+      var user = null;
+      var permission = null;
+      for ( var i in classes) {
+         var styleClass = classes[i];
+         if (styleClass.indexOf("userId_") === 0) {
+            user = styleClass;
+         }
+         if (styleClass.indexOf("permission_") === 0) {
+            permission = styleClass;
+         }
+         if (user && permission) {
+            break;
+         }
       }
-      relatedCBs.attr('checked', isChecked);
-      if (isGroup) {
-         relatedCBs.each(function(index) {
-            var checkBox = jqCheckBox.get(index);
-            if (checkBox != this) {
-               $jQ(this).trigger('change');
+      var userRows = $jQ("tr." + user, privilegesTable);
+      if (userRows.length > 1) {
+         var curCBRowEl = jqCheckBox.closest("tr").get(0);
+         userRows.each(function() {
+            if (this != curCBRowEl) {
+               var otherGroupSameUserRow = $jQ(this);
+               var relatedCB = otherGroupSameUserRow.find("." + permission + ":enabled");
+               relatedCB.attr('checked', isChecked);
+               addDependantPrivileges(relatedCB);
             }
          });
       }
-   });
+   }
 
    // hack that manually triggers onmouseover/mouseout events for disabled checkboxes(based on mouse movement in parent element)
    var unShownTooltips = $jQ("input[type='checkbox'].tooltip").filter(":disabled").parent();
@@ -73,7 +115,9 @@ $jQ(document).ready(function() {
 
    // START: update header checkboxes of all groups
    function updateHeaderCheckboxState(firstUpdate) {
-      var groups = $jQ(".privileges .tbGroup");
+      if (updateHeaderCheckboxStateDisabled) {
+         return; // at the end of reacting to headerCheckBox click this function will be called once
+      }
       groups.each(function() {
          var group = $jQ(this);
          var groupRows = group.children();
@@ -111,7 +155,6 @@ $jQ(document).ready(function() {
                      var relatedPermCBToUpdate = curCB.closest("tr").find("td input[type='checkbox'].permission_" + privToUpdate + ":enabled");
                      if (!relatedPermCBToUpdate.is(":checked")) {
                         relatedPermCBToUpdate.attr('checked', true);
-                        relatedPermCBToUpdate.trigger('change');
                      }
                   }
                }
@@ -123,7 +166,7 @@ $jQ(document).ready(function() {
 
    function bindOnChangeUpdateHeaderCheckboxState(groupBodyCBs) {
       groupBodyCBs.each(function() {
-         $jQ(this).change(function(eventObject) {
+         $jQ(this).change(function() {
             updateHeaderCheckboxState(false);
             addDependantPrivileges($jQ(this));
          });
