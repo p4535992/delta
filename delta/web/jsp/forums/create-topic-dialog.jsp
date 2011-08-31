@@ -41,30 +41,15 @@ function pageLoaded()
 document.getElementById("dialog:dialog-body:name").focus();
 document.getElementById("dialog").onsubmit = validate;
 document.getElementById("dialog:finish-button").onclick = function() {finishButtonPressed = true; clear_dialog();}
-checkButtonState();
-}
-
-function checkButtonState()
-{
-if (document.getElementById("dialog:dialog-body:name").value.length == 0 ||
-document.getElementById("dialog:dialog-body:message").value.length == 0)
-{
-document.getElementById("dialog:finish-button").disabled = true;
-}
-else
-{
-document.getElementById("dialog:finish-button").disabled = false;
-}
 }
 
 function validate()
 {
 if (finishButtonPressed)
 {
-finishButtonPressed = false;
-return validateName(document.getElementById("dialog:dialog-body:name"),
-'<%= MessageUtil.getMessageAndEscapeJS("validation_invalid_character") %>',
-true);
+return finishButtonPressed = validateName(document.getElementById("dialog:dialog-body:name"), '<%= MessageUtil.getMessageAndEscapeJS("validation_invalid_character") %>', true)
+   && validateMandatory(document.getElementById("dialog:dialog-body:name"), '<%= MessageUtil.getMessageAndEscapeJS("common_propertysheet_validator_mandatory", "msg.forum_subject") %>', true)
+   && validateMandatory(document.getElementById("dialog:dialog-body:message"), '<%= MessageUtil.getMessageAndEscapeJS("common_propertysheet_validator_mandatory", "msg.message") %>', true);
 }
 else
 {
@@ -83,10 +68,9 @@ return true;
          <f:verbatim>
          <span class="red">* </span>
          </f:verbatim>
-         <h:outputText value="#{msg.subject}:&nbsp;&nbsp;&nbsp;" escape="false" />
+         <h:outputText value="#{msg.forum_subject}:&nbsp;&nbsp;&nbsp;" escape="false" />
       </h:panelGroup>
-      <h:inputText id="name" value="#{DialogManager.bean.name}" size="35" maxlength="1024" onkeyup="javascript:checkButtonState();"
-         onchange="javascript:checkButtonState();" />   
+      <h:inputText id="name" value="#{DialogManager.bean.name}" size="35" maxlength="1024" />   
       
       <h:outputText value="#{msg.icon}:&nbsp;&nbsp;&nbsp;" escape="false" />
       <a:imagePickerRadioPanel id="space-icon" columns="6" spacing="4" value="#{DialogManager.bean.icon}" panelBorder="greyround" panelBgcolor="#F5F5F5">
@@ -104,5 +88,5 @@ return true;
          </f:verbatim>
          <h:outputText value="#{msg.message}:" />
          <f:verbatim></b></f:verbatim>
-   <h:inputTextarea id="message" value="#{DialogManager.bean.message}" rows="6" cols="70" onkeyup="checkButtonState();" onchange="checkButtonState();" styleClass="expand100-250 margin-top-10" />
+   <h:inputTextarea id="message" value="#{DialogManager.bean.message}" rows="6" cols="70" styleClass="expand100-250 margin-top-10" />
 </a:panel>

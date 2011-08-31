@@ -10,4 +10,12 @@
       </property>
    </bean>
 
+   <!-- START: web beans: -->
+
+   <!-- this JSF validator can be singleton, as it doesn't change state -->
+   <bean id="OnlyLettersValidator_PANEL_AND_FIELD_NAME" class="ee.webmedia.alfresco.common.propertysheet.validator.OnlyLettersValidator">
+      <property name="customErrorMsgFormat" value="PANEL_AND_FIELD_NAME" />
+   </bean>
+
+   <!-- END: web beans: -->
 </beans>

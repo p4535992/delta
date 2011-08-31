@@ -1,0 +1,14 @@
+<alfresco-config>
+   <config>
+      <dialogs>
+
+         <dialog name="documentDynamicTestDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/document-dynamic-test-dialog.jsp" managed-bean="DocumentDynamicTestDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="docdyn_test" show-ok-button="false"/>
+
+         <dialog name="documentDynamicDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docdynamic/web/document-dynamic-dialog.jsp" managed-bean="DocumentDynamicDialog"
+            icon="/images/icons/details_large.gif" title-id="document" />
+         <!-- TODO DLSeadist actions-config-id="document_actions" more-actions-menu-label-id="document_addFollowUp" -->
+
+      </dialogs>
+   </config>
+</alfresco-config>

@@ -54,7 +54,7 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
         getCustomAttributes().put(VALIDATION_MARKER_DISABLED, Boolean.FALSE.toString());
         propIndex = 0;
         UIComponent container = context.getApplication().createComponent(ComponentConstants.JAVAX_FACES_GRID);
-        container.getAttributes().put("styleClass", "inline-property-group");
+        ComponentUtil.putAttribute(container, "styleClass", "inline-property-group");
         FacesHelper.setupComponentId(context, container, null);
         return container;
     }
@@ -73,12 +73,12 @@ public class InlinePropertyGroupGenerator extends BaseComponentGenerator impleme
         String text = Application.getMessage(FacesContext.getCurrentInstance(), getCustomAttributes().get("textId"));
         @SuppressWarnings("unchecked")
         List<UIComponent> children = component.getChildren();
-        generate(context, propertySheet, item, children, propVOs, text, escapeText);
+        generate(context, propertySheet, children, propVOs, text, escapeText);
 
         super.setupMandatoryPropertyIfNecessary(context, propertySheet, item, propertyDef, component);
     }
 
-    protected void generate(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item, List<UIComponent> children,
+    protected void generate(FacesContext context, UIPropertySheet propertySheet, List<UIComponent> children,
             List<ComponentPropVO> propVOs, String text, boolean escapeText) {
 
         int i = 0;

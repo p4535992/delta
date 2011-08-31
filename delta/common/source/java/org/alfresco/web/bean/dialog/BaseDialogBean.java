@@ -56,9 +56,11 @@ import org.alfresco.web.ui.common.ReportedException;
 import org.alfresco.web.ui.common.Utils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.utils.UnableToPerformMultiReasonException;
 
 /**
  * Base class for all dialog beans providing common functionality
@@ -110,7 +112,7 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       }
       
       // reset the isFinished flag
-      this.isFinished = false;
+      isFinished = false;
    }
    
    public void restored()
@@ -135,9 +137,9 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       
       // check the isFinished flag to stop the finish button
       // being pressed multiple times
-      if (this.isFinished == false)
+      if (isFinished == false)
       {
-         this.isFinished = true;
+         isFinished = true;
       
          RetryingTransactionHelper txnHelper = Repository.getRetryingTransactionHelper(context);
          RetryingTransactionCallback<String> callback = new RetryingTransactionCallback<String>()
@@ -161,8 +163,15 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
             context.getExternalContext().getSessionMap().remove(
                     AlfrescoNavigationHandler.EXTERNAL_CONTAINER_SESSION);
             clearCustomAttributes();
+
+            if (outcome == null) {
+                isFinished = false;
+            }
          } catch (UnableToPerformException e) {
              MessageUtil.addStatusMessage(e);
+             outcome = handleException(e);
+         } catch (UnableToPerformMultiReasonException e) {
+             MessageUtil.addStatusMessages(context, e.getMessageDataWrapper());
              outcome = handleException(e);
          }
          catch (Throwable e)
@@ -183,7 +192,7 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
         // reset the flag so we can re-attempt the operation
         isFinished = false;
         outcome = getErrorOutcome(e);
-        if (outcome == null && e instanceof ReportedException == false && !(e instanceof UnableToPerformException))
+        if (outcome == null && e instanceof ReportedException == false && !(e instanceof UnableToPerformException) && !(e instanceof UnableToPerformMultiReasonException))
         {
             Utils.addErrorMessage(formatErrorMessage(e), e);
         }
@@ -245,13 +254,13 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
       // dialog implementations can override this method to return the
       // appropriate object for their use case
       
-      if (this.navigator == null)
+      if (navigator == null)
       {
          throw new AlfrescoRuntimeException("To use actions in the dialog the 'navigator' " +
                   "property must be injected with an instance of NavigationBean!");
       }
       
-      return this.navigator.getCurrentNode();
+      return navigator.getCurrentNode();
    }
 
    public String getActionsConfigId()
@@ -286,11 +295,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected TransactionService getTransactionService()
    {
-      if (this.transactionService == null)
+      if (transactionService == null)
       {
-         this.transactionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getTransactionService();
+         transactionService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getTransactionService();
       }
-      return this.transactionService;
+      return transactionService;
    }
    
    /**
@@ -303,11 +312,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected NodeService getNodeService()
    {
-      if (this.nodeService == null)
+      if (nodeService == null)
       {
-         this.nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
+         nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
       }
-      return this.nodeService;
+      return nodeService;
    }
    
    /**
@@ -320,11 +329,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected FileFolderService getFileFolderService()
    {
-      if (this.fileFolderService == null)
+      if (fileFolderService == null)
       {
-         this.fileFolderService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getFileFolderService();
+         fileFolderService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getFileFolderService();
       }
-      return this.fileFolderService;
+      return fileFolderService;
    }
 
    /**
@@ -337,11 +346,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected SearchService getSearchService()
    {
-      if (this.searchService == null)
+      if (searchService == null)
       {
-         this.searchService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getSearchService();
+         searchService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getSearchService();
       }
-      return this.searchService;
+      return searchService;
    }
    
    /**
@@ -356,11 +365,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected DictionaryService getDictionaryService()
    {
-      if (this.dictionaryService == null)
+      if (dictionaryService == null)
       {
-         this.dictionaryService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getDictionaryService();
+         dictionaryService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getDictionaryService();
       }
-      return this.dictionaryService;
+      return dictionaryService;
    }
    
    /**
@@ -373,11 +382,11 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    
    protected NamespaceService getNamespaceService()
    {
-      if (this.namespaceService == null)
+      if (namespaceService == null)
       {
-         this.namespaceService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService();
+         namespaceService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNamespaceService();
       }
-      return this.namespaceService;
+      return namespaceService;
    }
    
    /**

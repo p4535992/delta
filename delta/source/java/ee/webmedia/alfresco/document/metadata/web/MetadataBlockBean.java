@@ -65,8 +65,8 @@ import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateListener;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.model.Document;
@@ -1596,7 +1596,7 @@ public class MetadataBlockBean implements ClearStateListener {
         }
         if (validate()) {
             removeEmptyParties();
-            calculateInvoiceSums();
+            fillInvoiceData();
             try {
                 log.debug("save: doc NodeRef=" + document.getNodeRefAsString());
                 document.getProperties().put(DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT, isDraft);
@@ -1643,16 +1643,27 @@ public class MetadataBlockBean implements ClearStateListener {
         return false;
     }
 
-    private void calculateInvoiceSums() {
+    private void fillInvoiceData() {
         if (DocumentSubtypeModel.Types.INVOICE.equals(document.getType())) {
-            Double totalSum = (Double) document.getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM);
-            Double vat = (Double) document.getProperties().get(DocumentSpecificModel.Props.VAT);
+            // calculate invoice sums
+            Map<String, Object> docProps = document.getProperties();
+            Double totalSum = (Double) docProps.get(DocumentSpecificModel.Props.TOTAL_SUM);
+            Double vat = (Double) docProps.get(DocumentSpecificModel.Props.VAT);
             if (vat == null) {
                 vat = new Double(0);
             }
             if (totalSum != null) {
                 BigDecimal sumWithoutVat = BigDecimal.valueOf(totalSum).subtract(BigDecimal.valueOf(vat));
-                document.getProperties().put(DocumentSpecificModel.Props.INVOICE_SUM.toString(), sumWithoutVat.doubleValue());
+                docProps.put(DocumentSpecificModel.Props.INVOICE_SUM.toString(), sumWithoutVat.doubleValue());
+            }
+            // fill (or empty) contact sap account
+            String contactRegNumber = (String) docProps.get(DocumentSpecificModel.Props.SELLER_PARTY_REG_NUMBER);
+            List<Node> contacts = BeanHelper.getAddressbookService().getContactsByRegNumber(contactRegNumber);
+            if (contacts.size() == 1) {
+                String contactSapAccount = (String) contacts.get(0).getProperties().get(AddressbookModel.Props.SAP_ACCOUNT);
+                docProps.put(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT.toString(), contactSapAccount);
+            } else {
+                docProps.put(DocumentSpecificModel.Props.SELLER_PARTY_SAP_ACCOUNT.toString(), null);
             }
         }
     }
@@ -2004,7 +2015,7 @@ public class MetadataBlockBean implements ClearStateListener {
             }
             MessageUtil.addStatusMessage(FacesContext.getCurrentInstance(), e);
         } catch (NodeLockedException e) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_registerDoc_error_docLocked");
+            documentDialog.handleLockedNode("document_registerDoc_error_docLocked");
         }
         reloadDoc();
     }
@@ -2238,7 +2249,7 @@ public class MetadataBlockBean implements ClearStateListener {
         return propertySheet;
     }
 
-    public void setPropertySheet(UIPropertySheet propertySheet) throws IOException {
+    public void setPropertySheet(UIPropertySheet propertySheet) {
         if (propertySheetControlDocument != null && !propertySheetControlDocument.equals(document)) {
             propertySheet.getChildren().clear();
             propertySheetControlDocument = document;

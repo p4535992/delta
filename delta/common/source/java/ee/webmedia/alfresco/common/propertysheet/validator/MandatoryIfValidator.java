@@ -13,6 +13,7 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UISelectBoolean;
 import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
+import javax.faces.el.ValueBinding;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.FacesListener;
 import javax.faces.event.PhaseId;
@@ -20,12 +21,12 @@ import javax.faces.validator.ValidatorException;
 
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
 import org.alfresco.web.ui.common.Utils;
-import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
@@ -113,7 +114,23 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
         UIInput input = (UIInput) component;
 
         String[] expressions = null;
-        if (evaluationExpression.indexOf(',') > -1) {
+        if (StringUtils.startsWith(evaluationExpression, "#{") && StringUtils.endsWith(evaluationExpression, "}")) {
+            if (!isFilled(input)) {
+                ValueBinding vb = context.getApplication().createValueBinding(evaluationExpression);
+                boolean mandatory = (Boolean) vb.getValue(context);
+                if (mandatory) {
+                    FacesMessage facesMessage;
+                    if (StringUtils.isNotBlank(mandatoryIfLabelId)) {
+                        facesMessage = new FacesMessage(MessageUtil.getMessage(context, MESSAGE_ID, new MessageDataImpl(mandatoryIfLabelId)));
+                    } else {
+                        String label = ComponentUtil.getDisplayLabel(input);
+                        facesMessage = getErrorMessage(context, label);
+                    }
+                    handleValidationException(input, facesMessage, context);
+                }
+            }
+            return;
+        } else if (evaluationExpression.indexOf(',') > -1) {
             expressions = evaluationExpression.split(",");
         } else {
             expressions = new String[] { evaluationExpression };
@@ -155,17 +172,19 @@ public class MandatoryIfValidator extends ForcedMandatoryValidator implements St
         }
 
         if (evaluationExpression.indexOf('=') < 0 || StringUtils.isBlank(mandatoryIfLabelId)) {
-            String label = (String) input.getAttributes().get(ComponentUtil.ATTR_DISPLAY_LABEL);
-            if (label == null) {
-                UIProperty thisUIProperty = ComponentUtil.getAncestorComponent(component, UIProperty.class, true);
-                label = ComponentUtil.getPropertyLabel(thisUIProperty, component.getId());
-            }
-            String msg = MessageUtil.getMessage(context, MESSAGE_ID, label);
-            handleValidationException(input, new FacesMessage(msg), context);
+            FacesMessage facesMessage = getErrorMessage(context, ComponentUtil.getDisplayLabel(input));
+            handleValidationException(input, facesMessage, context);
         } else {
             final FacesMessage msg = new FacesMessage(MessageUtil.getMessage(context, mandatoryIfLabelId));
             handleValidationException(input, msg, context);
         }
+    }
+
+    private FacesMessage getErrorMessage(FacesContext context, String mandatoryComponentLabelTranslated) {
+        if (StringUtils.isBlank(mandatoryComponentLabelTranslated)) {
+            throw new IllegalStateException("Can't determine property label to be used in error message complaining that property is mandatory");
+        }
+        return new FacesMessage(MessageUtil.getMessage(context, MESSAGE_ID, mandatoryComponentLabelTranslated));
     }
 
     private void handleValidationException(UIInput input, FacesMessage facesMessage, FacesContext context) {

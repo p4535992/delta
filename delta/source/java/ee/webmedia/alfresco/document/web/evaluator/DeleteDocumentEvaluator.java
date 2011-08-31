@@ -17,9 +17,12 @@ public class DeleteDocumentEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node docNode) {
-        boolean isInViewState = new ViewStateActionEvaluator().evaluate(docNode);
-        return isInViewState && StringUtils.isBlank((String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER))
-                && docNode.hasPermission(DocumentCommonModel.Privileges.DELETE_DOCUMENT_META_DATA);
+        if (!new ViewStateActionEvaluator().evaluate(docNode)) {
+            return false;
+        }
+        boolean isAdminOrDocManager = new IsAdminOrDocManagerEvaluator().evaluate(docNode);
+        return isAdminOrDocManager || (StringUtils.isBlank((String) docNode.getProperties().get(DocumentCommonModel.Props.REG_NUMBER))
+                && docNode.hasPermission(DocumentCommonModel.Privileges.DELETE_DOCUMENT_META_DATA));
     }
 
 }

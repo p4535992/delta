@@ -53,5 +53,9 @@
          </list>
       </property>
    </bean>
+   
+   <bean class="ee.webmedia.alfresco.user.web.MyFavoritesMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+   </bean>
 
 </beans>

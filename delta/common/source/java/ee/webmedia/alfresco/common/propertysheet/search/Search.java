@@ -58,6 +58,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String ID_KEY = "id";
     public static final String STYLE_CLASS_KEY = "styleClass";
     public static final String AJAX_PARENT_LEVEL_KEY = "ajaxParentLevel";
+    /** method binding that can be used to add tooltip to rows added using search component */
+    public static final String ATTR_TOOLTIP_MB = "tooltip";
+    /** should delete(clear value) link be rendered when component is singlevalued (by default not rendered) */
+    public static final String ALLOW_CLEAR_SINGLE_VALUED = "allowClearSingleValued";
 
     @Override
     public String getFamily() {
@@ -106,6 +110,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
             } else {
                 ((UIComponent) getChildren().get(0)).getChildren().remove(0);
                 setValue(context, null);
+                invokeSetterCallbackIfNeeded(context, null); // so that if needed, related components could be updated
             }
         } else {
             super.broadcast(event);
@@ -119,7 +124,7 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         UIGenericPicker picker = (UIGenericPicker) context.getApplication().createComponent("org.alfresco.faces.GenericPicker");
         String id = (String) getAttributes().get(ID_KEY);
         FacesHelper.setupComponentId(context, picker, "picker_" + id);
-        picker.setShowFilter(getAttributes().containsKey(SHOW_FILTER_KEY) && Boolean.valueOf((String) getAttributes().get(SHOW_FILTER_KEY)));
+        picker.setShowFilter(isAttributeTrue(SHOW_FILTER_KEY));
         if (picker.getShowFilter()) {
             ValueBinding pickerV = context.getApplication().createValueBinding((String) getAttributes().get(FILTERS_KEY));
             picker.setValueBinding("filters", pickerV);
@@ -171,6 +176,10 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         }
         appendRow(context, value);
 
+        invokeSetterCallbackIfNeeded(context, value);
+    }
+
+    private void invokeSetterCallbackIfNeeded(FacesContext context, String value) {
         // Invoke setter callback if needed
         String setterCallback = getSetterCallback();
         if (StringUtils.isBlank(setterCallback)) {
@@ -238,7 +247,15 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         UIOutput component = (UIOutput) context.getApplication().createComponent(
                 isEditable() ? ComponentConstants.JAVAX_FACES_INPUT : ComponentConstants.JAVAX_FACES_OUTPUT);
         FacesHelper.setupComponentId(context, component, "picker_" + id + "row_" + getNextCounterValue());
-        setValueBinding(context, component, rowIndex);
+        ValueBinding vb = setValueBinding(context, component, rowIndex);
+        String tooltipVB = ComponentUtil.getAttribute(this, ATTR_TOOLTIP_MB, String.class);
+        if (StringUtils.isNotBlank(tooltipVB)) {
+            Object value = vb.getValue(context);
+            String tooltip = (String) context.getApplication().createMethodBinding(tooltipVB, new Class[] { Object.class }).invoke(context, new Object[] { value });
+            if (StringUtils.isNotBlank(tooltip)) {
+                ComponentUtil.putAttribute(component, "title", tooltip); // add tooltip
+            }
+        }
         ComponentUtil.createAndSetConverter(context, (String) getAttributes().get(CONVERTER_KEY), component);
         if (isDisabled()) {
             ComponentUtil.setDisabledAttributeRecursively(component);
@@ -269,10 +286,6 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         }
     }
 
-    private boolean isAllowDuplicates() {
-        return (Boolean) getAttributes().get(ALLOW_DUPLICATES_KEY);
-    }
-
     protected void removeRow(FacesContext context, int removeIndex) {
         List<?> list = getList(context);
         list.remove(removeIndex);
@@ -290,15 +303,15 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         }
     }
 
-    protected void setValueBinding(FacesContext context, UIComponent component, int rowIndex) {
+    protected ValueBinding setValueBinding(FacesContext context, UIComponent component, int rowIndex) {
         ValueBinding vb = createValueBinding(context, rowIndex);
         component.setValueBinding(VALUE_KEY, vb);
+        return vb;
     }
 
     protected ValueBinding createValueBinding(FacesContext context, int rowIndex) {
         String list = getValueBinding(VALUE_KEY).getExpressionString();
-        ValueBinding vb = context.getApplication().createValueBinding(list.substring(0, list.length() - 1) + (rowIndex >= 0 ? "[" + rowIndex + "]" : "") + "}");
-        return vb;
+        return context.getApplication().createValueBinding(list.substring(0, list.length() - 1) + (rowIndex >= 0 ? "[" + rowIndex + "]" : "") + "}");
     }
 
     protected Object getValue(FacesContext context) {
@@ -321,17 +334,18 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
         return list;
     }
 
-    private boolean setterCallbackTakesNode() {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> attributes = getAttributes();
-        final Boolean takesNode = (Boolean) attributes.get(Search.SETTER_CALLBACK_TAKES_NODE);
-        return takesNode == null ? false : takesNode;
-    }
-
     protected String getSetterCallback() {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = getAttributes();
         return (String) attributes.get(SETTER_CALLBACK);
+    }
+
+    private boolean setterCallbackTakesNode() {
+        return isAttributeTrue(Search.SETTER_CALLBACK_TAKES_NODE);
+    }
+
+    private boolean isAllowDuplicates() {
+        return isAttributeTrue(ALLOW_DUPLICATES_KEY);
     }
 
     protected boolean isDisabled() {
@@ -339,27 +353,28 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     }
 
     protected boolean isMultiValued() {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> attributes = getAttributes();
-        return attributes.containsKey(DATA_MULTI_VALUED) && (Boolean) attributes.get(DATA_MULTI_VALUED);
+        return isAttributeTrue(DATA_MULTI_VALUED);
     }
 
     protected boolean isMandatory() {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> attributes = getAttributes();
-        return attributes.containsKey("dataMandatory") && (Boolean) attributes.get("dataMandatory");
+        return isAttributeTrue("dataMandatory");
     }
 
     protected boolean isEmpty() {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> attributes = getAttributes();
-        return attributes.containsKey("empty") && (Boolean) attributes.get("empty");
+        return isAttributeTrue("empty");
     }
 
     protected boolean isEditable() {
-        @SuppressWarnings("unchecked")
-        Map<String, Object> attributes = getAttributes();
-        return attributes.containsKey("editable") && (Boolean) attributes.get("editable");
+        return isAttributeTrue("editable");
+    }
+
+    private boolean isAttributeTrue(String attributeName) {
+        Boolean val = (Boolean) ComponentUtil.getAttribute(this, attributeName);
+        return val != null && val;
+    }
+
+    protected boolean isRemoveLinkRendered() {
+        return !isDisabled() && (isMultiValued() || isAttributeTrue(ALLOW_CLEAR_SINGLE_VALUED));
     }
 
     private int getNextCounterValue() {

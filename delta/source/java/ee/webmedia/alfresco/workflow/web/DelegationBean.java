@@ -135,10 +135,10 @@ public class DelegationBean implements Serializable {
      * @return pair(delegatableTaskIndex, delegatableTask). delegatableTask == assignmentTask when task with the same noderef hasn't been added yet
      */
     public Pair<Integer, Task> initDelegatableTask(Task assignmentTask) {
-        NodeRef delegatableTaskRef = assignmentTask.getNode().getNodeRef();
+        NodeRef delegatableTaskRef = assignmentTask.getNodeRef();
         int delegatableTaskIndex = 0;
         for (Task t : delegatableTasks) {
-            if (delegatableTaskRef.equals(t.getNode().getNodeRef())) {
+            if (delegatableTaskRef.equals(t.getNodeRef())) {
                 // don't add new delegatable task if this is yet another clone of existing task or this method was called after update.
                 return new Pair<Integer, Task>(delegatableTaskIndex, t);
             }

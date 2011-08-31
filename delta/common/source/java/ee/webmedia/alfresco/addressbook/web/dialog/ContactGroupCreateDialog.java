@@ -12,7 +12,7 @@ public class ContactGroupCreateDialog extends ContactGroupBaseDialog {
 
     private static final long serialVersionUID = 1L;
 
-    private static final String MSG_BUTTON_NEW_GROUP = "new_group";
+    private static final String MSG_BUTTON_NEW_GROUP = "addressbook_contactgroup_create_title";
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {

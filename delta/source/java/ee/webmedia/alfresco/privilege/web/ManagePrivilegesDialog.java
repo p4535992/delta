@@ -73,7 +73,7 @@ import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
-import ee.webmedia.alfresco.utils.Transformer;
+import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -231,7 +231,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
                 } else {
                     missingPrivileges.addAll(requiredPrivileges);
                 }
-                LOG.debug("User " + userPrivileges.getUserName() + " is missing required privileges '" + missingPrivileges + "' for task " + task.getNode().getNodeRef());
+                LOG.debug("User " + userPrivileges.getUserName() + " is missing required privileges '" + missingPrivileges + "' for task " + task.getNodeRef());
                 missingPrivsByUser.put(userPrivileges.getUserName(), missingPrivileges);
             }
 
@@ -491,9 +491,9 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             FixedOrderComparator specialGroupsLastComp = new FixedOrderComparator(groupOrderLow);
             specialGroupsLastComp.setUnknownObjectBehavior(FixedOrderComparator.UNKNOWN_BEFORE);
 
-            Transformer<UserPrivilegesRow> privGroupTransformer = new Transformer<UserPrivilegesRow>() {
+            ComparableTransformer<UserPrivilegesRow> privGroupTransformer = new ComparableTransformer<UserPrivilegesRow>() {
                 @Override
-                public Object tr(UserPrivilegesRow input) {
+                public Comparable<?> tr(UserPrivilegesRow input) {
                     return groupNamesByCode.get(input.getCurrentGroup());
                 }
             };
@@ -504,9 +504,9 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             chain.addComparator(new TransformingComparator(privGroupTransformer, new NullComparator(specialGroupsLastComp)));
             chain.addComparator(new TransformingComparator(privGroupTransformer, new NullComparator(false)));
             // withing same group sort users by display name
-            chain.addComparator(new TransformingComparator(new Transformer<UserPrivilegesRow>() {
+            chain.addComparator(new TransformingComparator(new ComparableTransformer<UserPrivilegesRow>() {
                 @Override
-                public Object tr(UserPrivilegesRow input) {
+                public Comparable<?> tr(UserPrivilegesRow input) {
                     return input.getUserDisplayName();
                 }
             }, new NullComparator()));

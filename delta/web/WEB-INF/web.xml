@@ -48,6 +48,7 @@
          ,/WEB-INF/classes/ee/webmedia/alfresco/document/register/register-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/archivals/archivals-faces-config.xml
          ,/WEB-INF/classes/ee/webmedia/alfresco/common/propertysheet/common-propertysheet-sim-faces-config.xml
+         ,/WEB-INF/classes/ee/webmedia/alfresco/thesaurus/thesaurus-faces-config.xml
       </param-value>
    </context-param>
 

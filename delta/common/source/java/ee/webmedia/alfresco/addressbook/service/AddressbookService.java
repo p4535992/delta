@@ -14,7 +14,7 @@ import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
 /**
- * @author Keit Tehvan
+ * @author Keit Tehvan 29.09.2009
  */
 public interface AddressbookService {
 
@@ -75,6 +75,7 @@ public interface AddressbookService {
      * @param node - the transient node with set properties to create
      * @param parent - the parent nodeRef of the node to be created, can be null
      * @return the nodeRef of the newly created node
+     * @throws UnableToPerformException when contact group name exists
      */
     NodeRef addOrUpdateNode(Node node, NodeRef parent);
 

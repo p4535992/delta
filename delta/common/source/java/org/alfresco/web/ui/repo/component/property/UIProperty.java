@@ -112,6 +112,7 @@ public class UIProperty extends PropertySheetItem
             // warn the user that the property was not found anywhere
             if (missingPropsLogger.isWarnEnabled())
                missingPropsLogger.warn("Failed to find property '" + propertyName + "' for node: " + node.getNodeRefAsString());
+            setRendered(false);
          }
       }
       else
@@ -269,14 +270,4 @@ public class UIProperty extends PropertySheetItem
                       "' and added it to component " + this);
    }
    
-   /**
-    * Let subclasses override it
-    * @param context FacesContext
-    * @param generatorName The name of the component generator to retrieve
-    * @return component generated and optionally changed as well
-    * @author Ats Uiboupin
-    */
-   protected IComponentGenerator getComponentGenerator(FacesContext context, String componentGeneratorName) {
-       return FacesHelper.getComponentGenerator(context, componentGeneratorName);
-   }
 }

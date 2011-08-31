@@ -10,7 +10,6 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
 import org.alfresco.web.app.servlet.FacesHelper;
-import org.alfresco.web.bean.ajax.NavigatorPluginBean;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.renderer.BaseRenderer;
@@ -32,7 +31,6 @@ import ee.webmedia.alfresco.workflow.service.WorkflowService;
 public class MenuRenderer extends BaseRenderer {
 
     private static final String TREE_SCRIPTS_WRITTEN = "_alfTreeScripts";
-    private static final String AJAX_URL_START = "/ajax/invoke/" + NavigatorPluginBean.BEAN_NAME;
     public static final String SECONDARY_MENU_PREFIX = "sm";
     public static final String PRIMARY_MENU_PREFIX = "pm";
 
@@ -110,32 +108,6 @@ public class MenuRenderer extends BaseRenderer {
         Object present = requestMap.get(TREE_SCRIPTS_WRITTEN);
         ResponseWriter out = context.getResponseWriter();
         if (present == null) {
-            String reqPath = context.getExternalContext().getRequestContextPath();
-            out.write("<link rel=\"stylesheet\" href=\"");
-            out.write(reqPath);
-            out.write("/css/yahoo-tree.css\" type=\"text/css\">\n");
-
-            out.write("<script type=\"text/javascript\" src=\"");
-            out.write(reqPath);
-            out.write("/scripts/ajax/yahoo/treeview/treeview-min.js\"></script>\n");
-
-            out.write("<script type=\"text/javascript\" src=\"");
-            out.write(reqPath);
-            out.write("/scripts/ajax/yahoo-tree.js\"></script>\n");
-
-            out.write("<script type=\"text/javascript\">\n");
-            out.write("function treeNodeSelected(nodeRef) {\n");
-            out.write("var data = nodeRef.split('/');");
-            out.write("var store = data[2];");
-            out.write("var space = data[3];");
-            out.write("location.href = '" + reqPath + "/navigate/browse/workspace/'+ store +'/' + space;");
-            out.write("\n}\n");
-
-            out.write("setLoadDataUrl('" + AJAX_URL_START + ".retrieveNodeChildren?');\n");
-            out.write("setCollapseUrl('" + AJAX_URL_START + ".nodeCollapsed?');\n");
-            out.write("setNodeSelectedHandler('treeNodeSelected');\n");
-            out.write("</script>\n");
-
             if (!isScrollDisabled(context)) {
                 MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
 

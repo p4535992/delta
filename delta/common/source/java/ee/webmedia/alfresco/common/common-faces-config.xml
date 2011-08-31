@@ -16,6 +16,7 @@
    <lifecycle>
       <phase-listener>ee.webmedia.alfresco.common.listener.StatisticsPhaseListener</phase-listener>
       <phase-listener>ee.webmedia.alfresco.common.listener.RefreshInvokerPhaseListener</phase-listener>
+      <phase-listener>ee.webmedia.alfresco.common.listener.ExternalAccessPhaseListener</phase-listener>
    </lifecycle>
 
    <managed-bean>
@@ -106,6 +107,11 @@
       <converter-class>ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter</converter-class>
    </converter>
    
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.web.ConvertIntWithMsg</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.web.ConvertIntWithMsg</converter-class>
+   </converter>
+
    <component>
       <component-type>component.CustomSelectOneRadio</component-type>
       <component-class>ee.webmedia.alfresco.common.radio.UICustomSelectOneRadio</component-class>

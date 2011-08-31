@@ -48,7 +48,7 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
 
     protected Workflow copy(CompoundWorkflow copyParent) {
         // no need to copy newTaskTemplate, it is not changed ever
-        return copyImpl(new Workflow(getNode().copy(), copyParent, newTaskTemplate, newTaskClass, newTaskOutcomes));
+        return copyImpl(new Workflow(getNode().clone(), copyParent, newTaskTemplate, newTaskClass, newTaskOutcomes));
     }
 
     @Override
@@ -117,6 +117,18 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
             return false;
         }
         return parallelTasks;
+    }
+
+    public boolean isMandatory() {
+        Boolean mandatory = getProp(WorkflowCommonModel.Props.MANDATORY);
+        if (mandatory == null) {
+            return false;
+        }
+        return mandatory;
+    }
+
+    public void setMandatory(boolean mandatory) {
+        setProp(WorkflowCommonModel.Props.MANDATORY, mandatory);
     }
 
     public void setParallelTasks(boolean parallelTasks) {

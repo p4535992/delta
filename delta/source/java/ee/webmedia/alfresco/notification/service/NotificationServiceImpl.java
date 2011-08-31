@@ -195,8 +195,8 @@ public class NotificationServiceImpl implements NotificationService {
 
         LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<String, NodeRef>();
         templateDataNodeRefs.put(null, docRef);
-        templateDataNodeRefs.put("workflow", workflow.getNode().getNodeRef());
-        templateDataNodeRefs.put("compoundWorkflow", workflow.getParent().getNode().getNodeRef());
+        templateDataNodeRefs.put("workflow", workflow.getNodeRef());
+        templateDataNodeRefs.put("compoundWorkflow", workflow.getParent().getNodeRef());
 
         try {
             sendNotification(notification, docRef, templateDataNodeRefs);
@@ -439,7 +439,7 @@ public class NotificationServiceImpl implements NotificationService {
             List<Substitute> substitutes = substituteService.getSubstitutes(userService.getUser(task.getOwnerId()).getNodeRef());
             if (substitutes.size() > 0) {
                 if (!(task.getDueDate() == null && WorkflowSpecificModel.Types.INFORMATION_TASK.equals(task.getNode().getType()))) {
-                    int daysForSubstitutionTasksCalc = (int) (parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC) * 1);
+                    int daysForSubstitutionTasksCalc = parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC).intValue();
                     Calendar calendar = Calendar.getInstance();
                     Date now = new Date();
                     for (Substitute sub : substitutes) {
@@ -593,7 +593,7 @@ public class NotificationServiceImpl implements NotificationService {
         // co-responsible finished task
         if (StringUtils.isNotEmpty(task.getOwnerId()) && !task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE)) {
             for (Task workflowTask : workflow.getTasks()) {
-                final Serializable active = nodeService.getProperty(workflowTask.getNode().getNodeRef(), WorkflowSpecificModel.Props.ACTIVE); // responsible
+                final Serializable active = nodeService.getProperty(workflowTask.getNodeRef(), WorkflowSpecificModel.Props.ACTIVE); // responsible
                 // aspect
                 if (active != null && Boolean.valueOf(active.toString())) {
                     if (!isSubscribed(workflowTask.getOwnerId(), NotificationModel.NotificationType.TASK_ASSIGNMENT_TASK_COMPLETED_BY_CO_RESPONSIBLE)) {
@@ -721,7 +721,7 @@ public class NotificationServiceImpl implements NotificationService {
             notification.addRecipient(task.getOwnerName(), task.getOwnerEmail());
 
             Workflow workflow = task.getParent();
-            NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflow.getNode().getNodeRef())).getParentRef();
+            NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflow.getNodeRef())).getParentRef();
             NodeRef docRef = (nodeService.getPrimaryParent(compoundWorkflowRef)).getParentRef();
 
             try {
@@ -878,11 +878,11 @@ public class NotificationServiceImpl implements NotificationService {
     private LinkedHashMap<String, NodeRef> setupTemplateData(Task task) {
         LinkedHashMap<String, NodeRef> templateDataNodeRefs = new LinkedHashMap<String, NodeRef>();
         Workflow workflow = task.getParent();
-        NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflow.getNode().getNodeRef())).getParentRef();
+        NodeRef compoundWorkflowRef = (nodeService.getPrimaryParent(workflow.getNodeRef())).getParentRef();
         NodeRef docRef = (nodeService.getPrimaryParent(compoundWorkflowRef)).getParentRef();
         templateDataNodeRefs.put(null, docRef);
-        templateDataNodeRefs.put("task", task.getNode().getNodeRef());
-        templateDataNodeRefs.put("workflow", workflow.getNode().getNodeRef());
+        templateDataNodeRefs.put("task", task.getNodeRef());
+        templateDataNodeRefs.put("workflow", workflow.getNodeRef());
         templateDataNodeRefs.put("compoundWorkflow", compoundWorkflowRef);
 
         return templateDataNodeRefs;
@@ -894,6 +894,7 @@ public class NotificationServiceImpl implements NotificationService {
                         getContainedAuthorities(
                                 AuthorityType.USER,
                                 userService.getDocumentManagersGroup(), true);
+        // XXX: if no documentManagers set (could it happen in live environment?) then there will be exception when sending out notifications
         for (String documentManager : documentManagers) {
             String userName = authorityService.getShortName(documentManager);
             String userFullName = userService.getUserFullName(userName);

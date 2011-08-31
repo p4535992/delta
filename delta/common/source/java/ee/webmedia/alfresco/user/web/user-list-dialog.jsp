@@ -39,6 +39,15 @@
       <h:inputText id="search-text" styleClass="admin-user-search-input" value="#{UsersBeanProperties.searchCriteria}" size="35" maxlength="1024" />
       <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" style="margin-left: 5px;" />
       <h:commandButton value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" style="margin-left: 5px;"/>
+      <f:verbatim>
+      <script type="text/javascript">
+      	addSearchSuggest("dialog:dialog-body:search-text", "dialog:dialog-body:search-text", "UserListDialog.searchUsers", "<%=request.getContextPath()%>/ajax/invoke/AjaxSearchBean.invokeActionListener?actionListener=UserDetailsDialog.setupUser",
+      	   function() {
+      	      $jQ("#showUser").click();
+      	});
+      </script>
+      </f:verbatim>
+      <a:actionLink id="showUser" value="" action="dialog:userDetailsDialog" styleClass="hidden" />
    </a:panel>
    
    <%-- Spaces List --%>

@@ -11,6 +11,8 @@ import java.util.Set;
 
 import javax.faces.context.FacesContext;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
 import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
@@ -68,6 +70,8 @@ public interface GeneralService {
      * @throws RuntimeException if more than 1 node found
      */
     NodeRef getNodeRef(String nodeRefXPath, NodeRef root);
+
+    NodeRef getChildByAssocName(NodeRef parentRef, QName assocQName);
 
     ChildAssociationRef getLastChildAssocRef(String nodeRefXPath);
 
@@ -247,4 +251,14 @@ public interface GeneralService {
     void deleteNodeRefs(Collection<NodeRef> nodeRefs);
 
     NodeRef getParentNodeRefWithType(NodeRef childRef, QName parentType);
+
+    /**
+     * Perform work in a background thread. Background thread is created and started after current transaction commit successfully completes; if current transaction is rolled back,
+     * then work never executes. Work is executed as System user and in a separate transaction ({@link RetryingTransactionHelper} is used).
+     * 
+     * @param work work to execute in a background thread after current transaction commit completes
+     * @param threadName name to give the new thread that is created for executing work
+     */
+    void runOnBackground(final RunAsWork<Void> work, final String threadName);
+
 }

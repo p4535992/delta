@@ -130,9 +130,10 @@
          <show-property name="docspec:sellerPartyRegNumber" show-in-view-mode="false" styleClass="expand19-200 medium" forcedMandatory="true" display="inline" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:sellerPartySapAccount" show-in-view-mode="false" styleClass="expand19-200 medium" read-only="true" />
          <show-property name="{temp}invoiceSeller" show-in-edit-mode="false" display-label-id="document_invoiceSeller" />
-         <show-property name="docspec:sellerPartyContactName" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
-         <show-property name="docspec:sellerPartyContactPhoneNumber" styleClass="width250" display="inline" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
-         <show-property name="docspec:sellerPartyContactEmailAddress" styleClass="medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
+         <show-property name="docspec:sellerPartyContactName" show-in-view-mode="false" styleClass="expand19-200 medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
+         <show-property name="docspec:sellerPartyContactPhoneNumber" show-in-view-mode="false" styleClass="width250" display="inline" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
+         <show-property name="docspec:sellerPartyContactEmailAddress" show-in-view-mode="false" styleClass="medium" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}" />
+         <show-property name="{temp}invoiceSellerContact"  show-in-edit-mode="false" display-label-id="document_invoiceSellerContact" />
          <show-property name="{temp}invoiceNumberDate" show-in-edit-mode="false" display-label-id="document_invoiceNumberDate" />
          <show-property name="docspec:invoiceDate" component-generator="DatePickerGenerator" show-in-view-mode="false" display="inline" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>
          <show-property name="docspec:invoiceNumber" show-in-view-mode="false" styleClass="medium" forcedMandatory="true" readOnlyIf="#{DocumentDialog.isInvoiceXmlOrIsClosed}"/>

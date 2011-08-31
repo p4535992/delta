@@ -305,7 +305,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     /**
      * This method assumes that compound workflow has been validated
      */
-    public void continueValidatedWorkflow() {
+    public void continueValidatedWorkflow(ActionEvent event) {
         continueValidatedWorkflow(false);
     }
 
@@ -361,7 +361,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         log.debug("deleteWorkflow");
         try {
             removeEmptyTasks();
-            getWorkflowService().deleteCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
+            getWorkflowService().deleteCompoundWorkflow(compoundWorkflow.getNodeRef());
             resetState();
             MessageUtil.addInfoMessage("workflow_compound_delete_compound_success");
             return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
@@ -665,7 +665,9 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                         break;
                     }
                 }
-                regressionTest.checkDueDate(task);
+                if (!block.isParallelTasks()) {
+                    regressionTest.checkDueDate(task);
+                }
             }
             if (activeResponsibleAssigneeNeeded && !activeResponsibleAssigneeAssigned) {
                 missingOwnerAssignment = true;
@@ -798,8 +800,8 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
             }
         }
         List<String> errorMessageKeys = new ArrayList<String>();
-        Double totalSum = (Double) docProps.get(DocumentSpecificModel.Props.TOTAL_SUM);
-        EInvoiceUtil.checkTotalSum(errorMessageKeys, "workflow_start_failed_", totalSum, transactions, null);
+        Double totalSum = (Double) docProps.get(DocumentSpecificModel.Props.INVOICE_SUM);
+        EInvoiceUtil.checkTotalSum(errorMessageKeys, "workflow_start_failed_", totalSum, transactions, null, false);
         if (!errorMessageKeys.isEmpty()) {
             valid = false;
             for (String validationMsg : errorMessageKeys) {

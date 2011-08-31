@@ -6,8 +6,8 @@
 
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
-
 <a:booleanEvaluator id="workflowBlockEvaluator" value="#{DocumentDialog.meta.inEditMode == false}">
+   <h:panelGroup binding="#{DocumentDialog.modalContainer}" />
    <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/workflow/web/workflow-block.jsp" />
 </a:booleanEvaluator>
 <a:booleanEvaluator id="foundSimilarEvaluator" value="#{DocumentDialog.showFoundSimilar}">

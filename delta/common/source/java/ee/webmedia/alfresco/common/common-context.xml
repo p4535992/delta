@@ -7,6 +7,10 @@
    <bean id="sessionContext" class="ee.webmedia.alfresco.common.web.SessionContext" scope="session">
    
    </bean>
+
+   <bean class="ee.webmedia.alfresco.common.bootstrap.EhCacheJmxBootstrap">
+      <property name="cacheManager" ref="internalEHCacheManager" />
+   </bean>
    
    <!--
       Overrides 'global-properties' bean defined in
@@ -163,6 +167,7 @@
       <property name="fileFolderService" ref="FileFolderService" />
       <property name="contentService" ref="ContentService" />
       <property name="mimetypeService" ref="MimetypeService" />
+      <property name="transactionService" ref="TransactionService" />
    </bean>
    
    <bean id="GeneralService" class="org.springframework.aop.framework.ProxyFactoryBean">

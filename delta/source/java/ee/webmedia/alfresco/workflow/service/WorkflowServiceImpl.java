@@ -240,7 +240,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         WmNode node = getNode(nodeRef, WorkflowCommonModel.Types.COMPOUND_WORKFLOW, false, false);
         NodeRef parent = nodeService.getPrimaryParent(nodeRef).getParentRef();
         CompoundWorkflow compoundWorkflow = new CompoundWorkflow(node, parent);
-        getAndAddWorkflows(compoundWorkflow.getNode().getNodeRef(), compoundWorkflow, false);
+        getAndAddWorkflows(compoundWorkflow.getNodeRef(), compoundWorkflow, false);
         return compoundWorkflow;
     }
 
@@ -249,7 +249,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         List<CompoundWorkflow> compoundWorkflows = getCompoundWorkflows(compoundWorkflow.getParent());
         // remove current compound workflow
         for (Iterator<CompoundWorkflow> it = compoundWorkflows.iterator(); it.hasNext();) {
-            if (it.next().getNode().getNodeRef().equals(compoundWorkflow.getNode().getNodeRef())) {
+            if (it.next().getNodeRef().equals(compoundWorkflow.getNodeRef())) {
                 it.remove();
                 break;
             }
@@ -451,7 +451,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
 
         // also check repo status
-        CompoundWorkflowDefinition freshCompoundWorkflowDefinition = getCompoundWorkflowDefinition(compoundWorkflowDefinition.getNode().getNodeRef());
+        CompoundWorkflowDefinition freshCompoundWorkflowDefinition = getCompoundWorkflowDefinition(compoundWorkflowDefinition.getNodeRef());
         checkCompoundWorkflow(freshCompoundWorkflowDefinition, true, Status.NEW);
         // ignore events
         return freshCompoundWorkflowDefinition;
@@ -475,7 +475,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
 
         // also check repo status
-        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
+        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNodeRef());
         checkCompoundWorkflow(freshCompoundWorkflow);
         checkActiveResponsibleAssignmentTasks(freshCompoundWorkflow.getParent());
         handleEvents(queue);
@@ -514,7 +514,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
         // Remove workflows
         for (Workflow removedWorkflow : compoundWorkflow.getRemovedWorkflows()) {
-            NodeRef removedWorkflowNodeRef = removedWorkflow.getNode().getNodeRef();
+            NodeRef removedWorkflowNodeRef = removedWorkflow.getNodeRef();
             if (removedWorkflowNodeRef != null) {
                 checkWorkflow(getWorkflow(removedWorkflowNodeRef, compoundWorkflow, false), Status.NEW);
                 nodeService.deleteNode(removedWorkflowNodeRef);
@@ -529,7 +529,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             saveWorkflow(queue, workflow);
 
             // Update index
-            ChildAssociationRef childAssocRef = nodeService.getPrimaryParent(workflow.getNode().getNodeRef());
+            ChildAssociationRef childAssocRef = nodeService.getPrimaryParent(workflow.getNodeRef());
             if (childAssocRef.getNthSibling() != index) {
                 nodeService.setChildAssociationIndex(childAssocRef, index);
                 changed = true;
@@ -539,19 +539,22 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         // changing workflow may have changed other workflows of the document too,
         // so we need to save them also
         for (CompoundWorkflow otherCompoundWorkflow : compoundWorkflow.getOtherCompoundWorkflows()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Saving other compoundWorkflow attached to compoundWorkflow " + compoundWorkflow.getNode().getNodeRef() + ": " + otherCompoundWorkflow);
+            }
             saveCompoundWorkflow(queue, otherCompoundWorkflow, null);
-            CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(otherCompoundWorkflow.getNode().getNodeRef());
+            CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(otherCompoundWorkflow.getNodeRef());
             checkCompoundWorkflow(freshCompoundWorkflow);
         }
         return changed;
     }
 
     private boolean saveWorkflow(WorkflowEventQueue queue, Workflow workflow) {
-        boolean changed = createOrUpdate(queue, workflow, workflow.getParent().getNode().getNodeRef(), WorkflowCommonModel.Assocs.WORKFLOW);
+        boolean changed = createOrUpdate(queue, workflow, workflow.getParent().getNodeRef(), WorkflowCommonModel.Assocs.WORKFLOW);
 
         // Remove tasks
         for (Task removedTask : workflow.getRemovedTasks()) {
-            NodeRef removedTaskNodeRef = removedTask.getNode().getNodeRef();
+            NodeRef removedTaskNodeRef = removedTask.getNodeRef();
             if (removedTaskNodeRef != null) {
                 checkTask(getTask(removedTaskNodeRef, workflow, false), Status.NEW);
                 nodeService.deleteNode(removedTaskNodeRef);
@@ -566,7 +569,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             saveTask(queue, task);
 
             // Update index
-            ChildAssociationRef childAssocRef = nodeService.getPrimaryParent(task.getNode().getNodeRef());
+            ChildAssociationRef childAssocRef = nodeService.getPrimaryParent(task.getNodeRef());
             if (childAssocRef.getNthSibling() != index) {
                 nodeService.setChildAssociationIndex(childAssocRef, index);
                 changed = true;
@@ -701,7 +704,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private boolean saveTask(WorkflowEventQueue queue, Task task) {
-        return createOrUpdate(queue, task, task.getParent().getNode().getNodeRef(), WorkflowCommonModel.Assocs.TASK);
+        return createOrUpdate(queue, task, task.getParent().getNodeRef(), WorkflowCommonModel.Assocs.TASK);
     }
 
     @Override
@@ -730,7 +733,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         requireStatusUnchanged(taskOriginal);
 
         // operate on compoundWorkflow that was fetched fresh from repo
-        CompoundWorkflow compoundWorkflow = getCompoundWorkflow(taskOriginal.getParent().getParent().getNode().getNodeRef());
+        CompoundWorkflow compoundWorkflow = getCompoundWorkflow(taskOriginal.getParent().getParent().getNodeRef());
         // insert (possibly modified) task into compoundWorkflow from repo
         Task task = replaceTask(taskOriginal, compoundWorkflow);
 
@@ -768,12 +771,12 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         requireStatus(taskOriginal.getParent(), Status.IN_PROGRESS);
 
         // operate on compoundWorkflow that was fetched fresh from repo
-        NodeRef compoundWorkflowRef = nodeService.getPrimaryParent(taskOriginal.getParent().getNode().getNodeRef()).getParentRef();
+        NodeRef compoundWorkflowRef = nodeService.getPrimaryParent(taskOriginal.getParent().getNodeRef()).getParentRef();
         CompoundWorkflow compoundWorkflow = getCompoundWorkflow(compoundWorkflowRef);
 
         Task task = replaceTask(taskOriginal, compoundWorkflow);
         WorkflowEventQueue queue = getNewEventQueue();
-        queue.setParameter(WorkflowQueueParameter.EXTERNAL_REVIEWER_TRIGGERING_TASK, task.getNode().getNodeRef());
+        queue.setParameter(WorkflowQueueParameter.EXTERNAL_REVIEWER_TRIGGERING_TASK, task.getNodeRef());
 
         setTaskFinishedOrUnfinished(queue, task, Status.FINISHED, null, -1, false);
 
@@ -789,7 +792,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             log.debug("Saved " + compoundWorkflow);
         }
         // also check repo status
-        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
+        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNodeRef());
         checkCompoundWorkflow(freshCompoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
 
         checkActiveResponsibleAssignmentTasks(freshCompoundWorkflow.getParent());
@@ -803,7 +806,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             if (tasks != null && tasks.size() > 0) {
                 int i = 0;
                 for (; i < tasks.size(); i++) {
-                    if (tasks.get(i).getNode().getNodeRef().equals(replacementTask.getNode().getNodeRef())) {
+                    if (tasks.get(i).getNodeRef().equals(replacementTask.getNodeRef())) {
                         newTask = replacementTask.copy(workflow);
                         break;
                     }
@@ -833,7 +836,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         ensureNoTwoInProgressOrStoppedCWorkflowsWithMultipleWorkflows(compoundWorkflow);
         WorkflowEventQueue queue = getNewEventQueue();
         saveCompoundWorkflow(queue, compoundWorkflow);
-        return startCompoundWorkflow(queue, compoundWorkflow.getNode().getNodeRef());
+        return startCompoundWorkflow(queue, compoundWorkflow.getNodeRef());
     }
 
     @Override
@@ -854,7 +857,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
 
         // also check repo status
-        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
+        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNodeRef());
         checkCompoundWorkflow(freshCompoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
         checkActiveResponsibleAssignmentTasks(freshCompoundWorkflow.getParent());
         handleEvents(queue);
@@ -866,7 +869,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         CompoundWorkflow compoundWorkflow = compoundWorkflowOriginal.copy();
         WorkflowEventQueue queue = getNewEventQueue();
         saveCompoundWorkflow(queue, compoundWorkflow);
-        return finishCompoundWorkflow(queue, compoundWorkflow.getNode().getNodeRef());
+        return finishCompoundWorkflow(queue, compoundWorkflow.getNodeRef());
     }
 
     @Override
@@ -878,11 +881,11 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             for (Iterator<CompoundWorkflow> i = compoundWorkflows.iterator(); i.hasNext();) {
                 CompoundWorkflow compoundWorkflow = i.next();
                 if (compoundWorkflow.isStatus(Status.NEW)) {
-                    deleteCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
+                    deleteCompoundWorkflow(compoundWorkflow.getNodeRef());
                     i.remove();
                 } else {
                     List<NodeRef> excludedNodeRefs = getExcludedNodeRefsOnFinishWorkflows(compoundWorkflow);
-                    finishCompoundWorkflowInner(queue, compoundWorkflow.getNode().getNodeRef(), Status.UNFINISHED,
+                    finishCompoundWorkflowInner(queue, compoundWorkflow.getNodeRef(), Status.UNFINISHED,
                             "task_outcome_unfinished_by_registering_reply_letter", comment, true, excludedNodeRefs);
                 }
             }
@@ -927,9 +930,10 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
 
         // also check repo status
-        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
+        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNodeRef());
         if (!finishOnRegisterDocument && excludedNodeRefs == null) {
             checkCompoundWorkflow(freshCompoundWorkflow, Status.FINISHED);
+            // XXX FIXME TODO From Alar to Riina: why shouln't this check be performed also on else clause?
         }
         checkActiveResponsibleAssignmentTasks(freshCompoundWorkflow.getParent());
         return freshCompoundWorkflow;
@@ -945,7 +949,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             boolean finishOnRegisterDocument,
             List<NodeRef> excludedWorkflows) {
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-            if (excludedWorkflows != null && excludedWorkflows.contains(workflow.getNode().getNodeRef())) {
+            if (excludedWorkflows != null && excludedWorkflows.contains(workflow.getNodeRef())) {
                 continue;
             }
             if (isStatus(workflow, Status.NEW, Status.IN_PROGRESS)) {
@@ -974,7 +978,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         CompoundWorkflow compoundWorkflow = compoundWorkflowOriginal.copy();
         WorkflowEventQueue queue = getNewEventQueue();
         saveCompoundWorkflow(queue, compoundWorkflow);
-        return stopCompoundWorkflow(queue, compoundWorkflow.getNode().getNodeRef());
+        return stopCompoundWorkflow(queue, compoundWorkflow.getNodeRef());
     }
 
     @Override
@@ -1014,7 +1018,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
 
         // also check repo status
-        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
+        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNodeRef());
         checkCompoundWorkflow(freshCompoundWorkflow, Status.STOPPED, Status.FINISHED);
         checkActiveResponsibleAssignmentTasks(freshCompoundWorkflow.getParent());
         handleEvents(queue);
@@ -1027,7 +1031,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         ensureNoTwoInProgressOrStoppedCWorkflowsWithMultipleWorkflows(compoundWorkflow);
         WorkflowEventQueue queue = getNewEventQueue();
         saveCompoundWorkflow(queue, compoundWorkflow);
-        return continueCompoundWorkflow(queue, compoundWorkflow.getNode().getNodeRef());
+        return continueCompoundWorkflow(queue, compoundWorkflow.getNodeRef());
     }
 
     @Override
@@ -1069,7 +1073,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         }
 
         // also check repo status
-        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
+        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNodeRef());
         checkCompoundWorkflow(freshCompoundWorkflow, Status.IN_PROGRESS, Status.STOPPED, Status.FINISHED);
         checkActiveResponsibleAssignmentTasks(freshCompoundWorkflow.getParent());
         handleEvents(queue);
@@ -1116,7 +1120,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         if (!isStatus(compoundWorkflow, Status.FINISHED)) {
             saveCompoundWorkflow(queue, compoundWorkflow);
         }
-        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
+        CompoundWorkflow freshCompoundWorkflow = getCompoundWorkflow(compoundWorkflow.getNodeRef());
         checkCompoundWorkflow(freshCompoundWorkflow);
         checkActiveResponsibleAssignmentTasks(freshCompoundWorkflow.getParent());
         resetCompoundWorkflow(freshCompoundWorkflow);
@@ -1309,7 +1313,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private void requireValue(BaseWorkflowObject object, String objectValue, QName repoPropertyName, String... requiredValues) {
         String repoValue = null;
-        NodeRef nodeRef = object.getNode().getNodeRef();
+        NodeRef nodeRef = object.getNodeRef();
         if (nodeRef != null) {
             repoValue = (String) nodeService.getProperty(nodeRef, repoPropertyName);
         }
@@ -1585,8 +1589,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                         if (event.getType() == WorkflowEventType.STATUS_CHANGED && object instanceof Workflow
                                 && isStatus(object, Status.FINISHED)) {
                             if (log.isDebugEnabled()) {
-                                log.debug("Detected automatic start of workflow!\n  Finished workflow: " + object.getNode().getNodeRef()
-                                        + "\n  Started workflow: " + workflow.getNode().getNodeRef());
+                                log.debug("Detected automatic start of workflow!\n  Finished workflow: " + object.getNodeRef()
+                                        + "\n  Started workflow: " + workflow.getNodeRef());
                             }
                             queueEvent(queue, WorkflowEventType.WORKFLOW_STARTED_AUTOMATICALLY, workflow);
                             break;
@@ -1734,7 +1738,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                 && task.getProp(WorkflowSpecificModel.Props.ORIGINAL_DVK_ID) != null
                 && !task.isStatus(Status.IN_PROGRESS, Status.STOPPED)
                 && (originalStatus.equals(Status.IN_PROGRESS) || originalStatus.equals(Status.STOPPED))
-                && (!task.getNode().getNodeRef().equals(queue.getParameter(WorkflowQueueParameter.EXTERNAL_REVIEWER_TRIGGERING_TASK)));
+                && (!task.getNodeRef().equals(queue.getParameter(WorkflowQueueParameter.EXTERNAL_REVIEWER_TRIGGERING_TASK)));
     }
 
     private boolean stepAndCheck(WorkflowEventQueue queue, CompoundWorkflow compoundWorkflow, Status... requiredStatuses) {
@@ -1762,7 +1766,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     private void fireCreatedEvent(WorkflowEventQueue queue, BaseWorkflowObject object) {
-        if (object.getNode().getNodeRef() == null) {
+        if (object.getNodeRef() == null) {
             queueEvent(queue, WorkflowEventType.CREATED, object);
         }
     }
@@ -1816,7 +1820,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             if (isStatus(workflow, Status.NEW)) {
                 workflow.setStoppedDateTime(stoppedDateTime);
             }
-            boolean isParentWorkflow = parentWorkFlow.getNode().getNodeRef().equals(workflow.getNode().getNodeRef());
+            boolean isParentWorkflow = parentWorkFlow.getNodeRef().equals(workflow.getNodeRef());
             boolean forceStopParentWorkflow = false;
             for (Task aTask : workflow.getTasks()) {
                 boolean isReviewWorkflow = aTask.getParent().getNode().getType().equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW);
@@ -1830,7 +1834,7 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
                         setStatus(queue, aTask, Status.STOPPED);
                     }
                     // only stop parent if we have more than one task in the workflow
-                    if (isParentWorkflow && !aTask.getNode().getNodeRef().equals(task.getNode().getNodeRef())) {
+                    if (isParentWorkflow && !aTask.getNodeRef().equals(task.getNodeRef())) {
                         forceStopParentWorkflow = true;
                     }
                 }
@@ -1869,14 +1873,12 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private Set<QName> getDefaultAspects(QName className) {
         Set<QName> aspects = generalService.getDefaultAspects(className);
-        removeSystemAspects(aspects);
-        return aspects;
+        return RepoUtil.getAspectsIgnoringSystem(aspects);
     }
 
     private Set<QName> getNodeAspects(NodeRef nodeRef) {
         Set<QName> aspects = nodeService.getAspects(nodeRef);
-        removeSystemAspects(aspects);
-        return aspects;
+        return RepoUtil.getAspectsIgnoringSystem(aspects);
     }
 
     private Map<QName, Serializable> getDefaultProperties(QName className) {
@@ -1952,15 +1954,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     // ---
-
-    private void removeSystemAspects(Set<QName> aspects) {
-        for (Iterator<QName> i = aspects.iterator(); i.hasNext();) {
-            QName aspect = i.next();
-            if (RepoUtil.isSystemAspect(aspect)) {
-                i.remove();
-            }
-        }
-    }
 
     private Map<QName, Serializable> getSaveProperties(Map<QName, Serializable> props) {
         Map<QName, Serializable> filteredProps = RepoUtil.getPropertiesIgnoringSystem(props, dictionaryService);

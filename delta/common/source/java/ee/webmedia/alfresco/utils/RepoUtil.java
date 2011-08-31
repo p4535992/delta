@@ -1,11 +1,14 @@
 package ee.webmedia.alfresco.utils;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -20,9 +23,12 @@ import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.GUID;
 import org.alfresco.web.bean.repository.Node;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.service.IClonable;
@@ -35,10 +41,20 @@ import ee.webmedia.alfresco.document.service.DocumentPropertySets;
  */
 public class RepoUtil {
     public static final String TRANSIENT_PROPS_NAMESPACE = "temp";
+    private static final StoreRef NOT_SAVED_STORE = new StoreRef("NOT_SAVED", "NOT_SAVED");
 
     public static boolean isSystemProperty(QName propName) {
         return StringUtils.equals(TRANSIENT_PROPS_NAMESPACE, propName.getNamespaceURI())
                 || NamespaceService.SYSTEM_MODEL_1_0_URI.equals(propName.getNamespaceURI()) || ContentModel.PROP_NAME.equals(propName);
+    }
+
+    public static boolean isSystemAspect(QName aspectName) {
+        return StringUtils.equals(TRANSIENT_PROPS_NAMESPACE, aspectName.getNamespaceURI())
+                || NamespaceService.SYSTEM_MODEL_1_0_URI.equals(aspectName.getNamespaceURI());
+    }
+
+    public static QName createTransientProp(String localName) {
+        return QName.createQName(TRANSIENT_PROPS_NAMESPACE, localName);
     }
 
     /**
@@ -50,10 +66,6 @@ public class RepoUtil {
     public static boolean isExistingPropertyValueEqualTo(Node currentNode, final QName property, final Object equalityTestValue) {
         final Object realValue = currentNode.getProperties().get(property.toString());
         return equalityTestValue == null ? realValue == null : equalityTestValue.equals(realValue);
-    }
-
-    public static boolean isSystemAspect(QName aspectName) {
-        return ContentModel.ASPECT_REFERENCEABLE.equals(aspectName);
     }
 
     public static Map<QName, Serializable> copyProperties(Map<QName, Serializable> props) {
@@ -219,8 +231,15 @@ public class RepoUtil {
                 continue;
             }
             Serializable value = props.get(qName);
-            // check for empty strings when using number types, set to null in this case
-            if ((value != null) && (value instanceof String) && (value.toString().length() == 0)) {
+            if (value == null) {
+                // problem: when null is set as a value to multivalued property and stored to repository, then after loading back instead of null value is list containing null
+                // workaround: replace null values with empty list
+                PropertyDefinition propDef = dictionaryService.getProperty(qName);
+                if (propDef != null && propDef.isMultiValued()) {
+                    value = new ArrayList<Object>(0);
+                }
+            } else if (value instanceof String && (value.toString().length() == 0)) {
+                // check for empty strings when using number types, set to null in this case
                 PropertyDefinition propDef = dictionaryService.getProperty(qName);
                 if (propDef != null) {
                     if (propDef.getDataType().getName().equals(DataTypeDefinition.DOUBLE) ||
@@ -234,6 +253,61 @@ public class RepoUtil {
             filteredProps.put(qName, value);
         }
         return filteredProps;
+    }
+
+    public static boolean propsEqual(Map<String, Object> savedProps, Map<String, Object> unSavedPprops) {
+        Map<QName, Serializable> sP = RepoUtil.getPropertiesIgnoringSystem(RepoUtil.toQNameProperties(savedProps), getDictionaryService());
+        Map<QName, Serializable> uP = RepoUtil.getPropertiesIgnoringSystem(RepoUtil.toQNameProperties(unSavedPprops), getDictionaryService());
+        if (sP.size() != uP.size()) {
+            return false; // at least one field/fieldGroup/separatorLine is added or removed
+        }
+        Set<QName> unSavedQNames = uP.keySet();
+        Set<QName> savedQNames = sP.keySet();
+        if (!savedQNames.containsAll(unSavedQNames)) {
+            return false; // added props
+        }
+        if (!unSavedQNames.containsAll(savedQNames)) {
+            return false; // removed props
+        }
+        for (Entry<QName, Serializable> entry : sP.entrySet()) {
+            QName propName = entry.getKey();
+            Serializable sPValue = entry.getValue();
+            Serializable uPValue = uP.get(propName);
+            if (!ObjectUtils.equals(sPValue, uPValue)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static Set<QName> getAspectsIgnoringSystem(Set<QName> aspects) {
+        Set<QName> filteredAspects = new HashSet<QName>();
+        for (QName aspect : aspects) {
+            if (!isSystemAspect(aspect)) {
+                filteredAspects.add(aspect);
+            }
+        }
+        return filteredAspects;
+    }
+
+    public static boolean isSaved(Node node) {
+        return !isUnsaved(node);
+    }
+
+    public static boolean isUnsaved(Node node) {
+        return node == null ? true : isUnsaved(node.getNodeRef());
+    }
+
+    public static boolean isSaved(NodeRef nodeRef) {
+        return !isUnsaved(nodeRef);
+    }
+
+    public static boolean isUnsaved(NodeRef nodeRef) {
+        return nodeRef == null || NOT_SAVED_STORE.equals(nodeRef.getStoreRef());
+    }
+
+    public static NodeRef createNewUnsavedNodeRef() {
+        return new NodeRef(RepoUtil.NOT_SAVED_STORE, GUID.generate());
     }
 
 }

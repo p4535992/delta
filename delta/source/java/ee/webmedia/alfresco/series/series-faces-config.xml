@@ -34,14 +34,6 @@
       <managed-bean-class>ee.webmedia.alfresco.series.web.SeriesDetailsDialog</managed-bean-class>
       <managed-bean-scope>session</managed-bean-scope>
       <managed-property>
-         <property-name>seriesService</property-name>
-         <value>#{SeriesService}</value>
-      </managed-property>
-      <managed-property>
-         <property-name>menuService</property-name>
-         <value>#{MenuService}</value>
-      </managed-property>
-      <managed-property>
          <property-name>logBlockBean</property-name>
          <value>#{LogBlockBean}</value>
       </managed-property>

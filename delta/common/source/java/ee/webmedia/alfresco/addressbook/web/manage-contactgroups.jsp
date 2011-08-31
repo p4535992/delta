@@ -45,6 +45,6 @@
    <h:panelGroup style="position: absolute; left: -9000px;">
       <wm:search id="addressbook_add_to_group" value="#{AddressbookDialog.groupToAdd}" dataMultiValued="false" dataMandatory="true"
          pickerCallback="#{AddressbookDialog.searchContactGroups}" setterCallback="#{AddressbookDialog.addToContactGroup}"
-         dialogTitleId="usergroups_search_title" editable="false" readonly="true" ajaxParentLevel="2" />
+         dialogTitleId="contactgroups_search_title" editable="false" readonly="true" ajaxParentLevel="2" />
    </h:panelGroup>
 </a:panel>

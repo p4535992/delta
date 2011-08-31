@@ -28,6 +28,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
+import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.dialog.IDialogBean;
 import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
 import org.alfresco.web.config.WizardsConfigElement.WizardConfig;
@@ -288,7 +289,7 @@ public class MenuBean implements Serializable {
         final UIComponent link = event.getComponent();
         setLastLinkId(((UIActionLink) link).getId());
 
-        // NOTE: In XML nodes are referenced by xPath, but since all child association names are with the same (function, series etc)
+        // NOTE: In XML nodes are referenced by xPath, but since all child association names are with the same name(function, series etc)
         // Therefore items generated at runtime should be referenced by NodeRef
         if (link.getAttributes().get(DropdownMenuItem.ATTRIBUTE_NODEREF) != null) {
             linkNodeRef = (NodeRef) link.getAttributes().get(DropdownMenuItem.ATTRIBUTE_NODEREF);
@@ -356,6 +357,7 @@ public class MenuBean implements Serializable {
                 if (nodeRef == null) {
                     nodeRef = getGeneralService().getNodeRef(dropdownItem.getXPath());
                 }
+
                 if (item.getSubItems() == null) {
                     item.setSubItems(new ArrayList<MenuItem>());
                 }
@@ -438,6 +440,7 @@ public class MenuBean implements Serializable {
             log.debug("Fetching new menu structure from service.");
             reloadMenu(); // XXX - Somehow this makes it work... Although menu structure in service isn't modified.
             menu = getMenuService().getMenu();
+            getMenuService().process(menu, false, true);
             updateCount = getMenuService().getUpdateCount();
             if (lastLinkId != null && linkNodeRef != null) {
                 updateTree();
@@ -478,6 +481,12 @@ public class MenuBean implements Serializable {
         // Clear the view stack, otherwise it would grow too big as the cancel button is hidden in some views
         // Later in the life-cycle the view where this action came from is added to the stack, so visible cancel buttons will function properly
         Map<String, Object> sessionMap = context.getExternalContext().getSessionMap();
+        Stack<String> stack = (Stack<String>) sessionMap.get(UIMenuComponent.VIEW_STACK);// close all dialogs, when clearing stack
+        DialogManager dialogManager = org.alfresco.web.app.Application.getDialogManager();
+        while (stack != null && !stack.isEmpty()) {
+            stack.pop();
+            dialogManager.cancel();
+        }
         sessionMap.put(UIMenuComponent.VIEW_STACK, new Stack());
 
         MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
@@ -491,6 +500,13 @@ public class MenuBean implements Serializable {
     public void clearViewStack(ActionEvent event) {
         String primaryId = ActionUtil.getParam(event, "primaryId");
         clearViewStack(primaryId, null);
+    }
+
+    public void toggle(@SuppressWarnings("unused") ActionEvent event) {
+        MenuItem menuItem = getMenuItemFromShortcut(getShortcutFromClickedId(), getMenu());
+        if (menuItem instanceof DropdownMenuItem) {
+            ((DropdownMenuItem) menuItem).toggle();
+        }
     }
 
     public void reloadMenu() {

@@ -67,6 +67,30 @@
                <type>d:int</type>
                <default>0</default>
             </property>
+            <property name="ser:docNumberPattern">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <default>{S}/{DN}</default>
+            </property>
+            <property name="ser:newNumberForEveryDoc">
+               <type>d:boolean</type>
+            </property>
+            <property name="ser:validFromDate">
+               <type>d:date</type>
+            </property>
+            <property name="ser:validToDate">
+               <type>d:date</type>
+            </property>
+            <property name="ser:volType">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="ser:volRegister">
+               <type>d:int</type>
+            </property>
+            <property name="ser:volNumberPattern">
+               <type>d:text</type>
+            </property>
          </properties>
          <associations>
             <child-association name="vol:volume">

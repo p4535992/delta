@@ -131,11 +131,6 @@ public class UIDialogButtons extends SelfRenderingComponent
                "#{DialogManager.finish}", null);
          okButton.setAction(methodBinding);
          
-         // create the binding for whether the button is disabled
-         valueBinding = context.getApplication().createValueBinding(
-               "#{DialogManager.finishButtonDisabled}");
-         okButton.setValueBinding("disabled", valueBinding);
-         
          // setup CSS class for button
          String styleClass = (String)this.getAttributes().get("styleClass");
          styleClass = (styleClass == null) ? "dialog-button primary" : styleClass + " dialog-button primary";

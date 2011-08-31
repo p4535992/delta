@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.BeanFactoryAware;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
@@ -76,7 +78,9 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         List<Series> series = getAllSeriesByFunction(functionNodeRef);
         for (Iterator<Series> i = series.iterator(); i.hasNext();) {
             Series s = i.next();
-            if (!status.getValueName().equals(s.getStatus()) || (docTypeId != null && !s.getDocType().contains(docTypeId))) {
+            // XXX DLSeadist: allow all dyn doctypes for testing
+            if (!status.getValueName().equals(s.getStatus())
+                    || (docTypeId != null && !s.getDocType().contains(docTypeId) && !DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(docTypeId))) {
                 i.remove();
             }
         }
@@ -191,6 +195,7 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
         final String initialSeriesIdentifier = functionMark + "-";
         series.setSeriesIdentifier(initialSeriesIdentifier);
         series.setInitialSeriesIdentifier(initialSeriesIdentifier);
+        series.setValidFromDate(new Date());
         return series;
     }
 

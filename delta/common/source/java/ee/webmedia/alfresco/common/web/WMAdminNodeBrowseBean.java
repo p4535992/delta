@@ -1,28 +1,46 @@
 package ee.webmedia.alfresco.common.web;
 
+import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
 import javax.faces.model.DataModel;
 import javax.faces.model.ListDataModel;
 import javax.faces.model.SelectItem;
+import javax.servlet.http.HttpServletResponse;
 
+import org.alfresco.repo.content.MimetypeMap;
+import org.alfresco.repo.exporter.ACPExportPackageHandler;
 import org.alfresco.service.cmr.dictionary.AssociationDefinition;
 import org.alfresco.service.cmr.repository.AssociationRef;
+import org.alfresco.service.cmr.repository.MimetypeService;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.view.ExportPackageHandler;
+import org.alfresco.service.cmr.view.ExporterCrawlerParameters;
+import org.alfresco.service.cmr.view.Location;
+import org.alfresco.service.cmr.view.ReferenceType;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.util.ISO9075;
 import org.alfresco.web.bean.admin.AdminNodeBrowseBean;
+import org.alfresco.web.bean.repository.Repository;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 
 /**
  * @author Ats Uiboupin
  */
 public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(WMAdminNodeBrowseBean.class);
 
     private static final long serialVersionUID = -3757857288967828948L;
     private String targetRef;
@@ -132,6 +150,65 @@ public class WMAdminNodeBrowseBean extends AdminNodeBrowseBean {
             primaryPathShort = primaryPath;
         }
         return ISO9075.decode(primaryPathShort.toString());
+    }
+
+    public void export(@SuppressWarnings("unused") ActionEvent event) {
+        LOG.info("Node export started: " + getNodeRef());
+        HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
+        response.setCharacterEncoding(CHARSET);
+        OutputStream outputStream = null;
+        try {
+            String packageName = "export";
+            File dataFile = new File(packageName);
+            File contentDir = new File(packageName);
+
+            outputStream = getExportOutStream(response);
+            // setup an ACP Package Handler to export to an ACP file format
+            MimetypeService mimetypeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getMimetypeService();
+            ExportPackageHandler handler = new ACPExportPackageHandler(outputStream, dataFile, contentDir, mimetypeService);
+
+            // now export (note: we're not interested in progress in the example)
+            Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getExporterService().exportView(handler, getExportParameters(), null);
+
+            outputStream.flush();
+        } catch (IOException e) {
+            String msg = "Failed to export node: " + getNodeRef();
+            LOG.error(msg, e);
+            throw new RuntimeException(msg, e);
+        } finally {
+            IOUtils.closeQuietly(outputStream);
+            FacesContext.getCurrentInstance().responseComplete();
+
+            // Erko hack for incorrect view id in the next request
+            JspStateManagerImpl.ignoreCurrentViewSequenceHack();
+
+            LOG.info("Node export completed: " + getNodeRef());
+        }
+    }
+
+    private OutputStream getExportOutStream(HttpServletResponse response) throws IOException {
+        OutputStream outputStream;
+        response.setContentType(MimetypeMap.MIMETYPE_BINARY);
+        response.setHeader("Expires", "0");
+        response.setHeader("Cache-Control", "must-revalidate, post-check=0, pre-check=0");
+        response.setHeader("Pragma", "public");
+        response.setHeader("Content-disposition", "attachment;filename=export.acp");
+        outputStream = response.getOutputStream();
+        return outputStream;
+    }
+
+    private ExporterCrawlerParameters getExportParameters() {
+        ExporterCrawlerParameters parameters = new ExporterCrawlerParameters();
+        parameters.setReferenceType(ReferenceType.NODEREF);
+        parameters.setExportFrom(new Location(getNodeRef()));
+        parameters.setCrawlSelf(true);
+        return parameters;
+    }
+
+    public void delete(@SuppressWarnings("unused") ActionEvent event) {
+        LOG.info("Node delete started: " + getNodeRef());
+        getNodeService().deleteNode(getNodeRef());
+        setNodeRef(getPrimaryParent());
     }
 
 }

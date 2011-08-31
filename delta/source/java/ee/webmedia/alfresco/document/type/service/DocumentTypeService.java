@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.document.type.service;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -37,11 +36,11 @@ public interface DocumentTypeService {
     List<DocumentType> getAllDocumentTypes(boolean used);
 
     /**
-     * Update properties for document types. All properties except {@code id} and {@code name} are written.
+     * Update properties or save new document type.
      * 
-     * @param parameters - document types to be updated to the repository
+     * @param documentType - document type to be saved or updated to the repository
      */
-    void updateDocumentTypes(Collection<DocumentType> documentTypes);
+    void saveOrUpdateDocumentType(DocumentType documentType);
 
     /**
      * Returns DocumentType from repository
@@ -62,5 +61,7 @@ public interface DocumentTypeService {
     QName getIncomingLetterType();
 
     QName getOutgoingLetterType();
+
+    DocumentType createNewUnSavedDocumentType();
 
 }

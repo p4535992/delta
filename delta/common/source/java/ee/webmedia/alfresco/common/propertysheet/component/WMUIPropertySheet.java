@@ -6,8 +6,8 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
+import javax.faces.el.EvaluationException;
 import javax.faces.el.MethodBinding;
-import javax.faces.el.ReferenceSyntaxException;
 import javax.faces.el.ValueBinding;
 
 import org.alfresco.util.Pair;
@@ -78,7 +78,7 @@ public class WMUIPropertySheet extends UIPropertySheet {
                         MethodBinding mb = context.getApplication().createMethodBinding(show,
                                 new Class[] { UIPropertySheet.class });
                         showItem = (Boolean) mb.invoke(context, new Object[] { this });
-                    } catch (ReferenceSyntaxException e) {
+                    } catch (EvaluationException e) {
                         // ... if first method failed, try ValueBinding
                         ValueBinding vb = context.getApplication().createValueBinding(show);
                         showItem = (Boolean) vb.getValue(context);
@@ -114,7 +114,7 @@ public class WMUIPropertySheet extends UIPropertySheet {
                 id = ASSOC_ID_PREFIX + item.getName();
                 propSheetItem = (PropertySheetItem) context.getApplication().
                         createComponent(RepoConstants.ALFRESCO_FACES_CHILD_ASSOCIATION);
-            } else if (confVO.getConfigItemType().equals(ConfigItemType.SEPPARATOR)) {
+            } else if (confVO.getConfigItemType().equals(ConfigItemType.SEPARATOR)) {
                 id = SEP_ID_PREFIX + item.getName();
                 propSheetItem = (PropertySheetItem) context.getApplication().
                         createComponent(RepoConstants.ALFRESCO_FACES_SEPARATOR);

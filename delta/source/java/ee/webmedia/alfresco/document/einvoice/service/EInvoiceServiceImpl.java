@@ -250,14 +250,15 @@ public class EInvoiceServiceImpl implements EInvoiceService {
         if (buyerContactData != null) {
             String contactName = buyerContactData.getContactName();
             String contactCode = buyerContactData.getContactPersonCode();
+            Pair<String, String> firstNameLastName = UserUtil.splitFirstNameLastName(contactName);
             Map<QName, Serializable> userProps = null;
             if (StringUtils.isNotBlank(contactCode)) {
                 userProps = userService.getUserProperties(contactCode);
-                userService.setOwnerPropsFromUser(props, userProps);
-            }
-            if (userProps == null) {
-                Pair<String, String> firstNameLastName = UserUtil.splitFirstNameLastName(contactName);
-                if (firstNameLastName != null && firstNameLastName.getSecond() != null) {
+                if (UserUtil.hasSameName(firstNameLastName, userProps)) {
+                    userService.setOwnerPropsFromUser(props, userProps);
+                }
+            } else {
+                if (firstNameLastName != null && firstNameLastName.getFirst() != null && firstNameLastName.getSecond() != null) {
                     List<NodeRef> users = documentSearchService.searchUsersByFirstNameLastName(firstNameLastName.getFirst(), firstNameLastName.getSecond());
                     if (users.size() == 1) {
                         userProps = nodeService.getProperties(users.get(0));
@@ -309,12 +310,6 @@ public class EInvoiceServiceImpl implements EInvoiceService {
             LOG.debug("Dimensions found: " + dimensions);
         }
         return dimensions;
-    }
-
-    @Override
-    public boolean isEditableDimension(NodeRef nodeRef) {
-        ChildAssociationRef childAssoc = nodeService.getPrimaryParent(nodeRef);
-        return EInvoiceUtil.notImportedDimension.getDimensionName().equalsIgnoreCase(childAssoc.getQName().getLocalName());
     }
 
     @Override
@@ -574,6 +569,7 @@ public class EInvoiceServiceImpl implements EInvoiceService {
     public TransactionTemplate createTransactionTemplate(String templateName) {
         Map<QName, Serializable> properties = new HashMap<QName, Serializable>();
         properties.put(TransactionModel.Props.NAME, templateName);
+        properties.put(TransactionModel.Props.ACTIVE, Boolean.TRUE);
         NodeRef nodeRef = createTransactionTemplate(properties);
         WmNode node = new WmNode(nodeRef, TransactionModel.Types.TRANSACTION_TEMPLATE, RepoUtil.toStringProperties(nodeService.getProperties(nodeRef)),
                 new HashSet<QName>(
@@ -1132,9 +1128,6 @@ public class EInvoiceServiceImpl implements EInvoiceService {
      * no null check is performed if xsd states that element is required
      */
     private NodeRef updateDimensionValuesFromXml(Dimensions dimensions, Collection<XmlDimensionListsValueWrapper> xmlDimensionValues, String xmlDimensionId) {
-        if (EInvoiceUtil.notImportedDimension.equals(dimensions)) {
-            return null;
-        }
         NodeRef dimensionRef = getOrCreateDimension(dimensions, xmlDimensionId);
         final List<DimensionValue> dimensionValues = getAllDimensionValuesFromRepo(dimensionRef);
         // List xmlDimension values that already exist in application

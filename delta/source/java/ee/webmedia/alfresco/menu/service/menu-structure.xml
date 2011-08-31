@@ -54,10 +54,10 @@
                   <outcome>dialog:forRegisteringListDialog</outcome>
                    <action-listener>#{ForRegisteringListDialog.setup}</action-listener>
                </item>
-               <dropdown title-id="menu_received_documents" document-manager="true" expanded="true">
+               <dropdown title-id="menu_received_documents" expanded="true">
                   <submenu-id>received-documents-submenu</submenu-id>
                   <subitems>
-                     <item id="incomingEmails" title-id="menu_incoming_emails">
+                     <item id="incomingEmails" title-id="menu_incoming_emails" document-manager="true">
                         <outcome>dialog:incomingEmailListDialog</outcome>
                         <action-listener>#{IncomingEmailListDialog.setup}</action-listener>
                      </item>
@@ -65,23 +65,23 @@
                         <outcome>dialog:incomingEInvoiceListDialog</outcome>
                         <action-listener>#{IncomingEInvoiceListDialog.setup}</action-listener>
                      </item>                     
-                     <item id="emailAttachments" title-id="menu_email_attachments">
+                     <item id="emailAttachments" title-id="menu_email_attachments" document-manager="true">
                         <outcome>dialog:attachmentListDialog</outcome>
                          <action-listener>#{AttachmentListDialog.init}</action-listener>
                      </item>
-                     <item id="sentEmails" title-id="menu_sent_emails">
+                     <item id="sentEmails" title-id="menu_sent_emails" document-manager="true">
                         <outcome>dialog:sentEmailListDialog</outcome>
                         <action-listener>#{SentEmailListDialog.setup}</action-listener>
                      </item>
-                     <item id="dvkCorrupt" title-id="menu_dvk_error_messages">
+                     <item id="dvkCorrupt" title-id="menu_dvk_error_messages" document-manager="true">
                         <outcome>dialog:dvkCorruptListDialog</outcome>
                         <action-listener>#{DvkCorruptListDialog.init}</action-listener>
                      </item>
-                     <item id="scannedDocuments" title-id="menu_scanned_documents">
+                     <item id="scannedDocuments" title-id="menu_scanned_documents" document-manager="true">
                         <outcome>dialog:scannedFoldersListDialog</outcome>
                          <action-listener>#{ScannedFoldersListDialog.init}</action-listener>
                      </item>
-                     <item id="dvkDocuments" title-id="menu_dvk_documents">
+                     <item id="dvkDocuments" title-id="menu_dvk_documents" document-manager="true">
                         <outcome>dialog:dvkDocumentListDialog</outcome>
                         <action-listener>#{DvkDocumentListDialog.setup}</action-listener>
                      </item>
@@ -161,9 +161,12 @@
             <outcome>dialog:userConsole</outcome>
             <action-listener>#{UserDetailsDialog.setupCurrentUser}</action-listener>
          </item>
-         <item id="myFavourites" title-id="menu_my_favourites">
+         <dropdown id="myFavourites" title-id="menu_my_favourites" browse="true">
+            <!-- NB! typo here Favo***u***rites vs favorites -->
+            <submenu-id>myFavorites-submenu</submenu-id>
             <outcome>dialog:favoritesDocumentListDialog</outcome>
-         </item>
+            <action-listener>#{MenuBean.toggle}</action-listener>
+         </dropdown>
          <dropdown title-id="menu_settings" expanded="true">
             <submenu-id>settings-submenu</submenu-id>
             <subitems>
@@ -213,14 +216,24 @@
          <item id="templates" title-id="menu_templates" admin="true">
             <outcome>dialog:documentTemplateListDialog</outcome>
          </item>
-         <item id="documentTypeManagement" title-id="menu_document_types" admin="true">
+         <!-- FIXME DLSeadist -->
+         <item id="documentTypeManagementOld" title-id="menu_document_types" admin="true">
             <outcome>dialog:documentTypeDialog</outcome>
+         </item>
+         <item id="documentTypeManagement" title-id="menu_document_types" admin="true">
+            <outcome>dialog:docTypeListDialog</outcome>
+         </item>
+         <item id="documentTypeFields" title-id="menu_document_type_fields" admin="true">
+            <outcome>dialog:fieldDefinitionListDialog</outcome>
          </item>
          <item id="organizationStructure" title-id="menu_organization_structure" admin="true">
             <outcome>dialog:orgstructureListDialog</outcome>
          </item>
          <item id="importantNotifications" title-id="menu_important_notifications" admin="true">
             <outcome>dialog:notificationListDialog</outcome>
+         </item>
+         <item id="thesauri" title-id="menu_thesauri" admin="true">
+            <outcome>dialog:thesaurusListDialog</outcome>
          </item>
          <item id="systemInformation" title-id="menu_system_information" admin="true">
             <outcome>dialog:showSystemInfo</outcome>
@@ -230,7 +243,11 @@
          </item>
       </subitems>
    </item>
-
+<!--
+   <dropdown id="documentDynamicTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">
+      <submenu-id>new-document-dynamic-submenu</submenu-id>
+   </dropdown>
+-->
    <!-- ALUSTA UUT DOKUMENTI -->
    <dropdown id="documentTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">
       <child-filter>createDocument</child-filter>

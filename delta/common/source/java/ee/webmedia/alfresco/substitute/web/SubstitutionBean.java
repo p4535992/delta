@@ -101,13 +101,20 @@ public class SubstitutionBean implements Serializable {
         List<Substitute> substitutions = getSubstituteService().findActiveSubstitutionDuties(AuthenticationUtil.getRunAsUser());
         DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
         StringBuilder builder = new StringBuilder();
-        for (Substitute subs : substitutions) {
-            builder.append("<div class=\"message message-red\">");
+        for (int i = 0; i < substitutions.size(); i++) {
+            Substitute subs = substitutions.get(i);
+            if (i == 0) {
+                builder.append("<div class=\"message message-red\">");
+            }
             builder.append(MessageUtil.getMessage(FacesContext.getCurrentInstance(), "substitution_message",
                     getUserService().getUserFullName(subs.getReplacedPersonUserName()),
                     dateFormat.format(subs.getSubstitutionStartDate()),
                     dateFormat.format(subs.getSubstitutionEndDate())));
-            builder.append("</div>");
+            if (i != substitutions.size() - 1) {
+                builder.append("<br/>");
+            } else {
+                builder.append("</div>");
+            }
         }
         return builder.toString();
     }

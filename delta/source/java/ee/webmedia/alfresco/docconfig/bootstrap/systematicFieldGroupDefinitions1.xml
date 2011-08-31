@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
+<!--
+   Praeguse andmemudeli järgi on fieldDefinition tüübil järgmised väljad:
+
+   docadmin:fieldDefinitionIds - qname, multiple - siin peab alati olema väärtustatud!
+   docadmin:name - text - mandatory
+   docadmin:comment - text
+   docadmin:mandatoryForDoc - boolean - default puudub, järelikult false
+   docadmin:mandatoryForVol - boolean - default puudub, järelikult false
+   docadmin:defaultUserLoggedIn - boolean - default puudub, järelikult false
+   docadmin:systematic - boolean - default false - siin peab olema alati true!
+   docadmin:systematicComment - text
+   docadmin:removableFromSystemDocType - boolean - mandatory - default true
+   docadmin:readonlyFieldsName - text
+   docadmin:readonlyFieldsRule - text
+   docadmin:showInTwoColumns - boolean - default puudub, järelikult false
+   docadmin:thesaurus - text
+   docadmin:order - int - ei oma mõtet fieldGroupDefinition all, jätta alati ära
+-->
+
+   <docadmin:fieldGroup view:childName="docadmin:documentLocation"><!-- fieldGroup childName is not used anywhere, it is specified only for convenience -->
+      <view:properties>
+         <docadmin:name>Dokumendi asukoht</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}function</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}series</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}volume</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}case</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+</view:view>

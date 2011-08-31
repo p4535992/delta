@@ -66,7 +66,7 @@ public class WMPropertySheetElementReader extends PropertySheetElementReader {
         } else if (ELEMENT_SHOW_CHILD_ASSOC.equals(item.getName())) {
             configItemType = ConfigItemType.CHILD_ASSOC;
         } else if (ELEMENT_SEPARATOR.equals(item.getName())) {
-            configItemType = ConfigItemType.SEPPARATOR;
+            configItemType = ConfigItemType.SEPARATOR;
         } else if (ELEMENT_SUB_PROPERTY_SHEET.equals(item.getName())) {
             configItemType = ConfigItemType.SUB_PROPERTY_SHEET;
         } else {

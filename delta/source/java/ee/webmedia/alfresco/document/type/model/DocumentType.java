@@ -1,67 +1,89 @@
 package ee.webmedia.alfresco.document.type.model;
 
-import java.io.Serializable;
-
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
 
-import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
-import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
+import ee.webmedia.alfresco.common.model.NodeBaseVO;
+import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * @author Alar Kvell
+ * @author Ats Uiboupin
  */
-@AlfrescoModelType(uri = DocumentTypeModel.URI)
-public class DocumentType implements Serializable, Comparable<DocumentType> {
+public class DocumentType extends NodeBaseVO implements Comparable<DocumentType> {
     private static final long serialVersionUID = 1L;
+    private static final QName TMP_ID = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "id");
 
-    @AlfrescoModelProperty(isMappable = false)
-    private QName id;
+    public DocumentType(QName id, WmNode node) {
+        this.node = node;
+        setId(id);
+    }
 
-    private String name;
-    private boolean used;
-    private boolean publicAdr;
-    private String comment;
+    /**
+     * Constructs new unsaved DocumentType
+     * 
+     * @param node
+     */
+    public DocumentType(WmNode node) {
+        this(null, node);
+    }
 
     // START: getters / setters
     public QName getId() {
-        return id;
+        return getProp(DocumentTypeModel.Props.ID);
     }
 
     public void setId(QName id) {
-        this.id = id;
+        setProp(DocumentTypeModel.Props.ID, id);
+    }
+
+    public String getTmpId() {
+        return getProp(TMP_ID);
+    }
+
+    public void setTmpId(String tmpId) {
+        setProp(TMP_ID, tmpId);
     }
 
     public String getName() {
-        return name;
+        return getProp(DocumentTypeModel.Props.NAME);
     }
 
     public void setName(String name) {
-        this.name = name;
+        setProp(DocumentTypeModel.Props.NAME, name);
     }
 
     public boolean isUsed() {
-        return used;
+        return getPropBoolean(DocumentTypeModel.Props.USED);
     }
 
     public void setUsed(boolean used) {
-        this.used = used;
+        setProp(DocumentTypeModel.Props.USED, used);
     }
 
     public boolean isPublicAdr() {
-        return publicAdr;
+        return getPropBoolean(DocumentTypeModel.Props.PUBLIC_ADR);
     }
 
     public void setPublicAdr(boolean publicAdr) {
-        this.publicAdr = publicAdr;
+        setProp(DocumentTypeModel.Props.PUBLIC_ADR, publicAdr);
     }
 
     public String getComment() {
-        return comment;
+        return getProp(DocumentTypeModel.Props.COMMENT);
     }
 
     public void setComment(String comment) {
-        this.comment = comment;
+        setProp(DocumentTypeModel.Props.COMMENT, comment);
+    }
+
+    public String getSystematicComment() {
+        return getProp(DocumentTypeModel.Props.SYSTEMATIC_COMMENT);
+    }
+
+    public void setSystematicComment(String systematicComment) {
+        setProp(DocumentTypeModel.Props.SYSTEMATIC_COMMENT, systematicComment);
     }
 
     // END: getters / setters

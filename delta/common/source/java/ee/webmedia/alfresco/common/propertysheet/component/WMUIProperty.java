@@ -1,7 +1,6 @@
 package ee.webmedia.alfresco.common.propertysheet.component;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 import javax.faces.component.UIComponent;
@@ -9,13 +8,11 @@ import javax.faces.component.html.HtmlOutputText;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.web.app.servlet.FacesHelper;
-import org.alfresco.web.bean.generator.IComponentGenerator;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 
-import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.parameters.model.Parameters;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 
@@ -25,24 +22,12 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
  * 
  * @author Ats Uiboupin
  */
-public class WMUIProperty extends UIProperty implements CustomAttributes {
+public class WMUIProperty extends UIProperty {
 
     public static final String LABEL_STYLE_CLASS = "labelStyleClass";
     public static final String DISPLAY_LABEL_PARAMETER = "displayLabelParameter";
     public static final String REPO_NODE = "__repo_node";
     public static final String DONT_RENDER_IF_DISABLED_ATTR = "dontRenderIfDisabled";
-    protected Map<String, String> propertySheetItemAttributes;
-
-    @Override
-    protected IComponentGenerator getComponentGenerator(FacesContext context, String componentGeneratorName) {
-        IComponentGenerator compGenerator = FacesHelper.getComponentGenerator(context, componentGeneratorName);
-        // add all attributes from property-sheet/show-property element if current generator supports custom attributes
-        if (compGenerator instanceof CustomAttributes) {
-            CustomAttributes gen = (CustomAttributes) compGenerator;
-            gen.setCustomAttributes(propertySheetItemAttributes);
-        }
-        return compGenerator;
-    }
 
     @Override
     public boolean isRendered() {
@@ -66,26 +51,12 @@ public class WMUIProperty extends UIProperty implements CustomAttributes {
         }
         // --------------------------------------------------------
         if (getChildCount() >= 2) {
-            UIComponent child = (UIComponent) getChildren().get(1);
+            UIComponent child = getChildren().get(1);
             if (Boolean.TRUE.equals(child.getAttributes().get(DONT_RENDER_IF_DISABLED_ATTR)) && Utils.isComponentDisabledOrReadOnly(child)) {
                 return false;
             }
         }
         return super.isRendered();
-    }
-
-    // START: getters / setters
-    @Override
-    public Map<String, String> getCustomAttributes() {
-        if (propertySheetItemAttributes == null) {
-            propertySheetItemAttributes = new HashMap<String, String>(0);
-        }
-        return propertySheetItemAttributes;
-    }
-
-    @Override
-    public void setCustomAttributes(Map<String, String> propertySheetItemAttributes) {
-        this.propertySheetItemAttributes = propertySheetItemAttributes;
     }
 
     @Override
@@ -108,8 +79,6 @@ public class WMUIProperty extends UIProperty implements CustomAttributes {
         label.getAttributes().put("value", displayLabel);
         label.setStyleClass(getCustomAttributes().get(LABEL_STYLE_CLASS));
     }
-
-    // END: getters / setters
 
     @SuppressWarnings("unchecked")
     @Override

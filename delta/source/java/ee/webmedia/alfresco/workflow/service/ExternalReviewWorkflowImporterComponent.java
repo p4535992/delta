@@ -119,7 +119,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                     for (Task task : workflow.getTasks()) {
                         // compound workflow is created by other institution, delete it
                         if (task.getInstitutionCode().equalsIgnoreCase(currentInstitutionCode)) {
-                            compoundWorkflowsToRemove.add(compoundWorkflow.getNode().getNodeRef());
+                            compoundWorkflowsToRemove.add(compoundWorkflow.getNodeRef());
                         }
                     }
                 }
@@ -145,7 +145,7 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {
                 for (Task task : workflow.getTasks()) {
                     if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
-                        Map<QName, Serializable> taskOriginalProps = nodeService.getProperties(task.getNode().getNodeRef());
+                        Map<QName, Serializable> taskOriginalProps = nodeService.getProperties(task.getNodeRef());
                         Map<QName, Serializable> taskNewProps = new HashMap<QName, Serializable>();
                         if (!taskOriginalProps.containsKey(WorkflowSpecificModel.Props.SENT_DVK_ID)) {
                             taskNewProps.put(WorkflowSpecificModel.Props.SENT_DVK_ID, null);
@@ -306,7 +306,9 @@ public class ExternalReviewWorkflowImporterComponent extends ImporterComponent i
                     if (objVal instanceof String) {
                         importContent(nodeRef, property.getKey(), (String) objVal, filename);
                     } else if (objVal instanceof Collection) {
-                        for (String value : (Collection<String>) objVal) {
+                        @SuppressWarnings("unchecked")
+                        Collection<String> importContents = (Collection<String>) objVal;
+                        for (String value : importContents) {
                             importContent(nodeRef, property.getKey(), value, filename);
                         }
                     }

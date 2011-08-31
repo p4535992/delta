@@ -3,6 +3,8 @@ package ee.webmedia.alfresco.template.service;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.ServletContext;
+
 import org.alfresco.service.cmr.model.FileNotFoundException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
@@ -95,5 +97,7 @@ public interface DocumentTemplateService {
     NodeRef getSystemTemplateByName(String templateName);
 
     String getDocumentUrl(NodeRef document);
+
+    ServletContext getServletContext();
 
 }

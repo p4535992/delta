@@ -16,7 +16,6 @@ import org.apache.commons.logging.LogFactory;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.model.Dimension;
-import ee.webmedia.alfresco.document.einvoice.model.DimensionModel;
 import ee.webmedia.alfresco.document.einvoice.model.DimensionValue;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -32,7 +31,6 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
 
     private List<DimensionValue> dimensionValues;
     private Dimension selectedDimension;
-    private boolean isEditableDimension;
 
     public DimensionDetailsDialog() {
         UIContextService.getInstance(FacesContext.getCurrentInstance()).registerBean(this);
@@ -124,16 +122,7 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
      */
     public void select(ActionEvent event) {
         selectedDimension = new Dimension(new Node(new NodeRef(ActionUtil.getParam(event, "nodeRef"))));
-        isEditableDimension = BeanHelper.getEInvoiceService().isEditableDimension(selectedDimension.getNode().getNodeRef());
         loadDimensionValues();
-    }
-
-    public void addNewValue(ActionEvent event) {
-        dimensionValues.add(getNewUnsavedDimensionValue());
-    }
-
-    private DimensionValue getNewUnsavedDimensionValue() {
-        return new DimensionValue(BeanHelper.getGeneralService().createNewUnSaved(DimensionModel.Types.DIMENSION_VALUE, null));
     }
 
     @Override
@@ -172,10 +161,6 @@ public class DimensionDetailsDialog extends BaseDialogBean implements IContextLi
     @Override
     public Object getActionsContext() {
         return null;
-    }
-
-    public boolean isEditableDimension() {
-        return isEditableDimension;
     }
 
     public void setDimensionValuesInactive(javax.faces.event.ActionEvent event) {

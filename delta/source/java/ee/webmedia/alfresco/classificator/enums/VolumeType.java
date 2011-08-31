@@ -7,6 +7,7 @@ package ee.webmedia.alfresco.classificator.enums;
  */
 public enum VolumeType {
     YEAR_BASED("aastapõhine"),
+    CASE("asja"),
     OBJECT("objektipõhine");
 
     private String valueName;

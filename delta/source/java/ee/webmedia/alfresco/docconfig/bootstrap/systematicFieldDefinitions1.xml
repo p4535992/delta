@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
+<!--
+   Praeguse andmemudeli järgi on fieldDefinition tüübil järgmised väljad:
+
+   docadmin:fieldId - qname - mandatory, fieldDefinition view:childName peab olema sama väärtusega
+   docadmin:name - text - mandatory
+   docadmin:fieldType - text - mandatory
+   docadmin:comment - text
+   docadmin:mandatory - boolean - default puudub, järelikult false
+   docadmin:mandatoryForDoc - boolean - default puudub, järelikult false
+   docadmin:mandatoryForVol - boolean - default puudub, järelikult false
+   docadmin:changeableIf - text
+   docadmin:defaultValue - text
+   docadmin:classificator - text
+   docadmin:classificatorDefaultValue - text
+   docadmin:defaultDateSysdate - boolean - default puudub, järelikult false
+   docadmin:defaultUserLoggedIn - boolean - default puudub, järelikult false
+   docadmin:defaultSelected - boolean - default puudub, järelikult false
+   docadmin:onlyInGroup - boolean - default puudub, järelikult false
+   docadmin:systematic - boolean - default false - siin peab olema alati true!
+   docadmin:systematicComment - text
+   docadmin:removableFromSystemDocType - boolean - mandatory - default true - kui mandatoryForDoc=true, siis siin peab olema alati false!
+   docadmin:removableFromSystematicFieldGroup - boolean - default true - omab mõtet ainult siis kui field on fieldGroup/fieldGroupDefinition all
+   docadmin:isParameterInDocSearch - boolean - default puudub, järelikult false
+   docadmin:isParameterInVolSearch - boolean - default puudub, järelikult false
+   docadmin:isFixedParameterInDocSearch - boolean - default puudub, järelikult false
+   docadmin:isFixedParameterInVolSearch - boolean - default puudub, järelikult false
+   docadmin:parameterOrderInDocSearch - int
+   docadmin:parameterOrderInVolSearch - int
+   docadmin:docTypes - text, multiple
+   docadmin:volTypes - text, multiple
+   docadmin:order - int - ei oma mõtet fieldDefinition all, jätta alati ära
+-->
+
+   <docadmin:fieldDefinition view:childName="docdyn:docName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}docName</docadmin:fieldId>
+         <docadmin:name>Pealkiri</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:function">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}function</docadmin:fieldId>
+         <docadmin:name>Funktsioon</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+         <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:series">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}series</docadmin:fieldId>
+         <docadmin:name>Sari</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+         <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:volume">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}volume</docadmin:fieldId>
+         <docadmin:name>Toimik</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+         <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>false</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:case">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}case</docadmin:fieldId>
+         <docadmin:name>Asi</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+         <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>false</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+</view:view>

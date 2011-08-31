@@ -99,7 +99,7 @@ public class AssignmentWorkflowType extends BaseWorkflowType implements Workflow
                     for (Iterator<CompoundWorkflow> i = compoundWorkflows.iterator(); i.hasNext();) {
                         CompoundWorkflow compoundWorkflow = i.next();
                         if (compoundWorkflow.isStatus(Status.NEW)) {
-                            this.workflowService.deleteCompoundWorkflow(compoundWorkflow.getNode().getNodeRef());
+                            this.workflowService.deleteCompoundWorkflow(compoundWorkflow.getNodeRef());
                             i.remove();
                         } else {
                             List<NodeRef> excludedNodeRefs = getExcludedNodeRefsOnFinishWorkflows(compoundWorkflow);

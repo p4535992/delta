@@ -81,6 +81,8 @@ public class SearchGenerator extends BaseComponentGenerator {
         addValueFromCustomAttributes(Search.FILTERS_KEY, attributes);
         addValueFromCustomAttributes(Search.AJAX_PARENT_LEVEL_KEY, attributes, Integer.class);
         addValueFromCustomAttributes(Search.ALLOW_DUPLICATES_KEY, attributes, Boolean.class, true);
+        addValueFromCustomAttributes(Search.ATTR_TOOLTIP_MB, attributes);
+        addValueFromCustomAttributes(Search.ALLOW_CLEAR_SINGLE_VALUED, attributes, Boolean.class, false);
         setEditableAttribute(context, propertySheet, item, propertyDef, attributes);
     }
 

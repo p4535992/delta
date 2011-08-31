@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -10,6 +11,7 @@ import java.util.regex.Pattern;
 
 import javax.faces.model.SelectItem;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.util.HtmlUtils;
 
@@ -87,6 +89,20 @@ public class WebUtil {
         }
 
         return b.toString();
+    }
+
+    public static String getValuesAsJsArrayString(Collection<String> suggesterValues) {
+        final StringBuilder sb = new StringBuilder("[");
+        int i = 0;
+        for (String value : suggesterValues) {
+            final String escapedValue = StringEscapeUtils.escapeJavaScript(value);
+            sb.append("\"" + escapedValue + "\"");
+            if (i != suggesterValues.size() - 1) {
+                sb.append(", ");
+            }
+            i++;
+        }
+        return sb.append("]").toString();
     }
 
 }

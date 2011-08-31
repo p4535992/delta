@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.common.propertysheet.classificatorselector;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getNamespaceService;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -10,6 +12,8 @@ import javax.faces.component.UISelectItem;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.namespace.QName;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.StringUtils;
@@ -33,6 +37,7 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ClassificatorSelectorGenerator.class);
 
     public static final String ATTR_CLASSIFICATOR_NAME = "classificatorName";
+    public static final String ATTR_CLASSIFICATOR_PROP = "classificatorProp";
     public static final String ATTR_DESCRIPTION_AS_LABEL = "descriptionAsLabel";
 
     private transient ClassificatorService classificatorService;
@@ -45,14 +50,16 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
             return selectComponent;
         }
         // for debugging purpose in development
-        return ComponentUtil.setTooltip(selectComponent, MessageUtil.getMessage("classificator_source", getValueProviderName()));
+        return ComponentUtil.setTooltip(selectComponent, MessageUtil.getMessage("classificator_source", getValueProviderName(null)));
     }
 
     @Override
     protected List<UISelectItem> initializeSelectionItems(FacesContext context, UIPropertySheet propertySheet, PropertySheetItem item,
             PropertyDefinition propertyDef, UIInput component, Object boundValue, boolean multiValued) {
 
-        String valueProviderName = getValueProviderName();
+        // PropertySheet might be null if component has not been added to a PropertySheet yet
+        Node node = propertySheet == null ? null : propertySheet.getNode();
+        String valueProviderName = getValueProviderName(node);
         if (StringUtils.isBlank(valueProviderName)) {
             return null;
         }
@@ -84,10 +91,7 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
         }
 
         if (null == defaultOrExistingValue && isSingleValued) { // don't add default selection to multivalued component
-            UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-            selectItem.setItemLabel(MessageUtil.getMessage(context, "select_default_label"));
-            selectItem.setItemValue("");
-            results.add(0, selectItem);
+            addDefault(context, results);
         }
         return results;
     }
@@ -100,7 +104,19 @@ public class ClassificatorSelectorGenerator extends GeneralSelectorGenerator {
         return valueProviders;
     }
 
-    protected String getValueProviderName() {
+    /**
+     * @param node property sheet node (null when creating tooltip)
+     * @return classificator name that is used to generate select values (translated text pointing to field used as a source of classificator name)
+     */
+    protected String getValueProviderName(Node node) {
+        String classificatorProviderProp = getCustomAttributes().get(ATTR_CLASSIFICATOR_PROP);
+        if (StringUtils.isNotBlank(classificatorProviderProp)) {
+            QName propQName = QName.createQName(classificatorProviderProp, getNamespaceService());
+            if (node == null) {
+                return MessageUtil.getMessage("classificator_source_classificatorNameContainer", classificatorProviderProp);
+            }
+            return (String) node.getProperties().get(propQName);
+        }
         return getCustomAttributes().get(ATTR_CLASSIFICATOR_NAME);
     }
 

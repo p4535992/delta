@@ -15,6 +15,7 @@ import java.util.Set;
 
 import javax.faces.application.Application;
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
 import javax.faces.component.UIParameter;
 import javax.faces.component.html.HtmlCommandButton;
@@ -27,6 +28,7 @@ import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.el.MethodBinding;
 import javax.faces.event.ActionEvent;
+import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -67,7 +69,15 @@ import ee.webmedia.alfresco.utils.TextUtil;
 
 public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements Serializable {
 
+    private static final String ORIGINAL_TAX_OPTION_SEPARATOR = "¤";
+    private static final String INLINE_STYLE_DISPLAY_NONE = "display: none;";
+    private static final String TRANS_ROW_SUM_INPUT_CLASS = "trans-row-sum-input";
+    private static final String TRANS_ROW_VAT_CODE_INPUT_CLASS = "trans-row-vat-code-input";
+    private static final String TRANS_ROW_ENTRY_CONTENT_INPUT_CLASS = "trans-row-entry-content-input";
+    private static final String TRANS_MAIN_TABLE_CLASS = "trans-main-table";
     protected static final String TRANS_TEMPLATE_SELECTOR = "trans-template-selector";
+    protected static final String TRANS_TAX_CODE_SELECTOR = "trans-tax-code-selector";
+    protected static final String TRANS_TAX_ORIGINAL_INFO_SELECTOR = "trans-tax-original-info-selector";
     private static final String NO_OPTION_TITLE = "noOptionTitle";
 
     protected String getBeanName() {
@@ -99,6 +109,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
     private NodeRef taskPanelControlNodeRef;
     private TransactionTemplate transactionTemplate;
     private List<TransactionTemplate> transactionTemplates;
+    private List<SelectItem> taxOriginalInfoSelectItems = null;
 
     public void init(Node node) {
         reset();
@@ -172,6 +183,10 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
     }
 
     public boolean isShowTransactionTemplates() {
+        return false;
+    }
+
+    public boolean isManageTransactionTemplates() {
         return false;
     }
 
@@ -358,6 +373,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         transRowsMainGrid.setColumns(mainGridColumnCount);
         transRowsMainGrid.setCellpadding("0");
         transRowsMainGrid.setCellspacing("0");
+        transRowsMainGrid.setStyleClass(TRANS_MAIN_TABLE_CLASS);
         transRowsMainGrid.setWidth("100%");
 
         // custom attributes for rendering
@@ -368,6 +384,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         transRowsMainGrid.getAttributes().put(HtmlGridCustomChildAttrRenderer.CHILDREN_CLASSES_ATTR, childrenStyleClassAttribute);
         List<Pair<String, Pair<String, String>>> footerSums = new ArrayList<Pair<String, Pair<String, String>>>();
         transRowsMainGrid.getAttributes().put(HtmlGridCustomChildAttrRenderer.FOOTER_SUMS_ATTR, footerSums);
+        transRowsMainGrid.getAttributes().put(HtmlGridCustomChildAttrRenderer.FOOTER_ERROR_MESSAGES, getFooterMessages());
 
         transRowsScrollGroup.getChildren().add(transRowsMainGrid);
 
@@ -379,26 +396,32 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         final String rowClassesEvenValue = "trans-recordSetRow2,trans-subrow,"; // transaction list row and subrow classes
         final String rowClassesOddValue = "trans-recordSetRowAlt2,trans-subrowAlt,";
         Set<String> generalMandatoryFields = getMandatoryFields();
+        if (isSumCalculated()) {
+            addHiddenTaxCodePercentages(context, transExpandingGroup.getChildren());
+        }
         for (Transaction transaction : transactions) {
             Set<String> transMandatoryProps = getCostManagerMandatoryFields(transaction);
             transMandatoryProps.addAll(generalMandatoryFields);
             // First row inputs
             HtmlOutputLink outputLink = createOutputLink(application, transMainGridChildren, transRowCounter);
             childrenStyleClassAttribute.put(outputLink.getId(), "trans-toggle-subrow");
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS_CENTERS, TransactionModel.Props.FUNDS_CENTER, transRowCounter, "width180 ",
+            if (isSumCalculated()) {
+                addOriginalTaxInfo(transaction, transRowCounter);
+            }
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS_CENTERS, TransactionModel.Props.FUNDS_CENTER, transRowCounter, "width160 ",
                     transMandatoryProps);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COST_CENTERS, TransactionModel.Props.COST_CENTER, transRowCounter, "width120 ",
                     transMandatoryProps);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_FUNDS, TransactionModel.Props.FUND, transRowCounter, "width120 ",
                     transMandatoryProps);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.EA_COMMITMENT_ITEM, transRowCounter, "width180 ",
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.EA_COMMITMENT_ITEM, transRowCounter, "width120 ",
                     DimensionSelectorGenerator.getEAInclusivePredicate(), transMandatoryProps);
-            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.COMMITMENT_ITEM, transRowCounter, "width160 ",
+            addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_COMMITMENT_ITEM, TransactionModel.Props.COMMITMENT_ITEM, transRowCounter, "width190 ",
                     DimensionSelectorGenerator.getEAExclusivePredicate(), transMandatoryProps);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_INTERNAL_ORDERS, TransactionModel.Props.ORDER_NUMBER, transRowCounter, "width140 ",
                     transMandatoryProps);
             addDimensionSelector(context, transMainGridChildren, Dimensions.INVOICE_ASSET_INVENTORY_NUMBERS, TransactionModel.Props.ASSET_INVENTORY_NUMBER, transRowCounter,
-                    "width140 ", transMandatoryProps);
+                    "width120 ", transMandatoryProps);
             addDoubleInput(context, transMainGridChildren, transRowCounter, TransactionModel.Props.SUM_WITHOUT_VAT, childrenStyleClassAttribute,
                     transMandatoryProps);
             // actions
@@ -427,15 +450,15 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
                     transMandatoryProps);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_ACCOUNTS, TransactionModel.Props.ACCOUNT, transRowCounter, "width120 ",
                     transMandatoryProps);
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.TAX_CODE_ITEMS, TransactionModel.Props.INVOICE_TAX_CODE, transRowCounter, "width40 ",
-                    transMandatoryProps);
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.TAX_CODE_ITEMS, TransactionModel.Props.INVOICE_TAX_CODE,
+                    transRowCounter, "width40 " + TRANS_ROW_VAT_CODE_INPUT_CLASS, transMandatoryProps);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_TRADING_PARTNER_CODES, TransactionModel.Props.TRADING_PARTNER_CODE, transRowCounter,
                     "width80 ", transMandatoryProps);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_FUNCTIONAL_AREA_CODE, TransactionModel.Props.FUNCTIONAL_ARE_CODE, transRowCounter,
-                    "width180 ", transMandatoryProps);
+                    "width80 ", transMandatoryProps);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_CASH_FLOW_CODES, TransactionModel.Props.CASH_FLOW_CODE, transRowCounter, "width50 ",
                     transMandatoryProps);
-            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_SOURCE_CODES, TransactionModel.Props.SOURCE, transRowCounter, "width60 ",
+            addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_SOURCE_CODES, TransactionModel.Props.SOURCE, transRowCounter, "width40 ",
                     transMandatoryProps);
             addDimensionSelector(context, tranRowSecondaryGridChildren, Dimensions.INVOICE_PAYMENT_METHOD_CODES, TransactionModel.Props.PAYMENT_METHOD, transRowCounter,
                     "width40 ", transMandatoryProps);
@@ -458,12 +481,76 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             createAddTransLink(application, listId, transRowsMainGrid.getFacets());
         }
 
-        if (isShowTransactionTemplates()) {
+        if (isManageTransactionTemplates()) {
             addTemplateSaveAs(context, application, transactionPanel, listId);
         }
 
         return transRowsMainGrid;
 
+    }
+
+    private List<String> getFooterMessages() {
+        List<String> messages = new ArrayList<String>();
+        messages.add(MessageUtil.getMessage("transactions_footer_sum_error_message"));
+        messages.add(MessageUtil.getMessage("transactions_footer_vat_error_message"));
+        return messages;
+    }
+
+    protected void addOriginalTaxInfo(Transaction transaction, int transRowCounter) {
+        List<SelectItem> selectItems = getTaxOriginalInfoSelectItems();
+        Map<QName, Serializable> origProps = originalProperties.get(transaction.getNode().getNodeRef());
+        if (origProps != null) {
+            Serializable originalTaxCode = origProps.get(TransactionModel.Props.INVOICE_TAX_CODE);
+            Serializable originalTaxPercentage = origProps.get(TransactionModel.Props.INVOICE_TAX_PERCENT);
+            String originalTaxCodeStr = originalTaxCode != null ? originalTaxCode.toString() : "";
+            String originalTaxPercentageStr = originalTaxPercentage != null ? originalTaxPercentage.toString() : "";
+            selectItems.add(new SelectItem(String.valueOf(transRowCounter), originalTaxCodeStr + ORIGINAL_TAX_OPTION_SEPARATOR + originalTaxPercentageStr));
+        }
+    }
+
+    protected boolean isSumCalculated() {
+        return false;
+    }
+
+    protected void addHiddenTaxCodePercentages(FacesContext context, List siblings) {
+        GeneralSelectorGenerator selectorGenerator = new GeneralSelectorGenerator();
+        HtmlSelectOneMenu transTaxPercentageSelector = (HtmlSelectOneMenu) selectorGenerator.generateSelectComponent(context, TRANS_TAX_CODE_SELECTOR, false);
+        selectorGenerator.getCustomAttributes().put("selectionItems", "#{" + getBeanName() + ".getTaxCodeSelectItems}");
+        selectorGenerator.setupSelectComponent(context, null, null, null, transTaxPercentageSelector, false);
+        transTaxPercentageSelector.setStyle(INLINE_STYLE_DISPLAY_NONE);
+        transTaxPercentageSelector.setStyleClass(TRANS_TAX_CODE_SELECTOR);
+        siblings.add(transTaxPercentageSelector);
+        HtmlSelectOneMenu transOriginalTaxInfoSelector = (HtmlSelectOneMenu) selectorGenerator.generateSelectComponent(context, TRANS_TAX_ORIGINAL_INFO_SELECTOR, false);
+        selectorGenerator.getCustomAttributes().put("selectionItems", "#{" + getBeanName() + ".getTaxOriginalInfoSelectItems}");
+        selectorGenerator.setupSelectComponent(context, null, null, null, transOriginalTaxInfoSelector, false);
+        transOriginalTaxInfoSelector.setStyle(INLINE_STYLE_DISPLAY_NONE);
+        transOriginalTaxInfoSelector.setStyleClass(TRANS_TAX_ORIGINAL_INFO_SELECTOR);
+        siblings.add(transOriginalTaxInfoSelector);
+    }
+
+    public List<SelectItem> getTaxCodeSelectItems(FacesContext context, UIInput input) {
+        return getTaxCodeSelectItems();
+    }
+
+    private List<SelectItem> getTaxCodeSelectItems() {
+        List<DimensionValue> dimensionValues = BeanHelper.getEInvoiceService().getAllDimensionValuesFromCache(
+                BeanHelper.getEInvoiceService().getDimension(Dimensions.TAX_CODE_ITEMS));
+        List<SelectItem> selectItems = new ArrayList<SelectItem>();
+        for (DimensionValue dimensionValue : dimensionValues) {
+            selectItems.add(new SelectItem(dimensionValue.getValueName(), dimensionValue.getValue()));
+        }
+        return selectItems;
+    }
+
+    public List<SelectItem> getTaxOriginalInfoSelectItems(FacesContext context, UIInput input) {
+        return getTaxOriginalInfoSelectItems();
+    }
+
+    protected List<SelectItem> getTaxOriginalInfoSelectItems() {
+        if (taxOriginalInfoSelectItems == null) {
+            taxOriginalInfoSelectItems = new ArrayList<SelectItem>();
+        }
+        return taxOriginalInfoSelectItems;
     }
 
     @SuppressWarnings("unchecked")
@@ -485,7 +572,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         tranSaveAsTemplateGrid.getChildren().add(selectTemplatelabel);
 
         SuggesterGenerator suggesterGenerator = new SuggesterGenerator();
-        suggesterGenerator.getCustomAttributes().put("suggesterValues", "#{" + getBeanName() + ".getActiveTransactionTemplateNames}");
+        suggesterGenerator.getCustomAttributes().put(SuggesterGenerator.ComponentAttributeNames.SUGGESTER_VALUES, "#{" + getBeanName() + ".getActiveTransactionTemplateNames}");
         UIComponent suggester = suggesterGenerator.generate(context, SAVEAS_TEMPLATE_NAME);
         tranSaveAsTemplateGrid.getChildren().add(suggester);
 
@@ -538,7 +625,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
         HtmlCommandLink transTemplateSelectorHiddenLink = new HtmlCommandLink();
         transTemplateSelectorHiddenLink.setId(TRANS_COMPONENT_ID_PREFIX + "trans-select-template-link-" + listId);
         transTemplateSelectorHiddenLink.setActionListener(application.createMethodBinding("#{" + getBeanName() + ".copyFromTemplate}", new Class[] { ActionEvent.class }));
-        transTemplateSelectorHiddenLink.setStyle("display: none;");
+        transTemplateSelectorHiddenLink.setStyle(INLINE_STYLE_DISPLAY_NONE);
 
         transTemplateSelectGroup.getChildren().add(transTemplateSelectorHiddenLink);
 
@@ -652,17 +739,6 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
     }
 
     @SuppressWarnings("rawtypes")
-    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, Set<String> mandatoryProps) {
-        addDimensionSelector(context, siblings, dimensions, propName, transactionIndex, null, null, mandatoryProps);
-    }
-
-    @SuppressWarnings("rawtypes")
-    private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, Predicate filter,
-            Set<String> mandatoryProps) {
-        addDimensionSelector(context, siblings, dimensions, propName, transactionIndex, null, filter, mandatoryProps);
-    }
-
-    @SuppressWarnings("rawtypes")
     private void addDimensionSelector(FacesContext context, List siblings, Dimensions dimensions, QName propName, int transactionIndex, String styleClass,
             Set<String> mandatoryProps) {
         addDimensionSelector(context, siblings, dimensions, propName, transactionIndex, styleClass, null, mandatoryProps);
@@ -684,13 +760,14 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             dimensionGenerator.getCustomAttributes().put(ClassificatorSelectorGenerator.ATTR_DESCRIPTION_AS_LABEL, "true");
             dimensionGenerator.setSelectedValue((String) transactions.get(transactionIndex).getNode().getProperties().get(propName));
             dimensionSelector = dimensionGenerator.generateSelectComponent(context, null, false);
+            // The following line must execute before setupSelectComponent(), because the latter needs a value binding.
+            setIdAndValueBinding(context, transactionIndex, propName, dimensionSelector);
             dimensionGenerator.getCustomAttributes().put(DimensionSelectorGenerator.ATTR_DIMENSION_NAME, dimensions.getDimensionName());
             dimensionGenerator.setupSelectComponent(context, null, null, null, dimensionSelector, false);
             dimensionSelector.getAttributes().put(CustomAttributeNames.STYLE_CLASS, styleClass == null ? "width120 " + NO_OPTION_TITLE : styleClass + " " + NO_OPTION_TITLE);
 
             dimensionSelector.getAttributes().put("displayMandatoryMark", true);
 
-            setIdAndValueBinding(context, transactionIndex, propName, dimensionSelector);
             dimensionSelectorPanel.getChildren().add(dimensionSelector);
 
             if (isMandatory(propName, mandatoryProps)) {
@@ -707,7 +784,6 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             dimensionSelector.getAttributes().put("title", tooltip);
             siblings.add(dimensionSelector);
         }
-
     }
 
     @SuppressWarnings("unchecked")
@@ -746,7 +822,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             childrenStyleClassAttribute.put(doubleInput.getId(), "trans-align-right");
             siblings.add(doubleInput);
         }
-        doubleInput.getAttributes().put(CustomAttributeNames.STYLE_CLASS, "margin-left-4 width120");
+        doubleInput.getAttributes().put(CustomAttributeNames.STYLE_CLASS, "margin-left-4 width120 " + TRANS_ROW_SUM_INPUT_CLASS);
         doubleInput.getAttributes().put("style", "text-align: right");
 
     }
@@ -776,7 +852,7 @@ public class TransactionsTemplateDetailsDialog extends BaseDialogBean implements
             siblings.add(textareaInput);
         }
         setValueBinding(context, transactionIndex, propName, textareaInput);
-        textareaInput.getAttributes().put(CustomAttributeNames.STYLE_CLASS, "expand19-200 medium");
+        textareaInput.getAttributes().put(CustomAttributeNames.STYLE_CLASS, "expand19-200 medium " + TRANS_ROW_ENTRY_CONTENT_INPUT_CLASS);
     }
 
     private void setIdAndValueBinding(FacesContext context, int transactionIndex, QName propName, final UIComponent doubleInput) {

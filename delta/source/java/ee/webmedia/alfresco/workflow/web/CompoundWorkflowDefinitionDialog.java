@@ -679,7 +679,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
             }
 
             String blockStatus = block.getStatus();
-            if (fullAccess && Status.NEW.equals(blockStatus)) {
+            if (fullAccess && Status.NEW.equals(blockStatus) && !block.isMandatory()) {
                 // block remove workflow actions
                 HtmlPanelGroup deleteActions = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
                 deleteActions.setId("action-remove-" + wfCounter);
@@ -832,7 +832,7 @@ public class CompoundWorkflowDefinitionDialog extends BaseDialogBean {
     private void setPropsToTask(Workflow block, int index, String name, Serializable id, Serializable email, Serializable orgName, Serializable jobTitle) {
         Task task = block.getTasks().get(index);
         if (task.getNode().hasAspect(WorkflowSpecificModel.Aspects.RESPONSIBLE) && StringUtils.isNotBlank(task.getOwnerName())
-                && task.getNode().getNodeRef() != null && !(compoundWorkflow instanceof CompoundWorkflowDefinition) && !Status.NEW.equals(task.getStatus())) {
+                && task.getNodeRef() != null && !(compoundWorkflow instanceof CompoundWorkflowDefinition) && !Status.NEW.equals(task.getStatus())) {
             task = ((AssignmentWorkflow) block).addResponsibleTask();
         }
         setPropsToTask(task, name, id, email, orgName, jobTitle);

@@ -37,7 +37,7 @@ public class SpaceLinkGenerator extends BaseComponentGenerator {
 
         UIParameter param = (UIParameter) application.createComponent(UIParameter.COMPONENT_TYPE);
         param.setName("id");
-        param.setValue(new Node(spaceRef).getId());
+        param.setValue(spaceRef.getId());
 
         @SuppressWarnings("unchecked")
         List<UIComponent> children = link.getChildren();

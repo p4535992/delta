@@ -1,4 +1,5 @@
 $jQ(document).ready(function() {
+   setScreenProtected(true, "luuakse õiguste tabelit");
    $jQ("td.expanded, td.collapsed").each(function() {
       setVisibility($jQ(this));
    });
@@ -36,6 +37,7 @@ $jQ(document).ready(function() {
       if (updateHeaderCheckboxStateDisabled) {
          return;
       }
+      setScreenProtected(true, "uuendatakse õiguste tabelit - headerCheckBoxChanged");
       updateHeaderCheckboxStateDisabled = true;
       var originalCheckBox = this;
       var jqCheckBox = $jQ(originalCheckBox);
@@ -52,6 +54,7 @@ $jQ(document).ready(function() {
       });
       updateHeaderCheckboxStateDisabled = false;
       updateHeaderCheckboxState(false);
+      setScreenProtected(false);
    }
 
    var bodyCheckBoxes = $jQ("td input[type='checkbox']:enabled", privilegesTable).filter(function(index) {
@@ -110,7 +113,7 @@ $jQ(document).ready(function() {
    // confirm removing
    prependOnclick($jQ(".deletePerson,.deleteGroup"), function(e) {
       var userOrGroup = $jQ(e).closest('tr').children().eq(1).text();
-      return confirm(confirmMsg.replace('{0}', userOrGroup));
+      return confirmWithPlaceholders(confirmMsg, userOrGroup);
    });
 
    // START: update header checkboxes of all groups
@@ -177,4 +180,5 @@ $jQ(document).ready(function() {
    bindOnChangeUpdateHeaderCheckboxState($jQ("tbody.groupless input[type='checkbox']"));
    // END: update header checkboxes of all groups
 
+   setScreenProtected(false);
 });

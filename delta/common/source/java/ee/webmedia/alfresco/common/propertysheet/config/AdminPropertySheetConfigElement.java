@@ -25,7 +25,7 @@ public class AdminPropertySheetConfigElement extends WMPropertySheetConfigElemen
     }
 
     @Override
-    protected void addItem(ItemConfigVO itemConfig) {
+    public void addItem(ItemConfigVO itemConfig) {
         addItemInternal(itemConfig);
     }
 

@@ -329,7 +329,7 @@ public class WorkflowUtil {
     }
 
     public static boolean isStatusChanged(BaseWorkflowObject object) {
-        if (object.getNode().getNodeRef() != null && object.isChangedProperty(WorkflowCommonModel.Props.STATUS)) {
+        if (object.getNodeRef() != null && object.isChangedProperty(WorkflowCommonModel.Props.STATUS)) {
             return true;
         }
         if (object instanceof CompoundWorkflow) {
@@ -430,7 +430,7 @@ public class WorkflowUtil {
         List<NodeRef> excludedNodeRefs = new ArrayList<NodeRef>();
         for (Workflow workflow : compoundWorkflow.getWorkflows()) {
             if (WorkflowSpecificModel.Types.INFORMATION_WORKFLOW.equals(workflow.getNode().getType())) {
-                excludedNodeRefs.add(workflow.getNode().getNodeRef());
+                excludedNodeRefs.add(workflow.getNodeRef());
             }
         }
         return excludedNodeRefs;
@@ -484,11 +484,11 @@ public class WorkflowUtil {
     public static Task createTaskCopy(Task myTask) {
         Workflow workflow = myTask.getParent();
         CompoundWorkflow cWorkflowCopy = workflow.getParent().copy();
-        NodeRef myTaskRef = myTask.getNode().getNodeRef();
+        NodeRef myTaskRef = myTask.getNodeRef();
         for (Workflow wf : cWorkflowCopy.getWorkflows()) {
-            if (wf.getNode().getNodeRef().equals(workflow.getNode().getNodeRef())) {
+            if (wf.getNodeRef().equals(workflow.getNodeRef())) {
                 for (Task task : wf.getTasks()) {
-                    if (myTaskRef.equals(task.getNode().getNodeRef())) {
+                    if (myTaskRef.equals(task.getNodeRef())) {
                         return task;
                     }
                 }

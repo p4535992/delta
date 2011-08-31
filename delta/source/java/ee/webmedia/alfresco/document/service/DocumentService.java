@@ -236,6 +236,8 @@ public interface DocumentService {
      */
     Node getVolumeByDocument(NodeRef nodeRef);
 
+    Node getVolumeByDocument(NodeRef docRef, Node caseNode);
+
     Node getCaseByDocument(NodeRef nodeRef);
 
     /**
@@ -250,6 +252,8 @@ public interface DocumentService {
     DocumentParentNodesVO getAncestorNodesByDocument(NodeRef nodeRef);
 
     void registerDocumentIfNotRegistered(NodeRef document, boolean logging);
+
+    void registerDocumentRelocating(Node docNode);
 
     /**
      * @param documentNode
@@ -390,15 +394,29 @@ public interface DocumentService {
 
     SignatureDigest prepareDocumentDigest(NodeRef document, String certHex) throws SignatureException;
 
-    List<Document> getFavorites();
+    /**
+     * Returns a List with favorite documents, associated with favorite directory or with user directly(if parameter is null).
+     * 
+     * @param containerNodeRef
+     * @return
+     */
+    List<Document> getFavorites(NodeRef containerNodeRef);
 
-    boolean isFavorite(NodeRef document);
+    /**
+     * Returns a pair where first boolean value indicates if given document is favorite for currently authenticated user. Second value contains source NodeRef of the association.
+     * 
+     * @param document document to check
+     * @return
+     */
+    NodeRef isFavorite(NodeRef document);
 
     boolean isFavoriteAddable(NodeRef document);
 
     void addFavorite(NodeRef document);
 
-    void removeFavorite(NodeRef document);
+    void addFavorite(NodeRef document, String favDirName);
+
+    void removeFavorite(NodeRef nodeRef);
 
     List<Document> processExtendedSearchResults(List<Document> documents, Node filter);
 
@@ -451,5 +469,13 @@ public interface DocumentService {
     Set<String> addPrivilegesBasedOnSeries(NodeRef docRef, Map<String, Object> docProps, NodeRef parentRef);
 
     Pair<Set<String> /* users */, Set<String> /* groups */> getSeriesAuthorities(NodeRef seriesRef);
+
+    List<String> getFavoriteDirectoryNames();
+
+    List<Document> getIncomingEInvoicesForUser(String userFullName);
+
+    int getUserDocumentFromIncomingInvoiceCount(String userFullName);
+
+    boolean isReplyOrFollowupDoc(final NodeRef docRef, List<AssociationRef> replyAssocs);
 
 }

@@ -1,6 +1,7 @@
 package ee.webmedia.alfresco.series.model;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
@@ -37,6 +38,10 @@ public class Series implements Serializable, Comparable<Series> {
     public void setType(String type) {
         node.getProperties().put(SeriesModel.Props.TYPE.toString(), type);
         this.type = type;
+    }
+
+    public void setValidFromDate(Date validFrom) {
+        node.getProperties().put(SeriesModel.Props.VALID_FROM_DATE.toString(), validFrom);
     }
 
     public String getSeriesIdentifier() {

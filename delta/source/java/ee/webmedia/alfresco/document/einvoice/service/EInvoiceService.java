@@ -125,8 +125,6 @@ public interface EInvoiceService {
 
     List<String> getAccountantMandatoryFields();
 
-    boolean isEditableDimension(NodeRef nodeRef);
-
     void deleteTransactionTemplate(NodeRef transactionTemplateRef);
 
     List<TransactionTemplate> getAllTransactionTemplates();

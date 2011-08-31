@@ -213,11 +213,9 @@
                 </property>
             </bean>
         </property>
-        <!-- enable this to activate bean
         <property name="scheduler">
             <ref bean="schedulerFactory" />
         </property>
-        -->
         <!-- start after an hour and repeat hourly -->
         <property name="startDelayMinutes">
             <value>60</value>

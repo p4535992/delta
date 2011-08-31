@@ -39,6 +39,8 @@ public interface MenuService {
      */
     void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce);
 
+    void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce, boolean sessionScope);
+
     void setCountHandler(String menuItemId, MenuItemCountHandler countHandler);
 
     MenuItemCountHandler getCountHandler(String menuItemId);
@@ -101,5 +103,7 @@ public interface MenuService {
     void removeShortcut(String shortcut);
 
     Map<String, MenuItemFilter> getMenuItemFilters();
+
+    void process(Menu loadedMenu, boolean reloaded, boolean sessionScope);
 
 }

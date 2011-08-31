@@ -261,6 +261,7 @@
       </managed-property>
    </managed-bean>
 
+   <!-- FIXME DLSeadist vana bean'i def -->
    <managed-bean>
       <managed-bean-name>DocumentTypeDialog</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.document.type.web.DocumentTypeDialog</managed-bean-class>
@@ -270,6 +271,7 @@
          <value>#{DocumentTypeService}</value>
       </managed-property>
    </managed-bean>
+
 
    <managed-bean>
       <managed-bean-name>DocumentSendOutDialog</managed-bean-name>

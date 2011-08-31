@@ -109,6 +109,7 @@ import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.classificator.enums.LeaveType;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.bootstrap.DocumentPrivilegesUpdater;
@@ -133,6 +134,7 @@ import ee.webmedia.alfresco.document.type.service.DocumentTypeHelper;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.functions.model.FunctionsModel;
 import ee.webmedia.alfresco.imap.model.ImapModel;
+import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.privilege.model.PrivilegeMappings;
 import ee.webmedia.alfresco.privilege.model.PrivilegeModel;
 import ee.webmedia.alfresco.privilege.model.UserPrivileges;
@@ -183,6 +185,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     private ContentService contentService;
     private FileService fileService;
     private SignatureService signatureService;
+    private MenuService menuService;
     private WorkflowService workflowService;
     private DocumentLogService documentLogService;
     private PrivilegeService privilegeService;
@@ -257,6 +260,10 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         // Add document type id. Now it's possible to modify props by doc type
         aspects.add(documentTypeId);
 
+        // TODO DLSeadist: not declaring doccom:common as mandatory aspect in documentCommonModel; but adding it to created docs programmatically here
+        aspects.addAll(generalService.getDefaultAspects(DocumentCommonModel.Aspects.COMMON));
+        aspects.add(DocumentCommonModel.Aspects.COMMON);
+
         for (QName docAspect : aspects) {
             callbackAspectProperiesModifier(docAspect, properties);
         }
@@ -281,6 +288,8 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     private NodeRef createDocumentNode(QName documentTypeId, NodeRef parentRef, Map<QName, Serializable> properties) {
         NodeRef document = nodeService.createNode(parentRef, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT //
                 , documentTypeId, properties).getChildRef();
+        // TODO DLSeadist: not declaring doccom:common as mandatory aspect in documentCommonModel; but adding it to created docs programmatically here
+        nodeService.addAspect(document, DocumentCommonModel.Aspects.COMMON, null);
         updateParentNodesContainingDocsCount(document, true);
         permissionService.setInheritParentPermissions(document, false);
         return document;
@@ -519,10 +528,10 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
         makeChildNodesSearchable(docNodeRef);
 
-        // If accessRestriction changes from OPEN/AK to INTERNAL
-        if (AccessRestriction.INTERNAL.equals((String) docProps.get(ACCESS_RESTRICTION))) {
+        // If accessRestriction changes from OPEN/AK to INTERNAL/LIMITED
+        if (AccessRestriction.INTERNAL.equals((String) docProps.get(ACCESS_RESTRICTION)) || AccessRestriction.LIMITED.equals((String) docProps.get(ACCESS_RESTRICTION))) {
             String oldAccessRestriction = (String) nodeService.getProperty(docNodeRef, ACCESS_RESTRICTION);
-            if (!AccessRestriction.INTERNAL.equals(oldAccessRestriction)) {
+            if (!(AccessRestriction.INTERNAL.equals(oldAccessRestriction) || AccessRestriction.LIMITED.equals(oldAccessRestriction))) {
 
                 // And if document was FINISHED
                 String oldStatus = (String) nodeService.getProperty(docNodeRef, DOC_STATUS);
@@ -534,7 +543,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
 
         boolean isDraft = RepoUtil.getPropertyBooleanValue(docProps, DocumentService.TransientProps.TEMP_DOCUMENT_IS_DRAFT);
         if (isDraft) {
-            addPrivilegesBasedOnSeries(docNodeRef, docProps, targetParentRef);
+            addPrivilegesBasedOnSeriesOnBackground(docNodeRef);
         }
         { // update properties and log changes made in properties
             final String previousAccessrestriction = (String) nodeService.getProperty(docNodeRef, ACCESS_RESTRICTION);
@@ -597,9 +606,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                     if (StringUtils.isNotBlank(existingRegNr)) {
                         // reg. number is changed if function, series or volume is changed
                         if (!previousVolume.getNodeRef().equals(volumeNodeRef)) {
-                            EventsLoggingHelper.disableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
-                            registerDocument(docNode, true);
-                            EventsLoggingHelper.enableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
+                            registerDocumentRelocating(docNode);
                         }
                     }
                 } else {
@@ -1573,6 +1580,18 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     }
 
     @Override
+    public int getUserDocumentFromIncomingInvoiceCount(String username) {
+        List<Document> allIncomingEinvoices = getIncomingEInvoices();
+        int userIncomingEInvoices = 0;
+        for (Document document : allIncomingEinvoices) {
+            if (username.equalsIgnoreCase(document.getOwnerId())) {
+                userIncomingEInvoices++;
+            }
+        }
+        return userIncomingEInvoices;
+    }
+
+    @Override
     public List<Document> getReplyOrFollowUpDocuments(NodeRef base) {
         List<Document> docs = new ArrayList<Document>();
         // reply and follow up are source associations regarding the base document
@@ -1660,6 +1679,18 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     public List<Document> getIncomingEInvoices() {
         NodeRef incomingNodeRef = generalService.getNodeRef(receivedInvoicePath);
         return getIncomingDocuments(incomingNodeRef);
+    }
+
+    @Override
+    public List<Document> getIncomingEInvoicesForUser(String username) {
+        List<Document> allIncomingEinvoices = getIncomingEInvoices();
+        List<Document> userIncomingEinvoices = new ArrayList<Document>(allIncomingEinvoices.size());
+        for (Document document : allIncomingEinvoices) {
+            if (username.equalsIgnoreCase(document.getOwnerId())) {
+                userIncomingEinvoices.add(document);
+            }
+        }
+        return userIncomingEinvoices;
     }
 
     private List<Document> getIncomingDocuments(NodeRef incomingNodeRef) {
@@ -1756,7 +1787,8 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         return volumeRef == null ? null : generalService.getParentWithType(volumeRef, SeriesModel.Types.SERIES);
     }
 
-    private Node getVolumeByDocument(NodeRef docRef, Node caseNode) {
+    @Override
+    public Node getVolumeByDocument(NodeRef docRef, Node caseNode) {
         final NodeRef docOrCaseRef;
         if (caseNode != null) {
             docOrCaseRef = caseNode.getNodeRef();
@@ -1862,6 +1894,13 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         if (triggeredAutomatically) {
             EventsLoggingHelper.enableLogging(docNode, TEMP_LOGGING_DISABLED_REGISTERED_BY_USER);
         }
+    }
+
+    @Override
+    public void registerDocumentRelocating(final Node docNode) {
+        EventsLoggingHelper.disableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
+        registerDocument(docNode, true);
+        EventsLoggingHelper.enableLogging(docNode, DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED);
     }
 
     @Override
@@ -2132,7 +2171,8 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
      * @param replyAssocs
      * @return true if document with given docRef has any reply or followUp documents
      */
-    private boolean isReplyOrFollowupDoc(final NodeRef docRef, List<AssociationRef> replyAssocs) {
+    @Override
+    public boolean isReplyOrFollowupDoc(final NodeRef docRef, List<AssociationRef> replyAssocs) {
         if (replyAssocs == null) {
             replyAssocs = nodeService.getTargetAssocs(docRef, DocumentCommonModel.Assocs.DOCUMENT_REPLY);
         }
@@ -2321,7 +2361,7 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         List<TaskAndDocument> results = new ArrayList<TaskAndDocument>(tasks.size());
         Map<NodeRef, Document> documents = new HashMap<NodeRef, Document>(tasks.size());
         for (Task task : tasks) {
-            NodeRef workflow = nodeService.getPrimaryParent(task.getNode().getNodeRef()).getParentRef();
+            NodeRef workflow = nodeService.getPrimaryParent(task.getNodeRef()).getParentRef();
             NodeRef compoundWorkflow = nodeService.getPrimaryParent(workflow).getParentRef();
             NodeRef documentNodeRef = nodeService.getPrimaryParent(compoundWorkflow).getParentRef();
             Document document = documents.get(documentNodeRef);
@@ -2489,14 +2529,15 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     // ========================================================================
     // =============================== FAVORITES ==============================
     // ========================================================================
-
     @Override
-    public List<Document> getFavorites() {
-        NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
-        if (!nodeService.hasAspect(user, DocumentCommonModel.Aspects.FAVORITE_CONTAINER)) {
+    public List<Document> getFavorites(NodeRef containerNodeRef) {
+        if (containerNodeRef == null) {
+            containerNodeRef = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
+        }
+        if (!nodeService.hasAspect(containerNodeRef, DocumentCommonModel.Aspects.FAVORITE_CONTAINER)) {
             return Collections.emptyList();
         }
-        List<AssociationRef> assocs = nodeService.getTargetAssocs(user, DocumentCommonModel.Assocs.FAVORITE);
+        List<AssociationRef> assocs = nodeService.getTargetAssocs(containerNodeRef, DocumentCommonModel.Assocs.FAVORITE);
         List<Document> favorites = new ArrayList<Document>(assocs.size());
         for (AssociationRef assoc : assocs) {
             favorites.add(getDocumentByNodeRef(assoc.getTargetRef()));
@@ -2505,40 +2546,87 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
     }
 
     @Override
-    public boolean isFavoriteAddable(NodeRef document) {
-        return !isFavorite(document) && !isDraft(document);
+    public List<String> getFavoriteDirectoryNames() {
+        NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
+        List<ChildAssociationRef> dirs = nodeService.getChildAssocs(user, new HashSet<QName>(Arrays.asList(DocumentCommonModel.Assocs.FAVORITE_DIRECTORY)));
+        List<String> names = new ArrayList<String>(dirs.size());
+        for (ChildAssociationRef dirAssoc : dirs) {
+            names.add(dirAssoc.getQName().getLocalName());
+        }
+
+        return names;
     }
 
     @Override
-    public boolean isFavorite(NodeRef document) {
+    public boolean isFavoriteAddable(NodeRef docRef) {
+        return (isFavorite(docRef) == null) && !isDraft(docRef);
+    }
+
+    @Override
+    public NodeRef isFavorite(NodeRef docRef) {
         NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
-        if (!nodeService.hasAspect(user, DocumentCommonModel.Aspects.FAVORITE_CONTAINER)) {
-            return false;
+        if (!nodeService.hasAspect(user, DocumentCommonModel.Aspects.FAVORITE_CONTAINER) && !nodeService.hasAspect(user, DocumentCommonModel.Aspects.FAVORITE_DIRECTORY_ASPECT)) {
+            return null;
         }
         for (AssociationRef assoc : nodeService.getTargetAssocs(user, DocumentCommonModel.Assocs.FAVORITE)) {
-            if (assoc.getTargetRef().equals(document)) {
-                return true;
+            if (assoc.getTargetRef().equals(docRef)) {
+                return assoc.getSourceRef();
             }
         }
-        return false;
+        for (ChildAssociationRef dirAssoc : nodeService.getChildAssocs(user, new HashSet<QName>(Arrays.asList(DocumentCommonModel.Assocs.FAVORITE_DIRECTORY)))) {
+            for (AssociationRef docAssoc : nodeService.getTargetAssocs(dirAssoc.getChildRef(), DocumentCommonModel.Assocs.FAVORITE)) {
+                if (docAssoc.getTargetRef().equals(docRef)) {
+                    return docAssoc.getSourceRef();
+                }
+            }
+        }
+        return null;
     }
 
     @Override
-    public void addFavorite(NodeRef document) {
-        if (isFavorite(document)) {
+    public void addFavorite(NodeRef docRef) {
+        addFavorite(docRef, null);
+    }
+
+    @Override
+    public void addFavorite(NodeRef docRef, String favDirName) {
+
+        if (isFavorite(docRef) != null) {
             return;
         }
         NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
         if (!nodeService.hasAspect(user, DocumentCommonModel.Aspects.FAVORITE_CONTAINER)) {
             nodeService.addAspect(user, DocumentCommonModel.Aspects.FAVORITE_CONTAINER, null);
         }
-        nodeService.createAssociation(user, document, DocumentCommonModel.Assocs.FAVORITE);
+        if (StringUtils.isNotBlank(favDirName)) {
+            favDirName = StringUtils.trim(favDirName);
+            if (!nodeService.hasAspect(user, DocumentCommonModel.Aspects.FAVORITE_DIRECTORY_ASPECT)) {
+                nodeService.addAspect(user, DocumentCommonModel.Aspects.FAVORITE_DIRECTORY_ASPECT, null);
+            }
+            QName assocName = QName.createQName(DocumentCommonModel.URI, QName.createValidLocalName(favDirName));
+            List<ChildAssociationRef> favDirs = nodeService.getChildAssocs(user, DocumentCommonModel.Assocs.FAVORITE_DIRECTORY, assocName);
+            NodeRef favDir;
+            if (favDirs.isEmpty()) {
+                favDir = nodeService.createNode(user, DocumentCommonModel.Assocs.FAVORITE_DIRECTORY, assocName, DocumentCommonModel.Types.FAVORITE_DIRECTORY).getChildRef();
+            } else {
+                favDir = favDirs.get(0).getChildRef();
+            }
+            nodeService.createAssociation(favDir, docRef, DocumentCommonModel.Assocs.FAVORITE);
+            menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
+        } else {
+            nodeService.createAssociation(user, docRef, DocumentCommonModel.Assocs.FAVORITE);
+        }
     }
 
     @Override
-    public void removeFavorite(NodeRef document) {
-        NodeRef user = userService.getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
-        nodeService.removeAssociation(user, document, DocumentCommonModel.Assocs.FAVORITE);
+    public void removeFavorite(NodeRef docRef) {
+        NodeRef favorite = isFavorite(docRef);
+        nodeService.removeAssociation(favorite, docRef, DocumentCommonModel.Assocs.FAVORITE);
+        if (nodeService.getType(favorite).equals(DocumentCommonModel.Types.FAVORITE_DIRECTORY) &&
+                nodeService.getTargetAssocs(favorite, DocumentCommonModel.Assocs.FAVORITE).isEmpty()) {
+            nodeService.removeChildAssociation(nodeService.getParentAssocs(favorite).get(0));
+            menuService.process(BeanHelper.getMenuBean().getMenu(), false, true);
+        }
     }
 
     // ========================================================================
@@ -2851,10 +2939,35 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
                 SeriesModel.Props.CONTAINING_DOCS_COUNT, documentAdded, null);
     }
 
+    public void addPrivilegesBasedOnSeriesOnBackground(final NodeRef docRef) {
+        RunAsWork<Void> work = new RunAsWork<Void>() {
+            @Override
+            public Void doWork() throws Exception {
+                addPrivilegesBasedOnSeries(docRef);
+                return null;
+            }
+        };
+        generalService.runOnBackground(work, "addPrivilegesBasedOnSeries-" + docRef.getId());
+    }
+
+    private Set<String> addPrivilegesBasedOnSeries(NodeRef docRef) {
+        Map<String, Object> docProps = new HashMap<String, Object>();
+        Set<String> result = addPrivilegesBasedOnSeries(docRef, docProps, null);
+
+        @SuppressWarnings("unchecked")
+        List<String> privUsers = (List<String>) docProps.get(PrivilegeModel.Props.USER.toString());
+        @SuppressWarnings("unchecked")
+        List<String> privGroups = (List<String>) docProps.get(PrivilegeModel.Props.GROUP.toString());
+
+        privilegeService.mergePrivilegeUsersGroupsLists(docRef, privUsers, privGroups);
+        return result;
+    }
+
     @Override
     public Set<String> addPrivilegesBasedOnSeries(NodeRef docRef, Map<String, Object> docProps, NodeRef parentRef) {
         NodeRef seriesRef = generalService.getAncestorNodeRefWithType(parentRef != null ? parentRef : docRef, SeriesModel.Types.SERIES);
         if (seriesRef == null) {
+            log.info("Document is not under documentList, skipping adding privileges based on series: " + docRef.toString());
             return Collections.<String> emptySet();
         }
         Pair<Set<String>, Set<String>> usersAndGroups = getSeriesAuthorities(seriesRef);
@@ -3089,6 +3202,9 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
         this.sentEmailPath = sentEmailPath;
     }
 
+    public void setMenuService(MenuService menuService) {
+        this.menuService = menuService;
+    }
     // END: getters / setters
 
 }

@@ -1,43 +1,36 @@
 package ee.webmedia.alfresco.classificator.web;
 
 import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
-import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.classificator.model.Classificator;
-import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.docadmin.web.FieldDetailsDialog;
+import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.WebUtil;
 
 public class ClassificatorListDialog extends BaseDialogBean {
 
     private static final long serialVersionUID = 1L;
 
-    private transient ClassificatorService classificatorService;
     private List<Classificator> classificators;
-
-    public void setClassificatorService(ClassificatorService classificatorService) {
-        this.classificatorService = classificatorService;
-    }
-
-    protected ClassificatorService getClassificatorService() {
-        if (classificatorService == null) {
-            classificatorService = (ClassificatorService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(ClassificatorService.BEAN_NAME);
-        }
-        return classificatorService;
-    }
+    private String searchCriteria = "";
 
     /**
      * Used in JSP pages.
@@ -85,17 +78,74 @@ public class ClassificatorListDialog extends BaseDialogBean {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
+        restored();
+    }
+
+    @Override
+    public void restored() {
         classificators = getClassificatorService().getAllClassificators();
+        searchCriteria = "";
     }
 
     @Override
     public String cancel() {
         classificators = null;
+        searchCriteria = "";
         return super.cancel();
+    }
+
+    public void search() {
+        if (StringUtils.isBlank(getSearchCriteria())) {
+            MessageUtil.addInfoMessage("classificators_error_emptySearchField");
+        }
+        clearRichList();
+        classificators = getClassificatorService().search(getSearchCriteria());
+    }
+
+    private void clearRichList() {
+        classificators = null;
+    }
+
+    public void showAll() {
+        clearRichList();
+        setSearchCriteria("");
+        classificators = getClassificatorService().getAllClassificators();
     }
 
     @Override
     public Object getActionsContext() {
         return null;
+    }
+
+    public void setSearchCriteria(String searchCriteria) {
+        this.searchCriteria = searchCriteria;
+    }
+
+    public String getSearchCriteria() {
+        return searchCriteria;
+    }
+
+    /**
+     * Used by propertysheet of the {@link FieldDetailsDialog}.
+     * Query callBack method executed by the Generic Picker component.
+     * This method is part of the contract to the Generic Picker, it is up to the backing bean
+     * to execute whatever query is appropriate and return the results.
+     * 
+     * @param filterIndex Index of the filter drop-down selection
+     * @param contains Text from the contains textBox
+     * @return An array of SelectItem objects containing the results to display in the picker.
+     */
+    public SelectItem[] searchClassificators(int filterIndex, String contains) {
+        List<Classificator> allClassificators = getClassificatorService().getAllClassificators();
+        List<SelectItem> results = new ArrayList<SelectItem>(allClassificators.size());
+        boolean doFilter = StringUtils.isNotBlank(contains);
+        for (Classificator node : allClassificators) {
+            String classificatorName = node.getName();
+            if (!doFilter || StringUtils.containsIgnoreCase(classificatorName, contains)) {
+                results.add(new SelectItem(classificatorName, classificatorName));
+            }
+        }
+        WebUtil.sort(results);
+        return results.toArray(new SelectItem[results.size()]);
     }
 }

@@ -39,7 +39,7 @@
     }
 %>
 <f:verbatim>
-<script type="text/javascript" src="<%=request.getContextPath()%>/scripts/validation.js"> </script>
+<script type="text/javascript" src="<%=request.getContextPath()%>/scripts/validation.js"></script>
 
 <%
     if (wrongFormat) {

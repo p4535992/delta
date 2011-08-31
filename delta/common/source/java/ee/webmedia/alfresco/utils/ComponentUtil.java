@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.ResourceBundle;
 import java.util.Set;
 
 import javax.faces.FacesException;
@@ -25,6 +26,8 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.convert.Converter;
 import javax.faces.el.ValueBinding;
+import javax.faces.event.FacesEvent;
+import javax.faces.event.PhaseId;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
@@ -42,11 +45,14 @@ import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
+import org.alfresco.web.ui.common.component.UIPanel;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIProperty;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
+import org.alfresco.web.ui.repo.tag.LoadBundleTag;
+import org.apache.commons.collections.Closure;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
@@ -66,6 +72,7 @@ import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPr
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * Util methods for JSF components/component trees
@@ -78,8 +85,37 @@ public class ComponentUtil {
     private static GeneralService generalService;
 
     public static UIComponent makeCondenced(final UIComponent component, int condenceSize) {
-        ComponentUtil.putAttribute(component, "styleClass", "condence" + condenceSize);
+        putAttribute(component, "styleClass", "condence" + condenceSize);
         return component;
+    }
+
+    public static void writeModalHeader(ResponseWriter out, String modalId, String modalTitle, String closeOnClick) throws IOException {
+        writeModalHeader(out, modalId, modalTitle, "", closeOnClick);
+    }
+
+    public static void writeModalHeader(ResponseWriter out, String modalId, String modalTitle, String modalWrapStyleClass, String closeOnClick) throws IOException {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div id=\"");
+        sb.append(modalId);
+        sb.append("\" class=\"modalpopup modalwrap " + modalWrapStyleClass + "\">");
+        sb.append("<div class=\"modalpopup-header clear\"><h1>");
+        sb.append(modalTitle);
+        sb.append("</h1><p class=\"close\"><a href=\"#\" onclick=\"");
+        if (StringUtils.isBlank(closeOnClick)) {
+            sb.append("return hideModal()");
+        } else {
+            sb.append(closeOnClick);
+        }
+        sb.append("\">");
+        sb.append(MessageUtil.getMessage("close_window"));
+        sb.append("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner modalpopup-filter\">");
+
+        out.write(sb.toString());
+    }
+
+    public static void writeModalFooter(ResponseWriter out) throws IOException {
+        // close modal popup
+        out.write("</div></div></div>");
     }
 
     /**
@@ -210,8 +246,8 @@ public class ComponentUtil {
      * @return UIInput from the same UIPropertySheet as the given <code>component</code> where id ends with given <code>searchPropertyIdSuffix</code>
      */
     public static UIInput getInputFromSamePropertySheet(UIComponent component, String searchPropertyIdSuffix) {
-        UIPropertySheet propSheetComponent = ComponentUtil.getAncestorComponent(component, UIPropertySheet.class, true);
-        UIProperty matchingProperty = ComponentUtil.findUIPropertyByIdSuffix(propSheetComponent, searchPropertyIdSuffix);
+        UIPropertySheet propSheetComponent = getAncestorComponent(component, UIPropertySheet.class, true);
+        UIProperty matchingProperty = findUIPropertyByIdSuffix(propSheetComponent, searchPropertyIdSuffix);
         UIInput propertyInput = getInputOfProperty(matchingProperty);
         return propertyInput;
     }
@@ -359,6 +395,43 @@ public class ComponentUtil {
             }
         }
         throw new RuntimeException("Can't find the lable for '" + propertyName + "'");
+    }
+
+    public static String getDisplayLabel(UIComponent component) {
+        String labelTranslated = (String) component.getAttributes().get(ATTR_DISPLAY_LABEL);
+        if (StringUtils.isBlank(labelTranslated)) {
+            UIProperty thisUIProperty = getAncestorComponent(component, UIProperty.class, true);
+            if (thisUIProperty != null) {
+                labelTranslated = getPropertyLabel(thisUIProperty, component.getId());
+                if (StringUtils.isBlank(labelTranslated)) {
+                    QName propName = QName.createQName(thisUIProperty.getName(), BeanHelper.getNamespaceService());
+                    PropertyDefinition propDef = BeanHelper.getDictionaryService().getProperty(propName);
+                    labelTranslated = propDef.getTitle();
+                }
+            }
+        }
+        return StringUtils.trim(labelTranslated);
+    }
+
+    public static String getPanelLabel(UIComponent descendantOfPanel) {
+        UIPanel panel = getAncestorComponent(descendantOfPanel, UIPanel.class, true);
+        String panelLabel = ""; // if panel not found then ignore
+        if (panel != null) {
+            FacesContext facesContext = FacesContext.getCurrentInstance();
+            loadMsgBundleIfNeeded(facesContext, "msg"); // needed to translate panel label
+            panelLabel = panel.getLabel();
+            Assert.notNull(panelLabel, "Panel lable shouldn't be null"); // panel found, but without label - this shouldn't happen
+        }
+        return StringUtils.trim(panelLabel);
+    }
+
+    private static void loadMsgBundleIfNeeded(FacesContext facesContext, String msgBundleVar) {
+        @SuppressWarnings("unchecked")
+        Map<String, Object> requestMap = facesContext.getExternalContext().getRequestMap();
+        if (!requestMap.containsKey(msgBundleVar)) { // bundle is not jet loaded using var msgBundleVar
+            ResourceBundle bundle = org.alfresco.web.app.Application.getBundle(facesContext);
+            requestMap.put(msgBundleVar, new LoadBundleTag.BundleMap(bundle));
+        }
     }
 
     /**
@@ -535,7 +608,10 @@ public class ComponentUtil {
         return generateAjaxFormSubmit(context, component, fieldId, value, params, 0);
     }
 
-    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value, int parentLevel) {
+    public static String generateAjaxFormSubmit(FacesContext context, UIComponent component, String fieldId, String value, Integer parentLevel) {
+        if (parentLevel == null) {
+            parentLevel = 0;
+        }
         return generateAjaxFormSubmit(context, component, fieldId, value, null, parentLevel);
     }
 
@@ -648,9 +724,9 @@ public class ComponentUtil {
         }
 
         int ajaxParentLevel = 0;
-        UIComponent searchComponent = ComponentUtil.getAncestorComponent(child, Search.class);
+        UIComponent searchComponent = getAncestorComponent(child, Search.class);
         if (searchComponent == null) {
-            searchComponent = ComponentUtil.getAncestorComponent(child, MultiValueEditor.class);
+            searchComponent = getAncestorComponent(child, MultiValueEditor.class);
             ajaxParentLevel++;
         }
 
@@ -664,7 +740,7 @@ public class ComponentUtil {
         } else if (ajaxParentLevel == 0) {
             ajaxParentLevel++; // set default level to 1
         }
-        UIComponent ancestorAjaxComponent = ComponentUtil.findAncestorAjaxComponent(searchComponent, null, ajaxParentLevel).getSecond();
+        UIComponent ancestorAjaxComponent = findAncestorAjaxComponent(searchComponent, null, ajaxParentLevel).getSecond();
         if (ancestorAjaxComponent == null) {
             throw new RuntimeException("Couldn't find parent ajax component to update for " + clientId + "!");
         }
@@ -709,7 +785,7 @@ public class ComponentUtil {
     public static UIComponent generateAndAddComponent(FacesContext context, ComponentPropVO componentPropVO, UIPropertySheet propertySheet,
             final List<UIComponent> children) {
         if (!componentPropVO.isUseComponentGenerator()) {
-            final UIComponent component = createCellComponent(context, componentPropVO);
+            final UIComponent component = createCellComponent(context, componentPropVO, propertySheet);
             children.add(component);
             return component;
         }
@@ -766,9 +842,10 @@ public class ComponentUtil {
      * 
      * @param context
      * @param vo
+     * @param propertySheet
      * @return
      */
-    private static UIComponent createCellComponent(FacesContext context, ComponentPropVO vo) {
+    private static UIComponent createCellComponent(FacesContext context, ComponentPropVO vo, UIPropertySheet propertySheet) {
         UIComponent component = null;
 
         String type = vo.getGeneratorName();
@@ -781,13 +858,13 @@ public class ComponentUtil {
             @SuppressWarnings("unchecked")
             Map<String, Object> attributes = component.getAttributes();
             attributes.put("styleClass", "date");
-            ComponentUtil.createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
+            createAndSetConverter(context, DatePickerConverter.CONVERTER_ID, component);
         } else if (StringUtils.equals("ClassificatorSelectorGenerator", type)) {
             if (voCustomAttributes.containsKey(ClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_NAME)) {
                 ClassificatorSelectorGenerator classificGenerator = new ClassificatorSelectorGenerator();
                 classificGenerator.setCustomAttributes(voCustomAttributes);
                 component = classificGenerator.generateSelectComponent(context, null, false);
-                classificGenerator.setupSelectComponent(context, null, null, null, component, false);
+                classificGenerator.setupSelectComponent(context, propertySheet, null, null, component, false);
             } else {
                 throw new RuntimeException("Component type '" + type + "' requires a classificator name in definition. Failing fast!");
             }
@@ -949,13 +1026,13 @@ public class ComponentUtil {
                 final Integer associationIndex = wmPropSheet.getAssociationIndex();
                 if (associationIndex != null) {
                     final AssocInfoHolder assocInfoHolder = new AssocInfoHolder();
-                    final SubPropertySheetItem subPropSheetItem = ComponentUtil.getAncestorComponent(ancestorPropSheet, SubPropertySheetItem.class, true);
+                    final SubPropertySheetItem subPropSheetItem = getAncestorComponent(ancestorPropSheet, SubPropertySheetItem.class, true);
                     assocInfoHolder.assocTypeQName = subPropSheetItem.getAssocTypeQName();
                     assocInfoHolder.associationBrand = wmPropSheet.getAssociationBrand();
                     assocInfoHolder.associationIndex = associationIndex;
                     assocInfoHolder.validate();
                     pathInfos.add(assocInfoHolder);
-                    UIPropertySheet nextAncestorPropSheet = ComponentUtil.getAncestorComponent(subPropSheetItem, UIPropertySheet.class, true);
+                    UIPropertySheet nextAncestorPropSheet = getAncestorComponent(subPropSheetItem, UIPropertySheet.class, true);
                     if (nextAncestorPropSheet != null) {
                         ancestorPropSheet = nextAncestorPropSheet;
                         continue;
@@ -1011,6 +1088,25 @@ public class ComponentUtil {
         public String toString() {
             return "AssocInfoHolder: " + getValueBindingPart();
         }
+    }
+
+    /**
+     * Creates new {@link FacesEvent} using closure, that is executed once in given phase
+     * 
+     * @param phaseId
+     * @param uiComponent
+     * @param closure
+     */
+    public static void executeLater(PhaseId phaseId, UIComponent uiComponent, final Closure closure) {
+        @SuppressWarnings("unused")
+        ExecuteLater executeLater = new ExecuteLater(phaseId, uiComponent) {
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            public void execute() {
+                closure.execute(null);
+            }
+        };
     }
 
 }

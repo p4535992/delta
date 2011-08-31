@@ -53,15 +53,12 @@ public class SendManuallyToSapModalComponent extends UICommand {
         ResponseWriter out = context.getResponseWriter();
 
         // modal popup code
-        out.write("<div id=\"" + ENTRY_SAP_NUMBER_MODAL_ID + "\" class=\"modalpopup modalwrap\">");
-        out.write("<div class=\"modalpopup-header clear\"><h1>");
-        out.write(MessageUtil.getMessage("document_invoiceEntrySapNumber_insert"));
-        out.write("</h1><p class=\"close\"><a href=\"#\" onclick=\"");
-        out.write(ComponentUtil.generateFieldSetter(context, this, getActionId(context, this), ""));
-        out.write(Utils.generateFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_CLEAR)));
-        out.write("\">");
-        out.write(MessageUtil.getMessage("close_window"));
-        out.write("</a></p></div><div class=\"modalpopup-content\"><div class=\"modalpopup-content-inner modalpopup-filter\">");
+        ComponentUtil.writeModalHeader(
+                out,
+                ENTRY_SAP_NUMBER_MODAL_ID,
+                MessageUtil.getMessage("document_invoiceEntrySapNumber_insert"),
+                ComponentUtil.generateFieldSetter(context, this, getActionId(context, this), "")
+                        + Utils.generateFormSubmit(context, this, getClientId(context), Integer.toString(ACTION_CLEAR)));
 
         // popup content
         out.write("<table><tbody>");
@@ -78,8 +75,7 @@ public class SendManuallyToSapModalComponent extends UICommand {
         out.write("</td></tr>");
         out.write("</tbody></table>");
 
-        // close modal popup
-        out.write("</div></div></div>");
+        ComponentUtil.writeModalFooter(out);
     }
 
     private static String getActionId(FacesContext context, UIComponent component) {

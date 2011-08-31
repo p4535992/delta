@@ -21,6 +21,7 @@ import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
 
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.generator.BaseComponentGenerator;
@@ -35,6 +36,8 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
@@ -70,7 +73,8 @@ public class TaskListGenerator extends BaseComponentGenerator {
     enum TaskOwnerSearchType {
         TASK_OWNER_SEARCH_RESPONSIBLE,
         TASK_OWNER_SEARCH_EXTERNAL_REVIEW,
-        TASK_OWNER_SEARCH_DEFAULT
+        TASK_OWNER_SEARCH_DEFAULT,
+        TASK_OWNER_SEARCH_REVIEW
     }
 
     @Override
@@ -81,10 +85,13 @@ public class TaskListGenerator extends BaseComponentGenerator {
         Map<String, Object> propSheetAttrs = propertySheet.getAttributes();
         int wfIndex = (Integer) propSheetAttrs.get(ATTR_WORKFLOW_INDEX);
         Workflow workflow = ((CompoundWorkflowDefinitionDialog) dialogManager.getBean()).getWorkflow().getWorkflows().get(wfIndex);
+
         TaskOwnerSearchType searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_DEFAULT;
         boolean responsible = new Boolean(getCustomAttributes().get("responsible"));
         QName blockType = workflow.getNode().getType();
-        if (responsible) {
+        if (workflow.getType().equals(WorkflowSpecificModel.Types.REVIEW_WORKFLOW)) {
+            searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_REVIEW;
+        } else if (responsible) {
             searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_RESPONSIBLE;
         } else if (blockType.equals(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
             searchType = TaskOwnerSearchType.TASK_OWNER_SEARCH_EXTERNAL_REVIEW;
@@ -193,6 +200,7 @@ public class TaskListGenerator extends BaseComponentGenerator {
             }
 
             // create table rows for each task
+            boolean isFirstSignatureTask = true;
             for (int counter = 0; counter < tasks.size(); counter++) {
                 if (visibleTasks.contains(counter)) {
                     Task task = tasks.get(counter);
@@ -205,6 +213,16 @@ public class TaskListGenerator extends BaseComponentGenerator {
                     String nameValueBinding = null;
                     if (task.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_TASK)) {
                         nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowSpecificModel.Props.INSTITUTION_NAME);
+                    } else if (task.isType(WorkflowSpecificModel.Types.SIGNATURE_TASK) && isFirstSignatureTask) {
+                        NodeRef docRef = task.getParent().getParent().getParent();
+                        if (docRef != null) {
+                            String ownerName = (String) BeanHelper.getNodeService().getProperty(docRef, DocumentCommonModel.Props.SIGNER_NAME);
+                            if (ownerName != null) {
+                                task.setOwnerName(ownerName);
+                            }
+                        }
+                        nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.OWNER_NAME);
+                        isFirstSignatureTask = false;
                     } else {
                         nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.OWNER_NAME);
                     }
@@ -468,7 +486,10 @@ public class TaskListGenerator extends BaseComponentGenerator {
             return application.createValueBinding("#{OwnerSearchBean.responsibleOwnerSearchFilters}");
         } else if (TaskOwnerSearchType.TASK_OWNER_SEARCH_EXTERNAL_REVIEW.equals(searchType)) {
             return application.createValueBinding("#{DialogManager.bean.externalReviewOwnerSearchFilters}");
+        } else if (TaskOwnerSearchType.TASK_OWNER_SEARCH_REVIEW.equals(searchType)) {
+            return application.createValueBinding("#{OwnerSearchBean.reviewOwnerSearchFilters}");
         } else {
+
             return application.createValueBinding("#{DialogManager.bean.ownerSearchFilters}");
         }
     }

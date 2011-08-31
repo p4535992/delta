@@ -20,6 +20,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
 
 public class PermissionsListDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "PermissionsListDialog";
 
     private transient UIRichList authoritiesRichList;
     private transient UserService userService;
@@ -29,6 +30,7 @@ public class PermissionsListDialog extends BaseDialogBean {
     private List<Authority> authorities;
     private String alternateConfigId;
     private String alternateDialogTitleId;
+    private String callbackMethodBinding;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -53,6 +55,9 @@ public class PermissionsListDialog extends BaseDialogBean {
         }
         if (ActionUtil.hasParam(event, "alternateDialogTitleId")) {
             alternateDialogTitleId = ActionUtil.getParam(event, "alternateDialogTitleId");
+        }
+        if (ActionUtil.hasParam(event, "callbackMethodBinding")) {
+            callbackMethodBinding = "#{" + ActionUtil.getParam(event, "callbackMethodBinding") + "}";
         }
         restored();
     }
@@ -134,5 +139,14 @@ public class PermissionsListDialog extends BaseDialogBean {
     public void setUserService(UserService userService) {
         this.userService = userService;
     }
+
+    public String getCallbackMethodBinding() {
+        return callbackMethodBinding;
+    }
+
+    public void setCallbackMethodBinding(String callbackMethodBinding) {
+        this.callbackMethodBinding = callbackMethodBinding;
+    }
+
     // END: getters / setters
 }

@@ -17,6 +17,7 @@ public class Classificator implements Serializable {
     private String name;
     @XStreamOmitField
     private boolean addRemoveValues;
+    private boolean deleteEnabled;
 
     @AlfrescoModelProperty(isMappable = false)
     @XStreamOmitField
@@ -72,5 +73,13 @@ public class Classificator implements Serializable {
         sb.append("addRemoveValues = " + addRemoveValues + "\n");
         sb.append("nodeRef = " + nodeRef + "\n");
         return sb.toString();
+    }
+
+    public void setDeleteEnabled(boolean deleteEnabled) {
+        this.deleteEnabled = deleteEnabled;
+    }
+
+    public boolean isDeleteEnabled() {
+        return deleteEnabled;
     }
 }

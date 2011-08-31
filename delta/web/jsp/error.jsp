@@ -31,9 +31,7 @@
 
 <r:page titleId="title_error">
 
-<div class="syserror-wrapper">
-
-<div id="titlebar">
+<div id="titlebar" style="margin: 20px;">
    <h2>
    <img alt="<%=Application.getMessage(session, "system_error")%>" src="<%=request.getContextPath()%>/images/icons/error_large.gif" />
    <%=Application.getMessage(session, "system_error")%>
@@ -41,5 +39,4 @@
 </div>
 
 <r:systemError styleClass="message" detailsStyleClass="sys-error-details" showDetails="false" />
-</div>
 </r:page>

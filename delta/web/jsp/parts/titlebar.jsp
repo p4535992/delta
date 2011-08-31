@@ -31,6 +31,7 @@
 
 <r:loadBundle var="msg"/>
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/translations.jsp" />
+<div id="submit-protection-msg"></div>
 <div class="submit-protection-layer"></div>
 <%-- Begin Header --%>
 <a:panel id="header">

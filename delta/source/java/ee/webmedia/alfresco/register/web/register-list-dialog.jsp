@@ -58,8 +58,7 @@
          <f:facet name="header">
             <h:outputText id="col5-txt" value="#{msg.register_active}" />
          </f:facet>
-         <h:outputText id="regActive" value="#{msg.yes}" rendered="#{r.active}" />
-         <h:outputText id="regNotActive" value="#{msg.no}" rendered="#{!r.active}"  />
+         <h:outputText id="regActive" value="#{r.active}"><a:convertBoolean /></h:outputText>
       </a:column>
 
       <%-- Actions column --%>

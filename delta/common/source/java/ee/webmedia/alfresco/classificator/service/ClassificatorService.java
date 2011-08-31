@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorExportVO;
@@ -26,14 +27,6 @@ public interface ClassificatorService {
      * @return list of found Classificator objects
      */
     List<Classificator> getAllClassificators();
-
-    /**
-     * Returns the classificator referenced by string reference.
-     * 
-     * @param ref
-     * @return
-     */
-    Classificator getClassificatorByNodeRef(String ref);
 
     /**
      * Returns the classificator referenced by nodeRef.
@@ -83,10 +76,8 @@ public interface ClassificatorService {
 
     /**
      * Adds a new classificator value to the classificator.
-     * 
-     * @return the reference to newly created node
      */
-    NodeRef addClassificatorValue(Classificator classificator, ClassificatorValue classificatorValue);
+    void addClassificatorValue(Classificator classificator, ClassificatorValue classificatorValue);
 
     /**
      * @see {@link ClassificatorService#getAllClassificatorValues(Classificator)}
@@ -99,7 +90,20 @@ public interface ClassificatorService {
 
     void importClassificators(Collection<ClassificatorExportVO> changedClassificators);
 
-    void updateClassificatorValues(Classificator classificator, Map<String, ClassificatorValue> originalValues
+    void updateClassificatorValues(Classificator classificator, Node classificatorNode, Map<String, ClassificatorValue> originalValues
             , List<ClassificatorValue> classificatorValues, List<ClassificatorValue> addedClassificators);
 
+    void deleteClassificator(NodeRef classificatorNode);
+
+    Node getNewUnsavedClassificator();
+
+    void saveClassificatorNode(Node classificatorNode);
+
+    void addNewClassificators(List<ClassificatorExportVO> classificatorsToAdd);
+
+    List<Classificator> search(String searchCriteria);
+
+    List<ClassificatorValue> searchValues(String searchCriteria, NodeRef classifNodeRef);
+
+    List<Classificator> getClassificatorsByNodeRefs(List<NodeRef> classifRefs);
 }

@@ -1,0 +1,129 @@
+package ee.webmedia.alfresco.docadmin.web;
+
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+
+import java.util.List;
+import java.util.Map;
+
+import javax.faces.context.FacesContext;
+import javax.faces.event.ActionEvent;
+
+import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.bean.dialog.BaseDialogBean;
+
+import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
+
+/**
+ * @author Ats Uiboupin
+ */
+public class DocTypeListDialog extends BaseDialogBean {
+    private static final long serialVersionUID = 1L;
+
+    // private transient DocumentTypeService documentTypeService;
+
+    private List<DocumentType> documentTypes;
+
+    @Override
+    public void init(Map<String, String> params) {
+        super.init(params);
+        initDocumentTypes();
+    }
+
+    private void initDocumentTypes() {
+        documentTypes = getDocumentAdminService().getDocumentTypes();
+    }
+
+    @Override
+    protected String finishImpl(FacesContext context, String outcome) throws Throwable {
+        return null;
+    }
+
+    @Override
+    public String cancel() {
+        documentTypes = null;
+        return super.cancel();
+    }
+
+    public void deleteDocType(ActionEvent event) {
+        NodeRef docTypeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+        getDocumentAdminService().deleteDocumentType(docTypeRef);
+        MessageUtil.addInfoMessage("docType_delete_success");
+        initDocumentTypes();
+    }
+
+    @Override
+    public Object getActionsContext() {
+        return null;
+    }
+
+    @Override
+    public void restored() {
+        initDocumentTypes();
+    }
+
+    //@formatter:off
+    // FIXME DLSeadist kasutusel olevate dokumentide liikide otsing (vist ei pea väga palju muutma)
+//    /**
+//     * Query callback method executed by the Generic Picker component.
+//     * This method is part of the contract to the Generic Picker, it is up to the backing bean
+//     * to execute whatever query is appropriate and return the results.
+//     * 
+//     * @param filterIndex Index of the filter drop-down selection
+//     * @param substring Text from the search textbox
+//     * @return An array of SelectItem objects containing the results to display in the picker.
+//     */
+//    public SelectItem[] searchUsedDocTypes(int filterIndex, String substring) {
+//        return searchUsedDocTypes(substring, false);
+//    }
+//
+//    /**
+//     * Used by the property sheet as a callback.
+//     */
+//    public List<SelectItem> getUsedDocTypes(@SuppressWarnings("unused") FacesContext context, @SuppressWarnings("unused") UIInput selectComponent) {
+//        return Arrays.asList(searchUsedDocTypes(null, true));
+//    }
+//
+//    private SelectItem[] searchUsedDocTypes(String substring, boolean addEmptyItem) {
+//        final List<DocumentType> usedDocTypes = getDocumentAdminService().getDocumentTypes(true);
+//        substring = StringUtils.trimToNull(substring);
+//        substring = (substring != null ? substring.toLowerCase() : null);
+//        int size = addEmptyItem ? usedDocTypes.size() + 1 : usedDocTypes.size();
+//        final ArrayList<SelectItem> results = new ArrayList<SelectItem>(size);
+//        if (addEmptyItem) {
+//            results.add(new SelectItem("", ""));
+//        }
+//        for (DocumentType documentType : usedDocTypes) {
+//            final String name = documentType.getName();
+//            if (substring == null || name.toLowerCase().contains(substring)) {
+//                results.add(new SelectItem(documentType.getDocumentTypeId(), name));
+//            }
+//        }
+//        SelectItem[] resultArray = new SelectItem[results.size()];
+//        int i = 0;
+//        for (SelectItem selectItem : results) {
+//            resultArray[i++] = selectItem;
+//        }
+//
+//        Arrays.sort(resultArray, new Comparator<SelectItem>() {
+//            @Override
+//            public int compare(SelectItem a, SelectItem b) {
+//                return a.getLabel().compareTo(b.getLabel());
+//            }
+//        });
+//        return resultArray;
+//    }
+    //@formatter:on
+
+    // START: getters / setters
+    /**
+     * Used in JSP page to create table rows
+     */
+    public List<DocumentType> getDocumentTypes() {
+        return documentTypes;
+    }
+
+    // END: getters / setters
+
+}

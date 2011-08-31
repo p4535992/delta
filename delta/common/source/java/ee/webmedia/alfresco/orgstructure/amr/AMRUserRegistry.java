@@ -17,6 +17,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import smit.ametnik.services.Ametnik;
+import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
 import ee.webmedia.alfresco.user.service.UserService;
 
@@ -30,6 +31,8 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     private UserService userService;
     private AMRService amrService;
+    private ApplicationService applicationService;
+    private String testEmail;
 
     /** Is this bean active? I.e. should this part of the subsystem be used? */
     private boolean active = true;
@@ -95,6 +98,13 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
      */
     public void fillPropertiesFromAmetnik(Ametnik ametnik, Map<QName, Serializable> properties) {
         String email = ametnik.getEmail();
+
+        // This is actually implemented in ChainingUserRegistrySynchronizer and the correct thing to do would be to
+        // switch from AMRSimpleAuthenticationImpl to SimpleUpdatingAuthenticationComponentImpl - this has been the idea all along, but needs testing
+        if (applicationService.isTest()) {
+            email = testEmail;
+        }
+
         BigInteger yksusId = ametnik.getYksusId();
         if (BigInteger.valueOf(-1).equals(yksusId)) {
             yksusId = null;
@@ -129,6 +139,14 @@ public class AMRUserRegistry implements UserRegistry, ActivateableBean {
 
     public void setAmrService(AMRService amrService) {
         this.amrService = amrService;
+    }
+
+    public void setApplicationService(ApplicationService applicationService) {
+        this.applicationService = applicationService;
+    }
+
+    public void setTestEmail(String testEmail) {
+        this.testEmail = testEmail;
     }
     // END: getters / setters
 

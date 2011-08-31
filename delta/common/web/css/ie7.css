@@ -181,6 +181,10 @@ hr {
 	padding-left: 98px;
 }
 
+.edit-mode .subPropertySheetTR.borderless > td {
+	padding-left: 90px;
+}
+
 .footer-component {
 	margin-left: 84px;
 }
@@ -385,4 +389,8 @@ table.detailsMultiTbody input[type='checkbox']{
 table.privileges .linkReplacement{
 	height: 16px;
 	padding-bottom: 1px;
+}
+
+.sys-error-details {
+	overflow: hidden;
 }

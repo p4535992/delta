@@ -9,6 +9,7 @@ import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
@@ -102,7 +103,7 @@ public class DimensionSelectorGenerator extends ClassificatorSelectorGenerator {
     }
 
     @Override
-    protected String getValueProviderName() {
+    protected String getValueProviderName(Node node) {
         return getCustomAttributes().get(ATTR_DIMENSION_NAME);
     }
 

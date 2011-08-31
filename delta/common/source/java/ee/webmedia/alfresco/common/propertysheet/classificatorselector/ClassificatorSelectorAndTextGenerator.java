@@ -115,7 +115,7 @@ public class ClassificatorSelectorAndTextGenerator extends TextAreaGenerator {
         selectComponent.setId(id);
 
         @SuppressWarnings("unchecked")
-        List<UIComponent> selectOptions = selectComponent.getChildren();
+        List<UISelectItem> selectOptions = selectComponent.getChildren();
 
         String classificatorName = getClassificatorName();
         if (StringUtils.isBlank(classificatorName)) {
@@ -137,10 +137,7 @@ public class ClassificatorSelectorAndTextGenerator extends TextAreaGenerator {
             selectOptions.add(selectItem);
         }
         if (null == defaultValue) {
-            UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-            selectItem.setItemLabel("");
-            selectItem.setItemValue("");
-            selectOptions.add(0, selectItem);
+            ClassificatorSelectorGenerator.addDefault(context, selectOptions);
         }
         selectComponent.setStyleClass(BINDING_MARKER_CLASS);
         return selectComponent;

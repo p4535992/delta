@@ -1,24 +1,27 @@
 package ee.webmedia.alfresco.common.web;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.TreeMap;
 
-import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.cmr.repository.StoreRef;
-import org.alfresco.service.namespace.NamespaceService;
+import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.QNameNodeMap;
 import org.alfresco.web.bean.repository.TransientNode;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
+
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Node that does not fetch properties (or anything) lazily, but takes data on creation. Thus does not depend on static FacesContext and can be used in service
@@ -29,8 +32,6 @@ import org.springframework.util.Assert;
  */
 public class WmNode extends TransientNode {
     private static final long serialVersionUID = 1L;
-
-    public static final StoreRef NOT_SAVED_STORE = new StoreRef("NOT_SAVED", "NOT_SAVED");
 
     /**
      * Special NodeRef that can be used for detection that a {@link Node} object is not backed by repository node (not saved yet).
@@ -69,6 +70,16 @@ public class WmNode extends TransientNode {
         }
     }
 
+    /**
+     * Create new WmNode that will lazy-init its properties and aspects when needed
+     * 
+     * @param nodeRef
+     * @param type
+     */
+    public WmNode(NodeRef nodeRef, QName type) {
+        this(nodeRef, type, null);
+    }
+
     private WmNode(NodeRef nodeRef, QName type, Set<QName> aspects) {
         super(type, null, null);
         Assert.notNull(type);
@@ -80,7 +91,8 @@ public class WmNode extends TransientNode {
         childAssociations = new QNameNodeMap<String, List<ChildAssociationRef>>(this, this);
 
         // show that the maps have been initialised
-        if (isUnsaved(nodeRef)) {
+        boolean unsaved = isUnsaved(nodeRef);
+        if (unsaved) {
             propsRetrieved = true;
             assocsRetrieved = true;
             childAssocsRetrieved = true;
@@ -91,31 +103,29 @@ public class WmNode extends TransientNode {
         locked = Boolean.FALSE;
         workingCopyOwner = Boolean.FALSE;
 
-        if (aspects == null) {
-            this.aspects = new HashSet<QName>();
-        } else {
+        if (aspects != null) {
             this.aspects = new HashSet<QName>(aspects);
+        } else if (unsaved) {
+            this.aspects = new HashSet<QName>();
         }
     }
 
-    public WmNode copy() {
-        return new WmNode(getNodeRef(), getType(), getProperties(), getAspects());
+    @Override
+    public WmNode clone() {
+        return new WmNode(getNodeRef(), getType(), getAspects(), RepoUtil.toQNameProperties(getProperties(), true));
     }
 
-    public void updateNodeRef(NodeRef nodeRef) {
-        this.nodeRef = nodeRef;
-        id = nodeRef == null ? null : nodeRef.getId();
+    public void updateNodeRef(NodeRef newRef) {
+        if (newRef == null) {
+            newRef = RepoUtil.createNewUnsavedNodeRef();
+        }
+        this.nodeRef = newRef;
+        id = newRef.getId();
     }
 
     @Override
     protected void initNode(Map<QName, Serializable> data) {
         // Do nothing
-    }
-
-    @Override
-    protected ServiceRegistry getServiceRegistry() {
-        // map'i lisamisel vaja NamespacePrefixResolver'it, mis superklassis küsitakse läbi serviceRegistry
-        return super.getServiceRegistry();
     }
 
     @Override
@@ -128,18 +138,26 @@ public class WmNode extends TransientNode {
         throw new RuntimeException("Not supported");
     }
 
+    public boolean isSaved() {
+        return !isUnsaved();
+    }
+
     public boolean isUnsaved() {
         return isUnsaved(nodeRef);
     }
 
-    private boolean isUnsaved(final NodeRef nodeRef) {
-        return nodeRef == null || NOT_SAVED_STORE.equals(nodeRef.getStoreRef());
+    public static boolean isSaved(final NodeRef nodeRef) {
+        return !isUnsaved(nodeRef);
+    }
+
+    public static boolean isUnsaved(final NodeRef nodeRef) {
+        return RepoUtil.isUnsaved(nodeRef);
     }
 
     @Override
     public String toString() {
-        return toString(this) + "[\n saved=" + !isUnsaved() + "\n nodeRef=" + getNodeRef() + "\n  type=" + getType() + "\n  aspects=" + toString(getAspects())
-                + "\n  props=" + toString(getProperties().entrySet()) + "\n]";
+        return toString(this) + "[\n  nodeRef=" + getNodeRef() + "\n  type=" + getType().toPrefixString(getNamespacePrefixResolver()) + "\n  aspects="
+                + toString(getAspects(), getNamespacePrefixResolver()) + "\n  props=" + toString(RepoUtil.toQNameProperties(getProperties()), getNamespacePrefixResolver()) + "\n]";
     }
 
     public static String toString(Collection<?> collection) {
@@ -159,32 +177,55 @@ public class WmNode extends TransientNode {
         return s.toString();
     }
 
-    public static String toString(Collection<QName> collection, NamespaceService namespaceService) {
+    public static String toString(Collection<QName> collection, NamespacePrefixResolver namespacePrefixResolver) {
         if (collection == null) {
             return null;
         }
+        List<QName> list = new ArrayList<QName>(collection);
+        Collections.sort(list);
         StringBuilder s = new StringBuilder();
-        s.append("[").append(collection.size()).append("]");
-        if (collection.size() > 0) {
-            for (QName o : collection) {
+        s.append("[").append(list.size()).append("]");
+        if (list.size() > 0) {
+            for (QName o : list) {
                 s.append("\n    ");
-                s.append(o.toPrefixString(namespaceService));
+                s.append(o.toPrefixString(namespacePrefixResolver));
             }
         }
         return s.toString();
     }
 
-    public static String toString(Map<QName, Serializable> collection, NamespaceService namespaceService) {
+    public static String toString(Map<QName, Serializable> collection, NamespacePrefixResolver namespacePrefixResolver) {
         if (collection == null) {
             return null;
         }
+        Map<QName, Serializable> map = new TreeMap<QName, Serializable>(collection);
         StringBuilder s = new StringBuilder();
-        s.append("[").append(collection.size()).append("]");
-        if (collection.size() > 0) {
-            for (Entry<QName, Serializable> entry : collection.entrySet()) {
+        s.append("[").append(map.size()).append("]");
+        if (map.size() > 0) {
+            for (Entry<QName, Serializable> entry : map.entrySet()) {
                 s.append("\n    ");
-                s.append(entry.getKey().toPrefixString(namespaceService));
-                s.append("=").append(entry.getValue());
+                s.append(entry.getKey().toPrefixString(namespacePrefixResolver));
+                Serializable value = entry.getValue();
+                if (value instanceof QName) {
+                    value = ((QName) value).toPrefixString(namespacePrefixResolver);
+                }
+                s.append("=").append(value);
+            }
+        }
+        return s.toString();
+    }
+
+    public static String toString(Map<? extends Object, ? extends Collection<?>> map) {
+        if (map == null) {
+            return null;
+        }
+        StringBuilder s = new StringBuilder();
+        s.append("[").append(map.size()).append("]");
+        if (map.size() > 0) {
+            for (Entry<? extends Object, ? extends Collection<?>> entry : map.entrySet()) {
+                s.append("\n    ");
+                s.append(entry.getKey());
+                s.append("=").append(StringUtils.replace(toString(entry.getValue()), "\n", "\n        "));
             }
         }
         return s.toString();

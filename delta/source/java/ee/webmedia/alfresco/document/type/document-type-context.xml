@@ -9,6 +9,11 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
             <value>ee/webmedia/alfresco/document/type/model/documentTypeModel.xml</value>
          </list>
       </property>
+      <property name="labels">
+         <list>
+            <value>ee/webmedia/alfresco/document/type/model/documentType-model</value>
+         </list>
+      </property>
    </bean>
 
    <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
@@ -109,6 +114,12 @@ http://www.springframework.org/schema/beans http://www.springframework.org/schem
             <ref bean="documentTypeSpacesBootstrap" />
          </list>
       </property>
-   </bean>     
+   </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="DocumentTypeDetailsDialog" class="ee.webmedia.alfresco.document.type.web.DocumentTypeDetailsDialog" scope="session" />
+
+   <!-- END: web beans: -->
 
 </beans>

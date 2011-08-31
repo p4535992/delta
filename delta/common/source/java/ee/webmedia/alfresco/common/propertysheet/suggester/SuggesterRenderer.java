@@ -9,10 +9,11 @@ import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.renderkit.html.HtmlTextareaRenderer;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
+
+import ee.webmedia.alfresco.utils.WebUtil;
 
 public class SuggesterRenderer extends HtmlTextareaRenderer {
     public static final String SUGGESTER_RENDERER_TYPE = SuggesterRenderer.class.getCanonicalName();
@@ -57,23 +58,8 @@ public class SuggesterRenderer extends HtmlTextareaRenderer {
     }
 
     private String getJavascriptFunctionCall(String inputClientId, List<String> suggesterValues) {
-        String jsValuesArrayString = getValuesAsJsArrayString(suggesterValues);
+        String jsValuesArrayString = WebUtil.getValuesAsJsArrayString(suggesterValues);
         String functionCall = "addAutocompleter('" + inputClientId + "', " + jsValuesArrayString + ");";
         return functionCall;
     }
-
-    private String getValuesAsJsArrayString(List<String> suggesterValues) {
-        final StringBuilder sb = new StringBuilder("[");
-        int i = 0;
-        for (String value : suggesterValues) {
-            final String escapedValue = StringEscapeUtils.escapeJavaScript(value);
-            sb.append("\"" + escapedValue + "\"");
-            if (i != suggesterValues.size() - 1) {
-                sb.append(", ");
-            }
-            i++;
-        }
-        return sb.append("]").toString();
-    }
-
 }

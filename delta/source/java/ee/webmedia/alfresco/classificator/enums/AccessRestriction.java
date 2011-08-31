@@ -3,7 +3,8 @@ package ee.webmedia.alfresco.classificator.enums;
 public enum AccessRestriction {
     OPEN("Avalik"),
     AK("AK"),
-    INTERNAL("Majasisene");
+    INTERNAL("Majasisene"),
+    LIMITED("Piiratud");
 
     private String valueName;
 

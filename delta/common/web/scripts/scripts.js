@@ -45,40 +45,33 @@ window.onbeforeunload = function () {
       }, 20000);
 
    } else {
-      // When page is submitted, user sees an hourglass cursor
-      $jQ(".submit-protection-layer").show().focus();
+      setScreenProtected(true, "palun oodake, lehelt lahkutakse");
       $jQ.ajaxDestroy(); // do not allow any new AJAX requests to start
       // if we are navigating to another page, and one AJAX request was cancelled already but is still working on server, then that makes 2 requests in server simultaneously
       // if any new AJAX requests would start, then RequestControlFilter connection limit 2 would be exceeded and user would see a blank page
    }
-}
+};
 
-function isIE() {
-	if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)){ //test for MSIE x.x;
-		return true;
-	}
-	return false;
+/**
+ * @param version
+ * @returns if <code>version</code> is not given, then actual major version, otherwise true or false.
+ */
+function isIE(version) {
+   if(!$jQ.browser.msie) {
+      return false;
+   }
+   var actVer = parseInt($jQ.browser.version, 10);
+   if(version){
+      return actVer == version;
+   } else {
+      return actVer; // number will also evaluate to true
+   }
 }
-
-function isIE7() {
-	if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)){ //test for MSIE x.x;
-		 var ieversion=new Number(RegExp.$1) // capture x.x portion and store as a number
-		 if (ieversion>=7 && ieversion < 8) {
-			 return true;
-		 }
-	}
-	return false;
-}
-
-function isIE8() {
-	if (/MSIE (\d+\.\d+);/.test(navigator.userAgent)){ //test for MSIE x.x;
-		 var ieversion=new Number(RegExp.$1) // capture x.x portion and store as a number
-		 if (ieversion>7) {
-			 return true;
-		 }
-	}
-	return false;
-}
+// järgnevad funktsioonid võiks eemaldada kõige uuemas harus, et vältida probleeme vahepeal lisandunud koodi osas
+/**@deprecated eemaldatakse varsti*/
+function isIE7(){return isIE(7);}
+/**@deprecated eemaldatakse varsti*/
+function isIE8(){return isIE(8);}
 
 function round(floatVal, decimals) {
    return (Math.round(floatVal * Math.pow(10, decimals)) / Math.pow(10, decimals)).toFixed(decimals);
@@ -91,7 +84,7 @@ function zIndexWorkaround(context)
    if(isIE()) {
 
       var containerContext = context;
-	  if (context) {
+     if (context) {
          if (!$jQ(context).parents().is('#container')) {
             return;
          }
@@ -99,7 +92,7 @@ function zIndexWorkaround(context)
          containerContext = $jQ('#container');
       }
 
-      if(isIE7()) {
+      if(isIE(7)) {
          var zIndexNumber = 5000;
          $jQ("div", containerContext).each(function() {
             $jQ(this).css('zIndex', zIndexNumber);
@@ -130,14 +123,14 @@ function zIndexWorkaround(context)
          });
       }
 
-      if(isIE8()) {
+      if(isIE(8)) {
          $jQ(".long-content", context).css("top", "-17px");
       }
    }
 }
 
 function fixIEDropdownMinWidth(container, items, context) {
-	if(isIE7()) {
+	if(isIE(7)) {
 		var max = 0;
 		var ul = $jQ(container, context);
 		ul.css('visibility', 'hidden').css('display', 'block');
@@ -154,7 +147,7 @@ function fixIEDropdownMinWidth(container, items, context) {
 }
 
 function fixIESelectMinWidth(context) {
-	if(isIE7()) {
+	if(isIE(7)) {
       if (context) {
          if (!$jQ(context).parents().is('#container-content')) {
             return;
@@ -164,12 +157,12 @@ function fixIESelectMinWidth(context) {
       }
 
       $jQ("td select").not('.with-pager select').not(".modalpopup-content-inner select[name$='_results']").not("#aoscModal-container-modalpopup select").not(".genericpicker-results").each(function() {
-			var select = $jQ(this);
-			if(select.outerWidth() < 165) {
-				select.css('width', '170px');
-			}
-		});
-	}
+         var select = $jQ(this);
+         if(select.outerWidth() < 165) {
+            select.css('width', '170px');
+         }
+      });
+   }
 }
 
 /**
@@ -179,6 +172,13 @@ function escapeId4JQ(idToEscape) {
    return idToEscape.replace(/:/g, "\\:").replace(/\./g, "\\.");
 }
 
+function confirmWithPlaceholders(msgWithPlaceholders /*, placeHolderValues ...*/) {
+   var translatedMsg = msgWithPlaceholders;
+   for( var i = 1; i < arguments.length; i++ ) {
+      translatedMsg = translatedMsg.replace('{'+(i-1)+'}', arguments[i]);
+  }
+  return confirm(translatedMsg);
+}
 /**
  * Prepend given function to each element selected with jQBtnOrLink jQuery object.
  * @param jQBtnOrLink - jQuery object containing elements that need prepending function
@@ -243,13 +243,16 @@ function disableAndRemoveButton(buttonId) {
  * @author Ats Uiboupin
  */
 function appendSelection(source, targetId) {
-   var appendSepparator = ', ';
+   var selectItem = $jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected');
+   if ($jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected').val() == "") {
+      return;
+   }
    var targetElem = $jQ("#" + escapeId4JQ(targetId));
-   var lable = $jQ('#' + escapeId4JQ(source.attr("id")) + ' :selected').text(); // using label not value!
    var lastToItemValue = targetElem.val();
    if (lastToItemValue.length != 0) {
-      lastToItemValue = lastToItemValue + appendSepparator;
+      lastToItemValue = lastToItemValue + ', ';
    }
+   var lable = selectItem.text(); // using label not value!
    targetElem.val(lastToItemValue + lable);
 };
 
@@ -270,7 +273,6 @@ function addAutocompleter(inputId, valuesArray){
       autoCompleter.bind("autoComplete", function(e, data){
          var ac = $jQ(this);
          if(!ac.parent().hasClass('noValChangeTooltip')) {
-            var selected = ac.val();
             ac.attr("title", data.newVal);
          }
       });
@@ -281,10 +283,14 @@ function addAutocompleter(inputId, valuesArray){
 }
 
 function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri) {
+   addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri, null);
+}
+
+function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri, autoCompleteCallback) {
    autocompleters.push(function () {
       var jQInput = $jQ("#"+escapeId4JQ(clientId));
       var uri = getContextPath() + "/ajax/invoke/AjaxSearchBean.searchSuggest";
-      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, minChars: 3, suggestAll: 1, delay: 50,
+      var suggest = jQInput.autocomplete(uri, {extraParams: {'pickerCallback' : pickerCallback}, matchContains: 1, minChars: 3, suggestAll: 1, delay: 50,
       onItemSelect: function (li) {
          processButtonState();
       },
@@ -297,8 +303,11 @@ function addSearchSuggest(clientId, containerClientId, pickerCallback, submitUri
       }
       });
 
-      suggest.bind("autoComplete", function(e, data){
-      	ajaxSubmit(clientId, containerClientId, [], submitUri, {'data' : data.newVal});
+      suggest.bind("autoComplete", function(e, data) {
+         ajaxSubmit(clientId, containerClientId, [], submitUri, {'data' : data.newVal});
+      	if (autoCompleteCallback) {
+      	   autoCompleteCallback.call(data.newVal);
+      	}
       });
       jQInput.focus(function() {
          jQInput.keydown();
@@ -317,20 +326,20 @@ function applyAutocompleters() {
 }
 
 function showFooterTitlebar() {
-	var bar = $jQ("#footer-titlebar");
+   var bar = $jQ("#footer-titlebar");
 
-	if (bar.length > 0) {
-   	if($jQ(window).height() < bar.offset().top) {
-   		bar.css('visibility', 'visible'); // vivibility is used, because display: none; gives offset (0, 0)
-   	} else {
-   		bar.css('display', 'none'); // doesn't need to take the space
-   	}
-	}
+   if (bar.length > 0) {
+      if($jQ(window).height() < bar.offset().top) {
+         bar.css('visibility', 'visible'); // vivibility is used, because display: none; gives offset (0, 0)
+      } else {
+         bar.css('display', 'none'); // doesn't need to take the space
+      }
+   }
 }
 
 function setPageScrollY() {
-	var scrollTop = $jQ(window).scrollTop();
-	$jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
+   var scrollTop = $jQ(window).scrollTop();
+   $jQ('#wrapper form').append('<input type="hidden" name="scrollToY" value="'+ scrollTop +'" />');
 }
 
 function getSharePointObject() {
@@ -424,7 +433,7 @@ function showModal(target, height){
 	if ($jQ("#overlay").length == 0) {
 		$jQ("#" + target).before("<div id='overlay'></div>");
 	}
-	if(isIE7()) {
+	if(isIE(7)) {
 		titlebarIndex = $jQ("#titlebar").css("z-index");
 		$jQ("#titlebar").css("z-index", "-1");
 	}
@@ -433,29 +442,28 @@ function showModal(target, height){
 	}
 	openModalContent = target;
 
-	$jQ("#overlay").css("display","block");
-	$jQ("#" + target).css("display","block");
-	$jQ("#" + target).find(".genericpicker-input").focus();
-	if (height != null) {
-	   $jQ("#" + target).css("height",height);
-	}
-	$jQ("#" + target).show();
+   $jQ("#overlay").css("display","block");
+   $jQ("#" + target).css("display","block");
+   $jQ("#" + target).find(".genericpicker-input").focus();
+   if (height != null) {
+      $jQ("#" + target).css("height",height);
+   }
+   $jQ("#" + target).show();
 
-	return false;
+   return false;
 }
 
 function hideModal(){
 	if (openModalContent != null){
-	  if(isIE7() && titlebarIndex != null) {
+	  if(isIE(7) && titlebarIndex != null) {
 		  $jQ("#titlebar").css("zIndex", titlebarIndex);
 	  }
 	  $jQ("#" + openModalContent).hide();
       $jQ("#overlay").remove();
-	}
-	return false;
+   }
+   return false;
 }
 
-var propSheetValidateBtnFn = [];
 var propSheetValidateSubmitFn = [];
 var propSheetValidateFormId = '';
 var propSheetValidateFinishId = '';
@@ -467,8 +475,7 @@ var propSheetNextBtnPressed = false;
 // Should be called once per property sheet. If there are multiple propertySheets on the same
 // page then the last caller overwrites formId, finishBtnId and nextBtnId, so those must be
 // equal to all property sheets on the same page.
-function registerPropertySheetValidator(btnFn, submitFn, formId, finishBtnId, nextBtnId) {
-   propSheetValidateBtnFn.push(btnFn);
+function registerPropertySheetValidator(submitFn, formId, finishBtnId, nextBtnId) {
    propSheetValidateSubmitFn.push(submitFn);
    propSheetValidateFormId = formId;
    propSheetValidateFinishId = finishBtnId;
@@ -477,16 +484,6 @@ function registerPropertySheetValidator(btnFn, submitFn, formId, finishBtnId, ne
 }
 
 function processButtonState() {
-   for (var i = 0; i < propSheetValidateBtnFn.length; i++) {
-      if (typeof propSheetValidateBtnFn[i] == 'function') {
-         propSheetValidateBtnFn[i]();
-         var finishBtn = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId);
-         var finishBtn2 = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryFinishId);
-         if (finishBtn == null || finishBtn.disabled == true) {
-            break;
-         }
-      }
-   }
    if (typeof postProcessButtonState == 'function') { postProcessButtonState(); }
 }
 
@@ -553,20 +550,20 @@ function getEndDate(beginDateElem, container){
 }
 
 function propSheetValidateOnDocumentReady() {
-   if (propSheetValidateBtnFn.length > 0 || propSheetValidateSubmitFn.length > 0) {
+   if (propSheetValidateSubmitFn.length > 0) {
       document.getElementById(propSheetValidateFormId).onsubmit = propSheetValidateSubmit;
       var finishBtn = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateFinishId);
       if(finishBtn){
-         finishBtn.onclick = function() { propSheetFinishBtnPressed = true; }
+         finishBtn.onclick = function() { propSheetFinishBtnPressed = true; };
       }
       var secondaryFinishButton = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateSecondaryFinishId);
       if(secondaryFinishButton != null) {
-    	  secondaryFinishButton.onclick = function() { propSheetFinishBtnPressed = true; }
+    	  secondaryFinishButton.onclick = function() { propSheetFinishBtnPressed = true; };
       }
       if (propSheetValidateNextId.length > 0) {
          var validateNextId = document.getElementById(propSheetValidateFormId + ':' + propSheetValidateNextId);
          if (validateNextId != null){
-            validateNextId.onclick = function() { propSheetNextBtnPressed = true; }
+            validateNextId.onclick = function() { propSheetNextBtnPressed = true; };
          }
       }
       processButtonState();
@@ -580,6 +577,22 @@ function togglePanel(divId) {
 function togglePanelWithStateUpdate(divId, panelId, viewName) {
     togglePanel(divId);
     updateState(divId, panelId, viewName);
+}
+
+/**
+ * Toggle submit-protection-layer on/off based on <code>isProtected</code>.
+ * When submit-protection-layer is on, then screen is protected against clicking and user sees an hourglass cursor
+ * @param isProtected
+ */
+function setScreenProtected(isProtected, reason) {
+   var layer = $jQ(".submit-protection-layer");
+   if(!isProtected){
+//      $jQ("#submit-protection-msg").text("");
+      layer.hide();
+   } else {
+//      $jQ("#submit-protection-msg").text(reason);
+      layer.show().focus();
+   }
 }
 
 function updateState(divId, panelId, viewName) {
@@ -611,7 +624,7 @@ function requestUpdatePanelStateFailure() {
 function ajaxError(request, textStatus, errorThrown) {
    var result = request.responseText.match(/<body>(.*)<\/body>/i);
    if (result) {
-      $jQ(".submit-protection-layer").hide();
+      setScreenProtected(false);
       $jQ('#wrapper').html(result[1]);
    } else {
       alert('Error during submit: ' + textStatus + "\nAfter clicking OK, the page will reload!");
@@ -628,8 +641,7 @@ function ajaxSubmit(componentClientId, componentContainerId, submittableParams, 
 }
 
 function ajaxSubmit(componentClientId, componentContainerId, submittableParams, uri, payload) {
-   // When page is submitted, user sees an hourglass cursor
-   $jQ(".submit-protection-layer").show().focus();
+   setScreenProtected(true, "FIXME: palun oodake, ühendus serveriga");
 
    // Find all form fields that are inside this component
    var componentChildFormElements = $jQ('#' + escapeId4JQ(componentContainerId)).find('input,select,textarea');
@@ -649,7 +661,7 @@ function ajaxSubmit(componentClientId, componentContainerId, submittableParams, 
       url: uri,
       data: postData,
       success: function (responseText) {
-         ajaxSuccess(responseText, componentClientId, componentContainerId)
+         ajaxSuccess(responseText, componentClientId, componentContainerId);
       },
       error: ajaxError,
       dataType: 'html'
@@ -661,7 +673,19 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
       // Split response
       var i = responseText.lastIndexOf('VIEWSTATE:');
       var html = responseText.substr(0, i);
-      var viewState = responseText.substr(i + 10);
+      var hiddenInputsIndex = responseText.lastIndexOf("HIDDEN_INPUT_NAMES_JSON:");
+      var viewState = responseText.substr(i + 'VIEWSTATE:'.length, hiddenInputsIndex);
+
+      var hiddenInputNames = $jQ.parseJSON(responseText.substr(hiddenInputsIndex+"HIDDEN_INPUT_NAMES_JSON:".length));
+      if(hiddenInputNames){
+         var hiddenInputsContainer = $jQ("#hiddenInputsContainer");
+         hiddenInputNames.each(function(elem){
+            if(hiddenInputsContainer.find("input[name='"+elem+"']").length == 0){
+               $jQ('<input type="hidden" name="'+elem+'" value="" />').appendTo(hiddenInputsContainer);
+            }
+         });
+      }
+
 
       // Update HTML
       $jQ('#' + escapeId4JQ(componentContainerId)).after(html).remove();
@@ -676,10 +700,17 @@ function ajaxSuccess(responseText, componentClientId, componentContainerId) {
          this.value = '';
       });
 
-      // Reattach behaviour
-      handleHtmlLoaded($jQ('#' + escapeId4JQ(componentContainerId)));
+      try {
+         // Reattach behaviour
+         handleHtmlLoaded($jQ('#' + escapeId4JQ(componentContainerId)));
+      } catch (e) {
+         alert("Failed to update page! "+e);
+      } finally {
+         setScreenProtected(false);
+      }
+   } else {
+      setScreenProtected(false);
    }
-   $jQ(".submit-protection-layer").hide();
 }
 
 //-----------------------------------------------------------------------------
@@ -778,7 +809,7 @@ var historyListener = function(newLocation, historyData) {
      historyStorage.put(window.dhtmlHistory.PAGELOADEDSTRING, true);
      window.dhtmlHistory.add(randomHistoryHash(), null);
    }
-}
+};
 
 function randomHistoryHash() {
    var chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXTZabcdefghiklmnopqrstuvwxyz";
@@ -822,29 +853,38 @@ function allowMultiplePageSizeChangers(){ // otherwise the last pageSizeChanger 
 
 // These things need to be performed only once after full page load
 $jQ(document).ready(function() {
+   try {
+      initWithScreenProtected();
+   } catch (e) {
+      alert("Failed to initialize page! "+e);
+   } finally {
+      setScreenProtected(false);
+   }
+});
+
+function initWithScreenProtected() {
    showFooterTitlebar();
    allowMultiplePageSizeChangers();
    $jQ(".admin-user-search-input").keyup(function(event) {
-	   updateButtonState();
-	   if (event.keyCode == 13) {
-		     $jQ(this).next().click();
-		     return false;
-	   }
+      if (event.keyCode == 13) {
+           $jQ(this).next().click();
+           return false;
+      }
    });
 
    $jQ(".quickSearch-input").live('keydown', function(event) {
-	   if (event.keyCode == 13) {
-		    $jQ(this).next().click();
-		    return false;
-	   }
+      if (event.keyCode == 13) {
+          $jQ(this).next().click();
+          return false;
+      }
    });
 
    $jQ(".genericpicker-input").live('keydown', function (event) {
       if (event.keyCode == 13) {
-	      $jQ(this).next().click();
-			return false;
-	   }
-	});
+         $jQ(this).next().click();
+         return false;
+      }
+   });
 
    $jQ(".genericpicker-input").live('keyup', function (event) {
       var input = $jQ(this);
@@ -865,13 +905,20 @@ $jQ(document).ready(function() {
          tbody.find('.hidden').toggleClass('hidden');
       };
 
+      // Workaround for IE/WebKit, since it cannot hide option elements...
       var backSpaceCallback = function(inputValue){
-         select.children().each(function (i) {
+         select.children('option').each(function (i) {
             var option = $jQ(this);
             if (option.text().toLowerCase().indexOf(inputValue.toLowerCase()) < 0) {
-               option.hide();
-            } else {
-               option.show();
+               option.attr('disabled', 'disabled').hide();
+               option.wrap('<span />').hide();
+            }
+         });
+         select.children('span').each(function (i) {
+            var option = $jQ(this).find('option');
+            if (option.text().toLowerCase().indexOf(inputValue.toLowerCase()) > -1) {
+               option.attr('disabled', '').show();
+               $jQ(this).replaceWith(option).show();
             }
          });
       };
@@ -986,16 +1033,16 @@ $jQ(document).ready(function() {
    });
 
    if(isIE()) {
-	   // http://www.htmlcenter.com/blog/fixing-the-ie-text-selection-bug/
-	   document.body.style.height = document.documentElement.scrollHeight + 'px';
+      // http://www.htmlcenter.com/blog/fixing-the-ie-text-selection-bug/
+      document.body.style.height = document.documentElement.scrollHeight + 'px';
    }
 
-   if(isIE7()) {
-	   $jQ(window).resize(function() {
-		   var htmlWidth = $jQ("html").outerWidth(true);
-		   var width =  htmlWidth < 920 ? 920 : htmlWidth;
-		   $jQ("#wrapper").css("min-width", width + "px");
-	   });
+   if(isIE(7)) {
+      $jQ(window).resize(function() {
+         var htmlWidth = $jQ("html").outerWidth(true);
+         var width =  htmlWidth < 920 ? 920 : htmlWidth;
+         $jQ("#wrapper").css("min-width", width + "px");
+      });
    }
 
    var suggesters = $jQ("span.suggest-wrapper>textarea");
@@ -1019,9 +1066,9 @@ $jQ(document).ready(function() {
    // extendCondencePlugin() MUST be called before tooltips are added on the following lines,
    // as condence plugin will make a copy of element for condenced text that would not get tooltips if created later
    $jQ(".tooltip").tooltip({
-	   track: true
-	   ,escapeHtml: true
-	   ,tooltipContainerElemName: "p"
+      track: true
+      ,escapeHtml: true
+      ,tooltipContainerElemName: "p"
    });
 
    // Realy simple history stuff for back button
@@ -1083,16 +1130,28 @@ $jQ(document).ready(function() {
       var invoiceSum = $jQ(".invoiceSum");
       if(isNaN(invoiceTotalSum) || isNaN(invoiceVat)){
          invoiceSum.val('');
-         return;
+      } else {
+         invoiceSum.val(round(invoiceTotalSum - invoiceVat, 2));
       }
-      invoiceSum.val(round(invoiceTotalSum - invoiceVat, 2));
+      transFooterTotalSumElem = jQuery("#footer-sum-2:first");
+      setTransTotalSumColor(transFooterTotalSumElem, invoiceTotalSum, getFloatOrNull(transFooterTotalSumElem.text()));
+   });
+   
+   jQuery(".trans-row-sum-input").live('change', recalculateInvoiceSums);
+   jQuery(".trans-row-vat-code-input").live('change', recalculateInvoiceSums);
+   
+   jQuery(".trans-row-entry-content-input").keyup(function(){
+      textCounter($(this), 50);
+   });
+   jQuery(".trans-row-entry-content-input").keydown(function(){
+      textCounter($(this), 50);
    });
 
    toggleSubrow.init();
    toggleSubrowToggle.init();
 
    handleHtmlLoaded(null, selects);
-});
+};
 
 var toggleSubrowToggle = {
       init : function(){
@@ -1116,7 +1175,9 @@ var toggleSubrowToggle = {
 };
 var toggleSubrow = {
       init : function(){
-         $jQ("td.trans-toggle-subrow").children("a").click(this.clickIt);
+         var subrowToggles = $jQ("td.trans-toggle-subrow").children("a"); 
+         subrowToggles.click(this.clickIt);
+         subrowToggles.click();
       },
       clickIt : function(){
          var anchor = $jQ(this);
@@ -1135,14 +1196,121 @@ var toggleSubrow = {
       }
 };
 
+function recalculateInvoiceSums(){
+   var sumWithoutVat = 0;
+   var vatSum = 0;
+   var hasInvalidSumInput = false;
+   var hasInvalidVatInput = false;
+   var originalTaxInfoOptions = jQuery(".trans-tax-original-info-selector").find("option");
+   var taxCodeOptions = jQuery(".trans-tax-code-selector").find("option");
+// assume there is only one transaction table
+   var transTable = jQuery(".trans-main-table:first");
+   transTable.find(".trans-recordSetRow2,.trans-recordSetRowAlt2").each(function(){
+      var mainRow = $jQ(this);
+      var sumInput = mainRow.find(".trans-row-sum-input:first");
+      var vatPercentage = 0;
+      var rowSumWithoutVat = getFloatOrNull(sumInput.val());
+      if(isNaN(rowSumWithoutVat)){
+         hasInvalidSumInput = true;
+         return false;
+      } else {
+         sumWithoutVat += rowSumWithoutVat;
+         var vatCodeInput = mainRow.next(".trans-subrow,.trans-subrowAlt").find(".trans-row-vat-code-input:first");
+         var vatCode = vatCodeInput.find("option:selected").val();
+         if(vatCode){
+            var sumInputId = sumInput.attr('id');
+            var sumInputNumber = sumInputId.substring(sumInputId.lastIndexOf('-') + 1)
+            var originalVatCodeInfo = originalTaxInfoOptions.filter("[value='" + sumInputNumber + "']:first");
+            if(originalVatCodeInfo.length > 0){
+               var originalVatCodeInfoText = originalVatCodeInfo.text();
+               var originalVatCode = originalVatCodeInfoText.substring(0, originalVatCodeInfoText.lastIndexOf("¤"));
+               if(originalVatCode == vatCode){
+                  vatPercentage = getFloatOrNull(originalVatCodeInfoText.substring(originalVatCodeInfoText.lastIndexOf("¤") + 1));
+               } else {
+                  vatPercentage = getFloatOrNull(taxCodeOptions.filter("[value='" + vatCode + "']:first").text());
+               }
+            } else {
+               vatPercentage = getFloatOrNull(taxCodeOptions.filter("[value='" + vatCode + "']:first").text());
+            }
+         }
+         if(isNaN(vatPercentage)){
+            hasInvalidVatInput = true;
+            return false;
+         }
+         vatSum += rowSumWithoutVat * vatPercentage / 100;
+      }
+   });
+   var msg1 = jQuery("#footer-error-message-0");
+   var msg2 = jQuery("#footer-error-message-1");
+   if (!hasInvalidSumInput && !hasInvalidVatInput){
+      jQuery("#footer-sum-0").text(round(sumWithoutVat, 2));
+      jQuery("#footer-sum-1").text(round(vatSum, 2));
+      var transFooterTotalSumElem = jQuery("#footer-sum-2:first");
+      var transFooterTotalSum = round(sumWithoutVat + vatSum, 2);
+      transFooterTotalSumElem.text(transFooterTotalSum);
+      setTransTotalSumColor(transFooterTotalSumElem, getFloatOrNull(jQuery(".invoiceTotalSum").val()), getFloatOrNull(transFooterTotalSum));
+      msg1.hide();
+      msg2.hide();
+   } else {
+      jQuery("#footer-sum-0").text("");
+      jQuery("#footer-sum-1").text("");
+      jQuery("#footer-sum-2").text("");
+      if(hasInvalidSumInput){
+         msg1.show();
+         msg2.hide();
+      } else {
+         msg1.hide();
+         msg2.show();
+      }
+   }
+}
+
+function setTransTotalSumColor(transFooterTotalSumElem, invoiceTotalSum, transFooterTotalSum){
+   if(invoiceTotalSum == '' || isNaN(invoiceTotalSum) || Math.abs(transFooterTotalSum - invoiceTotalSum) > 0.001){
+      transFooterTotalSumElem.css("color", "red");
+   } else {
+      transFooterTotalSumElem.css("color", "");
+   }
+}
+
+function textCounter(input, maxlimit) {
+   var value = input.value;
+   if (value.length > maxlimit){
+      input.value = value.substring(0, maxlimit);
+   }
+}
+
+// return number for valid numeric string, 
+// 0 for blank string and NaN for all other values
 function getFloatOrNull(originalSumString){
    var sumString = originalSumString.replace(",", ".");
    sumString = sumString.replace(/ /g, "");
    if(sumString == ""){
       return 0;
    }
-   return parseFloat(sumString);
+   if(isNumeric(sumString)){
+      return parseFloat(sumString);
+   }
+   return NaN;
 }
+
+// use to avoid javascript parsing strings like "55 krooni" to number 55 
+// (conversion that java validation wouldn't allow)
+function isNumeric(numberStr){
+   var validChars = "0123456789.";
+   var additionalFirstChars = "+-";
+   for (i = 0; i < numberStr.length; i++){ 
+      var currentChar = numberStr.charAt(i);
+      if (validChars.indexOf(currentChar) == -1) {
+         if(i !== 0 || additionalFirstChars.indexOf(currentChar) == -1){
+            return false;
+         }
+      }
+   }
+   return true;
+}
+   
+
 
 function initSelectTooltips(selects) {
    selects.each(function(){
@@ -1174,7 +1342,6 @@ function extendCondencePlugin() {
    condencers.each(function(){
       var p = this.className.match(/condence(\d+)?(\-)?/i);
       var condenceAtChar = p ? parseInt('0'+p[1], 10) : 200;
-      var condenceAtChar = p ? parseInt('0'+p[1], 10) : 200;
       var condence = p ? parseInt('0'+p[1], 10) : 200;
       var moreTxt = "... ";
       if(!(p && p[2] == "-")){
@@ -1199,39 +1366,16 @@ function extendCondencePlugin() {
 // 1) once after full page load
 // *) each time an area is replaced inside the page
 function handleHtmlLoaded(context, selects) {
-   applyAutocompleters();
-
-   initSelectTooltips((selects==undefined) ? $jQ("select") : selects);
-
    //initialize all expanding textareas
    var expanders = jQuery("textarea[class*=expand]", context);
    expanders.TextAreaExpander();
-   if(jQuery.browser.msie) {
+   var ieVer = isIE();
+   if(ieVer) { // Darn IE bugs...
       // trigger size recalculation if IE, because e.scrollHeight may be inaccurate before keyup() is called
       expanders.keyup();
       jQuery.fn.TextAreaExpander.ieInitialized = true;
-   }
+      zIndexWorkaround(context);
 
-   // datepicker
-   jQuery("input.date", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', yearRange: '-100:+100', duration: '' });
-   jQuery("input.sysdate", context).not("input[readonly]").datepicker({ dateFormat: 'dd.mm.yy', changeMonth: true, changeYear: true, nextText: '', prevText: '', defaultDate: +7, yearRange: '-100:+100', duration: '' });
-
-   // trigger keyup event (for validation & textarea resize) on paste. Can't use live() because of IE
-   $jQ("textarea, input[type='text']", context).bind("paste", function(){
-      var input = $jQ(this);// pasted value not jet assigned
-      setTimeout(function() {
-         input.keyup();
-      }, 100);
-   });
-
-   // Darn IE7 bugs...
-   fixIESelectMinWidth(context);
-   fixIEDropdownMinWidth("#titlebar .extra-actions .dropdown-menu", "#titlebar .extra-actions .dropdown-menu li", context);
-   fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li", context);
-   fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li", context);
-   zIndexWorkaround(context);
-
-   if(isIE()) {
       var jqSelects = (selects==undefined) ? $jQ("select") : selects;
       jqSelects.each(function(){
          var jqSelect = $jQ(this);
@@ -1241,6 +1385,12 @@ function handleHtmlLoaded(context, selects) {
             });
          }
       });
+      if(ieVer==7){
+         fixIESelectMinWidth(context);
+         fixIEDropdownMinWidth("#titlebar .extra-actions .dropdown-menu", "#titlebar .extra-actions .dropdown-menu li", context);
+         fixIEDropdownMinWidth("footer-titlebar .extra-actions .dropdown-menu", "#footer-titlebar .extra-actions .dropdown-menu li", context);
+         fixIEDropdownMinWidth(".title-component .dropdown-menu.in-title", ".title-component .dropdown-menu.in-title li", context);
+      }
    }
 
    /**
@@ -1284,29 +1434,84 @@ function handleHtmlLoaded(context, selects) {
       return false;
    });
 
-   $jQ(".modalwrap select option", context).tooltip();
+   ////////////////////////////////////////////////////////////////////////////////////////////////////
+   // Functions that should be executed before removing submit-protection layer should be above.
+   // For example activities related to clicking links or buttons
+   ////////////////////////////////////////////////////////////////////////////////////////////////////
+   setScreenProtected(false);
+   ////////////////////////////////////////////////////////////////////////////////////////////////////
+   // Functions that could be delayed a bit after submit-protection layer is removed could be bellow.
+   // For example because user is probably not fast enough to react to removing submit-protection layer
+   ////////////////////////////////////////////////////////////////////////////////////////////////////
+   $jQ(".genericpicker-input:visible").focus();
 
-   /**
-    * Forward click event to autocomplete input.
-    * (We wrap autocomplete inputs to fix IE bug related to input with background image and text shadowing)
-    */
-   $jQ(".suggest-wrapper", context).click(function (e) {
-      $jQ(this).children("textarea").focus();
+   applyAutocompleters();
+
+   // datepicker
+   var dp_dates = jQuery("input.date", context).not("input[readonly]").datepicker({ 
+      dateFormat: 'dd.mm.yy', 
+      changeMonth: true, 
+      changeYear: true, 
+      nextText: '', 
+      prevText: '', 
+      yearRange: '-100:+100', 
+      duration: '',
+      onSelect: function( selectedDate ) {
+         var dateElem = jQuery(this);
+         dateElem.trigger("change");
+         var date_all = jQuery.datepicker.parseDate(dateElem.data("datepicker").settings.dateFormat,selectedDate,dateElem.data("datepicker").settings);
+         dp_dates.datepicker("option","defaultDate",date_all);
+         if(dateElem.attr("class").indexOf("beginDate")<0) return;
+         var row = dateElem.closest("tr");
+         if(row==null) return;
+         var endDate = getEndDate(this, row);
+         if(endDate==null) return;
+         var endDatePicker = endDate.data("datepicker");
+         if(endDatePicker==null) return;
+         var date = jQuery.datepicker.parseDate(endDatePicker.settings.dateFormat,selectedDate,endDatePicker.settings);
+         if(date==null) return;
+         endDate.datepicker("option","minDate",date);
+      }
    });
-
-   $jQ(".toggle-tasks", context).click(function(){
-      var nextTr = $jQ(this).toggleClass("expanded").closest("tr").next()[0];
-      if(nextTr.style.display == 'none') { // bug in IE8
-           $jQ(nextTr).show();
-      } else {
-           $jQ(nextTr).hide();
+   var dp_sysdates = jQuery("input.sysdate", context).not("input[readonly]").datepicker({ 
+      dateFormat: 'dd.mm.yy', 
+      changeMonth: true, 
+      changeYear: true, 
+      nextText: '', 
+      prevText: '', 
+      defaultDate: +7, 
+      yearRange: '-100:+100', 
+      duration: '',
+      onSelect: function( selectedDate ) {
+         var dateElem = jQuery(this);
+         dateElem.trigger("change");
+         var date_all = jQuery.datepicker.parseDate(dateElem.data("datepicker").settings.dateFormat,selectedDate,dateElem.data("datepicker").settings);
+         dp_sysdates.datepicker("option","defaultDate",date_all);
+         if(dateElem.attr("class").indexOf("beginDate")<0){
+            return;
+         }
+         var row = dateElem.closest("tr");
+         if(row==null){
+            return;
+         }
+         var endDate = getEndDate(this, row);
+         if(endDate==null) return;
+         var endDatePicker = endDate.data("datepicker");
+         if(endDatePicker==null) return;
+         var date = jQuery.datepicker.parseDate(endDatePicker.settings.dateFormat,selectedDate,endDatePicker.settings);
+         if(date==null) return;
+         endDate.datepicker("option","minDate",date);
       }
    });
 
+   
+   
+   
+   
    if(context != null) {
-	   $jQ("input", context).focus(function() {
-		      lastActiveInput = $jQ(this);
-	   });
+      $jQ("input", context).focus(function() {
+            lastActiveInput = $jQ(this);
+      });
    }
 
    /**
@@ -1320,15 +1525,15 @@ function handleHtmlLoaded(context, selects) {
       var selectId = $(this).id;
       var textAreaId = selectId.substring(0, selectId.lastIndexOf(':') + 1) + TARGET_SUFFIX;
       var existingValue = $jQ("#" + escapeId4JQ(textAreaId)).text();
-      var initialValue = $jQ('#' + escapeId4JQ(selectId) + ' :selected').text()
-      if (initialValue != "" && existingValue == "")
+      var initialValue = $jQ('#' + escapeId4JQ(selectId) + ' :selected').text();
+      if (initialValue != "" && existingValue == "" && initialValue != getTranslation("select_default_label"))
       {
          var targetElem = $jQ("#" + escapeId4JQ(textAreaId));
          targetElem.val(initialValue);
       }
       $jQ(this).bind("change", function()
       {
-         appendSelection($jQ(this), textAreaId)
+         appendSelection($jQ(this), textAreaId);
       });
    });
 
@@ -1339,6 +1544,7 @@ function handleHtmlLoaded(context, selects) {
    $jQ("[class^=selectWithOnchangeEvent]", context).each(function (intIndex, selectElement)
    {
       var classString = selectElement.className;
+      var currElId = selectElement.id;
       var onChangeJavascript = classString.substring(classString.lastIndexOf('¤¤¤¤') + 4);
       if(onChangeJavascript != ""){
          if(classString.indexOf('selectWithOnchangeEventParam') == 0){
@@ -1357,19 +1563,46 @@ function handleHtmlLoaded(context, selects) {
       }
    });
 
-   $jQ(".admin-user-search-input", context).keyup(function(event) {
-       updateButtonState();
-       if (event.keyCode == '13') {
-          $jQ(this).next().click();
-       }
-    });
-
-   $jQ(".genericpicker-input:visible").focus();
-
 	propSheetValidateOnDocumentReady();
 
-	// this method should be called last in handleHtmlLoaded as it displays alerts and possibly submits page
-	confirmWorkflow();
+   // this method should be called after critical activities have been done in handleHtmlLoaded as it displays alerts and possibly submits page
+   confirmWorkflow();
+
+   // trigger keyup event (for validation & textarea resize) on paste. Can't use live() because of IE
+   $jQ("textarea, input[type='text']", context).bind("paste", function(){
+      var input = $jQ(this);// pasted value not jet assigned
+      setTimeout(function() {
+         input.keyup();
+      }, 100);
+   });
+
+   /**
+    * Forward click event to autocomplete input.
+    * (We wrap autocomplete inputs to fix IE bug related to input with background image and text shadowing)
+    */
+   $jQ(".suggest-wrapper", context).click(function (e) {
+      $jQ(this).children("textarea").focus();
+   });
+
+   $jQ(".modalwrap select option", context).tooltip();
+   initSelectTooltips((selects==undefined) ? $jQ("select") : selects);
+
+   // XXX: kasutusel addressbook.jsp, users.jsp lehtedel
+   $jQ(".admin-user-search-input", context).keyup(function(event) {
+      if (event.keyCode == '13') {
+         $jQ(this).next().click();
+      }
+   });
+
+   var forms = $jQ(document.forms);
+   if(forms.length > 2){
+      forms.each(function(){
+         var form = this;
+         if(form.id != "rshStorageForm" && form.id != "searchForm" && form.id != "ConfigAdmin-console-title" && form.id != "node-browser-titlebar") {
+            alert("unexpected form.id='"+form.id+"' (found "+forms.length+" forms)");
+         }
+      });
+   }
 }
 
 //-----------------------------------------------------------------------------
@@ -1552,6 +1785,9 @@ function isActiveXOK(plugin) {
 function sendToSapManually(){
    return showModal('entrySapNumber_popup');
 }
+function addToFavorites() {
+   return showModal("addToFavorites");
+}
 
 function confirmWorkflow(){
    var confirmationMessagesSelect = $jQ("[class='workflow-confirmation-messages']").get(0);
@@ -1564,4 +1800,20 @@ function confirmWorkflow(){
       }
    }
    $jQ("[class='workflow-after-confirmation-link']").get(0).click();
+}
+
+function clearFormHiddenParams(currFormName, newTargetVal) {
+   var f = document.forms[currFormName];
+   $jQ("#hiddenInputsContainer input[type='hidden']", $jQ(f)).each(function(){
+      var jqInput=$jQ(this);
+      var before = jqInput.val();// FIXME DLSeadist debug
+      jqInput.val("");
+      if(before != ""){
+         alert("clean hiddenInput: before "+before+", after="+jqInput.val());
+      }
+   });
+   if(newTargetVal){// FIXME DLSeadist debug - testiks sisse jäätud..kui üllatust ei tule kuskilt, siis kustutan lõpus ära
+      alert("suprize! newTargetVal="+newTargetVal+" ( old val was '"+f.target+"')");
+   }
+   f.target = newTargetVal ? newTargetVal : '';
 }

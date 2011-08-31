@@ -2,12 +2,17 @@ package ee.webmedia.alfresco.common.ajax;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import javax.faces.application.Application;
 import javax.faces.application.StateManager;
 import javax.faces.application.ViewHandler;
 import javax.faces.component.UIComponent;
+import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
 import javax.faces.component.UIViewRoot;
 import javax.faces.context.FacesContext;
@@ -21,12 +26,14 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.web.app.servlet.ajax.InvokeCommand.ResponseMimetype;
 import org.alfresco.web.ui.common.Utils;
+import org.apache.myfaces.shared_impl.renderkit.html.HtmlFormRendererBase;
 import org.apache.myfaces.shared_impl.util.RestoreStateUtils;
 import org.apache.myfaces.shared_impl.util.StateUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import flexjson.JSONSerializer;
 
 /**
  * @author Alar Kvell
@@ -161,6 +168,27 @@ public class AjaxBean implements Serializable {
         String viewState = saveView(context, viewRoot);
         ResponseWriter out = context.getResponseWriter();
         out.write("VIEWSTATE:" + viewState);
+
+        UIForm form = Utils.getParentForm(context, component);
+        @SuppressWarnings("unchecked")
+        Set<String> formHiddenInputs = (Set<String>) context.getExternalContext().getRequestMap().get(
+                HtmlFormRendererBase.getHiddenCommandInputsSetName(context, form));
+        if (formHiddenInputs == null) {
+            formHiddenInputs = Collections.<String> emptySet();
+        }
+        String jsonHiddenInputNames = new JSONSerializer().serialize(formHiddenInputs);
+        out.write("HIDDEN_INPUT_NAMES_JSON:" + jsonHiddenInputNames);
+    }
+
+    private static JSONSerializer SERIALIZER = new JSONSerializer(); // FIXME DLSeadist final
+
+    public static void main(String[] args) {
+        SERIALIZER = new JSONSerializer();
+        // HashSet<String> set = new HashSet<String>(null);
+        HashSet<String> set = new HashSet<String>(Arrays.asList("test:1", "test,2"));
+        String serialize = SERIALIZER.serialize(set);
+        System.out.println(serialize);
+
     }
 
     protected String getParam(FacesContext context, String paramKey) {

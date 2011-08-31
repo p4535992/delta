@@ -75,6 +75,14 @@
       </table>
       
       <br/>
+      <p>Export as .ACP file: 
+      <h:commandButton id="export" styleClass="node-export" value="Export" type="submit"
+         actionListener="#{AdminNodeBrowseBean.export}" />
+      <h:commandButton id="delete" styleClass="node-delete" value="Delete node" type="submit"
+         actionListener="#{AdminNodeBrowseBean.delete}" rendered="#{ApplicationService.test}" />
+      </p>
+
+      <br/>
       <h:outputText styleClass="mainTitle" value="Node Identifier"/>
    
       <table cellpadding="4" cellspacing="0">
@@ -377,6 +385,13 @@
    
    </h:form>
    
+   <f:verbatim>
+      <script type="text/javascript">
+         prependOnclick($jQ(".node-export"), function(){
+            return confirm('Exporting node hierarchy can take a long time if hierarchy is deep or there are large files. If you click OK, then you must wait until export is complete. You must not click anywhere else or try to cancel. Do you want to continue?');
+         });
+      </script>
+   </f:verbatim>
 </f:view>
 
 </r:page>

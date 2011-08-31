@@ -57,12 +57,14 @@ public class MenuServiceImpl implements MenuService {
         public MenuItemProcessor processor;
         public boolean runOnce;
         public boolean isExecutable;
+        public boolean isSessionScoped;
 
-        public ProcessorWrapper(String menuItemId, MenuItemProcessor processor, boolean runOnce) {
+        public ProcessorWrapper(String menuItemId, MenuItemProcessor processor, boolean runOnce, boolean isSessionScoped) {
             this.menuItemId = menuItemId;
             this.processor = processor;
             this.runOnce = runOnce;
             isExecutable = true;
+            this.isSessionScoped = isSessionScoped;
 
         }
     }
@@ -76,7 +78,7 @@ public class MenuServiceImpl implements MenuService {
     public void processTasks(Menu menu, Collection<String> onlyMenuItemIds) {
         long start = System.currentTimeMillis();
         System.out.println("PERFORMANCE: MENU PROCESS TASK START");
-        process(menu, false, onlyMenuItemIds);
+        process(menu, false, onlyMenuItemIds, false);
         System.out.println("PERFORMANCE: MENU PROCESS TASK END: " + (System.currentTimeMillis() - start) + "ms");
     }
 
@@ -140,8 +142,13 @@ public class MenuServiceImpl implements MenuService {
     }
 
     @Override
+    public void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce, boolean sessionScope) {
+        processors.add(new ProcessorWrapper(menuItemId, processor, runOnce, sessionScope));
+    }
+
+    @Override
     public void addProcessor(String menuItemId, MenuItemProcessor processor, boolean runOnce) {
-        processors.add(new ProcessorWrapper(menuItemId, processor, runOnce));
+        addProcessor(menuItemId, processor, runOnce, false);
     }
 
     @Override
@@ -169,12 +176,17 @@ public class MenuServiceImpl implements MenuService {
     }
 
     private void process(Menu loadedMenu, boolean reloaded) {
-        process(loadedMenu, reloaded, null);
+        process(loadedMenu, reloaded, null, false);
     }
 
-    private void process(Menu loadedMenu, boolean reloaded, Collection<String> onlyMenuItemIds) {
+    @Override
+    public void process(Menu loadedMenu, boolean reloaded, boolean sessionScope) {
+        process(loadedMenu, reloaded, null, sessionScope);
+    }
+
+    private void process(Menu loadedMenu, boolean reloaded, Collection<String> onlyMenuItemIds, boolean sessionScope) {
         for (ProcessorWrapper processorWrapper : processors) {
-            if (processorWrapper.isExecutable || reloaded) {
+            if (reloaded || (processorWrapper.isExecutable && processorWrapper.isSessionScoped == sessionScope)) {
                 if (processorWrapper.runOnce) {
                     processorWrapper.isExecutable = false;
                 }

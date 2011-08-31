@@ -98,6 +98,11 @@
                <mandatory enforced="true">true</mandatory>
                <default>true</default>
             </property>
+            <property name="wfc:mandatory">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+               <default>false</default>
+            </property>
             <property name="wfc:stopOnFinish">
                <!-- It's a mandatory property, but as the default value is always set anyway and we want to avoid the 
                mandatory symbol in front of the checkbox on the view side, we can leave it as not mandatory in model. -->

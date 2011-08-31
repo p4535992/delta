@@ -86,6 +86,7 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
     public void setFileName(String fileName) {
         if (!isCorrectExtension(fileName)) {
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), wrongExtensionMsg, getFileName());
+            clearUpload(); // Do this to avoid FileUploadBean multiple file mode
             this.fileName = null;
             return;
         }

@@ -11,6 +11,7 @@ import java.util.StringTokenizer;
 
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Repository;
 import org.apache.commons.lang.StringUtils;
@@ -193,6 +194,10 @@ public class SearchUtil {
             value = QueryParser.escape(stripCustom(value));
         }
         return "@" + Repository.escapeQName(documentPropName) + ":\"" + (leftWildcard ? "*" : "") + value + (rightWildcard ? "*" : "") + "\"";
+    }
+
+    public static String generateParentQuery(NodeRef parentRef, StoreRef storeRef) {
+        return "PARENT:\"" + storeRef + "/" + parentRef.getId() + "\"";
     }
 
     public static String generatePropertyDateQuery(QName documentPropName, Date date) {

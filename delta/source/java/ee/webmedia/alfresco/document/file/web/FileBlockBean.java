@@ -6,6 +6,7 @@ import java.util.List;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.model.FileInfo;
@@ -20,6 +21,7 @@ import org.alfresco.web.bean.repository.Repository;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -62,7 +64,14 @@ public class FileBlockBean implements Serializable {
 
     public void transformToPdf(ActionEvent event) {
         NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        final FileInfo pdfFileInfo = getFileService().transformToPdf(nodeRef);
+        FileInfo pdfFileInfo = null;
+        try {
+            pdfFileInfo = getFileService().transformToPdf(nodeRef);
+        } catch (NodeLockedException e) {
+            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "file_transform_pdf_error_docLocked",
+                    BeanHelper.getUserService().getUserFullName((String) BeanHelper.getNodeService().getProperty(docRef, ContentModel.PROP_LOCK_OWNER)));
+            return;
+        }
         restore(); // refresh the files list
         if (pdfFileInfo != null) {
             MessageUtil.addInfoMessage("file_generate_pdf_success", pdfFileInfo.getName());

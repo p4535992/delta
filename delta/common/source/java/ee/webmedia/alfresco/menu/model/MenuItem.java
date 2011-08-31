@@ -128,7 +128,8 @@ public class MenuItem implements Serializable {
         FacesHelper.setupComponentId(context, link, id);
 
         if (getTitle() == null) {
-            setTitle(I18NUtil.getMessage(getTitleId()));
+            String message = I18NUtil.getMessage(getTitleId());
+            setTitle(message == null ? getTitleId() : message);
         }
         link.setValue(getTitle());
         link.setTooltip(getTitle());
@@ -158,14 +159,14 @@ public class MenuItem implements Serializable {
 
         Config config = Application.getConfigService(context).getGlobalConfig();
         ActionDefinition actionDef = ((ActionsConfigElement) config.getConfigElement(ActionsConfigElement.CONFIG_ELEMENT_ID))
-                .getActionDefinition(outcome2);
+        .getActionDefinition(outcome2);
 
         // Check, if there is config for this action and overwrite properties if available
         if (actionDef != null) {
             // prepare any code based evaluators that may be present
             if (actionDef.Evaluator != null) {
                 ActionInstanceEvaluator evaluator =
-                        (ActionInstanceEvaluator) application.createComponent(UIActions.COMPONENT_ACTIONEVAL);
+                    (ActionInstanceEvaluator) application.createComponent(UIActions.COMPONENT_ACTIONEVAL);
                 FacesHelper.setupComponentId(context, evaluator, id + "-evaluator");
                 evaluator.setEvaluator(actionDef.Evaluator);
                 evaluator.setValueBinding(ATTR_VALUE, application.createValueBinding("#{" + ACTION_CONTEXT + "}"));
@@ -296,9 +297,9 @@ public class MenuItem implements Serializable {
     @Override
     public String toString() {
         return "Title: " + title +
-                "Outcome: " + outcome + ", " +
-                "Admin: " + admin + ", " +
-                "Subitems: " + (subItems == null ? null : subItems.size()) + "; ";
+        "Outcome: " + outcome + ", " +
+        "Admin: " + admin + ", " +
+        "Subitems: " + (subItems == null ? null : subItems.size()) + "; ";
     }
 
     public String getId() {
@@ -338,6 +339,9 @@ public class MenuItem implements Serializable {
     }
 
     public List<MenuItem> getSubItems() {
+        if (subItems == null) {
+            subItems = new ArrayList<MenuItem>();
+        }
         return subItems;
     }
 

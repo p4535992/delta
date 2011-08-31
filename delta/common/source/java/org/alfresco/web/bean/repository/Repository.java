@@ -600,7 +600,7 @@ public final class Repository
    public static ServiceRegistry getServiceRegistry(FacesContext context)
    {
         if (serviceRegistry == null) {
-            if (FacesContext.getCurrentInstance() == null) {
+            if (context == null) {
                 serviceRegistry = (ServiceRegistry) AppConstants.getBeanFactory().getBean(ServiceRegistry.SERVICE_REGISTRY);
             } else {
                 serviceRegistry = (ServiceRegistry) FacesContextUtils.getRequiredWebApplicationContext(

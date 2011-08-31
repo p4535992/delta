@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<alfresco-config>
+   <config>
+      <actions>
+         <action id="thesaurus_export">
+            <label-id>thesaurus_export</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{ThesaurusListDialog.export}</action-listener>
+         </action>
+         
+         <action id="thesaurus_import">
+            <label-id>thesaurus_import</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action>dialog:thesaurusImportDialog</action>
+         </action>
+         
+         <action id="thesaurus_add_new">
+            <permissions>
+               <permission allow="true">CreateChildren</permission>
+            </permissions>
+            <label-id>thesaurus_add</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{ThesaurusDetailsDialog.addNew}</action-listener>
+            <action>dialog:thesaurusDetailsDialog</action>
+         </action>
+         
+         <action id="thesaurus_add_keyword">
+            <label-id>thesaurus_keyword_add</label-id>
+            <image>/images/icons/new_content.gif</image>
+            <action-listener>#{ThesaurusDetailsDialog.addKeyword}</action-listener>
+         </action>
+
+         <action-group id="list_actions_thesaurus">
+            <action idref="thesaurus_add_new" />
+            <action idref="thesaurus_import" />
+            <action idref="thesaurus_export" />
+         </action-group>
+         
+         <action-group id="details_actions_thesaurus">
+            <action idref="thesaurus_add_keyword" />
+         </action-group>
+
+      </actions>
+      <dialogs>
+         <dialog name="thesaurusListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/thesaurus/web/thesaurus-list-dialog.jsp" managed-bean="ThesaurusListDialog"
+            icon="/images/icons/versioned_properties_large.gif" actions-config-id="list_actions_thesaurus" title-id="thesauri" show-ok-button="false" />
+         
+         <dialog name="thesaurusDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/thesaurus/web/thesaurus-details-dialog.jsp" managed-bean="ThesaurusDetailsDialog"
+            icon="/images/icons/versioned_properties_large.gif" actions-config-id="details_actions_thesaurus" title-id="thesaurus_details" show-ok-button="true" />
+            
+         <dialog name="thesaurusImportDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/thesaurus/web/thesaurus-import-dialog.jsp" managed-bean="ThesaurusImportDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="thesaurus_import" show-ok-button="true" />
+         
+      </dialogs>
+   </config>
+</alfresco-config>
+

@@ -294,20 +294,14 @@
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.AddFavoritesDocumentEvaluator</evaluator>
             <label-id>document_favorites_add</label-id>
             <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{FavoritesDocumentListDialog.add}</action-listener>
-            <params>
-               <param name="nodeRef">#{DocumentDialog.node.nodeRef}</param>
-            </params>
+            <onclick>addToFavorites(); return false;</onclick>
          </action>
 
           <action id="document_favorites_remove">
             <evaluator>ee.webmedia.alfresco.document.web.evaluator.RemoveFavoritesDocumentEvaluator</evaluator>
             <label-id>document_favorites_remove</label-id>
             <image>/images/icons/versioned_properties.gif</image>
-            <action-listener>#{FavoritesDocumentListDialog.remove}</action-listener>
-            <params>
-               <param name="nodeRef">#{DocumentDialog.node.nodeRef}</param>
-            </params>
+            <action-listener>#{DocumentDialog.removeFavorite}</action-listener>
          </action>
          
          <action id="document_sendToSap">

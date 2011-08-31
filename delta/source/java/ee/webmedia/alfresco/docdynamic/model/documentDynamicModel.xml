@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="docdyn:documentDynamicModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://alfresco.webmedia.ee/model/document/common/1.0" prefix="doccom" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/document/dynamic/1.0" prefix="docdyn" />
+   </namespaces>
+
+   <types>
+
+      <type name="docdyn:documentDynamic">
+         <parent>doccom:document</parent>
+         <properties>
+            <property name="docdyn:documentTypeId">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="docdyn:documentTypeVersionNr">
+               <type>d:int</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+         </properties>
+      </type>
+
+   </types>
+<!--
+      xxxLetter
+         foobar
+         
+      type=docdyn:documentDynamic
+         prop:
+            * docdyn:documentTypeId=xxxLetter
+            * docdyn:documentTypeVersionNr=1
+            * doccom:docName=...
+            * doccom:docStatus=...
+            * docdyn:foobar=...
+-->  
+
+</model>

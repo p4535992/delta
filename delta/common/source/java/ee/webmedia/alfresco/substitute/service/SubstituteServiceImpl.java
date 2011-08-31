@@ -174,9 +174,16 @@ public class SubstituteServiceImpl implements SubstituteService {
                 generateTypeQuery(SubstituteModel.Types.SUBSTITUTE),
                 generateStringExactQuery(userName, SubstituteModel.Props.SUBSTITUTE_ID),
                 joinQueryPartsOr(Arrays.asList(
+                joinQueryPartsOr(Arrays.asList(
                         generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
                         generateDatePropertyRangeQuery(startDate, endDate, SubstituteModel.Props.SUBSTITUTION_END_DATE)
-                        ), true)
+                        ), true),
+                        joinQueryPartsAnd(Arrays.asList(
+                                generateDatePropertyRangeQuery(null, startDate, SubstituteModel.Props.SUBSTITUTION_START_DATE),
+                                generateDatePropertyRangeQuery(endDate, null, SubstituteModel.Props.SUBSTITUTION_END_DATE)
+                                ), true)
+
+                ), true)
                 ));
 
         ResultSet resultSet = doSearch(query);

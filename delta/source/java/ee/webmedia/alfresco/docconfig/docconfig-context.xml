@@ -1,0 +1,97 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+   <bean id="documentConfigService" class="ee.webmedia.alfresco.docconfig.service.DocumentConfigServiceImpl">
+      <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="namespaceService" ref="NamespaceService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="generalService" ref="GeneralService" />
+   </bean>
+
+   <bean id="DocumentConfigService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.docconfig.service.DocumentConfigService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentConfigService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+<!-- TODO DLSeadist commented out for shipping 
+   <bean id="systematicFieldDefinitionsBootstrap1" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="fieldDefinitionsBootstrap" />
+         </list>
+      </property>      
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldDefinitions1.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="systematicFieldGroupDefinitionsBootstrap1" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="simdhs" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="fieldDefinitionsBootstrap" />
+         </list>
+      </property>      
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/docadmin:fieldGroupDefinitions</prop>
+               <prop key="location">ee/webmedia/alfresco/docconfig/bootstrap/systematicFieldGroupDefinitions1.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>
+-->
+
+   <bean id="documentLocationGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="functionsService" ref="FunctionsService" />
+      <property name="seriesService" ref="SeriesService" />
+      <property name="volumeService" ref="VolumeService" />
+      <property name="caseService" ref="CaseService" />
+   </bean>
+
+   <bean id="comboboxEditableGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.ComboboxEditableGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>
+
+   <bean id="comboboxGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.ComboboxGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>
+
+   <bean id="textFieldGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.TextFieldGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="PropertySheetStateBean" class="ee.webmedia.alfresco.docconfig.web.PropertySheetStateBean" scope="session" />
+
+   <!-- END: web beans: -->
+
+</beans>

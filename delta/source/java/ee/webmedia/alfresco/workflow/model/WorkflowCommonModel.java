@@ -51,6 +51,8 @@ public interface WorkflowCommonModel {
         // Workflow
         QName PARALLEL_TASKS = QName.createQName(URI, "parallelTasks");
         QName STOP_ON_FINISH = QName.createQName(URI, "stopOnFinish");
+        /** can workflow be deleted? */
+        QName MANDATORY = QName.createQName(URI, "mandatory");
 
         // Task
         QName OWNER_EMAIL = QName.createQName(URI, "ownerEmail");

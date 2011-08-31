@@ -57,14 +57,13 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
             if (user == null) {
                 String msg = "Didn't manage to get user with id '" + userName + "' from AMRService.";
                 if (BeanHelper.getApplicationService().isTest()) {
-                    log.warn(msg);
+                    log.warn(msg + ". Ignoring, as project.test=true");
                     return;
                 }
                 log.debug(msg);
                 throw new UserNotFoundException("Didn't manage to get user with id '" + userName + "' from AMRService.");
-            } else {
-                log.debug("Found user with id '" + userName + "'");
             }
+            log.debug("Found user with id '" + userName + "'");
             if (!StringUtils.equals(userName, user.getIsikukood())) {
                 throw new AuthenticationException("Social security id is supposed to be equal to userName");
             }
@@ -84,8 +83,13 @@ public class AMRSimpleAuthenticationImpl extends SimpleAcceptOrRejectAllAuthenti
         } catch (WebServiceIOException e) {
             log.warn("AMRService is not available", e);
         } catch (SoapFaultClientException e) {
-            log.error("Didn't manage to get user with id '" + userName + "' from AMRService.", e);
-            throw new UserNotFoundException("Didn't manage to get user with id '" + userName + "' from AMRService: " + e.getMessage(), e);
+            String msg = "Didn't get response from AMR to get user with id '" + userName + "'";
+            if (BeanHelper.getApplicationService().isTest()) {
+                log.warn(msg + ". Ignoring, as project.test=true"); // Web service is down - Just log in and ignore failure
+            } else {
+                log.error(msg, e);
+                throw new UserNotFoundException("Didn't manage to get user with id '" + userName + "' from AMRService: " + e.getMessage(), e);
+            }
         }
     }
 

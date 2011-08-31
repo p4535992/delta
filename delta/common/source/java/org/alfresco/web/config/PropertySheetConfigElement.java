@@ -284,7 +284,7 @@ public class PropertySheetConfigElement extends ConfigElementAdapter
     */
    public static abstract class ItemConfig
    {
-      final protected String name;
+      protected String name;
       protected String displayLabel;
       protected String displayLabelId;
       protected String converter;

@@ -16,7 +16,7 @@
    </f:facet>
 </h:panelGroup>
 
-<a:panel id="metadata-panel" facetsId="dialog:dialog-body:metadata-panel-facets" label="#{msg.document_metadata}" styleClass="panel-100" progressive="true">
+<a:panel id="metadata-panel" facetsId="dialog:dialog-body:metadata-panel-facets" label="#{msg.document_metadata}" styleClass="panel-100 #{(DialogManager.bean.meta.inEditMode) ? 'edit-mode' : ''}" progressive="true">
    <r:propertySheetGrid id="doc-metatada" binding="#{DialogManager.bean.meta.propertySheet}" value="#{DialogManager.bean.meta.document}" columns="1"
       mode="#{DialogManager.bean.meta.mode}" externalConfig="true" labelStyleClass="propertiesLabel" />
 </a:panel>

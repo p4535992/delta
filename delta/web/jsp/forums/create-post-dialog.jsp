@@ -22,30 +22,33 @@
 * the FLOSS exception, and it is also available here:
 * http://www.alfresco.com/legal/licensing"
 --%>
+<%@ page import="ee.webmedia.alfresco.utils.MessageUtil"%>
 <%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
 <%@ taglib uri="/WEB-INF/repo.tld" prefix="r" %>
 
 <f:verbatim>
+<script type="text/javascript" src="<%=request.getContextPath()%>/scripts/validation.js"> </script>
 <script type="text/javascript">
 window.onload = pageLoaded;
 
 function pageLoaded()
 {
 document.getElementById("dialog:dialog-body:message").focus();
-checkButtonState();
+document.getElementById("dialog").onsubmit = validate;
+document.getElementById("dialog:finish-button").onclick = function() {finishButtonPressed = true; clear_dialog();}
 }
 
-function checkButtonState()
+function validate()
 {
-if (document.getElementById("dialog:dialog-body:message").value.length == 0)
+if (finishButtonPressed)
 {
-document.getElementById("dialog:finish-button").disabled = true;
+return finishButtonPressed = validateMandatory(document.getElementById("dialog:dialog-body:message"), '<%= MessageUtil.getMessageAndEscapeJS("common_propertysheet_validator_mandatory", "msg.message") %>', true);
 }
 else
 {
-document.getElementById("dialog:finish-button").disabled = false;
+return true;
 }
 }
 </script>
@@ -56,5 +59,5 @@ document.getElementById("dialog:finish-button").disabled = false;
       <span class="red">* </span>
    </f:verbatim>
    <h:outputText value="#{msg.message}:" />
-   <h:inputTextarea id="message" value="#{DialogManager.bean.content}" rows="6" cols="70" onkeyup="checkButtonState();" onchange="checkButtonState();" styleClass="expand100-250 margin-top-10" />
+   <h:inputTextarea id="message" value="#{DialogManager.bean.content}" rows="6" cols="70" styleClass="expand100-250 margin-top-10" />
 </a:panel>

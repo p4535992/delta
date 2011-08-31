@@ -81,7 +81,6 @@ public class EInvoiceUtil {
 
     public static final Dimensions ACCOUNT_DIMENSION = Dimensions.INVOICE_ACCOUNTS;
     public static final Dimensions VAT_CODE_DIMENSION = Dimensions.TAX_CODE_ITEMS;
-    public static final Dimensions notImportedDimension = Dimensions.INVOICE_POSTING_KEY;
     /** TODO: actually it would be better to use generic bidirectional map (from guava? refactored Commons-Collections?) here */
     public static final BidiMap /* <Parameters, Dimensions> */DIMENSION_PARAMETERS;
 
@@ -354,7 +353,7 @@ public class EInvoiceUtil {
     }
 
     public static boolean checkTotalSum(List<String> errorMessageKeys, String msgKeyPrefix, Double totalSum, List<Transaction> transactions,
-            Map<NodeRef, Map<QName, Serializable>> originalProperties) {
+            Map<NodeRef, Map<QName, Serializable>> originalProperties, boolean useVat) {
         if (totalSum == null) {
             return false;
         }
@@ -366,12 +365,15 @@ public class EInvoiceUtil {
                 errorMessageKeys.add(msgKeyPrefix + "transMissingSum");
                 return false;
             }
-            if (transaction.getInvoiceTaxPercent() == null) {
+            if (useVat && transaction.getInvoiceTaxPercent() == null) {
                 errorMessageKeys.add(msgKeyPrefix + "transMissingTaxPercent");
                 return false;
             }
         }
-        double transTotalSum = getSumWithoutVat(transactions) + getVatSum(transactions, originalProperties, BeanHelper.getEInvoiceService().getVatCodeDimensionValues());
+        double transTotalSum = getSumWithoutVat(transactions);
+        if (useVat) {
+            transTotalSum += getVatSum(transactions, originalProperties, BeanHelper.getEInvoiceService().getVatCodeDimensionValues());
+        }
         boolean result = Math.abs(totalSum - transTotalSum) <= 0.001;
         if (!result) {
             errorMessageKeys.add(msgKeyPrefix + "transSumsNotCorrect");

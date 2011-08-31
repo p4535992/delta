@@ -6,6 +6,7 @@ import java.util.Map;
 
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIInput;
+import javax.faces.component.UIOutput;
 import javax.faces.component.html.HtmlPanelGroup;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
@@ -187,7 +188,9 @@ public class SearchRenderer extends BaseRenderer {
             Utils.encodeRecursive(context, child);
             ComponentUtil.generateSuggestScript(context, child, (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY), out);
             out.write("</td>");
-            if (isRemoveLinkRendered(search)) {
+            UIOutput ch = (UIOutput) child;
+            Object val = ch.getValue();
+            if (isRemoveLinkRendered(search) && val != null) {
                 out.write("<td>");
                 renderRemoveLink(context, out, search, i);
                 out.write("</td>");
@@ -213,8 +216,9 @@ public class SearchRenderer extends BaseRenderer {
      */
     private void renderRemoveLink(FacesContext context, ResponseWriter out, Search search, int index) throws IOException {
         out.write("<a class=\"icon-link delete\" onclick=\"");
+        Integer ajaxParentLevel = (Integer) search.getAttributes().get(Search.AJAX_PARENT_LEVEL_KEY);
         out.write(ComponentUtil //
-                .generateAjaxFormSubmit(context, search, getActionId(context, search), REMOVE_ROW_ACTION + ACTION_SEPARATOR + index));
+                .generateAjaxFormSubmit(context, search, getActionId(context, search), REMOVE_ROW_ACTION + ACTION_SEPARATOR + index, ajaxParentLevel));
         out.write("\" title=\"" + Application.getMessage(context, DELETE_MSG) + "\">");
         out.write("</a>");
     }
@@ -223,15 +227,7 @@ public class SearchRenderer extends BaseRenderer {
      * @param search
      */
     private boolean isRemoveLinkRendered(Search search) {
-        // don't render removing link
-        if (search.isDisabled()) {
-            return false;
-        }
-        if (!search.isMultiValued()) {
-            return false;
-        }
-
-        return true;
+        return search.isRemoveLinkRendered();
     }
 
     private void renderPicker(FacesContext context, ResponseWriter out, Search search, UIGenericPicker picker) throws IOException {

@@ -21,7 +21,9 @@
  * FLOSS exception.  You should have recieved a copy of the text describing 
  * the FLOSS exception, and it is also available here: 
  * http://www.alfresco.com/legal/licensing"
---%><%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
+--%>
+<%@page import="ee.webmedia.alfresco.utils.MessageUtil"%>
+<%@ taglib uri="http://java.sun.com/jsf/html" prefix="h" %>
 <%@ taglib uri="http://java.sun.com/jsf/core" prefix="f" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="/WEB-INF/alfresco.tld" prefix="a" %>
@@ -32,24 +34,26 @@
 <%@ page import="org.alfresco.web.ui.common.PanelGenerator" %>
 
 <f:verbatim>
+<script type="text/javascript" src="<%=request.getContextPath()%>/scripts/validation.js"> </script>
 <script type="text/javascript">
    window.onload = pageLoaded;
    
    function pageLoaded()
    {
       document.getElementById("dialog:dialog-body:name").focus();
-      checkButtonState();
+      document.getElementById("dialog").onsubmit = validate;
+      document.getElementById("dialog:finish-button").onclick = function() {finishButtonPressed = true; clear_dialog();}
    }
    
-   function checkButtonState()
+   function validate()
    {
-      if (document.getElementById("dialog:dialog-body:name").value.length == 0 )
+      if (finishButtonPressed)
       {
-         document.getElementById("dialog:finish-button").disabled = true;
+         return finishButtonPressed = validateMandatory(document.getElementById("dialog:dialog-body:name"), '<%= MessageUtil.getMessageAndEscapeJS("common_propertysheet_validator_mandatory", "msg.identifier") %>', true);
       }
       else
       {
-         document.getElementById("dialog:finish-button").disabled = false;
+         return true;
       }
    }
 </script>
@@ -68,8 +72,7 @@
             <f:verbatim escape="false"><span class="red">* </span></f:verbatim>
             <h:outputText value="#{msg.identifier}" />
          </h:panelGroup>
-         <h:inputText id="name" value="#{DialogManager.bean.name}" size="35" maxlength="1024" validator="#{DialogManager.bean.validateGroupName}"
-            onkeyup="javascript:checkButtonState();" onchange="javascript:checkButtonState();" />
+         <h:inputText id="name" value="#{DialogManager.bean.name}" size="35" maxlength="1024" validator="#{DialogManager.bean.validateGroupName}" />
 
       </h:panelGrid>
    </a:panel>

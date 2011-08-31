@@ -16,6 +16,7 @@ public class OwnerSearchBean implements Serializable {
     public static final String BEAN_NAME = "OwnerSearchBean";
     private SelectItem[] ownerSearchFilters;
     private SelectItem[] responsibleOwnerSearchFilters;
+    private SelectItem[] reviewOwnerSearchFilters;
 
     public void init() {
     }
@@ -31,6 +32,16 @@ public class OwnerSearchBean implements Serializable {
             };
         }
         return responsibleOwnerSearchFilters;
+    }
+
+    public SelectItem[] getReviewOwnerSearchFilters() {
+        if (reviewOwnerSearchFilters == null) {
+            reviewOwnerSearchFilters = new SelectItem[] {
+                    new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
+                    new SelectItem(1, MessageUtil.getMessage("task_owner_usergroups"))
+            };
+        }
+        return reviewOwnerSearchFilters;
     }
 
     public SelectItem[] getOwnerSearchFilters() {

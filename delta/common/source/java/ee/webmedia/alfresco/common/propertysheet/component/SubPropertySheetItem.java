@@ -28,7 +28,6 @@ import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttri
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -52,7 +51,6 @@ import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.servlet.FacesHelper;
-import org.alfresco.web.bean.generator.IComponentGenerator;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.ActionsConfigElement;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
@@ -68,7 +66,6 @@ import org.apache.myfaces.shared_impl.renderkit.JSFAttr;
 import org.apache.myfaces.shared_impl.renderkit.html.HTML;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.SessionContext;
 import ee.webmedia.alfresco.utils.ComponentUtil;
@@ -79,7 +76,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * 
  * @author Ats Uiboupin
  */
-public class SubPropertySheetItem extends PropertySheetItem implements CustomAttributes {
+public class SubPropertySheetItem extends PropertySheetItem {
     public static final String SUB_PROPERTY_SHEET_ITEM = SubPropertySheetItem.class.getCanonicalName();
     public static final String PARAM_ASSOC_INDEX = "aIndex";
     /** noderef to property sheet node where that actionLink is located */
@@ -167,19 +164,6 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
         if (StringUtils.isNotBlank(action) && (action.endsWith(ACTION_ADD_SUFFIX) || action.endsWith(ACTION_REMOVE_SUFFIX))) {
             Utils.setRequestValidationDisabled(context);
         }
-    }
-
-    @Override
-    public Map<String, String> getCustomAttributes() {
-        if (customAttributes == null) {
-            customAttributes = new HashMap<String, String>(0);
-        }
-        return customAttributes;
-    }
-
-    @Override
-    public void setCustomAttributes(Map<String, String> propertySheetItemAttributes) {
-        customAttributes = propertySheetItemAttributes;
     }
 
     @Override
@@ -456,18 +440,6 @@ public class SubPropertySheetItem extends PropertySheetItem implements CustomAtt
                     FacesContext.getCurrentInstance()).getBean("NodeService");
         }
         return nodeService;
-    }
-
-    /**
-     * Let subclasses override it
-     * 
-     * @param context FacesContext
-     * @param generatorName The name of the component generator to retrieve
-     * @return component generated and optionally changed as well
-     * @author Ats Uiboupin
-     */
-    protected IComponentGenerator getComponentGenerator(FacesContext context, String componentGeneratorName) {
-        return FacesHelper.getComponentGenerator(context, componentGeneratorName);
     }
 
     public static class AddRemoveEvent extends ActionEvent {

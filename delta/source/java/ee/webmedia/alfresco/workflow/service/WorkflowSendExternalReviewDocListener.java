@@ -92,7 +92,7 @@ public class WorkflowSendExternalReviewDocListener implements WorkflowEventListe
     private boolean sendExternalReviewWorkflow(List<Workflow> workflows, Map<NodeRef, List<String>> additionalRecipients) {
         for (Workflow workflow : workflows) {
             if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
-                dvkService.sendDvkTasksWithDocument(workflow.getParent().getParent(), workflow.getParent().getNode().getNodeRef(), additionalRecipients);
+                dvkService.sendDvkTasksWithDocument(workflow.getParent().getParent(), workflow.getParent().getNodeRef(), additionalRecipients);
                 return true;
             }
         }

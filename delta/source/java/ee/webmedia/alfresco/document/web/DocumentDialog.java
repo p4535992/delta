@@ -20,11 +20,15 @@ import java.util.Map;
 import java.util.Stack;
 
 import javax.faces.application.NavigationHandler;
+import javax.faces.component.UIComponent;
+import javax.faces.component.UIInput;
+import javax.faces.component.UIPanel;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.event.ValueChangeEvent;
 
 import org.alfresco.config.Config;
+import org.alfresco.model.ContentModel;
 import org.alfresco.repo.security.permissions.AccessDeniedException;
 import org.alfresco.service.cmr.lock.NodeLockedException;
 import org.alfresco.service.cmr.model.FileNotFoundException;
@@ -40,6 +44,7 @@ import org.alfresco.web.config.ActionsConfigElement;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.alfresco.web.config.ActionsConfigElement.ActionGroup;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
+import org.alfresco.web.ui.repo.component.UIActions;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
@@ -50,6 +55,7 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.listener.RefreshEventListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
@@ -67,10 +73,12 @@ import ee.webmedia.alfresco.document.search.web.SearchBlockBean;
 import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.type.web.TypeBlockBean;
+import ee.webmedia.alfresco.document.web.FavoritesModalComponent.AddToFavoritesEvent;
 import ee.webmedia.alfresco.document.web.evaluator.RegisterDocumentEvaluator;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.template.service.DocumentTemplateService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.PermissionDeniedException;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -103,6 +111,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     private transient DocumentLogService documentLogService;
     private transient DocumentTemplateService documentTemplateService;
     private transient WorkflowService workflowService;
+    private transient UIPanel modalContainer;
 
     private SearchBlockBean searchBlockBean;
     private TypeBlockBean typeBlockBean;
@@ -122,6 +131,10 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     private List<NodeRef> newInvoiceDocuments = new ArrayList<NodeRef>();
 
     public String action() {
+        if (openDynamicDocument) {
+            openDynamicDocument = false;
+            return BeanHelper.getDocumentDynamicDialog().action();
+        }
         try {
             validatePermissions();
         } catch (PermissionDeniedException e) {
@@ -144,6 +157,15 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             MessageUtil.addStatusMessage(e);
             throw new PermissionDeniedException(MessageUtil.getMessage(e), null);
         }
+    }
+
+    public void handleLockedNode(String messageId) {
+        handleLockedNode(messageId, node.getNodeRef());
+    }
+
+    private void handleLockedNode(String messageId, NodeRef nodeRef) {
+        MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), messageId,
+                BeanHelper.getUserService().getUserFullName((String) getNodeService().getProperty(nodeRef, ContentModel.PROP_LOCK_OWNER)));
     }
 
     /**
@@ -179,7 +201,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
             return;
         } catch (NodeLockedException e) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_createWordFile_error_docLocked");
+            handleLockedNode("document_createWordFile_error_docLocked");
         } catch (RuntimeException e) {
             log.error("Populate template failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), ERR_TEMPLATE_PROCESSING_FAILED);
@@ -196,13 +218,23 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).collapseMenuItems(null);
     }
 
+    private boolean openDynamicDocument = false;
+
     public void open(ActionEvent event) {
-        open(new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF)));
+        final NodeRef docRef = new NodeRef(ActionUtil.getParam(event, PARAM_NODEREF));
+        // TODO DLSeadist temporary
+        if (DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(getNodeService().getType(docRef))) {
+            openDynamicDocument = true;
+            BeanHelper.getDocumentDynamicDialog().openFromDocumentList(event);
+            return;
+        }
+        open(docRef);
     }
 
     public void open(NodeRef docRef) {
-        node = new Node(docRef);
-        if (!node.hasPermission(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA)) {
+        Node permissionCheckNode = new Node(docRef);
+        if (!permissionCheckNode.hasPermission(DocumentCommonModel.Privileges.VIEW_DOCUMENT_META_DATA)) {
+            node = permissionCheckNode; // update node for action() method!
             return; // in action() method error will be shown
         }
         createSnapshot();
@@ -246,7 +278,12 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     public void endDocument(@SuppressWarnings("unused") ActionEvent event) {
         Assert.notNull(node, "No current document");
-        getDocumentService().endDocument(node.getNodeRef());
+        try {
+            getDocumentService().endDocument(node.getNodeRef());
+        } catch (NodeLockedException e) {
+            handleLockedNode("document_end_error_docLocked");
+            return;
+        }
         // change property status of Node as well(in addition to changing it in repository) to avoid fetching node again just to reload single property needed
         // for file-block
         node.getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
@@ -287,7 +324,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_delete_error_accessDenied");
             return;
         } catch (NodeLockedException e) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "document_delete_error_docLocked");
+            handleLockedNode("document_delete_error_docLocked");
             return;
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
@@ -339,6 +376,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_addFollowUp_error_docDeleted");
+        } catch (NodeLockedException e) {
+            handleLockedNode("document_addFollowUp_error_docLocked");
         }
     }
 
@@ -367,6 +406,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_addReply_error_docDeleted");
+        } catch (NodeLockedException e) {
+            handleLockedNode("document_addReply_error_docLocked");
         }
     }
 
@@ -422,6 +463,18 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             MessageUtil.addErrorMessage(messageKey);
             return;
         }
+    }
+
+    public List<String> getFavoriteDirectoryNames(@SuppressWarnings("unused") FacesContext context, @SuppressWarnings("unused") UIInput selectComponent) {
+        return getDocumentService().getFavoriteDirectoryNames();
+    }
+
+    public void addFavorite(ActionEvent event) {
+        getDocumentService().addFavorite(node.getNodeRef(), ((AddToFavoritesEvent) event).getFavoriteDirectoryName());
+    }
+
+    public void removeFavorite(@SuppressWarnings("unused") ActionEvent event) {
+        getDocumentService().removeFavorite(node.getNodeRef());
     }
 
     public void sendToSapManually(ActionEvent event) {
@@ -496,6 +549,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         }
         super.init(params);
         metadataBlockBean.init(node.getNodeRef(), isDraft, this);
+
         if (isFromDVK() || isFromImap() || isIncomingInvoice()) {
             String ownerName = (String) node.getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
             if (StringUtils.isEmpty(ownerName) || !isIncomingInvoice()) {
@@ -516,6 +570,14 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         transactionsBlockBean.init(metadataBlockBean.getDocument(), this);
 
         BeanHelper.getClearStateNotificationHandler().addClearStateListener(this);
+
+        // Add favorite modal component
+        FavoritesModalComponent modal = new FavoritesModalComponent();
+        modal.setActionListener(FacesContext.getCurrentInstance().getApplication().createMethodBinding("#{DocumentDialog.addFavorite}", UIActions.ACTION_CLASS_ARGS));
+        modal.setId("favorite-popup-" + FacesContext.getCurrentInstance().getViewRoot().createUniqueId());
+        List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
+        children.clear();
+        children.add(modal);
     }
 
     public void reloadDoc() {
@@ -537,15 +599,17 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             if (!snapshotRestored) {
                 if (!docReloadDisabled) {
                     reloadDocAndClearPropertySheet(true);
-                } else {
-                    docReloadDisabled = false;
                 }
                 fileBlockBean.restore();
                 sendOutBlockBean.restore();
                 assocsBlockBean.restore();
                 logBlockBean.restore();
                 workflowBlockBean.restore();
-                transactionsBlockBean.restore();
+                if (!docReloadDisabled) {
+                    transactionsBlockBean.restore();
+                } else {
+                    docReloadDisabled = false;
+                }
             }
         } catch (UnableToPerformException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
@@ -799,7 +863,14 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 return;
             }
         }
-        getDocumentService().createAssoc(sourceRef, targetRef, assocType);
+        try {
+            getDocumentService().createAssoc(sourceRef, targetRef, assocType);
+        } catch (NodeLockedException e) {
+            NodeRef nodeRef = e.getNodeRef();
+            String messageId = nodeRef.equals(sourceRef) ? "document_assocAdd_error_sourceLocked" : "document_assocAdd_error_targetLocked";
+            handleLockedNode(messageId, nodeRef);
+            return;
+        }
         assocsBlockBean.restore();
         MessageUtil.addInfoMessage("document_assocAdd_success");
     }
@@ -1056,6 +1127,17 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     public TransactionsBlockBean getTransactionsBlockBean() {
         return transactionsBlockBean;
+    }
+
+    public UIPanel getModalContainer() {
+        if (modalContainer == null) {
+            modalContainer = new UIPanel();
+        }
+        return modalContainer;
+    }
+
+    public void setModalContainer(UIPanel modalContainer) {
+        this.modalContainer = modalContainer;
     }
 
     // END: getters / setters

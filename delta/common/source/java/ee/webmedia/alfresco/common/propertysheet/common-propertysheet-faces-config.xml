@@ -51,6 +51,16 @@
    </converter>
 
    <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.QNameLocalNameConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.QNameLocalNameConverter</converter-class>
+   </converter>
+
+   <converter>
+      <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.EnumConverter</converter-id>
+      <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.EnumConverter</converter-class>
+   </converter>
+
+   <converter>
       <converter-id>ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter</converter-id>
       <converter-class>ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter</converter-class>
    </converter>
@@ -147,7 +157,25 @@
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
    </managed-bean>
-   
+
+   <managed-bean>
+      <description>
+         Bean that generates a input that is converted to QName. QName namespace is given with namespace attribute
+      </description>
+      <managed-bean-name>QNameLocalNameGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.generator.QNameLocalNameGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
+   <managed-bean>
+      <description>
+         Bean that generates a selectBox with values of enum constant specified using enumClass attribute on property-sheet/show-property element
+      </description>
+      <managed-bean-name>EnumSelectorGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.classificatorselector.EnumSelectorGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+
    <managed-bean>
       <description>
          Bean that generates a selectBox with values of dimension specified using dimensionName attribute on property-sheet/show-property element

@@ -65,7 +65,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
     }
 
     protected Task copy(Workflow copyParent) {
-        return copyImpl(new Task(getNode().copy(), copyParent, outcomes));
+        return copyImpl(new Task(getNode().clone(), copyParent, outcomes));
     }
 
     protected Task copy() {
@@ -274,7 +274,7 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         }
         MimetypeService mimetypeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getMimetypeService();
         String extension = mimetypeService.getExtension(contentData.getMimetype());
-        return DownloadContentServlet.generateDownloadURL(getNode().getNodeRef(), "fail." + extension) + "?property=" + WorkflowSpecificModel.Props.FILE;
+        return DownloadContentServlet.generateDownloadURL(getNodeRef(), "fail." + extension) + "?property=" + WorkflowSpecificModel.Props.FILE;
     }
 
     @Override
@@ -325,12 +325,12 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         setProp(WorkflowSpecificModel.Props.COMPLETED_OVERDUE, completedOverdue);
 
         // Set workflowResolution value which is used in task search
-        if (getNode().getNodeRef() == null) {
+        if (getNodeRef() == null) {
             setProp(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION, parent.getProp(WorkflowSpecificModel.Props.RESOLUTION));
         }
 
         // Check if the new task is under CompoundWorkflow (not Definition) then add Searchable aspect
-        if (getNode().getNodeRef() == null && !(getParent().getParent() instanceof CompoundWorkflowDefinition)) {
+        if (getNodeRef() == null && !(getParent().getParent() instanceof CompoundWorkflowDefinition)) {
             getNode().getAspects().add(WorkflowSpecificModel.Aspects.SEARCHABLE);
         }
     }

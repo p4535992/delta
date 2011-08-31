@@ -17,7 +17,7 @@ public class SignatureTask extends Task {
 
     @Override
     protected Task copy(Workflow parent) {
-        return copyImpl(new SignatureTask(getNode().copy(), parent, getOutcomes()));
+        return copyImpl(new SignatureTask(getNode().clone(), parent, getOutcomes()));
     }
 
     @Override

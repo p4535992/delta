@@ -19,6 +19,7 @@ import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.CssStylable;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
@@ -92,12 +93,17 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getDocumentTypeName() {
+        // TODO DLSeadist temporary
+        if (DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(getType())) {
+            return ((String) getProperties().get(DocumentDynamicModel.Props.DOCUMENT_TYPE_ID)) + "-"
+                    + ((Integer) getProperties().get(DocumentDynamicModel.Props.DOCUMENT_TYPE_VERSION_NR)).toString();
+        }
         final DocumentType documentType = getDocumentType();
         return documentType != null ? documentType.getName() : null;
     }
 
     private String getDocTypeLocalName() {
-        return getDocumentType().getId().getLocalName();
+        return getType().getLocalName();
     }
 
     @Override
@@ -121,8 +127,11 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getSender() {
-        if (DocumentTypeHelper.isIncomingLetter(getDocumentType().getId())) {
+        QName docType = getType();
+        if (DocumentTypeHelper.isIncomingLetter(docType)) {
             return (String) getProperties().get(DocumentSpecificModel.Props.SENDER_DETAILS_NAME);
+        } else if (DocumentSubtypeModel.Types.INVOICE.equals(docType)) {
+            return (String) getProperties().get(DocumentSpecificModel.Props.SELLER_PARTY_NAME);
         }
         return (String) getProperties().get(DocumentCommonModel.Props.OWNER_NAME);
     }
@@ -137,6 +146,10 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getDocName() {
+        // TODO DLSeadist temporary
+        if (DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(getType())) {
+            return (String) getNode().getProperties().get(DocumentDynamicModel.Props.DOC_NAME);
+        }
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.DOC_NAME);
     }
 
@@ -173,15 +186,15 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
 
     public Date getDueDate2() {
         lazyInit();
-        if (DocumentTypeHelper.isIncomingLetter(getDocumentType().getId())) {
+        if (DocumentTypeHelper.isIncomingLetter(getType())) {
             return (Date) getProperties().get(DocumentSpecificModel.Props.DUE_DATE);
-        } else if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.MANAGEMENTS_ORDER)) {
+        } else if (getType().equals(DocumentSubtypeModel.Types.MANAGEMENTS_ORDER)) {
             return (Date) getProperties().get(DocumentSpecificModel.Props.MANAGEMENTS_ORDER_DUE_DATE);
-        } else if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.CONTRACT_SIM)) {
+        } else if (getType().equals(DocumentSubtypeModel.Types.CONTRACT_SIM)) {
             return (Date) getProperties().get(DocumentSpecificModel.Props.CONTRACT_SIM_END_DATE);
-        } else if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.CONTRACT_SMIT)) {
+        } else if (getType().equals(DocumentSubtypeModel.Types.CONTRACT_SMIT)) {
             return (Date) getProperties().get(DocumentSpecificModel.Props.CONTRACT_SMIT_END_DATE);
-        } else if (getDocumentType().getId().equals(DocumentSubtypeModel.Types.CONTRACT_MV)) {
+        } else if (getType().equals(DocumentSubtypeModel.Types.CONTRACT_MV)) {
             return (Date) getProperties().get(DocumentSpecificModel.Props.CONTRACT_MV_END_DATE);
         }
         return null;

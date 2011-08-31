@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.series.web;
 
+import java.util.List;
+
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
@@ -7,12 +9,13 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.TransientNode;
-import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.classificator.enums.VolumeType;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.log.web.LogBlockBean;
-import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.series.model.Series;
-import ee.webmedia.alfresco.series.service.SeriesService;
+import ee.webmedia.alfresco.series.model.SeriesModel;
+import ee.webmedia.alfresco.series.numberpattern.NumberPatternParser;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -28,19 +31,90 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     private static final String PARAM_FUNCTION_NODEREF = "functionNodeRef";
     private static final String PARAM_SERIES_NODEREF = "seriesNodeRef";
 
-    private transient SeriesService seriesService;
-    private transient MenuService menuService;
     private LogBlockBean logBlockBean;
     private Series series;
     private boolean newSeries;
+    private String initialSeriesIdentifier;
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        getSeriesService().saveOrUpdate(series);
+        if (performPatternChecks(context)) {
+            return null;
+        }
+        BeanHelper.getSeriesService().saveOrUpdate(series);
         resetFields();
-        getMenuService().menuUpdated(); // We need to refresh the left-hand sub-menu
+        BeanHelper.getMenuService().menuUpdated(); // We need to refresh the left-hand sub-menu
         MessageUtil.addInfoMessage("save_success");
         return outcome;
+    }
+
+    private boolean performPatternChecks(FacesContext context) {
+        boolean foundErrors = false;
+        NumberPatternParser docNrPatternParsed = new NumberPatternParser((String) getCurrentNode().getProperties().get(SeriesModel.Props.DOC_NUMBER_PATTERN));
+        if (!docNrPatternParsed.isValid()) {
+            for (String invalidParam : docNrPatternParsed.getInvalidParams()) {
+                MessageUtil.addErrorMessage(context, "series_docNumberPattern_contains_invalid_param", "{" + invalidParam + "}");
+                foundErrors = true;
+            }
+        }
+        if (docNrPatternParsed.containsParam("TN")) {
+            MessageUtil.addErrorMessage(context, "series_docNumberPattern_tn_not_allowed");
+            foundErrors = true;
+        }
+        if (BeanHelper.getVolumeService().isCaseVolumeEnabled()) {
+            // volRegister && volNumberPattern are visible and enabled
+            @SuppressWarnings("unchecked")
+            List<String> volType = (List<String>) getCurrentNode().getProperties().get(SeriesModel.Props.VOL_TYPE);
+            NumberPatternParser volNrPatternParsed = new NumberPatternParser((String) getCurrentNode().getProperties().get(SeriesModel.Props.VOL_NUMBER_PATTERN));
+            if (!volNrPatternParsed.isValid()) {
+                for (String invalidParam : volNrPatternParsed.getInvalidParams()) {
+                    MessageUtil.addErrorMessage(context, "series_volNumberPattern_contains_invalid_param", "{" + invalidParam + "}");
+                    foundErrors = true;
+                }
+            }
+            if (volNrPatternParsed.containsParam("T")) {
+                MessageUtil.addErrorMessage(context, "series_volNumberPattern_cannot_contain_itself");
+                foundErrors = true;
+            }
+            if (volNrPatternParsed.containsParam("DA")) {
+                MessageUtil.addErrorMessage(context, "series_volNumberPattern_da_not_allowed");
+                foundErrors = true;
+            }
+            if (volNrPatternParsed.containsParam("DN")) {
+                MessageUtil.addErrorMessage(context, "series_volNumberPattern_dn_not_allowed");
+                foundErrors = true;
+            }
+            if (volType.contains(VolumeType.CASE.name())) {
+                Integer volRegister = (Integer) getCurrentNode().getProperties().get(SeriesModel.Props.VOL_REGISTER);
+                if (volNrPatternParsed.isBlank()) {
+                    MessageUtil.addErrorMessage(context, "series_volNrPattern_must_not_be_empty");
+                    foundErrors = true;
+                } else if (volNrPatternParsed.containsParam("TN") && volRegister == null) {
+                    MessageUtil.addErrorMessage(context, "series_vol_register_must_be_chosen");
+                    foundErrors = true;
+                }
+            } else {
+                if (volNrPatternParsed.containsParam("TN")) {
+                    MessageUtil.addErrorMessage(context, "series_volNumberPattern_tn_not_allowed");
+                    foundErrors = true;
+                }
+                if (volNrPatternParsed.containsParam("TA")) {
+                    MessageUtil.addErrorMessage(context, "series_volNumberPattern_ta_not_allowed");
+                    foundErrors = true;
+                }
+                if (docNrPatternParsed.containsParam("TA")) {
+                    MessageUtil.addErrorMessage(context, "series_docNumberPattern_ta_not_allowed");
+                    foundErrors = true;
+                }
+            }
+        } else {
+            if (docNrPatternParsed.containsParam("TA")) {
+                MessageUtil.addErrorMessage(context, "series_docNumberPattern_ta_not_allowed");
+                foundErrors = true;
+            }
+
+        }
+        return foundErrors;
     }
 
     @Override
@@ -65,7 +139,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     // START: jsf actions/accessors
     public void showDetails(ActionEvent event) {
         String seriesNodeRef = ActionUtil.getParam(event, PARAM_SERIES_NODEREF);
-        series = getSeriesService().getSeriesByNodeRef(seriesNodeRef);
+        series = BeanHelper.getSeriesService().getSeriesByNodeRef(seriesNodeRef);
         logBlockBean.init(series.getNode());
     }
 
@@ -73,7 +147,8 @@ public class SeriesDetailsDialog extends BaseDialogBean {
         newSeries = true;
         NodeRef funcNodeRef = new NodeRef(ActionUtil.getParam(event, PARAM_FUNCTION_NODEREF));
         // create new node for series
-        series = getSeriesService().createSeries(funcNodeRef);
+        series = BeanHelper.getSeriesService().createSeries(funcNodeRef);
+        initialSeriesIdentifier = (String) getCurrentNode().getProperties().get(SeriesModel.Props.SERIES_IDENTIFIER);
     }
 
     public Node getCurrentNode() {
@@ -86,7 +161,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
         }
 
         if (!isClosed()) {
-            boolean wasClosed = getSeriesService().closeSeries(series);
+            boolean wasClosed = BeanHelper.getSeriesService().closeSeries(series);
             if (!wasClosed) {
                 MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "series_validationMsg_closeNotPossible");
                 return null;
@@ -98,7 +173,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     }
 
     public boolean isClosed() {
-        return getSeriesService().isClosed(getCurrentNode());
+        return BeanHelper.getSeriesService().isClosed(getCurrentNode());
     }
 
     public boolean isNew() {
@@ -108,35 +183,13 @@ public class SeriesDetailsDialog extends BaseDialogBean {
     // END: jsf actions/accessors
 
     private void resetFields() {
+        initialSeriesIdentifier = null;
         series = null;
         newSeries = false;
         logBlockBean.reset();
     }
 
     // START: getters / setters
-    protected SeriesService getSeriesService() {
-        if (seriesService == null) {
-            seriesService = (SeriesService) FacesContextUtils.getRequiredWebApplicationContext(//
-                    FacesContext.getCurrentInstance()).getBean(SeriesService.BEAN_NAME);
-        }
-        return seriesService;
-    }
-
-    public void setSeriesService(SeriesService seriesService) {
-        this.seriesService = seriesService;
-    }
-
-    protected MenuService getMenuService() {
-        if (menuService == null) {
-            menuService = (MenuService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-                    .getBean(MenuService.BEAN_NAME);
-        }
-        return menuService;
-    }
-
-    public void setMenuService(MenuService menuService) {
-        this.menuService = menuService;
-    }
 
     public void setLogBlockBean(LogBlockBean logBlockBean) {
         this.logBlockBean = logBlockBean;
@@ -144,6 +197,10 @@ public class SeriesDetailsDialog extends BaseDialogBean {
 
     public LogBlockBean getLogBlockBean() {
         return logBlockBean;
+    }
+
+    public String getInitialSeriesIdentifier() {
+        return initialSeriesIdentifier;
     }
 
     // END: getters / setters

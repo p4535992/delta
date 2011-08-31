@@ -49,7 +49,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
  * @author gavinc
  */
 public class PageTag extends TagSupport
-{
+{ 
    private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(PageTag.class);
    private static final long serialVersionUID = 8142765393181557228L;
    
@@ -68,6 +68,13 @@ public class PageTag extends TagSupport
        List<String> scriptsList = getScripts();
        SCRIPTS = scriptsList.toArray(new String[scriptsList.size()]);
        urlSuffix = System.currentTimeMillis();
+   }
+
+   public static long getUrlsuffix() {
+       if (BeanHelper.getApplicationService().isTest()) {
+           return System.currentTimeMillis();
+       }
+       return urlSuffix;
    }
 
     private static List<String> getScripts() {
@@ -281,7 +288,7 @@ public class PageTag extends TagSupport
             out.write(STYLES_START);
             out.write(reqPath);
             out.write(css);
-            out.write("?r=" + urlSuffix);
+            out.write("?r=" + getUrlsuffix());
             out.write(STYLES_MAIN);
          }
          
@@ -292,7 +299,7 @@ public class PageTag extends TagSupport
             out.write(STYLES_START);
             out.write(reqPath);
             out.write(ie7cond_css);
-            out.write("?r=" + urlSuffix);
+            out.write("?r=" + getUrlsuffix());
             out.write(STYLES_MAIN);
          }
          out.write(IE7COND_END);
@@ -304,7 +311,7 @@ public class PageTag extends TagSupport
             out.write(STYLES_START);
             out.write(reqPath);
             out.write(ie6cond_css);
-            out.write("?r=" + urlSuffix);
+            out.write("?r=" + getUrlsuffix());
             out.write(STYLES_MAIN);
          }
          out.write(IE6COND_END);
@@ -315,7 +322,7 @@ public class PageTag extends TagSupport
             out.write(SCRIPTS_START);
             out.write(reqPath);
             out.write(s);
-            out.write("?r=" + urlSuffix);
+            out.write("?r=" + getUrlsuffix());
             out.write(SCRIPTS_END);
          }
          

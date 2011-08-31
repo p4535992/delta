@@ -1055,7 +1055,9 @@ public class AdrServiceImpl extends BaseAdrServiceImpl {
                 return ((AdrDocument) input).nodeRef;
             }
         }, new NullComparator()));
-        ADR_DOCUMENT_BY_REG_DATE_TIME_COMPARATOR = chain;
+        @SuppressWarnings("unchecked")
+        Comparator<AdrDocument> tmp = chain;
+        ADR_DOCUMENT_BY_REG_DATE_TIME_COMPARATOR = tmp;
     }
 
     // ========================================================================

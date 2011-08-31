@@ -72,5 +72,12 @@
          <show-property name="{temp}workflowTasksCo" component-generator="TaskListGenerator" ignore-if-missing="false" display-label-id="assignmentWorkflow_tasks_co" />
       </property-sheet>
    </config>
+   
+   <config evaluator="node-type" condition="wfs:signatureWorkflow,wfs:opinionWorkflow,wfs:reviewWorkflow,wfs:informationWorkflow,wfs:assignmentWorkflow,wfs:docRegistrationWorkflow">
+   <!-- TODO: add orderAssignmentWorkflow, confirmationWorkflow into "condition" -->
+      <property-sheet>
+         <show-property name="wfc:mandatory" component-generator="CheckboxGenerator"/>
+      </property-sheet>
+   </config>
 
 </alfresco-config>

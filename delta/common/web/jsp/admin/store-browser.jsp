@@ -121,6 +121,11 @@
             actionListener="#{contractSendInfoUpdater.updateSleepTime}" />
 
       <hr/>
+         <h:outputText value="Faili asukoht serveri kõvakettal, millest DVK dokument importida: "/><br/>
+         <h:inputText id="fileNameInputText" value="#{TestingForDeveloperBean.fileName}" size="70" /><br/>
+         <h:commandButton id="receiveDocStub" value="Jäljenda DVK importi faili alusel" type="submit"
+            actionListener="#{TestingForDeveloperBean.receiveDocStub}" />
+      <hr/>
       <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/><br/>
 
          <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" >

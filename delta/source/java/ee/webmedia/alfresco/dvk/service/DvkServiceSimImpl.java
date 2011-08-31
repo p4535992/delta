@@ -453,7 +453,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
                                 getPropByName(taskNode, WorkflowCommonModel.Props.OUTCOME),
                                 DefaultTypeConverter.INSTANCE.convert(Date.class, getPropByName(taskNode, WorkflowCommonModel.Props.COMPLETED_DATE_TIME)),
                                 dvkId);
-                        return originalTask.getNode().getNodeRef();
+                        return originalTask.getNodeRef();
                     } else {
                         throw new ExternalReviewException(ExceptionType.TASK_OVERWRITE_WRONG_STATUS, originalTask, dvkId, attemptedStatus);
                     }
@@ -650,15 +650,15 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         Task task = obj;
         List<Node> dvkCapableOrgs = addressbookService.getDvkCapableOrgs();
         if (isDvkCapable(dvkCapableOrgs, task.getInstitutionCode())) {
-            ExcludingExporterCrawlerParameters exportParameters = getTaskExportParameters(task.getNode().getNodeRef());
+            ExcludingExporterCrawlerParameters exportParameters = getTaskExportParameters(task.getNodeRef());
             org.w3c.dom.Node taskDomNode = exportDom(exportParameters);
             DvkSendWorkflowDocuments sd = new DvkSendWorkflowDocumentsImpl();
             sd.setIsDocumentNode(false);
             sd.setRecipientsRegNr(task.getCreatorInstitutionCode());
             sd.setRecipientDocNode(taskDomNode);
             String dvkId = sendExternalReviewWorkflowData(new ArrayList<ContentToSend>(), sd);
-            nodeService.setProperty(task.getNode().getNodeRef(), WorkflowSpecificModel.Props.SENT_DVK_ID, dvkId);
-            nodeService.setProperty(task.getNode().getNodeRef(), WorkflowSpecificModel.Props.SEND_STATUS, SendStatus.SENT);
+            nodeService.setProperty(task.getNodeRef(), WorkflowSpecificModel.Props.SENT_DVK_ID, dvkId);
+            nodeService.setProperty(task.getNodeRef(), WorkflowSpecificModel.Props.SEND_STATUS, SendStatus.SENT);
         }
     }
 
@@ -713,11 +713,11 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         Map<String, Set<NodeRef>> sendableWorkflowNodeRefs = new HashMap();
 
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
-            NodeRef compoundWorkflowNodeRef = compoundWorkflow.getNode().getNodeRef();
+            NodeRef compoundWorkflowNodeRef = compoundWorkflow.getNodeRef();
             // all workflows before this workflow plus this workflow
             List<NodeRef> traversedWorkflows = new ArrayList<NodeRef>();
             for (Workflow wf : compoundWorkflow.getWorkflows()) {
-                NodeRef wfNodeRef = wf.getNode().getNodeRef();
+                NodeRef wfNodeRef = wf.getNodeRef();
                 traversedWorkflows.add(wfNodeRef);
                 if (wf.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
                     for (Task task : wf.getTasks()) {
@@ -747,7 +747,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
 
             @Override
             public Object transform(Object compWorkflow) {
-                return ((CompoundWorkflow) compWorkflow).getNode().getNodeRef();
+                return ((CompoundWorkflow) compWorkflow).getNodeRef();
             }
 
         });
@@ -788,7 +788,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         List<NodeRef> workflows = new ArrayList<NodeRef>();
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
             for (Workflow workflow : compoundWorkflow.getWorkflows()) {
-                workflows.add(workflow.getNode().getNodeRef());
+                workflows.add(workflow.getNodeRef());
             }
         }
         return workflows;
@@ -801,7 +801,7 @@ public class DvkServiceSimImpl extends DvkServiceImpl {
         List<String> recipients = new ArrayList<String>();
         String dvkCapabilityErrorMessage = null;
         for (CompoundWorkflow compoundWorkflow : compoundWorkflows) {
-            if (compoundWorkflowRef == null || compoundWorkflowRef.equals(compoundWorkflow.getNode().getNodeRef())) {
+            if (compoundWorkflowRef == null || compoundWorkflowRef.equals(compoundWorkflow.getNodeRef())) {
                 for (Workflow workflow : compoundWorkflow.getWorkflows()) {
                     if (workflow.isType(WorkflowSpecificModel.Types.EXTERNAL_REVIEW_WORKFLOW)) {
                         for (Task task : workflow.getTasks()) {

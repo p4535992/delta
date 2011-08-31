@@ -20,7 +20,7 @@ public class CompoundWorkflowDefinition extends CompoundWorkflow {
 
     @Override
     protected CompoundWorkflowDefinition copy() {
-        return copyImpl(new CompoundWorkflowDefinition(getNode().copy(), getParent()));
+        return copyImpl(new CompoundWorkflowDefinition(getNode().clone(), getParent()));
     }
 
     public String getName() {

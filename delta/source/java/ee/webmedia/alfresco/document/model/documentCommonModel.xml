@@ -77,7 +77,8 @@
             </child-association>
          </associations>
          <mandatory-aspects>
-            <aspect>doccom:common</aspect>
+            <!--TODO DLSeadist: not declaring doccom:common as mandatory aspect in data model; but adding it to created docs programmatically in DocumentServiceImpl#createDocumentNode-->
+            <!--<aspect>doccom:common</aspect>-->
             <aspect>wfc:compoundWorkflowContainer</aspect>
             <aspect>priv:userGroupMapping</aspect>
          </mandatory-aspects>
@@ -135,6 +136,11 @@
          </mandatory-aspects>
       </type>
       
+      <type name="doccom:favoriteDirectory">
+         <mandatory-aspects>
+            <aspect>doccom:favoriteContainer</aspect>
+         </mandatory-aspects>
+      </type>
    </types>
 
    <aspects>
@@ -157,13 +163,29 @@
 
       <aspect name="doccom:favoriteContainer">
          <associations>
-            <child-association name="doccom:favorite">
+            <association name="doccom:favorite">
                <source>
                   <mandatory>false</mandatory>
-                  <many>false</many>
+                  <many>true</many>
                </source>
                <target>
                   <class>doccom:document</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </association>
+         </associations>
+      </aspect>
+      
+      <aspect name="doccom:favoriteDirectoryAspect">
+         <associations>
+            <child-association name="doccom:favoriteDirectory">
+               <source>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </source>
+               <target>
+                  <class>doccom:favoriteDirectory</class>
                   <mandatory>false</mandatory>
                   <many>true</many>
                </target>

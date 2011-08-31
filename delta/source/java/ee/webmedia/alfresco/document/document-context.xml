@@ -72,6 +72,7 @@
       <property name="fileService" ref="FileService" />
       <property name="signatureService" ref="SignatureService" />
       <property name="workflowService" ref="WmWorkflowService" />
+      <property name="menuService" ref="MenuService" />
       <property name="documentLogService" ref="DocumentLogService" />
       <property name="userService" ref="UserService" />
       <property name="sendOutService" ref="SendOutService" />
@@ -120,6 +121,10 @@
    <bean class="ee.webmedia.alfresco.document.propmodifiers.ManagementsOrderPropertiesModifierCallback" parent="propertiesModifierCallback">
       <property name="parametersService" ref="ParametersService" />
    </bean>
+   
+   <bean class="ee.webmedia.alfresco.document.propmodifiers.SupervisionReportPropertiesModifierCallback" parent="propertiesModifierCallback">
+      <property name="parametersService" ref="ParametersService" />
+   </bean>   
    
    <bean class="ee.webmedia.alfresco.document.propmodifiers.VacationOrderPropertiesModifierCallback" parent="propertiesModifierCallback">
       <property name="parametersService" ref="ParametersService" />
@@ -200,6 +205,26 @@
          </list>
       </property>
    </bean>
+   
+   <bean id="documentParametersBootstrap2" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
+      <property name="moduleId" value="common" />
+      <property name="executeOnceOnly" value="true" />
+      <property name="dependsOn">
+         <list>
+            <ref bean="parametersSpacesBootstrap" />
+         </list>
+      </property>
+      <property name="importer" ref="spacesBootstrap" />
+      <property name="bootstrapViews">
+         <list>
+            <props>
+               <prop key="encoding">UTF-8</prop>
+               <prop key="path">/param:parameters</prop>
+               <prop key="location">ee/webmedia/alfresco/document/bootstrap/document-parameters2.xml</prop>
+            </props>
+         </list>
+      </property>
+   </bean>   
    
    <bean id="documentParametersBootstrap3" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="common" />

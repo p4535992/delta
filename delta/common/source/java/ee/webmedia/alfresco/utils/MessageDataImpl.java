@@ -16,6 +16,8 @@ public class MessageDataImpl implements MessageData {
     private final String messageKey;
     private final Object[] messageValuesForHolders;
 
+    private MessageData fallbackMessage;
+
     public MessageDataImpl(MessageSeverity severity, String messageKey, Object... messageValuesForHolders) {
         this.severity = severity;
         this.messageValuesForHolders = messageValuesForHolders;
@@ -39,6 +41,15 @@ public class MessageDataImpl implements MessageData {
     @Override
     public Object[] getMessageValuesForHolders() {
         return messageValuesForHolders;
+    }
+
+    @Override
+    public MessageData getFallbackMessage() {
+        return fallbackMessage;
+    }
+
+    public void setFallbackMessage(MessageData fallbackMessage) {
+        this.fallbackMessage = fallbackMessage;
     }
 
     @Override

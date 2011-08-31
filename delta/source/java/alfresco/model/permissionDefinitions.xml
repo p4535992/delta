@@ -307,6 +307,7 @@
       <permission name="viewDocumentFiles" expose="false" />
       <permission name="editDocumentFiles" expose="false" />
       <permission name="deleteDocumentFiles" expose="false" />
+      <permission name="createDocument" expose="false" />
       <!-- END: delta permissions -->
    </permissionSet>
    

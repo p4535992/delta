@@ -7,6 +7,18 @@
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{ClassificatorDetailsDialog.addNewValue}</action-listener>
          </action>
+         
+         <action id="classificator_delete">
+            <label-id>classificator_delete</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DeleteDialog.setupDeleteDialog}</action-listener>
+            <params>
+               <param name="nodeRef">#{actionContext.nodeRef}</param>
+               <param name="name">#{actionContext.name}</param>
+               <param name="dialogsToClose">2</param>
+            </params>
+            <action>dialog:deleteDialog</action>
+         </action>
 
          <action id="classificator_export">
             <label-id>classificators_export</label-id>
@@ -20,14 +32,26 @@
             <image>/images/icons/add_item.gif</image>
             <action>dialog:classificatorsImport</action>
          </action>
+         
+         <action id="classificator_create">
+            <label-id>classificators_create</label-id>
+            <image>/images/icons/add_item.gif</image>
+            <action-listener>#{ClassificatorDetailsDialog.select}</action-listener>
+            <action>dialog:classificatorDetailsDialog</action>
+         </action>
 
-         <action-group id="browse_classificator_values">
+         <action-group id="browse_add_delete_classificator_values">
+            <action idref="classificator_add_value" />
+            <action idref="classificator_delete" />
+         </action-group>
+         <action-group id="browse_add_classificator_values">
             <action idref="classificator_add_value" />
          </action-group>
 
          <action-group id="classificators_actions">
             <action idref="classificator_export" />
             <action idref="classificator_import" />
+            <action idref="classificator_create" />
          </action-group>
 
       </actions>
@@ -44,14 +68,17 @@
 
          <dialog name="classificatorsImport" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificators-import-dialog.jsp" managed-bean="ClassificatorsImportDialog"
             icon="/images/icons/add_content_large.gif" title-id="classificators_import" description-id="import_classificators_desc" />
-
+            
+         <dialog name="deleteDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/delete-dialog.jsp" managed-bean="DeleteDialog"
+            icon="/images/icons/delete_group_large.gif" />
       </dialogs>
    </config>
 
    <config evaluator="node-type" condition="cl:classificator" >
       <property-sheet>
+         <show-property name="cl:name" rendered="#{ClassificatorDetailsDialog.isUnsavedClassificator}" />
          <show-property name="cl:description" styleClass="expand19-200" component-generator="TextAreaGenerator" />
-         <show-property name="cl:alfabeticOrder" component-generator="BooleanRadioGenerator" labelTrue="classificator_order_alfabetic" labelFalse="classificator_order_sequental" nullValue="false" />
+         <show-property name="cl:alfabeticOrder" component-generator="BooleanRadioGenerator" labelTrue="classificator_order_alfabetic" labelFalse="classificator_order_sequental" nullValue="false" rendered="#{ClassificatorDetailsDialog.isSavedClassificator}" />
       </property-sheet>
    </config>
 

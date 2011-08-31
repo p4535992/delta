@@ -1,0 +1,75 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+
+   <bean parent="dictionaryModelBootstrap" depends-on="documentModelBootstrap">
+      <property name="models">
+         <list>
+            <value>ee/webmedia/alfresco/docdynamic/model/documentDynamicModel.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+      <property name="configs">
+         <list>
+            <value>classpath:ee/webmedia/alfresco/docdynamic/web/document-dynamic-web-client-config.xml</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.web.app.ResourceBundleBootstrap">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/docdynamic/web/document-dynamic-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean class="org.alfresco.i18n.ResourceBundleBootstrapComponent">
+      <property name="resourceBundles">
+         <list>
+            <value>ee/webmedia/alfresco/docdynamic/web/document-dynamic-webclient</value>
+         </list>
+      </property>
+   </bean>
+
+   <bean id="documentDynamicService" class="ee.webmedia.alfresco.docdynamic.service.DocumentDynamicServiceImpl">
+      <property name="dictionaryService" ref="DictionaryService" />
+      <property name="namespaceService" ref="NamespaceService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="generalService" ref="GeneralService" />
+      <property name="documentService" ref="DocumentService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
+   </bean>
+
+   <bean id="DocumentDynamicService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="proxyInterfaces">
+         <list>
+            <value>ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService</value>
+         </list>
+      </property>
+      <property name="target" ref="documentDynamicService" />
+      <property name="interceptorNames">
+         <list>
+            <idref bean="commonTransactionInterceptor" />
+         </list>
+      </property>
+   </bean>
+
+   <bean class="ee.webmedia.alfresco.docdynamic.service.DocumentDynamicTypeMenuItemProcessor">
+      <property name="menuService" ref="MenuService" />
+      <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="permissionService" ref="PermissionService" />
+   </bean>
+
+   <!-- START: web beans: -->
+
+   <bean id="DocumentDynamicTestDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicTestDialog" scope="session" />
+
+   <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" />
+
+   <!-- END: web beans: -->
+
+</beans>

@@ -235,4 +235,6 @@ public interface DocumentSearchService {
 
     List<Document> searchDocumentsByDvkId(String dvkId);
 
+    List<NodeRef> simpleSearch(String searchInputString, NodeRef parentRef, QName type, QName... props);
+
 }

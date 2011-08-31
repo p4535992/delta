@@ -112,7 +112,7 @@ public class FunctionsServiceImpl implements FunctionsService {
         if (function.getNode() instanceof TransientNode) {
             TransientNode transientNode = (TransientNode) function.getNode();
             NodeRef functionNodeRef = nodeService.createNode(getFunctionsRoot(),
-                    FunctionsModel.Types.FUNCTION,
+                    FunctionsModel.Associations.FUNCTION,
                     FunctionsModel.Associations.FUNCTION,
                     FunctionsModel.Types.FUNCTION,
                     RepoUtil.toQNameProperties(transientNode.getProperties())).getChildRef();

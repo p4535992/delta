@@ -83,19 +83,19 @@ public class UserUtil {
             if (StringUtils.contains(personName, ",")) {
                 if (StringUtils.countMatches(personName, ",") == 1) {
                     String[] names = StringUtils.split(personName, ",");
-                    firstName = names[1];
-                    lastName = names[0];
+                    firstName = StringUtils.trim(names[1]);
+                    lastName = StringUtils.trim(names[0]);
                 }
             } else {
                 int splitIndex = StringUtils.lastIndexOf(personName, " ");
                 if (splitIndex < 0) {
                     lastName = personName;
                 } else {
-                    firstName = personName.substring(0, splitIndex - 1).trim();
-                    lastName = personName.substring(splitIndex).trim();
+                    firstName = StringUtils.trim(personName.substring(0, splitIndex));
+                    lastName = StringUtils.trim(personName.substring(splitIndex));
                 }
-                firstNameLastName = new Pair<String, String>(firstName, lastName);
             }
+            firstNameLastName = new Pair<String, String>(firstName, lastName);
         }
         return firstNameLastName;
     }
@@ -121,6 +121,17 @@ public class UserUtil {
         }
 
         return groups;
+    }
+
+    public static boolean hasSameName(Pair<String, String> firstNameLastName, Map<QName, Serializable> userProps) {
+        if (userProps == null || firstNameLastName == null || StringUtils.isBlank(firstNameLastName.getFirst()) || StringUtils.isBlank(firstNameLastName.getSecond())) {
+            return false;
+        }
+        if (StringUtils.equalsIgnoreCase(firstNameLastName.getFirst(), (String) userProps.get(ContentModel.PROP_FIRSTNAME))
+                && StringUtils.equalsIgnoreCase(firstNameLastName.getSecond(), (String) userProps.get(ContentModel.PROP_LASTNAME))) {
+            return true;
+        }
+        return false;
     }
 
 }

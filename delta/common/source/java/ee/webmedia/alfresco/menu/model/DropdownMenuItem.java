@@ -172,6 +172,10 @@ public class DropdownMenuItem extends MenuItem {
         return wrapper;
     }
 
+    public void toggle() {
+        setExpanded(!isExpanded());
+    }
+
     public String getSubmenuId() {
         return submenuId;
     }

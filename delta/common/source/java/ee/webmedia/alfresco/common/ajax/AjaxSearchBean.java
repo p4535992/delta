@@ -71,6 +71,22 @@ public class AjaxSearchBean extends AjaxBean {
         ComponentUtil.renderSelectItems(responseWriter, results);
     }
 
+    /**
+     * Handles an action outcome and invokes an action listener. Parameter for the action listener is assumed to be in DATA.
+     */
+    public void invokeActionListener() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        @SuppressWarnings("unchecked")
+        Map<String, String> params = context.getExternalContext().getRequestParameterMap();
+
+        // Fetch data
+        String data = StringUtils.substringBetween(getParam(context, DATA), VALUE_MARKUP_START, VALUE_MARKUP_END);
+        String actionListener = getParam(params, "actionListener");
+
+        // Invoke action listener
+        context.getApplication().createMethodBinding("#{" + actionListener + "}", new Class[] { String.class }).invoke(context, new Object[] { data });
+    }
+
     private SelectItem[] getSelectItems(FacesContext context, String callback, String contains, String filterValue) {
         int filter = 0;
         if (StringUtils.isNotBlank(filterValue) && !"undefined".equals(filterValue)) {

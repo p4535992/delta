@@ -31,6 +31,7 @@ public interface DocumentCommonModel {
         QName SEND_INFO = QName.createQName(URI, "sendInfo");
         QName DOCUMENT_LOG = QName.createQName(URI, "documentLog");
         QName METADATA_CONTAINER = QName.createQName(URI, "metadataContainer");
+        QName FAVORITE_DIRECTORY = QName.createQName(URI, "favoriteDirectory");
     }
 
     interface Aspects {
@@ -44,6 +45,8 @@ public interface DocumentCommonModel {
         QName RECIPIENT = QName.createQName(URI, "recipient");
         QName ADDITIONAL_RECIPIENT = QName.createQName(URI, "additionalRecipient");
         QName FAVORITE_CONTAINER = QName.createQName(URI, "favoriteContainer");
+        QName FAVORITE_DIRECTORY_ASPECT = QName.createQName(URI, "favoriteDirectoryAspect");// new
+
     }
 
     interface Assocs {
@@ -58,6 +61,8 @@ public interface DocumentCommonModel {
         QName SEND_INFO = QName.createQName(URI, "sendInfo");
         QName DOCUMENT_LOG = QName.createQName(URI, "documentLog");
         QName FAVORITE = QName.createQName(URI, "favorite");
+        QName FAVORITE_DIRECTORY = QName.createQName(URI, "favoriteDirectory");
+        QName FAVORITE_DIRECTORY_ASPECT = QName.createQName(URI, "favoriteDirectoryAspect");
     }
 
     interface Props {
@@ -145,6 +150,8 @@ public interface DocumentCommonModel {
      * @author Ats Uiboupin
      */
     abstract class Privileges {
+        /** Permission used on dynamic document types. Indicates that user can create new document of specific type. */
+        public static final String CREATE_DOCUMENT = "createDocument";
         public static final String VIEW_DOCUMENT_META_DATA = "viewDocumentMetaData";
         public static final String EDIT_DOCUMENT_META_DATA = "editDocumentMetaData";
         public static final String VIEW_DOCUMENT_FILES = "viewDocumentFiles";

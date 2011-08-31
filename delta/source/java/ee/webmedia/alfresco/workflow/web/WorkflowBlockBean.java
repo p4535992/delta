@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
 import java.io.Serializable;
@@ -26,6 +27,7 @@ import org.alfresco.service.cmr.model.FileExistsException;
 import org.alfresco.service.cmr.repository.InvalidNodeRefException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
+import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
@@ -49,6 +51,7 @@ import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -173,7 +176,7 @@ public class WorkflowBlockBean implements Serializable {
                 actionDefinition.Label = compoundWorkflowDefinition.getName();
                 actionDefinition.Action = "#{DocumentDialog.workflow.getCompoundWorkflowDialog}";
                 actionDefinition.ActionListener = "#{CompoundWorkflowDialog.setupNewWorkflow}";
-                actionDefinition.addParam("compoundWorkflowDefinitionNodeRef", compoundWorkflowDefinition.getNode().getNodeRef().toString());
+                actionDefinition.addParam("compoundWorkflowDefinitionNodeRef", compoundWorkflowDefinition.getNodeRef().toString());
 
                 actionDefinitions.add(actionDefinition);
             }
@@ -208,8 +211,7 @@ public class WorkflowBlockBean implements Serializable {
         // or user's id is document 'ownerId'
         // or user's id is 'taskOwnerId' and 'taskStatus' = IN_PROGRESS of some document's task
 
-        if (getUserService().isDocumentManager() || getDocumentService().isDocumentOwner(docRef, AuthenticationUtil.getRunAsUser())
-                || getMyTasks().size() > 0) {
+        if (!getMyTasks().isEmpty() || getPermissionService().hasPermission(docRef, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA) == AccessStatus.ALLOWED) {
             return WORKFLOW_METHOD_BINDING_NAME;
         }
         return null;

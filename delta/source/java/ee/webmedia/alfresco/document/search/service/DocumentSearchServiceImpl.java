@@ -504,7 +504,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             return tasks.get(0);
         }
         for (Task task : tasks) {
-            NodeRef compoundWorkflowRef = nodeService.getPrimaryParent(task.getParent().getNode().getNodeRef()).getParentRef();
+            NodeRef compoundWorkflowRef = nodeService.getPrimaryParent(task.getParent().getNodeRef()).getParentRef();
             NodeRef docRef = workflowService.getCompoundWorkflow(compoundWorkflowRef).getParent();
             if (nodeService.hasAspect(docRef, DocumentSpecificModel.Aspects.NOT_EDITABLE)) {
                 return task;
@@ -581,6 +581,18 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         return authorities;
     }
 
+    @Override
+    public List<NodeRef> simpleSearch(String searchInputString, NodeRef parentRef, QName type, QName... props) {
+        String query = joinQueryPartsAnd(Arrays.asList(
+                generateTypeQuery(type)
+                , generateStringWordsWildcardQuery(searchInputString, true, true, props)
+                ));
+        if (parentRef != null) {
+            query = joinQueryPartsAnd(Arrays.asList(query, SearchUtil.generateParentQuery(parentRef, generalService.getStore())));
+        }
+        return searchNodes(query, false, /* queryName */"simpleSearch");
+    }
+
     private List<NodeRef> searchAuthorityGroups(String groupName) {
         long startTime = System.currentTimeMillis();
         List<String> queryParts = new ArrayList<String>(2);
@@ -653,7 +665,9 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             Long daysForSubstitutionTasksCalc = parametersService.getLongParameter(Parameters.DAYS_FOR_SUBSTITUTION_TASKS_CALC);
             Date end = DateUtils.truncate(subInfo.getSubstitution().getSubstitutionEndDate(), Calendar.DATE);
             end = DateUtils.addDays(end, daysForSubstitutionTasksCalc.intValue());
-            queryParts.add(generateDatePropertyRangeQuery(start, end, WorkflowSpecificModel.Props.DUE_DATE));
+            queryParts.add(joinQueryPartsOr(Arrays.asList(
+                    generatePropertyNullQuery(WorkflowSpecificModel.Props.DUE_DATE),
+                    generateDatePropertyRangeQuery(start, end, WorkflowSpecificModel.Props.DUE_DATE))));
         }
     }
 
@@ -1161,10 +1175,13 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
         queryParts.add(generateDoublePropertyRangeQuery((Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_LOWEST) //
                 , (Double) props.get(DocumentSearchModel.Props.TOTAL_SUM_HIGHEST), DocumentSpecificModel.Props.TOTAL_SUM));
         // invoice transaction fields
+        @SuppressWarnings("unchecked")
         List<String> fund = (List<String>) props.get(DocumentSearchModel.Props.FUND);
         queryParts.add(generateMultiStringExactQuery(fund, DocumentCommonModel.Props.SEARCHABLE_FUND));
+        @SuppressWarnings("unchecked")
         List<String> fundsCenter = (List<String>) props.get(DocumentSearchModel.Props.FUNDS_CENTER);
         queryParts.add(generateMultiStringExactQuery(fundsCenter, DocumentCommonModel.Props.SEARCHABLE_FUNDS_CENTER));
+        @SuppressWarnings("unchecked")
         List<String> eaCommitmentItem = (List<String>) props.get(DocumentSearchModel.Props.EA_COMMITMENT_ITEM);
         queryParts.add(generateMultiStringExactQuery(eaCommitmentItem, DocumentCommonModel.Props.SEARCHABLE_EA_COMMITMENT_ITEM));
 

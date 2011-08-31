@@ -71,6 +71,7 @@ public enum Parameters {
     DOC_PROP_ERRAND_ORDER_ABROAD_DOC_NAME("docPropErrandOrderAbroadDocName"),
     DOC_PROP_ERRAND_APPLICATION_DOMESTIC_DOC_NAME("docPropErrandApplicationDomesticDocName"),
     DOC_PROP_MANAGEMENTS_ORDER_DOC_NAME("docPropManagementsOrderDocName"),
+    DOC_PROP_SUPERVISION_REPORT_DOC_NAME("docPropSupervisionReportDocName"),
     DOC_PROP_VACATION_ORDER_DOC_NAME("docPropVacationOrderDocName"),
     DOC_PROP_VACATION_ORDER_LEGAL_BASIS_NAME("docPropVacationOrderLegalBasisName"),
     DOC_PROP_CHANCELLORS_ORDER_SIGNER_NAME("docPropChancellorsOrderSignerName"),

@@ -10,7 +10,7 @@
    $jQ(document).ready(function() {
       prependOnclick($jQ("a.delete"), function(e) {
          var userOrGroup = $jQ(e).closest('tr').children().eq(0).text();
-         return confirm(confirmMsg.replace('{0}', userOrGroup));
+         return confirmWithPlaceholders(confirmMsg, userOrGroup);
       });
    });
    </script>

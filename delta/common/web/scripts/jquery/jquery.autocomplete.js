@@ -2,7 +2,7 @@ nrOfAutoCompleteInputs = 0;
 jQuery.autocomplete = function(input, options) {
    // Create a link to self
    var me = this;
-   
+
    // Create jQuery object for input element
    var $input = jQuery(input).attr("autocomplete", "off");
 
@@ -507,7 +507,7 @@ jQuery.autocomplete = function(input, options) {
 			   curtop += 2;
 			}
       }
-      if (isIE7()) { // IE7 hack :(
+      if (isIE(7)) { // IE7 hack :(
          curtop += 1;
       }
       return {x:curleft,y:curtop};
@@ -545,7 +545,7 @@ jQuery.fn.autocomplete = function(url, options, data) {
    // XXX: Ats: additional functionality:
    // suggest all values(no input needed to show all items - set options.minChars to -1)
    options.suggestAll = options.suggestAll || 0;
-   
+
    this.each(function() {
       var input = this;
       new jQuery.autocomplete(input, options);

@@ -71,7 +71,20 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
 
     @Override
     public boolean isShowTransactionTemplates() {
-        return isInEditMode() && BeanHelper.getUserService().isInAccountantGroup();
+        return isInEditMode();
+    }
+
+    @Override
+    public boolean isManageTransactionTemplates() {
+        return isShowTransactionTemplates() && BeanHelper.getUserService().isInAccountantGroup();
+    }
+
+    @Override
+    protected boolean isSumCalculated() {
+        return getTransactions() != null && !getTransactions().isEmpty();
+    }
+
+    protected void addHiddenTaxCodePercentages(List list) {
     }
 
     @Override
@@ -105,6 +118,7 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
         UIInput component = (UIInput) event.getComponent().getParent().findComponent(SAVEAS_TEMPLATE_NAME);
         String templateName = (String) component.getValue();
         if (StringUtils.isBlank(templateName)) {
+            MessageUtil.addErrorMessage("transactions_saveas_template_error_no_name");
             return;
         }
         TransactionTemplate template = BeanHelper.getEInvoiceService().getTransactionTemplateByName(templateName);
@@ -114,6 +128,7 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
             BeanHelper.getEInvoiceService().removeTransactions(template.getNode().getNodeRef());
         }
         BeanHelper.getEInvoiceService().copyTransactions(template, getTransactions());
+        constructTransactionPanelGroup();
     }
 
     /**
@@ -198,7 +213,7 @@ public class TransactionsBlockBean extends TransactionsTemplateDetailsDialog imp
     public boolean checkTotalSum() {
         List<String> errorMessageKeys = new ArrayList<String>();
         boolean result = EInvoiceUtil.checkTotalSum(errorMessageKeys, "document_sendToSap_", (Double) getParentNode().getProperties().get(DocumentSpecificModel.Props.TOTAL_SUM),
-                getTransactions(), getOriginalProperties());
+                getTransactions(), getOriginalProperties(), true);
         for (String msgKey : errorMessageKeys) {
             MessageUtil.addErrorMessage(msgKey);
         }

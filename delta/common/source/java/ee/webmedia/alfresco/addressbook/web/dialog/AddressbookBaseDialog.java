@@ -54,8 +54,12 @@ public abstract class AddressbookBaseDialog extends BaseDialogBean {
         return this;
     }
 
+    public void setupViewEntry(String nodeRefString) {
+        setCurrentNode(getAddressbookService().getNode(new NodeRef(nodeRefString)));
+    }
+    
     public void setupViewEntry(ActionEvent event) {
-        setCurrentNode(getAddressbookService().getNode(new NodeRef(ActionUtil.getParam(event, "nodeRef"))));
+        setupViewEntry(ActionUtil.getParam(event, "nodeRef"));
     }
 
     public Node getCurrentNode() {

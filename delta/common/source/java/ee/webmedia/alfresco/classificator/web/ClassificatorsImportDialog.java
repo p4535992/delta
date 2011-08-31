@@ -45,7 +45,8 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
     private Collection<ClassificatorExportVO> changedClassificators;
     private Map<String /* classifName */, List<ClassificatorValue>> classificatorsToImport;
     private List<ClassificatorExportVO> classificatorsOverview;
-    private boolean containsUnknownClassificators;
+    private List<ClassificatorExportVO> classificatorsToAdd;
+    private Map<String /* classifName */, ClassificatorExportVO> classifObjects;
 
     protected ClassificatorsImportDialog() {
         super(".xml", "classificators_import_error_wrongExtension");
@@ -61,10 +62,11 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
         try {
             @SuppressWarnings("unchecked")
             final List<ClassificatorExportVO> classificatorsFromXML = (List<ClassificatorExportVO>) xstream.fromXML(new FileInputStream(upFile));
-            final Map<String /* classifName */, List<ClassificatorValue>> classifValues = new HashMap<String /* classifName */, List<ClassificatorValue>>(
-                    classificatorsFromXML.size());
+            final Map<String /* classifName */, List<ClassificatorValue>> classifValues = new HashMap<String, List<ClassificatorValue>>(classificatorsFromXML.size());
+            classifObjects = new HashMap<String, ClassificatorExportVO>(classificatorsFromXML.size());
             for (ClassificatorExportVO classificatorExportVO : classificatorsFromXML) {
                 classifValues.put(classificatorExportVO.getName(), classificatorExportVO.getClassificatorValues());
+                classifObjects.put(classificatorExportVO.getName(), classificatorExportVO);
             }
             return classifValues;
         } catch (StreamException e1) {
@@ -99,28 +101,37 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
             if (importableClassificatorValues == null) {
                 continue; // this classificator was not included in import file
             }
+            final String newClassifDescription = classifObjects.get(classifName).getDescription();
+            final boolean newClassifDeleteEnabled = classifObjects.get(classifName).isDeleteEnabled();
             final ClassificatorExportVO classificatorExportVO = new ClassificatorExportVO(classificator, importableClassificatorValues);
             classificatorExportVO.setNodeRef(classificator.getNodeRef());
             final List<ClassificatorValue> existingClassifValues = getClassificatorService().getAllClassificatorValues(classificatorExportVO);
+            classificatorExportVO.setPreviousDeleteEnabled(classificator.isDeleteEnabled());
+            classificatorExportVO.setDeleteEnabled(newClassifDeleteEnabled);
+            classificatorExportVO.setPreviousDescription(classificator.getDescription());
+            classificatorExportVO.setDescription(newClassifDescription);
             classificatorExportVO.setPreviousClassificatorValues(existingClassifValues != null ? existingClassifValues : Collections
                     .<ClassificatorValue> emptyList());
-            if (classificatorExportVO.isValuesChanged()) {
+            if (classificatorExportVO.isValuesChanged() || (classificatorExportVO.getChangedProperties() != null)) {
                 classificatorsToUpdate.put(classifName, classificatorExportVO);
             }
             classificatorsOverview.add(classificatorExportVO);
             existingClassifNames.add(classifName);
         }
-        // create import VOs for classificators that doesn't exist (only for overview - should not be saved!)
         final Set<String> newClassificatorNames = new HashSet<String>(classificatorsToImport.keySet());
         newClassificatorNames.removeAll(existingClassifNames);
         if (newClassificatorNames.size() > 0) {
-            containsUnknownClassificators = true;
+            classificatorsToAdd = new ArrayList<ClassificatorExportVO>(newClassificatorNames.size());
             final StringBuilder sb = new StringBuilder();
             int i = newClassificatorNames.size();
             for (String newClassifName : newClassificatorNames) {
                 i++;
                 final List<ClassificatorValue> importableClassificatorValues = classificatorsToImport.get(newClassifName);
+                ClassificatorExportVO newClassif = classifObjects.get(newClassifName);
                 final ClassificatorExportVO classificatorExportVO = new ClassificatorExportVO(newClassifName, importableClassificatorValues);
+                classificatorExportVO.setDescription(newClassif.getDescription());
+                classificatorExportVO.setDeleteEnabled(newClassif.isDeleteEnabled());
+                classificatorsToAdd.add(classificatorExportVO);
                 classificatorsOverview.add(classificatorExportVO);
                 final boolean appendSepparator = i < newClassificatorNames.size();
                 sb.append(newClassifName + (appendSepparator ? ", " : ""));
@@ -133,7 +144,7 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
             Entry<String, ClassificatorExportVO> entry = iterator.next();
             final ClassificatorExportVO classificator = entry.getValue();
 
-            if (!classificator.isValuesChanged()) {
+            if (!classificator.isValuesChanged() && classificator.getChangedProperties() == null) {
                 iterator.remove();
             } else {
                 log.debug("values of classificator '" + entry.getKey() + "' are different");
@@ -153,18 +164,20 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        if (containsUnknownClassificators) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "classificators_import_error_unknownClassificatorsExist");
-            return null;
-        }
-        if (changedClassificators == null || changedClassificators.size() == 0) {
+        if ((changedClassificators == null || changedClassificators.isEmpty()) && (classificatorsToAdd == null || classificatorsToAdd.isEmpty())) {
             log.info("Values in uploaded file contain no changes to existing classificators");
             MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "classificators_import_info_noChanges", getFileName());
         } else {
-            log.info("Starting to import classificators");
-            getClassificatorService().importClassificators(changedClassificators);
-            log.info("Finished importing classificators");
-            MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "classificators_import_success", changedClassificators.size(), getFileName());
+            if (classificatorsToAdd != null && !classificatorsToAdd.isEmpty()) {
+                log.info("Classificators in uploaded file contain new classificators");
+                getClassificatorService().addNewClassificators(classificatorsToAdd);
+            }
+            if (changedClassificators != null && !changedClassificators.isEmpty()) {
+                log.info("Starting to import classificators");
+                getClassificatorService().importClassificators(changedClassificators);
+                log.info("Finished importing classificators");
+            }
+            MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "classificators_import_success", getFileName());
         }
         return outcome;
     }
@@ -175,7 +188,7 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
         changedClassificators = null;
         classificatorsToImport = null;
         classificatorsOverview = null;
-        containsUnknownClassificators = false;
+        classificatorsToAdd = null;
         return "dialog:close";
     }
 

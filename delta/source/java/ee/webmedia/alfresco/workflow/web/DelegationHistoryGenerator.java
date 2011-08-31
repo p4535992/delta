@@ -34,7 +34,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
-import ee.webmedia.alfresco.utils.Transformer;
+import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
 import ee.webmedia.alfresco.workflow.service.Task;
@@ -57,21 +57,21 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
 
     private static Comparator<Task> getTaskComparator() {
         ComparatorChain chain = new ComparatorChain();
-        chain.addComparator(new TransformingComparator(new Transformer<Task>() {
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<Task>() {
             @Override
-            public Object tr(Task input) {
+            public Comparable<?> tr(Task input) {
                 return input.getStartedDateTime();
             }
         }, new NullComparator()));
-        chain.addComparator(new TransformingComparator(new Transformer<Task>() {
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<Task>() {
             @Override
-            public Object tr(Task input) {
+            public Comparable<?> tr(Task input) {
                 return input.getDueDate();
             }
         }, new NullComparator()));
-        chain.addComparator(new TransformingComparator(new Transformer<Task>() {
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<Task>() {
             @Override
-            public Object tr(Task input) {
+            public Comparable<?> tr(Task input) {
                 return input.getOwnerName();
             }
         }, new NullComparator()));
@@ -144,7 +144,7 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
             for (Iterator<Task> it = tasks4History.iterator(); it.hasNext();) {
                 Task task = it.next();
                 if (task.getStartedDateTime() == null) {
-                    LOG.warn("task with status=" + task.getStatus() + " has no startedDateTime. TaskRef=" + task.getNode().getNodeRef());
+                    LOG.warn("task with status=" + task.getStatus() + " has no startedDateTime. TaskRef=" + task.getNodeRef());
                     it.remove();
                 }
             }
@@ -161,7 +161,7 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
             }
             Map<String, Object> props = taskNode.getProperties();
             props.put(mainOrCoOwner.toString(), task.getOwnerName());
-            if (delegatableTask.getNodeRef().equals(task.getNode().getNodeRef())) {
+            if (delegatableTask.getNodeRef().equals(task.getNodeRef())) {
                 props.put(TMP_STYLE_CLASS.toString(), "bold");
             }
             delegationHistories.add(taskNode);

@@ -97,7 +97,7 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     public NodeRef getCompoundWorkflowNodeRef() {
-        return task.getParent().getParent().getNode().getNodeRef();
+        return task.getParent().getParent().getNodeRef();
     }
 
     public void setSeparator(boolean isSeparator) {

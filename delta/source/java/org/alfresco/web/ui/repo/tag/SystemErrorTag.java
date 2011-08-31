@@ -25,8 +25,12 @@
 package org.alfresco.web.ui.repo.tag;
 
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ResourceBundle;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.portlet.PortletSession;
 import javax.portlet.PortletURL;
@@ -39,8 +43,11 @@ import javax.servlet.jsp.tagext.TagSupport;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.BaseServlet;
 import org.alfresco.web.bean.ErrorBean;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * A non-JSF tag library that displays the currently stored system error
@@ -164,8 +171,9 @@ public class SystemErrorTag extends TagSupport
          Writer out = pageContext.getOut();
          
          ResourceBundle bundle = Application.getBundle(pageContext.getSession());
+         String appVersion = "Rakenduse versioon: " + BeanHelper.getApplicationService().getProjectVersion() + "\n";
          
-         out.write("<div");
+         out.write("<div style='margin: 20px;'");
          
          if (this.styleClass != null)
          {
@@ -175,12 +183,13 @@ public class SystemErrorTag extends TagSupport
          }
          
          out.write(">");
+         out.write(appVersion + "<br>");
          out.write(errorMessage);
          out.write("</div>");
          
          // work out initial state
          boolean hidden = !this.showDetails; 
-         String display = "inline";
+         String display = "block";
          String toggleTitle = "Hide";
          if (hidden)
          {
@@ -198,7 +207,7 @@ public class SystemErrorTag extends TagSupport
          out.write("document.getElementById('detailsTitle').innerHTML = '");
          out.write(bundle.getString(MSG_HIDE_DETAILS));
          out.write("<br/><br/>';\n");
-         out.write("document.getElementById('details').style.display = 'inline';\n");
+         out.write("document.getElementById('details').style.display = 'block';\n");
          out.write("hidden = false;\n");
          out.write("} else {\n");
          out.write("document.getElementById('detailsTitle').innerHTML = '");
@@ -209,12 +218,12 @@ public class SystemErrorTag extends TagSupport
          out.write("} } </script>\n");
          
          // output the initial toggle state
-         out.write("<br/>");
+         out.write("<div style='margin:10px 20px;'>");
          out.write("<a id='detailsTitle' href='#' onclick='toggleDetails(); return false;'>");
          out.write(toggleTitle);
-         out.write(" Details</a>");
+         out.write(" Details</a></div>");
          
-         out.write("<div style='padding-top:5px;display:");
+         out.write("<div style='overflow: visible;margin:5px 20px 20px 20px;display:");
          out.write(display);
          out.write("' id='details'");
          
@@ -225,12 +234,13 @@ public class SystemErrorTag extends TagSupport
             out.write("'");
          }
          
-         out.write(">");
-         out.write(errorDetails);
-         out.write("</div>");
+         out.write("><pre>");
+         out.write(appVersion);
+         out.write(highLightEE(errorDetails).replaceAll("<br>Caused by:", "\n\n<b>Caused by</b>:").replaceAll("<br>", "\n")); 
+         out.write("<pre></div>");
          
          // output a link to return to the application
-         out.write("\n<div style='padding-top:16px;'><a href='");
+         out.write("\n<div style='margin:10px 20px;'><a href='");
       
          if (Application.inPortalServer())
          {
@@ -274,13 +284,13 @@ public class SystemErrorTag extends TagSupport
          // this can be used by the user if the app has got into a total mess
          if (Application.inPortalServer() == false)
          {
-            out.write("\n<div style='padding-top:16px;'><a href='");
+            out.write("\n<div style='margin: 10px 20px;'><a href='");
             out.write(((HttpServletRequest)pageContext.getRequest()).getContextPath());
             out.write("'>");
             out.write(bundle.getString(MSG_RETURN_HOME));
             out.write("</a></div>");
             
-            out.write("\n<div style='padding-top:16px;'><a href='");
+            out.write("\n<div style='margin: 10px 20px;'><a href='");
             out.write(((HttpServletRequest)pageContext.getRequest()).getContextPath());
             out.write(BaseServlet.FACES_SERVLET + "/jsp/relogin.jsp");
             out.write("'>");
@@ -310,4 +320,18 @@ public class SystemErrorTag extends TagSupport
       
       super.release();
    }
+
+    private String highLightEE(String input) {
+        String patternStr = "<br>(\\s*at ee\\.webmedia\\..*?)<br>";
+        Pattern pattern = Pattern.compile(patternStr);
+        input = input.replaceAll("\r", ""); // this is needed on windows platform(otherwise match will not be found and rows not highlighted)
+        Matcher matcher = pattern.matcher(input);
+        String output = input.toString();
+        while (matcher.find()) {
+            String groupStr = matcher.group(1);
+            output = output.replaceFirst(patternStr, Matcher.quoteReplacement("<br><b class='red'>" + groupStr + "</b><br>"));
+        }
+        return output;
+    }
+
 }

@@ -25,8 +25,7 @@
          <f:facet name="header">
             <a:sortLink id="col1-sort" label="#{msg.dimension_value_name}" value="valueName" mode="case-insensitive" styleClass="header" />
          </f:facet>
-         <h:inputText id="col1-in-txt" value="#{dimValue.valueName}" rendered="#{DialogManager.bean.editableDimension}" styleClass="medium" />
-         <h:outputText id="col1-text" value="#{dimValue.valueName}" rendered="#{!DialogManager.bean.editableDimension}" styleClass="wrap"/>         
+         <h:outputText id="col1-text" value="#{dimValue.valueName}" styleClass="wrap"/>         
       </a:column>
 
       <%-- Value column --%>
@@ -34,8 +33,7 @@
          <f:facet name="header">
             <a:sortLink id="col2-sort" label="#{msg.dimension_value_value}" value="value" mode="case-insensitive" styleClass="header" />
          </f:facet>
-         <h:inputText id="col2-in-txt" value="#{dimValue.value}" rendered="#{DialogManager.bean.editableDimension}" styleClass="medium" />
-         <h:outputText id="col2-text" value="#{dimValue.value}" rendered="#{!DialogManager.bean.editableDimension}" styleClass="wrap"/>
+         <h:outputText id="col2-text" value="#{dimValue.value}" styleClass="wrap"/>
       </a:column>
 
       <%-- Comment column --%>
@@ -51,10 +49,7 @@
          <f:facet name="header">
             <a:sortLink id="col4-sort" label="#{msg.dimension_value_beginDateTime}" value="beginDateTime" styleClass="header" />
          </f:facet>
-         <h:inputText id="col4-in-text" value="#{dimValue.beginDateTime}" styleClass="date" rendered="#{DialogManager.bean.editableDimension}">
-            <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter" />               
-         </h:inputText>
-         <h:outputText id="col4-text" value="#{dimValue.beginDateTime}" rendered="#{!DialogManager.bean.editableDimension}">
+         <h:outputText id="col4-text" value="#{dimValue.beginDateTime}">
             <a:convertXMLDate pattern="#{msg.date_pattern}" />
          </h:outputText>
       </a:column>
@@ -64,10 +59,7 @@
          <f:facet name="header">
             <a:sortLink id="col5-sort" label="#{msg.dimension_value_endDateTime}" value="endDateTime" styleClass="header" />
          </f:facet>
-         <h:inputText id="col5-in-text" value="#{dimValue.endDateTime}" styleClass="date" rendered="#{DialogManager.bean.editableDimension}">
-            <f:converter converterId="ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter" />
-         </h:inputText>
-         <h:outputText id="col5-text" value="#{dimValue.endDateTime}" rendered="#{!DialogManager.bean.editableDimension}">
+         <h:outputText id="col5-text" value="#{dimValue.endDateTime}">
             <a:convertXMLDate pattern="#{msg.date_pattern}" />
          </h:outputText>
       </a:column>

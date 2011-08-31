@@ -1,0 +1,118 @@
+<alfresco-config>
+   <config>
+      <actions>
+         <action id="doc_type_add">
+            <label-id>doc_type_add</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocTypeDetailsDialog.addNew}</action-listener>
+            <action>dialog:docTypeDetailsDialog</action>
+         </action>
+
+         <action id="doc_type_manage_permissions">
+            <label-id>manage_user_permissions</label-id>
+            <image>/images/icons/invite.gif</image>
+            <action>dialog:permissionsListDialog</action>
+            <action-listener>#{PermissionsListDialog.setup}</action-listener>
+            <params>
+               <param name="nodeRef">#{DocTypeDetailsDialog.docType.nodeRef}</param>
+               <param name="permission">createDocument</param>
+               <param name="alternateDialogTitleId">doc_type_permissions_management</param>
+               <param name="callbackMethodBinding">MenuService.menuUpdated</param>
+            </params>
+         </action>
+
+         <action-group id="doc_type_list_actions">
+            <action idref="doc_type_add" />
+         </action-group>
+
+         <action-group id="doc_type_details_actions">
+            <action idref="doc_type_manage_permissions" />
+         </action-group>
+
+      </actions>
+      <dialogs>
+
+         <dialog name="docTypeListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-list-dialog.jsp" managed-bean="DocTypeListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="doc_types" actions-config-id="doc_type_list_actions" show-ok-button="false"/>
+
+         <dialog name="docTypeDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-details-dialog.jsp"
+            managed-bean="DocTypeDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="doc_type_details" actions-config-id="doc_type_details_actions" />
+
+         <dialog name="fieldDefinitionListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/field-definition-list-dialog.jsp" managed-bean="FieldDefinitionListDialog"
+            icon="/images/icons/versioned_properties_large.gif" title-id="fieldDefinitions_list" show-ok-button="true" />
+
+         <dialog name="fieldDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/field-details-dialog.jsp"
+            managed-bean="FieldDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="field_details" />
+      </dialogs>
+   </config>
+
+   <config evaluator="aspect-name" condition="docadmin:name">
+      <property-sheet>
+         <show-property name="docadmin:name" />
+      </property-sheet>
+   </config>   
+
+   <config evaluator="node-type" condition="docadmin:documentType">
+      <property-sheet>
+         <show-property name="docadmin:documentTypeId" forcedMandatory="true" readOnlyIf="#{DocTypeDetailsDialog.isSaved}" validator="OnlyLettersValidator_PANEL_AND_FIELD_NAME" />
+         <show-property name="docadmin:comment" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="docadmin:used" />
+         <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+         <show-property name="docadmin:publicAdr" />
+         <show-property name="docadmin:showUnvalued" />
+         <show-property name="docadmin:changeByNewDocumentEnabled" />
+         <show-property name="docadmin:documentTypeGroup" classificatorName="docTypeGroup" component-generator="ClassificatorSelectorGenerator" />
+         <show-property name="docadmin:registrationEnabled" />
+         <show-property name="docadmin:finishDocByRegistration" labelStyleClass="wrap" />
+         <show-property name="docadmin:sendUnregistratedDocEnabled" labelStyleClass="wrap" />
+         <show-property name="docadmin:addFollowUpToUnregistratedDocEnabled" labelStyleClass="wrap" />
+         <show-property name="docadmin:addReplyToUnregistratedDocEnabled" labelStyleClass="wrap" />
+         <show-property name="docadmin:editFilesOfFinishedDocEnabled" labelStyleClass="wrap"/>
+         <show-property name="docadmin:showValidityData" />
+      </property-sheet>
+   </config>
+
+<!--    <config evaluator="node-type" condition="docadmin:field"> -->
+   <config evaluator="node-type" condition="docadmin:field,docadmin:fieldDefinition">
+      <property-sheet>
+         <show-property name="docadmin:fieldId" readOnlyIf="#{FieldDetailsDialog.isSavedInPreviousDocTypeVersionOrFieldDefinitions}" component-generator="QNameLocalNameGenerator" namespace="docadmin:" customErrorMsgFormat="FIELD_NAME_ONLY" />
+         <show-property name="docadmin:comment" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+         <show-property name="docadmin:mandatoryForDoc" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+         <show-property name="docadmin:fieldType" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.classificator.constant.FieldType" readOnlyIf="#{FieldDetailsDialog.fieldTypeReadOnly}" valueChangeListener="#{FieldDetailsDialog.fieldTypeChanged}"/>
+         <show-property name="docadmin:mandatory" />
+         <show-property name="docadmin:changeableIf" component-generator="EnumSelectorGenerator" enumClass="ee.webmedia.alfresco.classificator.constant.FieldChangeableIf" forcedMandatory="#{!FieldDetailsDialog.fieldDefinition}" />
+
+         <!-- START: properties conditionally shown based on value of fieldType -->
+         <separator name="sep-conditionalProps-before" show="#{FieldDetailsDialog.fieldTypeHasAdditionalFields}" />
+         <show-property name="docadmin:classificator" component-generator="SearchGenerator" pickerCallback="#{ClassificatorListDialog.searchClassificators}" setterCallback="#{FieldDetailsDialog.setClassificator}"
+            dialogTitleId="classificators_search_title" tooltip="#{FieldDetailsDialog.getClassificatorDescription}" ajaxParentLevel="100"
+            editable="false" allowClearSingleValued="true" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" forcedMandatory="#{!FieldDetailsDialog.fieldDefinition}" />
+         <show-property name="docadmin:classificatorDefaultValue" component-generator="GeneralSelectorGenerator" selectionItems="#{FieldDetailsDialog.getClassificatorSelectItems}"
+            dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" readOnlyIf="#{FieldDetailsDialog.classificatorDefaultValueReadOnly}" />
+         <show-property name="docadmin:defaultValue" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" mandatoryIf="#{FieldDetailsDialog.defaultValueMandatory}" />
+         <show-property name="docadmin:defaultDateSysdate" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" />
+         <show-property name="docadmin:defaultUserLoggedIn" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" />
+         <show-property name="docadmin:defaultSelected" dontRenderIfDisabled="true" disabled="#{FieldDetailsDialog.isProperyHidden}" />
+         <separator name="sep-conditionalProps-after" show="#{FieldDetailsDialog.fieldTypeHasAdditionalFields}" />
+         <!-- END: properties conditionally shown based on value of fieldType -->
+
+         <show-property name="docadmin:onlyInGroup" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="docadmin:fieldDefinition">
+      <property-sheet>
+         <show-property name="docadmin:isParameterInDocSearch" readOnlyIf="#{FieldDetailsDialog.field.fixedParameterInDocSearch}" />
+         <show-property name="docadmin:parameterOrderInDocSearch" />
+         <show-property name="docadmin:isParameterInVolSearch" readOnlyIf="#{FieldDetailsDialog.field.fixedParameterInVolSearch}" />
+         <show-property name="docadmin:parameterOrderInVolSearch" />
+         <show-property name="docadmin:mandatoryForVol" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{VolumeService.caseVolumeEnabled}" />
+         <!-- FIXME DLSeadist debugimiseks
+         <show-property name="docadmin:docTypes" component-generator="SearchGenerator" read-only="true" />
+         <show-property name="docadmin:volTypes" component-generator="SearchGenerator" read-only="true" show="#{VolumeService.caseVolumeEnabled}" />
+          -->
+      </property-sheet>
+   </config>
+
+</alfresco-config>

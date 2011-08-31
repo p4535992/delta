@@ -37,6 +37,8 @@
       <property name="active" value="true" />
       <property name="userService" ref="UserService" />
       <property name="amrService" ref="AmrService" />
+      <property name="applicationService" ref="ApplicationService" />
+      <property name="testEmail" value="${mail.from.default}" />
    </bean>
 
 </beans>

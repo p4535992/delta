@@ -43,10 +43,11 @@ import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDet
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
 import ee.webmedia.alfresco.utils.SearchUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 /**
- * @author Keit Tehvan
+ * @author Keit Tehvan 29.09.2009
  */
 public class AddressbookServiceImpl implements AddressbookService {
 
@@ -92,6 +93,14 @@ public class AddressbookServiceImpl implements AddressbookService {
                 || node.getType().equals(Types.ORGPERSON)) {
             output = createPerson(parent, convertProps(node.getProperties()));
         } else if (node.getType().equals(Types.CONTACT_GROUP)) {
+            List<Node> contactGroups = listContactGroups();
+            for (Node contactGroup : contactGroups) {
+                String contactGroupName = (String) contactGroup.getProperties().get(AddressbookModel.Props.GROUP_NAME);
+                String newContactGroupName = (String) node.getProperties().get(AddressbookModel.Props.GROUP_NAME);
+                if (StringUtils.equalsIgnoreCase(contactGroupName, newContactGroupName)) {
+                    throw new UnableToPerformException("addressbook_group_name_exists");
+                }
+            }
             output = createContactGroup(convertProps(node.getProperties()));
         }
         return output;

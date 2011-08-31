@@ -2,13 +2,6 @@
    <config>
    
      <actions>
-
-         <action id="dimension_add_value">
-            <label-id>dimension_add_value</label-id>
-            <image>/images/icons/versioned_properties.gif</image>
-            <evaluator>ee.webmedia.alfresco.document.einvoice.web.DimensionValueEditEvaluator</evaluator>
-            <action-listener>#{DimensionDetailsDialog.addNewValue}</action-listener>
-         </action>
          
          <action id="dimensions_set_inactive">
             <label-id>dimensions_set_all_inactive</label-id>
@@ -33,7 +26,6 @@
         </action-group>
         
          <action-group id="dimension_detail_actions">
-            <action idref="dimension_add_value" />
            <action idref="dimensions_set_active" />              
            <action idref="dimensions_set_inactive" />
          </action-group>   

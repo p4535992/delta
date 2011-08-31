@@ -16,7 +16,7 @@ public class WorkflowNewSavedEvaluator extends AbstractFullAccessEvaluator {
     @Override
     public boolean evaluate(Object obj) {
         CompoundWorkflow workflow = (CompoundWorkflow) obj;
-        return workflow != null && workflow.getNode().getNodeRef() != null && WorkflowUtil.isStatus(workflow, Status.NEW) && hasFullAccess();
+        return workflow != null && workflow.getNodeRef() != null && WorkflowUtil.isStatus(workflow, Status.NEW) && hasFullAccess();
     }
 
 }

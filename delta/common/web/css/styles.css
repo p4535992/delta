@@ -198,6 +198,10 @@ a.action {
 	background: url("../images/icons/expand-2-white.png") left 5px no-repeat;
 }
 
+#menu li.dropdown ul li.dropdown > a {
+	background: url("../images/icons/collapse-2-white.png") left 5px no-repeat;
+}
+
 #menu li.dropdown  ul ul li a {
 	background: url("../images/icons/expand-3-blue.png") left 5px no-repeat;
 }
@@ -522,16 +526,10 @@ a.action {
 	overflow: auto;
 }
 
-.syserror-wrapper div {
-	clear: left;
-}
-
 .sys-error-details {
 	border: 1px solid #C9101A;
-	float: left;
 	line-height: 18px;
 	overflow: auto;
-	
 	background: #FFEFEF;
 	margin-bottom: 20px;
 	padding: 10px;
@@ -977,17 +975,22 @@ span.small input, input.small, textarea.small, select.small {
 	min-width: 180px !important; 
 }
 
+.width190 {
+	width: 190px !important;
+	min-width: 190px !important; 
+}
+
 .width250 {
 	width: 250px !important;
 	min-width: 250px !important; 
 }
 
-span.medium input, input.medium, textarea.medium, select.medium {
+span.medium, span.medium input, input.medium, textarea.medium, select.medium {
 	width: 200px !important;/*153px !important;*/
 	min-width: 200px !important;
 }
 
-span.long input, input.long, textarea.long, select.long {
+span.long, span.long input, input.long, textarea.long, select.long {
 	width: 400px !important;
 }
 
@@ -1313,7 +1316,16 @@ input[type="radio"].aoscModal-newCase {
 table.expand19-200 {
 	width: 100%;
 }
-
+.classificatorTextArea{
+	height: 19px !important;
+    overflow: hidden;
+    padding-bottom: 0;
+    padding-top: 0;
+    padding-left: 2px;
+    padding-right: 2px;
+    width: 300px !important;
+	}
+	
 .table-padding td {
 	padding-top: 3px;
 	padding-bottom: 3px;
@@ -1727,11 +1739,16 @@ table.recipient td {
 }
 
 .submit-protection-layer {
+   display: block;
    z-index: 100000 !important;
    cursor: wait;
    filter: alpha(opacity=0);
    -moz-opacity: 0;
    opacity: 0;
+}
+
+#submit-protection-msg {
+	background: red;
 }
 
 DIV.modalwrap {
@@ -2008,14 +2025,6 @@ DIV.modalpopup-footer P.action {
 	line-height: 18px;
 }
 
-.workflow-table .toggle-tasks.expanded {
-	background: transparent url("../images/icons/arrow_up.gif") no-repeat;
-}
-
-.workflow-table .toggle-tasks {
-	background: transparent url("../images/icons/arrow_down.gif") no-repeat;
-}
-
 .workflow-table .workflow-conf {
 	font-weight: bold;
 	margin: 0 10px 0 6px;
@@ -2109,10 +2118,6 @@ TH A.header-wrap {
 
 .selectBoundWithText {
 	margin-bottom: 6px;
-}
-
-.selectWithOnchangeEvent {
-	
 }
 
 .no-wrap {
@@ -2280,6 +2285,11 @@ div.panel.tooltip{
 	position: relative;
 }
 /* END: hack to show tooltips for disabled checkboxes */
+
+textarea.borderless{
+	background:transparent;
+	border: none;
+}
 
 .workflow-separator {
 	background-color: #fff;
@@ -2456,4 +2466,9 @@ DIV.trans-scroll TABLE {
 
 .hidden {
 	display: none;
+}
+
+.signatureModalWrap {
+	display: block;
+	height: 143px;
 }

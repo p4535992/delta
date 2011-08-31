@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="docadmin:documentAdminModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/document/admin/1.0" prefix="docadmin" />
+   </namespaces>
+
+   <constraints>
+
+      <!-- If you change this list, FieldType enum -->
+      <constraint name="docadmin:changeableIf" type="LIST">
+         <parameter name="allowedValues">
+            <list>
+               <value>ALWAYS_CHANGEABLE</value>
+               <value>CHANGEABLE_IF_WORKING_DOC</value>
+               <value>ALWAYS_NOT_CHANGEABLE</value>
+            </list>
+         </parameter>
+      </constraint>
+
+      <!-- If you change this list, FieldChangeableIf enum -->
+      <constraint name="docadmin:fieldType" type="LIST">
+         <parameter name="allowedValues">
+            <list>
+               <value>TEXT_FIELD</value>
+               <value>COMBOBOX</value>
+               <value>INT</value>
+               <value>DOUBLE</value>
+               <value>DATE</value>
+               <value>COMBOBOX_EDITABLE</value>
+               <value>USER</value>
+               <value>CONTACT</value>
+               <value>USER_CONTACT</value>
+               <value>USERS</value>
+               <value>CONTACTS</value>
+               <value>USERS_CONTACTS</value>
+               <value>COMBOBOX_AND_TEXT</value>
+               <value>COMBOBOX_AND_TEXT_NOT_EDITABLE</value>
+               <value>LISTBOX</value>
+               <value>CHECKBOX</value>
+               <value>INFORMATION_TEXT</value>
+               <value>HIERARCHICAL_KEYWORD_LEVEL1</value>
+               <value>HIERARCHICAL_KEYWORD_LEVEL2</value>
+            </list>
+         </parameter>
+      </constraint>
+
+   </constraints>
+
+   <types>
+
+      <type name="docadmin:documentTypes">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="docadmin:documentType">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docadmin:documentType</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+               <duplicate>false</duplicate>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docadmin:documentType"><!-- path name should be id -->
+         <parent>sys:base</parent>
+         <properties>
+            <property name="docadmin:documentTypeId">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="docadmin:used">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="docadmin:latestVersion">
+               <type>d:int</type>
+               <mandatory enforced="true">true</mandatory>
+               <default>1</default>
+            </property>
+            <property name="docadmin:publicAdr">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="docadmin:showUnvalued">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+               <default>false</default>
+            </property>
+            <property name="docadmin:changeByNewDocumentEnabled">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+               <default>false</default>
+            </property>
+            <property name="docadmin:documentTypeGroup">
+               <type>d:text</type>
+            </property>
+            <property name="docadmin:registrationEnabled">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+               <default>false</default>
+            </property>
+            <property name="docadmin:finishDocByRegistration">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+               <default>false</default>
+            </property>
+            <property name="docadmin:sendUnregistratedDocEnabled">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+               <default>false</default>
+            </property>
+            <property name="docadmin:addFollowUpToUnregistratedDocEnabled">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+               <default>false</default>
+            </property>
+            <property name="docadmin:addReplyToUnregistratedDocEnabled">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+               <default>false</default>
+            </property>
+            <property name="docadmin:editFilesOfFinishedDocEnabled">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+               <default>false</default>
+            </property>
+            <property name="docadmin:showValidityData">
+               <type>d:boolean</type>
+               <mandatory enforced="true">false</mandatory>
+               <default>false</default>
+            </property>
+         </properties>
+         <associations>
+            <child-association name="docadmin:documentTypeVersion">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docadmin:documentTypeVersion</class>
+                  <mandatory>true</mandatory>
+                  <many>true</many>
+               </target>
+               <duplicate>false</duplicate>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>docadmin:name</aspect>
+            <aspect>docadmin:systematic</aspect>
+            <aspect>docadmin:comment</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docadmin:documentTypeVersion"><!-- path name should be versionNr -->
+         <parent>sys:base</parent>
+         <properties>
+            <property name="docadmin:versionNr">
+               <type>d:int</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="docadmin:creatorId">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="docadmin:creatorName">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="docadmin:createdDateTime">
+               <type>d:datetime</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>docadmin:fieldGroupContainer</aspect>
+            <aspect>docadmin:fieldContainer</aspect>
+            <aspect>docadmin:separationLineContainer</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docadmin:fieldGroup">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="docadmin:fieldDefinitionIds">
+               <type>d:qname</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docadmin:readonlyFieldsName">
+               <type>d:text</type>
+            </property>
+            <property name="docadmin:readonlyFieldsRule">
+               <type>d:text</type>
+            </property>
+            <property name="docadmin:showInTwoColumns">
+               <type>d:boolean</type>
+            </property>
+            <property name="docadmin:thesaurus">
+               <type>d:text</type>
+            </property>
+            <!-- if you add new properties, update MetadataItemCompareUtil.getFieldGroupComparator() -->
+         </properties>
+         <mandatory-aspects>
+            <aspect>docadmin:fieldContainer</aspect>
+            <aspect>docadmin:fieldAndGroupCommon</aspect>
+            <aspect>docadmin:mandatoryForVol</aspect>
+            <!-- if you add new aspects, update MetadataItemCompareUtil.getFieldGroupComparator() -->
+         </mandatory-aspects>
+      </type>
+
+      <type name="docadmin:field">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="docadmin:fieldId"><!-- XXX: speci's viidatakse sellele, kui "id" väljale -->
+               <type>d:qname</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+            <property name="docadmin:mandatory">
+               <type>d:boolean</type>
+            </property>
+            <property name="docadmin:fieldType">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+               <constraints>
+                  <constraint ref="docadmin:fieldType" />
+               </constraints>
+            </property>
+            <property name="docadmin:changeableIf">
+               <type>d:text</type>
+               <constraints>
+                  <constraint ref="docadmin:changeableIf" />
+               </constraints>
+            </property>
+            <property name="docadmin:defaultValue">
+               <type>d:text</type>
+            </property>
+            <property name="docadmin:classificator"><!-- reference to classificator name -->
+               <type>d:text</type>
+            </property>
+            <property name="docadmin:classificatorDefaultValue">
+               <type>d:text</type>
+            </property>
+            <property name="docadmin:defaultDateSysdate">
+               <type>d:boolean</type>
+            </property>
+            <property name="docadmin:defaultSelected">
+               <type>d:boolean</type>
+            </property>
+            <property name="docadmin:onlyInGroup">
+               <type>d:boolean</type>
+            </property>
+            <!-- if you add new properties, update MetadataItemCompareUtil.getFieldComparator() -->
+         </properties>
+         <mandatory-aspects>
+            <aspect>docadmin:fieldAndGroupCommon</aspect>
+            <!-- if you add new aspects, update MetadataItemCompareUtil.getFieldComparator() -->
+         </mandatory-aspects>
+         
+      </type>
+
+      <type name="docadmin:fieldDefinition">
+         <parent>docadmin:field</parent>
+         <properties>
+            <property name="docadmin:docTypes">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+            <property name="docadmin:removableFromSystematicFieldGroup">
+               <type>d:boolean</type>
+               <default>true</default>
+            </property>
+            <property name="docadmin:isParameterInDocSearch">
+               <type>d:boolean</type>
+            </property>
+            <property name="docadmin:isParameterInVolSearch">
+               <type>d:boolean</type>
+            </property>
+            <property name="docadmin:parameterOrderInDocSearch">
+               <type>d:int</type>
+            </property>
+            <property name="docadmin:parameterOrderInVolSearch">
+               <type>d:int</type>
+            </property>
+            <property name="docadmin:isFixedParameterInDocSearch">
+               <type>d:boolean</type>
+            </property>
+            <property name="docadmin:isFixedParameterInVolSearch">
+               <type>d:boolean</type>
+            </property>
+            <property name="docadmin:volTypes">
+               <type>d:text</type>
+               <multiple>true</multiple>
+            </property>
+         </properties>
+         <mandatory-aspects>
+            <aspect>docadmin:mandatoryForVol</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docadmin:separationLine">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>docadmin:order</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docadmin:fieldGroupDefinitions">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+            <aspect>docadmin:fieldGroupContainer</aspect>
+         </mandatory-aspects>
+      </type>
+
+      <type name="docadmin:fieldDefinitions">
+         <parent>sys:base</parent>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+            <aspect>docadmin:fieldDefinitionContainer</aspect>
+         </mandatory-aspects>
+      </type>
+
+   </types>
+
+   <aspects>
+
+      <aspect name="docadmin:fieldGroupContainer">
+         <associations>
+            <child-association name="docadmin:fieldGroup">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docadmin:fieldGroup</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+<!-- FIXME DLSeadist kas võiks ka unikaalne path olla? näiteks name, kui see on unikaalne? 
+               <duplicate>false</duplicate>
+-->
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="docadmin:fieldContainer">
+         <associations>
+            <child-association name="docadmin:field">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docadmin:field</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+               <duplicate>false</duplicate><!-- path'is(assocName) on fieldId -->
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="docadmin:fieldDefinitionContainer">
+         <associations>
+            <child-association name="docadmin:fieldDefinition">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docadmin:fieldDefinition</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+               <duplicate>false</duplicate><!-- path'is(assocName) on fieldId -->
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="docadmin:separationLineContainer">
+         <associations>
+            <child-association name="docadmin:separationLine">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docadmin:separationLine</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </aspect>
+
+      <aspect name="docadmin:name">
+         <properties>
+            <property name="docadmin:name">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docadmin:order">
+         <properties>
+            <property name="docadmin:order">
+               <type>d:int</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docadmin:systematic">
+         <properties>
+            <property name="docadmin:systematic">
+               <type>d:boolean</type>
+               <default>false</default>
+            </property>
+            <property name="docadmin:systematicComment">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docadmin:comment">
+         <properties>
+            <property name="docadmin:comment">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </aspect>
+
+      <aspect name="docadmin:fieldAndGroupCommon">
+         <properties>
+            <property name="docadmin:mandatoryForDoc">
+               <type>d:boolean</type>
+            </property>
+            <property name="docadmin:removableFromSystemDocType">
+               <type>d:boolean</type>
+               <mandatory enforced="true">true</mandatory>
+               <default>true</default>
+            </property>
+            <property name="docadmin:defaultUserLoggedIn">
+               <type>d:boolean</type>
+            </property>
+            <!-- if you add new properties, update MetadataItemCompareUtil.getFieldAndGroupBaseComparatorChain() -->
+         </properties>
+         <mandatory-aspects>
+            <aspect>docadmin:name</aspect>
+            <aspect>docadmin:systematic</aspect>
+            <aspect>docadmin:comment</aspect>
+            <aspect>docadmin:order</aspect>
+            <!-- if you add new aspects, update MetadataItemCompareUtil.getFieldAndGroupBaseComparatorChain() -->
+         </mandatory-aspects>
+      </aspect>
+
+      <aspect name="docadmin:mandatoryForVol">
+         <properties>
+            <property name="docadmin:mandatoryForVol">
+               <type>d:boolean</type>
+            </property>
+         </properties>
+      </aspect>
+   </aspects>
+
+</model>

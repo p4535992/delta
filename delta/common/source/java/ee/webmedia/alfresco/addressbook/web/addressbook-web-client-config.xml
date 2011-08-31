@@ -78,7 +78,8 @@
    <config evaluator="aspect-name" condition="ab:contactGroupProperties">
       <property-sheet>
          <show-property name="ab:groupName" />
-         <show-property name="ab:taskCapable" readOnlyIf="#{ContactGroupListDialog.getNotAllowedEditTaskCapable}"/>
+         <show-property name="ab:taskCapable" readOnlyIf="#{ContactGroupListDialog.getNotAllowedEditTaskCapable}" />
+         <show-property name="ab:manageableForAdmin" readOnlyIf="#{ContactGroupListDialog.getNotAllowedEditTaskCapable}" />
       </property-sheet>
    </config>
    

@@ -35,15 +35,26 @@ function updateButtonState()
             <%-- Organizations List --%>
             <a:panel id="ab-addressbook-panel" styleClass="mainSubTitle" label="#{msg.addressbook}">
             <a:panel id="search-panel">
-            <h:inputText id="search-text" styleClass="admin-user-search-input" value="#{DialogManager.bean.searchCriteria}" size="35" maxlength="1024" />
-            <h:commandButton id="search-btn" value="#{msg.search}" action="#{DialogManager.bean.search}" disabled="true" style="margin-left: 5px;"/>
-            <h:commandButton id="show-all-button" value="#{msg.show_all}" action="#{DialogManager.bean.showAll}" style="margin-left: 5px;"/>
+            <h:inputText id="search-text" styleClass="admin-user-search-input" value="#{AddressbookDialog.searchCriteria}" size="35" maxlength="1024" />
+            <h:commandButton id="search-btn" value="#{msg.search}" action="#{AddressbookDialog.search}" disabled="true" style="margin-left: 5px;"/>
+            <h:commandButton id="show-all-button" value="#{msg.show_all}" action="#{AddressbookDialog.showAll}" style="margin-left: 5px;"/>
+            <f:verbatim>
+            <script type="text/javascript">
+               addSearchSuggest("dialog:dialog-body:search-text", "dialog:dialog-body:search-text", "AddressbookDialog.searchContacts", "<%=request.getContextPath()%>/ajax/invoke/AjaxSearchBean.invokeActionListener?actionListener=AddressbookDialog.setupViewEntry",
+                     function() {
+                  		var type = this.slice(this.lastIndexOf("(") + 1, this.lastIndexOf(")")); // eraisik or organisatsioon
+                        $jQ("#" + type).click();
+               });
+            </script>
+            </f:verbatim>
+            <a:actionLink id="eraisik" value="" showLink="false" action="dialog:addressbookViewEntryPerson" />
+            <a:actionLink id="organisatsioon" value="" showLink="false" action="dialog:addressbookViewEntry" />
             </a:panel>
             <a:panel id="ab-org-panel" styleClass="with-pager" label="#{msg.addressbook_organizations}">
 
-                        <a:richList id="ab-organizations-list" viewMode="details" binding="#{DialogManager.bean.orgRichList}" width="100%"
+                        <a:richList id="ab-organizations-list" viewMode="details" binding="#{AddressbookDialog.orgRichList}" width="100%"
                            rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" pageSize="#{BrowseBean.pageSizeContent}"
-                           value="#{DialogManager.bean.organizations}" var="r" initialSortColumn="name" initialSortDescending="false">
+                           value="#{AddressbookDialog.organizations}" var="r" initialSortColumn="name" initialSortDescending="false">
 
                            <%-- Primary column with name --%>
                            <a:column id="ab-org-list-column" primary="true">
@@ -57,7 +68,7 @@ function updateButtonState()
                                  <h:graphicImage id="ab-org-list-eval2-img" url="/images/icons/error.gif" />
                               </a:booleanEvaluator>
                               <a:actionLink id="ab-org-list-link1" value="#{r['ab:orgName']} (#{r['ab:orgAcronym']})" showLink="false"
-                                 action="dialog:addressbookViewEntry" actionListener="#{DialogManager.bean.setupViewEntry}">
+                                 action="dialog:addressbookViewEntry" actionListener="#{AddressbookDialog.setupViewEntry}">
                                  <f:param id="ab-org-list-param1" name="nodeRef" value="#{r.nodeRef}" />
                               </a:actionLink>
                            </a:column>
@@ -83,17 +94,17 @@ function updateButtonState()
                            <%-- Actions column --%>
                            <a:column id="ab-org-list-col2" actions="true">
                               <f:facet name="header">
-                                 <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="WriteProperties,DeleteNode">
+                                 <r:permissionEvaluator value="#{AddressbookDialog.addressbookNode}" allow="WriteProperties,DeleteNode">
                                     <h:outputText id="ab-org-list-ot1" value="#{msg.actions}" />
                                  </r:permissionEvaluator>
                               </f:facet>
-                              <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="WriteProperties">
+                              <r:permissionEvaluator value="#{AddressbookDialog.addressbookNode}" allow="WriteProperties">
                                  <a:actionLink id="ab-org-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
                                     action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}">
                                     <f:param id="ab-org-list-link-mod-param" name="nodeRef" value="#{r.nodeRef}" />
                                  </a:actionLink>
                               </r:permissionEvaluator>
-                              <r:permissionEvaluator id="ab-org-list-deleteEval" value="#{DialogManager.bean.addressbookNode}" allow="DeleteNode">
+                              <r:permissionEvaluator id="ab-org-list-deleteEval" value="#{AddressbookDialog.addressbookNode}" allow="DeleteNode">
                                  <a:actionLink id="ab-org-list-link-del" value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false"
                                     action="dialog:addressbookDeleteEntry" actionListener="#{AddressbookDeleteDialog.setupDelete}">
                                     <f:param id="ab-org-list-link-del-param" name="nodeRef" value="#{r.nodeRef}" />
@@ -109,9 +120,9 @@ function updateButtonState()
                      
                      <a:panel id="ab-person-panel" styleClass="with-pager" label="#{msg.addressbook_private_persons}">
 
-                        <a:richList id="ab-people-list" viewMode="details" binding="#{DialogManager.bean.peopleRichList}" pageSize="#{BrowseBean.pageSizeContent}"
+                        <a:richList id="ab-people-list" viewMode="details" binding="#{AddressbookDialog.peopleRichList}" pageSize="#{BrowseBean.pageSizeContent}"
                            headerStyleClass="recordSetHeader" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%"
-                           value="#{DialogManager.bean.people}" var="r" initialSortColumn="name" initialSortDescending="false">
+                           value="#{AddressbookDialog.people}" var="r" initialSortColumn="name" initialSortDescending="false">
 
                            <%-- Primary column with name --%>
                            <a:column id="ab-people-list-col1" primary="true" style="padding:2px;text-align:left">
@@ -125,7 +136,7 @@ function updateButtonState()
                                  <h:graphicImage id="ab-people-list-eval2-img" url="/images/icons/error.gif" />
                               </a:booleanEvaluator>
                               <a:actionLink id="ab-people-list-link1" value="#{r['ab:personTitle']} #{r['ab:personFirstName']} #{r['ab:personLastName']}"
-                                 showLink="false" action="dialog:addressbookViewEntryPerson" actionListener="#{DialogManager.bean.setupViewEntry}">
+                                 showLink="false" action="dialog:addressbookViewEntryPerson" actionListener="#{AddressbookDialog.setupViewEntry}">
                                  <f:param id="ab-people-list-link1-param" name="nodeRef" value="#{r.nodeRef}" />
                               </a:actionLink>
                            </a:column>
@@ -141,17 +152,17 @@ function updateButtonState()
                            <%-- Actions column --%>
                            <a:column id="ab-people-list-col2" actions="true" style="text-align:left">
                               <f:facet name="header">
-                                 <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="WriteProperties,DeleteNode">
+                                 <r:permissionEvaluator value="#{AddressbookDialog.addressbookNode}" allow="WriteProperties,DeleteNode">
                                     <h:outputText id="ab-people-list-ot12" value="#{msg.actions}" />
                                  </r:permissionEvaluator>
                               </f:facet>
-                              <r:permissionEvaluator value="#{DialogManager.bean.addressbookNode}" allow="WriteProperties">
+                              <r:permissionEvaluator value="#{AddressbookDialog.addressbookNode}" allow="WriteProperties">
                                  <a:actionLink id="ab-people-list-link-mod" value="#{msg.modify}" image="/images/icons/edituser.gif" showLink="false"
                                     action="dialog:addressbookAddEdit" actionListener="#{AddressbookAddEditDialog.setupEdit}">
                                     <f:param id="ab-people-list-link-mod-param" name="nodeRef" value="#{r.nodeRef}" />
                                  </a:actionLink>
                               </r:permissionEvaluator>
-                              <r:permissionEvaluator id="ab-people-list-deleteEval" value="#{DialogManager.bean.addressbookNode}" allow="DeleteNode">
+                              <r:permissionEvaluator id="ab-people-list-deleteEval" value="#{AddressbookDialog.addressbookNode}" allow="DeleteNode">
                                  <a:actionLink id="ab-people-list-link-del" value="#{msg.delete}" image="/images/icons/delete_person.gif" showLink="false"
                                     action="dialog:addressbookDeleteEntry" actionListener="#{AddressbookDeleteDialog.setupDelete}">
                                     <f:param id="ab-people-list-link-del-param" name="nodeRef" value="#{r.nodeRef}" />
@@ -164,14 +175,14 @@ function updateButtonState()
 
                      </a:panel>
 
-                     <a:booleanEvaluator id="search-eval" value="#{DialogManager.bean.search}">
+                     <a:booleanEvaluator id="search-eval" value="#{AddressbookDialog.search}">
 
-                        <a:panel id="ab-people-panel2" styleClass="panel-100 with-pager" label="#{msg.addressbook_org_persons}">
+                        <a:panel id="ab-people-panel2" styleClass="panel-100 with-pager column" label="#{msg.addressbook_org_persons}">
 
 
                            <a:richList id="ab-people-list2" viewMode="details" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" 
-                              value="#{DialogManager.bean.orgPeople}" var="r" initialSortColumn="name" initialSortDescending="false"
-                              binding="#{DialogManager.bean.orgPeopleRichList}" pageSize="#{BrowseBean.pageSizeContent}" >
+                              value="#{AddressbookDialog.orgPeople}" var="r" initialSortColumn="name" initialSortDescending="false"
+                              binding="#{AddressbookDialog.orgPeopleRichList}" pageSize="#{BrowseBean.pageSizeContent}" >
                               <%-- Primary column with name --%>
                               <a:column id="ab-people-list2-col" primary="true">
                                  <f:facet name="header">

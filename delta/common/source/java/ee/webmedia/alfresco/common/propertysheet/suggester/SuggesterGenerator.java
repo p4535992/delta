@@ -26,7 +26,7 @@ public class SuggesterGenerator extends TextAreaGenerator {
 
     private GeneralService generalService;
 
-    interface ComponentAttributeNames {
+    public interface ComponentAttributeNames {
         String SUGGESTER_VALUES = "suggesterValues";
     }
 
@@ -73,7 +73,8 @@ public class SuggesterGenerator extends TextAreaGenerator {
     }
 
     public Pair<List<String>, String> getSuggesterValues(FacesContext context, UIInput component) {
-        MethodBinding mb = context.getApplication().createMethodBinding(getCustomAttributes().get("suggesterValues"), new Class[] { FacesContext.class, UIInput.class });
+        MethodBinding mb = context.getApplication().createMethodBinding(
+                getCustomAttributes().get(ComponentAttributeNames.SUGGESTER_VALUES), new Class[] { FacesContext.class, UIInput.class });
         @SuppressWarnings("unchecked")
         List<String> suggesterValues = (List<String>) mb.invoke(context, new Object[] { context, component });
         return new Pair<List<String>, String>(suggesterValues, null);

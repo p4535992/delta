@@ -16,7 +16,6 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
-import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * @author Alar Kvell
@@ -31,16 +30,15 @@ public class DocumentTypeDialog extends BaseDialogBean {
     @Override
     public void init(Map<String, String> params) {
         super.init(params);
+        initDocumentTypes();
+    }
+
+    private void initDocumentTypes() {
         documentTypes = getDocumentTypeService().getAllDocumentTypes();
     }
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
-        getDocumentTypeService().updateDocumentTypes(documentTypes);
-        documentTypes = null;
-        MessageUtil.addInfoMessage("save_success");
-        // We need to stay on the same dialog
-        init(null);
         return null;
     }
 
@@ -53,6 +51,16 @@ public class DocumentTypeDialog extends BaseDialogBean {
     @Override
     public boolean getFinishButtonDisabled() {
         return false;
+    }
+
+    @Override
+    public Object getActionsContext() {
+        return null;
+    }
+
+    @Override
+    public void restored() {
+        initDocumentTypes();
     }
 
     /**

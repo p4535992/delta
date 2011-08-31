@@ -49,8 +49,10 @@ import javax.faces.component.UIInput;
 import javax.faces.component.UIOutput;
 import javax.faces.context.FacesContext;
 import javax.faces.convert.Converter;
+import javax.faces.el.EvaluationException;
 import javax.faces.el.MethodBinding;
 import javax.faces.el.ValueBinding;
+import javax.faces.validator.Validator;
 
 import org.alfresco.repo.dictionary.constraint.ListOfValuesConstraint;
 import org.alfresco.repo.dictionary.constraint.NumericRangeConstraint;
@@ -61,6 +63,7 @@ import org.alfresco.service.cmr.dictionary.Constraint;
 import org.alfresco.service.cmr.dictionary.ConstraintDefinition;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.app.servlet.FacesHelper;
@@ -84,6 +87,7 @@ import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.GeneratorsWrapper;
 import ee.webmedia.alfresco.common.propertysheet.validator.ForcedMandatoryValidator;
 import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 
 public abstract class BaseComponentGenerator implements IComponentGenerator, CustomAttributes
@@ -96,8 +100,10 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
    
    protected Map<String, String> propertySheetItemAttributes;
    
-   private static final String READONLY_IF = "readOnlyIf";
+   public static final String READONLY_IF = "readOnlyIf";
    private static final String RENDERED = "rendered";
+   /** should control component of propertySheet item be disabled */
+   private static final String DISABLED = "disabled";
    
    /**
     * when using readOnlyIf attribute on subPropertySheet, you can refer to property of some ancestor node using this constant. For example <br>
@@ -202,9 +208,12 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
       
       if (component instanceof UIInput && propertySheet.inEditMode()) {
           addMandatoryIfValidator(context, (UIInput) component);
+          addCustomValidator((UIInput) component);
       }
       
       setReadOnlyBasedOnExpressionIfNessesary(component, item, context, propertySheet);
+      setDisabledBasedOnAttribute(component, item, context);
+
       processCustomAttributes(component);
 
       return component;
@@ -257,6 +266,20 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         }
     }
 
+    private void addCustomValidator(UIInput component) {
+        String validatorClassName = getCustomAttributes().get("validator");
+        if(!StringUtils.hasText(validatorClassName)) {
+            return;
+        }
+        try {
+            Validator valdiator = BeanHelper.getSpringBean(Validator.class, validatorClassName);
+            component.addValidator(valdiator);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create valdiator class from validator='"+validatorClassName+"'", e);
+        }
+        
+    }
+
     /**
      * Add mandatory validation if property-sheet/show-property has attribute <code>forcedMandatory="true"</code>
      * 
@@ -271,7 +294,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             if (propertyDef != null && propertyDef.isMandatory()) {
                 return;
             }
-            if (getForceMandatoryAttribute() && component instanceof UIInput) {
+            if (isForceMandatory(context) && component instanceof UIInput) {
                 UIInput uiInput = (UIInput) component;
                 setupMandatoryValidation(context, propertySheet, item, component, true, null);
                 uiInput.addValidator(new ForcedMandatoryValidator());
@@ -279,10 +302,10 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
         }
     }
 
-    protected boolean getForceMandatoryAttribute() {
+    private boolean isForceMandatory(FacesContext context) {
         String strAttr = getCustomAttributes().get(ATTR_FORCED_MANDATORY);
         if(isNotBlank(strAttr)) {
-            return Boolean.valueOf(strAttr.trim());
+            return evaluateBoolean(strAttr, context);
         }
         return false;
     }
@@ -308,7 +331,47 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             }
         }
     }
-    
+
+    private void setDisabledBasedOnAttribute(UIComponent component, PropertySheetItem item, FacesContext context) {
+        String isDisabledEpression = ((CustomAttributes) item).getCustomAttributes().get(DISABLED);
+        if (isNotBlank(isDisabledEpression) && evaluateBoolean(isDisabledEpression, context, item)) {
+            ComponentUtil.setDisabledAttributeRecursively(component);
+        }
+    }
+
+    private boolean evaluateBoolean(String expression, FacesContext context) {
+        return evaluateBoolean(expression, context, null);
+    }
+
+    private boolean evaluateBoolean(String expression, FacesContext context, PropertySheetItem item) {
+        if ("true".equals(expression)) {
+            return true;
+        }
+        if ("false".equals(expression)) {
+            return false;
+        }
+        try {
+            return ((Boolean) context.getApplication().createMethodBinding(expression, new Class[] {}).invoke(context, null)).booleanValue();
+        } catch (EvaluationException e) { // Fall back to value binding to allow negation - for example readOnlyIf="#{!FieldDetailsDialog.field.parameterInVolSearch}"
+            try {
+                ValueBinding vb = context.getApplication().createValueBinding(expression);
+                return (Boolean) vb.getValue(context);
+            } catch (EvaluationException e2) {
+                try {
+                    // decide based on method binding that accepts PropertySheetItem
+                    MethodBinding isDisabledMB = context.getApplication().createMethodBinding(expression, new Class[] { PropertySheetItem.class });
+                    return ((Boolean) isDisabledMB.invoke(context, new Object[] { item })).booleanValue();
+                } catch (Exception e1) {
+                    long msgId = System.currentTimeMillis();
+                    logger.info(msgId+" - evaluation attempt 1 failed (using MB)", e);
+                    logger.info(msgId+" - evaluation attempt 2 failed (using VB)", e2);
+                    logger.error(msgId+" - evaluation attempt 3 failed (using MB with PropertySheetItem)", e1);
+                    throw new RuntimeException(msgId+" Failed to evaluate expression '" + expression + "' 3 times (see causes from the log above)", e1);
+                }
+            }
+        }
+    }
+
     private boolean isComponentRendered(UIComponent component, PropertySheetItem item, FacesContext context, UIPropertySheet propertySheet) {
         if (item instanceof CustomAttributes) {
             String expression = ((CustomAttributes) item).getCustomAttributes().get(RENDERED);
@@ -317,8 +380,8 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
             }
         }
         return true;
-    }    
-   
+    }
+
     /**
      * Refactored custom property expression checking into separate method. 
      * Evaluates expressions in format: "somePrefix:someProperty=someValue||otherValue;someOtherPrefix:someOtherProperty=someOtherValue||stillOtherValue". 
@@ -342,7 +405,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
     protected boolean checkCustomPropertyExpression(FacesContext context, UIPropertySheet propertySheet, String expression, String fieldName, String itemName) {
         final String errMsg = fieldName + " must be defined as 'somePrefix:someProperty=someValue||otherValue;someOtherPrefix:someOtherProperty=someOtherValue||stillOtherValue' or '#{ClassName.methodName}'";
         if(StringUtils.startsWithIgnoreCase(expression, "#{")){
-            return ((Boolean)context.getApplication().createMethodBinding(expression, new Class[] {}).invoke(context, null)).booleanValue();
+            return evaluateBoolean(expression, context);
         }
         String[] split = expression.split(";");
         for (int i = 0; i < split.length; i++) {
@@ -739,7 +802,7 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
       // only setup validations if the property sheet is in edit mode,
       // validation is enabled and the property is declared as mandatory
         if (propertySheet.inEditMode() && propertySheet.isValidationEnabled() &&
-                (getForceMandatoryAttribute()
+                (isForceMandatory(context)
                 || (propertyDef != null && propertyDef.isMandatory())))
       {
          setupMandatoryValidation(context, propertySheet, property, component, false, null);
@@ -1136,7 +1199,15 @@ public abstract class BaseComponentGenerator implements IComponentGenerator, Cus
       return this.dataDictionary;
    }
    
-    // START: getters / setters
+   protected <T> T getValue(UIPropertySheet propertySheet, final PropertySheetItem item) {
+       Node node = propertySheet.getNode();
+       QName qName = QName.resolveToQName(node.getNamespacePrefixResolver(), item.getAttributes().get("name").toString());
+       @SuppressWarnings("unchecked")
+       T value = (T) node.getProperties().get(qName);
+       return value;
+   }
+
+   // START: getters / setters
     @Override
     public Map<String, String> getCustomAttributes() {
         if (propertySheetItemAttributes == null) {

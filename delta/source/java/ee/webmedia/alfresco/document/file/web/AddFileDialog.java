@@ -214,7 +214,7 @@ public class AddFileDialog extends BaseDialogBean implements Validator {
                 createAdditionalInvoices(fileInvoices, documentNodeRef, !documentDialog.isDraft());
 
             } catch (NodeLockedException e) {
-                MessageUtil.addErrorMessage(context, "document_addFile_error_docLocked");
+                documentDialog.handleLockedNode("document_addFile_error_docLocked");
                 return outcome;
             }
             return outcome;

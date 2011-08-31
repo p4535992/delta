@@ -44,6 +44,7 @@ public class VolumeServiceImpl implements VolumeService {
     private SeriesService seriesService;
     private CaseService caseService;
     private DocumentService documentService;
+    private boolean caseVolumeEnabled;
 
     @Override
     public List<ChildAssociationRef> getAllVolumeRefsBySeries(NodeRef seriesNodeRef) {
@@ -307,6 +308,11 @@ public class VolumeServiceImpl implements VolumeService {
         return generalService.fetchNode(volumeNodeRef);
     }
 
+    @Override
+    public boolean isCaseVolumeEnabled() {
+        return caseVolumeEnabled;
+    }
+
     /**
      * @param volumeNodeRef
      * @param seriesNodeRef if null, then volume.seriesNodeRef is set using association of given volumeNodeRef
@@ -360,6 +366,9 @@ public class VolumeServiceImpl implements VolumeService {
         this.documentService = documentService;
     }
 
+    public void setCaseVolumeEnabled(boolean caseVolumeEnabled) {
+        this.caseVolumeEnabled = caseVolumeEnabled;
+    }
     // END: getters / setters
 
 }

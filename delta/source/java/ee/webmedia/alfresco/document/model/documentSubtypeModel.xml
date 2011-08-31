@@ -290,6 +290,7 @@
             <aspect>docspec:deliverer</aspect>
             <aspect>docspec:receiver</aspect>
             <aspect>docspec:secondPartyReg</aspect>
+            <aspect>docspec:template</aspect>
          </mandatory-aspects>
       </type>
       

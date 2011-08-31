@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<model name="the:thesaurusModel" xmlns="http://www.alfresco.org/model/dictionary/1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://www.alfresco.org/model/dictionary/1.0 http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/model/modelSchema.xsd">
+
+   <imports>
+      <import uri="http://www.alfresco.org/model/dictionary/1.0" prefix="d" />
+      <import uri="http://www.alfresco.org/model/system/1.0" prefix="sys" />
+   </imports>
+
+   <namespaces>
+      <namespace uri="http://alfresco.webmedia.ee/model/thesaurus/1.0" prefix="the" />
+   </namespaces>
+
+   <types>
+      <type name="the:thesauri">
+         <parent>sys:base</parent>
+         <associations>
+            <child-association name="the:thesaurus">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>the:thesaurus</class>
+                  <mandatory>false</mandatory>
+                  <many>true</many>
+               </target>
+               <duplicate>false</duplicate>
+            </child-association>
+         </associations>
+         <mandatory-aspects>
+            <aspect>sys:aspect_root</aspect>
+         </mandatory-aspects>
+      </type>
+   
+      <type name="the:thesaurus">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="the:name">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="the:description">
+               <type>d:text</type>
+            </property>
+         </properties>
+         <associations>
+            <child-association name="the:hierarchicalKeyword">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>the:hierarchicalKeyword</class>
+                  <many>true</many>
+               </target>
+            </child-association>
+         </associations>
+      </type>
+      
+      <type name="the:hierarchicalKeyword">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="the:keywordLevel1">
+               <type>d:text</type>
+               <mandatory>true</mandatory>
+            </property>
+            <property name="the:keywordLevel2">
+               <type>d:text</type>
+            </property>
+         </properties>
+      </type>
+   </types>
+
+</model>

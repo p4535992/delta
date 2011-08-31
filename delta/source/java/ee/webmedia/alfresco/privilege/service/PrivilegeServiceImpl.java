@@ -163,10 +163,50 @@ public class PrivilegeServiceImpl implements PrivilegeService {
             }
         }
         RepoUtil.validateSameSize(privUsers, privGroups, "users", "groups");
-        Map<QName, Serializable> userGroupMappingProps = new HashMap<QName, Serializable>();
-        userGroupMappingProps.put(PrivilegeModel.Props.USER, privUsers);
-        userGroupMappingProps.put(PrivilegeModel.Props.GROUP, privGroups);
-        nodeService.addProperties(manageableRef, userGroupMappingProps);
+
+        mergePrivilegeUsersGroupsLists(manageableRef, privUsers, privGroups);
+    }
+
+    @Override
+    public void mergePrivilegeUsersGroupsLists(NodeRef manageableRef, List<String> privUsers, List<String> privGroups) {
+        if (privUsers == null || privUsers.isEmpty() || privGroups == null || privGroups.isEmpty()) {
+            return;
+        }
+
+        @SuppressWarnings("unchecked")
+        List<String> currentPrivUsers = (List<String>) nodeService.getProperty(manageableRef, PrivilegeModel.Props.USER);
+        @SuppressWarnings("unchecked")
+        List<String> currentPrivGroups = (List<String>) nodeService.getProperty(manageableRef, PrivilegeModel.Props.GROUP);
+        if (currentPrivUsers == null) {
+            currentPrivUsers = new ArrayList<String>();
+        }
+        if (currentPrivGroups == null) {
+            currentPrivGroups = new ArrayList<String>();
+        }
+
+        // Add from privUsers to currentPrivUsers if doesn't exist there
+        for (int i = 0; i < privUsers.size(); i++) {
+            String authority = privUsers.get(i);
+            String group = privGroups.get(i);
+
+            boolean found = false;
+            for (int j = 0; j < currentPrivUsers.size(); j++) {
+                if (authority.equals(currentPrivUsers.get(j)) && group.equals(currentPrivGroups.get(j))) {
+                    found = true;
+                    break;
+                }
+            }
+            // Add, if same user+group combination is not yet added
+            if (!found) {
+                currentPrivUsers.add(authority);
+                currentPrivGroups.add(group);
+            }
+        }
+
+        Map<QName, Serializable> addProps = new HashMap<QName, Serializable>();
+        addProps.put(PrivilegeModel.Props.USER, (Serializable) currentPrivUsers);
+        addProps.put(PrivilegeModel.Props.GROUP, (Serializable) currentPrivGroups);
+        nodeService.addProperties(manageableRef, addProps);
     }
 
     @Override

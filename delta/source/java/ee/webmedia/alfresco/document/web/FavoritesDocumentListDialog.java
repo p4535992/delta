@@ -6,8 +6,11 @@ import java.util.Map;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -16,6 +19,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class FavoritesDocumentListDialog extends BaseDocumentListDialog {
     private static final long serialVersionUID = 1L;
+    private NodeRef containerNodeRef;
+    private String dirName;
 
     @Override
     public void init(Map<String, String> params) {
@@ -25,23 +30,30 @@ public class FavoritesDocumentListDialog extends BaseDocumentListDialog {
 
     @Override
     public void restored() {
-        documents = getDocumentService().getFavorites();
+        documents = getDocumentService().getFavorites(containerNodeRef);
         Collections.sort(documents);
+        containerNodeRef = null;
+    }
+
+    public void setup(ActionEvent event) {
+        containerNodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+        String param = ActionUtil.getParam(event, "dirName");
+        dirName = param;
     }
 
     @Override
     public String getListTitle() {
-        return MessageUtil.getMessage(FacesContext.getCurrentInstance(), "documents");
+        if (StringUtils.isBlank(dirName)) {
+            return MessageUtil.getMessage("document_my_favourites");
+        }
+        String title = dirName;
+        dirName = null;
+        return title;
+
     }
 
-    public void add(ActionEvent event) {
-        NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        getDocumentService().addFavorite(nodeRef);
-    }
-
-    public void remove(ActionEvent event) {
-        NodeRef nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        getDocumentService().removeFavorite(nodeRef);
+    public NodeRef getUserNodeRef() {
+        return BeanHelper.getUserService().getUser(AuthenticationUtil.getRunAsUser()).getNodeRef();
     }
 
 }

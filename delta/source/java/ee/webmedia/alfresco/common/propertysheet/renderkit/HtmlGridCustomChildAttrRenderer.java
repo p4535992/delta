@@ -24,6 +24,7 @@ public class HtmlGridCustomChildAttrRenderer extends HtmlGridRenderer {
     public static final String HEADING_KEYS_ATTR = "headingKeys";
     public static final String FOOTER_ACTIONS_FACET = "footerActions";
     public static final String FOOTER_SUMS_ATTR = "footerSums";
+    public static final String FOOTER_ERROR_MESSAGES = "footerErrorMessage";
 
     @Override
     protected int childAttributes(FacesContext context,
@@ -93,11 +94,27 @@ public class HtmlGridCustomChildAttrRenderer extends HtmlGridRenderer {
             writer.startElement("td", component);
             writer.writeAttribute("colspan", Integer.toString(columns - 2), null);
             writer.writeAttribute("style", "text-align: right;", null);
+
+            List<String> footerErrorMessages = (List<String>) component.getAttributes().get(FOOTER_ERROR_MESSAGES);
+            if (footerErrorMessages != null) {
+                int messageCounter = 0;
+                for (String message : footerErrorMessages) {
+                    writer.startElement("span", component);
+                    writer.writeAttribute("id", "footer-error-message-" + messageCounter, null);
+                    writer.writeAttribute("style", "color: red; display: none;", null);
+                    writer.write(message + " ");
+                    writer.endElement("span");
+                    messageCounter++;
+                }
+            }
+
             List<Pair<String, Pair<String, String>>> footerSums = (List<Pair<String, Pair<String, String>>>) component.getAttributes().get(FOOTER_SUMS_ATTR);
             if (footerSums != null) {
+                int footerSumCounter = 0;
                 for (Pair<String, Pair<String, String>> labelAndSum : footerSums) {
                     writer.write(labelAndSum.getFirst() + ": ");
                     writer.startElement("strong", component);
+                    writer.writeAttribute("id", "footer-sum-" + footerSumCounter, null);
                     Pair<String, String> sumAndColor = labelAndSum.getSecond();
                     String sum = sumAndColor.getFirst();
                     String color = sumAndColor.getSecond();
@@ -107,6 +124,7 @@ public class HtmlGridCustomChildAttrRenderer extends HtmlGridRenderer {
                     writer.write(sum);
                     writer.endElement("strong");
                     writer.write(" ");
+                    footerSumCounter++;
                 }
             }
             writer.endElement("td");

@@ -699,6 +699,11 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         this.servletContext = servletContext;
     }
 
+    @Override
+    public ServletContext getServletContext() {
+        return servletContext;
+    }
+
     public void setApplicationService(ApplicationService applicationService) {
         this.applicationService = applicationService;
     }

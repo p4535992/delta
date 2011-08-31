@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.Deflater;
 
 import javax.faces.context.FacesContext;
@@ -28,6 +29,10 @@ import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.importer.ImporterBootstrap;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.security.authentication.AuthenticationUtil.RunAsWork;
+import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.repo.transaction.TransactionListenerAdapter;
 import org.alfresco.service.cmr.dictionary.AspectDefinition;
 import org.alfresco.service.cmr.dictionary.ClassDefinition;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
@@ -53,7 +58,8 @@ import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.service.namespace.RegexQNamePattern;
-import org.alfresco.util.GUID;
+import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.util.Pair;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
@@ -66,6 +72,7 @@ import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
@@ -89,6 +96,9 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     private FileFolderService fileFolderService;
     private ContentService contentService;
     private MimetypeService mimetypeService;
+    private TransactionService transactionService;
+
+    private final AtomicLong backgroundThreadCounter = new AtomicLong();
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -137,19 +147,32 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
 
             QName qName = QName.resolveToQName(namespaceService, xPathPart);
 
-            List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(nodeRef, RegexQNamePattern.MATCH_ALL, qName);
-            if (childAssocs.size() != 1) {
-                String msg = "Expected 1, got " + childAssocs.size() + " childAssocs for xPathPart '"
-                        + xPathPart + "' when searching for node with xPath '" + nodeRefXPath + "'";
-                if (childAssocs.size() == 0) {
-                    log.trace(msg);
-                    return null;
-                }
-                throw new RuntimeException(msg);
-            }
-            nodeRef = childAssocs.get(0).getChildRef();
+            nodeRef = getChildByAssocName(nodeRef, qName, nodeRefXPath);
         }
         return nodeRef;
+    }
+
+    @Override
+    public NodeRef getChildByAssocName(NodeRef parentRef, QName assocQName) {
+        return getChildByAssocName(parentRef, assocQName, null);
+    }
+
+    private NodeRef getChildByAssocName(NodeRef parentRef, QName assocQName, String nodeRefXPath) {
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, assocQName);
+        if (childAssocs.size() != 1) {
+            StringBuilder msg = new StringBuilder("Expected 1, got ").append(childAssocs.size()).append(" childAssocs for assocName '")
+                    .append(assocQName.toPrefixString(namespaceService)).append("'");
+            if (nodeRefXPath != null) {
+                msg.append(" when searching for node with xPath '").append(nodeRefXPath).append("'");
+            }
+            if (childAssocs.size() == 0) {
+                log.trace(msg);
+                return null;
+            }
+            throw new RuntimeException(msg.toString());
+        }
+        parentRef = childAssocs.get(0).getChildRef();
+        return parentRef;
     }
 
     @Override
@@ -219,7 +242,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         for (Map<String, ChildAssociationRef> typedAssoc : removedChildAssocs.values()) {
             for (ChildAssociationRef assoc : typedAssoc.values()) {
                 final NodeRef childRef = assoc.getChildRef();
-                if (!WmNode.NOT_SAVED_STORE.equals(childRef.getStoreRef())) {
+                if (RepoUtil.isSaved(childRef)) {
                     nodeService.removeChild(assoc.getParentRef(), childRef);
                 }
             }
@@ -245,7 +268,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
     public WmNode createNewUnSaved(QName type, Map<QName, Serializable> props) {
         Set<QName> aspects = getDefaultAspects(type);
         props = addDefaultValues(type, aspects, props);
-        return new WmNode(/* unsaved */new NodeRef(WmNode.NOT_SAVED_STORE, GUID.generate()), type, aspects, props);
+        return new WmNode(/* unsaved */RepoUtil.createNewUnsavedNodeRef(), type, aspects, props);
     }
 
     /**
@@ -654,6 +677,52 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         }
     }
 
+    @Override
+    public void runOnBackground(final RunAsWork<Void> work, final String threadNamePrefix) {
+        Assert.notNull(threadNamePrefix, "threadName");
+        final String threadName = threadNamePrefix + "-" + backgroundThreadCounter.getAndIncrement();
+        AlfrescoTransactionSupport.bindListener(new TransactionListenerAdapter() {
+            @Override
+            public void afterCommit() {
+                Runnable runnable = new Runnable() {
+                    @Override
+                    public void run() {
+                        log.info("Started new background thread: " + Thread.currentThread().getName());
+                        long startTime = System.nanoTime();
+                        try {
+                            RetryingTransactionHelper txHelper = transactionService.getRetryingTransactionHelper();
+                            Pair<Long, Long> workTime = txHelper.doInTransaction(new RetryingTransactionCallback<Pair<Long, Long>>() {
+                                @Override
+                                public Pair<Long, Long> execute() throws Throwable {
+                                    log.info("Started new transaction in background thread: " + Thread.currentThread().getName());
+                                    long start = System.nanoTime();
+                                    AuthenticationUtil.runAs(work, AuthenticationUtil.getSystemUserName());
+                                    long stop = System.nanoTime();
+                                    return new Pair<Long, Long>(start, stop);
+                                }
+                            }, false, true);
+                            long stopTime = System.nanoTime();
+                            log.info("Finished transaction and background thread: " + Thread.currentThread().getName() + " total time = " + duration(startTime, stopTime)
+                                    + "ms, last transaction work time = " + duration(workTime.getFirst(), workTime.getSecond()) + " ms, last transaction commit time = "
+                                    + duration(workTime.getSecond(), stopTime) + " ms");
+                        } catch (Exception e) {
+                            long stopTime = System.nanoTime();
+                            log.error("Exception in background thread: " + Thread.currentThread().getName() + " total time = " + duration(startTime, stopTime) + "ms", e);
+                        }
+                    }
+
+                };
+                log.info("Creating and starting a new background thread: " + threadName);
+                Thread thread = new Thread(runnable, threadName);
+                thread.start();
+            }
+        });
+    }
+
+    private static long duration(long startTime, long stopTime) {
+        return (stopTime - startTime) / 1000000L;
+    }
+
     // START: getters / setters
     public void setDefaultStore(String store) {
         this.store = new StoreRef(store);
@@ -691,6 +760,9 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         this.mimetypeService = mimetypeService;
     }
 
+    public void setTransactionService(TransactionService transactionService) {
+        this.transactionService = transactionService;
+    }
     // END: getters / setters
 
 }

@@ -45,6 +45,7 @@ import ee.sk.digidoc.SignedProperties;
 import ee.sk.digidoc.factory.SAXDigiDocFactory;
 import ee.sk.utils.ConfigManager;
 import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
 import ee.webmedia.alfresco.signature.model.DataItem;
@@ -524,7 +525,7 @@ public class SignatureServiceImpl implements SignatureService, InitializingBean 
      * @return short file name by fileRef
      */
     protected String getFileName(NodeRef fileRef) {
-        return fileFolderService.getFileInfo(fileRef).getName();
+        return (String) nodeService.getProperty(fileRef, FileModel.Props.DISPLAY_NAME);
     }
 
     public void setTest(boolean test) {

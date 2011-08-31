@@ -346,8 +346,10 @@ public class TextFieldGenerator extends BaseComponentGenerator
          {
             ListOfValuesConstraint constraint = getListOfValuesConstraint(context, 
                      propertySheet, property);
-            if (constraint != null)
-            {
+              // Ats: don't understand why this if was initially added by alfresco developers.
+              // uncommented it, to automatically add appropriate converter so that node.properties wouldn't contain string instead of number
+//            if (constraint != null)
+//            {
                String converterId = null;
                
                if (propertyDef.getDataType().getName().equals(DataTypeDefinition.INT))
@@ -372,7 +374,7 @@ public class TextFieldGenerator extends BaseComponentGenerator
                {
                   createAndSetConverter(context, converterId, component);
                }
-            }
+//            }
          }
       }
    }
