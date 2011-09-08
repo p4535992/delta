@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.document.file.web;
 
-import java.io.Serializable;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -21,7 +20,10 @@ import org.alfresco.web.bean.repository.Repository;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.common.listener.RefreshEventListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -33,8 +35,10 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
 /**
  * @author Dmitri Melnikov
  */
-public class FileBlockBean implements Serializable {
+public class FileBlockBean implements DocumentDynamicBlock, RefreshEventListener {
     private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "FileBlockBean";
 
     private transient FileService fileService;
     private transient DocumentService documentService;
@@ -89,6 +93,15 @@ public class FileBlockBean implements Serializable {
         return pdfUrl;
     }
 
+    @Override
+    public void reset(DialogDataProvider provider) {
+        if (provider == null) {
+            reset();
+        } else {
+            init(provider.getNode());
+        }
+    }
+
     public void init(Node node) {
         docRef = node.getNodeRef();
         Assert.notNull(docRef, "nodeRef is null - node: " + node);
@@ -104,6 +117,11 @@ public class FileBlockBean implements Serializable {
         docRef = null;
         navigationBean.setCurrentNodeId(getDocumentService().getDrafts().getId());
         pdfUrl = null;
+    }
+
+    @Override
+    public void refresh() {
+        restore();
     }
 
     public void restore() {

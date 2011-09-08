@@ -243,11 +243,11 @@
          </item>
       </subitems>
    </item>
-<!--
+
    <dropdown id="documentDynamicTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">
       <submenu-id>new-document-dynamic-submenu</submenu-id>
    </dropdown>
--->
+
    <!-- ALUSTA UUT DOKUMENTI -->
    <dropdown id="documentTypes" title-id="menu_start_new_document" skinnable="true" temporary="true">
       <child-filter>createDocument</child-filter>

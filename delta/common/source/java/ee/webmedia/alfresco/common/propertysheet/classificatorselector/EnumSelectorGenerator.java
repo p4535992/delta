@@ -63,8 +63,7 @@ public class EnumSelectorGenerator extends GeneralSelectorGenerator {
         List<UISelectItem> selectOptions = new ArrayList<UISelectItem>();
         for (Enum<?> c : en.getEnumConstants()) {
             UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
-            String message = MessageUtil.getMessage(context, "constant_" + en.getCanonicalName() + "_" + c.name());
-            selectItem.setItemLabel(message);
+            selectItem.setItemLabel(MessageUtil.getMessage(c));
             selectItem.setItemValue(c.name());
             selectOptions.add(selectItem);
         }

@@ -21,6 +21,7 @@ import org.alfresco.service.cmr.dictionary.ClassDefinition;
 import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
 import org.alfresco.service.cmr.dictionary.PropertyDefinition;
+import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ContentData;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
@@ -68,9 +69,15 @@ public class RepoUtil {
         return equalityTestValue == null ? realValue == null : equalityTestValue.equals(realValue);
     }
 
-    public static Map<QName, Serializable> copyProperties(Map<QName, Serializable> props) {
-        Map<QName, Serializable> results = new HashMap<QName, Serializable>(props.size());
-        for (Entry<QName, Serializable> entry : props.entrySet()) {
+    public static <K, V> Map<K, V> copyProperties(Map<K, V> props) {
+        return copyProperties(props, null);
+    }
+
+    public static <K, V> Map<K, V> copyProperties(Map<K, V> props, Map<K, V> results) {
+        if (results == null) {
+            results = new HashMap<K, V>(props.size());
+        }
+        for (Entry<K, V> entry : props.entrySet()) {
             results.put(entry.getKey(), copyProperty(entry.getValue()));
         }
         return results;
@@ -106,7 +113,7 @@ public class RepoUtil {
         return results;
     }
 
-    public static Serializable copyProperty(Serializable property) {
+    public static <T> T copyProperty(T property) {
         if (property == null) {
             return null;
 
@@ -116,12 +123,16 @@ public class RepoUtil {
             return property;
 
         } else if (property instanceof Date) {
-            return new Date(((Date) property).getTime());
+            @SuppressWarnings("unchecked")
+            T tmp = (T) new Date(((Date) property).getTime());
+            return tmp;
 
         } else if (property instanceof ContentData) {
             ContentData contentData = (ContentData) property;
-            return new ContentData(contentData.getContentUrl(), contentData.getMimetype() //
+            @SuppressWarnings("unchecked")
+            T tmp = (T) new ContentData(contentData.getContentUrl(), contentData.getMimetype() //
                     , contentData.getSize(), contentData.getEncoding(), contentData.getLocale());
+            return tmp;
 
         } else if (property instanceof List<?>) {
             @SuppressWarnings("unchecked")
@@ -130,10 +141,14 @@ public class RepoUtil {
             for (Serializable prop : list) {
                 newList.add(copyProperty(prop));
             }
-            return newList;
+            @SuppressWarnings("unchecked")
+            T tmp = (T) newList;
+            return tmp;
 
         } else if (property instanceof IClonable<?>) {
-            return (Serializable) ((IClonable<?>) property).clone();
+            @SuppressWarnings("unchecked")
+            T tmp = (T) ((IClonable<?>) property).clone();
+            return tmp;
         }
         throw new RuntimeException("Copying property not supported: " + property.getClass());
     }
@@ -308,6 +323,25 @@ public class RepoUtil {
 
     public static NodeRef createNewUnsavedNodeRef() {
         return new NodeRef(RepoUtil.NOT_SAVED_STORE, GUID.generate());
+    }
+
+    public static void copyProps(Map<String, Object> sourceProps, Map<String, Object> targetProps) {
+        targetProps.putAll(sourceProps);
+        targetProps.keySet().retainAll(sourceProps.keySet());
+    }
+
+    public static AssociationRef addAssoc(Node node, NodeRef otherNodeRef, QName assocType, boolean nodeIsSource) {
+        Map<String, Map<String, AssociationRef>> addedAssociations = node.getAddedAssociations();
+        Map<String, AssociationRef> newAssoc = addedAssociations.get(assocType.toString());
+        if (newAssoc == null) {
+            newAssoc = new HashMap<String, AssociationRef>(1);
+        }
+        NodeRef sourceRef = nodeIsSource ? node.getNodeRef() : otherNodeRef;
+        NodeRef targetRef = nodeIsSource ? otherNodeRef : node.getNodeRef();
+        final AssociationRef assocRef = new AssociationRef(sourceRef, assocType, targetRef);
+        newAssoc.put(node.getNodeRefAsString(), assocRef);
+        addedAssociations.put(assocType.toString(), newAssoc);
+        return assocRef;
     }
 
 }

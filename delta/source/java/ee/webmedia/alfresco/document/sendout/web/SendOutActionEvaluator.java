@@ -39,6 +39,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.web.evaluator.DocumentSavedActionEvaluator;
 import ee.webmedia.alfresco.document.web.evaluator.ViewStateActionEvaluator;
@@ -58,6 +59,7 @@ public class SendOutActionEvaluator extends BaseActionEvaluator {
             , SUPERVISION_REPORT, MANAGEMENTS_ORDER, INTERNAL_APPLICATION, INSTRUMENT_OF_DELIVERY_AND_RECEIPT
             , REPORT, LICENCE, MEMO, MINUTES, TRAINING_APPLICATION, LEAVING_LETTER, ERRAND_ORDER_ABROAD, ERRAND_APPLICATION_DOMESTIC
             , ORDER_MV, CONTRACT_MV, INTERNAL_APPLICATION_MV, VACATION_APPLICATION, ERRAND_ORDER_ABROAD_MV, RESOLUTION_MV, PROJECT_APPLICATION
+            , DocumentDynamicModel.Types.DOCUMENT_DYNAMIC
             );
 
     @Override

@@ -16,6 +16,11 @@
             <action-listener>#{AddContentDialog.start}</action-listener>
          </action>
       </actions>
+
+      <dialogs>
+         <dialog name="deleteDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/delete-dialog.jsp" managed-bean="DeleteDialog"
+            icon="/images/icons/delete_group_large.gif" />
+      </dialogs>
    </config>
    <config evaluator="string-compare" condition="Views">
       <views>

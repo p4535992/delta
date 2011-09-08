@@ -15,9 +15,11 @@
          <properties>
             <property name="usr:leavingDateTime">
                <type>d:datetime</type>
+               <mandatory enforced="true">true</mandatory>
             </property>
             <property name="usr:liabilityGivenToPersonId">
                <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
             </property>
          </properties>
       </aspect>

@@ -1,8 +1,12 @@
 package ee.webmedia.alfresco.classificator.service;
 
+import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsOr;
+
 import java.io.Serializable;
 import java.io.Writer;
-import java.text.Collator;
 import java.text.RuleBasedCollator;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -10,7 +14,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -29,6 +32,7 @@ import org.springframework.util.Assert;
 
 import com.thoughtworks.xstream.XStream;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorExportVO;
 import ee.webmedia.alfresco.classificator.model.ClassificatorExportVO.ClassificatorValueState;
@@ -36,6 +40,8 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorModel;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.utils.ComparableTransformer;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -48,12 +54,12 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     public static BeanPropertyMapper<Classificator> classificatorBeanPropertyMapper;
     private static BeanPropertyMapper<ClassificatorValue> classificatorValueBeanPropertyMapper;
     private static final Comparator<ClassificatorValue> CLASSIFICATOR_VALUES_ALFABETIC_ORDER_COMPARATOR;
-
+    private DocumentSearchService documentSearchService;
     static {
         classificatorBeanPropertyMapper = BeanPropertyMapper.newInstance(Classificator.class);
         classificatorValueBeanPropertyMapper = BeanPropertyMapper.newInstance(ClassificatorValue.class);
 
-        RuleBasedCollator et_EECollator = (RuleBasedCollator) Collator.getInstance(new Locale("et", "EE", ""));
+        RuleBasedCollator et_EECollator = (RuleBasedCollator) AppConstants.DEFAULT_COLLATOR;
         @SuppressWarnings("unchecked")
         Comparator<ClassificatorValue> tmp = new TransformingComparator(new ComparableTransformer<ClassificatorValue>() {
             @Override
@@ -179,7 +185,11 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     }
 
     private String getClassificatorPathByName(String classificatorName) {
-        return classificatorsPath + "/" + ClassificatorModel.NAMESPACE_PREFFIX + ISO9075.encode(classificatorName);
+        return classificatorsPath + "/" + getAssocName(classificatorName);
+    }
+
+    private QName getAssocName(String classificatorName) {
+        return QName.createQName(ClassificatorModel.URI, ISO9075.encode(classificatorName));
     }
 
     @Override
@@ -249,8 +259,24 @@ public class ClassificatorServiceImpl implements ClassificatorService {
     }
 
     @Override
-    public void deleteClassificator(NodeRef classificatorNode) {
-        nodeService.deleteNode(classificatorNode);
+    public boolean isClassificatorUsed(String classificatorName) {
+        // TODO DLSeadist maybe need to cache the result - field using classificator will alwais remain using that classificator even if it is changed
+        // (new field is created under new DocumentTypeVersion)
+        boolean used = documentSearchService.isMatch(
+                joinQueryPartsAnd(
+                        joinQueryPartsOr(
+                                generateTypeQuery(DocumentAdminModel.Types.FIELD)
+                                , generateTypeQuery(DocumentAdminModel.Types.FIELD_DEFINITION)
+                                )
+                        , generatePropertyExactQuery(DocumentAdminModel.Props.CLASSIFICATOR, classificatorName, false))
+                );
+        return used;
+    }
+
+    @Override
+    public void deleteClassificator(Classificator classificator) {
+        Assert.isTrue(!isClassificatorUsed(classificator.getName()), "Can't delete - classificator is used: " + classificator);
+        nodeService.deleteNode(classificator.getNodeRef());
     }
 
     @Override
@@ -341,6 +367,10 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         this.nodeService = nodeService;
     }
 
+    public void setDocumentSearchService(DocumentSearchService documentSearchService) {
+        this.documentSearchService = documentSearchService;
+    }
+
     public void setClassificatorsPath(String classificatorsPath) {
         this.classificatorsPath = classificatorsPath;
     }
@@ -357,8 +387,8 @@ public class ClassificatorServiceImpl implements ClassificatorService {
         validateNewClassifName(newName);
         nodeService.createNode(getClassificatorRoot(),
                 ClassificatorModel.Associations.CLASSIFICATOR,
-                    ClassificatorModel.Associations.CLASSIFICATOR,
-                    ClassificatorModel.Types.CLASSIFICATOR,
+                getAssocName(newName),
+                ClassificatorModel.Types.CLASSIFICATOR,
                     propsMap).getChildRef();
     }
 

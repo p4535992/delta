@@ -379,7 +379,7 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     public int searchRecipientFinishedDocumentsCount() {
         long startTime = System.currentTimeMillis();
         String query = generateRecipientFinichedQuery();
-        List<NodeRef> results = searchNodesFromAllStores(query, false, /* queryName */"recipientFinishedDocumentsCount");
+        List<NodeRef> results = searchNodes(query, false, /* queryName */"recipientFinishedDocumentsCount");
 
         if (log.isDebugEnabled()) {
             log.debug("FINISHED documents count search total time " + (System.currentTimeMillis() - startTime) + " ms, query: " + query);
@@ -591,6 +591,14 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
             query = joinQueryPartsAnd(Arrays.asList(query, SearchUtil.generateParentQuery(parentRef, generalService.getStore())));
         }
         return searchNodes(query, false, /* queryName */"simpleSearch");
+    }
+
+    @Override
+    public boolean isMatch(String query) {
+        SearchParameters sp = buildSearchParameters(query, 1);
+        sp.addStore(generalService.getStore());
+        ResultSet resultSet = doSearchQuery(sp, "testQuery");
+        return resultSet.length() > 0;
     }
 
     private List<NodeRef> searchAuthorityGroups(String groupName) {
@@ -1584,10 +1592,6 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
      * @param limited if true, only 100 first results are returned
      * @return query resultset
      */
-    private ResultSet doSearch(String query, boolean limited, String queryName) {
-        return doSearch(query, limited, queryName, null);
-    }
-
     private ResultSet doSearch(String query, boolean limited, String queryName, StoreRef storeRef) {
         SearchParameters sp = buildSearchParameters(query, limited);
         sp.addStore(storeRef == null ? generalService.getStore() : storeRef);
@@ -1631,6 +1635,10 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
     }
 
     private SearchParameters buildSearchParameters(String query, boolean limited) {
+        return buildSearchParameters(query, limited ? RESULTS_LIMIT : null);
+    }
+
+    private SearchParameters buildSearchParameters(String query, Integer limit) {
         // build up the search parameters
         SearchParameters sp = new SearchParameters();
         sp.setLanguage(SearchService.LANGUAGE_LUCENE);
@@ -1638,8 +1646,8 @@ public class DocumentSearchServiceImpl extends AbstractSearchServiceImpl impleme
 
         // This limit does not work when ACLEntryAfterInvocationProvider has been disabled
         // So we perform our own limiting in this service also
-        if (limited) {
-            sp.setLimit(RESULTS_LIMIT);
+        if (limit != null) {
+            sp.setLimit(limit);
             sp.setLimitBy(LimitBy.FINAL_SIZE);
         } else {
             sp.setLimitBy(LimitBy.UNLIMITED);

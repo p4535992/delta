@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.docadmin.service;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseService;
@@ -37,19 +36,7 @@ public class FieldDefinition extends Field {
         super(parentRef, fieldDefNode);
     }
 
-    @Override
-    protected QName getAssocName() {
-        return QName.createQName(DocumentAdminModel.URI, getFieldId().getLocalName());
-    }
-
     // START: properties
-    public final boolean isMandatoryForVol() {
-        return getPropBoolean(DocumentAdminModel.Props.MANDATORY_FOR_VOL);
-    }
-
-    public final void setMandatoryForVol(boolean mandatoryForVol) {
-        setProp(DocumentAdminModel.Props.MANDATORY_FOR_VOL, mandatoryForVol);
-    }
 
     public List<String> getDocTypes() {
         return getPropList(DocumentAdminModel.Props.DOC_TYPES);
@@ -57,14 +44,6 @@ public class FieldDefinition extends Field {
 
     public void setDocTypes(List<String> docTypes) {
         setPropList(DocumentAdminModel.Props.DOC_TYPES, docTypes);
-    }
-
-    public final boolean isRemovableFromSystematicFieldGroup() {
-        return getPropBoolean(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEMATIC_FIELD_GROUP);
-    }
-
-    public final void setRemovableFromSystematicFieldGroup(boolean removableFromSystematicFieldGroup) {
-        setProp(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEMATIC_FIELD_GROUP, removableFromSystematicFieldGroup);
     }
 
     public boolean isParameterInDocSearch() {
@@ -123,4 +102,5 @@ public class FieldDefinition extends Field {
     public FieldDefinition clone() {
         return (FieldDefinition) super.clone(); // just return casted type
     }
+
 }

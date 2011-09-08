@@ -60,6 +60,11 @@ public class SearchGenerator extends BaseComponentGenerator {
             return;
         }
 
+        Map<String, Object> attributes = addAttributes(propertyDef, component);
+        setEditableAttribute(context, propertySheet, item, propertyDef, attributes);
+    }
+
+    protected Map<String, Object> addAttributes(PropertyDefinition propertyDef, UIComponent component) {
         @SuppressWarnings("unchecked")
         Map<String, Object> attributes = component.getAttributes();
 
@@ -77,13 +82,13 @@ public class SearchGenerator extends BaseComponentGenerator {
         addValueFromCustomAttributes(Search.DIALOG_TITLE_ID_KEY, attributes);
         addValueFromCustomAttributes(Search.SETTER_CALLBACK, attributes);
         addValueFromCustomAttributes(Search.SETTER_CALLBACK_TAKES_NODE, attributes, Boolean.class);
-        addValueFromCustomAttributes(Search.SHOW_FILTER_KEY, attributes);
+        addValueFromCustomAttributes(Search.SHOW_FILTER_KEY, attributes, Boolean.class, false);
         addValueFromCustomAttributes(Search.FILTERS_KEY, attributes);
         addValueFromCustomAttributes(Search.AJAX_PARENT_LEVEL_KEY, attributes, Integer.class);
         addValueFromCustomAttributes(Search.ALLOW_DUPLICATES_KEY, attributes, Boolean.class, true);
         addValueFromCustomAttributes(Search.ATTR_TOOLTIP_MB, attributes);
         addValueFromCustomAttributes(Search.ALLOW_CLEAR_SINGLE_VALUED, attributes, Boolean.class, false);
-        setEditableAttribute(context, propertySheet, item, propertyDef, attributes);
+        return attributes;
     }
 
     @Override

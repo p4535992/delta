@@ -233,6 +233,12 @@
    </managed-bean>
    
    <managed-bean>
+      <managed-bean-name>UserSearchGenerator</managed-bean-name>
+      <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.search.UserSearchGenerator</managed-bean-class>
+      <managed-bean-scope>request</managed-bean-scope>
+   </managed-bean>
+   
+   <managed-bean>
       <managed-bean-name>SpaceLinkGenerator</managed-bean-name>
       <managed-bean-class>ee.webmedia.alfresco.common.propertysheet.generator.SpaceLinkGenerator</managed-bean-class>
       <managed-bean-scope>request</managed-bean-scope>
@@ -291,6 +297,12 @@
          <component-family>ee.webmedia.alfresco.common.propertysheet.search.Search</component-family>
          <renderer-type>ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer</renderer-type>
          <renderer-class>ee.webmedia.alfresco.common.propertysheet.search.SearchRenderer</renderer-class>
+      </renderer>
+      
+      <renderer>
+         <component-family>ee.webmedia.alfresco.common.propertysheet.search.Search</component-family>
+         <renderer-type>ee.webmedia.alfresco.common.propertysheet.search.UserSearchRenderer</renderer-type>
+         <renderer-class>ee.webmedia.alfresco.common.propertysheet.search.UserSearchRenderer</renderer-class>
       </renderer>
       
       <renderer>

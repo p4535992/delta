@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.document.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_APPLICATION_DOMESTIC;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.ERRAND_ORDER_ABROAD_MV;
@@ -11,6 +12,7 @@ import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.REP
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.REPORT_MV;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.RESOLUTION_MV;
 import static ee.webmedia.alfresco.document.model.DocumentSubtypeModel.Types.TRAINING_APPLICATION;
+import static ee.webmedia.alfresco.utils.RepoUtil.addAssoc;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -45,6 +47,7 @@ import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
 import org.alfresco.web.config.ActionsConfigElement.ActionGroup;
 import org.alfresco.web.config.DialogsConfigElement.DialogButtonConfig;
 import org.alfresco.web.ui.repo.component.UIActions;
+import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
@@ -55,6 +58,8 @@ import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.listener.RefreshEventListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler;
+import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
+import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.associations.web.AssocsBlockBean;
@@ -89,7 +94,7 @@ import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 /**
  * @author Alar Kvell
  */
-public class DocumentDialog extends BaseDialogBean implements ClearStateNotificationHandler.ClearStateListener, RefreshEventListener {
+public class DocumentDialog extends BaseDialogBean implements ClearStateNotificationHandler.ClearStateListener, RefreshEventListener, DialogDataProvider {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(DocumentDialog.class);
 
@@ -277,6 +282,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public void endDocument(@SuppressWarnings("unused") ActionEvent event) {
+        Node node = getDocumentDialogHelperBean().getNode();
         Assert.notNull(node, "No current document");
         try {
             getDocumentService().endDocument(node.getNodeRef());
@@ -288,14 +294,12 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         // for file-block
         node.getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), DocumentStatus.FINISHED.getValueName());
         // refresh metadata block
-        metadataBlockBean.init(node.getNodeRef(), isDraft, this);
-        logBlockBean.restore();
-        fileBlockBean.restore();
-        transactionsBlockBean.restore();
+        getDocumentDialogHelperBean().switchMode(false);
         MessageUtil.addInfoMessage("document_end_success");
     }
 
     public void reopenDocument(@SuppressWarnings("unused") ActionEvent event) {
+        Node node = getDocumentDialogHelperBean().getNode();
         Assert.notNull(node, "No current document");
         final Map<String, Object> docProps = node.getProperties();
         final String docStatusBeforeReopen = (String) docProps.get(DocumentCommonModel.Props.DOC_STATUS.toString());
@@ -305,14 +309,14 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         final String docStatusAfterReopen = DocumentStatus.WORKING.getValueName();
         docProps.put(DocumentCommonModel.Props.DOC_STATUS.toString(), docStatusAfterReopen);
         // refresh metadata block
-        metadataBlockBean.init(node.getNodeRef(), isDraft, this);
+        getDocumentDialogHelperBean().switchMode(false);
         if (!StringUtils.equals(docStatusBeforeReopen, docStatusAfterReopen)) {
             MessageUtil.addInfoMessage("document_reopen_success");
         }
-        transactionsBlockBean.init(metadataBlockBean.getDocument(), this);
     }
 
     public void deleteDocument(@SuppressWarnings("unused") ActionEvent event) {
+        Node node = getDocumentDialogHelperBean().getNode();
         Assert.notNull(node, "No current document");
         try {
             validatePermission(node, DocumentCommonModel.Privileges.DELETE_DOCUMENT_META_DATA);
@@ -332,16 +336,15 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
             return;
         }
-        reset();
         // go back
         FacesContext fc = FacesContext.getCurrentInstance();
         NavigationHandler navigationHandler = fc.getApplication().getNavigationHandler();
-        navigationHandler.handleNavigation(fc, null, getDefaultCancelOutcome());
+        navigationHandler.handleNavigation(fc, null, BeanHelper.getDialogManager().cancel());
         MessageUtil.addInfoMessage("document_delete_success");
     }
 
     public boolean isInprogressCompoundWorkflows() {
-        return getWorkflowService().hasInprogressCompoundWorkflows(node.getNodeRef());
+        return getDocumentDialogHelperBean().isNotWorkingOrNotEditable();
     }
 
     public void createFollowUp(ActionEvent event) {
@@ -470,11 +473,11 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public void addFavorite(ActionEvent event) {
-        getDocumentService().addFavorite(node.getNodeRef(), ((AddToFavoritesEvent) event).getFavoriteDirectoryName());
+        getDocumentService().addFavorite(getDocumentDialogHelperBean().getNodeRef(), ((AddToFavoritesEvent) event).getFavoriteDirectoryName());
     }
 
     public void removeFavorite(@SuppressWarnings("unused") ActionEvent event) {
-        getDocumentService().removeFavorite(node.getNodeRef());
+        getDocumentService().removeFavorite(getDocumentDialogHelperBean().getNodeRef());
     }
 
     public void sendToSapManually(ActionEvent event) {
@@ -507,9 +510,11 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         fileBlockBean.init(node);
         assocsBlockBean.init(node);
         workflowBlockBean.init(node);
-        sendOutBlockBean.init(node, workflowBlockBean.getCompoundWorkflows());
+        sendOutBlockBean.init(node);
         logBlockBean.init(node);
         transactionsBlockBean.init(metadataBlockBean.getDocument(), this);
+
+        getDocumentDialogHelperBean().reset(this);
     }
 
     @Override
@@ -565,7 +570,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         assocsBlockBean.init(node);
         searchBlockBean.init(node, isIncomingInvoice());
         workflowBlockBean.init(node);
-        sendOutBlockBean.init(node, workflowBlockBean.getCompoundWorkflows());
+        sendOutBlockBean.init(node);
         logBlockBean.init(node);
         transactionsBlockBean.init(metadataBlockBean.getDocument(), this);
 
@@ -578,6 +583,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
         children.clear();
         children.add(modal);
+
+        getDocumentDialogHelperBean().reset(this);
     }
 
     public void reloadDoc() {
@@ -616,6 +623,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             // no need to add statusMessage, as it is already added
             context.getApplication().getNavigationHandler().handleNavigation(context, null, getDefaultCancelOutcome());
         }
+
+        getDocumentDialogHelperBean().reset(this);
     }
 
     @Override
@@ -645,6 +654,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         transactionsBlockBean.onModeChanged();
     }
 
+    @Override
     public boolean isInEditMode() {
         return metadataBlockBean.isInEditMode();
     }
@@ -680,6 +690,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         showDocsAndCasesAssocs = false;
         skipInit = false;
         newInvoiceDocuments = new ArrayList<NodeRef>();
+
+        getDocumentDialogHelperBean().reset(this);
     }
 
     private String getStatus() {
@@ -714,11 +726,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             metadataBlockBean.registerDocument(event);
             // change property status of Node as well(in addition to changing it in repository) to avoid fetching node again just to reload single property
             // needed for file-block
-            final Serializable updatedStatus = getNodeService().getProperty(node.getNodeRef(), DocumentCommonModel.Props.DOC_STATUS);
-            node.getProperties().put(DocumentCommonModel.Props.DOC_STATUS.toString(), updatedStatus);
-            logBlockBean.restore();
-            fileBlockBean.restore();
-            transactionsBlockBean.restore();
+            final Serializable updatedStatus = getNodeService().getProperty(getDocumentDialogHelperBean().getNodeRef(), DocumentCommonModel.Props.DOC_STATUS);
+            getDocumentDialogHelperBean().getProps().put(DocumentCommonModel.Props.DOC_STATUS.toString(), updatedStatus);
         } catch (InvalidNodeRefException e) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "document_registerDoc_error_docDeleted");
@@ -761,6 +770,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         return null;
     }
 
+    @Override
     public Node getNode() {
         return node;
     }
@@ -781,8 +791,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
 
     // doccom:docStatus!=töös
     public boolean isNotWorkingOrNotEditable() {
-        return !DocumentStatus.WORKING.getValueName().equals(node.getProperties().get(DocumentCommonModel.Props.DOC_STATUS))
-                || isNotEditable();
+        return getDocumentDialogHelperBean().isNotWorkingOrNotEditable();
     }
 
     public boolean isNotWorkingAndFinishedOrNotEditable() {
@@ -796,7 +805,7 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     public boolean isNotEditable() {
-        return Boolean.TRUE.equals(node.getProperties().get(DocumentSpecificModel.Props.NOT_EDITABLE));
+        return getDocumentDialogHelperBean().isNotEditable();
     }
 
     public boolean isFromImap() {
@@ -882,7 +891,8 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     }
 
     private void addTargetAssoc(NodeRef targetRef, QName targetType) {
-        final DocAssocInfo docAssocInfo = searchBlockBean.addTargetAssoc(targetRef, targetType);
+        final DocAssocInfo docAssocInfo = getDocumentService().getDocAssocInfo(addAssoc(searchBlockBean.getNode(), targetRef, targetType, true), true);
+        searchBlockBean.setShow(false);
         assocsBlockBean.getDocAssocInfos().add(docAssocInfo);
         assocsBlockBean.init(node);
         metadataBlockBean.editNewDocument(node);
@@ -915,6 +925,22 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
     @Override
     public void refresh() {
         fileBlockBean.restore();
+    }
+
+    @Override
+    public UIPropertySheet getPropertySheet() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public <E extends PropertySheetStateHolder> E getStateHolder(String key, Class<E> clazz) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void switchMode(boolean inEditMode) {
+        Assert.isTrue(!inEditMode);
+        getMeta().viewDocument(getDocumentService().getDocument(metadataBlockBean.getDocument().getNodeRef()));
     }
 
     // START: snapshot logic (for supporting multiple concurrent document views)
@@ -962,9 +988,11 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
                 typeBlockBean.init();
                 assocsBlockBean.init(node);
                 workflowBlockBean.init(node);
-                sendOutBlockBean.init(node, workflowBlockBean.getCompoundWorkflows());
+                sendOutBlockBean.init(node);
                 logBlockBean.init(node);
                 transactionsBlockBean.init(node, this);
+
+                getDocumentDialogHelperBean().reset(this);
             } else {
                 log.debug("restored document snapshot recursively");
             }

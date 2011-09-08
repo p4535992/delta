@@ -1,10 +1,9 @@
 package ee.webmedia.alfresco.document.web.evaluator;
 
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
-import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.repository.Node;
 
-import ee.webmedia.alfresco.document.web.DocumentDialog;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 
 /**
  * UI action evaluator for validating whether document is saved (is not draft).
@@ -18,7 +17,6 @@ public class DocumentSavedActionEvaluator extends BaseActionEvaluator {
 
     @Override
     public boolean evaluate(Node node) {
-        DocumentDialog dialog = (DocumentDialog) Application.getDialogManager().getState().getDialog();
-        return !dialog.isDraft();
+        return !BeanHelper.getDocumentDynamicService().isDraft(node.getNodeRef());
     }
 }

@@ -3,22 +3,17 @@ package ee.webmedia.alfresco.document.search.web;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 
-import org.alfresco.service.cmr.repository.AssociationRef;
-import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.cases.service.CaseService;
-import ee.webmedia.alfresco.document.associations.model.DocAssocInfo;
 import ee.webmedia.alfresco.document.model.Document;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
@@ -73,19 +68,6 @@ public class SearchBlockBean implements Serializable {
             MessageUtil.addStatusMessage(e);
             documents = Collections.<Document> emptyList();
         }
-    }
-
-    public DocAssocInfo addTargetAssoc(NodeRef targetRef, QName assocType) {
-        Map<String, Map<String, AssociationRef>> addedAssociations = node.getAddedAssociations();
-        Map<String, AssociationRef> newAssoc = addedAssociations.get(assocType.toString());
-        if (newAssoc == null) {
-            newAssoc = new HashMap<String, AssociationRef>(1);
-        }
-        final AssociationRef assocRef = new AssociationRef(node.getNodeRef(), assocType, targetRef);
-        newAssoc.put(node.getNodeRefAsString(), assocRef);
-        addedAssociations.put(assocType.toString(), newAssoc);
-        show = false;
-        return getDocumentService().getDocAssocInfo(assocRef, true);
     }
 
     // START: snapshot logic
@@ -163,8 +145,16 @@ public class SearchBlockBean implements Serializable {
 
     // START: getters / setters
 
+    public Node getNode() {
+        return node;
+    }
+
     public boolean isShow() {
         return show;
+    }
+
+    public void setShow(boolean show) {
+        this.show = show;
     }
 
     public boolean isFoundSimilar() {

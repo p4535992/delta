@@ -1,8 +1,7 @@
 package ee.webmedia.alfresco.classificator.constant;
 
 /**
- * Constant for different conditions when field should be changeable.
- * If you add/remove/change values, then update constraint in documentAdminModel.xml
+ * Constant for different conditions when field should be changeable
  * 
  * @author Ats Uiboupin
  */

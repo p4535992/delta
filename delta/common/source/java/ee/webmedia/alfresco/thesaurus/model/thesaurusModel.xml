@@ -11,6 +11,15 @@
       <namespace uri="http://alfresco.webmedia.ee/model/thesaurus/1.0" prefix="the" />
    </namespaces>
 
+   <constraints>
+
+      <constraint name="the:name" type="REGEX">
+         <parameter name="expression"><value><![CDATA[^[a-zA-Z]+$]]></value></parameter>
+         <parameter name="requiresMatch"><value>true</value></parameter>
+      </constraint>
+
+   </constraints>
+
    <types>
       <type name="the:thesauri">
          <parent>sys:base</parent>
@@ -39,6 +48,9 @@
             <property name="the:name">
                <type>d:text</type>
                <mandatory>true</mandatory>
+               <constraints>
+                  <constraint ref="the:name" />
+               </constraints>
             </property>
             <property name="the:description">
                <type>d:text</type>

@@ -98,7 +98,7 @@
 
             <a:panel id="actions">
             <%--<f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible or DialogManager.moreActionsId != null}"> --%>
-            <f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
+            <f:subview id="extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                <f:verbatim>
                <ul class="actions-menu extra-actions">
                </f:verbatim>
@@ -131,16 +131,16 @@
                   <f:verbatim></li></f:verbatim>
                </f:subview>
                
-               <f:subview id="more-actions-panel-sub2" rendered="#{DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
+               <f:subview id="more-actions-panel-sub2" rendered="#{(DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                   <f:verbatim><li></f:verbatim>
                      <a:menu id="workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
-                        label="#{DocumentDialog.workflow.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
-                        rendered="#{DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
+                        label="#{WorkflowBlockBean.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
+                        rendered="#{(DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                         <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
                              UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
                              return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
                               --%>
-                        <r:actions id="workflow_menu_items" value="#{DocumentDialog.workflow.workflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
+                        <r:actions id="workflow_menu_items" value="#{WorkflowBlockBean.workflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
                      </a:menu>
                <f:verbatim></li></f:verbatim>
                </f:subview>
@@ -169,7 +169,7 @@
                         <r:actions id="more_actions_menu_items" value="#{DialogManager.moreActionsId}" context="#{DialogManager.actionsContext}"/>
                      </a:menu>--%>
                   </f:subview>
-                  <f:subview id="empty-main-actions-subview" rendered="#{not (DialogManager.currentDialog.name eq 'manageGroups' and not empty DialogManager.bean.groups or DialogManager.currentDialog.name ne 'manageGroups') and (DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false)}">
+                  <f:subview id="empty-main-actions-subview" rendered="#{not (DialogManager.currentDialog.name eq 'manageGroups' and not empty DialogManager.bean.groups or DialogManager.currentDialog.name ne 'manageGroups') and (DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false)}">
                      <h:outputText value="&nbsp;" escape="false" style="line-height:20px;" />
                   </f:subview>
                </a:panel>
@@ -254,7 +254,7 @@
 
             <a:panel id="footer-actions">
             <%--<f:subview id="footer-extra-actions" rendered="#{DialogManager.filterListVisible or DialogManager.moreActionsId != null}"> --%>
-            <f:subview id="footer-extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
+            <f:subview id="footer-extra-actions" rendered="#{DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                <f:verbatim>
                <ul class="actions-menu extra-actions">
                </f:verbatim>
@@ -290,13 +290,13 @@
                   <li>
                   </f:verbatim>   
                      <a:menu id="footer-workflow_menu" style="white-space:nowrap" menuStyleClass="dropdown-menu right"
-                        label="#{DocumentDialog.workflow.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
-                        rendered="#{DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false}">
+                        label="#{WorkflowBlockBean.workflowMenuLabel}" image="/images/icons/arrow-down.png" 
+                        rendered="#{(DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false}">
                         <%-- Here the method call of the value parameter is actually returning a string in the form "#{method binding}"
                              UIActions class has been modified to interpret such strings as method bindings that take 1 parameter and
                              return a list of ActionDefinition objects. See UIActions and WorkflowBlockBean classes for details.
                               --%>
-                        <r:actions id="footer-workflow_menu_items" value="#{DocumentDialog.workflow.workflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
+                        <r:actions id="footer-workflow_menu_items" value="#{WorkflowBlockBean.workflowMethodBindingName}" context="#{DialogManager.actionsContext}" />
                      </a:menu>
                   <f:verbatim>
                   </li>
@@ -326,7 +326,7 @@
                         <r:actions id="footer-more_actions_menu_items" value="#{DialogManager.moreActionsId}" context="#{DialogManager.actionsContext}"/>
                      </a:menu>--%>
                   </f:subview>
-                  <f:subview id="footer-empty-main-actions-subview" rendered="#{not (DialogManager.currentDialog.name eq 'manageGroups' and not empty DialogManager.bean.groups or DialogManager.currentDialog.name ne 'manageGroups') and (DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or DialogManager.currentDialog.name eq 'document' and DocumentDialog.workflow.workflowMethodBindingName != null and DocumentDialog.meta.inEditMode == false)}">
+                  <f:subview id="footer-empty-main-actions-subview" rendered="#{not (DialogManager.currentDialog.name eq 'manageGroups' and not empty DialogManager.bean.groups or DialogManager.currentDialog.name ne 'manageGroups') and (DialogManager.filterListVisible and DialogManager.currentDialog.name ne 'manageGroups' or (DialogManager.currentDialog.name eq 'document' or DialogManager.currentDialog.name eq 'documentDynamicDialog') and WorkflowBlockBean.workflowMethodBindingName != null and DocumentDialogHelperBean.inEditMode == false)}">
                      <h:outputText value="&nbsp;" escape="false" style="line-height:20px;" />
                   </f:subview>
                </a:panel>

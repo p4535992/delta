@@ -25,6 +25,7 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.thesaurus.model.HierarchicalKeyword;
 import ee.webmedia.alfresco.thesaurus.model.Thesaurus;
 import ee.webmedia.alfresco.thesaurus.model.ThesaurusModel;
+import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 
@@ -32,7 +33,6 @@ import ee.webmedia.alfresco.utils.UnableToPerformException;
  * Implementation for ThesaurusService.
  * 
  * @author Kaarel Jõgeva
- *
  */
 public class ThesaurusServiceImpl implements ThesaurusService {
 
@@ -94,7 +94,7 @@ public class ThesaurusServiceImpl implements ThesaurusService {
     private NodeRef createThesaurus(Thesaurus thesaurus) {
         String name = StringUtils.trim(thesaurus.getName());
         if (!name.matches("[A-Za-z]*")) {
-            throw new UnableToPerformException("thesaurus_name_constraint");
+            throw new UnableToPerformException("validator_onlyLetters_constraint_FIELD_NAME_ONLY", null, new MessageDataImpl("thesaurus_name"));
         }
 
         Map<QName, Serializable> props = new HashMap<QName, Serializable>(3);
@@ -127,7 +127,6 @@ public class ThesaurusServiceImpl implements ThesaurusService {
 
         return thesauri;
     }
-
 
     @Override
     public Thesaurus getThesaurus(NodeRef nodeRef, boolean fetchKeywords) {

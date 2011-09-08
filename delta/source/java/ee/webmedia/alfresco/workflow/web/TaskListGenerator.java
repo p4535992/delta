@@ -40,6 +40,7 @@ import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.workflow.model.Status;
 import ee.webmedia.alfresco.workflow.model.WorkflowCommonModel;
 import ee.webmedia.alfresco.workflow.model.WorkflowSpecificModel;
@@ -227,7 +228,24 @@ public class TaskListGenerator extends BaseComponentGenerator {
                         nameValueBinding = createPropValueBinding(wfIndex, counter, WorkflowCommonModel.Props.OWNER_NAME);
                     }
                     nameInput.setValueBinding("value", application.createValueBinding(nameValueBinding));
-                    taskGridChildren.add(nameInput);
+
+                    String ownerId = task.getOwnerId();
+                    if (ownerId != null) {
+                        String info = UserUtil.getSubstitute(ownerId);
+                        if (StringUtils.isNotBlank(info)) {
+                            final HtmlPanelGroup userPanelGroup = (HtmlPanelGroup) application.createComponent(HtmlPanelGroup.COMPONENT_TYPE);
+                            userPanelGroup.setId("task-name-group-" + listId + "-" + counter);
+                            HtmlOutputText substitutionInfoOutput = (HtmlOutputText) application.createComponent(HtmlOutputText.COMPONENT_TYPE);
+                            substitutionInfoOutput.setValue(info);
+                            putAttribute(substitutionInfoOutput, "styleClass", "fieldExtraInfo");
+                            taskGridChildren.add(userPanelGroup);
+                            addChildren(userPanelGroup, nameInput, substitutionInfoOutput);
+                        } else {
+                            taskGridChildren.add(nameInput);
+                        }
+                    } else {
+                        taskGridChildren.add(nameInput);
+                    }
 
                     if (dialogManager.getBean() instanceof CompoundWorkflowDialog) {
                         if (task.isType(WorkflowSpecificModel.Types.ASSIGNMENT_TASK)) {

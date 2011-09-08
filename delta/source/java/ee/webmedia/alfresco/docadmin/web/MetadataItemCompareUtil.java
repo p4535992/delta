@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.apache.commons.collections.comparators.ComparatorChain;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.collections.comparators.TransformingComparator;
@@ -151,13 +152,19 @@ public class MetadataItemCompareUtil {
         chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldAndGroupBase>() {
             @Override
             public Comparable<?> tr(FieldAndGroupBase input) {
-                return input.isRemovableFromSystemDocType();
+                return input.isRemovableFromSystematicDocType();
             }
         }, new NullComparator()));
         chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldAndGroupBase>() {
             @Override
             public Comparable<?> tr(FieldAndGroupBase input) {
                 return input.isDefaultUserLoggedIn();
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldAndGroupBase>() {
+            @Override
+            public Comparable<?> tr(FieldAndGroupBase input) {
+                return input.isMandatoryForVol();
             }
         }, new NullComparator()));
         return chain;
@@ -229,6 +236,24 @@ public class MetadataItemCompareUtil {
                 return input.isOnlyInGroup();
             }
         }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<Field>() {
+            @Override
+            public Comparable<?> tr(Field input) {
+                return input.isMandatoryChangeable();
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<Field>() {
+            @Override
+            public Comparable<?> tr(Field input) {
+                return input.isChangeableIfChangeable();
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<Field>() {
+            @Override
+            public Comparable<?> tr(Field input) {
+                return input.isRemovableFromSystematicFieldGroup();
+            }
+        }, new NullComparator()));
         return chain;
     }
 
@@ -237,7 +262,7 @@ public class MetadataItemCompareUtil {
         chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldGroup>() {
             @Override
             public Comparable<?> tr(FieldGroup input) {
-                return input.isMandatoryForVol();
+                return new CollectionComparator<QName>(input.getFieldDefinitionIds());
             }
         }, new NullComparator()));
         chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldGroup>() {
@@ -264,6 +289,24 @@ public class MetadataItemCompareUtil {
                 return input.getThesaurus();
             }
         }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldGroup>() {
+            @Override
+            public Comparable<?> tr(FieldGroup input) {
+                return input.isReadonlyFieldsNameChangeable();
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldGroup>() {
+            @Override
+            public Comparable<?> tr(FieldGroup input) {
+                return input.isReadonlyFieldsRuleChangeable();
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldGroup>() {
+            @Override
+            public Comparable<?> tr(FieldGroup input) {
+                return input.isShowInTwoColumnsChangeable();
+            }
+        }, new NullComparator()));
         return cast(chain, FieldGroup.class);
     }
 
@@ -273,12 +316,6 @@ public class MetadataItemCompareUtil {
             @Override
             public Comparable<?> tr(FieldDefinition input) {
                 return new CollectionComparator<String>(input.getDocTypes());
-            }
-        }, new NullComparator()));
-        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
-            @Override
-            public Comparable<?> tr(FieldDefinition input) {
-                return input.isRemovableFromSystematicFieldGroup();
             }
         }, new NullComparator()));
         chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
@@ -308,12 +345,6 @@ public class MetadataItemCompareUtil {
         chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
             @Override
             public Comparable<?> tr(FieldDefinition input) {
-                return input.isMandatoryForVol();
-            }
-        }, new NullComparator()));
-        chain.addComparator(new TransformingComparator(new ComparableTransformer<FieldDefinition>() {
-            @Override
-            public Comparable<?> tr(FieldDefinition input) {
                 return new CollectionComparator<String>(input.getVolTypes());
             }
         }, new NullComparator()));
@@ -333,7 +364,7 @@ public class MetadataItemCompareUtil {
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> Comparator<T> cast(ComparatorChain chain, @SuppressWarnings("unused") Class<T> clazz) {
+    public static <T> Comparator<T> cast(ComparatorChain chain, @SuppressWarnings("unused") Class<T> clazz) {
         return chain;
     }
 }

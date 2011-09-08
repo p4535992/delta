@@ -42,6 +42,7 @@ import org.springframework.util.Assert;
 import ee.webmedia.alfresco.classificator.enums.DocumentStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.dvk.service.DvkService;
@@ -51,6 +52,7 @@ import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageDataWrapper;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.Predicate;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
@@ -184,7 +186,8 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         outer: //
         for (Iterator<CompoundWorkflowDefinition> i = compoundWorkflowDefinitions.iterator(); i.hasNext();) {
             CompoundWorkflowDefinition compoundWorkflowDefinition = i.next();
-            if (!compoundWorkflowDefinition.getDocumentTypes().contains(documentType)) {
+            // TODO DLSeadist if docdyn then allow all workflows
+            if (!DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(documentType) && !compoundWorkflowDefinition.getDocumentTypes().contains(documentType)) {
                 i.remove();
                 continue outer;
             }
@@ -259,11 +262,14 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private void getAndAddWorkflows(NodeRef parent, CompoundWorkflow compoundWorkflow, boolean copy) {
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parent);
+        int workflowIndex = 0;
         for (ChildAssociationRef childAssoc : childAssocs) {
             NodeRef nodeRef = childAssoc.getChildRef();
             Workflow workflow = getWorkflow(nodeRef, compoundWorkflow, copy);
+            workflow.setIndexInCompoundWorkflow(workflowIndex);
             compoundWorkflow.addWorkflow(workflow);
             getAndAddTasks(nodeRef, workflow, copy);
+            workflowIndex++;
         }
     }
 
@@ -295,10 +301,13 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
 
     private void getAndAddTasks(NodeRef parent, Workflow workflow, boolean copy) {
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parent);
+        int taskIndex = 0;
         for (ChildAssociationRef childAssoc : childAssocs) {
             NodeRef nodeRef = childAssoc.getChildRef();
             Task task = getTask(nodeRef, workflow, copy);
+            task.setTaskIndexInWorkflow(taskIndex);
             workflow.addTask(task);
+            taskIndex++;
         }
     }
 
@@ -742,7 +751,6 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
         queue.setParameter(WorkflowQueueParameter.TRIGGERED_BY_FINISHING_EXTERNAL_REVIEW_TASK_ON_CURRENT_SYSTEM,
                 new Boolean(isRecievedExternalReviewTask(task)));
         setTaskFinished(queue, task, outcomeIndex);
-
         saveAndCheckCompoundWorkflow(queue, compoundWorkflow);
     }
 
@@ -1537,32 +1545,38 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
             return;
         }
         List<Task> tasks = workflow.getTasks();
-
-        if (workflow.isParallelTasks()) {
+        boolean parallelTasks = workflow.isParallelTasks();
+        boolean isReviewWorkFlow = workflow.isType(WorkflowSpecificModel.Types.REVIEW_WORKFLOW);
+        for (Task task : tasks) {
+            if (isReviewWorkFlow) {
+                setStopOnFinishByOutcome(workflow, task);
+            }
             // Start all new tasks
+            if (parallelTasks && isStatus(task, Status.NEW)) {
+                setStatus(queue, task, Status.IN_PROGRESS);
+            }
+        }
+        if (!parallelTasks && !isStatusAny(tasks, Status.IN_PROGRESS)) {
+            // Start first new task
             for (Task task : tasks) {
                 if (isStatus(task, Status.NEW)) {
                     setStatus(queue, task, Status.IN_PROGRESS);
-                }
-            }
-        } else {
-            if (!isStatusAny(tasks, Status.IN_PROGRESS)) {
-                // Start first new task
-                for (Task task : tasks) {
-                    if (isStatus(task, Status.NEW)) {
-                        setStatus(queue, task, Status.IN_PROGRESS);
-                        break;
-                    }
+                    break;
                 }
             }
         }
-
         // If all tasks are finished, then finish the workflow
         if (isStatusAll(tasks, Status.FINISHED, Status.UNFINISHED)) {
             setStatus(queue, workflow, Status.FINISHED);
             if (workflow.isStopOnFinish()) {
                 setStatus(queue, workflow.getParent(), Status.STOPPED);
             }
+        }
+    }
+
+    private void setStopOnFinishByOutcome(Workflow workflow, Task task) {
+        if (isStatus(task, Status.FINISHED) && task.getOutcome().equals(MessageUtil.getMessage("task_outcome_reviewTask1"))) {
+            workflow.setProp(WorkflowCommonModel.Props.STOP_ON_FINISH, true);
         }
     }
 

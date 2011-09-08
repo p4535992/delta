@@ -24,7 +24,7 @@
          <f:facet name="header">
             <a:sortLink id="nameCol-sort" label="#{msg.fieldDefinitions_list_name}" value="name" mode="case-insensitive" />
          </f:facet>
-         <a:actionLink id="name" value="#{fd.name}" action="dialog:fieldDetailsDialog" actionListener="#{FieldDetailsDialog.editField}">
+         <a:actionLink id="name" value="#{fd.name}" action="dialog:fieldDetailsDialog" actionListener="#{FieldDetailsDialog.editFieldDefinition}">
             <f:param name="nodeRef" value="#{fd.nodeRef}" />
          </a:actionLink>
       </a:column>
@@ -55,7 +55,7 @@
             <a:sortLink id="parameterOrderInDocSearchCol-sort" label="#{msg.fieldDefinitions_list_parameterOrderInDocSearch}" value="parameterOrderInDocSearch" mode="case-insensitive" />
          </f:facet>
          <h:inputText value="#{fd.parameterOrderInDocSearch}" styleClass="tiny" disabled="#{!fd.parameterInDocSearch}">
-            <wm:convertIntWithMsg msgKey="fieldDefinitions_list_parameterOrderInDocSearch_error" />
+            <wm:convertIntWithMsg />
          </h:inputText>
       </a:column>
 
@@ -64,7 +64,7 @@
             <a:sortLink id="parameterOrderInVolSearchCol-sort" label="#{msg.fieldDefinitions_list_parameterOrderInVolSearch}" value="parameterOrderInVolSearch" mode="case-insensitive" />
          </f:facet>
          <h:inputText value="#{fd.parameterOrderInVolSearch}" styleClass="tiny" disabled="#{!fd.parameterInVolSearch}" >
-            <wm:convertIntWithMsg msgKey="fieldDefinitions_list_parameterOrderInVolSearch_error" />
+            <wm:convertIntWithMsg />
          </h:inputText>
       </a:column>
 

@@ -49,6 +49,7 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -57,7 +58,6 @@ import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.document.web.OutboxDocumentMenuItemProcessor;
 import ee.webmedia.alfresco.document.web.UnsentDocumentMenuItemProcessor;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
@@ -164,13 +164,12 @@ public class DocumentSendOutDialog extends BaseDialogBean {
 
     public String init() {
         FacesContext context = FacesContext.getCurrentInstance();
-        DocumentDialog dialog = (DocumentDialog) FacesHelper.getManagedBean(context, DocumentDialog.BEAN_NAME);
-        Node docNode = dialog.getNode();
+        Node docNode = BeanHelper.getDocumentDialogHelperBean().getNode();
         if (!getNodeService().exists(docNode.getNodeRef())) {
             return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
         }
 
-        if (!getMetadataBlockBean().lockOrUnlockIfNeeded(getMetadataBlockBean().isLockingAllowed())) {
+        if (!DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(docNode.getType()) && !getMetadataBlockBean().lockOrUnlockIfNeeded(getMetadataBlockBean().isLockingAllowed())) {
             return null;
         }
 
@@ -451,7 +450,8 @@ public class DocumentSendOutDialog extends BaseDialogBean {
             if (!hasValidRecipient && StringUtils.isNotBlank(name) && StringUtils.isNotBlank(mode) && (StringUtils.isNotBlank(email)
                     || (!SendMode.EMAIL.equals(mode) && !SendMode.EMAIL_DVK.equals(mode) && !SendMode.EMAIL_BCC.equals(mode)))) {
                 hasValidRecipient = true;
-            } else if (!hasMissingEmails && StringUtils.isNotBlank(mode) && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode) || SendMode.EMAIL_BCC.equals(mode)) && StringUtils.isBlank(email)) {
+            } else if (!hasMissingEmails && StringUtils.isNotBlank(mode) && (SendMode.EMAIL.equals(mode) || SendMode.EMAIL_DVK.equals(mode) || SendMode.EMAIL_BCC.equals(mode))
+                    && StringUtils.isBlank(email)) {
                 hasMissingEmails = true;
             } else if (!hasInvalidRecipient && (StringUtils.isNotBlank(name) || StringUtils.isNotBlank(mode) || StringUtils.isNotBlank(email))
                     && (StringUtils.isBlank(name) || StringUtils.isBlank(mode))) {

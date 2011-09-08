@@ -6,14 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
-import javax.faces.event.ActionEvent;
 
-import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
-import ee.webmedia.alfresco.utils.ActionUtil;
-import ee.webmedia.alfresco.utils.MessageUtil;
 
 /**
  * @author Ats Uiboupin
@@ -44,13 +40,6 @@ public class DocTypeListDialog extends BaseDialogBean {
     public String cancel() {
         documentTypes = null;
         return super.cancel();
-    }
-
-    public void deleteDocType(ActionEvent event) {
-        NodeRef docTypeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        getDocumentAdminService().deleteDocumentType(docTypeRef);
-        MessageUtil.addInfoMessage("docType_delete_success");
-        initDocumentTypes();
     }
 
     @Override

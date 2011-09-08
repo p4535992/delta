@@ -46,7 +46,6 @@ public abstract class FieldAndGroupBase extends MetadataItem {
         setProp(DocumentAdminModel.Props.NAME, name);
     }
 
-    // FIXME DLSeadist - võiks setter'i eemaldada kui testandmeid luua vaja pole, sest seda programmaatiliselt muuta ei tohiks
     public final void setSystematic(boolean systematic) {
         setProp(DocumentAdminModel.Props.SYSTEMATIC, systematic);
     }
@@ -59,7 +58,8 @@ public abstract class FieldAndGroupBase extends MetadataItem {
         return getProp(DocumentAdminModel.Props.SYSTEMATIC_COMMENT);
     }
 
-    public final void setSystematicComment(String systematicComment) {
+    // TODO DLSeadist võiks eemaldada või protected'iks teha, kui näiteks service's on vaja
+    private final void setSystematicComment(String systematicComment) {
         setProp(DocumentAdminModel.Props.SYSTEMATIC_COMMENT, systematicComment);
     }
 
@@ -79,12 +79,12 @@ public abstract class FieldAndGroupBase extends MetadataItem {
         return getPropBoolean(DocumentAdminModel.Props.MANDATORY_FOR_DOC);
     }
 
-    public final void setRemovableFromSystemDocType(boolean removableFromSystemDocType) {
-        setProp(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEM_DOC_TYPE, removableFromSystemDocType);
+    public final void setRemovableFromSystematicDocType(boolean removableFromSystematicDocType) {
+        setProp(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEMATIC_DOC_TYPE, removableFromSystematicDocType);
     }
 
-    public final boolean isRemovableFromSystemDocType() {
-        return getPropBoolean(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEM_DOC_TYPE);
+    public final boolean isRemovableFromSystematicDocType() {
+        return getPropBoolean(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEMATIC_DOC_TYPE);
     }
 
     public final boolean isDefaultUserLoggedIn() {
@@ -95,11 +95,19 @@ public abstract class FieldAndGroupBase extends MetadataItem {
         setProp(DocumentAdminModel.Props.DEFAULT_USER_LOGGED_IN, defaultUserLoggedIn);
     }
 
+    public final boolean isMandatoryForVol() {
+        return getPropBoolean(DocumentAdminModel.Props.MANDATORY_FOR_VOL);
+    }
+
+    public final void setMandatoryForVol(boolean mandatoryForVol) {
+        setProp(DocumentAdminModel.Props.MANDATORY_FOR_VOL, mandatoryForVol);
+    }
+
     @Override
     public boolean isRemovableFromList() {
         // if subclass delegates method call here, then expecting that parent is DocumentTypeVersion
         DocumentTypeVersion docTypeVersion = (DocumentTypeVersion) getParent();
-        if (isRemovableFromSystemDocType()) {
+        if (isRemovableFromSystematicDocType()) {
             return true;
         }
         DocumentType docType = docTypeVersion.getParent();

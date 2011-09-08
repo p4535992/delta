@@ -1,8 +1,12 @@
 package ee.webmedia.alfresco.document.assignresponsibility.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getPersonService;
+
 import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
@@ -76,6 +80,10 @@ public class AssignResponsibilityBean implements Serializable {
         String toOwnerId = (String) getNode().getProperties().get(OWNER_ID);
         getAssignResponsibilityService().changeOwnerOfAllDocumentsAndTasks(fromOwnerId, toOwnerId, true);
         leaving = true;
+        Map<QName, Serializable> props = new HashMap<QName, Serializable>(2);
+        props.put(UserModel.Props.LEAVING_DATE_TIME, new Date());
+        props.put(UserModel.Props.LIABILITY_GIVEN_TO_PERSON_ID, toOwnerId);
+        nodeService.addProperties(userService.getCurrentUser(), props);
         MessageUtil.addInfoMessage("assign_responsibility_perform_success", UserUtil.getPersonFullName1(getPersonProps(toOwnerId)));
     }
 
@@ -159,13 +167,6 @@ public class AssignResponsibilityBean implements Serializable {
         NodeRef person = getPersonService().getPerson(userName);
         Map<QName, Serializable> personProps = getNodeService().getProperties(person);
         return personProps;
-    }
-
-    private PersonService getPersonService() {
-        if (personService == null) {
-            personService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getPersonService();
-        }
-        return personService;
     }
 
     private NodeService getNodeService() {

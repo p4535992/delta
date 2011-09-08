@@ -115,7 +115,7 @@ public class InviteUsersDialog extends PermissionsAddDialog {
             String email = props.get(ContentModel.PROP_EMAIL).toString();
             if (!toEmails.contains(email)) {
                 toEmails.add(email);
-                toNames.add(UserUtil.getPersonFullName2(props));
+                toNames.add(UserUtil.getPersonFullName2(props, false));
             }
         }
     }

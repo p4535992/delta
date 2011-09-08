@@ -45,7 +45,8 @@ public interface DocumentService {
         public static final String SERIES_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "series").toString();
         public static final String VOLUME_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "volume").toString();
         public static final String CASE_NODEREF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "case").toString();
-        public static final String TEMP_DOCUMENT_IS_DRAFT = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "isDraft").toString();
+        public static final QName TEMP_DOCUMENT_IS_DRAFT_QNAME = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "isDraft");
+        public static final String TEMP_DOCUMENT_IS_DRAFT = TEMP_DOCUMENT_IS_DRAFT_QNAME.toString();
         public static final String TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED = "{temp}logging_disabled_docMetadataChanged";
     }
 
@@ -477,5 +478,7 @@ public interface DocumentService {
     int getUserDocumentFromIncomingInvoiceCount(String userFullName);
 
     boolean isReplyOrFollowupDoc(final NodeRef docRef, List<AssociationRef> replyAssocs);
+
+    void addPrivilegesBasedOnSeriesOnBackground(NodeRef docRef);
 
 }

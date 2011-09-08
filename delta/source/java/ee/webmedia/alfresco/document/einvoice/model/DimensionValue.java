@@ -8,6 +8,7 @@ import java.util.Date;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorValueProvider;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.TextUtil;
@@ -110,7 +111,7 @@ public class DimensionValue implements Comparable<DimensionValue>, Classificator
         if (getValueName() == null) {
             return -1;
         }
-        return getValueName().compareToIgnoreCase(o.getValueName());
+        return AppConstants.DEFAULT_COLLATOR.compare(getValueName(), o.getValueName());
     }
 
     @Override

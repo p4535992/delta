@@ -26,12 +26,10 @@ import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.cmr.security.PermissionService;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
-import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.workflow.service.HasNoStoppedOrInprogressWorkflowsEvaluator;
@@ -52,8 +50,7 @@ public class RegisterDocumentEvaluator extends BaseActionEvaluator {
     @Override
     public boolean evaluate(Node docNode) {
         final FacesContext context = FacesContext.getCurrentInstance();
-        MetadataBlockBean metadataBlock = (MetadataBlockBean) FacesHelper.getManagedBean(context, MetadataBlockBean.BEAN_NAME);
-        if (metadataBlock.isInEditMode()) {
+        if (!new ViewStateActionEvaluator().evaluate(docNode)) {
             return false;
         }
         if (deniedDocTypes.contains(docNode.getType())) {

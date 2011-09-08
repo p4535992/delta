@@ -76,7 +76,7 @@ public class DocumentDynamicTestDialog extends BaseDialogBean {
 
     public void deleteDocument(ActionEvent event) {
         NodeRef docRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        getDocumentDynamicService().deleteDocument(docRef);
+        getDocumentDynamicService().deleteDocumentIfDraft(docRef);
         MessageUtil.addInfoMessage("document_delete_success");
         restored();
     }

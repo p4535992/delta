@@ -10,7 +10,6 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props;
 
 /**
  * Constant for different type of fields that can be added under document type
- * If you add/remove/change values, then update constraint in documentAdminModel.xml
  * 
  * @author Ats Uiboupin
  */

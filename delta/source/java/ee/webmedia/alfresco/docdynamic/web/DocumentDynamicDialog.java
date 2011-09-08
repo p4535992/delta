@@ -1,26 +1,37 @@
 package ee.webmedia.alfresco.docdynamic.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getClearStateNotificationHandler;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicTestDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_NAME;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_STATUS;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
 
 import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.config.PropertySheetConfigElement;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.lang.ObjectUtils;
 
+import ee.webmedia.alfresco.addressbook.web.dialog.AddressbookMainViewDialog;
+import ee.webmedia.alfresco.common.listener.RefreshEventListener;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateListener;
 import ee.webmedia.alfresco.common.web.WmNode;
@@ -28,10 +39,16 @@ import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfig;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.document.file.web.FileBlockBean;
+import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.utils.UnableToPerformException;
+import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
 /**
  * To open this dialog you must:
@@ -51,7 +68,7 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  * 
  * @author Alar Kvell
  */
-public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateListener, DialogDataProvider {
+public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateListener, DialogDataProvider, RefreshEventListener {
     private static final long serialVersionUID = 1L;
     private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(DocumentDynamicDialog.class);
 
@@ -100,8 +117,20 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         String documentTypeId = ActionUtil.getParam(event, "documentTypeId");
         NodeRef docRef = getDocumentDynamicService().createDraft(documentTypeId);
         open(docRef, true);
+    }
 
-        getDocumentDynamicTestDialog().restored();
+    public void changeByNewDocument(@SuppressWarnings("unused") ActionEvent event) {
+        LOG.info("changeByNewDocument");
+        DocumentDynamic baseDoc = getCurrentSnapshot().document;
+        Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(1);
+        overrides.put(DOC_NAME, MessageUtil.getMessage("docdyn_changeByNewDocument_name"//
+                , getDocumentAdminService().getDocumentTypeName(baseDoc.getDocumentTypeId()), baseDoc.getProp(REG_DATE_TIME), baseDoc.getProp(REG_NUMBER)));
+        NodeRef docRef = getDocumentDynamicService().copyDocument(baseDoc, overrides, REG_NUMBER, REG_DATE_TIME, DOC_STATUS);
+
+        open(docRef, true);
+
+        // Add followUp association when new document is saved
+        RepoUtil.addAssoc(getCurrentSnapshot().document.getNode(), baseDoc.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP, false);
     }
 
     // =========================================================================
@@ -128,7 +157,7 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         @Override
         public String toString() {
             return "Snapshot[document=" + (document == null ? null : document.getNodeRef()) + ", inEditMode=" + inEditMode + ", viewModeWasOpenedInThePast="
-                    + viewModeWasOpenedInThePast + ", config=" + config + "]";
+            + viewModeWasOpenedInThePast + ", config=" + config + "]";
         }
     }
 
@@ -162,7 +191,8 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         openOrSwitchModeCommon(docRef, inEditMode);
     }
 
-    private void switchMode(boolean inEditMode) {
+    @Override
+    public void switchMode(boolean inEditMode) {
         openOrSwitchModeCommon(getDocument().getNodeRef(), inEditMode);
     }
 
@@ -174,13 +204,12 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         }
         DocumentConfig config = BeanHelper.getDocumentConfigService().getConfig(getNode());
         getCurrentSnapshot().config = config;
-        resetComponents();
+        reset();
         LOG.info("document before rendering: " + getDocument());
     }
 
     private String close() {
         snapshots.removeLast();
-        resetComponents();
         return super.cancel();
     }
 
@@ -190,13 +219,13 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
     public void init(Map<String, String> params) {
         LOG.info("init");
         getClearStateNotificationHandler().addClearStateListener(this);
-        getDocumentDynamicTestDialog().restored();
         super.init(params);
     }
 
     @Override
     public void restored() {
         LOG.info("restored");
+        reset();
         // Siin ei ole plaanis midagi teha; kui mingi teine dialoog suletakse ja seetõttu pöördutakse tagasi varemavatud dok.dialoogile, siis nimelt ei tee õiguste ega kustutamise
         // kontrolli
         // Õiguste kontroll on ainult dialoogile sisenemisel
@@ -207,17 +236,29 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
     // Blocks
     // =========================================================================
 
-    private final Map<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock> blocks = new HashMap<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock>();
+    private Map<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock> blocks;
 
-    public DocumentDynamicDialog() {
-        blocks.put(MetadataBlock.class, new MetadataBlock());
-        for (DocumentDynamicBlock block : blocks.values()) {
-            block.setDocumentDynamicDialog(this);
+    private Map<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock> getBlocks() {
+        if (blocks == null) {
+            blocks = new HashMap<Class<? extends DocumentDynamicBlock>, DocumentDynamicBlock>();
+            blocks.put(FileBlockBean.class, BeanHelper.getFileBlockBean());
+            blocks.put(LogBlockBean.class, BeanHelper.getLogBlockBean());
+            blocks.put(WorkflowBlockBean.class, BeanHelper.getWorkflowBlockBean());
+            blocks.put(SendOutBlockBean.class, BeanHelper.getSendOutBlockBean());
         }
+        return blocks;
     }
 
-    public MetadataBlock getMeta() {
-        return (MetadataBlock) blocks.get(MetadataBlock.class);
+    @Override
+    public void refresh() {
+        if (getCurrentSnapshot() == null) {
+            return;
+        }
+        for (DocumentDynamicBlock block : getBlocks().values()) {
+            if (block instanceof RefreshEventListener) {
+                ((RefreshEventListener) block).refresh();
+            }
+        }
     }
 
     // =========================================================================
@@ -243,8 +284,18 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
     @Override
     public String cancel() {
         LOG.info("cancel");
+
+        if (getCurrentSnapshot() == null) {
+            try {
+                throw new RuntimeException("!!!!!!!!!!!!!!!!!!!!!!!!! Cancel is called too many times !!!!!!!!!!!!!!!!!!!!!!!!!");
+            } catch (RuntimeException e) {
+                LOG.warn(e.getMessage(), e);
+            }
+            return super.cancel();
+        }
+
         if (!isInEditMode() || (isInEditMode() && !getCurrentSnapshot().viewModeWasOpenedInThePast)) {
-            // TODO if draft, then delete
+            getDocumentDynamicService().deleteDocumentIfDraft(getDocument().getNodeRef());
 
             // Close dialog
             return close();
@@ -298,24 +349,12 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
     }
 
     private static boolean validatePermissionWithErrorMessage(NodeRef docRef, String permission) {
-        // TODO DLSeadist this is for testing...
-        // if ("type1".equals(BeanHelper.getNodeService().getProperty(docRef, DocumentDynamicModel.Props.DOCUMENT_TYPE_ID))) {
-        // MessageUtil.addErrorMessage("action_failed_missingPermission", new MessageDataImpl("permission_" + permission));
-        // return false;
-        // }
-        // if (DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA.equals(permission)
-        // && "type2".equals(BeanHelper.getNodeService().getProperty(docRef, DocumentDynamicModel.Props.DOCUMENT_TYPE_ID))) {
-        // MessageUtil.addErrorMessage("action_failed_missingPermission", new MessageDataImpl("permission_" + permission));
-        // return false;
-        // }
-
-        // TODO DLSeadist enable real validation
-        // try {
-        // validatePermission(docRef, permission);
-        // } catch (UnableToPerformException e) {
-        // MessageUtil.addStatusMessage(e);
-        // return false;
-        // }
+        try {
+            validatePermission(docRef, permission);
+        } catch (UnableToPerformException e) {
+            MessageUtil.addStatusMessage(e);
+            return false;
+        }
         return true;
     }
 
@@ -339,6 +378,11 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
             return null;
         }
         return document.getNode();
+    }
+
+    @Override
+    public Object getActionsContext() {
+        return getNode();
     }
 
     private DocumentConfig getConfig() {
@@ -365,6 +409,17 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         return config.getStateHolders();
     }
 
+    @Override
+    public <E extends PropertySheetStateHolder> E getStateHolder(String key, Class<E> clazz) {
+        Map<String, PropertySheetStateHolder> stateHolders = getStateHolders();
+        if (stateHolders == null) {
+            return null;
+        }
+        @SuppressWarnings("unchecked")
+        E stateHolder = (E) stateHolders.get(key);
+        return stateHolder;
+    }
+
     // Metadata block
 
     @Override
@@ -382,8 +437,16 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
 
     @Override
     public String getContainerTitle() {
-        // TODO documentType title
-        return "DocumentDynamicDialog";
+        DocumentConfig config = getConfig();
+        if (config == null) {
+            return null;
+        }
+        return config.getDocumentTypeName();
+    }
+
+    @Override
+    public String getMoreActionsConfigId() {
+        return "";
     }
 
     // =========================================================================
@@ -405,7 +468,7 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         this.propertySheet = propertySheet;
     }
 
-    private void resetComponents() {
+    private void reset() {
         // TODO call clear on all other blocks and components!!!
 
         LOG.info("clearPropertySheet propertySheet=" + ObjectUtils.toString(propertySheet));
@@ -416,7 +479,12 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
             propertySheet.setMode(getMode());
             propertySheet.setConfig(getPropertySheetConfigElement());
         }
-        getPropertySheetStateBean().reset(getStateHolders(), getCurrentSnapshot() == null ? null : this);
+        DialogDataProvider provider = getCurrentSnapshot() == null ? null : this;
+        getPropertySheetStateBean().reset(getStateHolders(), provider);
+        getDocumentDialogHelperBean().reset(provider);
+        for (DocumentDynamicBlock block : getBlocks().values()) {
+            block.reset(provider);
+        }
     }
 
     /** @param event */
@@ -445,14 +513,28 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
     // ?? dok.staatus, pealkiri väljad.... - common aspekti alt kuidas üksikuid süsteemseid välju kasutan?
     // * metaandmete valideerimine
 
+    // TODO kas on võimalik viia dictionaryservice'isse sisse docdyn propdef'ide tagastamine, nii et olulsied kohad neid kasutaks?
+    // TODO kontaktide jms asjad: reposse list, tagasi string bugi; default väärtus sisselogitud kasutaja
+
+    // TODO tuua põhiliste süsteemsete väljade ja gruppide täiendav funktsionaalsus üle !!!
+
+    // TODO õiguste seadmine ja kontrollid
+
+    // TODO teiste süsteemsete doccom/docspec väljade kasutusele võtmisel: vaadata et vajalikud aspektid documentDynamic node'ile külge saaks
+
     // TODO kontrollida et kustutatud dokumendi ekraanile tagasipöördumine töötaks... või tahavad teised blokid laadida uuesti asju? ja siis oleks mõtekam dialoogi mitte kuvada?
 
+    // TODO veateadete näitamised
     // TODO hiljem - dokumendi otsing
     // TODO hiljem - metaandmete lukustamine, üldisem lahendus
-    // TODO kõige hiljem - vanade dok.liikide
+    // TODO kõige hiljem - vanade dok.liikide ja andmete ülekandmine
 
     // dokumendile logikirje lisamiseks teha mudelisse meetod ja siis see lisab alfrescotransactionsupport kontrolli et üldse oleks transaktsioon lahti ja et transaktsiooni lõpus
     // oleks salvestamist tehtud
+
+    // TODO dokumendi originaalprop'id võiks saada mudeli objekti käest?
+
+    // TODO üle vaadata et kõik realiseeritud asjad ka spekis oleksid :)
 
     /*
      * Rakenduses lingi/nupu kaudu dialoogi avamine ESIMEST KORDA
@@ -497,5 +579,18 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
      * .
      * Kas me tahame setPropertySheet puhul alati clearida? oleks ohutu; samas võtab see natuke rohkem aega, sest mingite väljade ehitamisel vist käiakse ka baasis
      */
+
+    public SelectItem[] searchUsersOrContacts(int filterIndex, String contains) {
+        if (filterIndex == 0) { // users
+            return BeanHelper.getUserListDialog().searchUsersWithNameValue(-1, contains);
+        } else if (filterIndex == 1) { // contacts
+            final String personLabel = MessageUtil.getMessage("addressbook_private_person").toLowerCase();
+            final String organizationLabel = MessageUtil.getMessage("addressbook_org").toLowerCase();
+            List<Node> nodes = BeanHelper.getAddressbookService().search(contains);
+            return AddressbookMainViewDialog.transformNodesToSelectItems(nodes, personLabel, organizationLabel, true);
+        } else {
+            throw new RuntimeException("Unknown filter index value: " + filterIndex);
+        }
+    }
 
 }

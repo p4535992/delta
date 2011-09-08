@@ -11,12 +11,15 @@
    docadmin:defaultUserLoggedIn - boolean - default puudub, järelikult false
    docadmin:systematic - boolean - default false - siin peab olema alati true!
    docadmin:systematicComment - text
-   docadmin:removableFromSystemDocType - boolean - mandatory - default true
+   docadmin:removableFromSystematicDocType - boolean - mandatory - default true
    docadmin:readonlyFieldsName - text
+   docadmin:readonlyFieldsNameChangeable - boolean - default true
    docadmin:readonlyFieldsRule - text
+   docadmin:readonlyFieldsRuleChangeable - boolean - default true
    docadmin:showInTwoColumns - boolean - default puudub, järelikult false
+   docadmin:showInTwoColumnsChangeable - boolean - default true
    docadmin:thesaurus - text
-   docadmin:order - int - ei oma mõtet fieldGroupDefinition all, jätta alati ära
+   docadmin:order - int - kasutusel uue dokumendi tüübi loomisel field ja fieldGroup järjestuse määramiseks metaandmete plokis
 -->
 
    <docadmin:fieldGroup view:childName="docadmin:documentLocation"><!-- fieldGroup childName is not used anywhere, it is specified only for convenience -->
@@ -24,13 +27,84 @@
          <docadmin:name>Dokumendi asukoht</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
-         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:fieldDefinitionIds>
             <view:values>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}function</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}series</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}volume</view:value>
-               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}case</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}function</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}series</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}volume</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}case</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+         <docadmin:order>4</docadmin:order>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:registrationData">
+      <view:properties>
+         <docadmin:name>Registreerimisandmed</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:readonlyFieldsName>Viit ja reg kpv</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule>{regNumber} {regDateTime}</docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}regNumber</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}regDateTime</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+         <docadmin:order>5</docadmin:order>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:accessRestriction">
+      <view:properties>
+         <docadmin:name>Juurdepääsupiirang</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsNameChangeable>false</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:order>1</docadmin:order>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}accessRestriction</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}accessRestrictionReason</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}accessRestrictionBeginDate</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}accessRestrictionEndDate</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}accessRestrictionEndDesc</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:documentOwner">
+      <view:properties>
+         <docadmin:name>Dokumendi vastutaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:readonlyFieldsName>Vastutaja</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:order>2</docadmin:order>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerName</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerJobTitle</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerOrgStructUnit</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerEmail</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerPhone</view:value>
             </view:values>
          </docadmin:fieldDefinitionIds>
       </view:properties>

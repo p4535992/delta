@@ -51,6 +51,8 @@ public interface BaseService {
      */
     <T extends BaseObject> List<T> getChildren(NodeRef parentRef, Class<T> childrenClass, Predicate<T> mustIncludePredicate);
 
+    <T extends BaseObject> List<T> getObjects(List<NodeRef> resultRefs, Class<T> resultClass);
+
     /**
      * Save object hierarchy to repository. Saving is performed deeply - all children are also saved recursively. <br/>
      * <br/>

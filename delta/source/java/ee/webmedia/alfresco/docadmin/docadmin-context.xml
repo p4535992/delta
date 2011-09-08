@@ -23,6 +23,7 @@
       <property name="baseService" ref="BaseService" />
       <property name="menuService" ref="MenuService" />
       <property name="userService" ref="UserService" />
+      <property name="documentSearchService" ref="DocumentSearchService" />
    </bean>
 
    <bean id="DocumentAdminService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -89,16 +90,26 @@
 
    <bean id="DocTypeListDialog" class="ee.webmedia.alfresco.docadmin.web.DocTypeListDialog" scope="session" />
 
-   <bean id="DocTypeDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog" scope="session" >
-      <property name="fieldsListBean" ref="DocTypeFieldsListBean"/>
+   <bean id="DocTypeDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog" scope="session">
+      <property name="fieldsListBean" ref="DocTypeFieldsListBean" />
    </bean>
 
-   <bean id="DocTypeFieldsListBean" class="ee.webmedia.alfresco.docadmin.web.DocTypeFieldsListBean" scope="session" />
+   <bean id="DocTypeFieldsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldsListBean" scope="session" />
 
    <bean id="FieldDefinitionListDialog" class="ee.webmedia.alfresco.docadmin.web.FieldDefinitionListDialog" scope="session" />
 
    <bean id="FieldDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.FieldDetailsDialog" scope="session" />
 
+   <bean id="FieldGroupDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.FieldGroupDetailsDialog" scope="session">
+      <property name="fieldsListBean" ref="FieldGroupFieldsListBean" />
+   </bean>
+
+   <bean id="FieldGroupFieldsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldsListBean" scope="session" />
+
+   <!-- Component generator -->
+   <bean id="FieldGroupInfoGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.MessageSeparatorGenerator" scope="request">
+      <property name="messageKey" value="fieldGroup_details_separator_infoText" />
+   </bean>
    <!-- END: web beans: -->
 
 

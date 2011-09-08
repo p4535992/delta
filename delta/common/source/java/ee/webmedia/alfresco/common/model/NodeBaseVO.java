@@ -42,9 +42,16 @@ public class NodeBaseVO implements Serializable {
         return (T) getNode().getProperties().get(propName);
     }
 
-    @SuppressWarnings("unchecked")
     protected <T extends List<? extends Serializable>> T getPropList(QName propName) {
-        return (T) getNode().getProperties().get(propName);
+        @SuppressWarnings("unchecked")
+        T propValue = (T) getNode().getProperties().get(propName);
+        if (propValue == null) {
+            @SuppressWarnings({ "unchecked", "rawtypes" })
+            T tmp = (T) new ArrayList(0);
+            propValue = tmp;
+            setPropList(propName, propValue);
+        }
+        return propValue;
     }
 
     public void setProp(QName propName, Serializable propValue) {
@@ -75,14 +82,9 @@ public class NodeBaseVO implements Serializable {
     }
 
     @Override
-    public NodeBaseVO clone() {
-        try {
-            NodeBaseVO copy = (NodeBaseVO) super.clone();
-            copy.node = node.clone();
-            return copy;
-        } catch (CloneNotSupportedException e) {
-            // shouldn't happen, because BaseObject is clonable and children are also subtypes of BaseObject
-            throw new RuntimeException(e);
-        }
+    public NodeBaseVO clone() throws CloneNotSupportedException {
+        NodeBaseVO copy = (NodeBaseVO) super.clone();
+        copy.node = node.clone();
+        return copy;
     }
 }

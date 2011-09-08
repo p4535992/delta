@@ -155,7 +155,7 @@
 
    <config evaluator="node-type" condition="wfc:compoundWorkflow">
       <property-sheet>
-         <show-property name="wfc:ownerName" editable="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}"
+         <show-property name="wfc:ownerName" editable="false" component-generator="UserSearchGenerator" usernameProp="wfc:ownerId" pickerCallback="#{UserListDialog.searchUsers}"
             setterCallback="#{CompoundWorkflowDialog.setWorkfowOwner}" readOnlyIf="wfc:status!=uus||teostamisel||peatatud||teostamata" /> 
       </property-sheet>
    </config>

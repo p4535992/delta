@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.docconfig.service;
 
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
@@ -18,5 +19,7 @@ public interface DocumentConfigService {
     void registerFieldGeneratorById(FieldGenerator fieldGenerator, QName... fieldIds);
 
     DocumentConfig getConfig(Node documentDynamicNode);
+
+    PropertyDefinition getPropertyDefinition(Node node, QName property);
 
 }

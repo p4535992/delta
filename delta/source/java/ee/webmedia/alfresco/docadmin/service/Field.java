@@ -14,6 +14,7 @@ import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.utils.MessageData;
 import ee.webmedia.alfresco.utils.MessageDataImpl;
 import ee.webmedia.alfresco.utils.MessageUtil;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * Field that is stored under {@link DocumentTypeVersion} or {@link FieldGroup}, but not under /fieldDefinitions folder
@@ -22,6 +23,8 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class Field extends FieldAndGroupBase {
     private static final long serialVersionUID = 1L;
+    /** this temp. property is added to Field that is created based on fieldDefinition */
+    private static final QName COPY_OF_FIELD_DEF_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "copyOfFieldDefNodeRef");
 
     /** used only by subclass */
     protected Field(BaseObject parent, QName type) {
@@ -49,7 +52,7 @@ public class Field extends FieldAndGroupBase {
 
     @Override
     protected QName getAssocName() {
-        return QName.createQName(DocumentAdminModel.URI, getFieldId().getLocalName());
+        return getFieldId();
     }
 
     @Override
@@ -92,6 +95,15 @@ public class Field extends FieldAndGroupBase {
             return null;
         }
         return new MessageDataImpl("docType_metadataList_additInfo_field_default", defaultValue);
+    }
+
+    /** used by fields-list-bean.jsp */
+    public final String getNameAndFieldId() {
+        return new StringBuilder(getName()).append(" (").append(getFieldId().getLocalName()).append(")").toString();
+    }
+
+    public String getFieldNameWithIdAndType() {
+        return MessageUtil.getMessage("field_nameIdAndType", getName(), getFieldId().getLocalName(), MessageUtil.getMessage(getFieldTypeEnum()));
     }
 
     // Properties
@@ -192,13 +204,36 @@ public class Field extends FieldAndGroupBase {
         setProp(DocumentAdminModel.Props.ONLY_IN_GROUP, onlyInGroup);
     }
 
+    public final boolean isMandatoryChangeable() {
+        return getPropBoolean(DocumentAdminModel.Props.MANDATORY_CHANGEABLE);
+    }
+
+    public final void setMandatoryChangeable(boolean mandatoryChangeable) {
+        setProp(DocumentAdminModel.Props.MANDATORY_CHANGEABLE, mandatoryChangeable);
+    }
+
+    public final boolean isChangeableIfChangeable() {
+        return getPropBoolean(DocumentAdminModel.Props.CHANGEABLE_IF_CHANGEABLE);
+    }
+
+    public final void setChangeableIfChangeable(boolean changeableIfChangeable) {
+        setProp(DocumentAdminModel.Props.CHANGEABLE_IF_CHANGEABLE, changeableIfChangeable);
+    }
+
+    public final boolean isRemovableFromSystematicFieldGroup() {
+        return getPropBoolean(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEMATIC_FIELD_GROUP);
+    }
+
+    public final void setRemovableFromSystematicFieldGroup(boolean removableFromSystematicFieldGroup) {
+        setProp(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEMATIC_FIELD_GROUP, removableFromSystematicFieldGroup);
+    }
+
     @Override
     public boolean isRemovableFromList() {
         BaseObject parent = getParent();
         if (parent instanceof FieldGroup) {
             FieldGroup parentFieldGroup = (FieldGroup) parent;
-            FieldDefinition fieldDef = (FieldDefinition) this;
-            if (!parentFieldGroup.isSystematic() || !isSystematic() || fieldDef.isRemovableFromSystematicFieldGroup()) {
+            if (!parentFieldGroup.isSystematic() || !isSystematic() || isRemovableFromSystematicFieldGroup()) {
                 return true;
             }
             return false;
@@ -209,6 +244,14 @@ public class Field extends FieldAndGroupBase {
     @Override
     public Field clone() {
         return (Field) super.clone(); // just return casted type
+    }
+
+    public void setCopyOfFieldDefinition(FieldDefinition fieldDefinition) {
+        setProp(COPY_OF_FIELD_DEF_NODE_REF, fieldDefinition.getNodeRef());
+    }
+
+    public boolean isCopyOfFieldDefinition() {
+        return getProp(COPY_OF_FIELD_DEF_NODE_REF) != null;
     }
 
 }

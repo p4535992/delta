@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.common.propertysheet.search;
 
+import static ee.webmedia.alfresco.utils.MessageUtil.getMessage;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -158,6 +160,7 @@ public class SearchRenderer extends BaseRenderer {
             out.write("<tr><td>");
             setInputStyleClass(child, search);
             Utils.encodeRecursive(context, child);
+            renderExtraInfo(search, out);
             out.write("</td>");
             if (isRemoveLinkRendered(search)) {
                 out.write("<td>");
@@ -187,6 +190,7 @@ public class SearchRenderer extends BaseRenderer {
             setInputStyleClass(child, search);
             Utils.encodeRecursive(context, child);
             ComponentUtil.generateSuggestScript(context, child, (String) search.getAttributes().get(Search.PICKER_CALLBACK_KEY), out);
+            renderExtraInfo(search, out);
             out.write("</td>");
             UIOutput ch = (UIOutput) child;
             Object val = ch.getValue();
@@ -199,6 +203,11 @@ public class SearchRenderer extends BaseRenderer {
         out.write("<td>");
         renderPicker(context, out, search, picker);
         out.write("</td></tr></tbody></table>");
+    }
+
+    @SuppressWarnings("unused")
+    protected void renderExtraInfo(Search search, ResponseWriter out) throws IOException {
+        // UserSearchRenderer overrides this
     }
 
     private void setInputStyleClass(UIComponent child, Search search) {
@@ -238,8 +247,16 @@ public class SearchRenderer extends BaseRenderer {
         out.write(ComponentUtil.generateFieldSetter(context, search, getActionId(context, search), OPEN_DIALOG_ACTION + ACTION_SEPARATOR + getRowIndex(search)));
         out.write("return showModal('");
         out.write(getDialogId(context, search));
-        out.write("');\" title=\"" + Application.getMessage(context, SEARCH_MSG) + "\">");
+        String toolTip = search.getSearchLinkTooltip();
+        if (toolTip == null) {
+            toolTip = SEARCH_MSG;
+        }
+        out.write("');\" title=\"" + getMessage(toolTip) + "\">");
         // out.write(Application.getMessage(context, SEARCH_MSG));
+        String searchLinkLabel = search.getSearchLinkLabel();
+        if (searchLinkLabel != null) {
+            out.write(getMessage(searchLinkLabel));
+        }
         out.write("</a>");
 
         Integer openDialog = (Integer) search.getAttributes().get(Search.OPEN_DIALOG_KEY);

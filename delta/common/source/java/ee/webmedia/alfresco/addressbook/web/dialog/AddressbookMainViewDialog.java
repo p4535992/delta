@@ -24,6 +24,7 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel;
 import ee.webmedia.alfresco.addressbook.model.AddressbookModel.Types;
 import ee.webmedia.alfresco.addressbook.web.dialog.ContactGroupAddDialog.UserDetails;
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -154,6 +155,13 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         return transformNodesToSelectItems(nodes, personLabel, organizationLabel);
     }
 
+    public SelectItem[] searchContactsWithNameValue(int filterIndex, String contains) {
+        final String personLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_private_person").toLowerCase();
+        final String organizationLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_org").toLowerCase();
+        List<Node> nodes = getAddressbookService().search(contains);
+        return transformNodesToSelectItems(nodes, personLabel, organizationLabel, true);
+    }
+
     public SelectItem[] searchOrgContacts(int filterIndex, String contains) {
         final String personLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_private_person").toLowerCase();
         final String organizationLabel = Application.getMessage(FacesContext.getCurrentInstance(), "addressbook_org").toLowerCase();
@@ -179,6 +187,10 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
      * @return
      */
     public static SelectItem[] transformNodesToSelectItems(List<Node> nodes, String privPersonLabel, String organizationLabel) {
+        return transformNodesToSelectItems(nodes, privPersonLabel, organizationLabel, false);
+    }
+
+    public static SelectItem[] transformNodesToSelectItems(List<Node> nodes, String privPersonLabel, String organizationLabel, boolean useNameAsValue) {
         SelectItem[] results = new SelectItem[nodes.size()];
         int i = 0;
         for (Node node : nodes) {
@@ -186,16 +198,24 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
             StringBuilder label = new StringBuilder();
             Map<String, Object> props = node.getProperties();
             if (node.getType().equals(Types.ORGANIZATION)) {
-                label.append((String) props.get(AddressbookModel.Props.ORGANIZATION_NAME.toString()));
+                String orgName = (String) props.get(AddressbookModel.Props.ORGANIZATION_NAME.toString());
+                label.append(orgName);
                 label.append(" (");
                 label.append(organizationLabel);
+                if (useNameAsValue) {
+                    value = orgName;
+                }
             } else if (node.getType().equals(Types.CONTACT_GROUP)) {
                 label.append((String) props.get(AddressbookModel.Props.GROUP_NAME));
             } else {
-                label.append(UserUtil.getPersonFullName((String) props.get(AddressbookModel.Props.PERSON_FIRST_NAME.toString()), (String) props
-                        .get(AddressbookModel.Props.PERSON_LAST_NAME.toString())));
+                String personName = UserUtil.getPersonFullName((String) props.get(AddressbookModel.Props.PERSON_FIRST_NAME.toString()), (String) props
+                        .get(AddressbookModel.Props.PERSON_LAST_NAME.toString()));
+                label.append(personName);
                 label.append(" (");
                 label.append(privPersonLabel);
+                if (useNameAsValue) {
+                    value = personName;
+                }
             }
             String email = (String) props.get(AddressbookModel.Props.EMAIL.toString());
             if (StringUtils.isNotEmpty(email)) {
@@ -212,7 +232,7 @@ public class AddressbookMainViewDialog extends AddressbookBaseDialog implements 
         Arrays.sort(results, new Comparator<SelectItem>() {
             @Override
             public int compare(SelectItem a, SelectItem b) {
-                return a.getLabel().compareTo(b.getLabel());
+                return AppConstants.DEFAULT_COLLATOR.compare(a.getLabel(), b.getLabel());
             }
         });
         return results;

@@ -271,6 +271,18 @@
          <rtexprvalue>true</rtexprvalue>
          <description>Level of AjaxUpdateable ancestor to refresh.</description>
       </attribute>
+      <attribute>
+         <name>searchLinkLabel</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>label to be used</description>
+      </attribute>
+      <attribute>
+         <name>searchLinkTooltip</name>
+         <required>false</required>
+         <rtexprvalue>true</rtexprvalue>
+         <description>custom message key for the tooltip to be used for search link</description>
+      </attribute>
    </tag>
 
    <tag>
@@ -314,13 +326,17 @@
       <tag-class>ee.webmedia.alfresco.common.web.ConvertIntWithMsgTag</tag-class>
       <body-content>JSP</body-content>
 
-      <description>Integer converter with custom message</description>
+      <description>Integer converter that creates error message that could contain problematic field name  
+      1) resolved based on label of the column in richList, where this editable component is
+      or some extra information
+      2) customMsgKey attribute
+      </description>
 
       <attribute>
-         <name>msgKey</name>
-         <required>true</required>
+         <name>customMsgKey</name>
+         <required>false</required>
          <rtexprvalue>true</rtexprvalue>
-         <description>translation message to be used with error message</description>
+         <description>translation message to be used with error message - by default translation is constructed based on label of the column in richList, where this editable component is</description>
       </attribute>
    </tag>
 

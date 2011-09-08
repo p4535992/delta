@@ -9,6 +9,12 @@
 <%@ include file="searchPanel.jsp" %>
 </a:booleanEvaluator>
 <a:panel id="classificator-details" styleClass="panel-100" label="#{msg.classificator_metadata}" progressive="true" >
+<a:booleanEvaluator value="#{ClassificatorDetailsDialog.unsavedClassificator}">
+   <a:panel id="new-classificator-message" styleClass="message">
+      <h:graphicImage url="/images/icons/info_icon.gif" width="16" height="16" alt="" />
+      <h:outputText value="#{msg.classificators_create_classificator_confirm}" />
+   </a:panel>
+   </a:booleanEvaluator>
    <r:propertySheetGrid id="classificator-details-props" value="#{ClassificatorDetailsDialog.classificatorNode}" columns="1"
       mode="edit" externalConfig="true" labelStyleClass="propertiesLabel" />
 <a:booleanEvaluator value="#{ClassificatorDetailsDialog.savedClassificator}">
@@ -22,7 +28,7 @@
       <%-- Name column --%>
       <a:column id="col1">
          <f:facet name="header">
-            <h:outputText id="col1-sort" value="#{msg.classificator_value_name}" />
+            <a:sortLink id="col1-sort" label="#{msg.classificator_value_name}" value="valueName" styleClass="header" />
          </f:facet>
          <h:inputTextarea id="col1-in-txt" value="#{clValue.valueName}" readonly="#{clValue.readOnly}"
             styleClass="expand19-200 #{(clValue.lastNameValidationSuccess) ? '' : 'error' }" />
@@ -49,7 +55,7 @@
          <f:facet name="header">
             <h:outputText id="col7-sort" value="#{msg.classificator_value_valueData}" />
          </f:facet>
-         <h:inputTextarea id="col7-in-txt" value="#{clValue.valueData}" readonly="#{clValue.readOnly}" styleClass="classificatorTextArea" />
+         <h:inputTextarea id="col7-in-txt" value="#{clValue.valueData}" readonly="#{clValue.readOnly}" styleClass="expand19-200 classificatorTextArea" />
       </a:column>
 
       <%-- byDefault column --%>

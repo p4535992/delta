@@ -1,5 +1,6 @@
 package ee.webmedia.alfresco.common.propertysheet.generator;
 
+import static ee.webmedia.alfresco.utils.ComponentUtil.DEFAULT_SELECT_VALUE;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomAttributeNames.STYLE_CLASS;
 import static org.alfresco.web.bean.generator.BaseComponentGenerator.CustomConstants.VALUE_INDEX_IN_MULTIVALUED_PROPERTY;
 
@@ -46,7 +47,6 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
     public static final String ONCHANGE_MARKER_CLASS = "selectWithOnchangeEvent";
     // call javascript function that takes current element id as parameter
     public static final String ONCHANGE_PARAM_MARKER_CLASS = "selectWithOnchangeEventParam";
-    public static final String DEFAULT_SELECT_VALUE = "";
 
     @Override
     public UIComponent generate(FacesContext context, String id) {
@@ -197,10 +197,16 @@ public class GeneralSelectorGenerator extends BaseComponentGenerator {
         return getCustomAttributes().get(STYLE_CLASS);
     }
 
+    /**
+     * Similar method for {@link SelectItem} objects is {@link ComponentUtil#addDefault(List, FacesContext)}
+     * @param context
+     * @param results
+     */
     public static void addDefault(FacesContext context, List<UISelectItem> results) {
         UISelectItem selectItem = (UISelectItem) context.getApplication().createComponent(UISelectItem.COMPONENT_TYPE);
         selectItem.setItemLabel(MessageUtil.getMessage(context, "select_default_label"));
         selectItem.setItemValue(DEFAULT_SELECT_VALUE); // value of SelectItem can't be null
         results.add(0, selectItem);
     }
+
 }

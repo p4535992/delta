@@ -1,11 +1,14 @@
 package ee.webmedia.alfresco.cases.model;
 
+import static ee.webmedia.alfresco.app.AppConstants.DEFAULT_COLLATOR;
+
 import java.io.Serializable;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
@@ -85,12 +88,12 @@ public class Case implements Serializable, Comparable<Case> {
     public int compareTo(Case other) {
         if (StringUtils.equals(getTitle(), other.getTitle())) {
             int cmpMark;
-            if ((cmpMark = getTitle().compareTo(other.getTitle())) == 0) {
+            if ((cmpMark = DEFAULT_COLLATOR.compare(getTitle(), other.getTitle())) == 0) {
                 return 0;
             }
             return cmpMark;
         }
-        return getTitle().compareTo(other.getTitle());
+        return AppConstants.DEFAULT_COLLATOR.compare(getTitle(), other.getTitle());
     }
 
     @Override

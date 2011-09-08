@@ -108,11 +108,6 @@
                <mandatory enforced="true">false</mandatory>
                <default>false</default>
             </property>
-            <property name="doctype:showValidityData">
-               <type>d:boolean</type>
-               <mandatory enforced="true">false</mandatory>
-               <default>false</default>
-            </property>
             <property name="doctype:latestVersion">
                <type>d:int</type>
                <default>1</default>

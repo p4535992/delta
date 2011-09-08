@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.classificator.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getClassificatorService;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -12,10 +14,8 @@ import javax.faces.event.ActionEvent;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.util.GUID;
-import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
-import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.data.UIRichList;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -137,7 +137,7 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
         }
         if (hasErrors || messages.size() > 0) {
             for (String message : messages) {
-                Utils.addErrorMessage(Application.getMessage(context, message));
+                MessageUtil.addErrorMessage(message);
             }
             outcome = null;
             super.isFinished = false;
@@ -160,18 +160,13 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
         if (selectedClassificator != null) {
             return selectedClassificator.getName();
         }
-        return super.getContainerTitle();
+        return MessageUtil.getMessage("classificators_create");
     }
 
-    @Override
-    public String getActionsConfigId() {// TODO DLSeadist tuleb teha et, nupp "kustuta" kuvatakse ka kui deleteEnabled = false ja klassifikaator ei ole seotud ühegi andmeväljaga
-        if (selectedClassificator != null && selectedClassificator.isAddRemoveValues()) {
-            if (selectedClassificator.isDeleteEnabled()) {
-                return ADD_REMOVE_VALUE_ACTION_GROUP;
-            }
-            return ADD_VALUE_ACTION_GROUP;
-        }
-        return "";
+    /** used by delete action to do actual deleting (after user has confirmed deleting in DeleteDialog) */
+    public String deleteClassificator(@SuppressWarnings("unused") ActionEvent event) {
+        getClassificatorService().deleteClassificator(selectedClassificator);
+        return getCloseOutcome(2);
     }
 
     /**

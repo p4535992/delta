@@ -14,6 +14,7 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.document.type.model.DocumentType;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 
@@ -107,7 +108,7 @@ public class DocumentTypeDialog extends BaseDialogBean {
         Arrays.sort(resultArray, new Comparator<SelectItem>() {
             @Override
             public int compare(SelectItem a, SelectItem b) {
-                return a.getLabel().compareTo(b.getLabel());
+                return AppConstants.DEFAULT_COLLATOR.compare(a.getLabel(), b.getLabel());
             }
         });
         return resultArray;

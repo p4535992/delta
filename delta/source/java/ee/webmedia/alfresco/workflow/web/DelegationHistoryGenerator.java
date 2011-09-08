@@ -31,6 +31,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
@@ -74,7 +75,7 @@ public class DelegationHistoryGenerator extends BaseComponentGenerator {
             public Comparable<?> tr(Task input) {
                 return input.getOwnerName();
             }
-        }, new NullComparator()));
+        }, new NullComparator(AppConstants.DEFAULT_COLLATOR)));
         @SuppressWarnings("unchecked")
         Comparator<Task> tmp = chain;
         return tmp;

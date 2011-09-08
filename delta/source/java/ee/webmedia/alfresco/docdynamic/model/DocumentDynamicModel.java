@@ -18,13 +18,6 @@ public interface DocumentDynamicModel {
     interface Props {
         QName DOCUMENT_TYPE_ID = QName.createQName(URI, "documentTypeId");
         QName DOCUMENT_TYPE_VERSION_NR = QName.createQName(URI, "documentTypeVersionNr");
-
-        QName FUNCTION = QName.createQName(URI, "function");
-        QName SERIES = QName.createQName(URI, "series");
-        QName VOLUME = QName.createQName(URI, "volume");
-        QName CASE = QName.createQName(URI, "case");
-
-        QName DOC_NAME = QName.createQName(URI, "docName");
     }
 
 }

@@ -38,7 +38,7 @@ public class MessageUtil {
         final Object[] translatedValuesForHolders = getTranslatedMessageValueHolders(context, messageValuesForHolders);
         if (isMessageTranslated(messageId, message)) {
             if (translatedValuesForHolders != null) {
-                message = MessageFormat.format(message, translatedValuesForHolders);
+                message = format(message, translatedValuesForHolders);
             }
         } else {
             String i18nUtilMsg = getI18nUtilMessage(new MessageDataImpl(messageId, translatedValuesForHolders));
@@ -47,6 +47,15 @@ public class MessageUtil {
             }
         }
         return message;
+    }
+
+    private static String format(String message, final Object[] translatedValuesForHolders) {
+        try {
+            return MessageFormat.format(message, translatedValuesForHolders);
+        } catch (IllegalArgumentException e) {
+            // if e.getMessage() is "can't parse argument number SOME_STRING" then message contains "{SOME_STRING}" - expected that message argument number is between "{" and "}"
+            throw new UnableToPerformException(e.getMessage() + "\nProbably there is/are invalid character(s) in translation message.\nmessage=" + message, e);
+        }
     }
 
     private static Object[] getTranslatedMessageValueHolders(FacesContext context, Object... messageValuesForHolders) {
@@ -82,7 +91,7 @@ public class MessageUtil {
 
     private static String localizeMessage(FacesContext context, MessageData messageData) {
         final String translationWithPlaceholders = Application.getMessage(context, messageData.getMessageKey());
-        return MessageFormat.format(translationWithPlaceholders, getTranslatedMessageParameters(context, messageData));
+        return format(translationWithPlaceholders, getTranslatedMessageParameters(context, messageData));
     }
 
     /**
@@ -270,11 +279,11 @@ public class MessageUtil {
     }
 
     /**
-     * Resolves translation and escapes it for JavaScript. Since it is mostly used from JSP, values support special notation. 
-     * When message placeholder value starts with "msg." prefix, then this prefix is stripped and rest of the value is processed with getMessage().  
+     * Resolves translation and escapes it for JavaScript. Since it is mostly used from JSP, values support special notation.
+     * When message placeholder value starts with "msg." prefix, then this prefix is stripped and rest of the value is processed with getMessage().
      */
     public static String getMessageAndEscapeJS(String messageId, Object... messageValuesForHolders) {
-        if(messageValuesForHolders == null) {
+        if (messageValuesForHolders == null) {
             return StringEscapeUtils.escapeJavaScript(getMessage(messageId, messageValuesForHolders));
         }
 
@@ -289,4 +298,9 @@ public class MessageUtil {
 
         return StringEscapeUtils.escapeJavaScript(getMessage(messageId, resolvedValues.toArray()));
     }
+
+    public static String getMessage(Enum<?> c) {
+        return getMessage("constant_" + c.getClass().getCanonicalName() + "_" + c.name());
+    }
+
 }

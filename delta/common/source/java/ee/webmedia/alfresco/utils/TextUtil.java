@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import org.alfresco.web.ui.common.converter.MultiValueConverter;
 import org.apache.commons.lang.StringUtils;
 
 public class TextUtil {
@@ -19,6 +20,13 @@ public class TextUtil {
             }
         }
         return s.toString();
+    }
+
+    public static String collectionToString(Collection<String> values) {
+        if (values == null || values.isEmpty()) {
+            return "";
+        }
+        return new MultiValueConverter().getAsString(null, null, values);
     }
 
     public static String joinStringAndStringWithComma(String value1, String value2) {

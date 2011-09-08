@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.common.propertysheet.converter;
 
+import static ee.webmedia.alfresco.utils.ComponentUtil.DEFAULT_SELECT_VALUE;
+
 import javax.faces.component.StateHolder;
 import javax.faces.component.UIComponent;
 import javax.faces.component.html.HtmlSelectOneMenu;
@@ -8,8 +10,6 @@ import javax.faces.convert.Converter;
 import javax.faces.convert.ConverterException;
 
 import org.alfresco.service.cmr.repository.datatype.DefaultTypeConverter;
-
-import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 
 /**
  * Converter that converts String->String based on Enum name.
@@ -36,7 +36,7 @@ public class EnumConverter implements Converter, StateHolder {
     public String getAsObject(FacesContext context, UIComponent enumSelect, String strEnumValue) throws ConverterException {
         try {
             Enum<?> enumValue = DefaultTypeConverter.INSTANCE.convert(getEnumClass(enumClass), strEnumValue);
-            return enumValue == null ? GeneralSelectorGenerator.DEFAULT_SELECT_VALUE : enumValue.name();
+            return enumValue == null ? DEFAULT_SELECT_VALUE : enumValue.name();
         } catch (Exception e) {
             throw new ConverterException("Failed to convert to enum", e);
         }

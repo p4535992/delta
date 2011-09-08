@@ -16,7 +16,7 @@
             <image>/images/icons/template.gif</image>
             <action-listener>#{DocumentDialog.populateTemplate}</action-listener>
             <params>
-               <param name="documentNodeRef">#{DocumentDialog.node.nodeRef}</param>
+               <param name="documentNodeRef">#{DocumentDialogHelperBean.nodeRef}</param>
             </params>
          </action>
 
@@ -194,7 +194,7 @@
             <image>/images/icons/versioned_properties.gif</image>
             <action>#{DocumentSendOutDialog.init}</action>
             <action-listener>#{DocumentSendOutDialog.loadDocument}</action-listener>
-            <params><param name="documentNodeRef">#{DialogManager.bean.node.nodeRef}</param></params>
+            <params><param name="documentNodeRef">#{DocumentDialogHelperBean.nodeRef}</param></params>
          </action>
 
          <action id="document_manage_permissions">
@@ -204,7 +204,7 @@
             <action>dialog:managePrivilegesDialog</action>
             <action-listener>#{ManagePrivilegesDialog.init}</action-listener>
             <params>
-               <param name="manageableRef">#{DocumentDialog.node.nodeRef}</param>
+               <param name="manageableRef">#{DocumentDialogHelperBean.nodeRef}</param>
                <param name="manageablePermissions">viewDocumentMetaData editDocumentMetaData viewDocumentFiles editDocumentFiles deleteDocumentFiles deleteDocumentMetaData</param>
             </params>
          </action>
@@ -252,6 +252,13 @@
             <params>
                <param name="subPropsheetsRequiredCount">1</param><!-- contract must have at least 2 parties(1 main party + 1 additional party) -->
             </params>
+         </action>
+
+         <action id="document_changeByNewDocument">
+            <evaluator>ee.webmedia.alfresco.document.web.evaluator.ChangeByNewDocumentEvaluator</evaluator>
+            <label-id>document_changeByNewDocument</label-id>
+            <image>/images/icons/versioned_properties.gif</image>
+            <action-listener>#{DocumentDynamicDialog.changeByNewDocument}</action-listener>
          </action>
 
          <action-group id="document_errandOrderApplicant">

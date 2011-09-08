@@ -15,7 +15,7 @@
             icon="/images/icons/users_large.gif" title-id="manage_invited_users" actions-config-id="browse_actions_permissions" />
 
          <dialog name="permissionsAddDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-add-dialog.jsp" managed-bean="PermissionsAddDialog"
-            icon="/images/icons/users_large.gif" title-id="manage_invited_users" />
+            icon="/images/icons/users_large.gif" />
 
          <dialog name="permissionsDeleteDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/user/web/permissions-delete-dialog.jsp" managed-bean="PermissionsDeleteDialog"
             icon="/images/icons/users_large.gif" title-id="manage_invited_users" />
@@ -31,6 +31,7 @@
             <params>
                <param name="nodeRef">#{PermissionsListDialog.nodeRef}</param>
                <param name="permission">#{PermissionsListDialog.permission}</param>
+               <param name="dialogTitleId">#{PermissionsListDialog.alternateDialogTitleId}</param>
             </params>
          </action>
 
@@ -69,8 +70,10 @@
          <show-property name="cm:lastName" />
          <show-property name="cm:userName" display-label-id="user_username" />
          <show-property name="cm:firstName" />
-         <show-property name="unit" display-label-id="unit" />
+         <show-property name="{temp}unit" display-label-id="unit" />
+         <show-property name="{temp}jobAddress" display-label-id="user_jobAddress" />
          <show-property name="cm:jobtitle" display-label-id="jobtitle" />
+         <show-property name="cm:serviceRank" display-label-id="user_serviceRank" rendered="#{UserDetailsDialog.isServiceRankRendered}"/>
          <show-property name="cm:telephone" display-label-id="telephone" />
          <show-property name="cm:email" display-label-id="user_email" />
          <show-property name="cm:homeFolder" display-label-id="user_home_folder" component-generator="HomespaceLinkGenerator" />

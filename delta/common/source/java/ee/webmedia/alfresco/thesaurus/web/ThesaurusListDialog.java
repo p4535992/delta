@@ -1,15 +1,20 @@
 package ee.webmedia.alfresco.thesaurus.web;
 
 import static ee.webmedia.alfresco.app.AppConstants.CHARSET;
+import static ee.webmedia.alfresco.utils.ComponentUtil.addDefault;
 
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
+import javax.faces.model.SelectItem;
 import javax.servlet.http.HttpServletResponse;
 
 import org.alfresco.web.bean.dialog.BaseDialogBean;
@@ -17,6 +22,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.myfaces.application.jsp.JspStateManagerImpl;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.docadmin.web.FieldGroupDetailsDialog;
 import ee.webmedia.alfresco.thesaurus.model.Thesaurus;
 import ee.webmedia.alfresco.thesaurus.service.ThesaurusService;
 
@@ -41,7 +47,7 @@ public class ThesaurusListDialog extends BaseDialogBean {
         thesauri = null;
     }
 
-    public void export(ActionEvent event) {
+    public void export(@SuppressWarnings("unused") ActionEvent event) {
         HttpServletResponse response = (HttpServletResponse) FacesContext.getCurrentInstance().getExternalContext().getResponse();
         response.setCharacterEncoding(CHARSET);
         OutputStream outputStream = null;
@@ -99,9 +105,22 @@ public class ThesaurusListDialog extends BaseDialogBean {
     protected ThesaurusService getThesaurusService() {
         if (thesaurusService == null) {
             thesaurusService = (ThesaurusService) FacesContextUtils.getRequiredWebApplicationContext(FacesContext.getCurrentInstance())
-            .getBean(ThesaurusService.BEAN_NAME);
+                    .getBean(ThesaurusService.BEAN_NAME);
         }
         return thesaurusService;
+    }
+
+    /** used by other property sheet (for example, to generate {@link FieldGroupDetailsDialog}) */
+    public List<SelectItem> getThesauriSelectItems(FacesContext context, @SuppressWarnings("unused") UIInput selectComponent) {
+        List<Thesaurus> thesauriList = getThesauri();
+        Collections.sort(thesauriList);
+        List<SelectItem> results = new ArrayList<SelectItem>(thesauriList.size() + 1);
+        addDefault(results, context);
+        for (Thesaurus thesaurus : thesauriList) {
+            SelectItem selectItem = new SelectItem(thesaurus.getName(), thesaurus.getName());
+            results.add(selectItem);
+        }
+        return results;
     }
     // END: getters / setters
 }

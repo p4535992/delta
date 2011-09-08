@@ -2,9 +2,7 @@ package ee.webmedia.alfresco.common.ajax;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -89,7 +87,7 @@ public class AjaxBean implements Serializable {
         // Phase 1: Restore view
         UIViewRoot viewRoot = restoreViewRoot(context, viewName);
 
-        UIComponent component = ComponentUtil.findChildComponentById(context, viewRoot, componentClientId);
+        UIComponent component = ComponentUtil.findChildComponentById(context, viewRoot, componentClientId, true);
         Assert.notNull(component, String.format("Component with clientId=%s was not found", componentClientId));
 
         // The following is copied from RestoreStateUtils#recursivelyHandleComponentReferencesAndSetValid
@@ -178,17 +176,6 @@ public class AjaxBean implements Serializable {
         }
         String jsonHiddenInputNames = new JSONSerializer().serialize(formHiddenInputs);
         out.write("HIDDEN_INPUT_NAMES_JSON:" + jsonHiddenInputNames);
-    }
-
-    private static JSONSerializer SERIALIZER = new JSONSerializer(); // FIXME DLSeadist final
-
-    public static void main(String[] args) {
-        SERIALIZER = new JSONSerializer();
-        // HashSet<String> set = new HashSet<String>(null);
-        HashSet<String> set = new HashSet<String>(Arrays.asList("test:1", "test,2"));
-        String serialize = SERIALIZER.serialize(set);
-        System.out.println(serialize);
-
     }
 
     protected String getParam(FacesContext context, String paramKey) {

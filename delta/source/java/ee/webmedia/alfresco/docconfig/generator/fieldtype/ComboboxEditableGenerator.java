@@ -1,8 +1,14 @@
 package ee.webmedia.alfresco.docconfig.generator.fieldtype;
 
-import org.apache.commons.lang.StringUtils;
+import java.util.Collections;
+import java.util.List;
+
+import org.alfresco.web.ui.repo.RepoConstants;
 
 import ee.webmedia.alfresco.classificator.constant.FieldType;
+import ee.webmedia.alfresco.classificator.model.Classificator;
+import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
+import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigElement.ItemConfigVO;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.BaseTypeFieldGenerator;
@@ -13,6 +19,8 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
  */
 public class ComboboxEditableGenerator extends BaseTypeFieldGenerator {
 
+    private ClassificatorService classificatorService;
+
     @Override
     protected FieldType[] getFieldTypes() {
         return new FieldType[] { FieldType.COMBOBOX_EDITABLE };
@@ -21,12 +29,25 @@ public class ComboboxEditableGenerator extends BaseTypeFieldGenerator {
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
-        if (StringUtils.isBlank(field.getClassificator())) {
-            item.setComponentGenerator("TextAreaGenerator");
+        final List<ClassificatorValue> values;
+        if (field.getClassificator() == null) {
+            // Only "case" field should have this special case
+            values = Collections.emptyList();
+        } else {
+            final Classificator classificator = classificatorService.getClassificatorByName(field.getClassificator());
+            values = classificatorService.getAllClassificatorValues(classificator);
+        }
+        if (values.isEmpty()) {
+            item.setComponentGenerator(RepoConstants.GENERATOR_TEXT_AREA);
             item.setStyleClass("expand19-200");
         } else {
-            item.setComponentGenerator("SuggesterGenerator");
+            item.setComponentGenerator("ClassificatorSuggesterGenerator");
+            item.setClassificatorName(field.getClassificator());
         }
+    }
+
+    public void setClassificatorService(ClassificatorService classificatorService) {
+        this.classificatorService = classificatorService;
     }
 
 }

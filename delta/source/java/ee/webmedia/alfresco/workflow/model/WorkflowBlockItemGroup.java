@@ -53,12 +53,15 @@ public class WorkflowBlockItemGroup implements Serializable {
         // ComparatorChain is not thread-safe at construction time, but it is thread-safe to perform multiple comparisons after all the setup operations are
         // complete.
         ComparatorChain chain = new ComparatorChain();
-        chain.addComparator(new TransformingComparator(new Transformer() {
-            @Override
-            public Object transform(Object input) {
-                return -((WorkflowBlockItemGroup) input).getWorkflowCount();
-            }
-        }, new NullComparator()));
+        // CL task 168225 - Maiga asked not to delete code
+        // for comparing compound workflows by number of workflows
+        // as this functionality may be needed again
+        // chain.addComparator(new TransformingComparator(new Transformer() {
+        // @Override
+        // public Object transform(Object input) {
+        // return -((WorkflowBlockItemGroup) input).getWorkflowCount();
+        // }
+        // }, new NullComparator()));
         chain.addComparator(new TransformingComparator(new Transformer() {
             @Override
             public Object transform(Object input) {

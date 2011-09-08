@@ -256,7 +256,8 @@ public class UserServiceImpl implements UserService {
         return nodeService.getProperties(personRef);
     }
 
-    private NodeRef getPerson(String userName) {
+    @Override
+    public NodeRef getPerson(String userName) {
         if (StringUtils.isBlank(userName)) {
             return null;
         }

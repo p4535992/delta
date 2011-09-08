@@ -26,6 +26,7 @@ package org.alfresco.web.bean.groups;
 
 import java.text.MessageFormat;
 import java.util.Map;
+import java.util.Set;
 
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIComponent;
@@ -38,6 +39,7 @@ import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.ui.common.Utils;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -78,30 +80,29 @@ public class CreateGroupDialog extends BaseDialogBean
    protected String finishImpl(FacesContext context, String outcome) throws Exception
    {
       // create new Group using Authentication Service
+       Set<String> allGroupNames = getAuthService().getAllAuthorities(AuthorityType.GROUP);
+       for (String groupName : allGroupNames) {
+        groupName = groupName.replace(AuthorityType.GROUP.getPrefixString(), "");
+        if(StringUtils.equalsIgnoreCase(name, groupName)){
+            MessageUtil.addErrorMessage(MSG_ERR_EXISTS);
+            isFinished = false;
+            return null;
+        }
+    }
       String groupName = this.getAuthService().getName(AuthorityType.GROUP, this.name);
-      if (this.getAuthService().authorityExists(groupName) == false)
-      {
          this.getAuthService().createAuthority(AuthorityType.GROUP, this.name);
          if (this.parentGroup != null)
          {
              this.getAuthService().addAuthority(this.parentGroup, groupName);
          }
          MessageUtil.addInfoMessage("save_success");
-      }
-      else
-      {
-         Utils.addErrorMessage(Application.getMessage(context, MSG_ERR_EXISTS));
-         outcome = null;
-         isFinished = false;
-      }
-
       return outcome;
    }
 
    @Override
    public String getFinishButtonLabel()
    {
-      return Application.getMessage(FacesContext.getCurrentInstance(), MSG_BUTTON_NEW_GROUP);
+      return MessageUtil.getMessage(MSG_BUTTON_NEW_GROUP);
    }
 
    @Override
@@ -115,7 +116,7 @@ public class CreateGroupDialog extends BaseDialogBean
       }
       else
       {
-         subtitle = Application.getMessage(FacesContext.getCurrentInstance(), MSG_ROOT_GROUPS);
+         subtitle = MessageUtil.getMessage(MSG_ROOT_GROUPS);
       }
 
       return subtitle;
@@ -162,7 +163,7 @@ public class CreateGroupDialog extends BaseDialogBean
       
       if (name.indexOf('"') != -1 || name.indexOf('\\') != -1)
       {
-         String err = MessageFormat.format(Application.getMessage(context, MSG_ERR_NAME), 
+          String err = MessageFormat.format(MessageUtil.getMessage(MSG_ERR_NAME), 
                   new Object[] { "\", \\" });
          throw new ValidatorException(new FacesMessage(err));
       }

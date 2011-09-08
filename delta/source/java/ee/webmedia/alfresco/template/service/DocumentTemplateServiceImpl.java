@@ -139,8 +139,8 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         log.debug("Creating a file from template for document: " + documentNodeRef);
         final Map<QName, Serializable> docProp = nodeService.getProperties(documentNodeRef);
 
-        String name = ((String) docProp.get(DocumentCommonModel.Props.DOC_NAME)) + "." + mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD);
-        String displayName = fileService.getUniqueFileDisplayName(documentNodeRef, name);
+        String name = ((String) docProp.get(DocumentCommonModel.Props.DOC_NAME));
+        String displayName = fileService.getUniqueFileDisplayName(documentNodeRef, name + "." + mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD));
         name = FilenameUtil.replaceAmpersand(ISOLatin1Util.removeAccents(FilenameUtil.buildFileName(name,
                 mimetypeService.getExtension(MimetypeMap.MIMETYPE_WORD))));
         name = FilenameUtil.replaceNonAsciiCharacters(name);

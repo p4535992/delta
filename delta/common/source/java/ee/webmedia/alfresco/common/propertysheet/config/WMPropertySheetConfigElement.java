@@ -11,10 +11,13 @@ import org.alfresco.web.config.PropertySheetConfigElement;
 import org.alfresco.web.config.PropertySheetElementReader;
 import org.springframework.util.Assert;
 
+import ee.webmedia.alfresco.common.propertysheet.classificatorselector.ClassificatorSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
+import ee.webmedia.alfresco.common.propertysheet.search.Search;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
+import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 
 /**
  * Custom PropertySheetConfigElement that also holds custom attributes read from "show-property" element.
@@ -85,22 +88,22 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         public void setDisplayLabel(String displayLabel) {
             this.displayLabel = displayLabel;
-            setCustomAttribute(PropertySheetElementReader.ATTR_DISPLAY_LABEL, displayLabel);
+            setCustomAttributeAndIgnoreNullValue(PropertySheetElementReader.ATTR_DISPLAY_LABEL, displayLabel);
         }
 
         public void setDisplayLabelId(String displayLabelId) {
             this.displayLabelId = displayLabelId;
-            setCustomAttribute(PropertySheetElementReader.ATTR_DISPLAY_LABEL_ID, displayLabelId);
+            setCustomAttributeAndIgnoreNullValue(PropertySheetElementReader.ATTR_DISPLAY_LABEL_ID, displayLabelId);
         }
 
         public void setConverter(String converter) {
             this.converter = converter;
-            setCustomAttribute(PropertySheetElementReader.ATTR_CONVERTER, converter);
+            setCustomAttributeAndIgnoreNullValue(PropertySheetElementReader.ATTR_CONVERTER, converter);
         }
 
         public void setComponentGenerator(String componentGenerator) {
             this.componentGenerator = componentGenerator;
-            setCustomAttribute(PropertySheetElementReader.ATTR_COMPONENT_GENERATOR, componentGenerator);
+            setCustomAttributeAndIgnoreNullValue(PropertySheetElementReader.ATTR_COMPONENT_GENERATOR, componentGenerator);
         }
 
         public void setReadOnly(boolean readOnly) {
@@ -175,17 +178,20 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
             for (Entry<String, String> entry : propertySheetItemAttributes.entrySet()) {
                 Assert.notNull(entry.getValue(), "Attribute key '" + entry.getKey() + "' has null value");
             }
-            customAttributes.putAll(propertySheetItemAttributes);
+            customAttributes = propertySheetItemAttributes;
         }
 
-        // TODO FIXME XXX DLSeadist Alar - implement it differently
+        protected void setCustomAttributeAndIgnoreNullValue(String key, String value) {
+            if (value == null) {
+                return;
+            }
+            setCustomAttribute(key, value);
+        }
+
         protected void setCustomAttribute(String key, String value) {
             Assert.notNull(key, "Attribute with null key not allowed");
-            if (value == null) {
-                customAttributes.remove(key);
-            } else {
-                customAttributes.put(key, value);
-            }
+            Assert.notNull(value, "Attribute key '" + key + "' has null value");
+            customAttributes.put(key, value);
         }
 
         public void setForcedMandatory(Boolean forcedMandatory) {
@@ -215,6 +221,47 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
         public void setSuggesterValues(String valueBinding) {
             setCustomAttribute(SuggesterGenerator.ComponentAttributeNames.SUGGESTER_VALUES, valueBinding);
         }
+
+        public void setClassificatorName(String classificatorName) {
+            setCustomAttribute(ClassificatorSelectorGenerator.ATTR_CLASSIFICATOR_NAME, classificatorName);
+        }
+
+        public void setAllowCommaAsDecimalSeparator(Boolean allowCommaAsDecimalSeparator) {
+            setCustomAttribute(WMUIProperty.ALLOW_COMMA_AS_DECIMAL_SEPARATOR_ATTR, allowCommaAsDecimalSeparator == null ? null : allowCommaAsDecimalSeparator.toString());
+        }
+
+        public void setPickerCallback(String pickerCallback) {
+            setCustomAttribute(Search.PICKER_CALLBACK_KEY, pickerCallback);
+        }
+
+        public void setDialogTitleId(String dialogTitleId) {
+            setCustomAttribute(Search.DIALOG_TITLE_ID_KEY, dialogTitleId);
+        }
+
+        public void setEditable(Boolean editable) {
+            setCustomAttribute("editable", editable == null ? null : editable.toString());
+        }
+
+        public void setAjaxParentLevel(int ajaxParentLevel) {
+            setCustomAttribute(Search.AJAX_PARENT_LEVEL_KEY, Integer.toString(ajaxParentLevel));
+        }
+
+        public void setSetterCallback(String setterCallback) {
+            setCustomAttribute(Search.SETTER_CALLBACK, setterCallback);
+        }
+
+        public void setMandatoryIf(String mandatoryIf) {
+            setCustomAttribute(MandatoryIfValidator.ATTR_MANDATORY_IF, mandatoryIf);
+        }
+
+        public void setShowFilter(Boolean showFilter) {
+            setCustomAttribute(Search.SHOW_FILTER_KEY, showFilter == null ? null : showFilter.toString());
+        }
+
+        public void setFilters(String filtersBinding) {
+            setCustomAttribute(Search.FILTERS_KEY, filtersBinding);
+        }
+
     }
 
     public void addItem(ItemConfigVO itemConfig) {

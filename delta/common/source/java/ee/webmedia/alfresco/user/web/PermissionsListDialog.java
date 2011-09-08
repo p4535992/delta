@@ -41,13 +41,25 @@ public class PermissionsListDialog extends BaseDialogBean {
 
     @Override
     public String cancel() {
-        nodeRef = null;
-        permission = null;
-        restored();
+        reset();
         return super.cancel();
     }
 
+    private void reset() {
+        nodeRef = null;
+        permission = null;
+        authorities = null;
+        alternateConfigId = null;
+        callbackMethodBinding = null;
+        alternateDialogTitleId = null;
+        if (authoritiesRichList != null) {
+            authoritiesRichList.setValue(null);
+        }
+    }
+
     public void setup(ActionEvent event) {
+        reset();
+
         nodeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
         permission = ActionUtil.getParam(event, "permission");
         if (ActionUtil.hasParam(event, "alternateConfigId")) {
@@ -59,7 +71,6 @@ public class PermissionsListDialog extends BaseDialogBean {
         if (ActionUtil.hasParam(event, "callbackMethodBinding")) {
             callbackMethodBinding = "#{" + ActionUtil.getParam(event, "callbackMethodBinding") + "}";
         }
-        restored();
     }
 
     public void removeAuthorityAndSave(ActionEvent event) {
@@ -98,10 +109,7 @@ public class PermissionsListDialog extends BaseDialogBean {
 
     @Override
     public void restored() {
-        authorities = null;
-        if (authoritiesRichList != null) {
-            authoritiesRichList.setValue(null);
-        }
+        reset();
     }
 
     // START: getters / setters
@@ -146,6 +154,10 @@ public class PermissionsListDialog extends BaseDialogBean {
 
     public void setCallbackMethodBinding(String callbackMethodBinding) {
         this.callbackMethodBinding = callbackMethodBinding;
+    }
+
+    public String getAlternateDialogTitleId() {
+        return alternateDialogTitleId;
     }
 
     // END: getters / setters

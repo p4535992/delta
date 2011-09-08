@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.substitute.model;
 
+import static ee.webmedia.alfresco.document.model.Document.dateFormat;
+
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
@@ -116,6 +118,10 @@ public class Substitute implements Serializable {
         return substitutionStartDate;
     }
 
+    public String getSubstitutionStartDateFormatted() {
+        return dateFormat.format(substitutionStartDate);
+    }
+
     public void setSubstitutionStartDate(Date substitutionStartDate) {
         this.substitutionStartDate = substitutionStartDate;
     }
@@ -124,8 +130,17 @@ public class Substitute implements Serializable {
         return substitutionEndDate;
     }
 
+    public String getSubstitutionEndDateFormatted() {
+        return dateFormat.format(substitutionEndDate);
+    }
+
     public void setSubstitutionEndDate(Date substitutionEndDate) {
         this.substitutionEndDate = substitutionEndDate;
+    }
+
+    public boolean isActive() {
+        Date currentDate = DateUtils.truncate(new Date(), Calendar.DATE);
+        return currentDate.after(substitutionStartDate) && currentDate.before(substitutionEndDate);
     }
 
     public void setValid(boolean valid) {

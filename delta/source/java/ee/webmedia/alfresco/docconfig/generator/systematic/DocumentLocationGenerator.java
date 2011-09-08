@@ -1,6 +1,10 @@
 package ee.webmedia.alfresco.docconfig.generator.systematic;
 
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.CASE;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.FUNCTION;
 import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.SERIES;
+import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLUME;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,14 +37,13 @@ import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigEle
 import ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.BaseSystematicFieldGenerator;
 import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
-import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.AccessRestrictionState;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
@@ -68,10 +71,10 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
     @Override
     protected QName[] getFieldIds() {
         return new QName[] {
-                DocumentDynamicModel.Props.FUNCTION,
-                DocumentDynamicModel.Props.SERIES,
-                DocumentDynamicModel.Props.VOLUME,
-                DocumentDynamicModel.Props.CASE };
+                FUNCTION,
+                SERIES,
+                VOLUME,
+                CASE };
     }
 
     // TODO et propertite nimed oleksid docdyn
@@ -100,7 +103,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
-        if (DocumentDynamicModel.Props.FUNCTION.equals(field.getFieldId())) {
+        if (FUNCTION.equals(field.getFieldId())) {
+            item.setComponentGenerator("GeneralSelectorGenerator");
             item.setConverter(NodeRefConverter.class.getName());
             item.setSelectionItems(getBindingName("getFunctions"));
             item.setValueChangeListener(getBindingName("functionValueChanged"));
@@ -108,7 +112,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
             generatorResults.generateAndAddViewModeText(FUNCTION_LABEL.toString(), field.getName());
             return;
-        } else if (DocumentDynamicModel.Props.SERIES.equals(field.getFieldId())) {
+        } else if (SERIES.equals(field.getFieldId())) {
+            item.setComponentGenerator("GeneralSelectorGenerator");
             item.setConverter(NodeRefConverter.class.getName());
             item.setSelectionItems(getBindingName("getSeries"));
             item.setValueChangeListener(getBindingName("seriesValueChanged"));
@@ -116,7 +121,8 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
             generatorResults.generateAndAddViewModeText(SERIES_LABEL.toString(), field.getName());
             return;
-        } else if (DocumentDynamicModel.Props.VOLUME.equals(field.getFieldId())) {
+        } else if (VOLUME.equals(field.getFieldId())) {
+            item.setComponentGenerator("GeneralSelectorGenerator");
             item.setConverter(NodeRefConverter.class.getName());
             item.setSelectionItems(getBindingName("getVolumes"));
             item.setValueChangeListener(getBindingName("volumeValueChanged"));
@@ -124,18 +130,17 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
             generatorResults.generateAndAddViewModeText(VOLUME_LABEL.toString(), field.getName());
             return;
-        } else if (DocumentDynamicModel.Props.CASE.equals(field.getFieldId())) {
+        } else if (CASE.equals(field.getFieldId())) {
             item.setName(CASE_LABEL_EDITABLE.toString());
+            item.setForcedMandatory(true);
             item.setComponentGenerator("SuggesterGenerator");
             item.setSuggesterValues(getBindingName("getCases"));
             item.setValueChangeListener(getBindingName("volumeValueChanged"));
             item.setStyleClass("long");
-            // item.setForcedMandatory(true);
             item.setDontRenderIfDisabled(true);
             item.setShowInViewMode(false);
 
-            final ItemConfigVO viewItem = generatorResults.generateAndAddViewModeText(CASE_LABEL.toString(), field.getName());
-            // viewItem.setDontRenderIfDisabled(true);
+            generatorResults.generateAndAddViewModeText(CASE_LABEL.toString(), field.getName());
             return;
         }
         throw new RuntimeException("Unsupported field: " + field);
@@ -158,12 +163,12 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
         @Override
         public void reset(boolean inEditMode) {
-            final WmNode document = dialogDataProvider.getNode();
+            final Node document = dialogDataProvider.getNode();
             if (inEditMode) {
-                NodeRef functionRef = (NodeRef) document.getProperties().get(DocumentDynamicModel.Props.FUNCTION);
-                NodeRef seriesRef = (NodeRef) document.getProperties().get(DocumentDynamicModel.Props.SERIES);
-                NodeRef volumeRef = (NodeRef) document.getProperties().get(DocumentDynamicModel.Props.VOLUME);
-                NodeRef caseRef = (NodeRef) document.getProperties().get(DocumentDynamicModel.Props.CASE);
+                NodeRef functionRef = (NodeRef) document.getProperties().get(FUNCTION);
+                NodeRef seriesRef = (NodeRef) document.getProperties().get(SERIES);
+                NodeRef volumeRef = (NodeRef) document.getProperties().get(VOLUME);
+                NodeRef caseRef = (NodeRef) document.getProperties().get(CASE);
                 String caseLabel = null;
                 if (caseRef != null) {
                     caseLabel = BeanHelper.getCaseService().getCaseByNoderef(caseRef).getTitle();
@@ -233,22 +238,22 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
         }
 
         public void seriesValueChanged(ValueChangeEvent event) {
-            WmNode document = dialogDataProvider.getNode();
-            NodeRef functionRef = (NodeRef) document.getProperties().get(DocumentDynamicModel.Props.FUNCTION);
+            Node document = dialogDataProvider.getNode();
+            NodeRef functionRef = (NodeRef) document.getProperties().get(FUNCTION);
             NodeRef seriesRef = (NodeRef) event.getNewValue();
             updateFnSerVol(functionRef, seriesRef, null, null, false);
         }
 
         public void volumeValueChanged(ValueChangeEvent event) {
-            WmNode document = dialogDataProvider.getNode();
-            NodeRef functionRef = (NodeRef) document.getProperties().get(DocumentDynamicModel.Props.FUNCTION);
-            NodeRef seriesRef = (NodeRef) document.getProperties().get(DocumentDynamicModel.Props.SERIES);
+            Node document = dialogDataProvider.getNode();
+            NodeRef functionRef = (NodeRef) document.getProperties().get(FUNCTION);
+            NodeRef seriesRef = (NodeRef) document.getProperties().get(SERIES);
             NodeRef volumeRef = (NodeRef) event.getNewValue();
             updateFnSerVol(functionRef, seriesRef, volumeRef, null, false);
         }
 
         private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel, boolean addIfMissing) {
-            WmNode document = dialogDataProvider.getNode();
+            Node document = dialogDataProvider.getNode();
             UIPropertySheet ps = dialogDataProvider.getPropertySheet();
 
             { // Function
@@ -377,10 +382,10 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
                     List<Case> allCases = BeanHelper.getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
                     cases = new ArrayList<String>(allCases.size());
                     for (Case tmpCase : allCases) {
-                        cases.add(tmpCase.getTitle());
+                        cases.add(StringUtils.trim(tmpCase.getTitle()));
                     }
                     if (StringUtils.isBlank(caseLabel) && cases.size() == 1) {
-                        caseLabel = cases.get(0);
+                        caseLabel = StringUtils.trim(cases.get(0));
                     }
                 } else {
                     cases = null;
@@ -415,14 +420,17 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
             // These only apply when called initially during creation of a new document
             // If called from eventlistener, then model values are updated after and thus overwritten
-            document.getProperties().put(DocumentDynamicModel.Props.FUNCTION.toString(), functionRef);
-            document.getProperties().put(DocumentDynamicModel.Props.SERIES.toString(), seriesRef);
-            document.getProperties().put(DocumentDynamicModel.Props.VOLUME.toString(), volumeRef);
+            document.getProperties().put(FUNCTION.toString(), functionRef);
+            document.getProperties().put(SERIES.toString(), seriesRef);
+            document.getProperties().put(VOLUME.toString(), volumeRef);
             document.getProperties().put(CASE_LABEL_EDITABLE.toString(), caseLabel);
         }
 
         private void updateAccessRestrictionProperties(NodeRef seriesRef) {
-            // TODO
+            AccessRestrictionState accessRestrictionState = dialogDataProvider.getStateHolder(AccessRestrictionGenerator.class.getName(), AccessRestrictionState.class);
+            if (accessRestrictionState != null) {
+                accessRestrictionState.updateAccessRestrictionProperties(seriesRef);
+            }
         }
 
     }
@@ -439,9 +447,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
     @Override
     public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
         final Map<String, Object> props = document.getNode().getProperties();
-        NodeRef functionRef = (NodeRef) props.get(DocumentDynamicModel.Props.FUNCTION);
-        NodeRef seriesRef = (NodeRef) props.get(DocumentDynamicModel.Props.SERIES);
-        NodeRef volumeRef = (NodeRef) props.get(DocumentDynamicModel.Props.VOLUME);
+        NodeRef functionRef = (NodeRef) props.get(FUNCTION);
+        NodeRef seriesRef = (NodeRef) props.get(SERIES);
+        NodeRef volumeRef = (NodeRef) props.get(VOLUME);
         if (functionRef == null || seriesRef == null || volumeRef == null) {
             if (log.isDebugEnabled()) {
                 log.warn("validation failed: document_validationMsg_mandatory_functionSeriesVolume");
@@ -474,7 +482,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
                     break;
                 }
             }
-            props.put(DocumentDynamicModel.Props.CASE.toString(), caseRef);
+            props.put(CASE.toString(), caseRef);
         }
 
         boolean isClosedUnitCheckNeeded = isClosedUnitCheckNeeded(document.getNodeRef(), documentService.getAncestorNodesByDocument(document.getNodeRef()), volumeRef, docCase);

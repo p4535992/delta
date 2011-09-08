@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -11,9 +12,14 @@ import java.util.regex.Pattern;
 
 import javax.faces.model.SelectItem;
 
+
 import org.apache.commons.lang.StringEscapeUtils;
+import org.alfresco.web.data.IDataContainer;
+import org.alfresco.web.data.QuickSort;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.util.HtmlUtils;
+
+import ee.webmedia.alfresco.app.AppConstants;
 
 public class WebUtil {
     /**
@@ -25,7 +31,7 @@ public class WebUtil {
     public static Comparator<SelectItem> selectItemLabelComparator = new Comparator<SelectItem>() {
         @Override
         public int compare(SelectItem a, SelectItem b) {
-            return a.getLabel().toLowerCase().compareTo(b.getLabel().toLowerCase());
+            return AppConstants.DEFAULT_COLLATOR.compare(a.getLabel(), b.getLabel());
         }
     };
 
@@ -34,7 +40,8 @@ public class WebUtil {
     }
 
     public static void sort(List<SelectItem> items) {
-        Collections.sort(items, selectItemLabelComparator);
+        QuickSort quickSort = new QuickSort(items, "label", true, IDataContainer.SORT_CASEINSENSITIVE);
+        quickSort.sort();
     }
 
     /**

@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.orgstructure.amr.service;
 
-import smit.ametnik.services.Ametnik;
+import smit.ametnik.services.AmetnikExt;
 import smit.ametnik.services.Yksus;
 
 /**
@@ -13,7 +13,7 @@ public interface AMRService {
 
     Yksus[] getYksusByAsutusId();
 
-    Ametnik[] getAmetnikByAsutusId();
+    AmetnikExt[] getAmetnikByAsutusId();
 
-    Ametnik getAmetnikByIsikukood(String socialSecurityNr);
+    AmetnikExt getAmetnikByIsikukood(String socialSecurityNr);
 }

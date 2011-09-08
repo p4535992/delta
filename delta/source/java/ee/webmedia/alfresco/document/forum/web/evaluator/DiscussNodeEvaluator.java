@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.document.forum.web.evaluator;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
+
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -9,13 +11,11 @@ import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.web.action.evaluator.BaseActionEvaluator;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.service.GeneralService;
-import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 
 /**
  * UI Action Evaluator - Discuss a node.
@@ -47,7 +47,6 @@ public class DiscussNodeEvaluator extends BaseActionEvaluator {
             }
         }
 
-        MetadataBlockBean bean = (MetadataBlockBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MetadataBlockBean.BEAN_NAME);
-        return result && !bean.isInEditMode();
+        return result && !getDocumentDialogHelperBean().isInEditMode();
     }
 }

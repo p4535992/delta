@@ -77,7 +77,7 @@
       <%-- Unit column --%>
       <a:column style="text-align:left">
          <f:facet name="header">
-            <a:sortLink label="#{msg.unit}" value="organizationId" styleClass="header" />
+            <a:sortLink label="#{msg.unit}" value="unit" styleClass="header" />
          </f:facet>
          <h:outputText value="#{u.unit}" />
       </a:column>

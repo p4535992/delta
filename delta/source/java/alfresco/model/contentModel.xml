@@ -206,6 +206,27 @@
             <property name="cm:jobtitle">
             	<type>d:text</type>
             </property>
+            <property name="cm:organizationPath">
+               <type>d:text</type>
+            </property>            
+            <property name="cm:county">
+               <type>d:text</type>
+            </property>
+            <property name="cm:municipality">
+               <type>d:text</type>
+            </property>
+            <property name="cm:village">
+               <type>d:text</type>
+            </property>
+            <property name="cm:streetHouse">
+               <type>d:text</type>
+            </property>            
+            <property name="cm:postalCode">
+               <type>d:text</type>
+            </property>
+            <property name="cm:serviceRank">
+               <type>d:text</type>
+            </property>            
             <property name="cm:location">
             	<type>d:text</type>
             </property>

@@ -7,6 +7,7 @@ import org.alfresco.model.ContentModel;
 import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.document.model.CreatedAndRegistered;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
@@ -177,7 +178,7 @@ public class TaskInfo implements Serializable, Comparable<TaskInfo>, CssStylable
             if (StringUtils.isBlank((String) taskInfo.getOwnerName())) {
                 return -1;
             }
-            return ownerName.compareTo((String) taskInfo.getOwnerName());
+            return AppConstants.DEFAULT_COLLATOR.compare(ownerName, (String) taskInfo.getOwnerName());
         }
         return 0;
     }

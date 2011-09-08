@@ -8,6 +8,9 @@ import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAU
 import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_SELECTED;
 import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_USER_LOGGED_IN;
 import static ee.webmedia.alfresco.docadmin.model.DocumentAdminModel.Props.DEFAULT_VALUE;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.commitToMetadataContainer;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.getDuplicateFieldIds;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.isSavedInPreviousDocTypeVersionOrFieldDefinitions;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -32,20 +35,19 @@ import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
 import org.alfresco.web.ui.repo.component.property.UIPropertySheet;
 import org.apache.commons.collections.Closure;
-import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.base.BaseObject;
-import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter_ET_EN;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
+import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docadmin.service.MetadataContainer;
-import ee.webmedia.alfresco.docadmin.service.MetadataItem;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.ComponentUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
@@ -65,8 +67,16 @@ public class FieldDetailsDialog extends BaseDialogBean {
 
     private transient UIPropertySheet propertySheet;
 
+    // START: fields that should be reset
     private Field field;
+    /**
+     * Not initialized when editing fieldDefinition.<br>
+     * Instance of {@link DocumentTypeVersion} (when adding/editing field to the latest {@link DocumentTypeVersion}).<br>
+     * Instance of {@link FieldGroup} when adding/editing field in fieldGroup
+     */
     private MetadataContainer fieldParent;
+
+    // END: fields that should be reset
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
@@ -76,21 +86,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
                 field = getDocumentAdminService().saveOrUpdateField(field);
                 MessageUtil.addInfoMessage(context, "save_success");
             } else {
-                // Don't persist changes to repository - field should be changed when parent documentType is changed
-                @SuppressWarnings("unchecked")
-                ChildrenList<MetadataItem> metadata = (ChildrenList<MetadataItem>) fieldParent.getMetadata();
-                if (isSavedInPreviousDocTypeVersionOrFieldDefinitions()) {
-                    // field that user came to edit was saved in previous version of DocumentType
-                    metadata.replaceChild(field); // replace original with clone created for editing in this dialog
-                } else if (!metadata.contains(field)) {
-                    // field has not been added to the DocumentType
-                    field.setOrder(metadata.size() + 1);
-                    metadata.addExisting(field);
-                } else {
-                    // field has been added to the DocumentType but not previously persisted
-                    metadata.replaceChild(field); // but since we cloned it, we need to replace
-                }
-                MessageUtil.addWarningMessage("field_details_affirm_changes_warning");
+                commitToMetadataContainer(field, fieldParent);
             }
         } else {
             isFinished = false;
@@ -104,7 +100,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
         if (isFieldDefinition()) {
             return super.getFinishButtonLabel();
         }
-        return MessageUtil.getMessage("field_details_affirm_changes");
+        return MessageUtil.getMessage("fieldOrFieldGroup_details_affirm_changes");
     }
 
     private boolean validate() {
@@ -135,28 +131,23 @@ public class FieldDetailsDialog extends BaseDialogBean {
             }
         } else {
             QName fieldId = field.getFieldId();
-            FieldDefinition sameIdFieldDef = getDocumentAdminService().getFieldDefinition(fieldId);
-            if (sameIdFieldDef != null) {
+            if (!field.isCopyOfFieldDefinition() && getDocumentAdminService().getFieldDefinition(fieldId) != null) {
                 MessageUtil.addErrorMessage("field_details_error_docField_sameIdFieldDef");
                 valid = false;
-            } else if (getSameIdOtherFieldAddedToDocTypeVersion() != null) {
-                valid = false;
-                MessageUtil.addErrorMessage("field_details_error_docField_sameIdFieldInDocType", fieldId.getLocalName());
-            }
-        }
-        return valid;
-    }
-
-    private Field getSameIdOtherFieldAddedToDocTypeVersion() {
-        for (MetadataItem metadataItem : fieldParent.getMetadata()) {
-            if (metadataItem instanceof Field) {
-                Field otherField = (Field) metadataItem;
-                if (ObjectUtils.equals(field.getFieldId(), otherField.getFieldId()) && !ObjectUtils.equals(field.getCloneOfNodeRef(), otherField.getNodeRef())) {
-                    return otherField;
+            } else {
+                // check that there is no field with same id added to ancestor DocumentTypeVersion
+                String fieldIdLocalName = fieldId.getLocalName();
+                Set<String> duplicateFieldIds = getDuplicateFieldIds(Arrays.asList(field), fieldParent);
+                if (!duplicateFieldIds.isEmpty()) {
+                    if (duplicateFieldIds.size() > 1 || !duplicateFieldIds.contains(fieldIdLocalName)) { // shouldn't happen
+                        throw new IllegalStateException("Expected at most one element (fieldId of editable field). duplicateFieldIds=" + duplicateFieldIds);
+                    }
+                    valid = false;
+                    MessageUtil.addErrorMessage("field_details_error_docField_sameIdFieldInDocType", fieldIdLocalName);
                 }
             }
         }
-        return null;
+        return valid;
     }
 
     @Override
@@ -171,9 +162,19 @@ public class FieldDetailsDialog extends BaseDialogBean {
         clearPropertySheet();
     }
 
-    // START: protected methods for DocTypeFieldsListBean
+    // START: protected methods for FieldsListBean
     void editField(Field f, MetadataContainer parentOfField) {
-        Field clone = f.clone();
+        Field clone;
+        if (f instanceof FieldDefinition) {
+            // create new Field based on FieldDefinition
+            clone = new Field((BaseObject) parentOfField);
+            BeanHelper.getDocumentAdminService().copyFieldProps(((FieldDefinition) f), clone);
+            clone.setRemovableFromSystematicDocType(true);
+            clone.setRemovableFromSystematicFieldGroup(true);
+            clone.setOnlyInGroup(false);
+        } else {
+            clone = f.clone();
+        }
         editFieldInner(clone, parentOfField);
     }
 
@@ -182,7 +183,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
         editFieldInner(new Field((BaseObject) parentOfField), parentOfField);
     }
 
-    // END: protected methods for DocTypeFieldsListBean
+    // END: protected methods for FieldsListBean
 
     // START: jsf actions/accessors
     // // TODO DLSeadist
@@ -191,9 +192,9 @@ public class FieldDetailsDialog extends BaseDialogBean {
     }
 
     /** used by jsp */
-    public void editField(ActionEvent event) {
+    public void editFieldDefinition(ActionEvent event) {
         NodeRef fieldRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
-        editField(getDocumentAdminService().getField(fieldRef), null);
+        editFieldInner(getDocumentAdminService().getField(fieldRef), null);
     }
 
     private void editFieldInner(Field fieldOrFieldDef, MetadataContainer parentOfField) {
@@ -218,7 +219,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
             FieldDefinition fd = (FieldDefinition) field;
             return field.isSystematic() || (fd.getDocTypes() != null && !fd.getDocTypes().isEmpty()) || (fd.getVolTypes() != null && !fd.getVolTypes().isEmpty());
         }
-        return isSavedInPreviousDocTypeVersionOrFieldDefinitions();
+        return isFieldIdReadOnly();
     }
 
     /** used by property sheet */
@@ -253,14 +254,9 @@ public class FieldDetailsDialog extends BaseDialogBean {
         return !isShowPropery(getPropQName(propSheetItem));
     }
 
-    /**
-     * used by property sheet
-     * 
-     * @return true if this field object is saved to the repository(applies when opening fieldDefinition from {@link FieldDefinitionListDialog})
-     *         or when field is opened from {@link DocTypeFieldsListBean} and field is a new version of field already saved in repository under previous {@link DocumentTypeVersion}
-     */
-    public boolean isSavedInPreviousDocTypeVersionOrFieldDefinitions() {
-        return field.isSaved() || field.getCopyOfNodeRef() != null;
+    /** used by property sheet */
+    public boolean isFieldIdReadOnly() {
+        return isSavedInPreviousDocTypeVersionOrFieldDefinitions(field) || field.isCopyOfFieldDefinition();
     }
 
     /** used by property sheet */
@@ -323,8 +319,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
             results.add(selectItem);
         }
         // add default value
-        SelectItem selectItem = new SelectItem("", MessageUtil.getMessage(context, "select_default_label"));
-        results.add(0, selectItem);
+        ComponentUtil.addDefault(results, context);
         return results;
     }
 
@@ -391,4 +386,5 @@ public class FieldDetailsDialog extends BaseDialogBean {
             field.setProp(prop, null);
         }
     }
+
 }

@@ -183,6 +183,13 @@ public interface ContentModel
     static final QName PROP_PRESENCEUSERNAME = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "presenceUsername");
     static final QName PROP_ORGANIZATION = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "organization");
     static final QName PROP_JOBTITLE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "jobtitle");
+    static final QName PROP_ORGANIZATION_PATH = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "organizationPath");
+    static final QName PROP_COUNTY = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "county");
+    static final QName PROP_MUNICIPALITY = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "municipality");
+    static final QName PROP_VILLAGE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "village");
+    static final QName PROP_STREET_HOUSE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "streetHouse");
+    static final QName PROP_POSTAL_CODE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "postalCode");
+    static final QName PROP_SERVICE_RANK = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "serviceRank");    
     static final QName PROP_LOCATION = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "location");
     static final QName PROP_PERSONDESC = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "persondescription");
     static final QName PROP_TELEPHONE = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, "telephone");

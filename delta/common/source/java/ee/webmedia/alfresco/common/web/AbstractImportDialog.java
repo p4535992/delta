@@ -7,6 +7,7 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.web.bean.FileUploadBean;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
+import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.utils.MessageUtil;
 
@@ -84,8 +85,14 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
     }
 
     public void setFileName(String fileName) {
+        if (StringUtils.isBlank(fileName)) {
+            MessageUtil.addErrorMessage("import_error_nameIsBlank", getFileName());
+            clearUpload();
+            this.fileName = null;
+            return;
+        }
         if (!isCorrectExtension(fileName)) {
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), wrongExtensionMsg, getFileName());
+            MessageUtil.addErrorMessage(wrongExtensionMsg, getFileName());
             clearUpload(); // Do this to avoid FileUploadBean multiple file mode
             this.fileName = null;
             return;
@@ -94,7 +101,7 @@ public abstract class AbstractImportDialog extends BaseDialogBean {
     }
 
     protected boolean isCorrectExtension(String fileName) {
-        return fileName != null && fileName.endsWith(acceptedFileExtension);
+        return StringUtils.endsWith(fileName, acceptedFileExtension);
     }
 
     // END: getters / setters

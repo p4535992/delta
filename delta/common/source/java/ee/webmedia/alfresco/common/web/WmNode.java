@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +15,7 @@ import java.util.TreeMap;
 import org.alfresco.service.cmr.repository.AssociationRef;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.NamespacePrefixResolver;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.QNameNodeMap;
@@ -54,6 +56,11 @@ public class WmNode extends TransientNode {
             }
             propsRetrieved = true;
         }
+    }
+
+    public WmNode(NodeRef nodeRef, QName type, Set<QName> aspects, Map<QName, Serializable> props, Map<String, Map<String, AssociationRef>> addedAssociations) {
+        this(nodeRef, type, aspects, props);
+        getAddedAssociations().putAll(addedAssociations);
     }
 
     /**
@@ -112,14 +119,14 @@ public class WmNode extends TransientNode {
 
     @Override
     public WmNode clone() {
-        return new WmNode(getNodeRef(), getType(), getAspects(), RepoUtil.toQNameProperties(getProperties(), true));
+        return new WmNode(getNodeRef(), getType(), getAspects(), RepoUtil.toQNameProperties(getProperties(), true), getAddedAssociations());
     }
 
     public void updateNodeRef(NodeRef newRef) {
         if (newRef == null) {
             newRef = RepoUtil.createNewUnsavedNodeRef();
         }
-        this.nodeRef = newRef;
+        nodeRef = newRef;
         id = newRef.getId();
     }
 
@@ -130,7 +137,20 @@ public class WmNode extends TransientNode {
 
     @Override
     public boolean hasPermission(String permission) {
-        throw new RuntimeException("Not supported");
+        if (isUnsaved()) {
+            throw new IllegalStateException("Not supported");
+        }
+        Boolean valid = null;
+        if (permissions != null) {
+            valid = permissions.get(permission);
+        } else {
+            permissions = new HashMap<String, Boolean>(8, 1.0f);
+        }
+        if (valid == null) {
+            valid = BeanHelper.getPermissionService().hasPermission(nodeRef, permission) == AccessStatus.ALLOWED;
+            permissions.put(permission, valid);
+        }
+        return valid;
     }
 
     @Override
@@ -157,7 +177,7 @@ public class WmNode extends TransientNode {
     @Override
     public String toString() {
         return toString(this) + "[\n  nodeRef=" + getNodeRef() + "\n  type=" + getType().toPrefixString(getNamespacePrefixResolver()) + "\n  aspects="
-                + toString(getAspects(), getNamespacePrefixResolver()) + "\n  props=" + toString(RepoUtil.toQNameProperties(getProperties()), getNamespacePrefixResolver()) + "\n]";
+        + toString(getAspects(), getNamespacePrefixResolver()) + "\n  props=" + toString(RepoUtil.toQNameProperties(getProperties()), getNamespacePrefixResolver()) + "\n]";
     }
 
     public static String toString(Collection<?> collection) {
@@ -195,6 +215,10 @@ public class WmNode extends TransientNode {
     }
 
     public static String toString(Map<QName, Serializable> collection, NamespacePrefixResolver namespacePrefixResolver) {
+        return toString(collection, namespacePrefixResolver, true);
+    }
+
+    public static String toString(Map<QName, Serializable> collection, NamespacePrefixResolver namespacePrefixResolver, boolean printValueClass) {
         if (collection == null) {
             return null;
         }
@@ -205,11 +229,24 @@ public class WmNode extends TransientNode {
             for (Entry<QName, Serializable> entry : map.entrySet()) {
                 s.append("\n    ");
                 s.append(entry.getKey().toPrefixString(namespacePrefixResolver));
+                s.append("=[");
                 Serializable value = entry.getValue();
-                if (value instanceof QName) {
-                    value = ((QName) value).toPrefixString(namespacePrefixResolver);
+                if (value == null) {
+                    s.append("null]");
+                } else {
+                    Class<? extends Serializable> valueClass = value.getClass();
+                    String className = valueClass.getName();
+                    if (valueClass.isPrimitive() || className.startsWith("java.lang.") || NodeRef.class.equals(valueClass) || QName.class.equals(valueClass)) {
+                        s.append(valueClass.getSimpleName());
+                    } else {
+                        s.append(className);
+                    }
+                    s.append("]");
+                    if (value instanceof QName) {
+                        value = ((QName) value).toPrefixString(namespacePrefixResolver);
+                    }
+                    s.append(value);
                 }
-                s.append("=").append(value);
             }
         }
         return s.toString();

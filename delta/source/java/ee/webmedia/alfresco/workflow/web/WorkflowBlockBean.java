@@ -1,9 +1,9 @@
 package ee.webmedia.alfresco.workflow.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPermissionService;
 import static ee.webmedia.alfresco.utils.ComponentUtil.putAttribute;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,7 +31,6 @@ import org.alfresco.service.cmr.security.AccessStatus;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
-import org.alfresco.web.app.servlet.FacesHelper;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.alfresco.web.config.ActionsConfigElement.ActionDefinition;
@@ -44,18 +43,18 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceUtil;
 import ee.webmedia.alfresco.document.einvoice.web.TransactionsBlockBean;
 import ee.webmedia.alfresco.document.file.model.File;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.FileBlockBean;
-import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentSpecificModel;
 import ee.webmedia.alfresco.document.model.DocumentSubtypeModel;
 import ee.webmedia.alfresco.document.service.DocumentService;
-import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.signature.exception.SignatureException;
 import ee.webmedia.alfresco.signature.exception.SignatureRuntimeException;
@@ -83,12 +82,12 @@ import ee.webmedia.alfresco.workflow.service.WorkflowUtil;
 /**
  * @author Dmitri Melnikov
  */
-public class WorkflowBlockBean implements Serializable {
+public class WorkflowBlockBean implements DocumentDynamicBlock {
     private static final long serialVersionUID = 1L;
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(WorkflowBlockBean.class);
     public static final String BEAN_NAME = "WorkflowBlockBean";
 
-    private static final String WORKFLOW_METHOD_BINDING_NAME = "#{DocumentDialog.workflow.findCompoundWorkflowDefinitions}";
+    private static final String WORKFLOW_METHOD_BINDING_NAME = "#{WorkflowBlockBean.findCompoundWorkflowDefinitions}";
     private static final String DROPDOWN_MENU_ITEM_ICON = "/images/icons/versioned_properties.gif";
     private static final String MSG_WORKFLOW_ACTION_GROUP = "workflow_compound_start_workflow";
     private static final String ATTRIB_OUTCOME_INDEX = "outcomeIndex";
@@ -96,7 +95,6 @@ public class WorkflowBlockBean implements Serializable {
     /** task index attribute name */
     private static final String ATTRIB_INDEX = "index";
     private FileBlockBean fileBlockBean;
-    private MetadataBlockBean metadataBlockBean;
     private DelegationBean delegationBean;
     private TransactionsBlockBean transactionsBlockBean;
 
@@ -117,6 +115,15 @@ public class WorkflowBlockBean implements Serializable {
     private List<Task> finishedReviewTasks;
     private List<Task> finishedOpinionTasks;
     private SignatureTask signatureTask;
+
+    @Override
+    public void reset(DialogDataProvider provider) {
+        if (provider == null) {
+            reset();
+        } else {
+            init(provider.getNode());
+        }
+    }
 
     public void init(Node document) {
         this.document = document;
@@ -174,9 +181,10 @@ public class WorkflowBlockBean implements Serializable {
                 ActionDefinition actionDefinition = new ActionDefinition("compoundWorkflowDefinitionAction");
                 actionDefinition.Image = DROPDOWN_MENU_ITEM_ICON;
                 actionDefinition.Label = compoundWorkflowDefinition.getName();
-                actionDefinition.Action = "#{DocumentDialog.workflow.getCompoundWorkflowDialog}";
+                actionDefinition.Action = "#{WorkflowBlockBean.getCompoundWorkflowDialog}";
                 actionDefinition.ActionListener = "#{CompoundWorkflowDialog.setupNewWorkflow}";
                 actionDefinition.addParam("compoundWorkflowDefinitionNodeRef", compoundWorkflowDefinition.getNodeRef().toString());
+                actionDefinition.addParam("documentNodeRef", document.getNodeRefAsString());
 
                 actionDefinitions.add(actionDefinition);
             }
@@ -195,9 +203,8 @@ public class WorkflowBlockBean implements Serializable {
     }
 
     public String getCompoundWorkflowDialog() {
-        DocumentDialog dialog = (DocumentDialog) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), DocumentDialog.BEAN_NAME);
         final NodeService nodeService = Repository.getServiceRegistry(FacesContext.getCurrentInstance()).getNodeService();
-        if (!nodeService.exists(dialog.getNode().getNodeRef())) {
+        if (!nodeService.exists(getDocumentDialogHelperBean().getNodeRef())) {
             final FacesContext context = FacesContext.getCurrentInstance();
             MessageUtil.addErrorMessage(context, "workflow_compound_start_workflow_error_docDeleted");
             return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
@@ -297,8 +304,8 @@ public class WorkflowBlockBean implements Serializable {
             log.debug("Finishing task failed", e);
             MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "workflow_task_save_failed");
         }
-        restore();
-        metadataBlockBean.viewDocument(getDocumentService().getDocument(metadataBlockBean.getDocument().getNodeRef()));
+
+        getDocumentDialogHelperBean().switchMode(false);
     }
 
     @SuppressWarnings("unchecked")
@@ -430,16 +437,11 @@ public class WorkflowBlockBean implements Serializable {
             long step0 = System.currentTimeMillis();
             getDocumentService().finishDocumentSigning(signatureTask, signatureHex);
             long step1 = System.currentTimeMillis();
-            fileBlockBean.restore();
+            getDocumentDialogHelperBean().switchMode(false);
             long step2 = System.currentTimeMillis();
-            metadataBlockBean.viewDocument(getDocumentService().getDocument(metadataBlockBean.getDocument().getNodeRef()));
-            long step3 = System.currentTimeMillis();
-            restore();
-            long step4 = System.currentTimeMillis();
             if (log.isInfoEnabled()) {
-                log.info("finishDocumentSigning took total time " + (step4 - step0) + " ms\n    service call - " + (step1 - step0)
-                        + " ms\n    reload file list - " + (step2 - step1) + " ms\n    reload document - " + (step3 - step2) + " ms\n    reload workflows - "
-                        + (step4 - step3) + " ms");
+                log.info("finishDocumentSigning took total time " + (step2 - step0) + " ms\n    service call - " + (step1 - step0) + " ms\n    reload document - "
+                        + (step2 - step1) + " ms");
             }
             MessageUtil.addInfoMessage("task_finish_success_defaultMsg");
         } catch (WorkflowChangedException e) {
@@ -459,9 +461,9 @@ public class WorkflowBlockBean implements Serializable {
     }
 
     public void cancelSign() {
-        metadataBlockBean.reloadDoc();
         closeModal();
         signatureTask = null;
+        getDocumentDialogHelperBean().switchMode(false);
     }
 
     /**
@@ -472,7 +474,7 @@ public class WorkflowBlockBean implements Serializable {
         List<SelectItem> selectItems = new ArrayList<SelectItem>(outcomes);
 
         for (int i = 0; i < outcomes; i++) {
-            String label = MessageUtil.getMessage("task_outcome_reviewTask" + i);
+            String label = MessageUtil.getMessage("task_action_outcome_reviewTask" + i);
             selectItems.add(new SelectItem(i, label));
         }
         return selectItems;
@@ -553,7 +555,7 @@ public class WorkflowBlockBean implements Serializable {
                 // the save button
                 HtmlCommandButton saveButton = new HtmlCommandButton();
                 saveButton.setId("save-id-" + node.getId());
-                saveButton.setActionListener(app.createMethodBinding("#{DocumentDialog.workflow.saveTask}", new Class[] { ActionEvent.class }));
+                saveButton.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.saveTask}", new Class[] { ActionEvent.class }));
                 saveButton.setValue(MessageUtil.getMessage("task_save_" + taskType.getLocalName()));
                 saveButton.setStyleClass("taskOutcome");
                 saveButton.getAttributes().put(ATTRIB_INDEX, index);
@@ -567,7 +569,7 @@ public class WorkflowBlockBean implements Serializable {
 
                 HtmlCommandButton outcomeButton = new HtmlCommandButton();
                 outcomeButton.setId("outcome-id-" + index + "-" + outcomeIndex);
-                outcomeButton.setActionListener(app.createMethodBinding("#{DocumentDialog.workflow.finishTask}", new Class[] { ActionEvent.class }));
+                outcomeButton.setActionListener(app.createMethodBinding("#{WorkflowBlockBean.finishTask}", new Class[] { ActionEvent.class }));
                 outcomeButton.setValue(MessageUtil.getMessage(label + outcomeIndex));
                 Map<String, Object> outcomeBtnAttributes = ComponentUtil.putAttribute(outcomeButton, "styleClass", "taskOutcome");
                 outcomeBtnAttributes.put(ATTRIB_INDEX, index);
@@ -650,10 +652,6 @@ public class WorkflowBlockBean implements Serializable {
     // START: getters / setters
     public void setFileBlockBean(FileBlockBean fileBlockBean) {
         this.fileBlockBean = fileBlockBean;
-    }
-
-    public void setMetadataBlockBean(MetadataBlockBean metadataBlockBean) {
-        this.metadataBlockBean = metadataBlockBean;
     }
 
     public void setTransactionsBlockBean(TransactionsBlockBean transactionsBlockBean) {

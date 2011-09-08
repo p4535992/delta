@@ -167,7 +167,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
     public void setupNewWorkflow(ActionEvent event) {
         resetState();
         NodeRef compoundWorkflowDefinition = new NodeRef(ActionUtil.getParam(event, "compoundWorkflowDefinitionNodeRef"));
-        NodeRef document = getDocumentDialog().getNode().getNodeRef();
+        NodeRef document = new NodeRef(ActionUtil.getParam(event, "documentNodeRef"));
         try {
             compoundWorkflow = getWorkflowService().getNewCompoundWorkflow(compoundWorkflowDefinition, document);
             Workflow costManagerWorkflow = getCostManagerForkflow();
@@ -665,9 +665,7 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
                         break;
                     }
                 }
-                if (!block.isParallelTasks()) {
-                    regressionTest.checkDueDate(task);
-                }
+                regressionTest.checkDueDate(task);
             }
             if (activeResponsibleAssigneeNeeded && !activeResponsibleAssigneeAssigned) {
                 missingOwnerAssignment = true;
@@ -722,6 +720,10 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
 
     /**
      * Helper class that validates that dueDates are not getting smaller for consecutive tasks(that run after each other)
+     * Exceptions to this rule are tasks inside blocks that are started at the same time:
+     * 1) tasks inside one parallel workflow
+     * 2) tasks inside assignment, opinion and information workflows immediately following each other in any number and any order
+     * Tasks inside each of these blocks are not compared to each other, BUT must still be compared to tasks outside these blocks
      * 
      * @author Ats Uiboupin
      */
@@ -729,35 +731,56 @@ public class CompoundWorkflowDialog extends CompoundWorkflowDefinitionDialog {
         boolean valid = true;
         Date earliestAllowedDueDate;
         Date latestDueDateParallel;
+        int workflowIndex = -1;
+        boolean insideParallelBlock = false; // task is in block of assignment, opinion and information workflows following each other
+        boolean insideParallelWorkflow = false; // task is in workflow with parallel property set to true and NOT insideParallelBlock
 
         private void checkDueDate(Task task) {
+
+            setParallelCheckDates(task);
+
             Date taskDueDate = task.getDueDate();
             if (taskDueDate == null) {
                 return;
             }
-            if (earliestAllowedDueDate == null) {
+            if (earliestAllowedDueDate == null && !(insideParallelBlock || insideParallelWorkflow)) {
                 earliestAllowedDueDate = taskDueDate;
                 return;
             }
-            if (task.getParent().isType(WorkflowSpecificModel.CAN_START_PARALLEL)) {
+
+            if (insideParallelBlock || insideParallelWorkflow) {
+                // collect maximum date of the current block
                 if (latestDueDateParallel == null || latestDueDateParallel.before(taskDueDate)) {
                     latestDueDateParallel = taskDueDate;
                 }
-            } else {
-                if (latestDueDateParallel != null) {
-                    if (earliestAllowedDueDate.before(latestDueDateParallel)) {
-                        earliestAllowedDueDate = latestDueDateParallel;
-                    }
-                    if (taskDueDate.after(earliestAllowedDueDate)) {
-                        earliestAllowedDueDate = taskDueDate;
-                    }
-                    latestDueDateParallel = null;
-                }
+            } else if (earliestAllowedDueDate == null || taskDueDate.after(earliestAllowedDueDate)) {
+                earliestAllowedDueDate = taskDueDate;
             }
-            if (taskDueDate.before(earliestAllowedDueDate)) {
+
+            if (earliestAllowedDueDate != null && taskDueDate.before(earliestAllowedDueDate)) {
                 invalid("workflow_save_error_dueDate_decreaseNotAllowed");
-                return;
             }
+        }
+
+        private void setParallelCheckDates(Task task) {
+            int indexInCompoundWorkflow = task.getParent().getIndexInCompoundWorkflow();
+            if (parallelBlockEnded(task, indexInCompoundWorkflow)) {
+                setCheckDate();
+            }
+            insideParallelBlock = task.getParent().isType(WorkflowSpecificModel.CAN_START_PARALLEL);
+            insideParallelWorkflow = !insideParallelBlock && task.getParent().isParallelTasks();
+            workflowIndex = indexInCompoundWorkflow;
+        }
+
+        private boolean parallelBlockEnded(Task task, int indexInCompoundWorkflow) {
+            return indexInCompoundWorkflow != workflowIndex
+                    && (insideParallelWorkflow
+                            || (insideParallelBlock && !task.getParent().isType(WorkflowSpecificModel.CAN_START_PARALLEL)));
+        }
+
+        private void setCheckDate() {
+            earliestAllowedDueDate = latestDueDateParallel;
+            latestDueDateParallel = null;
         }
 
         private void invalid(String msg) {

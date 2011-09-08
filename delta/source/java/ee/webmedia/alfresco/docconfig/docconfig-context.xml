@@ -24,7 +24,6 @@
       </property>
    </bean>
 
-<!-- TODO DLSeadist commented out for shipping 
    <bean id="systematicFieldDefinitionsBootstrap1" class="org.alfresco.repo.module.ImporterModuleComponent" parent="module.baseComponent">
       <property name="moduleId" value="simdhs" />
       <property name="executeOnceOnly" value="true" />
@@ -33,7 +32,7 @@
          <list>
             <ref bean="fieldDefinitionsBootstrap" />
          </list>
-      </property>      
+      </property>
       <property name="bootstrapViews">
          <list>
             <props>
@@ -53,7 +52,7 @@
          <list>
             <ref bean="fieldDefinitionsBootstrap" />
          </list>
-      </property>      
+      </property>
       <property name="bootstrapViews">
          <list>
             <props>
@@ -64,7 +63,6 @@
          </list>
       </property>
    </bean>
--->
 
    <bean id="documentLocationGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.DocumentLocationGenerator">
       <property name="documentConfigService" ref="DocumentConfigService" />
@@ -76,15 +74,47 @@
       <property name="caseService" ref="CaseService" />
    </bean>
 
+   <bean id="documentOwnerGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.DocumentOwnerGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>
+
+   <bean id="accessRestrictionGenerator" class="ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="nodeService" ref="NodeService" />
+      <property name="adrService" ref="AdrService" />
+      <property name="documentLogService" ref="DocumentLogService" />
+   </bean>
+
    <bean id="comboboxEditableGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.ComboboxEditableGenerator">
       <property name="documentConfigService" ref="DocumentConfigService" />
+      <property name="classificatorService" ref="ClassificatorService" />
    </bean>
 
    <bean id="comboboxGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.ComboboxGenerator">
       <property name="documentConfigService" ref="DocumentConfigService" />
    </bean>
 
+   <bean id="comboboxAndTextGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.ComboboxAndTextGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>
+
    <bean id="textFieldGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.TextFieldGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>
+
+   <bean id="intGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.IntGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>
+
+   <bean id="doubleGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.DoubleGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>
+
+   <bean id="dateGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.DateGenerator">
+      <property name="documentConfigService" ref="DocumentConfigService" />
+   </bean>
+
+   <bean id="usersContactsGenerator" class="ee.webmedia.alfresco.docconfig.generator.fieldtype.UsersContactsGenerator">
       <property name="documentConfigService" ref="DocumentConfigService" />
    </bean>
 

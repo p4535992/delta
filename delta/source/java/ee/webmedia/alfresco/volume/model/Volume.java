@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.volume.model;
 
+import static ee.webmedia.alfresco.app.AppConstants.DEFAULT_COLLATOR;
+
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
@@ -9,6 +11,7 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
@@ -139,14 +142,10 @@ public class Volume implements Serializable, Comparable<Volume> {
 
     @Override
     public int compareTo(Volume other) {
-        if (StringUtils.equals(getVolumeMark(), other.getVolumeMark())) {
-            int cmpMark;
-            if ((cmpMark = getTitle().compareTo(other.getTitle())) == 0) {
-                return 0;
-            }
-            return cmpMark;
+        if (StringUtils.equalsIgnoreCase(getVolumeMark(), other.getVolumeMark())) {
+            return AppConstants.DEFAULT_COLLATOR.compare(getTitle(), other.getTitle());
         }
-        return getVolumeMark().compareTo(other.getVolumeMark());
+        return DEFAULT_COLLATOR.compare(getVolumeMark(), other.getVolumeMark());
     }
 
     @Override

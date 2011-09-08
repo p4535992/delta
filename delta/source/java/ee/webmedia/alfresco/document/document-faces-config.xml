@@ -379,20 +379,6 @@
    
    <managed-bean>
       <description>
-         Bean that generates a notification separator
-      </description>
-      <managed-bean-name>RecipientNoteGenerator</managed-bean-name>
-      <managed-bean-class>org.alfresco.web.bean.generator.HtmlSeparatorGenerator</managed-bean-class>
-      <managed-bean-scope>request</managed-bean-scope>
-      <managed-property>
-         <property-name>html</property-name>
-         <!-- TODO: refactor message into bundle -->
-         <value><![CDATA[<div class="message">Kui adressaat ei ole määratud, siis dokumenti välja ei saadeta! Ära unusta adressaati määrata!</div>]]></value>
-      </managed-property>
-   </managed-bean>
-   
-   <managed-bean>
-      <description>
          Bean that generates a notification separator from leavingLetterContent parameter.
       </description>
       <managed-bean-name>LeavingLetterContentGenerator</managed-bean-name>

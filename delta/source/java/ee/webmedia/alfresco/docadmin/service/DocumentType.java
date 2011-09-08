@@ -2,7 +2,6 @@ package ee.webmedia.alfresco.docadmin.service;
 
 import java.util.List;
 
-import org.alfresco.service.cmr.repository.DuplicateChildNodeNameException;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 
@@ -11,8 +10,6 @@ import ee.webmedia.alfresco.base.BaseServiceImpl;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
-import ee.webmedia.alfresco.utils.UnableToPerformException;
-import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
 
 public class DocumentType extends BaseObject {
     private static final long serialVersionUID = 1L;
@@ -124,12 +121,12 @@ public class DocumentType extends BaseObject {
         setProp(DocumentAdminModel.Props.DOCUMENT_TYPE_GROUP, documentTypeGroup);
     }
 
-    @Override
-    protected void handleException(RuntimeException e) {
-        if (e instanceof DuplicateChildNodeNameException) {
-            throw new UnableToPerformException(MessageSeverity.ERROR, "doc_type_error_id_alreadyExists", e);
-        }
-        super.handleException(e);
+    public boolean isChangeByNewDocumentEnabled() {
+        return getPropBoolean(DocumentAdminModel.Props.CHANGE_BY_NEW_DOCUMENT_ENABLED);
+    }
+
+    public void setChangeByNewDocumentEnabled(boolean changeByNewDocumentEnabled) {
+        setProp(DocumentAdminModel.Props.CHANGE_BY_NEW_DOCUMENT_ENABLED, changeByNewDocumentEnabled);
     }
 
     @Override
@@ -143,7 +140,7 @@ public class DocumentType extends BaseObject {
         if (currentLatestVer == null) {
             DocumentTypeVersion docTypeVer = documentTypeVersions.add();
             setLatestVersion(1);
-            BeanHelper.getDocumentAdminService().addSystematicMetadataItems(docTypeVer); // TODO DLSeadist (Alar): temporary solution until Ats finishes proper support for this
+            BeanHelper.getDocumentAdminService().addSystematicMetadataItems(docTypeVer);
             return docTypeVer;
         }
         DocumentTypeVersion newLatestVer = cloneAndMarkChildren(documentTypeVersions, currentLatestVer);
@@ -156,4 +153,10 @@ public class DocumentType extends BaseObject {
         documentTypeVersions.addExisting(newLatestVer);
         return newLatestVer;
     }
+
+    /** used by DeleteDialog to confirm delete action */
+    public String getNameAndId() {
+        return new StringBuilder().append(getName()).append(" (").append(getDocumentTypeId()).append(")").toString();
+    }
+
 }

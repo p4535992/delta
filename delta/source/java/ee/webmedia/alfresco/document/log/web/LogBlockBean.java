@@ -1,6 +1,5 @@
 package ee.webmedia.alfresco.document.log.web;
 
-import java.io.Serializable;
 import java.util.List;
 
 import javax.faces.context.FacesContext;
@@ -12,14 +11,17 @@ import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.bean.repository.Repository;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.log.model.DocumentLog;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 
-public class LogBlockBean implements Serializable {
-
+public class LogBlockBean implements DocumentDynamicBlock {
     private static final long serialVersionUID = 1L;
+
+    public static final String BEAN_NAME = "LogBlockBean";
 
     private transient DocumentLogService documentLogService;
     private transient DictionaryService dictionaryService;
@@ -28,6 +30,15 @@ public class LogBlockBean implements Serializable {
     private List<DocumentLog> logs;
 
     private QName parentNodeType;
+
+    @Override
+    public void reset(DialogDataProvider provider) {
+        if (provider == null) {
+            reset();
+        } else {
+            init(provider.getNode());
+        }
+    }
 
     public void init(Node node) {
         reset();

@@ -22,15 +22,17 @@ import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.base.BaseService;
 import ee.webmedia.alfresco.cases.service.CaseService;
 import ee.webmedia.alfresco.cases.web.CaseDetailsDialog;
-import ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
+import ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.web.FieldDetailsDialog;
+import ee.webmedia.alfresco.docadmin.web.FieldGroupDetailsDialog;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
 import ee.webmedia.alfresco.docconfig.web.PropertySheetStateBean;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamicService;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicTestDialog;
 import ee.webmedia.alfresco.document.assignresponsibility.web.AssignResponsibilityBean;
@@ -39,12 +41,15 @@ import ee.webmedia.alfresco.document.einvoice.web.DimensionDetailsDialog;
 import ee.webmedia.alfresco.document.einvoice.web.DimensionListDialog;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.file.web.AddFileDialog;
+import ee.webmedia.alfresco.document.file.web.FileBlockBean;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
+import ee.webmedia.alfresco.document.log.web.LogBlockBean;
 import ee.webmedia.alfresco.document.metadata.web.MetadataBlockBean;
 import ee.webmedia.alfresco.document.permissions.DocumentFileWriteDynamicAuthority;
 import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.document.sendout.service.SendOutService;
 import ee.webmedia.alfresco.document.sendout.web.DocumentSendOutDialog;
+import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.document.service.DocLockService;
 import ee.webmedia.alfresco.document.service.DocumentService;
 import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
@@ -56,6 +61,7 @@ import ee.webmedia.alfresco.functions.web.FunctionsDetailsDialog;
 import ee.webmedia.alfresco.imap.service.ImapServiceExt;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
+import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
 import ee.webmedia.alfresco.parameters.service.ParametersService;
 import ee.webmedia.alfresco.privilege.service.PrivilegeService;
 import ee.webmedia.alfresco.privilege.web.ManagePrivilegesDialog;
@@ -72,6 +78,7 @@ import ee.webmedia.alfresco.user.web.UserListDialog;
 import ee.webmedia.alfresco.volume.service.VolumeService;
 import ee.webmedia.alfresco.volume.web.VolumeDetailsDialog;
 import ee.webmedia.alfresco.workflow.service.WorkflowService;
+import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
 
 /**
@@ -131,6 +138,10 @@ public class BeanHelper {
         return getJsfBean(FieldDetailsDialog.class, FieldDetailsDialog.BEAN_NAME);
     }
 
+    public static FieldGroupDetailsDialog getFieldGroupDetailsDialog() {
+        return getJsfBean(FieldGroupDetailsDialog.class, FieldGroupDetailsDialog.BEAN_NAME);
+    }
+
     public static VisitedDocumentsBean getVisitedDocumentsBean() {
         return getJsfBean(VisitedDocumentsBean.class, VisitedDocumentsBean.BEAN_NAME);
     }
@@ -177,6 +188,26 @@ public class BeanHelper {
 
     public static PermissionsListDialog getPermissionsListDialog() {
         return getJsfBean(PermissionsListDialog.class, PermissionsListDialog.BEAN_NAME);
+    }
+
+    public static DocumentDialogHelperBean getDocumentDialogHelperBean() {
+        return getJsfBean(DocumentDialogHelperBean.class, DocumentDialogHelperBean.BEAN_NAME);
+    }
+
+    public static FileBlockBean getFileBlockBean() {
+        return getJsfBean(FileBlockBean.class, FileBlockBean.BEAN_NAME);
+    }
+
+    public static LogBlockBean getLogBlockBean() {
+        return getJsfBean(LogBlockBean.class, LogBlockBean.BEAN_NAME);
+    }
+
+    public static WorkflowBlockBean getWorkflowBlockBean() {
+        return getJsfBean(WorkflowBlockBean.class, WorkflowBlockBean.BEAN_NAME);
+    }
+
+    public static SendOutBlockBean getSendOutBlockBean() {
+        return getJsfBean(SendOutBlockBean.class, SendOutBlockBean.BEAN_NAME);
     }
 
     // END: JSF web beans
@@ -360,6 +391,10 @@ public class BeanHelper {
 
     public static CaseService getCaseService() {
         return getService(CaseService.class, CaseService.BEAN_NAME);
+    }
+
+    public static OrganizationStructureService getOrganizationStructureService() {
+        return getService(OrganizationStructureService.class, OrganizationStructureService.BEAN_NAME);
     }
 
     // END: delta services

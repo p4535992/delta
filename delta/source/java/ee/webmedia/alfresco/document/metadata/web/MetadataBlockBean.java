@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.document.metadata.web;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithComma;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithParentheses;
+import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithSeparator;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithSpace;
 import static org.alfresco.web.ui.common.StringUtils.encode;
 
@@ -537,6 +539,11 @@ public class MetadataBlockBean implements ClearStateListener {
 
             if (document.hasAspect(DocumentCommonModel.Aspects.OWNER)) {
                 String owner = encode((String) props.get(DocumentCommonModel.Props.OWNER_NAME));
+                String ownerId = (String) props.get(DocumentCommonModel.Props.OWNER_ID);
+                String substitutionInfo = UserUtil.getSubstitute(ownerId);
+                if (!StringUtils.isBlank(substitutionInfo)) {
+                    owner = joinStringAndStringWithSeparator(owner, substitutionInfo, " ");
+                }
                 List<String> ownerProps = new ArrayList<String>(4);
                 String ownerJobTitle = (String) props.get(DocumentCommonModel.Props.OWNER_JOB_TITLE);
                 if (!StringUtils.isBlank(ownerJobTitle)) {
@@ -2003,9 +2010,11 @@ public class MetadataBlockBean implements ClearStateListener {
     /** Web-client action */
     public void registerDocument(@SuppressWarnings("unused") ActionEvent event) {
         try {
+            Node document = getDocumentDialogHelperBean().getNode();
+            DocumentParentNodesVO parentNodes = getDocumentService().getAncestorNodesByDocument(document.getNodeRef());
+            getDocumentService().setTransientProperties(document, parentNodes);
             BaseDialogBean.validatePermission(document, DocumentCommonModel.Privileges.EDIT_DOCUMENT_META_DATA);
             document = getDocumentService().registerDocument(document);
-            nodeRef = document.getNodeRef(); // reloadDoc uses NodeRef
             getDocumentTemplateService().updateGeneratedFilesOnRegistration(document.getNodeRef());
             ((MenuBean) FacesHelper.getManagedBean(FacesContext.getCurrentInstance(), MenuBean.BEAN_NAME)).processTaskItems();
             MessageUtil.addInfoMessage("document_registerDoc_success");
@@ -2017,7 +2026,7 @@ public class MetadataBlockBean implements ClearStateListener {
         } catch (NodeLockedException e) {
             documentDialog.handleLockedNode("document_registerDoc_error_docLocked");
         }
-        reloadDoc();
+        getDocumentDialogHelperBean().switchMode(false);
     }
 
     public void setCaseAssignmentNeeded(boolean showModal) {

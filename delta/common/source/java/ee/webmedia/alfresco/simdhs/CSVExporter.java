@@ -130,7 +130,7 @@ public class CSVExporter {
         Collections.sort(rows, new Comparator<List<String>>() {
             @Override
             public int compare(List<String> o1, List<String> o2) {
-                return String.CASE_INSENSITIVE_ORDER.compare(o1.get(sortColumnNr), o2.get(sortColumnNr)) * (isDescending ? -1 : 1);
+                return AppConstants.DEFAULT_COLLATOR.compare(o1.get(sortColumnNr), o2.get(sortColumnNr)) * (isDescending ? -1 : 1);
             }
         });
     }

@@ -24,10 +24,10 @@ public class DocTypeDetailsDialog extends BaseDialogBean {
 
     // START: Block beans
     //@formatter:off
-    private DocTypeFieldsListBean fieldsListBean;
+    private FieldsListBean fieldsListBean;
     // TODO:
-    //      DocTypeFieldsListBean->FieldDetailsDialog        - andmevälja/andmeväljade grupi detailvaate
-    //      DocTypeFieldsListBean->FieldGroupDetailsDialog   - andmevälja/andmeväljade grupi detailvaate
+    //      FieldsListBean->FieldDetailsDialog        - andmevälja/andmeväljade grupi detailvaate
+    //      FieldsListBean->FieldGroupDetailsDialog   - andmevälja/andmeväljade grupi detailvaate
     //          -> 
     //DocTypeFollowupAssocsBean                            - "Lubatud järgseosed"
     //DocTypeReplyAssocsBean                               - "Lubatud vastusseosed"
@@ -84,6 +84,13 @@ public class DocTypeDetailsDialog extends BaseDialogBean {
         setDocType(getDocumentAdminService().getDocumentType(docTypeRef));
     }
 
+    /** used by delete action to do actual deleting (after user has confirmed deleting in DeleteDialog) */
+    public String deleteDocType(ActionEvent event) {
+        NodeRef docTypeRef = new NodeRef(ActionUtil.getParam(event, "nodeRef"));
+        getDocumentAdminService().deleteDocumentType(docTypeRef);
+        return getCloseOutcome(2);
+    }
+
     private void setDocType(DocumentType documentType) {
         docType = documentType;
         docType.addNewLatestDocumentTypeVersion();
@@ -110,10 +117,19 @@ public class DocTypeDetailsDialog extends BaseDialogBean {
         return docType;
     }
 
+    /** used by jsp */
+    public FieldsListBean getFieldsListBean() {
+        return fieldsListBean;
+    }
+
     /** injected by spring */
-    public void setFieldsListBean(DocTypeFieldsListBean fieldsListBean) {
+    public void setFieldsListBean(FieldsListBean fieldsListBean) {
         this.fieldsListBean = fieldsListBean;
     }
 
+    /** JSP */
+    public boolean isAddFieldVisible() {
+        return true;
+    }
     // END: jsf actions/accessors
 }

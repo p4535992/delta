@@ -80,10 +80,6 @@
          <value>#{FileBlockBean}</value>
       </managed-property>
       <managed-property>
-         <property-name>metadataBlockBean</property-name>
-         <value>#{MetadataBlockBean}</value>
-      </managed-property>
-      <managed-property>
          <property-name>delegationBean</property-name>
          <value>#{DelegationBean}</value>
       </managed-property>

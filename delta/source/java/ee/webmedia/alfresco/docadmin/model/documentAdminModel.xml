@@ -13,43 +13,20 @@
 
    <constraints>
 
-      <!-- If you change this list, FieldType enum -->
-      <constraint name="docadmin:changeableIf" type="LIST">
-         <parameter name="allowedValues">
-            <list>
-               <value>ALWAYS_CHANGEABLE</value>
-               <value>CHANGEABLE_IF_WORKING_DOC</value>
-               <value>ALWAYS_NOT_CHANGEABLE</value>
-            </list>
-         </parameter>
+      <constraint name="docadmin:changeableIf" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">
+         <parameter name="enumClass"><value>ee.webmedia.alfresco.classificator.constant.FieldChangeableIf</value></parameter>
       </constraint>
 
-      <!-- If you change this list, FieldChangeableIf enum -->
-      <constraint name="docadmin:fieldType" type="LIST">
-         <parameter name="allowedValues">
-            <list>
-               <value>TEXT_FIELD</value>
-               <value>COMBOBOX</value>
-               <value>INT</value>
-               <value>DOUBLE</value>
-               <value>DATE</value>
-               <value>COMBOBOX_EDITABLE</value>
-               <value>USER</value>
-               <value>CONTACT</value>
-               <value>USER_CONTACT</value>
-               <value>USERS</value>
-               <value>CONTACTS</value>
-               <value>USERS_CONTACTS</value>
-               <value>COMBOBOX_AND_TEXT</value>
-               <value>COMBOBOX_AND_TEXT_NOT_EDITABLE</value>
-               <value>LISTBOX</value>
-               <value>CHECKBOX</value>
-               <value>INFORMATION_TEXT</value>
-               <value>HIERARCHICAL_KEYWORD_LEVEL1</value>
-               <value>HIERARCHICAL_KEYWORD_LEVEL2</value>
-            </list>
-         </parameter>
+      <constraint name="docadmin:fieldType" type="ee.webmedia.alfresco.common.constraint.EnumConstraint">
+         <parameter name="enumClass"><value>ee.webmedia.alfresco.classificator.constant.FieldType</value></parameter>
       </constraint>
+
+      <constraint name="docadmin:documentTypeId" type="REGEX">
+         <parameter name="expression"><value><![CDATA[^[a-zA-Z]+$]]></value></parameter>
+         <parameter name="requiresMatch"><value>true</value></parameter>
+      </constraint>
+
+      <!-- TODO similar constraint for fieldId, but -->
 
    </constraints>
 
@@ -82,6 +59,9 @@
             <property name="docadmin:documentTypeId">
                <type>d:text</type>
                <mandatory enforced="true">true</mandatory>
+               <constraints>
+                  <constraint ref="docadmin:documentTypeId" />
+               </constraints>
             </property>
             <property name="docadmin:used">
                <type>d:boolean</type>
@@ -139,11 +119,6 @@
                <mandatory enforced="true">false</mandatory>
                <default>false</default>
             </property>
-            <property name="docadmin:showValidityData">
-               <type>d:boolean</type>
-               <mandatory enforced="true">false</mandatory>
-               <default>false</default>
-            </property>
          </properties>
          <associations>
             <child-association name="docadmin:documentTypeVersion">
@@ -197,6 +172,7 @@
          <parent>sys:base</parent>
          <properties>
             <property name="docadmin:fieldDefinitionIds">
+               <!-- needed only for fieldGroup stored under fieldGroupDefinitions -->
                <type>d:qname</type>
                <multiple>true</multiple>
             </property>
@@ -211,13 +187,25 @@
             </property>
             <property name="docadmin:thesaurus">
                <type>d:text</type>
+               <mandatory>true</mandatory><!-- don't enforce, just show mandatory flag(because this field might not be visible and left without value)! -->
+            </property>
+            <property name="docadmin:readonlyFieldsNameChangeable">
+               <type>d:boolean</type>
+               <default>true</default>
+            </property>
+            <property name="docadmin:readonlyFieldsRuleChangeable">
+               <type>d:boolean</type>
+               <default>true</default>
+            </property>
+            <property name="docadmin:showInTwoColumnsChangeable">
+               <type>d:boolean</type>
+               <default>true</default>
             </property>
             <!-- if you add new properties, update MetadataItemCompareUtil.getFieldGroupComparator() -->
          </properties>
          <mandatory-aspects>
             <aspect>docadmin:fieldContainer</aspect>
             <aspect>docadmin:fieldAndGroupCommon</aspect>
-            <aspect>docadmin:mandatoryForVol</aspect>
             <!-- if you add new aspects, update MetadataItemCompareUtil.getFieldGroupComparator() -->
          </mandatory-aspects>
       </type>
@@ -263,6 +251,18 @@
             <property name="docadmin:onlyInGroup">
                <type>d:boolean</type>
             </property>
+            <property name="docadmin:mandatoryChangeable">
+               <type>d:boolean</type>
+               <default>true</default>
+            </property>
+            <property name="docadmin:changeableIfChangeable">
+               <type>d:boolean</type>
+               <default>true</default>
+            </property>
+            <property name="docadmin:removableFromSystematicFieldGroup">
+               <type>d:boolean</type>
+               <default>true</default>
+            </property>
             <!-- if you add new properties, update MetadataItemCompareUtil.getFieldComparator() -->
          </properties>
          <mandatory-aspects>
@@ -278,10 +278,6 @@
             <property name="docadmin:docTypes">
                <type>d:text</type>
                <multiple>true</multiple>
-            </property>
-            <property name="docadmin:removableFromSystematicFieldGroup">
-               <type>d:boolean</type>
-               <default>true</default>
             </property>
             <property name="docadmin:isParameterInDocSearch">
                <type>d:boolean</type>
@@ -306,9 +302,7 @@
                <multiple>true</multiple>
             </property>
          </properties>
-         <mandatory-aspects>
-            <aspect>docadmin:mandatoryForVol</aspect>
-         </mandatory-aspects>
+         <!-- if you add new aspects, update MetadataItemCompareUtil.getFieldAndGroupBaseComparatorChain() -->
       </type>
 
       <type name="docadmin:separationLine">
@@ -449,12 +443,15 @@
             <property name="docadmin:mandatoryForDoc">
                <type>d:boolean</type>
             </property>
-            <property name="docadmin:removableFromSystemDocType">
+            <property name="docadmin:removableFromSystematicDocType">
                <type>d:boolean</type>
                <mandatory enforced="true">true</mandatory>
                <default>true</default>
             </property>
             <property name="docadmin:defaultUserLoggedIn">
+               <type>d:boolean</type>
+            </property>
+            <property name="docadmin:mandatoryForVol">
                <type>d:boolean</type>
             </property>
             <!-- if you add new properties, update MetadataItemCompareUtil.getFieldAndGroupBaseComparatorChain() -->
@@ -463,17 +460,9 @@
             <aspect>docadmin:name</aspect>
             <aspect>docadmin:systematic</aspect>
             <aspect>docadmin:comment</aspect>
-            <aspect>docadmin:order</aspect>
+            <aspect>docadmin:order</aspect><!-- actually fieldDefinition doesn't need order property, but we put it here to make model easier (to avoid creating extra types)  -->
             <!-- if you add new aspects, update MetadataItemCompareUtil.getFieldAndGroupBaseComparatorChain() -->
          </mandatory-aspects>
-      </aspect>
-
-      <aspect name="docadmin:mandatoryForVol">
-         <properties>
-            <property name="docadmin:mandatoryForVol">
-               <type>d:boolean</type>
-            </property>
-         </properties>
       </aspect>
    </aspects>
 

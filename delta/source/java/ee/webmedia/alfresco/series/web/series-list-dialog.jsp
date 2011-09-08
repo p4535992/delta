@@ -31,7 +31,7 @@
       <%-- seriesIdentifier --%>
       <a:column id="col1" primary="true">
          <f:facet name="header">
-            <a:sortLink id="col1-sort" label="#{msg.series_seriesIdentifier}" value="type" styleClass="header" />
+            <a:sortLink id="col1-sort" label="#{msg.series_seriesIdentifier}" value="seriesIdentifier" styleClass="header" />
          </f:facet>
          <h:outputText id="col1-text" value="#{r.seriesIdentifier}" />
       </a:column>

@@ -1,5 +1,7 @@
 package ee.webmedia.alfresco.menu.ui;
 
+import static org.alfresco.web.bean.dialog.BaseDialogBean.getCloseOutcome;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,7 +30,6 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.util.Pair;
 import org.alfresco.web.app.servlet.FacesHelper;
-import org.alfresco.web.bean.dialog.DialogManager;
 import org.alfresco.web.bean.dialog.IDialogBean;
 import org.alfresco.web.config.DialogsConfigElement.DialogConfig;
 import org.alfresco.web.config.WizardsConfigElement.WizardConfig;
@@ -38,6 +39,7 @@ import org.alfresco.web.ui.repo.component.UIActions;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.document.einvoice.service.EInvoiceService;
@@ -266,8 +268,7 @@ public class MenuBean implements Serializable {
         }
 
         FacesContext context = FacesContext.getCurrentInstance();
-        context.getApplication().getNavigationHandler().handleNavigation(context, "closeBreadcrumbItem", "dialog:close[" + closeCount + "]");
-
+        context.getApplication().getNavigationHandler().handleNavigation(context, "closeBreadcrumbItem", getCloseOutcome(closeCount));
     }
 
     public void processTaskItem(String... menuItemIds) {
@@ -481,13 +482,7 @@ public class MenuBean implements Serializable {
         // Clear the view stack, otherwise it would grow too big as the cancel button is hidden in some views
         // Later in the life-cycle the view where this action came from is added to the stack, so visible cancel buttons will function properly
         Map<String, Object> sessionMap = context.getExternalContext().getSessionMap();
-        Stack<String> stack = (Stack<String>) sessionMap.get(UIMenuComponent.VIEW_STACK);// close all dialogs, when clearing stack
-        DialogManager dialogManager = org.alfresco.web.app.Application.getDialogManager();
-        while (stack != null && !stack.isEmpty()) {
-            stack.pop();
-            dialogManager.cancel();
-        }
-        sessionMap.put(UIMenuComponent.VIEW_STACK, new Stack());
+        sessionMap.put(UIMenuComponent.VIEW_STACK, new Stack<String>());
 
         MenuBean menuBean = (MenuBean) FacesHelper.getManagedBean(context, MenuBean.BEAN_NAME);
         menuBean.setMenuItemId(primaryId, secondaryId);
@@ -882,7 +877,7 @@ public class MenuBean implements Serializable {
         @Override
         public int compare(MenuItem o1, MenuItem o2) {
             if (o1 != null && o2 != null && o1 instanceof DropdownMenuItem && o2 instanceof DropdownMenuItem) {
-                return ((DropdownMenuItem) o1).getTransientOrderString().compareToIgnoreCase(((DropdownMenuItem) o2).getTransientOrderString());
+                return AppConstants.DEFAULT_COLLATOR.compare(((DropdownMenuItem) o1).getTransientOrderString(), ((DropdownMenuItem) o2).getTransientOrderString());
             }
             return 0;
         }

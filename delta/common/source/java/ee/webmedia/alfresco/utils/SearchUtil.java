@@ -376,12 +376,20 @@ public class SearchUtil {
 
     // Join
 
+    public static String joinQueryPartsAnd(String... queryParts) {
+        return joinQueryPartsAnd(Arrays.asList(queryParts));
+    }
+
     public static String joinQueryPartsAnd(List<String> queryParts) {
         return joinQueryParts(queryParts, "AND", true);
     }
 
     public static String joinQueryPartsAnd(List<String> queryParts, boolean parenthesis) {
         return joinQueryParts(queryParts, "AND", parenthesis);
+    }
+
+    public static String joinQueryPartsOr(String... queryParts) {
+        return joinQueryPartsOr(Arrays.asList(queryParts));
     }
 
     public static String joinQueryPartsOr(List<String> queryParts) {

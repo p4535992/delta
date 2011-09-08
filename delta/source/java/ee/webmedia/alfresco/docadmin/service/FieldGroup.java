@@ -1,13 +1,21 @@
 package ee.webmedia.alfresco.docadmin.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
+
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseService;
+import ee.webmedia.alfresco.base.BaseServiceImpl;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 
@@ -28,8 +36,30 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
         super(parent, node);
     }
 
+    /** Used by {@link BaseServiceImpl#getObject(NodeRef, Class)} through reflection */
+    public FieldGroup(NodeRef parentRef, WmNode fieldDefNode) {
+        super(parentRef, fieldDefNode);
+    }
+
+    @Override
+    public DocumentTypeVersion getParent() {
+        return (DocumentTypeVersion) super.getParent();
+    }
+
     public ChildrenList<Field> getFields() {
         return getChildren(Field.class);
+    }
+
+    @Override
+    public Collection<Field> getFieldsById(Set<QName> fieldIds) {
+        HashSet<Field> matchingFields = new HashSet<Field>();
+        for (QName fieldId : fieldIds) {
+            Field existingField = getFieldById(fieldId);
+            if (existingField != null) {
+                matchingFields.add(existingField);
+            }
+        }
+        return matchingFields;
     }
 
     @Override
@@ -37,24 +67,25 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
         return getFields();
     }
 
+    /** @return „name (id, fieldTypeTranslated), ..., name (id, fieldTypeTranslated)" */
     @Override
     public String getAdditionalInfo() {
         List<String> fieldNames = new ArrayList<String>();
-        for (Field field : getFields().getList()) {
-            fieldNames.add(field.getName() + " (" + field.getFieldId() + ", " + field.getFieldType() + ")");
+        List<? extends Field> fields;
+        List<QName> fieldDefinitionIds = getFieldDefinitionIds();
+        if (!fieldDefinitionIds.isEmpty()) {
+            // fieldGroup is under fieldGroupDefinitions where fields are referenced using multivalued property not child-assoc
+            fields = getDocumentAdminService().getFieldDefinitions(fieldDefinitionIds);
+        } else {
+            fields = getFields();
+        }
+        for (Field field : fields) {
+            fieldNames.add(field.getFieldNameWithIdAndType());
         }
         return StringUtils.join(fieldNames, ", ");
     }
 
     // START: properties
-    public final boolean isMandatoryForVol() {
-        return getPropBoolean(DocumentAdminModel.Props.MANDATORY_FOR_VOL);
-    }
-
-    public final void setMandatoryForVol(boolean mandatoryForVol) {
-        setProp(DocumentAdminModel.Props.MANDATORY_FOR_VOL, mandatoryForVol);
-    }
-
     public final String getReadonlyFieldsName() {
         return getProp(DocumentAdminModel.Props.READONLY_FIELDS_NAME);
     }
@@ -87,10 +118,57 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
         setProp(DocumentAdminModel.Props.THESAURUS, thesaurus);
     }
 
+    public final boolean isReadonlyFieldsNameChangeable() {
+        return getPropBoolean(DocumentAdminModel.Props.READONLY_FIELDS_NAME_CHANGEABLE);
+    }
+
+    public final void setReadonlyFieldsNameChangeable(boolean readonlyFieldsNameChangeable) {
+        setProp(DocumentAdminModel.Props.READONLY_FIELDS_NAME_CHANGEABLE, readonlyFieldsNameChangeable);
+    }
+
+    public final boolean isReadonlyFieldsRuleChangeable() {
+        return getPropBoolean(DocumentAdminModel.Props.READONLY_FIELDS_RULE_CHANGEABLE);
+    }
+
+    public final void setReadonlyFieldsRuleChangeable(boolean readonlyFieldsRuleChangeable) {
+        setProp(DocumentAdminModel.Props.READONLY_FIELDS_RULE_CHANGEABLE, readonlyFieldsRuleChangeable);
+    }
+
+    public final boolean isShowInTwoColumnsChangeable() {
+        return getPropBoolean(DocumentAdminModel.Props.SHOW_IN_TWO_COLUMNS_CHANGEABLE);
+    }
+
+    public final void setShowInTwoColumnsChangeable(boolean showInTwoColumnsChangeable) {
+        setProp(DocumentAdminModel.Props.SHOW_IN_TWO_COLUMNS_CHANGEABLE, showInTwoColumnsChangeable);
+    }
+
+    public List<QName> getFieldDefinitionIds() {
+        return getPropList(DocumentAdminModel.Props.FIELD_DEFINITIONS_IDS);
+    }
+
     // END: properties
 
     @Override
     public FieldGroup clone() {
         return (FieldGroup) super.clone(); // just return casted type
     }
+
+    // Utilities
+
+    /**
+     * Find first {@link Field} that matches given {@code fieldId}. Traverses all child {@link Field}s.
+     * 
+     * @param fieldId fieldId to match by, cannot be {@code null}.
+     * @return {@code null} if not found; otherwise the found field.
+     */
+    public Field getFieldById(QName fieldId) {
+        Assert.notNull(fieldId, "fieldId cannot be null");
+        for (Field field : getFields()) {
+            if (field.getFieldId().equals(fieldId)) {
+                return field;
+            }
+        }
+        return null;
+    }
+
 }

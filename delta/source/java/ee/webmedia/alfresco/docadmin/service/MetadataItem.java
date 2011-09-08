@@ -42,10 +42,12 @@ public abstract class MetadataItem extends BaseObject {
 
     // START: Properties
 
+    // actually fieldDefinition doesn't need order property, but we put it here to make model easier
     public final Integer getOrder() {
         return getProp(DocumentAdminModel.Props.ORDER);
     }
 
+    // actually fieldDefinition doesn't need order property, but we put it here to make model easier
     public final void setOrder(Integer name) {
         setProp(DocumentAdminModel.Props.ORDER, name);
     }

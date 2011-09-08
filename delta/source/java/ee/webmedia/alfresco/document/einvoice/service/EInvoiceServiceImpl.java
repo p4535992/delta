@@ -45,6 +45,8 @@ import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.GUID;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.data.IDataContainer;
+import org.alfresco.web.data.QuickSort;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
 import org.apache.commons.lang.StringUtils;
@@ -411,7 +413,8 @@ public class EInvoiceServiceImpl implements EInvoiceService {
                 activeDimensionValues.add(dimensionValue);
             }
         }
-        Collections.sort(activeDimensionValues);
+        QuickSort quickSort = new QuickSort(activeDimensionValues, "ValueName", true, IDataContainer.SORT_CASEINSENSITIVE);
+        quickSort.sort();
         activeDimensionValueCache.put(dimension, Collections.unmodifiableList(activeDimensionValues));
         return activeDimensionValues;
     }

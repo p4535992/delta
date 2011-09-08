@@ -165,7 +165,8 @@ public interface UserService {
      */
     boolean markUserLeaving(String leavingUserId, String replacementUserId, boolean isLeaving);
 
-
     void updateUser(Node user);
+
+    NodeRef getPerson(String userName);
 
 }

@@ -588,4 +588,8 @@
 
    <!-- END: web beans: -->
 
+   <bean id="RecipientNoteGenerator" class="ee.webmedia.alfresco.common.propertysheet.generator.MessageSeparatorGenerator" scope="request">
+      <property name="messageKey" value="document_recipientNoteSeparator_text" />
+   </bean>
+   
 </beans>

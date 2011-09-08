@@ -17,6 +17,11 @@ public class PropertySheetStateBean implements Serializable {
 
     private Map<String, PropertySheetStateHolder> stateHolders;
 
+    /**
+     * Reset all fields and components
+     * 
+     * @param dialogDataProvider may be {@code null}
+     */
     public void reset(Map<String, PropertySheetStateHolder> stateHolders, DialogDataProvider dialogDataProvider) {
         if (stateHolders != null) {
             for (PropertySheetStateHolder stateHolder : stateHolders.values()) {

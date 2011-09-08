@@ -52,7 +52,14 @@ public class WorkflowBlockItem implements Serializable {
     }
 
     public String getWorkflowType() {
+        if (isResponsibleTask()) {
+            return MessageUtil.getMessage("assignmentWorkflow_coOwner");
+        }
         return MessageUtil.getMessage(task.getParent().getType().getLocalName());
+    }
+
+    private boolean isResponsibleTask() {
+        return WorkflowSpecificModel.Types.ASSIGNMENT_WORKFLOW.equals(task.getParent().getType()) && !task.isResponsible();
     }
 
     public String getTaskOwnerName() {
@@ -65,6 +72,14 @@ public class WorkflowBlockItem implements Serializable {
 
     public Date getCompletedDateTime() {
         return task.getCompletedDateTime();
+    }
+
+    public int getWorkflowIndex() {
+        return task.getWorkflowIndex();
+    }
+
+    public int getTaskIndexInWorkflow() {
+        return task.getTaskIndexInWorkflow();
     }
 
     public String getTaskOutcome() {
@@ -134,13 +149,20 @@ public class WorkflowBlockItem implements Serializable {
         chain.addComparator(new TransformingComparator(new Transformer() {
             @Override
             public Object transform(Object input) {
-                return ((WorkflowBlockItem) input).getDueDate();
+                return ((WorkflowBlockItem) input).getWorkflowIndex();
+            }
+        }, new NullComparator()));
+        // in case of assignment tasks, responsible tasks come first
+        chain.addComparator(new TransformingComparator(new Transformer() {
+            @Override
+            public Object transform(Object input) {
+                return ((WorkflowBlockItem) input).isResponsibleTask() ? 1 : 0;
             }
         }, new NullComparator()));
         chain.addComparator(new TransformingComparator(new Transformer() {
             @Override
             public Object transform(Object input) {
-                return ((WorkflowBlockItem) input).getTaskOwnerName();
+                return ((WorkflowBlockItem) input).getTaskIndexInWorkflow();
             }
         }, new NullComparator()));
         COMPARATOR = chain;

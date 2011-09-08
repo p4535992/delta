@@ -2,6 +2,7 @@ package ee.webmedia.alfresco.utils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -13,6 +14,7 @@ import java.util.Set;
 
 import javax.faces.FacesException;
 import javax.faces.application.Application;
+import javax.faces.component.NamingContainer;
 import javax.faces.component.UIComponent;
 import javax.faces.component.UIForm;
 import javax.faces.component.UIInput;
@@ -46,6 +48,8 @@ import org.alfresco.web.ui.common.ComponentConstants;
 import org.alfresco.web.ui.common.Utils;
 import org.alfresco.web.ui.common.component.UIActionLink;
 import org.alfresco.web.ui.common.component.UIPanel;
+import org.alfresco.web.ui.common.component.data.UIColumn;
+import org.alfresco.web.ui.common.component.data.UISortLink;
 import org.alfresco.web.ui.repo.RepoConstants;
 import org.alfresco.web.ui.repo.component.UIActions;
 import org.alfresco.web.ui.repo.component.property.PropertySheetItem;
@@ -68,6 +72,7 @@ import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.datepicker.DatePickerConverter;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
+import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
 import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.ComponentPropVO;
 import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
@@ -83,6 +88,7 @@ public class ComponentUtil {
     private static final String JSF_CONVERTER = "jsfConverter";
     private static org.apache.commons.logging.Log log = org.apache.commons.logging.LogFactory.getLog(ComponentUtil.class);
     private static GeneralService generalService;
+    public static final String DEFAULT_SELECT_VALUE = "";
 
     public static UIComponent makeCondenced(final UIComponent component, int condenceSize) {
         putAttribute(component, "styleClass", "condence" + condenceSize);
@@ -423,6 +429,32 @@ public class ComponentUtil {
             Assert.notNull(panelLabel, "Panel lable shouldn't be null"); // panel found, but without label - this shouldn't happen
         }
         return StringUtils.trim(panelLabel);
+    }
+
+    public static String getColumnLabel(UIComponent descendantOfColumn) {
+        UIColumn column = getAncestorComponent(descendantOfColumn, UIColumn.class, true);
+        String label = ""; // if column not found then ignore
+        if (column != null) {
+            FacesContext facesContext = FacesContext.getCurrentInstance();
+            UIComponent headerFacet = column.getFacet("header");
+            if (headerFacet instanceof UISortLink) {
+                UISortLink sortLink = (UISortLink) headerFacet;
+                loadMsgBundleIfNeeded(facesContext, "msg"); // needed to translate panel label
+                label = sortLink.getLabel();
+            } else if (headerFacet instanceof UIOutput) {
+                UIOutput sortLink = (UIOutput) headerFacet;
+                loadMsgBundleIfNeeded(facesContext, "msg"); // needed to translate panel label
+                label = DefaultTypeConverter.INSTANCE.convert(String.class, sortLink.getValue());
+            } else {
+                String msg = "TODO: unimplemented - see example few lines above in code.";
+                if (headerFacet != null) {
+                    msg += " facetClass=" + headerFacet.getClass();
+                }
+                throw new RuntimeException(msg);
+            }
+            Assert.notNull(label, "Column lable shouldn't be null"); // column found, but without label - this shouldn't happen
+        }
+        return StringUtils.trim(label);
     }
 
     private static void loadMsgBundleIfNeeded(FacesContext facesContext, String msgBundleVar) {
@@ -954,17 +986,33 @@ public class ComponentUtil {
     }
 
     public static UIComponent findChildComponentById(FacesContext context, UIComponent component, String clientId) {
+        return findChildComponentById(context, component, clientId, false);
+    }
+
+    public static UIComponent findChildComponentById(FacesContext context, UIComponent component, String clientId, boolean includeFacets) {
         if (component == null) {
             return null;
         }
         if (clientId.equals(component.getClientId(context))) {
             return component;
         }
+        // dialog:dialog-body:testSearchFieldDef:picker_testSearchFieldDef
+        String[] namedPath = clientId.split(String.valueOf(NamingContainer.SEPARATOR_CHAR));
         for (int i = 0; i < component.getChildCount(); i++) {
             UIComponent child = (UIComponent) component.getChildren().get(i);
-            UIComponent result = findChildComponentById(context, child, clientId);
+            UIComponent result = findChildComponentById(context, child, clientId, includeFacets);
             if (result != null) {
                 return result;
+            }
+        }
+        if (includeFacets) {
+            @SuppressWarnings("unchecked")
+            Collection<UIComponent> facetComponents = component.getFacets().values();
+            for (UIComponent facet : facetComponents) {
+                UIComponent result = findChildComponentById(context, facet, clientId, true);
+                if (result != null) {
+                    return result;
+                }
             }
         }
         return null;
@@ -1109,4 +1157,14 @@ public class ComponentUtil {
         };
     }
 
+    /**
+     * Similar method for {@link UISelectItem} objects is {@link GeneralSelectorGenerator#addDefault(FacesContext, List)}
+     * 
+     * @param results
+     * @param context
+     */
+    public static void addDefault(List<SelectItem> results, FacesContext context) {
+        SelectItem selectItem = new SelectItem(DEFAULT_SELECT_VALUE, MessageUtil.getMessage(context, "select_default_label"));
+        results.add(0, selectItem);
+    }
 }

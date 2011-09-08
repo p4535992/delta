@@ -206,6 +206,7 @@ public interface DocumentSearchService {
 
     Task searchTaskByOriginalDvkIdQuery(String originalDvkId);
 
+    // TODO not document specific
     Series searchSeriesByIdentifier(String identifier);
 
     /**
@@ -235,6 +236,14 @@ public interface DocumentSearchService {
 
     List<Document> searchDocumentsByDvkId(String dvkId);
 
+    // TODO not document specific
     List<NodeRef> simpleSearch(String searchInputString, NodeRef parentRef, QName type, QName... props);
+
+    /**
+     * @param query
+     * @return true if at least one result could be found based on query (from default store)
+     */
+    // TODO not document specific
+    boolean isMatch(String query);
 
 }

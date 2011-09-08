@@ -77,8 +77,7 @@
             </child-association>
          </associations>
          <mandatory-aspects>
-            <!--TODO DLSeadist: not declaring doccom:common as mandatory aspect in data model; but adding it to created docs programmatically in DocumentServiceImpl#createDocumentNode-->
-            <!--<aspect>doccom:common</aspect>-->
+            <aspect>doccom:common</aspect>
             <aspect>wfc:compoundWorkflowContainer</aspect>
             <aspect>priv:userGroupMapping</aspect>
          </mandatory-aspects>
@@ -213,18 +212,6 @@
       <aspect name="doccom:searchable">
          <properties>
             <!-- Document's function and series noderefs are duplicated here, because we need to use them during lucene search -->
-            <property name="doccom:function">
-               <type>d:noderef</type>
-            </property>
-            <property name="doccom:series">
-               <type>d:noderef</type>
-            </property>
-            <property name="doccom:volume">
-               <type>d:noderef</type>
-            </property>
-            <property name="doccom:case">
-               <type>d:noderef</type>
-            </property>
             <property name="doccom:fileNames">
                <type>d:text</type>
                <multiple>true</multiple>
@@ -301,6 +288,18 @@
 
       <aspect name="doccom:common">
          <properties>
+            <property name="doccom:function">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:series">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:volume">
+               <type>d:noderef</type>
+            </property>
+            <property name="doccom:case">
+               <type>d:noderef</type>
+            </property>
             <property name="doccom:docName"><!-- Pealkiri -->
                <type>d:text</type>
                <mandatory enforced="false">true</mandatory>

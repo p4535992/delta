@@ -25,7 +25,7 @@
    <config evaluator="aspect-name" condition="doccom:common">
       <property-sheet>
          <show-property name="owner" show-in-edit-mode="false" display-label-id="document_owner" component-generator="UnescapedOutputTextGenerator" />
-         <show-property name="doccom:ownerName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" dialogTitleId="users_search_title" editable="false" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
+         <show-property name="doccom:ownerName" show-in-view-mode="false" component-generator="UserSearchGenerator" usernameProp="doccom:ownerId" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" dialogTitleId="users_search_title" editable="false" ajaxParentLevel="1" readOnlyIf="#{DocumentDialog.isNotWorkingOrNotEditable}" />
       </property-sheet>
    </config>
 
@@ -33,7 +33,7 @@
       <property-sheet>
          <show-property name="owner" show-in-edit-mode="false" display-label-id="document_owner2" component-generator="UnescapedOutputTextGenerator" />
          <!-- TODO: shouldn't this be readOnly also when status <> 'töös'? -->
-         <show-property name="doccom:ownerName" show-in-view-mode="false" component-generator="SearchGenerator" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" dialogTitleId="users_search_title" editable="false" ajaxParentLevel="1" display-label-id="document_owner2" readOnlyIf="#{DocumentDialog.isNotEditable}" />
+         <show-property name="doccom:ownerName" show-in-view-mode="false" component-generator="UserSearchGenerator" usernameProp="doccom:ownerId" pickerCallback="#{UserListDialog.searchUsers}" setterCallback="#{MetadataBlockBean.setOwner}" dialogTitleId="users_search_title" editable="false" ajaxParentLevel="1" display-label-id="document_owner2" readOnlyIf="#{DocumentDialog.isNotEditable}" />
       </property-sheet>
    </config>
 

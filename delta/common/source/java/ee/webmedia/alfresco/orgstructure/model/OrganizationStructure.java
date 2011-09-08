@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.orgstructure.model;
 import java.io.Serializable;
 import java.util.Comparator;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
@@ -63,7 +64,7 @@ public class OrganizationStructure implements Serializable {
 
         @Override
         public int compare(OrganizationStructure o1, OrganizationStructure o2) {
-            return o1.getName().compareToIgnoreCase(o2.getName());
+            return AppConstants.DEFAULT_COLLATOR.compare(o1.getName(), o2.getName());
         }
 
     }

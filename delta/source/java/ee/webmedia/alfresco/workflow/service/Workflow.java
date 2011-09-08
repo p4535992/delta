@@ -23,6 +23,12 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
     protected WmNode newTaskTemplate;
     protected Class<? extends Task> newTaskClass;
     protected int newTaskOutcomes;
+    /**
+     * Workflow's index in compound workflow during last save
+     * (may not be current index if compond workflow is changed in memory).
+     * At the moment used for secondary ordering in WorkflowBlock
+     */
+    private int indexInCompoundWorkflow;
 
     protected static <T extends Workflow> T create(Class<T> workflowClass, WmNode node, CompoundWorkflow parent, WmNode newTaskTemplate,
             Class<? extends Task> newTaskClass, int newTaskOutcomes) {
@@ -159,5 +165,13 @@ public class Workflow extends BaseWorkflowObject implements Serializable {
                 task.setProp(WorkflowSpecificModel.Props.WORKFLOW_RESOLUTION, getProp(WorkflowSpecificModel.Props.RESOLUTION));
             }
         }
+    }
+
+    public int getIndexInCompoundWorkflow() {
+        return indexInCompoundWorkflow;
+    }
+
+    public void setIndexInCompoundWorkflow(int indexInCompoundWorkflow) {
+        this.indexInCompoundWorkflow = indexInCompoundWorkflow;
     }
 }

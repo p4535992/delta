@@ -6,6 +6,9 @@ import org.apache.commons.lang.StringUtils;
 import ee.webmedia.alfresco.common.model.NodeBaseVO;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.utils.RepoUtil;
+import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
+import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
 /**
  * @author Alar Kvell
@@ -98,7 +101,7 @@ public class DocumentType extends NodeBaseVO implements Comparable<DocumentType>
         } else if (other.getName() == null) {
             return 1;
         }
-        return getName().compareToIgnoreCase(other.getName());
+        return AppConstants.DEFAULT_COLLATOR.compare(getName(), other.getName());
     }
 
 }

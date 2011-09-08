@@ -19,7 +19,11 @@ public class ComboboxGenerator extends BaseTypeFieldGenerator {
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
-        item.setComponentGenerator("GeneralSelectorGenerator");
+        item.setComponentGenerator("ClassificatorSelectorGenerator");
+        // Should only happen on special systematic fields: function, series, volume
+        if (field.getClassificator() != null) {
+            item.setClassificatorName(field.getClassificator());
+        }
     }
 
 }

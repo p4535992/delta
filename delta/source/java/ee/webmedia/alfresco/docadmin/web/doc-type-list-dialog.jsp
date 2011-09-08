@@ -49,29 +49,9 @@
          <h:inputTextarea rows="1" cols="45" value="#{type.comment}" styleClass="expand19-200 borderless" readonly="true" />
       </a:column>
 
-      <a:column id="actionsCol" actions="true">
-         <a:booleanEvaluator value="#{!type.systematic}"><%-- CLTASK 166371 TODO DLSeadist lisaks tingimus, et docType pole kasutusel --%>
-            <a:actionLink id="actionsCol-del" value="#{type.name}" actionListener="#{DocTypeListDialog.deleteDocType}"
-             showLink="false" image="/images/icons/delete.gif" tooltip="#{msg.docType_list_action_delete}" styleClass="deleteDocType">
-                  <f:param name="nodeRef" value="#{type.nodeRef}"/>
-            </a:actionLink>
-         </a:booleanEvaluator>
-      </a:column>
-
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="pager1" styleClass="pager" />
    </a:richList>
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/disable-dialog-cancel-button.jsp" />
-<f:verbatim>
-<script type="text/javascript">
-   // confirm removing
-   prependOnclick($jQ(".deleteDocType"), function(e) {
- 	 var msg = '<%= MessageUtil.getMessageAndEscapeJS("docType_list_action_delete_confirm") %>';
-     var docTypeName = $jQ(e).closest('tr').children().eq(2).text();
-     var docTypeId = $jQ(e).closest('tr').children().eq(3).text();
-     return confirmWithPlaceholders(msg, docTypeName, docTypeId);
-   });
-</script>
-</f:verbatim>

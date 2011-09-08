@@ -1,14 +1,26 @@
 package ee.webmedia.alfresco.docadmin.service;
 
+import static ee.webmedia.alfresco.utils.RepoUtil.copyProps;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateAspectQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generatePropertyExactQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.generateTypeQuery;
+import static ee.webmedia.alfresco.utils.SearchUtil.joinQueryPartsAnd;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.dictionary.TypeDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
@@ -18,12 +30,13 @@ import org.springframework.beans.factory.InitializingBean;
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.base.BaseService;
-import ee.webmedia.alfresco.classificator.constant.FieldChangeableIf;
-import ee.webmedia.alfresco.classificator.constant.FieldType;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.web.MetadataItemCompareUtil;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
+import ee.webmedia.alfresco.document.search.service.DocumentSearchService;
 import ee.webmedia.alfresco.menu.service.MenuService;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.Predicate;
@@ -42,9 +55,12 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     private BaseService baseService;
     private MenuService menuService;
     private UserService userService;
+    private DocumentSearchService documentSearchService;
 
     private NodeRef documentTypesRoot;
     private NodeRef fieldDefinitionsRoot;
+    private NodeRef fieldGroupDefinitionsRoot;
+    private Set<String> fieldPropNames;
 
     @Override
     public void afterPropertiesSet() throws Exception {
@@ -68,17 +84,12 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     @Override
     public DocumentType getDocumentType(String id) {
-        if ("type1".equals(id)) {
-            return getTestDocumentType1();
-        }
-        if ("type2".equals(id)) {
-            return getTestDocumentType2();
-        }
-        if ("type3".equals(id)) {
-            return getTestDocumentType3();
-        }
-        String xPath = DocumentAdminModel.Repo.DOCUMENT_TYPES_SPACE + "/" + DocumentType.getAssocName(id);
-        return getDocumentType(generalService.getNodeRef(xPath));
+        NodeRef documentTypeRef = getDocumentTypeRef(id);
+        return getDocumentType(documentTypeRef);
+    }
+
+    private NodeRef getDocumentTypeRef(String id) {
+        return generalService.getNodeRef(DocumentType.getAssocName(id).toString(), getDocumentTypesRoot());
     }
 
     @Override
@@ -86,139 +97,93 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         return baseService.getObject(docTypeRef, DocumentType.class);
     }
 
-    private DocumentType getTestDocumentType1() {
-        DocumentType docType = new DocumentType(getDocumentTypesRoot());
-        docType.setDocumentTypeId("type1");
-        docType.setName("Tüüp 1");
-
-        DocumentTypeVersion docVer = docType.getDocumentTypeVersions().add();
-        docVer.setVersionNr(1);
-        addSystematicMetadataItems(docVer);
-
-        Field field1 = docVer.getMetadata().add(Field.class);
-        field1.setOrder(3);
-        field1.setFieldId(QName.createQName("docdyn:field1", namespaceService));
-        field1.setName("Väli 1");
-        field1.setFieldTypeEnum(FieldType.TEXT_FIELD);
-
-        return docType;
-    }
-
-    private DocumentType getTestDocumentType2() {
-        DocumentType docType = new DocumentType(getDocumentTypesRoot());
-        docType.setDocumentTypeId("type2");
-        docType.setName("Tüüp 2");
-
-        DocumentTypeVersion docVer = docType.getDocumentTypeVersions().add();
-        docVer.setVersionNr(1);
-        addSystematicMetadataItems(docVer);
-
-        Field field1 = docVer.getMetadata().add(Field.class);
-        field1.setOrder(3);
-        field1.setFieldId(QName.createQName("docdyn:field2", namespaceService));
-        field1.setName("Väli 2");
-        field1.setFieldTypeEnum(FieldType.TEXT_FIELD);
-
-        Field field2 = docVer.getMetadata().add(Field.class);
-        field2.setOrder(4);
-        field2.setFieldId(QName.createQName("docdyn:field3", namespaceService));
-        field2.setName("Väli 3");
-        field2.setFieldTypeEnum(FieldType.TEXT_FIELD);
-
-        return docType;
-    }
-
-    private DocumentType getTestDocumentType3() {
-        DocumentType docType = new DocumentType(getDocumentTypesRoot());
-        docType.setDocumentTypeId("type3");
-        docType.setName("Tüüp 3");
-
-        DocumentTypeVersion docVer = docType.getDocumentTypeVersions().add();
-        docVer.setVersionNr(1);
-        addSystematicMetadataItems(docVer);
-
-        Field field1 = docVer.getMetadata().add(Field.class);
-        field1.setOrder(3);
-        field1.setFieldId(QName.createQName("docdyn:field3", namespaceService));
-        field1.setName("Väli 3");
-        field1.setFieldTypeEnum(FieldType.TEXT_FIELD);
-
-        Field field2 = docVer.getMetadata().add(Field.class);
-        field2.setOrder(4);
-        field2.setFieldId(QName.createQName("docdyn:field4", namespaceService));
-        field2.setName("Väli 4");
-        field2.setFieldTypeEnum(FieldType.TEXT_FIELD);
-
-        return docType;
+    @Override
+    public String getDocumentTypeName(String documentTypeId) {
+        NodeRef documentTypeRef = getDocumentTypeRef(documentTypeId);
+        if (documentTypeRef == null) {
+            // Should not usually happen
+            return null;
+        }
+        return (String) nodeService.getProperty(documentTypeRef, DocumentAdminModel.Props.NAME);
     }
 
     @Override
     public void addSystematicMetadataItems(DocumentTypeVersion docVer) {
-        FieldGroup group = docVer.getMetadata().add(FieldGroup.class);
-        group.setOrder(1);
-        group.setName("Dokumendi asukoht");
-        group.setSystematic(true);
-        group.setMandatoryForDoc(true);
-        group.setRemovableFromSystemDocType(false);
+        // order of mandatory metadataItems under docVer should be set on fieldDefinitions and fieldGroups
+        List<FieldDefinition> fieldDefinitions = getFieldDefinitions();
+        ChildrenList<MetadataItem> metadata = docVer.getMetadata();
+        for (FieldGroup sourceGroup : getFieldGroupDefinitions()) {
+            if (sourceGroup.isMandatoryForDoc()) {
+                FieldGroup targetGroup = metadata.add(FieldGroup.class);
+                addSystematicFields(sourceGroup, targetGroup, fieldDefinitions);
+            }
+        }
 
-        Field field = group.getFields().add();
-        field.setOrder(1);
-        field.setFieldId(QName.createQName("docdyn:function", namespaceService));
-        field.setName("Funktsioon");
-        field.setSystematic(true);
-        field.setMandatoryForDoc(true);
-        field.setMandatory(true);
-        field.setFieldTypeEnum(FieldType.COMBOBOX);
-        field.setChangeableIfEnum(FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC);
-        field.setRemovableFromSystemDocType(false);
-        field.setOnlyInGroup(true);
+        for (FieldDefinition sourceFieldDef : fieldDefinitions) {
+            if (sourceFieldDef.isMandatoryForDoc()) {
+                Field targetField = metadata.add(Field.class);
+                copyFieldProps(sourceFieldDef, targetField);
+            }
+        }
+    }
 
-        Field series = group.getFields().add();
-        series.setOrder(2);
-        series.setFieldId(QName.createQName("docdyn:series", namespaceService));
-        series.setName("Sari");
-        series.setSystematic(true);
-        series.setMandatoryForDoc(true);
-        series.setMandatory(true);
-        series.setFieldTypeEnum(FieldType.COMBOBOX);
-        series.setChangeableIfEnum(FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC);
-        series.setRemovableFromSystemDocType(false);
-        series.setOnlyInGroup(true);
+    @Override
+    public void addSystematicFields(FieldGroup fieldGroupDefinition, FieldGroup fieldGroup) {
+        addSystematicFields(fieldGroupDefinition, fieldGroup, getFieldDefinitions());
+    }
 
-        Field volume = group.getFields().add();
-        volume.setOrder(3);
-        volume.setFieldId(QName.createQName("docdyn:volume", namespaceService));
-        volume.setName("Toimik");
-        volume.setSystematic(true);
-        volume.setMandatoryForDoc(true);
-        volume.setMandatory(true);
-        volume.setFieldTypeEnum(FieldType.COMBOBOX);
-        volume.setChangeableIfEnum(FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC);
-        volume.setRemovableFromSystemDocType(false);
-        volume.setOnlyInGroup(true);
+    private void addSystematicFields(FieldGroup fieldGroupDefinition, FieldGroup fieldGroup, List<FieldDefinition> fieldDefinitions) {
+        Map<String, Object> targetGroupProps = fieldGroup.getNode().getProperties();
+        copyProps(fieldGroupDefinition.getNode().getProperties(), targetGroupProps);
+        @SuppressWarnings("unchecked")
+        List<QName> fieldDefinitionIds = (List<QName>) targetGroupProps.remove(DocumentAdminModel.Props.FIELD_DEFINITIONS_IDS);
+        int groupOrder = 1;
+        for (QName fieldDefinitionId : fieldDefinitionIds) {
+            FieldDefinition sourceFieldDef = null;
+            { // getFieldDefinition
+                for (FieldDefinition fieldDefinition : fieldDefinitions) {
+                    if (fieldDefinition.getFieldId().equals(fieldDefinitionId)) {
+                        sourceFieldDef = fieldDefinition;
+                        break;
+                    }
+                }
+                if (sourceFieldDef == null) {
+                    throw new IllegalArgumentException("FieldGroup '" + fieldGroupDefinition.getName() + "' references unknown fieldDefinition '" + fieldDefinitionId + "'");
+                }
+            }
+            Field targetField = fieldGroup.getFields().add();
+            copyFieldProps(sourceFieldDef, targetField);
+            targetField.setOrder(groupOrder++);
+            fieldDefinitions.remove(sourceFieldDef);
+        }
+    }
 
-        Field caseField = group.getFields().add();
-        caseField.setOrder(4);
-        caseField.setFieldId(QName.createQName("docdyn:case", namespaceService));
-        caseField.setName("Asi");
-        caseField.setSystematic(true);
-        caseField.setMandatoryForDoc(true);
-        caseField.setMandatory(true);
-        caseField.setFieldTypeEnum(FieldType.COMBOBOX_EDITABLE);
-        caseField.setChangeableIfEnum(FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC);
-        caseField.setRemovableFromSystemDocType(false);
-        caseField.setOnlyInGroup(true);
+    private Set<String> getFieldPropNames() {
+        if (fieldPropNames == null) {
+            TypeDefinition fieldTypeDef = generalService.getAnonymousType(DocumentAdminModel.Types.FIELD);
+            Set<String> tmp = new HashSet<String>();
+            for (QName qName : fieldTypeDef.getProperties().keySet()) {
+                tmp.add(qName.toString());
+            }
+            fieldPropNames = Collections.unmodifiableSet(tmp);
+        }
+        return fieldPropNames;
+    }
 
-        Field docName = docVer.getMetadata().add(Field.class);
-        docName.setOrder(2);
-        docName.setFieldId(QName.createQName("docdyn:docName", namespaceService));
-        docName.setName("Pealkiri");
-        docName.setSystematic(true);
-        docName.setMandatoryForDoc(true);
-        docName.setMandatory(true);
-        docName.setFieldTypeEnum(FieldType.COMBOBOX_EDITABLE);
-        docName.setChangeableIfEnum(FieldChangeableIf.CHANGEABLE_IF_WORKING_DOC);
-        docName.setRemovableFromSystemDocType(false);
+    @Override
+    public void copyFieldProps(FieldDefinition fieldDefinition, Field field) {
+        Map<String, Object> targetFieldProps = field.getNode().getProperties();
+        copyProps(fieldDefinition.getNode().getProperties(), targetFieldProps);
+        targetFieldProps.keySet().retainAll(getFieldPropNames()); // remove properties that only fieldDefinition should have
+        field.setCopyOfFieldDefinition(fieldDefinition);
+    }
+
+    private FieldDefinition createFieldDefinition(Field field) {
+        FieldDefinition fieldDef = createNewUnSavedFieldDefinition();
+        Map<String, Object> targetFieldProps = fieldDef.getNode().getProperties();
+        copyProps(field.getNode().getProperties(), targetFieldProps);
+        fieldDef.setOrder(null);
+        return fieldDef;
     }
 
     private List<DocumentType> getAllDocumentTypes(final Boolean used) {
@@ -258,6 +223,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         DocumentType docType = docTypeOriginal.clone();
         boolean wasUnsaved = docType.isUnsaved();
 
+        // validating duplicated documentTypeId is done in baseService
         updateOrRemoveLatestDocTypeVersion(docType);
         baseService.saveObject(docType);
 
@@ -295,8 +261,53 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+    public List<FieldDefinition> getFieldDefinitions(List<QName> fieldDefinitionIds) {
+        List<FieldDefinition> fieldDefinitions = getFieldDefinitions();
+        for (Iterator<FieldDefinition> it = fieldDefinitions.iterator(); it.hasNext();) {
+            FieldDefinition fieldDefinition = it.next();
+            if (!fieldDefinitionIds.contains(fieldDefinition.getFieldId())) {
+                it.remove();
+            }
+        }
+        return fieldDefinitions;
+    }
+
+    private Map<QName, FieldDefinition> getFieldDefinitionsByFieldIds() {
+        List<FieldDefinition> fieldDefinitions = getFieldDefinitions();
+        Map<QName, FieldDefinition> fieldDefs = new HashMap<QName, FieldDefinition>();
+        for (FieldDefinition fieldDefinition : fieldDefinitions) {
+            fieldDefs.put(fieldDefinition.getFieldId(), fieldDefinition);
+        }
+        return fieldDefs;
+    }
+
+    @Override
+    public List<FieldGroup> getFieldGroupDefinitions() {
+        return baseService.getChildren(getFieldGroupDefinitionsRoot(), FieldGroup.class);
+    }
+
+    @Override
     public FieldDefinition getFieldDefinition(QName fieldId) {
         return baseService.getChild(getFieldDefinitionsRoot(), fieldId, FieldDefinition.class);
+    }
+
+    @Override
+    public List<FieldDefinition> searchFieldDefinitions(String searchCriteria) {
+        List<NodeRef> resultRefs = documentSearchService.simpleSearch(searchCriteria, getFieldDefinitionsRoot()
+                , DocumentAdminModel.Types.FIELD_DEFINITION, DocumentAdminModel.Props.NAME, DocumentAdminModel.Props.FIELD_ID);
+        return baseService.getObjects(resultRefs, FieldDefinition.class);
+    }
+
+    @Override
+    public List<FieldGroup> searchFieldGroupDefinitions(String searchCriteria) {
+        List<NodeRef> resultRefs = documentSearchService.simpleSearch(searchCriteria, getFieldGroupDefinitionsRoot()
+                , DocumentAdminModel.Types.FIELD_GROUP, DocumentAdminModel.Props.NAME);
+        return baseService.getObjects(resultRefs, FieldGroup.class);
+    }
+
+    @Override
+    public FieldGroup getFieldGroup(NodeRef fieldGroupRef) {
+        return baseService.getObject(fieldGroupRef, FieldGroup.class);
     }
 
     @Override
@@ -309,11 +320,24 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         nodeService.deleteNode(fieldDefRef);
     }
 
+    @Override
+    public boolean isDocumentTypeUsed(String documentTypeId) {
+        // TODO DLSeadist maybe need to cache the result (very rare that document type that was used becomes unused)
+        return documentSearchService.isMatch(
+                joinQueryPartsAnd(
+                        joinQueryPartsAnd(
+                                generateTypeQuery(DocumentDynamicModel.Types.DOCUMENT_DYNAMIC)
+                                , generateAspectQuery(DocumentCommonModel.Aspects.SEARCHABLE)
+                        )
+                        , generatePropertyExactQuery(DocumentDynamicModel.Props.DOCUMENT_TYPE_ID, documentTypeId, false))
+                );
+    }
+
     /** FIXME DLSeadist test data */
     private List<FieldDefinition> createFieldDefinitionsTestData() {
         FieldDefinition fd1 = new FieldDefinition(getFieldDefinitionsRoot());
         fd1.setName("testFieldDefName");
-        fd1.setFieldId(QName.createQName(DocumentAdminModel.URI, "testFieldId"));
+        fd1.setFieldId(QName.createQName(DocumentDynamicModel.URI, "testFieldId"));
         fd1.setSystematic(true);
         fd1.setDocTypes(Arrays.asList("type1", "type2"));
         fd1.setParameterOrderInDocSearch(1);
@@ -324,7 +348,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
         FieldDefinition fd2 = new FieldDefinition(getFieldDefinitionsRoot());
         fd2.setName("testFieldDefName2");
-        fd2.setFieldId(QName.createQName(DocumentAdminModel.URI, "testFieldId2"));
+        fd2.setFieldId(QName.createQName(DocumentDynamicModel.URI, "testFieldId2"));
         fd2.setSystematic(false);
         fd2.setDocTypes(Arrays.asList("type2"));
         fd2.setParameterOrderInDocSearch(3);
@@ -335,7 +359,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
         FieldDefinition fd3 = new FieldDefinition(getFieldDefinitionsRoot());
         fd3.setName("testFieldDefName3");
-        fd3.setFieldId(QName.createQName(DocumentAdminModel.URI, "testFieldId3"));
+        fd3.setFieldId(QName.createQName(DocumentDynamicModel.URI, "testFieldId3"));
         fd3.setSystematic(true);
         fd3.setDocTypes(Collections.<String> emptyList());
         fd3.setParameterOrderInDocSearch(1);
@@ -347,7 +371,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
         FieldDefinition fd4 = new FieldDefinition(getFieldDefinitionsRoot());
         fd4.setName("testFieldDefName4");
-        fd4.setFieldId(QName.createQName(DocumentAdminModel.URI, "testFieldId4"));
+        fd4.setFieldId(QName.createQName(DocumentDynamicModel.URI, "testFieldId4"));
         fd4.setSystematic(false);
         fd4.setDocTypes(null);
         fd4.setParameterOrderInDocSearch(3);
@@ -409,6 +433,27 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         docVer.setCreatorName(userService.getUserFullName(userId));
         docVer.setVersionNr(versionNr);
         docVer.setCreatedDateTime(new Date(AlfrescoTransactionSupport.getTransactionStartTime()));
+        Map<QName, FieldDefinition> fieldDefinitions = getFieldDefinitionsByFieldIds();
+        // save new fields to fieldDefinitions
+        for (Field field : docVer.getFieldsDeeply()) {
+            if (field.getCopyOfNodeRef() == null) {
+                // field is not newer version of the same field under previous version of DocumentTypeVersion
+                FieldDefinition fieldDef = fieldDefinitions.get(field.getFieldId());
+                if (fieldDef != null) {
+                    // field is added based on existing fieldDefinition
+                    List<String> docTypesOfFieldDef = fieldDef.getDocTypes();
+                    if (!docTypesOfFieldDef.contains(docType.getDocumentTypeId())) {
+                        docTypesOfFieldDef.add(docType.getDocumentTypeId());
+                        fieldDef = saveOrUpdateField(fieldDef);
+                    }
+                } else {
+                    // added new field (not based on fieldDefinition)
+                    fieldDef = createFieldDefinition(field);
+                    fieldDef.getDocTypes().add(docType.getDocumentTypeId());
+                    fieldDef = saveOrUpdateField(fieldDef);
+                }
+            }
+        }
     }
 
     private NodeRef getDocumentTypesRoot() {
@@ -425,6 +470,14 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
             fieldDefinitionsRoot = generalService.getNodeRef(xPath);
         }
         return fieldDefinitionsRoot;
+    }
+
+    private NodeRef getFieldGroupDefinitionsRoot() {
+        if (fieldGroupDefinitionsRoot == null) {
+            String xPath = DocumentAdminModel.Repo.FIELD_GROUP_DEFINITIONS_SPACE;
+            fieldGroupDefinitionsRoot = generalService.getNodeRef(xPath);
+        }
+        return fieldGroupDefinitionsRoot;
     }
 
     public void setDictionaryService(DictionaryService dictionaryService) {
@@ -453,6 +506,10 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
 
     public void setUserService(UserService userService) {
         this.userService = userService;
+    }
+
+    public void setDocumentSearchService(DocumentSearchService documentSearchService) {
+        this.documentSearchService = documentSearchService;
     }
 
     /** To break Circular dependency */

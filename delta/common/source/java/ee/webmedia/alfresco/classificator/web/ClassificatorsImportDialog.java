@@ -19,6 +19,7 @@ import javax.faces.context.FacesContext;
 
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.FileUploadBean;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.web.jsf.FacesContextUtils;
 
 import com.thoughtworks.xstream.XStream;
@@ -122,7 +123,6 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
         newClassificatorNames.removeAll(existingClassifNames);
         if (newClassificatorNames.size() > 0) {
             classificatorsToAdd = new ArrayList<ClassificatorExportVO>(newClassificatorNames.size());
-            final StringBuilder sb = new StringBuilder();
             int i = newClassificatorNames.size();
             for (String newClassifName : newClassificatorNames) {
                 i++;
@@ -133,10 +133,7 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
                 classificatorExportVO.setDeleteEnabled(newClassif.isDeleteEnabled());
                 classificatorsToAdd.add(classificatorExportVO);
                 classificatorsOverview.add(classificatorExportVO);
-                final boolean appendSepparator = i < newClassificatorNames.size();
-                sb.append(newClassifName + (appendSepparator ? ", " : ""));
             }
-            MessageUtil.addErrorMessage(FacesContext.getCurrentInstance(), "classificators_import_error_unknownClassificatorsExist", sb.toString());
         }
 
         // iterate over existing classificators, remove all items, that have not changed, leaving only items that must be updated
@@ -164,6 +161,9 @@ public class ClassificatorsImportDialog extends AbstractImportDialog {
 
     @Override
     protected String finishImpl(FacesContext context, String outcome) throws Throwable {
+        if (StringUtils.isBlank(getFileName())) {
+            return null;
+        }
         if ((changedClassificators == null || changedClassificators.isEmpty()) && (classificatorsToAdd == null || classificatorsToAdd.isEmpty())) {
             log.info("Values in uploaded file contain no changes to existing classificators");
             MessageUtil.addInfoMessage(FacesContext.getCurrentInstance(), "classificators_import_info_noChanges", getFileName());

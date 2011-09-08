@@ -27,6 +27,8 @@ public class SearchTag extends UIComponentTag {
     private Boolean showFilter;
     private String filters;
     private Integer ajaxParentLevel;
+    private String searchLinkLabel;
+    private String searchLinkTooltip;
 
     @Override
     public String getComponentType() {
@@ -53,6 +55,12 @@ public class SearchTag extends UIComponentTag {
         }
         attributes.put(Search.DATA_TYPE_KEY, String.class);
         attributes.put(Search.DATA_MULTI_VALUED, dataMultiValued != null ? dataMultiValued : Boolean.FALSE);
+        if (searchLinkLabel != null) {
+            attributes.put(Search.SEARCH_LINK_LABEL, searchLinkLabel);
+        }
+        if (searchLinkTooltip != null) {
+            attributes.put(Search.SEARCH_LINK_TOOLTIP, searchLinkTooltip);
+        }
         attributes.put("dataMandatory", dataMandatory != null ? dataMandatory : Boolean.TRUE);
         attributes.put(Search.PICKER_CALLBACK_KEY, pickerCallback);
         if (setterCallback != null) {
@@ -145,5 +153,13 @@ public class SearchTag extends UIComponentTag {
 
     public Integer getAjaxParentLevel() {
         return ajaxParentLevel;
+    }
+
+    public void setSearchLinkLabel(String searchLinkLabel) {
+        this.searchLinkLabel = searchLinkLabel;
+    }
+
+    public void setSearchLinkTooltip(String searchLinkTooltip) {
+        this.searchLinkTooltip = searchLinkTooltip;
     }
 }

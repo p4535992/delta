@@ -8,9 +8,11 @@
    docadmin:fieldType - text - mandatory
    docadmin:comment - text
    docadmin:mandatory - boolean - default puudub, järelikult false
+   docadmin:mandatoryChangeable - boolean - default true
    docadmin:mandatoryForDoc - boolean - default puudub, järelikult false
    docadmin:mandatoryForVol - boolean - default puudub, järelikult false
    docadmin:changeableIf - text
+   docadmin:changeableIfChangeable - boolean - default true
    docadmin:defaultValue - text
    docadmin:classificator - text
    docadmin:classificatorDefaultValue - text
@@ -20,7 +22,7 @@
    docadmin:onlyInGroup - boolean - default puudub, järelikult false
    docadmin:systematic - boolean - default false - siin peab olema alati true!
    docadmin:systematicComment - text
-   docadmin:removableFromSystemDocType - boolean - mandatory - default true - kui mandatoryForDoc=true, siis siin peab olema alati false!
+   docadmin:removableFromSystematicDocType - boolean - mandatory - default true - kui mandatoryForDoc=true, siis siin peab olema alati false!
    docadmin:removableFromSystematicFieldGroup - boolean - default true - omab mõtet ainult siis kui field on fieldGroup/fieldGroupDefinition all
    docadmin:isParameterInDocSearch - boolean - default puudub, järelikult false
    docadmin:isParameterInVolSearch - boolean - default puudub, järelikult false
@@ -30,37 +32,41 @@
    docadmin:parameterOrderInVolSearch - int
    docadmin:docTypes - text, multiple
    docadmin:volTypes - text, multiple
-   docadmin:order - int - ei oma mõtet fieldDefinition all, jätta alati ära
+   docadmin:order - int - kasutusel uue dokumendi tüübi loomisel field ja fieldGroup järjestuse määramiseks metaandmete plokis
 -->
 
-   <docadmin:fieldDefinition view:childName="docdyn:docName">
+   <docadmin:fieldDefinition view:childName="doccom:docName">
       <view:properties>
-         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}docName</docadmin:fieldId>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}docName</docadmin:fieldId>
          <docadmin:name>Pealkiri</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
          <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
          <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
+         <docadmin:classificator>docName</docadmin:classificator>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
-         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
          <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
          <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
          <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+         <docadmin:order>3</docadmin:order>
       </view:properties>
    </docadmin:fieldDefinition>
 
-   <docadmin:fieldDefinition view:childName="docdyn:function">
+   <docadmin:fieldDefinition view:childName="doccom:function">
       <view:properties>
-         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}function</docadmin:fieldId>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}function</docadmin:fieldId>
          <docadmin:name>Funktsioon</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
          <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
          <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
          <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
          <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
@@ -69,17 +75,18 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
-   <docadmin:fieldDefinition view:childName="docdyn:series">
+   <docadmin:fieldDefinition view:childName="doccom:series">
       <view:properties>
-         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}series</docadmin:fieldId>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}series</docadmin:fieldId>
          <docadmin:name>Sari</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
          <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
          <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
          <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
          <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
@@ -88,17 +95,18 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
-   <docadmin:fieldDefinition view:childName="docdyn:volume">
+   <docadmin:fieldDefinition view:childName="doccom:volume">
       <view:properties>
-         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}volume</docadmin:fieldId>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}volume</docadmin:fieldId>
          <docadmin:name>Toimik</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
          <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
          <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
          <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
          <docadmin:isParameterInVolSearch>false</docadmin:isParameterInVolSearch>
@@ -107,22 +115,256 @@
       </view:properties>
    </docadmin:fieldDefinition>
 
-   <docadmin:fieldDefinition view:childName="docdyn:case">
+   <docadmin:fieldDefinition view:childName="doccom:case">
       <view:properties>
-         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}case</docadmin:fieldId>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}case</docadmin:fieldId>
          <docadmin:name>Asi</docadmin:name>
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
          <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
          <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
          <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
-         <docadmin:removableFromSystemDocType>false</docadmin:removableFromSystemDocType>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
          <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
          <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
          <docadmin:isParameterInVolSearch>false</docadmin:isParameterInVolSearch>
          <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
          <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:docStatus">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}docStatus</docadmin:fieldId>
+         <docadmin:name>Staatus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:classificator>documentStatus</docadmin:classificator>
+         <docadmin:classificatorDefaultValue>töös</docadmin:classificatorDefaultValue>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:order>6</docadmin:order>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:storageType">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}storageType</docadmin:fieldId>
+         <docadmin:name>Teabekandja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:classificator>storageType</docadmin:classificator>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:order>9</docadmin:order>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:keywords">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}keywords</docadmin:fieldId>
+         <docadmin:name>Märksõnad</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>false</docadmin:mandatoryForDoc>
+         <docadmin:fieldType>COMBOBOX_AND_TEXT</docadmin:fieldType>
+         <docadmin:classificator>keywords</docadmin:classificator>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:order>8</docadmin:order>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:comment">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}comment</docadmin:fieldId>
+         <docadmin:name>Täiendav info</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:order>7</docadmin:order>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:regNumber">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}regNumber</docadmin:fieldId>
+         <docadmin:name>Viit</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf><!-- muudetav töös dokumendil, kui konfiguratsiooniparameeter conf.document-regnumber.editable = true, muidu alati mittemuudetav -->
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:isParameterInDocSearch>true</docadmin:isParameterInDocSearch>
+         <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
+         <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
+         <docadmin:isFixedParameterInVolSearch>false</docadmin:isFixedParameterInVolSearch>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:regDateTime">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}regDateTime</docadmin:fieldId>
+         <docadmin:name>Registreerimise kuupäev</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:accessRestriction">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}accessRestriction</docadmin:fieldId>
+         <docadmin:name>Juurdepääsupiirang</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:classificator>accessRestriction</docadmin:classificator>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:accessRestrictionReason">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}accessRestrictionReason</docadmin:fieldId>
+         <docadmin:name>Juurdepääsupiirangu alus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>false</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>COMBOBOX_AND_TEXT</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:classificator>accessRestrictionReason</docadmin:classificator>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:accessRestrictionBeginDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}accessRestrictionBeginDate</docadmin:fieldId>
+         <docadmin:name>Kehtiv alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>false</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:accessRestrictionEndDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}accessRestrictionEndDate</docadmin:fieldId>
+         <docadmin:name>Kehtiv kuni</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>false</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:accessRestrictionEndDesc">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}accessRestrictionEndDesc</docadmin:fieldId>
+         <docadmin:name>Kehtiv kuni kirjeldus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>false</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:ownerName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerName</docadmin:fieldId>
+         <docadmin:name>Vastutaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:mandatoryChangeable>false</docadmin:mandatoryChangeable>
+         <docadmin:fieldType>USER</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:defaultUserLoggedIn>true</docadmin:defaultUserLoggedIn>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:removableFromSystematicDocType>false</docadmin:removableFromSystematicDocType>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:ownerJobTitle">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerJobTitle</docadmin:fieldId>
+         <docadmin:name>Vastutaja ametinimetus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:ownerOrgStructUnit">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerOrgStructUnit</docadmin:fieldId>
+         <docadmin:name>Vastutaja struktuuriüksus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:ownerEmail">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerEmail</docadmin:fieldId>
+         <docadmin:name>Vastutaja e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="doccom:ownerPhone">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerPhone</docadmin:fieldId>
+         <docadmin:name>Vastutaja telefon</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatoryForDoc>true</docadmin:mandatoryForDoc>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
       </view:properties>
    </docadmin:fieldDefinition>
 

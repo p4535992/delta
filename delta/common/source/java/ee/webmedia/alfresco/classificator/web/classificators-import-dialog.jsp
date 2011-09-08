@@ -61,14 +61,14 @@
          <f:facet name="header">
             <h:outputText id="name-header" value="#{msg.classificator_name}" />
          </f:facet>
-         <h:outputText value="#{p.name}" styleClass="#{p.status == 'classificators_import_status_addClassificator' ? 'error' : ''}" />
+         <h:outputText value="#{p.name}"/>
       </h:column>
 
       <h:column id="classifStatus">
          <f:facet name="header">
             <h:outputText id="classifStatus-header" value="#{msg.classificator_status}" />
          </f:facet>
-         <h:outputText value="#{msg[p.status]}" styleClass="#{p.status == 'classificators_import_status_addClassificator' ? 'error' : ''}" />
+         <h:outputText value="#{msg[p.status]}"/>
       </h:column>
 
    </h:dataTable>

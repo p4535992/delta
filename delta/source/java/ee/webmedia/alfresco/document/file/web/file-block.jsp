@@ -10,13 +10,13 @@
 
 <h:panelGroup id="files-panel-facets">
    <f:facet name="title">
-      <r:actions id="acts_add_content" value="addFileMenu" context="#{DialogManager.bean.node}" showLink="false"/>
+      <r:actions id="acts_add_content" value="addFileMenu" context="#{DocumentDialogHelperBean.node}" showLink="false"/>
    </f:facet>
 </h:panelGroup>
 
 <a:panel label="#{msg.file_title}" id="files-panel" facetsId="dialog:dialog-body:files-panel-facets" styleClass="panel-100" progressive="true">
 
-   <a:richList id="filelistList" viewMode="details" value="#{DialogManager.bean.file.files}" var="r" rowStyleClass="recordSetRow"
+   <a:richList id="filelistList" viewMode="details" value="#{FileBlockBean.files}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
       
       <%-- Name with URL link column --%>
@@ -93,27 +93,27 @@
       <a:column id="col7" rendered="#{r.activeAndNotDigiDoc}">
          <wm:docPermissionEvaluator value="#{r.node}" allow="editDocumentMetaData">
             <a:actionLink id="col7-act33" value="#{r.name}" actionListener="#{FileBlockBean.toggleActive}" showLink="false"
-               image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{!DocumentDialog.notEditable}">
+               image="/images/icons/document-convert.png" tooltip="#{msg.file_toggle_deactive} " rendered="#{!DocumentDialogHelperBean.notEditable}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator value="#{r.node}" allow="viewDocumentFiles">
             <a:actionLink id="col7-act2" value="#{r.name}" actionListener="#{VersionsListDialog.select}" action="dialog:versionsListDialog" showLink="false"
-               image="/images/icons/version_history.gif" rendered="#{r.versionable && !DocumentDialog.notEditable}" tooltip="#{msg.file_version_history}">
+               image="/images/icons/version_history.gif" rendered="#{r.versionable && !DocumentDialogHelperBean.notEditable}" tooltip="#{msg.file_version_history}">
                <f:param name="fileName" value="#{r.name}" />
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator value="#{r.node}" allow="deleteDocumentFiles">
             <a:actionLink id="col7-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
-               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{!DocumentDialog.inprogressCompoundWorkflows && !DocumentDialog.notEditable}">
+               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{!DocumentDialogHelperBean.inprogressCompoundWorkflows && !DocumentDialogHelperBean.notEditable}">
                <f:param name="id" value="#{r.id}" />
                <f:param name="ref" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator value="#{r.node}" allow="editDocumentFiles">
             <a:actionLink id="col7-act4" value="#{r.name}" actionListener="#{FileBlockBean.transformToPdf}" showLink="false"
-               image="/images/filetypes/pdf.gif" tooltip="#{msg.file_generate_pdf}" rendered="#{r.transformableToPdf && !DocumentDialog.notEditable}">
+               image="/images/filetypes/pdf.gif" tooltip="#{msg.file_generate_pdf}" rendered="#{r.transformableToPdf && !DocumentDialogHelperBean.notEditable}">
                <f:param name="nodeRef" value="#{r.nodeRef}" />
             </a:actionLink>
          </wm:docPermissionEvaluator>
@@ -188,7 +188,7 @@
 
 <a:panel label="#{msg.file_inactive_title}" id="inactive-files-panel" styleClass="panel-100" progressive="true" expanded="false">
 
-   <a:richList id="inactiveFilelistList" viewMode="details" value="#{DialogManager.bean.file.files}" var="r" rowStyleClass="recordSetRow"
+   <a:richList id="inactiveFilelistList" viewMode="details" value="#{FileBlockBean.files}" var="r" rowStyleClass="recordSetRow"
       altRowStyleClass="recordSetRowAlt" width="100%" refreshOnBind="true">
 
       <%-- Name with URL link column --%>
@@ -278,7 +278,7 @@
          </wm:docPermissionEvaluator>
          <wm:docPermissionEvaluator value="#{r.node}" allow="deleteDocumentFiles">
             <a:actionLink id="col27-act" value="#{r.name}" actionListener="#{BrowseBean.setupContentAction}" action="dialog:deleteFile" showLink="false"
-               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{!DocumentDialog.inprogressCompoundWorkflows && !DocumentDialog.notEditable}">
+               image="/images/icons/delete.gif" tooltip="#{msg.file_remove}" rendered="#{!DocumentDialogHelperBean.inprogressCompoundWorkflows && !DocumentDialogHelperBean.notEditable}">
                <f:param name="id" value="#{r.id}" />
                <f:param name="ref" value="#{r.nodeRef}" />
             </a:actionLink>
@@ -347,4 +347,11 @@
       </a:column>
 
    </a:richList>
+</a:panel>
+
+<a:panel label="PDF" id="pdf-panel" styleClass="panel-100" progressive="true" rendered="#{FileBlockBean.pdfUrl != null}">
+   <f:verbatim>
+      <iframe width="100%" height="450" style="z-index: -1;" wmode="transparent" tabindex="-1" src="<%=request.getContextPath()%></f:verbatim><h:outputText value="#{FileBlockBean.pdfUrl}" /><f:verbatim>" class="fileViewerFrame" name="embedpdf_1" id="embedpdf_1">
+      </iframe>
+   </f:verbatim>
 </a:panel>

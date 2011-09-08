@@ -47,6 +47,8 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
     public static final String OPEN_DIALOG_KEY = "openDialog";
     public static final String DATA_TYPE_KEY = "dataType";
     public static final String DATA_MULTI_VALUED = "dataMultiValued";
+    public static final String SEARCH_LINK_LABEL = "searchLinkLabel";
+    public static final String SEARCH_LINK_TOOLTIP = "searchLinkTooltip";
     /** determines if only unique values should be added to multiValued property values. Default value (if attribute is missing) is true */
     public static final String ALLOW_DUPLICATES_KEY = "allowDuplicates";
     public static final String DIALOG_TITLE_ID_KEY = "dialogTitleId";
@@ -354,6 +356,14 @@ public class Search extends UIComponentBase implements AjaxUpdateable, NamingCon
 
     protected boolean isMultiValued() {
         return isAttributeTrue(DATA_MULTI_VALUED);
+    }
+
+    protected String getSearchLinkLabel() {
+        return (String) ComponentUtil.getAttribute(this, SEARCH_LINK_LABEL);
+    }
+
+    protected String getSearchLinkTooltip() {
+        return (String) ComponentUtil.getAttribute(this, SEARCH_LINK_TOOLTIP);
     }
 
     protected boolean isMandatory() {

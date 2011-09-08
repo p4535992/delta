@@ -15,6 +15,7 @@ import java.util.Set;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.util.EqualsHelper;
+import org.alfresco.web.action.ActionEvaluator;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.Assert;
@@ -29,8 +30,13 @@ import ee.webmedia.alfresco.utils.RepoUtil;
  */
 public abstract class BaseObject extends NodeBaseVO implements Cloneable {
     private static final long serialVersionUID = 1L;
-    public static final QName COPY_OF_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "copyOfNodeRef");
-    public static final QName CLONE_OF_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "cloneOfNodeRef");
+    private static final QName COPY_OF_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "copyOfNodeRef");
+    private static final QName CLONE_OF_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "cloneOfNodeRef");
+    /**
+     * could be used to reconstruct object (using constructor {@link #BaseObject(NodeRef, WmNode)} <br>
+     * when we only have node (for example in {@link ActionEvaluator#evaluate(org.alfresco.web.bean.repository.Node)} of the object
+     */
+    private static QName PARENT_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "parentNodeRef"); // FIXME DLSeadist final
 
     // Currently only node type, properties and children (child-assocs) are supported
     // Also, when creating a new object in memory, default properties and aspects are loaded from dictionaryService
@@ -63,8 +69,8 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         Assert.notNull(node);
         Assert.isTrue(parent != null || WmNode.isSaved(parentNodeRef), "At least one of parent or parentNodeRef must be non-null");
         this.parent = parent;
-        this.parentNodeRef = parentNodeRef;
         this.node = node;
+        setParentNodeRef(parentNodeRef);
         if (parent != null) {
             Assert.isTrue(ObjectUtils.equals(parent.getNodeRef(), parentNodeRef));
         }
@@ -76,6 +82,12 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         } else {
             originalProperties = getProperties(true);
         }
+    }
+
+    private void setParentNodeRef(NodeRef parentNodeRef) {
+        PARENT_NODE_REF = QName.createQName(RepoUtil.TRANSIENT_PROPS_NAMESPACE, "parentNodeRef"); // FIXME DLSeadist final
+        this.parentNodeRef = parentNodeRef;
+        setProp(PARENT_NODE_REF, parentNodeRef);
     }
 
     protected BaseObject(BaseObject parent, QName type) {
@@ -108,10 +120,14 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
 
     @Override
     public BaseObject clone() {
-        // TODO DLSeadist setClonedFromNodeRef(null)
-        BaseObject copy = (BaseObject) super.clone();
-        copy.setCloneOfNodeRef(getNodeRef());
-        return CloneUtil.deepCopy(this, copy);
+        try {
+            BaseObject copy = (BaseObject) super.clone();
+            copy.setCloneOfNodeRef(getNodeRef());
+            return CloneUtil.deepCopy(this, copy);
+        } catch (CloneNotSupportedException e) {
+            // shouldn't happen, because BaseObject is clonable and children are also subtypes of BaseObject
+            throw new RuntimeException(e);
+        }
     }
 
     public static class CloneUtil {
@@ -155,7 +171,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         private static void resetChildrenBaseState(BaseObject baseObject) {
             for (Entry<Class<? extends BaseObject>, List<? extends BaseObject>> entry : baseObject.getChildren().entrySet()) {
                 for (BaseObject child : (List<? extends BaseObject>) entry.getValue()) {
-                    child.parentNodeRef = baseObject.getNodeRef();
+                    child.setParentNodeRef(baseObject.getNodeRef());
                     resetBaseState(child);
                     resetChildrenBaseState(child);
                 }
@@ -168,6 +184,14 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
             object.getRemovedChildren().clear();
             object.originalProperties = new HashMap<QName, Serializable>();
         }
+    }
+
+    public static <T extends BaseObject> T reconstruct(WmNode nodeOfBaseObject, Class<T> clazz) {
+        NodeRef parentRef = (NodeRef) nodeOfBaseObject.getProperties().get(BaseObject.PARENT_NODE_REF);
+        if (parentRef == null) {
+            throw new IllegalArgumentException("Can't reconstruct object because given node is not taken from baseObject");
+        }
+        return BaseObject.createNewWithParentNodeRef(clazz, parentRef, nodeOfBaseObject);
     }
 
     protected static <T extends BaseObject> T createNewWithParentNodeRef(Class<T> clazz, NodeRef parentNodeRef, WmNode node) {
@@ -204,13 +228,13 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
 
     protected void updateParentNodeRef() {
         Assert.isTrue(RepoUtil.isUnsaved(parentNodeRef) && parent != null && parent.isSaved());
-        parentNodeRef = parent.getNodeRef();
+        setParentNodeRef(parent.getNodeRef());
     }
 
     protected void destroy() {
+        setParentNodeRef(null);
         node = null;
         parent = null;
-        parentNodeRef = null;
         originalProperties = null;
         children.clear();
         removedChildren.clear();
@@ -272,7 +296,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
 
         public T addExisting(int index, T child) {
             Assert.isTrue(child.getParent() == BaseObject.this, "Cannot add child that was previously under another parent");
-            Assert.isTrue(!contains(child), "ChildreList already contains this child");
+            Assert.isTrue(!contains(child), "ChildrenList already contains this child");
             getModifiableList().add(index, child);
             return child;
         }

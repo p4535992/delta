@@ -398,6 +398,19 @@ public abstract class BaseDialogBean implements IDialogBean, Serializable
    {
       return AlfrescoNavigationHandler.CLOSE_DIALOG_OUTCOME;
    }
+
+   public static String getCloseOutcome(Integer dialogsToClose) {
+       if (dialogsToClose == null || dialogsToClose == 0) {
+           return null;
+       }
+       if (dialogsToClose == 1) {
+           return "dialog:close";
+       } else if (dialogsToClose > 1) {
+           return "dialog:close[" + dialogsToClose + "]";
+       } else {
+           throw new IllegalArgumentException("Can't close " + dialogsToClose + " dialogs");
+       }
+   }
    
    /**
     * Returns the default finish outcome

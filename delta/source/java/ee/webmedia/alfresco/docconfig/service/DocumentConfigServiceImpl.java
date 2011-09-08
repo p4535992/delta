@@ -1,18 +1,31 @@
 package ee.webmedia.alfresco.docconfig.service;
 
+import static ee.webmedia.alfresco.common.web.BeanHelper.getDictionaryService;
+
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.alfresco.repo.dictionary.IndexTokenisationMode;
+import org.alfresco.service.cmr.dictionary.ClassDefinition;
+import org.alfresco.service.cmr.dictionary.ConstraintDefinition;
+import org.alfresco.service.cmr.dictionary.DataTypeDefinition;
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.dictionary.ModelDefinition;
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
+import org.alfresco.web.ui.repo.RepoConstants;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
@@ -35,7 +48,7 @@ import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
-import ee.webmedia.alfresco.docdynamic.web.MetadataBlock;
+import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
 
 /**
  * @author Alar Kvell
@@ -51,6 +64,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
     private final Map<FieldType, FieldGenerator> fieldGenerators = new HashMap<FieldType, FieldGenerator>();
     private final Map<QName, FieldGenerator> fieldIdGenerators = new HashMap<QName, FieldGenerator>();
+
+    private final Map<Pair<String /* documentTypeId */, Integer /* documentTypeVersionNr */>, Map<QName /* fieldId */, PropertyDefinition>> propertyDefinitionCache = new ConcurrentHashMap<Pair<String, Integer>, Map<QName, PropertyDefinition>>();
 
     // TODO in the future caching
 
@@ -77,12 +92,19 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
     @Override
     public DocumentConfig getConfig(Node documentDynamicNode) {
         Assert.isTrue(DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(documentDynamicNode.getType()));
-        String docTypeId = (String) documentDynamicNode.getProperties().get(DocumentDynamicModel.Props.DOCUMENT_TYPE_ID);
-        int docTypeVersionNr = (Integer) documentDynamicNode.getProperties().get(DocumentDynamicModel.Props.DOCUMENT_TYPE_VERSION_NR);
-        return getConfig(docTypeId, docTypeVersionNr);
+        Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode);
+        return getConfig(documentTypeAndVersion.getFirst(), documentTypeAndVersion.getSecond(), documentDynamicNode);
     }
 
-    private DocumentConfig getConfig(String docTypeId, int docTypeVersionNr) {
+    private Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Node documentDynamicNode) {
+        Pair<String, Integer> docTypeIdAndVersionNr = getDocTypeIdAndVersionNr(documentDynamicNode);
+        return getDocumentTypeAndVersion(docTypeIdAndVersionNr);
+    }
+
+    private Pair<DocumentType, DocumentTypeVersion> getDocumentTypeAndVersion(Pair<String, Integer> docTypeIdAndVersionNr) {
+        String docTypeId = docTypeIdAndVersionNr.getFirst();
+        Integer docTypeVersionNr = docTypeIdAndVersionNr.getSecond();
+
         DocumentType docType = documentAdminService.getDocumentType(docTypeId);
         if (docType == null) {
             throw new RuntimeException("documentType with documentTypeId=" + docTypeId + " not found");
@@ -98,32 +120,41 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         if (docVersion == null) {
             throw new RuntimeException("documentTypeVersion with versionNr=" + docTypeVersionNr + " not found under documentType=" + docType.toString());
         }
+        return new Pair<DocumentType, DocumentTypeVersion>(docType, docVersion);
+    }
 
+    private Pair<String, Integer> getDocTypeIdAndVersionNr(Node documentDynamicNode) {
+        String docTypeId = (String) documentDynamicNode.getProperties().get(DocumentDynamicModel.Props.DOCUMENT_TYPE_ID);
+        Integer docTypeVersionNr = (Integer) documentDynamicNode.getProperties().get(DocumentDynamicModel.Props.DOCUMENT_TYPE_VERSION_NR);
+        Pair<String, Integer> docTypeIdAndVersionNr = new Pair<String, Integer>(docTypeId, docTypeVersionNr);
+        return docTypeIdAndVersionNr;
+    }
+
+    private DocumentConfig getConfig(DocumentType docType, DocumentTypeVersion docVersion, Node documentDynamicNode) {
         WMPropertySheetConfigElement propSheet = new WMPropertySheetConfigElement();
         Map<String, PropertySheetStateHolder> stateHolders = new HashMap<String, PropertySheetStateHolder>();
         List<String> saveListenerBeanNames = new ArrayList<String>();
-        DocumentConfig config = new DocumentConfig(propSheet, stateHolders, saveListenerBeanNames);
+        DocumentConfig config = new DocumentConfig(propSheet, stateHolders, saveListenerBeanNames, docType.getName());
 
         int separatorCount = 0;
         for (MetadataItem metadataItem : docVersion.getMetadata().getList()) {
             if (metadataItem instanceof Field) {
                 Field field = (Field) metadataItem;
-                processField(config, field);
+                processField(config, field, documentDynamicNode);
 
             } else if (metadataItem instanceof SeparatorLine) {
                 processSeparatorLine(config, separatorCount++);
 
             } else if (metadataItem instanceof FieldGroup) {
                 FieldGroup fieldGroup = (FieldGroup) metadataItem;
-                processFieldGroup(config, fieldGroup);
+                processFieldGroup(config, fieldGroup, documentDynamicNode);
 
             } else {
                 throw new RuntimeException("Unsupported metadataItem class=" + metadataItem.getClass() + " under documentTypeVersion=" + docVersion.toString());
             }
         }
 
-        DocumentConfig unmodifiableConfig = new DocumentConfig(config.getPropertySheetConfigElement(), Collections.unmodifiableMap(config.getStateHolders()),
-                Collections.unmodifiableList(config.getSaveListenerBeanNames()));
+        DocumentConfig unmodifiableConfig = config.cloneAsUnmodifiable();
         LOG.info("Returning " + unmodifiableConfig);
         return unmodifiableConfig;
     }
@@ -171,22 +202,21 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
     private void processSeparatorLine(DocumentConfig config, int separatorCount) {
         String name = "_separator" + separatorCount;
-        String componentGenerator = "SeparatorGenerator";
 
         ItemConfigVO item = new ItemConfigVO(name);
         item.setConfigItemType(ConfigItemType.SEPARATOR);
         item.setIgnoreIfMissing(false);
-        item.setComponentGenerator(componentGenerator);
+        item.setComponentGenerator(RepoConstants.GENERATOR_SEPARATOR);
         WMPropertySheetConfigElement propSheet = config.getPropertySheetConfigElement();
         Assert.isTrue(!propSheet.getItems().containsKey(item.getName()), "PropertySheetItem with name already exists: " + item.getName());
         propSheet.addItem(item);
     }
 
-    private void processFieldGroup(DocumentConfig config, FieldGroup fieldGroup) {
+    private void processFieldGroup(DocumentConfig config, FieldGroup fieldGroup, Node documentDynamicNode) {
         ChildrenList<Field> fields = fieldGroup.getFields();
         Set<Class<? extends FieldGenerator>> executedFieldGenerators = new HashSet<Class<? extends FieldGenerator>>();
         for (Field field : fields) {
-            boolean fieldAdded = processField(config, field);
+            boolean fieldAdded = processField(config, field, documentDynamicNode);
 
             if (!fieldAdded) {
                 continue;
@@ -203,20 +233,26 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         }
     }
 
-    /** References {@link MetadataBlock#isFieldChangeableIfWorkingDoc()} */
-    private boolean processField(DocumentConfig config, Field field) {
+    private boolean processField(DocumentConfig config, Field field, Node documentDynamicNode) {
         String name = field.getFieldId().toPrefixString(namespaceService);
         ItemConfigVO item = new ItemConfigVO(name);
         item.setConfigItemType(ConfigItemType.PROPERTY);
         item.setIgnoreIfMissing(false);
         item.setDisplayLabel(field.getName());
-        item.setDisplayLabelId(null);
-        item.setConverter(null);
-        item.setComponentGenerator(null); // Must be set by implementation
-        item.setReadOnly(false);
-        item.setShowInViewMode(true);
-        item.setShowInEditMode(true);
-        item.setForcedMandatory(field.isMandatory());
+
+        // Default values:
+        // item.setDisplayLabelId(null);
+        // item.setConverter(null);
+        // item.setComponentGenerator(null); // Must be set by implementation
+        // item.setReadOnly(false);
+        // item.setShowInViewMode(true);
+        // item.setShowInEditMode(true);
+
+        // forcedMandatory is not set here; BaseComponentGenerator sets mandatory based on PropertyDefinition.isMandatory
+        // but some doccom systematic fields currently are not defined mandatory in model
+        if (field.isMandatory() && !DocumentDynamicModel.URI.equals(field.getFieldId().getNamespaceURI()) && !dictionaryService.getProperty(field.getFieldId()).isMandatory()) {
+            item.setForcedMandatory(field.isMandatory());
+        }
         FieldChangeableIf changeableIf = field.getChangeableIfEnum();
         if (changeableIf != null) {
             switch (changeableIf) {
@@ -226,7 +262,7 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
                 item.setReadOnly(true);
                 break;
             case CHANGEABLE_IF_WORKING_DOC:
-                item.setReadOnlyIf("#{!DocumentDynamicDialog.meta.fieldChangeableIfWorkingDoc}"); // move this to PropertySheetStateBean ?
+                item.setReadOnlyIf("#{" + DocumentDialogHelperBean.BEAN_NAME + ".notWorkingOrNotEditable}");
                 break;
             }
         }
@@ -289,6 +325,43 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
         addSaveListener(config, fieldGeneratorByType);
         addSaveListener(config, fieldGeneratorById);
 
+        PropertyDefinitionImpl propDef = new PropertyDefinitionImpl(field);
+        Serializable value = (Serializable) documentDynamicNode.getProperties().get(field.getFieldId());
+        if (value != null) {
+            // TODO XXX FIXME hack
+            if (propDef.isMultiValued() && !(value instanceof Collection)) {
+                ArrayList<Serializable> list = new ArrayList<Serializable>();
+                list.add(value);
+                value = list;
+                documentDynamicNode.getProperties().put(field.getFieldId().toString(), value);
+            }
+        }
+
+        if (value == null) {
+            Serializable defaultValue = null;
+            if (field.getDefaultValue() != null) {
+                QName dataType = propDef.getDataTypeQName();
+                if (DataTypeDefinition.TEXT.equals(dataType)) {
+                    defaultValue = field.getDefaultValue();
+                }
+                // TODO other types?
+                if (defaultValue != null && propDef.isMultiValued()) {
+                    ArrayList<Serializable> list = new ArrayList<Serializable>();
+                    list.add(defaultValue);
+                    defaultValue = list;
+                }
+            }
+            if (defaultValue == null
+                    && (field.getFieldTypeEnum() == FieldType.USERS || field.getFieldTypeEnum() == FieldType.CONTACTS || field.getFieldTypeEnum() == FieldType.USERS_CONTACTS)) {
+                ArrayList<Serializable> list = new ArrayList<Serializable>();
+                list.add("");
+                defaultValue = list;
+            }
+            if (defaultValue != null) {
+                documentDynamicNode.getProperties().put(field.getFieldId().toString(), defaultValue);
+            }
+        }
+
         return true;
     }
 
@@ -301,6 +374,161 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
                 saveListenerBeanNames.add(beanName);
             }
         }
+    }
+
+    @Override
+    public PropertyDefinition getPropertyDefinition(Node documentDynamicNode, QName property) {
+        if (!(DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(documentDynamicNode.getType()) && DocumentDynamicModel.URI.equals(property.getNamespaceURI()))) {
+            return null;
+        }
+        Pair<String, Integer> cacheKey = getDocTypeIdAndVersionNr(documentDynamicNode);
+        Map<QName, PropertyDefinition> propertyDefinitions = propertyDefinitionCache.get(cacheKey);
+        if (propertyDefinitions == null) {
+            propertyDefinitions = new HashMap<QName, PropertyDefinition>();
+            Pair<DocumentType, DocumentTypeVersion> documentTypeAndVersion = getDocumentTypeAndVersion(documentDynamicNode);
+            DocumentTypeVersion docVersion = documentTypeAndVersion.getSecond();
+            for (Field field : docVersion.getFieldsDeeply()) {
+                Assert.isTrue(!propertyDefinitions.containsKey(field.getFieldId()));
+                propertyDefinitions.put(field.getFieldId(), new PropertyDefinitionImpl(field));
+            }
+            propertyDefinitionCache.put(cacheKey, Collections.unmodifiableMap(propertyDefinitions));
+        }
+
+        PropertyDefinition propertyDefinition = propertyDefinitions.get(property);
+        if (propertyDefinition == null) {
+            LOG.warn("\n\n!!!!!!!!!!!!!!!!!!! fieldId=" + property + " not found, documentDynamicNode=" + documentDynamicNode + "\n");
+        }
+        return propertyDefinition;
+    }
+
+    private static class PropertyDefinitionImpl implements PropertyDefinition {
+
+        private final QName name;
+        private final String title;
+        private final String description;
+        private final FieldType fieldType;
+        private final boolean mandatory;
+
+        public PropertyDefinitionImpl(Field field) {
+            Assert.notNull(field, "field");
+            name = field.getFieldId();
+            title = field.getName();
+            description = field.getComment();
+            fieldType = field.getFieldTypeEnum();
+            mandatory = field.isMandatory();
+        }
+
+        @Override
+        public ModelDefinition getModel() {
+            return getDictionaryService().getModel(DocumentDynamicModel.MODEL);
+        }
+
+        @Override
+        public QName getName() {
+            return name;
+        }
+
+        @Override
+        public String getTitle() {
+            return title;
+        }
+
+        @Override
+        public String getDescription() {
+            return description;
+        }
+
+        @Override
+        public String getDefaultValue() {
+            return null;
+            // return field.getDefaultValue(); TODO not used
+        }
+
+        @Override
+        public DataTypeDefinition getDataType() {
+            return getDictionaryService().getDataType(getDataTypeQName());
+        }
+
+        private QName getDataTypeQName() {
+            switch (fieldType) {
+            case DOUBLE:
+                return DataTypeDefinition.DOUBLE;
+            case INT:
+                return DataTypeDefinition.INT;
+            case DATE:
+                return DataTypeDefinition.DATE;
+            case CHECKBOX:
+                return DataTypeDefinition.BOOLEAN;
+            default:
+                return DataTypeDefinition.TEXT;
+            }
+        }
+
+        @Override
+        public ClassDefinition getContainerClass() {
+            return getDictionaryService().getType(DocumentDynamicModel.Types.DOCUMENT_DYNAMIC);
+        }
+
+        @Override
+        public boolean isOverride() {
+            return false;
+        }
+
+        @Override
+        public boolean isMultiValued() {
+            switch (fieldType) {
+            case USERS:
+            case USERS_CONTACTS:
+            case CONTACTS:
+            case LISTBOX:
+            case HIERARCHICAL_KEYWORD_LEVEL1:
+            case HIERARCHICAL_KEYWORD_LEVEL2:
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        @Override
+        public boolean isMandatory() {
+            return mandatory;
+        }
+
+        @Override
+        public boolean isMandatoryEnforced() {
+            return false;
+        }
+
+        @Override
+        public boolean isProtected() {
+            return false;
+        }
+
+        @Override
+        public boolean isIndexed() {
+            return true;
+        }
+
+        @Override
+        public boolean isStoredInIndex() {
+            return false;
+        }
+
+        @Override
+        public IndexTokenisationMode getIndexTokenisationMode() {
+            return IndexTokenisationMode.TRUE;
+        }
+
+        @Override
+        public boolean isIndexedAtomically() {
+            return true;
+        }
+
+        @Override
+        public List<ConstraintDefinition> getConstraints() {
+            return Collections.emptyList();
+        }
+
     }
 
     // START: setters

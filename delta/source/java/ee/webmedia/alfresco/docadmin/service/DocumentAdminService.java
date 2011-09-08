@@ -27,6 +27,8 @@ public interface DocumentAdminService {
 
     DocumentType getDocumentType(NodeRef docTypeRef);
 
+    String getDocumentTypeName(String documentTypeId);
+
     /**
      * Update properties or save new document type.
      * 
@@ -47,13 +49,29 @@ public interface DocumentAdminService {
 
     List<FieldDefinition> getFieldDefinitions();
 
+    List<FieldDefinition> getFieldDefinitions(List<QName> fieldDefinitionIds);
+
     FieldDefinition getFieldDefinition(QName fieldId);
+
+    List<FieldDefinition> searchFieldDefinitions(String searchCriteria);
+
+    List<FieldGroup> searchFieldGroupDefinitions(String searchCriteria);
+
+    FieldGroup getFieldGroup(NodeRef fieldGroupRef);
 
     Field getField(NodeRef fieldDefRef);
 
     void deleteFieldDefinition(NodeRef fieldDefRef);
 
-    // TODO DLSeadist (Alar): temporary solution until Ats finishes proper support for this
     void addSystematicMetadataItems(DocumentTypeVersion docVer);
+
+    void addSystematicFields(FieldGroup fieldGroupDefinition, FieldGroup fieldGroup);
+
+    List<FieldGroup> getFieldGroupDefinitions();
+
+    void copyFieldProps(FieldDefinition fieldDefinition, Field field);
+
+    /** @return true if at least one document is created based on this documentType */
+    boolean isDocumentTypeUsed(String documentTypeId);
 
 }

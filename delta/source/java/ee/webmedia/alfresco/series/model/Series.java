@@ -8,6 +8,7 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelProperty;
 import ee.webmedia.alfresco.utils.beanmapper.AlfrescoModelType;
 
@@ -27,6 +28,10 @@ public class Series implements Serializable, Comparable<Series> {
     private Integer retentionPeriod; // can be empty
     private List<QName> docType;
     private int containingDocsCount;
+    private boolean newNumberForEveryDoc;
+    private boolean individualizingNumbers;
+    private String docNumberPattern;
+    private int register;
 
     @AlfrescoModelProperty(isMappable = false)
     private Node node;
@@ -135,6 +140,38 @@ public class Series implements Serializable, Comparable<Series> {
         this.node = node;
     }
 
+    public boolean isNewNumberForEveryDoc() {
+        return newNumberForEveryDoc;
+    }
+
+    public void setNewNumberForEveryDoc(boolean newNumberForEveryDoc) {
+        this.newNumberForEveryDoc = newNumberForEveryDoc;
+    }
+
+    public boolean isIndividualizingNumbers() {
+        return individualizingNumbers;
+    }
+
+    public void setIndividualizingNumbers(boolean individualizingNumbers) {
+        this.individualizingNumbers = individualizingNumbers;
+    }
+
+    public String getDocNumberPattern() {
+        return docNumberPattern;
+    }
+
+    public void setDocNumberPattern(String docNumberPattern) {
+        this.docNumberPattern = docNumberPattern;
+    }
+
+    public int getRegister() {
+        return register;
+    }
+
+    public void setRegister(int register) {
+        this.register = register;
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -150,11 +187,7 @@ public class Series implements Serializable, Comparable<Series> {
     @Override
     public int compareTo(Series other) {
         if (getOrder() == other.getOrder()) {
-            int cmpMark;
-            if ((cmpMark = getSeriesIdentifier().compareTo(other.getSeriesIdentifier())) == 0) {
-                return 0;
-            }
-            return cmpMark;
+            return AppConstants.DEFAULT_COLLATOR.compare(getSeriesIdentifier(), other.getSeriesIdentifier());
         }
         return getOrder() - other.getOrder();
     }

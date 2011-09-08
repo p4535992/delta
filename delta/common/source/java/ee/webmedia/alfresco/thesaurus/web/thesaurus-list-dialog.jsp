@@ -37,7 +37,7 @@
             <f:param name="nodeRef" value="#{r.nodeRef}" />
          </a:actionLink>
          
-         <!-- TODO - rendered only when not associated with document or fieldGroupDefinition! -->
+         <!-- TODO DLSeadist - rendered only when not associated with document or fieldGroupDefinition! -->
          <a:actionLink id="col3-act2" value="#{msg.remove}" tooltip="#{msg.remove}" 
             actionListener="#{InformingDeleteNodeDialog.setupDelete}" action="dialog:informingDeleteNodeDialog" showLink="false" image="/images/icons/delete.gif">
             <f:param name="nodeRef" value="#{r.nodeRef}" />

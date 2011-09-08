@@ -8,6 +8,20 @@
             <action>dialog:docTypeDetailsDialog</action>
          </action>
 
+         <action id="doc_type_delete">
+            <evaluator>ee.webmedia.alfresco.docadmin.web.DeleteDocumentTypeEvaluator</evaluator>
+            <label-id>delete</label-id>
+            <tooltip-id>docType_list_action_delete</tooltip-id>
+            <image>/images/icons/delete.gif</image>
+            <action>dialog:deleteDialog</action>
+            <action-listener>#{DeleteDialog.setupDeleteDialog}</action-listener>
+            <params>
+               <param name="nodeRef">#{actionContext.nodeRef}</param>
+               <param name="confirmMessagePlaceholder">#{actionContext.nameAndId}</param>
+               <param name="deleteAfterConfirmHandler">DocTypeDetailsDialog.deleteDocType</param>
+            </params>
+         </action>
+
          <action id="doc_type_manage_permissions">
             <label-id>manage_user_permissions</label-id>
             <image>/images/icons/invite.gif</image>
@@ -27,6 +41,7 @@
 
          <action-group id="doc_type_details_actions">
             <action idref="doc_type_manage_permissions" />
+            <action idref="doc_type_delete" />
          </action-group>
 
       </actions>
@@ -43,6 +58,10 @@
 
          <dialog name="fieldDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/field-details-dialog.jsp"
             managed-bean="FieldDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="field_details" />
+
+         <dialog name="fieldGroupDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/field-group-details-dialog.jsp"
+            managed-bean="FieldGroupDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="fieldGroup_details" />
+
       </dialogs>
    </config>
 
@@ -50,12 +69,34 @@
       <property-sheet>
          <show-property name="docadmin:name" />
       </property-sheet>
-   </config>   
+   </config>
+
+   <config evaluator="node-type" condition="docadmin:fieldGroup">
+      <property-sheet>
+         <show-property name="docadmin:name" readOnlyIf="#{FieldGroupDetailsDialog.fieldGroup.systematic}" />
+         <show-property name="docadmin:comment" component-generator="TextAreaGenerator" styleClass="expand19-200" />
+         <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+         <show-property name="docadmin:mandatoryForDoc" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
+         <show-property name="docadmin:mandatoryForVol" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" show="#{VolumeService.caseVolumeEnabled}" />
+         <show-property name="docadmin:defaultUserLoggedIn" show="#{FieldGroupDetailsDialog.defaultUserLoggedInVisible}" />
+         <!-- fieldGropu specific props -->
+         <show-property name="docadmin:thesaurus" component-generator="GeneralSelectorGenerator" selectionItems="#{ThesaurusListDialog.getThesauriSelectItems}" show="#{FieldGroupDetailsDialog.thesaurusVisible}" />
+         <separator name="readOnlyInfo-sep" component-generator="FieldGroupInfoGenerator" show="#{FieldGroupDetailsDialog.readOnlyInfoVisible}" />
+         
+         <show-property name="docadmin:readonlyFieldsName" display-label-id="fieldGroup_details_inlineProperty_readonlyFields_readonlyFieldsRule_title" textId="fieldGroup_details_inlineProperty_readonlyFields_readonlyFieldsRule_templateText"
+         component-generator="InlinePropertyGroupGenerator" optionsSeparator="¤" props="
+             docadmin:readonlyFieldsName¤¤styleClass=medium¤readOnlyIf=#{!FieldGroupDetailsDialog.fieldGroup.readonlyFieldsNameChangeable}
+            ,docadmin:readonlyFieldsRule¤TextAreaGenerator¤styleClass=expand19-200 medium¤readOnlyIf=#{!FieldGroupDetailsDialog.fieldGroup.readonlyFieldsRuleChangeable}
+            "
+         />
+         <show-property name="docadmin:showInTwoColumns" readOnlyIf="#{!FieldGroupDetailsDialog.fieldGroup.showInTwoColumnsChangeable}" />
+      </property-sheet>
+   </config>
 
    <config evaluator="node-type" condition="docadmin:documentType">
       <property-sheet>
          <show-property name="docadmin:documentTypeId" forcedMandatory="true" readOnlyIf="#{DocTypeDetailsDialog.isSaved}" validator="OnlyLettersValidator_PANEL_AND_FIELD_NAME" />
-         <show-property name="docadmin:comment" styleClass="expand19-200" component-generator="TextAreaGenerator" />
+         <show-property name="docadmin:comment" component-generator="TextAreaGenerator" styleClass="expand19-200" />
          <show-property name="docadmin:used" />
          <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
          <show-property name="docadmin:publicAdr" />
@@ -68,14 +109,14 @@
          <show-property name="docadmin:addFollowUpToUnregistratedDocEnabled" labelStyleClass="wrap" />
          <show-property name="docadmin:addReplyToUnregistratedDocEnabled" labelStyleClass="wrap" />
          <show-property name="docadmin:editFilesOfFinishedDocEnabled" labelStyleClass="wrap"/>
-         <show-property name="docadmin:showValidityData" />
       </property-sheet>
    </config>
 
 <!--    <config evaluator="node-type" condition="docadmin:field"> -->
    <config evaluator="node-type" condition="docadmin:field,docadmin:fieldDefinition">
       <property-sheet>
-         <show-property name="docadmin:fieldId" readOnlyIf="#{FieldDetailsDialog.isSavedInPreviousDocTypeVersionOrFieldDefinitions}" component-generator="QNameLocalNameGenerator" namespace="docadmin:" customErrorMsgFormat="FIELD_NAME_ONLY" />
+         <!-- All user created fields must have docdyn: namespace in fieldId -->
+         <show-property name="docadmin:fieldId" readOnlyIf="#{FieldDetailsDialog.fieldIdReadOnly}" component-generator="QNameLocalNameGenerator" namespace="docdyn:" customErrorMsgFormat="FIELD_NAME_ONLY" />
          <show-property name="docadmin:comment" styleClass="expand19-200" component-generator="TextAreaGenerator" />
          <show-property name="docadmin:systematic" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />
          <show-property name="docadmin:mandatoryForDoc" component-generator="BooleanRadioGenerator" read-only="true" nullValue="false" />

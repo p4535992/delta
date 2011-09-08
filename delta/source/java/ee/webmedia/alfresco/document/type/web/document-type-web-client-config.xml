@@ -47,7 +47,6 @@
          <show-property name="doctype:addFollowUpToUnregistratedDocEnabled" labelStyleClass="wrap" />
          <show-property name="doctype:addReplyToUnregistratedDocEnabled" labelStyleClass="wrap" />
          <show-property name="doctype:editFilesOfFinishedDocEnabled" labelStyleClass="wrap"/>
-         <show-property name="doctype:showValidityData" />
       </property-sheet>
    </config>
 

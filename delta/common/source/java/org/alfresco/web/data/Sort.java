@@ -39,6 +39,8 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import ee.webmedia.alfresco.app.AppConstants;
+
 /**
  * Sort
  * 
@@ -72,16 +74,16 @@ public abstract class Sort
       if (this.data.size() != 0)
       {
          // setup the Collator for our Locale
-         Collator collator = Collator.getInstance(Locale.getDefault());
+         Collator collator;
          
          // set the strength according to the sort mode
-         if (mode.equals(IDataContainer.SORT_CASEINSENSITIVE))
+         if (mode.equals(IDataContainer.SORT_CASESENSITIVE))
          {
-            collator.setStrength(Collator.SECONDARY);
+             collator = AppConstants.IDENTICAL_COLLATOR;
          }
          else
          {
-            collator.setStrength(Collator.IDENTICAL);
+             collator = AppConstants.DEFAULT_COLLATOR;
          }
          
          this.keys = buildCollationKeys(collator);
@@ -481,7 +483,7 @@ public abstract class Sort
    
    // TODO: make this configurable
    /** config value whether to use strong collation Key string comparisons */
-   private boolean strongStringCompare = false;
+   private boolean strongStringCompare = true;
    
    private static Log    s_logger = LogFactory.getLog(IDataContainer.class);
    

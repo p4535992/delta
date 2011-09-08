@@ -53,6 +53,7 @@ import org.springframework.web.util.HtmlUtils;
 import ee.alfresco.web.ui.common.UITableCell;
 import ee.alfresco.web.ui.common.UITableRow;
 import ee.alfresco.web.ui.common.renderer.data.RichListMultiTbodyRenderer.DetailsViewRenderer;
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.classificator.enums.AccessRestriction;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
@@ -443,6 +444,9 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             final ArrayList<String> msgs = new ArrayList<String>();
             for (final UserPrivileges row : privMappings.getPrivilegesByUsername().values()) {
                 final String userName = row.getUserName();
+                if (StringUtils.isBlank(userName)) {
+                    continue;
+                }
                 AuthenticationUtil.runAs(new RunAsWork<Object>() {
                     @Override
                     public Object doWork() throws Exception {
@@ -487,7 +491,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             grouplessFirstComp.setUnknownObjectBehavior(FixedOrderComparator.UNKNOWN_AFTER);
 
             List<String> groupOrderLow = Arrays.asList(groupNamesByCode.get(UserService.AUTH_DOCUMENT_MANAGERS_GROUP), groupNamesByCode.get(UserService.AUTH_ADMINISTRATORS_GROUP));
-            Collections.sort(groupOrderLow);
+            Collections.sort(groupOrderLow, AppConstants.DEFAULT_COLLATOR);
             FixedOrderComparator specialGroupsLastComp = new FixedOrderComparator(groupOrderLow);
             specialGroupsLastComp.setUnknownObjectBehavior(FixedOrderComparator.UNKNOWN_BEFORE);
 
@@ -509,7 +513,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
                 public Comparable<?> tr(UserPrivilegesRow input) {
                     return input.getUserDisplayName();
                 }
-            }, new NullComparator()));
+            }, new NullComparator(AppConstants.DEFAULT_COLLATOR)));
             tableRowComparator = chain;
         }
         return tableRowComparator;
@@ -544,7 +548,7 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             String ownerId = getDocumentOwner();
             UserPrivilegesRow ownerRow = null;
             for (UserPrivilegesRow userPrivilegesRow : userPrivilegesRows) {
-                if (userPrivilegesRow.getUserName().equals(ownerId)) {
+                if (StringUtils.equals(userPrivilegesRow.getUserName(), ownerId)) {
                     ownerRow = userPrivilegesRow;
                     break;
                 }
@@ -898,10 +902,10 @@ public class ManagePrivilegesDialog extends BaseDialogBean {
             if (currentGroup == null && o.getCurrentGroup() == null) {
                 groupsRes = 0;
             } else {
-                groupsRes = currentGroup.compareTo(o.getCurrentGroup());
+                groupsRes = AppConstants.DEFAULT_COLLATOR.compare(currentGroup, o.getCurrentGroup());
             }
             if (groupsRes == 0) {
-                return getUserName().compareTo(o.getUserName());
+                return AppConstants.DEFAULT_COLLATOR.compare(getUserName(), o.getUserName());
             }
             return groupsRes;
         }

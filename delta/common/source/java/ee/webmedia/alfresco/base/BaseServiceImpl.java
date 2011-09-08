@@ -84,14 +84,27 @@ public class BaseServiceImpl implements BaseService {
     @Override
     public <T extends BaseObject> List<T> getChildren(NodeRef parentRef, Class<T> childrenClass, Predicate<T> mustIncludePredicate) {
         List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef);
-        List<T> children = new ArrayList<T>(childAssocs.size());
+        List<NodeRef> resultRefs = new ArrayList<NodeRef>(childAssocs.size());
         for (ChildAssociationRef childAssoc : childAssocs) {
-            T child = getObject(childAssoc.getChildRef(), childrenClass);
-            if (mustIncludePredicate == null || mustIncludePredicate.evaluate(child)) {
-                children.add(child);
+            resultRefs.add(childAssoc.getChildRef());
+        }
+        return getObjects(resultRefs, childrenClass, mustIncludePredicate);
+    }
+
+    @Override
+    public <T extends BaseObject> List<T> getObjects(List<NodeRef> resultRefs, Class<T> resultClass) {
+        return getObjects(resultRefs, resultClass, null);
+    }
+
+    private <T extends BaseObject> List<T> getObjects(List<NodeRef> resultRefs, Class<T> resultClass, Predicate<T> mustIncludePredicate) {
+        ArrayList<T> results = new ArrayList<T>(resultRefs.size());
+        for (NodeRef nodeRef : resultRefs) {
+            T object = getObject(nodeRef, resultClass);
+            if (mustIncludePredicate == null || mustIncludePredicate.evaluate(object)) {
+                results.add(object);
             }
         }
-        return children;
+        return results;
     }
 
     private <T extends BaseObject> T getObject(NodeRef nodeRef, NodeRef parentRef, BaseObject parent) {

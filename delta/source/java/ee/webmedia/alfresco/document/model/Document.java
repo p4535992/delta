@@ -18,6 +18,8 @@ import org.apache.commons.lang.time.FastDateFormat;
 import org.springframework.util.Assert;
 import org.springframework.web.jsf.FacesContextUtils;
 
+import ee.webmedia.alfresco.app.AppConstants;
+import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.CssStylable;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.File;
@@ -95,8 +97,8 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     public String getDocumentTypeName() {
         // TODO DLSeadist temporary
         if (DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(getType())) {
-            return ((String) getProperties().get(DocumentDynamicModel.Props.DOCUMENT_TYPE_ID)) + "-"
-                    + ((Integer) getProperties().get(DocumentDynamicModel.Props.DOCUMENT_TYPE_VERSION_NR)).toString();
+            String documentTypeId = (String) getProperties().get(DocumentDynamicModel.Props.DOCUMENT_TYPE_ID);
+            return BeanHelper.getDocumentAdminService().getDocumentTypeName(documentTypeId);
         }
         final DocumentType documentType = getDocumentType();
         return documentType != null ? documentType.getName() : null;
@@ -146,10 +148,6 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
     }
 
     public String getDocName() {
-        // TODO DLSeadist temporary
-        if (DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(getType())) {
-            return (String) getNode().getProperties().get(DocumentDynamicModel.Props.DOC_NAME);
-        }
         return (String) getNode().getProperties().get(DocumentCommonModel.Props.DOC_NAME);
     }
 
@@ -356,7 +354,7 @@ public class Document extends Node implements Comparable<Document>, CssStylable,
         } else if (other.getRegNumber() == null) {
             return 1;
         }
-        return getRegNumber().compareTo(other.getRegNumber());
+        return AppConstants.DEFAULT_COLLATOR.compare(getRegNumber(), other.getRegNumber());
     }
 
     // XXX: performance hit... if need to init other Document as well that is otherwise uninitialized

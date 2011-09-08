@@ -11,7 +11,7 @@
       </property>
    </bean>
 
-   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="commonWebClientConfigBootstrap">
+   <bean class="org.alfresco.web.config.WebClientConfigBootstrap" init-method="init" depends-on="documentWebClientBootstrap">
       <property name="configs">
          <list>
             <value>classpath:ee/webmedia/alfresco/docdynamic/web/document-dynamic-web-client-config.xml</value>
@@ -42,6 +42,8 @@
       <property name="generalService" ref="GeneralService" />
       <property name="documentService" ref="DocumentService" />
       <property name="documentAdminService" ref="DocumentAdminService" />
+      <property name="sendOutService" ref="SendOutService" />
+      <property name="documentLogService" ref="DocumentLogService" />
    </bean>
 
    <bean id="DocumentDynamicService" class="org.springframework.aop.framework.ProxyFactoryBean">
@@ -69,6 +71,8 @@
    <bean id="DocumentDynamicTestDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicTestDialog" scope="session" />
 
    <bean id="DocumentDynamicDialog" class="ee.webmedia.alfresco.docdynamic.web.DocumentDynamicDialog" scope="session" />
+
+   <bean id="DocumentDialogHelperBean" class="ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean" scope="session" />
 
    <!-- END: web beans: -->
 

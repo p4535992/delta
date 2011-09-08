@@ -1,6 +1,9 @@
 package ee.webmedia.alfresco.user.web;
 
+import static ee.webmedia.alfresco.utils.UserUtil.getUserDisplayUnit;
+
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +30,7 @@ import ee.webmedia.alfresco.substitute.model.Substitute;
 import ee.webmedia.alfresco.substitute.web.SubstituteListDialog;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.ActionUtil;
+import ee.webmedia.alfresco.utils.TextUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.UserUtil;
 
@@ -112,6 +116,10 @@ public class UserDetailsDialog extends BaseDialogBean {
         return BeanHelper.getUserService().isAdministrator();
     }
 
+    public boolean isServiceRankRendered() {
+        return StringUtils.isNotBlank((String) user.getProperties().get(ContentModel.PROP_SERVICE_RANK));
+    }
+
     /**
      * Action event called by all actions that need to setup a Person context on
      * the current user before an action page is called. The context will be a
@@ -135,11 +143,16 @@ public class UserDetailsDialog extends BaseDialogBean {
 
     private void fillUserProps(List<Node> users) {
         user = getOrganizationStructureService().setUsersUnit(users).get(0);
-        setupGroups();
-        if (user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER) == null) {
-            user.getProperties().put(ContentModel.PROP_RELATED_FUNDS_CENTER.toString(), new ArrayList<String>());
+	setupGroups();
+        Map<String, Object> props = user.getProperties();
+        if (props.get(ContentModel.PROP_RELATED_FUNDS_CENTER) == null) {
+            props.put(ContentModel.PROP_RELATED_FUNDS_CENTER.toString(), new ArrayList<String>());
         }
-        user.getProperties().put("{temp}relatedFundsCenter", user.getProperties().get(ContentModel.PROP_RELATED_FUNDS_CENTER));
+        props.put("{temp}unit", getUserDisplayUnit(props));
+        props.put("{temp}jobAddress", TextUtil.joinNonBlankStringsWithComma(Arrays.asList((String) props.get(ContentModel.PROP_STREET_HOUSE),
+                (String) props.get(ContentModel.PROP_VILLAGE), (String) props.get(ContentModel.PROP_MUNICIPALITY), (String) props.get(ContentModel.PROP_POSTAL_CODE),
+                (String) props.get(ContentModel.PROP_COUNTY))));
+        props.put("{temp}relatedFundsCenter", props.get(ContentModel.PROP_RELATED_FUNDS_CENTER));
     }
 
     public void removeFromGroup(ActionEvent event) {

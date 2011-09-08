@@ -1,20 +1,29 @@
 package ee.webmedia.alfresco.thesaurus.model;
 
+import static ee.webmedia.alfresco.docadmin.web.MetadataItemCompareUtil.cast;
+
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 import org.alfresco.service.cmr.repository.NodeRef;
+import org.apache.commons.collections.comparators.ComparatorChain;
+import org.apache.commons.collections.comparators.NullComparator;
+import org.apache.commons.collections.comparators.TransformingComparator;
 
 import com.thoughtworks.xstream.annotations.XStreamAlias;
 import com.thoughtworks.xstream.annotations.XStreamOmitField;
+
+import ee.webmedia.alfresco.utils.ComparableTransformer;
 
 /**
  * @author Kaarel Jõgeva
  */
 @XStreamAlias("thesaurus")
-public class Thesaurus implements Serializable {
+public class Thesaurus implements Serializable, Comparable<Thesaurus> {
     private static final long serialVersionUID = 1L;
+    private static Comparator<Thesaurus> COMPARATOR = createComparator();
 
     @XStreamOmitField
     private NodeRef nodeRef;
@@ -96,7 +105,7 @@ public class Thesaurus implements Serializable {
     @Override
     public String toString() {
         return "Thesaurus [nodeRef=" + nodeRef + ", name=" + name + ", description=" + description + ", keywords=" + keywords + ", removedKeywords="
-        + removedKeywords + "]";
+                + removedKeywords + "]";
     }
 
     @Override
@@ -127,6 +136,22 @@ public class Thesaurus implements Serializable {
             return false;
         }
         return true;
+    }
+
+    @Override
+    public int compareTo(Thesaurus o) {
+        return COMPARATOR.compare(this, o);
+    }
+
+    private static Comparator<Thesaurus> createComparator() {
+        ComparatorChain chain = new ComparatorChain();
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<Thesaurus>() {
+            @Override
+            public Comparable<?> tr(Thesaurus input) {
+                return input.getName();
+            }
+        }, new NullComparator()));
+        return cast(chain, Thesaurus.class);
     }
 
 }

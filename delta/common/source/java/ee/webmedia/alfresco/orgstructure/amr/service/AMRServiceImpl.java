@@ -4,15 +4,15 @@ import java.math.BigInteger;
 
 import org.springframework.ws.client.core.WebServiceTemplate;
 
-import smit.ametnik.services.Ametnik;
-import smit.ametnik.services.AmetnikByAsutusIdRequestDocument;
-import smit.ametnik.services.AmetnikByAsutusIdRequestDocument.AmetnikByAsutusIdRequest;
-import smit.ametnik.services.AmetnikByAsutusIdResponseDocument;
-import smit.ametnik.services.AmetnikByAsutusIdResponseDocument.AmetnikByAsutusIdResponse;
-import smit.ametnik.services.AmetnikByIsikukoodRequestDocument;
-import smit.ametnik.services.AmetnikByIsikukoodRequestDocument.AmetnikByIsikukoodRequest;
-import smit.ametnik.services.AmetnikByIsikukoodResponseDocument;
-import smit.ametnik.services.AmetnikByIsikukoodResponseDocument.AmetnikByIsikukoodResponse;
+import smit.ametnik.services.AmetnikByAsutusId2RequestDocument;
+import smit.ametnik.services.AmetnikByAsutusId2RequestDocument.AmetnikByAsutusId2Request;
+import smit.ametnik.services.AmetnikByAsutusId2ResponseDocument;
+import smit.ametnik.services.AmetnikByAsutusId2ResponseDocument.AmetnikByAsutusId2Response;
+import smit.ametnik.services.AmetnikByIsikukood2RequestDocument;
+import smit.ametnik.services.AmetnikByIsikukood2RequestDocument.AmetnikByIsikukood2Request;
+import smit.ametnik.services.AmetnikByIsikukood2ResponseDocument;
+import smit.ametnik.services.AmetnikByIsikukood2ResponseDocument.AmetnikByIsikukood2Response;
+import smit.ametnik.services.AmetnikExt;
 import smit.ametnik.services.Yksus;
 import smit.ametnik.services.YksusByAsutusIdRequestDocument;
 import smit.ametnik.services.YksusByAsutusIdRequestDocument.YksusByAsutusIdRequest;
@@ -43,32 +43,32 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
     }
 
     @Override
-    public Ametnik[] getAmetnikByAsutusId() {
+    public AmetnikExt[] getAmetnikByAsutusId() {
         long startTime = System.currentTimeMillis();
-        AmetnikByAsutusIdRequest request = AmetnikByAsutusIdRequestDocument.Factory.newInstance().addNewAmetnikByAsutusIdRequest();
+        AmetnikByAsutusId2Request request = AmetnikByAsutusId2RequestDocument.Factory.newInstance().addNewAmetnikByAsutusId2Request();
         request.setAsutusId(asutusId);
         request.setYksusetaAmetnikudOnly(false);
-        AmetnikByAsutusIdResponseDocument responseDoc = (AmetnikByAsutusIdResponseDocument) marshalSendAndReceive(request);
+        AmetnikByAsutusId2ResponseDocument responseDoc = (AmetnikByAsutusId2ResponseDocument) marshalSendAndReceive(request);
         if (log.isDebugEnabled()) {
             log.debug("getAmetnikByAsutusId asutusId '" + asutusId + "', time " + (System.currentTimeMillis() - startTime) + " ms, responseDoc:\n"
                     + responseDoc);
         }
-        AmetnikByAsutusIdResponse response = responseDoc.getAmetnikByAsutusIdResponse();
+        AmetnikByAsutusId2Response response = responseDoc.getAmetnikByAsutusId2Response();
         return response.getAmetnikArray();
     }
 
     @Override
-    public Ametnik getAmetnikByIsikukood(String socialSecurityNr) {
+    public AmetnikExt getAmetnikByIsikukood(String socialSecurityNr) {
         long startTime = System.currentTimeMillis();
-        AmetnikByIsikukoodRequest request = AmetnikByIsikukoodRequestDocument.Factory.newInstance().addNewAmetnikByIsikukoodRequest();
+        AmetnikByIsikukood2Request request = AmetnikByIsikukood2RequestDocument.Factory.newInstance().addNewAmetnikByIsikukood2Request();
         request.setIsikukood(socialSecurityNr);
         request.setAsutusId(asutusId);
-        AmetnikByIsikukoodResponseDocument responseDoc = (AmetnikByIsikukoodResponseDocument) marshalSendAndReceive(request);
+        AmetnikByIsikukood2ResponseDocument responseDoc = (AmetnikByIsikukood2ResponseDocument) marshalSendAndReceive(request);
         if (log.isDebugEnabled()) {
             log.debug("getAmetnikByIsikukood socialSecurityNr '" + socialSecurityNr + "', time " + (System.currentTimeMillis() - startTime)
                     + " ms, responseDoc:\n" + responseDoc);
         }
-        AmetnikByIsikukoodResponse response = responseDoc.getAmetnikByIsikukoodResponse();
+        AmetnikByIsikukood2Response response = responseDoc.getAmetnikByIsikukood2Response();
         return response.getAmetnik();
     }
 

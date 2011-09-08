@@ -33,19 +33,21 @@ public interface DocumentAdminModel {
         // START: properties of type fieldBase
         QName FIELD_ID = QName.createQName(URI, "fieldId");
         QName MANDATORY = QName.createQName(URI, "mandatory");
+        QName MANDATORY_CHANGEABLE = QName.createQName(URI, "mandatoryChangeable");
         QName FIELD_TYPE = QName.createQName(URI, "fieldType");
         QName CHANGEABLE_IF = QName.createQName(URI, "changeableIf");
+        QName CHANGEABLE_IF_CHANGEABLE = QName.createQName(URI, "changeableIfChangeable");
         QName CLASSIFICATOR = QName.createQName(URI, "classificator");
         QName DEFAULT_VALUE = QName.createQName(URI, "defaultValue");
         QName CLASSIFICATOR_DEFAULT_VALUE = QName.createQName(URI, "classificatorDefaultValue");
         QName DEFAULT_DATE_SYSDATE = QName.createQName(URI, "defaultDateSysdate");
         QName DEFAULT_SELECTED = QName.createQName(URI, "defaultSelected");
         QName ONLY_IN_GROUP = QName.createQName(URI, "onlyInGroup");
+        QName REMOVABLE_FROM_SYSTEMATIC_FIELD_GROUP = QName.createQName(URI, "removableFromSystematicFieldGroup");
         // END: properties of type fieldBase
 
         // Start: properties of type fieldDefinition
         QName DOC_TYPES = QName.createQName(URI, "docTypes");
-        QName REMOVABLE_FROM_SYSTEMATIC_FIELD_GROUP = QName.createQName(URI, "removableFromSystematicFieldGroup");
         QName IS_PARAMETER_IN_DOC_SEARCH = QName.createQName(URI, "isParameterInDocSearch");
         QName IS_PARAMETER_IN_VOL_SEARCH = QName.createQName(URI, "isParameterInVolSearch");
         QName PARAMETER_ORDER_IN_DOC_SEARCH = QName.createQName(URI, "parameterOrderInDocSearch");
@@ -75,13 +77,16 @@ public interface DocumentAdminModel {
         QName ADD_FOLLOW_UP_TO_UNREGISTRATED_DOC_ENABLED = QName.createQName(URI, "addFollowUpToUnregistratedDocEnabled");
         QName ADD_REPLY_TO_UNREGISTRATED_DOC_ENABLED = QName.createQName(URI, "addReplyToUnregistratedDocEnabled");
         QName EDIT_FILES_OF_FINISHED_DOC_ENABLED = QName.createQName(URI, "editFilesOfFinishedDocEnabled");
-        QName SHOW_VALIDITY_DATA = QName.createQName(URI, "showValidityData");
         QName LATEST_VERSION = QName.createQName(URI, "latestVersion");
         // END: properties of type documentType
         // START: properties of type fieldGroup
+        QName FIELD_DEFINITIONS_IDS = QName.createQName(URI, "fieldDefinitionIds");
         QName READONLY_FIELDS_NAME = QName.createQName(URI, "readonlyFieldsName");
+        QName READONLY_FIELDS_NAME_CHANGEABLE = QName.createQName(URI, "readonlyFieldsNameChangeable");
         QName READONLY_FIELDS_RULE = QName.createQName(URI, "readonlyFieldsRule");
+        QName READONLY_FIELDS_RULE_CHANGEABLE = QName.createQName(URI, "readonlyFieldsRuleChangeable");
         QName SHOW_IN_TWO_COLUMNS = QName.createQName(URI, "showInTwoColumns");
+        QName SHOW_IN_TWO_COLUMNS_CHANGEABLE = QName.createQName(URI, "showInTwoColumnsChangeable");
         QName THESAURUS = QName.createQName(URI, "thesaurus");
         // END: properties of type fieldGroup
 
@@ -97,10 +102,8 @@ public interface DocumentAdminModel {
         // END: properties of aspect comment
         // START: properties of aspect fieldAndGroupCommon
         QName MANDATORY_FOR_DOC = QName.createQName(URI, "mandatoryForDoc");
-        QName REMOVABLE_FROM_SYSTEM_DOC_TYPE = QName.createQName(URI, "removableFromSystemDocType");
+        QName REMOVABLE_FROM_SYSTEMATIC_DOC_TYPE = QName.createQName(URI, "removableFromSystematicDocType");
         QName DEFAULT_USER_LOGGED_IN = QName.createQName(URI, "defaultUserLoggedIn");
-        // END: properties of aspect fieldAndGroupCommon
-        // START: properties of aspect mandatoryForVol
         QName MANDATORY_FOR_VOL = QName.createQName(URI, "mandatoryForVol");
         // END: properties of aspect mandatoryForVol
     }

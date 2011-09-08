@@ -93,7 +93,9 @@ public interface ClassificatorService {
     void updateClassificatorValues(Classificator classificator, Node classificatorNode, Map<String, ClassificatorValue> originalValues
             , List<ClassificatorValue> classificatorValues, List<ClassificatorValue> addedClassificators);
 
-    void deleteClassificator(NodeRef classificatorNode);
+    boolean isClassificatorUsed(String classificatorName);
+
+    void deleteClassificator(Classificator selectedClassificator);
 
     Node getNewUnsavedClassificator();
 
@@ -106,4 +108,5 @@ public interface ClassificatorService {
     List<ClassificatorValue> searchValues(String searchCriteria, NodeRef classifNodeRef);
 
     List<Classificator> getClassificatorsByNodeRefs(List<NodeRef> classifRefs);
+
 }

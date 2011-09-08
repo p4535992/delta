@@ -42,6 +42,12 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
     private final int outcomes;
     private int outcomeIndex = -1;
     private Action action = Action.NONE;
+    /**
+     * Task's index in workflow during last save
+     * (may not be current index if workflow is changed in memory).
+     * At the moment used for secondary ordering in WorkflowBlock
+     */
+    private int taskIndexInWorkflow = -1;
 
     private String cssStyleClass;
 
@@ -333,6 +339,18 @@ public class Task extends BaseWorkflowObject implements Serializable, Comparable
         if (getNodeRef() == null && !(getParent().getParent() instanceof CompoundWorkflowDefinition)) {
             getNode().getAspects().add(WorkflowSpecificModel.Aspects.SEARCHABLE);
         }
+    }
+
+    public int getTaskIndexInWorkflow() {
+        return taskIndexInWorkflow;
+    }
+
+    public void setTaskIndexInWorkflow(int taskIndexInWorkflow) {
+        this.taskIndexInWorkflow = taskIndexInWorkflow;
+    }
+
+    public int getWorkflowIndex() {
+        return parent.getIndexInCompoundWorkflow();
     }
 
 }

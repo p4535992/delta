@@ -3,19 +3,21 @@
       <actions>
 
          <action id="classificator_add_value">
+            <evaluator>ee.webmedia.alfresco.classificator.web.ClassificatorAddRemoveEvaluator</evaluator>
             <label-id>classificator_add_value</label-id>
             <image>/images/icons/versioned_properties.gif</image>
             <action-listener>#{ClassificatorDetailsDialog.addNewValue}</action-listener>
          </action>
          
          <action id="classificator_delete">
+            <evaluator>ee.webmedia.alfresco.classificator.web.ClassificatorDeleteEnabledEvaluator</evaluator>
             <label-id>classificator_delete</label-id>
-            <image>/images/icons/versioned_properties.gif</image>
+            <image>/images/icons/delete.gif</image>
             <action-listener>#{DeleteDialog.setupDeleteDialog}</action-listener>
             <params>
                <param name="nodeRef">#{actionContext.nodeRef}</param>
-               <param name="name">#{actionContext.name}</param>
-               <param name="dialogsToClose">2</param>
+               <param name="confirmMessagePlaceholder">#{actionContext.name}</param>
+               <param name="deleteAfterConfirmHandler">ClassificatorDetailsDialog.deleteClassificator</param>
             </params>
             <action>dialog:deleteDialog</action>
          </action>
@@ -44,9 +46,6 @@
             <action idref="classificator_add_value" />
             <action idref="classificator_delete" />
          </action-group>
-         <action-group id="browse_add_classificator_values">
-            <action idref="classificator_add_value" />
-         </action-group>
 
          <action-group id="classificators_actions">
             <action idref="classificator_export" />
@@ -62,15 +61,14 @@
          <dialog name="classificatorListDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificator-list-dialog.jsp"
             managed-bean="ClassificatorListDialog" icon="/images/icons/versioned_properties_large.gif" title-id="classificators_title" show-ok-button="false"
             actions-config-id="classificators_actions" />
-
+            
          <dialog name="classificatorDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificator-details-dialog.jsp"
-            managed-bean="ClassificatorDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="classificators_title" show-ok-button="true" />
+            managed-bean="ClassificatorDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="classificators_title" show-ok-button="true" actions-config-id="browse_add_delete_classificator_values"/>
+         <!-- TODO DLSeadist tuleb teha et, nupp "kustuta" kuvatakse ka kui deleteEnabled = false ja klassifikaator ei ole seotud ühegi andmeväljaga -->
 
          <dialog name="classificatorsImport" page="/WEB-INF/classes/ee/webmedia/alfresco/classificator/web/classificators-import-dialog.jsp" managed-bean="ClassificatorsImportDialog"
             icon="/images/icons/add_content_large.gif" title-id="classificators_import" description-id="import_classificators_desc" />
             
-         <dialog name="deleteDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/delete-dialog.jsp" managed-bean="DeleteDialog"
-            icon="/images/icons/delete_group_large.gif" />
       </dialogs>
    </config>
 

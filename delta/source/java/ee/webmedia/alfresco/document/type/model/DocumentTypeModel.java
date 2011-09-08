@@ -33,7 +33,6 @@ public interface DocumentTypeModel {
         QName ADD_FOLLOW_UP_TO_UNREGISTRATED_DOC_ENABLED = QName.createQName(URI, "addFollowUpToUnregistratedDocEnabled");
         QName ADD_REPLY_TO_UNREGISTRATED_DOC_ENABLED = QName.createQName(URI, "addReplyToUnregistratedDocEnabled");
         QName EDIT_FILES_OF_FINISHED_DOC_ENABLED = QName.createQName(URI, "editFilesOfFinishedDocEnabled");
-        QName SHOW_VALIDITY_DATA = QName.createQName(URI, "showValidityData");
         QName LATEST_VERSION = QName.createQName(URI, "latestVersion");
         // END: properties of type documentType
     }

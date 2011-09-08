@@ -1136,10 +1136,10 @@ function initWithScreenProtected() {
       transFooterTotalSumElem = jQuery("#footer-sum-2:first");
       setTransTotalSumColor(transFooterTotalSumElem, invoiceTotalSum, getFloatOrNull(transFooterTotalSumElem.text()));
    });
-   
+
    jQuery(".trans-row-sum-input").live('change', recalculateInvoiceSums);
    jQuery(".trans-row-vat-code-input").live('change', recalculateInvoiceSums);
-   
+
    jQuery(".trans-row-entry-content-input").keyup(function(){
       textCounter($(this), 50);
    });
@@ -1175,7 +1175,7 @@ var toggleSubrowToggle = {
 };
 var toggleSubrow = {
       init : function(){
-         var subrowToggles = $jQ("td.trans-toggle-subrow").children("a"); 
+         var subrowToggles = $jQ("td.trans-toggle-subrow").children("a");
          subrowToggles.click(this.clickIt);
          subrowToggles.click();
       },
@@ -1280,7 +1280,7 @@ function textCounter(input, maxlimit) {
    }
 }
 
-// return number for valid numeric string, 
+// return number for valid numeric string,
 // 0 for blank string and NaN for all other values
 function getFloatOrNull(originalSumString){
    var sumString = originalSumString.replace(",", ".");
@@ -1294,12 +1294,12 @@ function getFloatOrNull(originalSumString){
    return NaN;
 }
 
-// use to avoid javascript parsing strings like "55 krooni" to number 55 
+// use to avoid javascript parsing strings like "55 krooni" to number 55
 // (conversion that java validation wouldn't allow)
 function isNumeric(numberStr){
    var validChars = "0123456789.";
    var additionalFirstChars = "+-";
-   for (i = 0; i < numberStr.length; i++){ 
+   for (i = 0; i < numberStr.length; i++){
       var currentChar = numberStr.charAt(i);
       if (validChars.indexOf(currentChar) == -1) {
          if(i !== 0 || additionalFirstChars.indexOf(currentChar) == -1){
@@ -1309,7 +1309,7 @@ function isNumeric(numberStr){
    }
    return true;
 }
-   
+
 
 
 function initSelectTooltips(selects) {
@@ -1448,13 +1448,13 @@ function handleHtmlLoaded(context, selects) {
    applyAutocompleters();
 
    // datepicker
-   var dp_dates = jQuery("input.date", context).not("input[readonly]").datepicker({ 
-      dateFormat: 'dd.mm.yy', 
-      changeMonth: true, 
-      changeYear: true, 
-      nextText: '', 
-      prevText: '', 
-      yearRange: '-100:+100', 
+   var dp_dates = jQuery("input.date", context).not("input[readonly]").datepicker({
+      dateFormat: 'dd.mm.yy',
+      changeMonth: true,
+      changeYear: true,
+      nextText: '',
+      prevText: '',
+      yearRange: '-100:+100',
       duration: '',
       onSelect: function( selectedDate ) {
          var dateElem = jQuery(this);
@@ -1473,14 +1473,14 @@ function handleHtmlLoaded(context, selects) {
          endDate.datepicker("option","minDate",date);
       }
    });
-   var dp_sysdates = jQuery("input.sysdate", context).not("input[readonly]").datepicker({ 
-      dateFormat: 'dd.mm.yy', 
-      changeMonth: true, 
-      changeYear: true, 
-      nextText: '', 
-      prevText: '', 
-      defaultDate: +7, 
-      yearRange: '-100:+100', 
+   var dp_sysdates = jQuery("input.sysdate", context).not("input[readonly]").datepicker({
+      dateFormat: 'dd.mm.yy',
+      changeMonth: true,
+      changeYear: true,
+      nextText: '',
+      prevText: '',
+      defaultDate: +7,
+      yearRange: '-100:+100',
       duration: '',
       onSelect: function( selectedDate ) {
          var dateElem = jQuery(this);
@@ -1504,10 +1504,10 @@ function handleHtmlLoaded(context, selects) {
       }
    });
 
-   
-   
-   
-   
+
+
+
+
    if(context != null) {
       $jQ("input", context).focus(function() {
             lastActiveInput = $jQ(this);
@@ -1808,9 +1808,6 @@ function clearFormHiddenParams(currFormName, newTargetVal) {
       var jqInput=$jQ(this);
       var before = jqInput.val();// FIXME DLSeadist debug
       jqInput.val("");
-      if(before != ""){
-         alert("clean hiddenInput: before "+before+", after="+jqInput.val());
-      }
    });
    if(newTargetVal){// FIXME DLSeadist debug - testiks sisse jäätud..kui üllatust ei tule kuskilt, siis kustutan lõpus ära
       alert("suprize! newTargetVal="+newTargetVal+" ( old val was '"+f.target+"')");

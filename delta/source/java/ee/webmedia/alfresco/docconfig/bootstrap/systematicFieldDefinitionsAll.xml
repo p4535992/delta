@@ -1,0 +1,1550 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0" xmlns:docdyn="http://alfresco.webmedia.ee/model/document/dynamic/1.0">
+
+   <docadmin:fieldDefinition view:childName="docdyn:docNameAdr">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}docNameAdr</docadmin:fieldId>
+         <docadmin:name>ADR pealkiri</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
+         <docadmin:classificator>docNameAdr</docadmin:classificator>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:templateName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}templateName</docadmin:fieldId>
+         <docadmin:name>Dokumendi mall</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:sendDescValue">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sendDescValue</docadmin:fieldId>
+         <docadmin:name>Välja saatmise selgitus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:transmittalMode">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}transmittalMode</docadmin:fieldId>
+         <docadmin:name>Saatmisviis</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:classificator>transmittalMode</docadmin:classificator>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:dueDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dueDate</docadmin:fieldId>
+         <docadmin:name>Tähtaeg</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:invoiceType">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}invoiceType</docadmin:fieldId>
+         <docadmin:name>Arve tüüp</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:classificator>invoiceTypes</docadmin:classificator>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:paymentReferenceNumber">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}paymentReferenceNumber</docadmin:fieldId>
+         <docadmin:name>Arve viitenumber</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:additionalInformationContent">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}additionalInformationContent</docadmin:fieldId>
+         <docadmin:name>Maksekorralduse selgitus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:purchaseOrderSapNumber">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}purchaseOrderSapNumber</docadmin:fieldId>
+         <docadmin:name>Ostutellimuse kood SAP’is</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:docSubType">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}docSubType</docadmin:fieldId>
+         <docadmin:name>Dokumendi liigi alaliik</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:userName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userName</docadmin:fieldId>
+         <docadmin:name>Kasutaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>USER</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:userJobTitle">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userJobTitle</docadmin:fieldId>
+         <docadmin:name>Kasutaja ametinimetus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:userOrgStructUnit">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userOrgStructUnit</docadmin:fieldId>
+         <docadmin:name>Kasutaja struktuuriüksus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:userEmail">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userEmail</docadmin:fieldId>
+         <docadmin:name>Kasutaja e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:userPhone">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userPhone</docadmin:fieldId>
+         <docadmin:name>Kasutaja telefon</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:contactName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactName</docadmin:fieldId>
+         <docadmin:name>Kontakt</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>CONTACT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:contactAddress">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactAddress</docadmin:fieldId>
+         <docadmin:name>Kontakti postiaadress</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:contactEmail">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactEmail</docadmin:fieldId>
+         <docadmin:name>Kontakti e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:contactPhone">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactPhone</docadmin:fieldId>
+         <docadmin:name>Kontakti telefon</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:contactFaxNumber">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactFaxNumber</docadmin:fieldId>
+         <docadmin:name>Kontakti faksinumber</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:contactWebPage">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contactWebPage</docadmin:fieldId>
+         <docadmin:name>Kontakti veebileht</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:userNames">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}userNames</docadmin:fieldId>
+         <docadmin:name>Kasutajad</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>USERS</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:recipientName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}recipientName</docadmin:fieldId>
+         <docadmin:name>Adressaadi nimi</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>USERS_CONTACTS</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:recipientPersonName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}recipientPersonName</docadmin:fieldId>
+         <docadmin:name>Adressaadi saaja nimi</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:recipientEmail">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}recipientEmail</docadmin:fieldId>
+         <docadmin:name>Adressaadi e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:recipientStreetHouse">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}recipientStreetHouse</docadmin:fieldId>
+         <docadmin:name>Adressaadi tänav, maja, korter</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:recipientPostalCity">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}recipientPostalCity</docadmin:fieldId>
+         <docadmin:name>Adressaadi indeks, linn, maakond</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:additionalRecipientName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}additionalRecipientName</docadmin:fieldId>
+         <docadmin:name>Lisaadressaadi nimi</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>USERS_CONTACTS</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:additionalRecipientPersonName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}additionalRecipientPersonName</docadmin:fieldId>
+         <docadmin:name>Lisaadressaadi saaja nimi</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:additionalRecipientEmail">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}additionalRecipientEmail</docadmin:fieldId>
+         <docadmin:name>Lisaadressaadi e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:additionalRecipientStreetHouse">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}additionalRecipientStreetHouse</docadmin:fieldId>
+         <docadmin:name>Lisaadressaadi tänav, maja, korter</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:additionalRecipientPostalCity">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}additionalRecipientPostalCity</docadmin:fieldId>
+         <docadmin:name>Lisaadressaadi indeks, linn, maakond</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:signerName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerName</docadmin:fieldId>
+         <docadmin:name>Allkirjastaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>USER</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:signerJobTitle">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerJobTitle</docadmin:fieldId>
+         <docadmin:name>Allkirjastaja ametinimetus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:signerOrgStructUnit">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerOrgStructUnit</docadmin:fieldId>
+         <docadmin:name>Allkirjastaja struktuuriüksus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:signerEmail">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerEmail</docadmin:fieldId>
+         <docadmin:name>Allkirjastaja e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:signerPhone">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerPhone</docadmin:fieldId>
+         <docadmin:name>Allkirjastaja telefon</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:senderName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}senderName</docadmin:fieldId>
+         <docadmin:name>Saatja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>CONTACT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:senderPersonName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}senderPersonName</docadmin:fieldId>
+         <docadmin:name>Saatja isik</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:senderEmail">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}senderEmail</docadmin:fieldId>
+         <docadmin:name>Saatja kirja e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:senderStreetHouse">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}senderStreetHouse</docadmin:fieldId>
+         <docadmin:name>Saatja tänav, maja, korter</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:senderPostalCity">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}senderPostalCity</docadmin:fieldId>
+         <docadmin:name>Saatja indeks, linn, maakond</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:senderRegNumber">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}senderRegNumber</docadmin:fieldId>
+         <docadmin:name>Saatja kirja reg nr</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:senderRegDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}senderRegDate</docadmin:fieldId>
+         <docadmin:name>Saatja kirja reg kpv</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:beginDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}beginDate</docadmin:fieldId>
+         <docadmin:name>Alguskuupäev</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:endDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}endDate</docadmin:fieldId>
+         <docadmin:name>Lõppkuupäev</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:complienceNotation">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}complienceNotation</docadmin:fieldId>
+         <docadmin:name>Täitmismärge</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:complienceDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}complienceDate</docadmin:fieldId>
+         <docadmin:name>Vastamise kpv</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:sellerPartyName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartyName</docadmin:fieldId>
+         <docadmin:name>Hankija nimi</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>CONTACT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:sellerPartyRegNumber">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartyRegNumber</docadmin:fieldId>
+         <docadmin:name>Hankija registreerimiskood</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:sellerPartySapAccount">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartySapAccount</docadmin:fieldId>
+         <docadmin:name>Hankija nr SAPis</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:sellerPartyContactName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartyContactName</docadmin:fieldId>
+         <docadmin:name>Hankija kontaktisik</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:sellerPartyContactPhoneNumber">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartyContactPhoneNumber</docadmin:fieldId>
+         <docadmin:name>Hankija kontaktisiku telefon</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:sellerPartyContactEmailAddress">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}sellerPartyContactEmailAddress</docadmin:fieldId>
+         <docadmin:name>Hankija kontaktisiku e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:invoiceDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}invoiceDate</docadmin:fieldId>
+         <docadmin:name>Arve kuupäev</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:invoiceNumber">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}invoiceNumber</docadmin:fieldId>
+         <docadmin:name>Arve number</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:invoiceDueDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}invoiceDueDate</docadmin:fieldId>
+         <docadmin:name>Arve kuupäev</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:paymentTerm">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}paymentTerm</docadmin:fieldId>
+         <docadmin:name>Maksetähtaja kirjeldus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:totalSum">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}totalSum</docadmin:fieldId>
+         <docadmin:name>Arve koondsumma</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:currency">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}currency</docadmin:fieldId>
+         <docadmin:name>Valuuta</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:classificator>currency</docadmin:classificator>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:invoiceSum">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}invoiceSum</docadmin:fieldId>
+         <docadmin:name>Summa käibemaksuta</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:vat">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}vat</docadmin:fieldId>
+         <docadmin:name>Käibemaksu summa</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:entryDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}entryDate</docadmin:fieldId>
+         <docadmin:name>Kande kuupäev</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:entrySapNumber">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}entrySapNumber</docadmin:fieldId>
+         <docadmin:name>Kande number SAPis</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:partyName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}partyName</docadmin:fieldId>
+         <docadmin:name>Lepingu pool</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>CONTACT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:partySigner">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}partySigner</docadmin:fieldId>
+         <docadmin:name>Lepingu poole allkirjastaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:partyEmail">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}partyEmail</docadmin:fieldId>
+         <docadmin:name>Lepingu poole e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:partyContactPerson">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}partyContactPerson</docadmin:fieldId>
+         <docadmin:name>Lepingu poole kontaktisik</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveType">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveType</docadmin:fieldId>
+         <docadmin:name>Puhkuse liik</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:classificator>leaveType</docadmin:classificator>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveBeginDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveBeginDate</docadmin:fieldId>
+         <docadmin:name>Puhkus alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveEndDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveEndDate</docadmin:fieldId>
+         <docadmin:name>Puhkus kuni</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveDays">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveDays</docadmin:fieldId>
+         <docadmin:name>Puhkuse kalendripäevi kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>INT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveWorkYear">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveWorkYear</docadmin:fieldId>
+         <docadmin:name>Puhkuse tööaasta</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>INT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveInitialBeginDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveInitialBeginDate</docadmin:fieldId>
+         <docadmin:name>Puhkus muudetav alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveInitialEndDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveInitialEndDate</docadmin:fieldId>
+         <docadmin:name>Puhkus muudetav kuni</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveNewBeginDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveNewBeginDate</docadmin:fieldId>
+         <docadmin:name>Uus puhkus alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveNewEndDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveNewEndDate</docadmin:fieldId>
+         <docadmin:name>Uus puhkus kuni</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveChangedDays">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveChangedDays</docadmin:fieldId>
+         <docadmin:name>Uue puhkuse kalendripäevi kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>INT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveNewWorkYear">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveNewWorkYear</docadmin:fieldId>
+         <docadmin:name>Uue puhkuse tööaasta</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>INT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>true</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveCancelBeginDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveCancelBeginDate</docadmin:fieldId>
+         <docadmin:name>Puhkuse tühistamine alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveCancelEndDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveCancelEndDate</docadmin:fieldId>
+         <docadmin:name>Puhkuse tühistamine alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:leaveCancelledDays">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}leaveCancelledDays</docadmin:fieldId>
+         <docadmin:name>Tühistatud puhkuse kalendripäevi kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>INT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:substituteName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substituteName</docadmin:fieldId>
+         <docadmin:name>Asendaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>USER</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:substituteJobTitle">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substituteJobTitle</docadmin:fieldId>
+         <docadmin:name>Asendaja ametinimetus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:substitutionBeginDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substitutionBeginDate</docadmin:fieldId>
+         <docadmin:name>Asendus alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:substitutionEndDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}substitutionEndDate</docadmin:fieldId>
+         <docadmin:name>Asendus kuni</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:applicantName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantName</docadmin:fieldId>
+         <docadmin:name>Taotleja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>USER</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:applicantJobTitle">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantJobTitle</docadmin:fieldId>
+         <docadmin:name>Taotleja ametinimetus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:applicantStructUnitName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}applicantStructUnitName</docadmin:fieldId>
+         <docadmin:name>Taotleja struktuuriüksus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandBeginDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandBeginDate</docadmin:fieldId>
+         <docadmin:name>Lähetus alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandEndDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandEndDate</docadmin:fieldId>
+         <docadmin:name>Lähetus kuni</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceDays">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceDays</docadmin:fieldId>
+         <docadmin:name>Päevade arv</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>INT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceRate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceRate</docadmin:fieldId>
+         <docadmin:name>Päevaraha määr (%)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceSum">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceSum</docadmin:fieldId>
+         <docadmin:name>Päevaraha maksumus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:dailyAllowanceTotalSum">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}dailyAllowanceTotalSum</docadmin:fieldId>
+         <docadmin:name>Päevaraha kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:expenseType">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expenseType</docadmin:fieldId>
+         <docadmin:name>Kulu</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:expectedExpenseSum">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expectedExpenseSum</docadmin:fieldId>
+         <docadmin:name>Eeldatav maksumus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:expensesTotalSum">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expensesTotalSum</docadmin:fieldId>
+         <docadmin:name>Lähetuskulud kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:changeableIfChangeable>false</docadmin:changeableIfChangeable>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:financingSource">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}financingSource</docadmin:fieldId>
+         <docadmin:name>Finantseerimisallikas</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:advancePaymentSum">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}advancePaymentSum</docadmin:fieldId>
+         <docadmin:name>Soovin avanssi summas</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:advancePaymentDesc">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}advancePaymentDesc</docadmin:fieldId>
+         <docadmin:name>Avansi soovi kirjeldus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>LISTBOX</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandComment">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandComment</docadmin:fieldId>
+         <docadmin:name>Lähetuse täiendav info</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:costManager">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}costManager</docadmin:fieldId>
+         <docadmin:name>Eelarve juht</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:costCenter">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}costCenter</docadmin:fieldId>
+         <docadmin:name>Kulukoht</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:eventName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}eventName</docadmin:fieldId>
+         <docadmin:name>Sündmus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:eventOrganizer">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}eventOrganizer</docadmin:fieldId>
+         <docadmin:name>Ürituse korraldaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:eventBeginDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}eventBeginDate</docadmin:fieldId>
+         <docadmin:name>Ürituse toimumise aeg alates</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:eventEndDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}eventEndDate</docadmin:fieldId>
+         <docadmin:name>Ürituse toimumise aeg kuni</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:county">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}county</docadmin:fieldId>
+         <docadmin:name>Maakond</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:classificator>counties</docadmin:classificator>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:city">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}city</docadmin:fieldId>
+         <docadmin:name>Sihtkoht</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:travelPurpose">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}travelPurpose</docadmin:fieldId>
+         <docadmin:name>Lähetuse põhjendus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:country">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}country</docadmin:fieldId>
+         <docadmin:name>Riik</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:classificator>countries</docadmin:classificator>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:reportDueDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}reportDueDate</docadmin:fieldId>
+         <docadmin:name>Aruande lisamise tähtaeg</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:firstPartyName">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}firstPartyName</docadmin:fieldId>
+         <docadmin:name>Esimene lepingu pool</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:mandatory>true</docadmin:mandatory>
+         <docadmin:fieldType>CONTACT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:firstPartyContactPerson">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}firstPartyContactPerson</docadmin:fieldId>
+         <docadmin:name>Esimese lepingu poole kontaktisik</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>USER</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:keywordLevel1">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}keywordLevel1</docadmin:fieldId>
+         <docadmin:name>Märksõna 1. tase</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>HIERARCHICAL_KEYWORD_LEVEL1</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:keywordLevel2">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}keywordLevel2</docadmin:fieldId>
+         <docadmin:name>Märksõna 2. tase</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>HIERARCHICAL_KEYWORD_LEVEL2</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:onlyInGroup>true</docadmin:onlyInGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:publishToAdr">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}publishToAdr</docadmin:fieldId>
+         <docadmin:name>Avalikku registrisse</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:classificator>publishToAdr</docadmin:classificator>
+         <docadmin:classificatorDefaultValue>Läheb ADR-i</docadmin:classificatorDefaultValue>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:expenseTypeChoice">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}expenseTypeChoice</docadmin:fieldId>
+         <docadmin:name>Kulu</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
+         <docadmin:classificator>expenseTypeChoice</docadmin:classificator>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:financingSourceChoice">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}financingSourceChoice</docadmin:fieldId>
+         <docadmin:name>Finantseerimise allikas</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
+         <docadmin:classificator>financingSourceChoice</docadmin:classificator>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:payingReasonAndExtent">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}payingReasonAndExtent</docadmin:fieldId>
+         <docadmin:name>Maksmise alus ja ulatus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>COMBOBOX_EDITABLE</docadmin:fieldType>
+         <docadmin:classificator>payingReasonAndExtent</docadmin:classificator>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandReportPaymentMethod">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandReportPaymentMethod</docadmin:fieldId>
+         <docadmin:name>Maksmise viis</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandReportSum">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandReportSum</docadmin:fieldId>
+         <docadmin:name>Summa</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryProject">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryProject</docadmin:fieldId>
+         <docadmin:name>Projekt</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryDepartment">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryDepartment</docadmin:fieldId>
+         <docadmin:name>Osakond</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryExpenseItem">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryExpenseItem</docadmin:fieldId>
+         <docadmin:name>Artikkel</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryAccount">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryAccount</docadmin:fieldId>
+         <docadmin:name>Konto</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryDebit">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryDebit</docadmin:fieldId>
+         <docadmin:name>Deebet</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:errandSummaryCredit">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}errandSummaryCredit</docadmin:fieldId>
+         <docadmin:name>Kreedit</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveRecordKeeping">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveRecordKeeping</docadmin:fieldId>
+         <docadmin:name>Kas sõitude kohta peetakse arvestust?</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>CHECKBOX</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveCompensationRate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveCompensationRate</docadmin:fieldId>
+         <docadmin:name>Hüvitise määr = 1 km hind</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveBeginDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveBeginDate</docadmin:fieldId>
+         <docadmin:name>Sõidu alguse kpv</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveEndDate">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveEndDate</docadmin:fieldId>
+         <docadmin:name>Sõidu lõpu kpv</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DATE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveOdoBegin">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveOdoBegin</docadmin:fieldId>
+         <docadmin:name>Odomeetri algnäit (km)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>INT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveOdoEnd">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveOdoEnd</docadmin:fieldId>
+         <docadmin:name>Odomeetri lõppnäit (km)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>INT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveKm">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveKm</docadmin:fieldId>
+         <docadmin:name>Läbisõit (km)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>INT</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveCompensationCalculated">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveCompensationCalculated</docadmin:fieldId>
+         <docadmin:name>Hüvitise maksumus (läbisõit x 1 km hind)</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveTotalKm">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveTotalKm</docadmin:fieldId>
+         <docadmin:name>Läbisõit kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>INT</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveTotalCompensation">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveTotalCompensation</docadmin:fieldId>
+         <docadmin:name>Hüvitise suurus kokku</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>ALWAYS_NOT_CHANGEABLE</docadmin:changeableIf>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:driveCompensation">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}driveCompensation</docadmin:fieldId>
+         <docadmin:name>Hüvitise suurus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:removableFromSystematicFieldGroup>false</docadmin:removableFromSystematicFieldGroup>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:contractSum">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}contractSum</docadmin:fieldId>
+         <docadmin:name>Lepingu lõppsumma</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>DOUBLE</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:endDateDesc">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}endDateDesc</docadmin:fieldId>
+         <docadmin:name>Lõppkuupäeva kirjeldus</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+   <docadmin:fieldDefinition view:childName="docdyn:endAnnotation">
+      <view:properties>
+         <docadmin:fieldId>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}endAnnotation</docadmin:fieldId>
+         <docadmin:name>Lõppemise märge</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:fieldType>TEXT_FIELD</docadmin:fieldType>
+         <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+      </view:properties>
+   </docadmin:fieldDefinition>
+
+</view:view>
