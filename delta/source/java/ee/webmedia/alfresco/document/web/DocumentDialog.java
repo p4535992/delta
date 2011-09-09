@@ -565,6 +565,9 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
             }
             showDocsAndCasesAssocs = false;
         }
+
+        getDocumentDialogHelperBean().reset(this);
+
         fileBlockBean.init(node);
         typeBlockBean.init();
         assocsBlockBean.init(node);
@@ -583,8 +586,6 @@ public class DocumentDialog extends BaseDialogBean implements ClearStateNotifica
         List<UIComponent> children = ComponentUtil.getChildren(getModalContainer());
         children.clear();
         children.add(modal);
-
-        getDocumentDialogHelperBean().reset(this);
     }
 
     public void reloadDoc() {

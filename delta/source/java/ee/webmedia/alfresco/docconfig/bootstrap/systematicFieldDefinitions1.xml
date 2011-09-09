@@ -72,6 +72,7 @@
          <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
          <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
          <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+         <docadmin:comboboxNotRelatedToClassificator>true</docadmin:comboboxNotRelatedToClassificator>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -92,6 +93,7 @@
          <docadmin:isParameterInVolSearch>true</docadmin:isParameterInVolSearch>
          <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
          <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+         <docadmin:comboboxNotRelatedToClassificator>true</docadmin:comboboxNotRelatedToClassificator>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -112,6 +114,7 @@
          <docadmin:isParameterInVolSearch>false</docadmin:isParameterInVolSearch>
          <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
          <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+         <docadmin:comboboxNotRelatedToClassificator>true</docadmin:comboboxNotRelatedToClassificator>
       </view:properties>
    </docadmin:fieldDefinition>
 
@@ -132,6 +135,7 @@
          <docadmin:isParameterInVolSearch>false</docadmin:isParameterInVolSearch>
          <docadmin:isFixedParameterInDocSearch>true</docadmin:isFixedParameterInDocSearch>
          <docadmin:isFixedParameterInVolSearch>true</docadmin:isFixedParameterInVolSearch>
+         <docadmin:comboboxNotRelatedToClassificator>true</docadmin:comboboxNotRelatedToClassificator>
       </view:properties>
    </docadmin:fieldDefinition>
 

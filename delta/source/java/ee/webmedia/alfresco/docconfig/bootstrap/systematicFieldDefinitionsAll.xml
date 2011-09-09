@@ -19,6 +19,7 @@
          <docadmin:systematic>true</docadmin:systematic>
          <docadmin:fieldType>COMBOBOX</docadmin:fieldType>
          <docadmin:changeableIf>CHANGEABLE_IF_WORKING_DOC</docadmin:changeableIf>
+         <docadmin:comboboxNotRelatedToClassificator>true</docadmin:comboboxNotRelatedToClassificator>
       </view:properties>
    </docadmin:fieldDefinition>
 

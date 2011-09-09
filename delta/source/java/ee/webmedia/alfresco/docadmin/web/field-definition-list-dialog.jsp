@@ -9,14 +9,7 @@
 <%@ page buffer="32kb" contentType="text/html;charset=UTF-8"%>
 <%@ page isELIgnored="false"%>
 
-<%-- TODO DLSeadist test --%>
-<h:panelGroup id="docTypeFields-panel-facets">
-   <f:facet name="title">
-       <a:actionLink id="nameCol-input2" value="FIXME: testimisels link - lisa uus eelseadistatud andmeväli" action="dialog:fieldDetailsDialog" actionListener="#{FieldDetailsDialog.addNew}" image="/images/icons/add_item.gif" />
-   </f:facet>
-</h:panelGroup>
-
-<a:panel id="docTypeFields-panel" label="#{msg.fieldDefinitions_list}" styleClass="panel-100 with-pager" facetsId="dialog:dialog-body:docTypeFields-panel-facets" >
+<a:panel id="docTypeFields-panel" label="#{msg.fieldDefinitions_list}" styleClass="panel-100 with-pager" >
    <a:richList id="docTypeFieldsList" value="#{FieldDefinitionListDialog.fieldDefinitions}" refreshOnBind="true" var="fd" viewMode="details" 
       pageSize="#{BrowseBean.pageSizeContent}" rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" initialSortColumn="name">
 

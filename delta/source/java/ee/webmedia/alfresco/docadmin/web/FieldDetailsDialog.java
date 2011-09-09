@@ -43,6 +43,7 @@ import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter_ET_EN;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
@@ -186,10 +187,6 @@ public class FieldDetailsDialog extends BaseDialogBean {
     // END: protected methods for FieldsListBean
 
     // START: jsf actions/accessors
-    // // TODO DLSeadist
-    public void addNew(@SuppressWarnings("unused") ActionEvent event) {
-        editFieldInner(getDocumentAdminService().createNewUnSavedFieldDefinition(), null);
-    }
 
     /** used by jsp */
     public void editFieldDefinition(ActionEvent event) {
@@ -347,6 +344,10 @@ public class FieldDetailsDialog extends BaseDialogBean {
     }
 
     private boolean isShowPropery(QName propQName) {
+        if ((DocumentAdminModel.Props.CLASSIFICATOR.equals(propQName) || DocumentAdminModel.Props.CLASSIFICATOR_DEFAULT_VALUE.equals(propQName))
+                && field.isComboboxNotRelatedToClassificator()) {
+            return false;
+        }
         FieldType fieldType = field.getFieldTypeEnum();
         return fieldType == null ? false : fieldType.getFieldsUsed().contains(propQName);
     }

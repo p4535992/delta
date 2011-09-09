@@ -220,6 +220,10 @@ public class Field extends FieldAndGroupBase {
         setProp(DocumentAdminModel.Props.CHANGEABLE_IF_CHANGEABLE, changeableIfChangeable);
     }
 
+    public final boolean isComboboxNotRelatedToClassificator() {
+        return getPropBoolean(DocumentAdminModel.Props.COMBOBOX_NOT_RELATED_TO_CLASSIFICATOR);
+    }
+
     public final boolean isRemovableFromSystematicFieldGroup() {
         return getPropBoolean(DocumentAdminModel.Props.REMOVABLE_FROM_SYSTEMATIC_FIELD_GROUP);
     }

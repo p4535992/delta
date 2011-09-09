@@ -156,7 +156,14 @@ public class FieldsListBean implements Serializable {
         List<SelectItem> results = new ArrayList<SelectItem>(fieldDefinitions.size());
         for (FieldDefinition fieldDef : fieldDefinitions) {
             SelectItem selectItem = new SelectItem(fieldDef.getFieldId().toString(), fieldDef.getFieldNameWithIdAndType());
-            selectItem.setDescription(getMessage("doc_types") + ": " + collectionToString(fieldDef.getDocTypes()));
+            List<String> docTypes = fieldDef.getDocTypes();
+            String docTypesString;
+            if (docTypes.isEmpty()) {
+                docTypesString = MessageUtil.getMessage("fieldDefinitions_list_noDocTypes");
+            } else {
+                docTypesString = collectionToString(docTypes);
+            }
+            selectItem.setDescription(getMessage("doc_types") + ": " + docTypesString);
             results.add(selectItem);
         }
         WebUtil.sort(results);

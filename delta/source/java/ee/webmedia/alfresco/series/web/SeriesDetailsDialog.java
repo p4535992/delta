@@ -50,12 +50,18 @@ public class SeriesDetailsDialog extends BaseDialogBean {
 
     private boolean performPatternChecks(FacesContext context) {
         boolean foundErrors = false;
-        NumberPatternParser docNrPatternParsed = new NumberPatternParser((String) getCurrentNode().getProperties().get(SeriesModel.Props.DOC_NUMBER_PATTERN));
+        String patternStr = (String) getCurrentNode().getProperties().get(SeriesModel.Props.DOC_NUMBER_PATTERN);
+        NumberPatternParser docNrPatternParsed = new NumberPatternParser(patternStr);
         if (!docNrPatternParsed.isValid()) {
             for (String invalidParam : docNrPatternParsed.getInvalidParams()) {
                 MessageUtil.addErrorMessage(context, "series_docNumberPattern_contains_invalid_param", "{" + invalidParam + "}");
                 foundErrors = true;
             }
+        }
+
+        if (!patternStr.matches(".*\\{[0-9]DN\\}.*")) {
+            MessageUtil.addErrorMessage("series_docNumberPattern_dn_mandatory");
+            foundErrors = true;
         }
         if (docNrPatternParsed.containsParam("TN")) {
             MessageUtil.addErrorMessage(context, "series_docNumberPattern_tn_not_allowed");

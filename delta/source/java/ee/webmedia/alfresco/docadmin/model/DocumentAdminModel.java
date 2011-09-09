@@ -37,6 +37,7 @@ public interface DocumentAdminModel {
         QName FIELD_TYPE = QName.createQName(URI, "fieldType");
         QName CHANGEABLE_IF = QName.createQName(URI, "changeableIf");
         QName CHANGEABLE_IF_CHANGEABLE = QName.createQName(URI, "changeableIfChangeable");
+        QName COMBOBOX_NOT_RELATED_TO_CLASSIFICATOR = QName.createQName(URI, "comboboxNotRelatedToClassificator");
         QName CLASSIFICATOR = QName.createQName(URI, "classificator");
         QName DEFAULT_VALUE = QName.createQName(URI, "defaultValue");
         QName CLASSIFICATOR_DEFAULT_VALUE = QName.createQName(URI, "classificatorDefaultValue");

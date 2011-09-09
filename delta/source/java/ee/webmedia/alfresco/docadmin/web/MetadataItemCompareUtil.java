@@ -251,6 +251,12 @@ public class MetadataItemCompareUtil {
         chain.addComparator(new TransformingComparator(new ComparableTransformer<Field>() {
             @Override
             public Comparable<?> tr(Field input) {
+                return input.isComboboxNotRelatedToClassificator();
+            }
+        }, new NullComparator()));
+        chain.addComparator(new TransformingComparator(new ComparableTransformer<Field>() {
+            @Override
+            public Comparable<?> tr(Field input) {
                 return input.isRemovableFromSystematicFieldGroup();
             }
         }, new NullComparator()));

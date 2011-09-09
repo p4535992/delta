@@ -131,6 +131,9 @@
          <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" >
               <f:param name="testP" value="11" />
          </a:actionLink>
+         <br/>
+          <%-- FIXME DLSeadist ajutine link test keskkonna jaoks --%>
+         <a:actionLink value="DeleteFieldAndFieldGroupsAndBootstrapInfo" actionListener="#{TestingForDeveloperBean.deleteFieldAndFieldGroupsAndBootstrapInfo}" />
 
       <hr/>
    </h:form>

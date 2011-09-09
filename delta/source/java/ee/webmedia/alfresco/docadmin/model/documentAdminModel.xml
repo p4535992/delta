@@ -259,6 +259,9 @@
                <type>d:boolean</type>
                <default>true</default>
             </property>
+            <property name="docadmin:comboboxNotRelatedToClassificator">
+               <type>d:boolean</type>
+            </property>
             <property name="docadmin:removableFromSystematicFieldGroup">
                <type>d:boolean</type>
                <default>true</default>
