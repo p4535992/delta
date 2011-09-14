@@ -122,20 +122,17 @@ public final class DataDictionary implements Serializable
    public PropertyDefinition getPropertyDefinition(Node node, String property)
    {
       QName propertyQName = Repository.resolveToQName(property);
-      PropertyDefinition propDef = null;
-      
-      TypeDefinition typeDef = getTypeDef(node.getType(), node.getAspects());
-      
-      if (typeDef != null)
-      {
-         Map<QName, PropertyDefinition> properties = typeDef.getProperties();
-         propDef = properties.get(propertyQName);
-      }
+      PropertyDefinition propDef = BeanHelper.getDocumentConfigService().getPropertyDefinition(node, propertyQName);
       if (propDef == null)
       {
-          propDef = BeanHelper.getDocumentConfigService().getPropertyDefinition(node, propertyQName);
+         TypeDefinition typeDef = getTypeDef(node.getType(), node.getAspects());
+         
+         if (typeDef != null)
+         {
+            Map<QName, PropertyDefinition> properties = typeDef.getProperties();
+            propDef = properties.get(propertyQName);
+         }
       }
-      
       return propDef;
    }
    

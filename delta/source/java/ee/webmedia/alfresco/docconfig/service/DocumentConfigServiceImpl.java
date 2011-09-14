@@ -26,6 +26,7 @@ import org.alfresco.service.namespace.QName;
 import org.alfresco.util.Pair;
 import org.alfresco.web.bean.repository.Node;
 import org.alfresco.web.ui.repo.RepoConstants;
+import org.apache.commons.lang.ArrayUtils;
 import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
@@ -47,8 +48,10 @@ import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.PropertySheetStateHolder;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
+import ee.webmedia.alfresco.docconfig.generator.systematic.RecipientsGenerator;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDialogHelperBean;
+import ee.webmedia.alfresco.utils.RepoUtil;
 
 /**
  * @author Alar Kvell
@@ -378,7 +381,8 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
     @Override
     public PropertyDefinition getPropertyDefinition(Node documentDynamicNode, QName property) {
-        if (!(DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(documentDynamicNode.getType()) && DocumentDynamicModel.URI.equals(property.getNamespaceURI()))) {
+        if (!DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(documentDynamicNode.getType()) || RepoUtil.TRANSIENT_PROPS_NAMESPACE.equals(property.getNamespaceURI())) {
+            /* && DocumentDynamicModel.URI.equals(property.getNamespaceURI()) */
             return null;
         }
         Pair<String, Integer> cacheKey = getDocTypeIdAndVersionNr(documentDynamicNode);
@@ -476,6 +480,9 @@ public class DocumentConfigServiceImpl implements DocumentConfigService {
 
         @Override
         public boolean isMultiValued() {
+            if (ArrayUtils.contains(RecipientsGenerator.recipientFields, name)) {
+                return true;
+            }
             switch (fieldType) {
             case USERS:
             case USERS_CONTACTS:

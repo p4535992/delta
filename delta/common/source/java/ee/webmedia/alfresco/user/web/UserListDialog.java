@@ -20,8 +20,8 @@ import org.springframework.web.jsf.FacesContextUtils;
 
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
-import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.user.model.UserListRowVO;
+import ee.webmedia.alfresco.user.model.UserModel;
 import ee.webmedia.alfresco.user.service.UserService;
 import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.WebUtil;
@@ -164,7 +164,7 @@ public class UserListDialog extends BaseDialogBean {
             String label = UserUtil.getPersonFullNameWithUnitName(node.getProperties());
             String value = userName;
             if (useNameAsValue) {
-                value = UserUtil.getPersonFullName2(node.getProperties(), true);
+                value = UserUtil.getPersonFullName2(node.getProperties(), false);
             }
             results.add(new SelectItem(value, label));
         }

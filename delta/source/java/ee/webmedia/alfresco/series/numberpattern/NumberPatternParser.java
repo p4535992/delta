@@ -1,6 +1,8 @@
 package ee.webmedia.alfresco.series.numberpattern;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -58,6 +60,16 @@ public class NumberPatternParser {
         public static boolean matchesParamWithDigit(String paramToMatch, String allowed) {
             return paramToMatch.matches("^[0-9]" + allowed + "$");
         }
+
+        public static boolean matchesAnyParamWithDigit(String paramToMatch) {
+            List<RegisterNumberPatternParams> digitParams = new ArrayList<RegisterNumberPatternParams>();
+            for (RegisterNumberPatternParams param : values()) {
+                if (param.isDigitAllowed()) {
+                    digitParams.add(param);
+                }
+            }
+            return paramToMatch.matches("^[0-9]?" + StringUtils.join(digitParams, '|') + "$");
+        }
     }
 
     private static final Pattern PARAM_PATTERN = Pattern.compile("\\{(.*?)\\}");
@@ -87,7 +99,7 @@ public class NumberPatternParser {
     }
 
     public boolean containsParam(String param) {
-        if (RegisterNumberPatternParams.getValidDigitParam(param) != null) {
+        if (RegisterNumberPatternParams.matchesAnyParamWithDigit(param)) {
             for (String existing : getAllParams()) {
                 if (RegisterNumberPatternParams.matchesParamWithDigit(existing, param)) {
                     return true;

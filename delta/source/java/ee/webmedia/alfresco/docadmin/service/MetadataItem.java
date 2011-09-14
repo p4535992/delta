@@ -63,6 +63,14 @@ public abstract class MetadataItem extends BaseObject {
 
     public abstract boolean isRemovableFromList();
 
+    public boolean isCopyFromPreviousDocTypeVersion() {
+        return getCopyFromPreviousDocTypeVersion() != null;
+    }
+
+    public NodeRef getCopyFromPreviousDocTypeVersion() {
+        return getCopyOfNodeRef();
+    }
+
     @Override
     protected int getAssocIndex() {
         Integer order = getOrder();

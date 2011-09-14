@@ -21,10 +21,12 @@ import ee.webmedia.alfresco.utils.MessageUtil;
  */
 public class DocTypeDetailsDialog extends BaseDialogBean {
     private static final long serialVersionUID = 1L;
+    public static final String BEAN_NAME = "DocTypeDetailsDialog"; // FIXME DLSeadist final
 
     // START: Block beans
     //@formatter:off
     private FieldsListBean fieldsListBean;
+    private DocTypeAssocsListBean docTypeAssocsListBean;
     // TODO:
     //      FieldsListBean->FieldDetailsDialog        - andmevälja/andmeväljade grupi detailvaate
     //      FieldsListBean->FieldGroupDetailsDialog   - andmevälja/andmeväljade grupi detailvaate
@@ -39,10 +41,9 @@ public class DocTypeDetailsDialog extends BaseDialogBean {
     private DocumentType docType;
 
     @Override
-    protected String finishImpl(FacesContext context, String outcome) throws Throwable {
+    protected String finishImpl(FacesContext context, String outcome) {
         if (validate()) {
-            getDocumentAdminService().saveOrUpdateDocumentType(docType);
-            // resetFields();
+            save(false);
             MessageUtil.addInfoMessage("save_success");
         } else {
             isFinished = false;
@@ -51,7 +52,14 @@ public class DocTypeDetailsDialog extends BaseDialogBean {
         return outcome;
     }
 
-    private boolean validate() {
+    void save(boolean reInit) {
+        DocumentType saveOrUpdateDocumentType = getDocumentAdminService().saveOrUpdateDocumentType(docType);
+        if (reInit) {
+            init(saveOrUpdateDocumentType, true);
+        }
+    }
+
+    boolean validate() {
         boolean valid = true;
         // TODO DLSeadist validation. (DocumentTypeId is already validated by converter)
         return valid;
@@ -63,8 +71,16 @@ public class DocTypeDetailsDialog extends BaseDialogBean {
         return super.cancel();
     }
 
+    @Override
+    public void restored() {
+        init(docType, false);
+    }
+
     private void resetFields() {
         docType = null;
+        docTypeAssocsListBean.reset();
+        fieldsListBean.resetFields();
+        // don't assign null to injected beans
     }
 
     @Override
@@ -74,14 +90,7 @@ public class DocTypeDetailsDialog extends BaseDialogBean {
 
     // START: jsf actions/accessors
     public void addNew(@SuppressWarnings("unused") ActionEvent event) {
-        resetFields();
-        setDocType(getDocumentAdminService().createNewUnSaved());
-    }
-
-    public void showDetails(ActionEvent event) {
-        resetFields();
-        NodeRef docTypeRef = ActionUtil.getParam(event, "nodeRef", NodeRef.class);
-        setDocType(getDocumentAdminService().getDocumentType(docTypeRef));
+        init(getDocumentAdminService().createNewUnSaved(), true);
     }
 
     /** used by delete action to do actual deleting (after user has confirmed deleting in DeleteDialog) */
@@ -91,10 +100,22 @@ public class DocTypeDetailsDialog extends BaseDialogBean {
         return getCloseOutcome(2);
     }
 
-    private void setDocType(DocumentType documentType) {
+    public void showDetails(ActionEvent event) {
+        init(ActionUtil.getParam(event, "nodeRef", NodeRef.class));
+    }
+
+    void init(NodeRef docTypeRef) {
+        init(getDocumentAdminService().getDocumentType(docTypeRef), true);
+    }
+
+    void init(DocumentType documentType, boolean addNewLatestDocumentTypeVersion) {
+        resetFields();
         docType = documentType;
-        docType.addNewLatestDocumentTypeVersion();
+        if (addNewLatestDocumentTypeVersion) {
+            docType.addNewLatestDocumentTypeVersion();
+        }
         fieldsListBean.init(docType.getLatestDocumentTypeVersion());
+        docTypeAssocsListBean.init(this);
     }
 
     /** used by jsp propertySheetGrid */
@@ -125,6 +146,16 @@ public class DocTypeDetailsDialog extends BaseDialogBean {
     /** injected by spring */
     public void setFieldsListBean(FieldsListBean fieldsListBean) {
         this.fieldsListBean = fieldsListBean;
+    }
+
+    /** used by jsp */
+    public DocTypeAssocsListBean getAssocsListBean() {
+        return docTypeAssocsListBean;
+    }
+
+    /** injected by spring */
+    public void setAssocsListBean(DocTypeAssocsListBean docTypeAssocsListBean) {
+        this.docTypeAssocsListBean = docTypeAssocsListBean;
     }
 
     /** JSP */

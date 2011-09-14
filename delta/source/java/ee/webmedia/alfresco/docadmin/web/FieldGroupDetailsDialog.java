@@ -27,7 +27,7 @@ public class FieldGroupDetailsDialog extends BaseDialogBean {
 
     public static final String BEAN_NAME = "FieldGroupDetailsDialog";
     private static final Set<String> DEFAULT_USER_LOGGED_IN_VISIBLE_NAMES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-            SystematicFieldGroupNames.USER, SystematicFieldGroupNames.SIGNER, SystematicFieldGroupNames.OWNER)));
+            SystematicFieldGroupNames.USER, SystematicFieldGroupNames.SIGNER, SystematicFieldGroupNames.DOCUMENT_OWNER)));
 
     private FieldsListBean fieldsListBean;
 

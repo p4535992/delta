@@ -3,6 +3,7 @@ package ee.webmedia.alfresco.docadmin.web;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFieldDetailsDialog;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getFieldGroupDetailsDialog;
+import static ee.webmedia.alfresco.docadmin.web.DocAdminUtil.navigate;
 import static ee.webmedia.alfresco.utils.MessageUtil.getMessage;
 import static ee.webmedia.alfresco.utils.TextUtil.collectionToString;
 
@@ -12,7 +13,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.faces.context.FacesContext;
 import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
@@ -48,6 +48,10 @@ public class FieldsListBean implements Serializable {
 
     void init(MetadataContainer parent) {
         metadataContainer = parent;
+    }
+
+    void resetFields() {
+        metadataContainer = null;
     }
 
     public List<? extends MetadataItem> getMetaFieldsList() {
@@ -125,12 +129,6 @@ public class FieldsListBean implements Serializable {
         reorder(metadata);
     }
 
-    private void navigate(String navigationOutcome) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        context.getApplication().getNavigationHandler()
-                .handleNavigation(context, null, navigationOutcome);
-    }
-
     private void reorder(ChildrenList<MetadataItem> metadata) {
         // TODO DLSeadist reorder metadata items if needed
 
@@ -155,6 +153,9 @@ public class FieldsListBean implements Serializable {
         }
         List<SelectItem> results = new ArrayList<SelectItem>(fieldDefinitions.size());
         for (FieldDefinition fieldDef : fieldDefinitions) {
+            if (fieldDef.isOnlyInGroup()) {
+                continue;
+            }
             SelectItem selectItem = new SelectItem(fieldDef.getFieldId().toString(), fieldDef.getFieldNameWithIdAndType());
             List<String> docTypes = fieldDef.getDocTypes();
             String docTypesString;
@@ -210,11 +211,6 @@ public class FieldsListBean implements Serializable {
         FieldGroup fieldGroupDef = getDocumentAdminService().getFieldGroup(fieldGroupRef);
         FieldGroup addableFieldGroup = new FieldGroup((BaseObject) metadataContainer);
         getDocumentAdminService().addSystematicFields(fieldGroupDef, addableFieldGroup);
-        { // reset properties that should not be overwritten by fieldGroupDefinition when adding existing fieldGroup
-            addableFieldGroup.setSystematic(false);
-            addableFieldGroup.setMandatoryForDoc(false);
-            addableFieldGroup.setRemovableFromSystematicDocType(true);
-        }
         editFieldGroup(addableFieldGroup);
     }
 

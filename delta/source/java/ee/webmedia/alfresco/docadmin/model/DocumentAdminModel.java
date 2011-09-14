@@ -15,16 +15,27 @@ public interface DocumentAdminModel {
         String DOCUMENT_TYPES_PARENT = "/";
         String DOCUMENT_TYPES_SPACE = DOCUMENT_TYPES_PARENT + PREFIX + "documentTypes";
         String FIELD_DEFINITIONS_SPACE = DOCUMENT_TYPES_PARENT + PREFIX + "fieldDefinitions";
+        String FIELD_DEFINITIONS_TMP_SPACE = FIELD_DEFINITIONS_SPACE + "Tmp";
         String FIELD_GROUP_DEFINITIONS_SPACE = DOCUMENT_TYPES_PARENT + PREFIX + "fieldGroupDefinitions";
+        String FIELD_GROUP_DEFINITIONS_TMP_SPACE = FIELD_GROUP_DEFINITIONS_SPACE + "Tmp";
+    }
+
+    interface Assocs {
+        QName FIELD_DEFINITIONS_TMP = QName.createQName(URI, "fieldDefinitionsTmp");
+        QName FIELD_GROUP_DEFINITIONS_TMP = QName.createQName(URI, "fieldGroupDefinitionsTmp");
     }
 
     interface Types {
+        QName FIELD_DEFINITIONS = QName.createQName(URI, "fieldDefinitions");
+        QName FIELD_GROUP_DEFINITIONS = QName.createQName(URI, "fieldGroupDefinitions");
         QName DOCUMENT_TYPE = QName.createQName(URI, "documentType");
         QName DOCUMENT_TYPE_VERSION = QName.createQName(URI, "documentTypeVersion");
         QName FIELD = QName.createQName(URI, "field");
         QName FIELD_DEFINITION = QName.createQName(URI, "fieldDefinition");
         QName FIELD_GROUP = QName.createQName(URI, "fieldGroup");
         QName SEPARATION_LINE = QName.createQName(URI, "separationLine");
+        QName ASSOCIATION_TO_DOC_TYPE = QName.createQName(URI, "associationToDocType");
+        QName ASSOCIATED_FIELDS = QName.createQName(URI, "associatedFields");
     }
 
     interface Props {
@@ -90,6 +101,15 @@ public interface DocumentAdminModel {
         QName SHOW_IN_TWO_COLUMNS_CHANGEABLE = QName.createQName(URI, "showInTwoColumnsChangeable");
         QName THESAURUS = QName.createQName(URI, "thesaurus");
         // END: properties of type fieldGroup
+
+        // START: properties of type associationToDocType
+        QName ASSOCIATION_TYPE = QName.createQName(URI, "associationType");
+        QName DOC_TYPE = QName.createQName(URI, "docType");
+        // START: properties of type associationToDocType
+        // START: properties of type associatedFields
+        QName FROM_FIELD = QName.createQName(URI, "fromField");
+        QName TO_FIELD = QName.createQName(URI, "toField");
+        // START: properties of type associatedFields
 
         // START: properties of aspect systematic
         QName SYSTEMATIC = QName.createQName(URI, "systematic");

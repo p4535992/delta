@@ -43,7 +43,6 @@ import ee.webmedia.alfresco.classificator.model.Classificator;
 import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter_ET_EN;
 import ee.webmedia.alfresco.common.web.BeanHelper;
-import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldDefinition;
@@ -132,7 +131,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
             }
         } else {
             QName fieldId = field.getFieldId();
-            if (!field.isCopyOfFieldDefinition() && getDocumentAdminService().getFieldDefinition(fieldId) != null) {
+            if (!field.isCopyFromPreviousDocTypeVersion() && !field.isCopyOfFieldDefinition() && getDocumentAdminService().isFieldDefinitionExisting(fieldId.getLocalName())) {
                 MessageUtil.addErrorMessage("field_details_error_docField_sameIdFieldDef");
                 valid = false;
             } else {
@@ -216,7 +215,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
             FieldDefinition fd = (FieldDefinition) field;
             return field.isSystematic() || (fd.getDocTypes() != null && !fd.getDocTypes().isEmpty()) || (fd.getVolTypes() != null && !fd.getVolTypes().isEmpty());
         }
-        return isFieldIdReadOnly();
+        return isFieldIdReadOnly() || field.isCopyOfFieldDefinition();
     }
 
     /** used by property sheet */
@@ -243,7 +242,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
     /** used by property sheet */
     public boolean isFieldTypeHasAdditionalFields() {
         FieldType fieldType = field.getFieldTypeEnum();
-        return fieldType == null ? false : !fieldType.getFieldsUsed().isEmpty();
+        return fieldType == null ? false : !fieldType.getFieldsUsed(field.isComboboxNotRelatedToClassificator()).isEmpty();
     }
 
     /** used by property sheet */
@@ -253,7 +252,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
 
     /** used by property sheet */
     public boolean isFieldIdReadOnly() {
-        return isSavedInPreviousDocTypeVersionOrFieldDefinitions(field) || field.isCopyOfFieldDefinition();
+        return isSavedInPreviousDocTypeVersionOrFieldDefinitions(field);
     }
 
     /** used by property sheet */
@@ -344,12 +343,8 @@ public class FieldDetailsDialog extends BaseDialogBean {
     }
 
     private boolean isShowPropery(QName propQName) {
-        if ((DocumentAdminModel.Props.CLASSIFICATOR.equals(propQName) || DocumentAdminModel.Props.CLASSIFICATOR_DEFAULT_VALUE.equals(propQName))
-                && field.isComboboxNotRelatedToClassificator()) {
-            return false;
-        }
         FieldType fieldType = field.getFieldTypeEnum();
-        return fieldType == null ? false : fieldType.getFieldsUsed().contains(propQName);
+        return fieldType == null ? false : fieldType.getFieldsUsed(field.isComboboxNotRelatedToClassificator()).contains(propQName);
     }
 
     private void updatePropSheetComponents() {
@@ -381,7 +376,7 @@ public class FieldDetailsDialog extends BaseDialogBean {
         FieldType newFieldType = field.getFieldTypeEnum();
         Set<QName> propsUnusedByFieldType = new HashSet<QName>(ALL_FIELD_TYPE_CUSTOM_PROPS);
         if (newFieldType != null) {
-            propsUnusedByFieldType.removeAll(newFieldType.getFieldsUsed());
+            propsUnusedByFieldType.removeAll(newFieldType.getFieldsUsed(false));
         }
         for (QName prop : propsUnusedByFieldType) {
             field.setProp(prop, null);

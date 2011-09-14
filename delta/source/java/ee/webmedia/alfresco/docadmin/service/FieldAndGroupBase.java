@@ -46,7 +46,8 @@ public abstract class FieldAndGroupBase extends MetadataItem {
         setProp(DocumentAdminModel.Props.NAME, name);
     }
 
-    public final void setSystematic(boolean systematic) {
+    // TODO DLSeadist võiks eemaldada või protected'iks teha, kui näiteks service's on vaja
+    protected final void setSystematic(boolean systematic) {
         setProp(DocumentAdminModel.Props.SYSTEMATIC, systematic);
     }
 

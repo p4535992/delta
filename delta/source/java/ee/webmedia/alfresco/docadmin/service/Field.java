@@ -56,19 +56,24 @@ public class Field extends FieldAndGroupBase {
     }
 
     @Override
+    public BaseObject getParent() {
+        return super.getParent();
+    }
+
+    @Override
     /** used in JSP */
     public String getAdditionalInfo() {
-        // Systematic: {Yes/No}, mandatory: {Yes/No}[, default value: {someDefaultIfSet}]
-        MessageData msgData = new MessageDataImpl("docType_metadataList_additInfo_field"
-                , new MessageDataImpl(isSystematic() ? "yes" : "no") // systematic
-                , new MessageDataImpl(isMandatory() ? "yes" : "no") // mandatory
-        );
-        String additionalInfo = MessageUtil.getMessage(msgData);
-        MessageData defaultValue = getAdditionalInfoDefaultValue();
-        if (defaultValue != null) {
-            additionalInfo += MessageUtil.getMessage(defaultValue);
+        Object additionalInfoDefaultValue = getAdditionalInfoDefaultValue();
+        if (additionalInfoDefaultValue == null) {
+            additionalInfoDefaultValue = "";
         }
-        return additionalInfo;
+        MessageData msgData = new MessageDataImpl("docType_metadataList_additInfo_field"
+                , MessageUtil.getMessage(getFieldTypeEnum()) // type
+                , additionalInfoDefaultValue // defaultValue
+                , new MessageDataImpl("docType_metadataList_additInfo_field_systematic_" + isSystematic())
+                , new MessageDataImpl("docType_metadataList_additInfo_field_mandatory_" + isSystematic())
+                );
+        return MessageUtil.getMessage(msgData);
     }
 
     private MessageData getAdditionalInfoDefaultValue() {

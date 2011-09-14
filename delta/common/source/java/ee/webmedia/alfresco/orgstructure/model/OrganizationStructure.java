@@ -15,6 +15,7 @@ public class OrganizationStructure implements Serializable {
     private String name;
     private int unitId;
     private int superUnitId;
+    private String organizationPath;
 
     @AlfrescoModelProperty(isMappable = false)
     private String superValueName;
@@ -49,6 +50,14 @@ public class OrganizationStructure implements Serializable {
 
     public void setSuperUnitId(int superUnitId) {
         this.superUnitId = superUnitId;
+    }
+
+    public void setOrganizationPath(String organizationPath) {
+        this.organizationPath = organizationPath;
+    }
+
+    public String getOrganizationPath() {
+        return organizationPath;
     }
 
     @Override

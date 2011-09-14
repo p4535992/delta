@@ -2132,8 +2132,9 @@ public class DocumentServiceImpl implements DocumentService, NodeServicePolicies
             }
 
             props.put(REG_NUMBER.toString(), regNumber);
-            props.put(SHORT_REG_NUMBER.toString(), StringUtils.substringAfter(regNumber, VOLUME_MARK_SEPARATOR));
+            props.put(SHORT_REG_NUMBER.toString(), StringUtils.substringAfterLast(regNumber, VOLUME_MARK_SEPARATOR));
             propertyChangesMonitorHelper.addIgnoredProps(props, REG_NUMBER);
+            propertyChangesMonitorHelper.addIgnoredProps(props, SHORT_REG_NUMBER);
             if (!isRelocating) {
                 Date oldRegDateTime = (Date) nodeService.getProperty(docNode.getNodeRef(), REG_DATE_TIME);
                 if (oldRegDateTime != null && !adrDeletedDocumentAdded) {

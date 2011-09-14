@@ -62,6 +62,9 @@
          <dialog name="fieldGroupDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/field-group-details-dialog.jsp"
             managed-bean="FieldGroupDetailsDialog" icon="/images/icons/versioned_properties_large.gif" title-id="fieldGroup_details" />
 
+         <dialog name="associationToDocTypeDetailsDialog" page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/associationToDocType-details-dialog.jsp"
+            managed-bean="AssociationToDocTypeDetailsDialog" icon="/images/icons/versioned_properties_large.gif" />
+
       </dialogs>
    </config>
 
@@ -153,6 +156,12 @@
          <show-property name="docadmin:docTypes" component-generator="SearchGenerator" read-only="true" />
          <show-property name="docadmin:volTypes" component-generator="SearchGenerator" read-only="true" show="#{VolumeService.caseVolumeEnabled}" />
           -->
+      </property-sheet>
+   </config>
+
+   <config evaluator="node-type" condition="docadmin:associationToDocType">
+      <property-sheet>
+         <show-property name="docadmin:docType" component-generator="GeneralSelectorGenerator" selectionItems="#{AssociationToDocTypeDetailsDialog.getDocTypes}" readOnlyIf="#{AssociationToDocTypeDetailsDialog.associationToDocType.isSaved}" />
       </property-sheet>
    </config>
 

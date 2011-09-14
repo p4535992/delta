@@ -13,11 +13,11 @@ import smit.ametnik.services.AmetnikByIsikukood2RequestDocument.AmetnikByIsikuko
 import smit.ametnik.services.AmetnikByIsikukood2ResponseDocument;
 import smit.ametnik.services.AmetnikByIsikukood2ResponseDocument.AmetnikByIsikukood2Response;
 import smit.ametnik.services.AmetnikExt;
-import smit.ametnik.services.Yksus;
-import smit.ametnik.services.YksusByAsutusIdRequestDocument;
-import smit.ametnik.services.YksusByAsutusIdRequestDocument.YksusByAsutusIdRequest;
-import smit.ametnik.services.YksusByAsutusIdResponseDocument;
-import smit.ametnik.services.YksusByAsutusIdResponseDocument.YksusByAsutusIdResponse;
+import smit.ametnik.services.YksusByAsutusId2RequestDocument;
+import smit.ametnik.services.YksusByAsutusId2RequestDocument.YksusByAsutusId2Request;
+import smit.ametnik.services.YksusByAsutusId2ResponseDocument;
+import smit.ametnik.services.YksusByAsutusId2ResponseDocument.YksusByAsutusId2Response;
+import smit.ametnik.services.YksusExt;
 
 /**
  * Web service, to communicate with AmetnikeRegister
@@ -30,16 +30,16 @@ public class AMRServiceImpl extends WebServiceTemplate implements AMRService {
     private BigInteger asutusId;
 
     @Override
-    public Yksus[] getYksusByAsutusId() {
+    public YksusExt[] getYksusByAsutusId() {
         long startTime = System.currentTimeMillis();
-        YksusByAsutusIdRequest request = YksusByAsutusIdRequestDocument.Factory.newInstance().addNewYksusByAsutusIdRequest();
+        YksusByAsutusId2Request request = YksusByAsutusId2RequestDocument.Factory.newInstance().addNewYksusByAsutusId2Request();
         request.setAsutusId(asutusId);
-        YksusByAsutusIdResponseDocument response = (YksusByAsutusIdResponseDocument) marshalSendAndReceive(request);
+        YksusByAsutusId2ResponseDocument response = (YksusByAsutusId2ResponseDocument) marshalSendAndReceive(request);
         if (log.isDebugEnabled()) {
             log.debug("getYksusByAsutusId asutusId '" + asutusId + "', time " + (System.currentTimeMillis() - startTime) + " ms, responseDoc:\n" + response);
         }
-        YksusByAsutusIdResponse yksusByAsutusIdResponse = response.getYksusByAsutusIdResponse();
-        return yksusByAsutusIdResponse.getYksusArray();
+        YksusByAsutusId2Response yksusByAsutusId2Response = response.getYksusByAsutusId2Response();
+        return yksusByAsutusId2Response.getYksusArray();
     }
 
     @Override

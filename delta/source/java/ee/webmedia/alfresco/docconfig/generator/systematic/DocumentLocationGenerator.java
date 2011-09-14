@@ -45,6 +45,7 @@ import ee.webmedia.alfresco.docconfig.generator.FieldGroupGenerator;
 import ee.webmedia.alfresco.docconfig.generator.GeneratorResults;
 import ee.webmedia.alfresco.docconfig.generator.systematic.AccessRestrictionGenerator.AccessRestrictionState;
 import ee.webmedia.alfresco.docdynamic.service.DocumentDynamic;
+import ee.webmedia.alfresco.document.log.service.DocumentLogService;
 import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.document.model.DocumentParentNodesVO;
 import ee.webmedia.alfresco.document.service.DocumentService;
@@ -55,6 +56,7 @@ import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
 import ee.webmedia.alfresco.series.service.SeriesService;
 import ee.webmedia.alfresco.utils.ComponentUtil;
+import ee.webmedia.alfresco.utils.MessageUtil;
 import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.utils.UnableToPerformException.MessageSeverity;
@@ -76,9 +78,6 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
                 VOLUME,
                 CASE };
     }
-
-    // TODO et propertite nimed oleksid docdyn
-    // TODO dokumendi salvestamise loogika ka siia tõsta, et reaalselt toimuks liigutamine
 
     /*
      * In EDIT_MODE we use properties:
@@ -443,6 +442,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
     private SeriesService seriesService;
     private VolumeService volumeService;
     private CaseService caseService;
+    private DocumentLogService documentLogService;
 
     @Override
     public void validate(DocumentDynamic document, ValidationHelper validationHelper) {
@@ -614,9 +614,9 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
                 throw new UnableToPerformException(MessageSeverity.ERROR, "document_errorMsg_register_movingNotEnabled_isReplyOrFollowUp", e);
             }
 
-            // if (!isDraft) {
-            // documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_location_changed"));
-            // }
+            if (!document.isDraft()) {
+                documentLogService.addDocumentLog(docNodeRef, MessageUtil.getMessage("document_log_location_changed"));
+            }
         }
     }
 
@@ -686,6 +686,10 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
 
     public void setCaseService(CaseService caseService) {
         this.caseService = caseService;
+    }
+
+    public void setDocumentLogService(DocumentLogService documentLogService) {
+        this.documentLogService = documentLogService;
     }
     // END: setters
 

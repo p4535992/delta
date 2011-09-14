@@ -92,9 +92,14 @@
 
    <bean id="DocTypeDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog" scope="session">
       <property name="fieldsListBean" ref="DocTypeFieldsListBean" />
+      <property name="assocsListBean" ref="AssocsListBean" />
    </bean>
 
    <bean id="DocTypeFieldsListBean" class="ee.webmedia.alfresco.docadmin.web.FieldsListBean" scope="session" />
+
+   <bean id="AssocsListBean" class="ee.webmedia.alfresco.docadmin.web.DocTypeAssocsListBean" scope="session" />
+
+   <bean id="AssociationToDocTypeDetailsDialog" class="ee.webmedia.alfresco.docadmin.web.AssociationToDocTypeDetailsDialog" scope="session" />
 
    <bean id="FieldDefinitionListDialog" class="ee.webmedia.alfresco.docadmin.web.FieldDefinitionListDialog" scope="session" />
 

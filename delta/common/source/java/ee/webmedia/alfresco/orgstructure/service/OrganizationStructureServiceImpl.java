@@ -21,11 +21,12 @@ import org.alfresco.web.bean.repository.Node;
 import org.apache.commons.collections.comparators.NullComparator;
 import org.apache.commons.lang.StringUtils;
 
-import smit.ametnik.services.Yksus;
+import smit.ametnik.services.YksusExt;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.orgstructure.amr.service.AMRService;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructure;
 import ee.webmedia.alfresco.orgstructure.model.OrganizationStructureModel;
+import ee.webmedia.alfresco.utils.UserUtil;
 import ee.webmedia.alfresco.utils.beanmapper.BeanPropertyMapper;
 
 public class OrganizationStructureServiceImpl implements OrganizationStructureService {
@@ -43,9 +44,9 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
 
     @Override
     public int updateOrganisationStructures() {
-        Yksus[] yksusArray = amrService.getYksusByAsutusId();
+        YksusExt[] yksusArray = amrService.getYksusByAsutusId();
         List<OrganizationStructure> orgStructures = new ArrayList<OrganizationStructure>(yksusArray.length);
-        for (Yksus yksus : yksusArray) {
+        for (YksusExt yksus : yksusArray) {
             orgStructures.add(yksusToOrganizationStructure(yksus));
         }
         Set<QName> childNodeTypeQnames = new HashSet<QName>();
@@ -172,7 +173,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         return os;
     }
 
-    private OrganizationStructure yksusToOrganizationStructure(Yksus yksus) {
+    private OrganizationStructure yksusToOrganizationStructure(YksusExt yksus) {
         OrganizationStructure org = new OrganizationStructure();
         org.setUnitId(yksus.getId().intValue());
         org.setName(yksus.getNimetus());
@@ -180,6 +181,7 @@ public class OrganizationStructureServiceImpl implements OrganizationStructureSe
         if (ylemYksusId != null) {
             org.setSuperUnitId(ylemYksusId.intValue());
         }
+        org.setOrganizationPath(UserUtil.formatYksusRadaToOrganizationPath(yksus.getYksusRada()));
         return org;
     }
 

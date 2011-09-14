@@ -18,6 +18,16 @@ public interface DocumentDynamicModel {
     interface Props {
         QName DOCUMENT_TYPE_ID = QName.createQName(URI, "documentTypeId");
         QName DOCUMENT_TYPE_VERSION_NR = QName.createQName(URI, "documentTypeVersionNr");
+
+        QName OWNER_SERVICE_RANK = QName.createQName(URI, "ownerServiceRank");
+        QName OWNER_WORK_ADDRESS = QName.createQName(URI, "ownerWorkAddress");
+
+        QName RECIPIENT_PERSON_NAME = QName.createQName(URI, "recipientPersonName");
+        QName RECIPIENT_STREET_HOUSE = QName.createQName(URI, "recipientStreetHouse");
+        QName RECIPIENT_POSTAL_CITY = QName.createQName(URI, "recipientPostalCity");
+        QName ADDITIONAL_RECIPIENT_PERSON_NAME = QName.createQName(URI, "additionalRecipientPersonName");
+        QName ADDITIONAL_RECIPIENT_STREET_HOUSE = QName.createQName(URI, "additionalRecipientStreetHouse");
+        QName ADDITIONAL_RECIPIENT_POSTAL_CITY = QName.createQName(URI, "additionalRecipientPostalCity");
     }
 
 }

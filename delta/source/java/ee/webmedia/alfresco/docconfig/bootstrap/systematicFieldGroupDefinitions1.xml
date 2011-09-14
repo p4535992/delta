@@ -101,8 +101,10 @@
          <docadmin:fieldDefinitionIds>
             <view:values>
                <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerName</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}ownerServiceRank</view:value>
                <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerJobTitle</view:value>
                <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerOrgStructUnit</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}ownerWorkAddress</view:value>
                <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerEmail</view:value>
                <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}ownerPhone</view:value>
             </view:values>

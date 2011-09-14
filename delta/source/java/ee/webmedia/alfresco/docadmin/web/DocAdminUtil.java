@@ -6,8 +6,9 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+import javax.faces.context.FacesContext;
+
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
 import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
@@ -52,24 +53,22 @@ public class DocAdminUtil {
      *         or when field is opened from {@link FieldsListBean} and field is a new version of field already saved in repository under previous {@link DocumentTypeVersion}
      */
     static boolean isSavedInPreviousDocTypeVersionOrFieldDefinitions(MetadataItem metadataItem) {
-        boolean savedInPreviousDocTypeVersion = metadataItem.getCopyOfNodeRef() != null;
-        return savedInPreviousDocTypeVersion || metadataItem.isSaved();
+        return metadataItem.isCopyFromPreviousDocTypeVersion() || metadataItem.isSaved();
     }
 
     static Set<String> getDuplicateFieldIds(Collection<Field> fieldsToAdd, MetadataContainer metadataContainer) {
-        Map<QName, Field> fieldsById = new HashMap<QName, Field>();
+        Map<String, Field> fieldsById = new HashMap<String, Field>();
         for (Field field : fieldsToAdd) {
-            fieldsById.put(field.getFieldId(), field);
+            fieldsById.put(field.getFieldId().getLocalName(), field);
         }
         Set<String> duplicateFieldIds = new LinkedHashSet<String>();
         for (Field duplicateField : metadataContainer.getFieldsById(fieldsById.keySet())) {
-            QName fieldId = duplicateField.getFieldId();
-            Field fieldToAdd = fieldsById.get(fieldId);
+            String fieldIdLocalName = duplicateField.getFieldId().getLocalName();
+            Field fieldToAdd = fieldsById.get(fieldIdLocalName);
             NodeRef cloneOfNodeRef = fieldToAdd.getCloneOfNodeRef();
             boolean cloneOfTheSameField = cloneOfNodeRef != null && cloneOfNodeRef.equals(duplicateField.getNodeRef());
-            NodeRef fieldRefInPreviousDocTypeVersion = fieldToAdd.getCopyOfNodeRef();
-            if (!cloneOfTheSameField && (fieldRefInPreviousDocTypeVersion == null || !fieldRefInPreviousDocTypeVersion.equals(duplicateField.getNodeRef()))) {
-                duplicateFieldIds.add(fieldId.getLocalName());
+            if (!cloneOfTheSameField && (!fieldToAdd.isCopyFromPreviousDocTypeVersion() || !fieldToAdd.getCopyFromPreviousDocTypeVersion().equals(duplicateField.getNodeRef()))) {
+                duplicateFieldIds.add(fieldIdLocalName);
             }
         }
         if (metadataContainer instanceof FieldGroup) {
@@ -78,5 +77,11 @@ public class DocAdminUtil {
             duplicateFieldIds.addAll(getDuplicateFieldIds(fieldsToAdd, docTypeVersion));
         }
         return duplicateFieldIds;
+    }
+
+    static void navigate(String navigationOutcome) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        context.getApplication().getNavigationHandler()
+                .handleNavigation(context, null, navigationOutcome);
     }
 }

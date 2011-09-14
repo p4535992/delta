@@ -260,11 +260,12 @@ public class ClassificatorDetailsDialog extends BaseDialogBean {
     }
 
     public void search() {
-        if (StringUtils.isBlank(getSearchCriteria())) {
+        if (StringUtils.isNotBlank(getSearchCriteria())) {
+            clearRichList();
+            classificatorValues = BeanHelper.getClassificatorService().searchValues(getSearchCriteria(), selectedClassificator.getNodeRef());
+        } else {
             MessageUtil.addInfoMessage("classificators_error_emptySearchField");
         }
-        clearRichList();
-        classificatorValues = BeanHelper.getClassificatorService().searchValues(getSearchCriteria(), selectedClassificator.getNodeRef());
     }
 
     public void showAll() {

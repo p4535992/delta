@@ -28,7 +28,11 @@ public abstract class BaseSystematicFieldGenerator implements FieldGenerator, Sa
     }
 
     protected String getBindingName(String suffix) {
-        return "#{" + PropertySheetStateBean.STATE_HOLDERS_BINDING_NAME + "['" + getStateHolderKey() + "']." + suffix + "}";
+        return getBindingName(suffix, getStateHolderKey());
+    }
+
+    protected String getBindingName(String suffix, String stateHolderKey) {
+        return "#{" + PropertySheetStateBean.STATE_HOLDERS_BINDING_NAME + "['" + stateHolderKey + "']." + suffix + "}";
     }
 
     @Override

@@ -57,6 +57,7 @@ import org.alfresco.service.cmr.search.SearchParameters;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.service.namespace.RegexQNamePattern;
 import org.alfresco.service.transaction.TransactionService;
 import org.alfresco.util.Pair;
@@ -140,6 +141,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             xPathParts = StringUtils.split(nodeRefXPath, "/");
         }
 
+        int partNr = 0;
         for (String xPathPart : xPathParts) {
             if (xPathPart.startsWith("/")) {
                 xPathPart = StringUtils.removeStart(xPathPart, "/");
@@ -148,20 +150,24 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
             QName qName = QName.resolveToQName(namespaceService, xPathPart);
 
             nodeRef = getChildByAssocName(nodeRef, qName, nodeRefXPath);
+            if (++partNr < xPathParts.length && nodeRef == null) {
+                throw new IllegalArgumentException("started to resolve xpath based on '" + nodeRefXPath
+                        + "'\nxPathParts='" + xPathParts + "'\npart that is incorrect='" + xPathPart + "'");
+            }
         }
         return nodeRef;
     }
 
     @Override
-    public NodeRef getChildByAssocName(NodeRef parentRef, QName assocQName) {
-        return getChildByAssocName(parentRef, assocQName, null);
+    public NodeRef getChildByAssocName(NodeRef parentRef, QNamePattern assocNamePattern) {
+        return getChildByAssocName(parentRef, assocNamePattern, null);
     }
 
-    private NodeRef getChildByAssocName(NodeRef parentRef, QName assocQName, String nodeRefXPath) {
-        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, assocQName);
+    private NodeRef getChildByAssocName(NodeRef parentRef, QNamePattern assocNamePattern, String nodeRefXPath) {
+        List<ChildAssociationRef> childAssocs = nodeService.getChildAssocs(parentRef, RegexQNamePattern.MATCH_ALL, assocNamePattern);
         if (childAssocs.size() != 1) {
             StringBuilder msg = new StringBuilder("Expected 1, got ").append(childAssocs.size()).append(" childAssocs for assocName '")
-                    .append(assocQName.toPrefixString(namespaceService)).append("'");
+                    .append(assocNamePattern instanceof QName ? ((QName) assocNamePattern).toPrefixString(namespaceService) : assocNamePattern).append("'");
             if (nodeRefXPath != null) {
                 msg.append(" when searching for node with xPath '").append(nodeRefXPath).append("'");
             }
@@ -242,7 +248,7 @@ public class GeneralServiceImpl implements GeneralService, BeanFactoryAware {
         for (Map<String, ChildAssociationRef> typedAssoc : removedChildAssocs.values()) {
             for (ChildAssociationRef assoc : typedAssoc.values()) {
                 final NodeRef childRef = assoc.getChildRef();
-                if (RepoUtil.isSaved(childRef)) {
+                if (RepoUtil.isSaved(childRef) && nodeService.exists(childRef)) {
                     nodeService.removeChild(assoc.getParentRef(), childRef);
                 }
             }

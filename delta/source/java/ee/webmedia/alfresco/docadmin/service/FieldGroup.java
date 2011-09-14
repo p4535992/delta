@@ -11,7 +11,6 @@ import java.util.Set;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.lang.StringUtils;
-import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseService;
@@ -51,11 +50,10 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
     }
 
     @Override
-    public Collection<Field> getFieldsById(Set<QName> fieldIds) {
-        HashSet<Field> matchingFields = new HashSet<Field>();
-        for (QName fieldId : fieldIds) {
-            Field existingField = getFieldById(fieldId);
-            if (existingField != null) {
+    public Collection<Field> getFieldsById(Set<String> fieldIdLocalNames) {
+        Set<Field> matchingFields = new HashSet<Field>();
+        for (Field existingField : getFields()) {
+            if (fieldIdLocalNames.contains(existingField.getFieldId().getLocalName())) {
                 matchingFields.add(existingField);
             }
         }
@@ -155,20 +153,24 @@ public class FieldGroup extends FieldAndGroupBase implements MetadataContainer {
 
     // Utilities
 
-    /**
-     * Find first {@link Field} that matches given {@code fieldId}. Traverses all child {@link Field}s.
-     * 
-     * @param fieldId fieldId to match by, cannot be {@code null}.
-     * @return {@code null} if not found; otherwise the found field.
-     */
-    public Field getFieldById(QName fieldId) {
-        Assert.notNull(fieldId, "fieldId cannot be null");
-        for (Field field : getFields()) {
-            if (field.getFieldId().equals(fieldId)) {
-                return field;
-            }
-        }
-        return null;
-    }
+    // FIXME DLSeadist - pole vist enam vaja
+//@formatter:off
+//    /**
+//     * Find first {@link Field} that matches given {@code fieldId}. Traverses all child {@link Field}s.
+//     * 
+//     * @param fieldId fieldId to match by, cannot be {@code null}.
+//     * @return {@code null} if not found; otherwise the found field.
+//     */
+//    // FIXME DLSeadist - kas vaja namespace'ga?
+//    public Field getFieldById(QName fieldId) {
+//        Assert.notNull(fieldId, "fieldId cannot be null");
+//        for (Field field : getFields()) {
+//            if (field.getFieldId().equals(fieldId)) {
+//                return field;
+//            }
+//        }
+//        return null;
+//    }
+//@formatter:on
 
 }

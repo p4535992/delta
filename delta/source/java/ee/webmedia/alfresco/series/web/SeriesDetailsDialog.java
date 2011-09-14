@@ -59,7 +59,7 @@ public class SeriesDetailsDialog extends BaseDialogBean {
             }
         }
 
-        if (!patternStr.matches(".*\\{[0-9]DN\\}.*")) {
+        if (!docNrPatternParsed.containsParam("DN")) {
             MessageUtil.addErrorMessage("series_docNumberPattern_dn_mandatory");
             foundErrors = true;
         }

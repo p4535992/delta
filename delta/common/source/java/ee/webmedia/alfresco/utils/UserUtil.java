@@ -1,6 +1,6 @@
 package ee.webmedia.alfresco.utils;
 
-import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithSeparator;
+import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithSpace;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class UserUtil {
             fullName = userName;
         }
         if (showSubstituteInfo) {
-            fullName = joinStringAndStringWithSeparator(fullName, getSubstitute(userName), " ");
+            fullName = joinStringAndStringWithSpace(fullName, getSubstitute(userName));
         }
         return fullName;
     }
@@ -73,7 +73,7 @@ public class UserUtil {
         if (StringUtils.isNotBlank(unitName)) {
             fullName += " (" + unitName + ")";
         }
-        return joinStringAndStringWithSeparator(fullName, getSubstitute((String) props.get(ContentModel.PROP_USERNAME)), " ");
+        return joinStringAndStringWithSpace(fullName, getSubstitute((String) props.get(ContentModel.PROP_USERNAME)));
     }
 
     public static String getSubstitute(String username) {

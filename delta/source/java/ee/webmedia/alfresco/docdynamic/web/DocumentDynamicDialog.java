@@ -1,14 +1,9 @@
 package ee.webmedia.alfresco.docdynamic.web;
 
 import static ee.webmedia.alfresco.common.web.BeanHelper.getClearStateNotificationHandler;
-import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentAdminService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDynamicService;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getPropertySheetStateBean;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_NAME;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.DOC_STATUS;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_DATE_TIME;
-import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.REG_NUMBER;
 
 import java.io.Serializable;
 import java.util.ArrayDeque;
@@ -22,7 +17,6 @@ import javax.faces.event.ActionEvent;
 import javax.faces.model.SelectItem;
 
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.app.AlfrescoNavigationHandler;
 import org.alfresco.web.bean.dialog.BaseDialogBean;
 import org.alfresco.web.bean.repository.Node;
@@ -46,7 +40,6 @@ import ee.webmedia.alfresco.document.sendout.web.SendOutBlockBean;
 import ee.webmedia.alfresco.simdhs.servlet.ExternalAccessServlet;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.alfresco.utils.MessageUtil;
-import ee.webmedia.alfresco.utils.RepoUtil;
 import ee.webmedia.alfresco.utils.UnableToPerformException;
 import ee.webmedia.alfresco.workflow.web.WorkflowBlockBean;
 
@@ -119,20 +112,6 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         open(docRef, true);
     }
 
-    public void changeByNewDocument(@SuppressWarnings("unused") ActionEvent event) {
-        LOG.info("changeByNewDocument");
-        DocumentDynamic baseDoc = getCurrentSnapshot().document;
-        Map<QName, Serializable> overrides = new HashMap<QName, Serializable>(1);
-        overrides.put(DOC_NAME, MessageUtil.getMessage("docdyn_changeByNewDocument_name"//
-                , getDocumentAdminService().getDocumentTypeName(baseDoc.getDocumentTypeId()), baseDoc.getProp(REG_DATE_TIME), baseDoc.getProp(REG_NUMBER)));
-        NodeRef docRef = getDocumentDynamicService().copyDocument(baseDoc, overrides, REG_NUMBER, REG_DATE_TIME, DOC_STATUS);
-
-        open(docRef, true);
-
-        // Add followUp association when new document is saved
-        RepoUtil.addAssoc(getCurrentSnapshot().document.getNode(), baseDoc.getNodeRef(), DocumentCommonModel.Assocs.DOCUMENT_FOLLOW_UP, false);
-    }
-
     // =========================================================================
     // 2 - ACTION method
     // =========================================================================
@@ -157,7 +136,7 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         @Override
         public String toString() {
             return "Snapshot[document=" + (document == null ? null : document.getNodeRef()) + ", inEditMode=" + inEditMode + ", viewModeWasOpenedInThePast="
-            + viewModeWasOpenedInThePast + ", config=" + config + "]";
+                    + viewModeWasOpenedInThePast + ", config=" + config + "]";
         }
     }
 
@@ -492,20 +471,6 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
         LOG.info("doNothing");
     }
 
-    /*
-     * Et generator saaks tagastada mitu itemit, nt. üks view ja teine edit mode jaoks
-     * Et documentLocation väljad oleksid kuvatud nii view kui edit mode'is
-     * Et salvestamisel kasutataks documentLocation välju ja liigutataks dokumenti
-     * Et enne salvestamist toimuks documentLocation valideerimine
-     * Lisada pealkirja väli
-     * Lisada regNumber ja regDateTime väli
-     * Teha dokumentide nimekirjadesse tugi, et avaneks dyn dokumendid
-     * Lisada docStatus väli
-     * Lisada owner* väljad; siis saab ka õigused juurde tuua
-     * Teised blokid
-     * Lisada accessRestriction* väljad; siis saab ka fn/sari/toimik puhul nende uuendamise välja kutsuda
-     */
-
     // Põhisuunad
     // * tuua juurde ülejäänud blokid ja tegevused
     // * täiendada metaandmetevälju niikaugele, et väljatüüpide lisamine muutuks iseseisvaks
@@ -513,20 +478,20 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
     // ?? dok.staatus, pealkiri väljad.... - common aspekti alt kuidas üksikuid süsteemseid välju kasutan?
     // * metaandmete valideerimine
 
+    // TODO javascript valideerimine propsheetil katki?
+    // TODO lemmiku tegevus katki? kas foorumi tegevused töötavad?
+
     // TODO kas on võimalik viia dictionaryservice'isse sisse docdyn propdef'ide tagastamine, nii et olulsied kohad neid kasutaks?
     // TODO kontaktide jms asjad: reposse list, tagasi string bugi; default väärtus sisselogitud kasutaja
 
     // TODO tuua põhiliste süsteemsete väljade ja gruppide täiendav funktsionaalsus üle !!!
-
-    // TODO õiguste seadmine ja kontrollid
-
     // TODO teiste süsteemsete doccom/docspec väljade kasutusele võtmisel: vaadata et vajalikud aspektid documentDynamic node'ile külge saaks
 
     // TODO kontrollida et kustutatud dokumendi ekraanile tagasipöördumine töötaks... või tahavad teised blokid laadida uuesti asju? ja siis oleks mõtekam dialoogi mitte kuvada?
 
     // TODO veateadete näitamised
     // TODO hiljem - dokumendi otsing
-    // TODO hiljem - metaandmete lukustamine, üldisem lahendus
+    // TODO hiljem - metaandmete lukustamine, üldisem lahendus -- arvestada kaarli kommentaariga, et cancelit ei pruugita alati välja kutsuda
     // TODO kõige hiljem - vanade dok.liikide ja andmete ülekandmine
 
     // dokumendile logikirje lisamiseks teha mudelisse meetod ja siis see lisab alfrescotransactionsupport kontrolli et üldse oleks transaktsioon lahti ja et transaktsiooni lõpus
@@ -535,6 +500,11 @@ public class DocumentDynamicDialog extends BaseDialogBean implements ClearStateL
     // TODO dokumendi originaalprop'id võiks saada mudeli objekti käest?
 
     // TODO üle vaadata et kõik realiseeritud asjad ka spekis oleksid :)
+
+    // Uutele paigaldustele imporditakse sellised süsteemsed dok.liigid mis spekis kirjeldatud
+    // Olemasolevatele paigaldustele (SiM, SMIT, ViljMV) igaühele imporditakse neil kasutusel olevate dok.liikide ülekantud variandid dün'iks, mis on visuaalselt 100% identsed, aga
+    // väljad on juba ümberstruktureeritud (nt kõik xxDueDate viidud ühe dueDate peale)
+    // Vanade dokkide ülekandmise skripti käigus oleks mõistlik kirjutada uus dok.loetelu juba eraldi store'i!!!
 
     /*
      * Rakenduses lingi/nupu kaudu dialoogi avamine ESIMEST KORDA

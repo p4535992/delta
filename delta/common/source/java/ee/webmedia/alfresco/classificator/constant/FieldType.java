@@ -1,7 +1,9 @@
 package ee.webmedia.alfresco.classificator.constant;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import org.alfresco.service.namespace.QName;
@@ -59,11 +61,20 @@ public enum FieldType {
         if (fieldsUsed == null) {
             this.fieldsUsed = Collections.<QName> emptyList();
         } else {
-            this.fieldsUsed = Arrays.asList(fieldsUsed);
+            this.fieldsUsed = Collections.unmodifiableList(Arrays.asList(fieldsUsed));
         }
     }
 
-    public List<QName> getFieldsUsed() {
-        return fieldsUsed;
+    public List<QName> getFieldsUsed(boolean ignoreClassificatorFields) {
+        List<QName> fields = new ArrayList<QName>(fieldsUsed);
+        if (ignoreClassificatorFields) {
+            for (Iterator<QName> it = fields.iterator(); it.hasNext();) {
+                QName type = it.next();
+                if (Props.CLASSIFICATOR.equals(type) || Props.CLASSIFICATOR_DEFAULT_VALUE.equals(type)) {
+                    it.remove();
+                }
+            }
+        }
+        return fields;
     }
 }

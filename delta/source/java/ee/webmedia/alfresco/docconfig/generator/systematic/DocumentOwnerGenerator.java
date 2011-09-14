@@ -26,17 +26,22 @@ public class DocumentOwnerGenerator extends BaseSystematicFieldGenerator impleme
 
     @Override
     protected QName[] getFieldIds() {
-        return new QName[] { DocumentCommonModel.Props.OWNER_NAME, };
+        return new QName[] { DocumentCommonModel.Props.OWNER_NAME };
     }
 
     @Override
     public void generateField(Field field, GeneratorResults generatorResults) {
         final ItemConfigVO item = generatorResults.getAndAddPreGeneratedItem();
         if (DocumentCommonModel.Props.OWNER_NAME.equals(field.getFieldId())) {
+            item.setComponentGenerator("UserSearchGenerator");
+            item.setUsernameProp(DocumentCommonModel.Props.OWNER_ID.toPrefixString(BeanHelper.getNamespaceService()));
             item.setPickerCallback("#{UserListDialog.searchUsers}");
             item.setSetterCallback(getBindingName("setOwner"));
             item.setEditable(false);
             item.setAjaxParentLevel(1);
+
+            // TODO in view mode, use code from MetadataBlockBean ("owner")
+
             return;
         }
         throw new RuntimeException("Unsupported field: " + field);

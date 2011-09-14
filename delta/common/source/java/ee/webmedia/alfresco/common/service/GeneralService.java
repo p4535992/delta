@@ -20,6 +20,7 @@ import org.alfresco.service.cmr.repository.ContentWriter;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.QNamePattern;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
@@ -71,7 +72,7 @@ public interface GeneralService {
      */
     NodeRef getNodeRef(String nodeRefXPath, NodeRef root);
 
-    NodeRef getChildByAssocName(NodeRef parentRef, QName assocQName);
+    NodeRef getChildByAssocName(NodeRef parentRef, QNamePattern assocNamePattern);
 
     ChildAssociationRef getLastChildAssocRef(String nodeRefXPath);
 

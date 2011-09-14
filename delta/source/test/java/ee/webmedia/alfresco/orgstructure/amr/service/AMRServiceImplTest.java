@@ -7,7 +7,7 @@ import junit.framework.TestCase;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
 import smit.ametnik.services.AmetnikExt;
-import smit.ametnik.services.Yksus;
+import smit.ametnik.services.YksusExt;
 
 /**
  * Test {@link AMRServiceImpl}
@@ -27,9 +27,9 @@ public class AMRServiceImplTest extends TestCase {
     }
 
     public void testYksusByAsutusId() {
-        Yksus[] yksusArray = amrService.getYksusByAsutusId();
+        YksusExt[] yksusArray = amrService.getYksusByAsutusId();
         assertTrue(yksusArray.length > 0);
-        for (Yksus yksus : yksusArray) {
+        for (YksusExt yksus : yksusArray) {
             BigInteger unitId = yksus.getId();
             String name = yksus.getNimetus();
             BigInteger superUnitId = yksus.getYlemYksusId();

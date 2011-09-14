@@ -929,11 +929,14 @@ public class ComponentUtil {
     }
 
     public static PropertyDefinition getPropertyDefinition(FacesContext context, Node node, String propName) {
-        PropertyDefinition propDef = null;
-        TypeDefinition typeDef = getGeneralService().getAnonymousType(node);
-        if (typeDef != null) {
-            Map<QName, PropertyDefinition> properties = typeDef.getProperties();
-            propDef = properties.get(Repository.resolveToQName(propName));
+        QName propertyQName = Repository.resolveToQName(propName);
+        PropertyDefinition propDef = BeanHelper.getDocumentConfigService().getPropertyDefinition(node, propertyQName);
+        if (propDef == null) {
+            TypeDefinition typeDef = getGeneralService().getAnonymousType(node);
+            if (typeDef != null) {
+                Map<QName, PropertyDefinition> properties = typeDef.getProperties();
+                propDef = properties.get(propertyQName);
+            }
         }
         return propDef;
     }

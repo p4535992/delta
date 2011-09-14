@@ -38,6 +38,7 @@ import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.service.OpenOfficeService;
 import ee.webmedia.alfresco.common.web.WmNode;
+import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.file.model.FileModel;
 import ee.webmedia.alfresco.document.file.service.FileService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -611,7 +612,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         Assert.notNull(docType, "Parameter docType is mandatory.");
         List<DocumentTemplate> result = new ArrayList<DocumentTemplate>();
         for (DocumentTemplate template : getTemplates()) {
-            if (docType.equals(template.getDocTypeId())) {
+            if (DocumentDynamicModel.Types.DOCUMENT_DYNAMIC.equals(docType) || docType.equals(template.getDocTypeId())) {
                 result.add(template);
             }
         }

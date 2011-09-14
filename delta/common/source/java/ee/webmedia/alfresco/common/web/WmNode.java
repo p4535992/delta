@@ -177,7 +177,7 @@ public class WmNode extends TransientNode {
     @Override
     public String toString() {
         return toString(this) + "[\n  nodeRef=" + getNodeRef() + "\n  type=" + getType().toPrefixString(getNamespacePrefixResolver()) + "\n  aspects="
-        + toString(getAspects(), getNamespacePrefixResolver()) + "\n  props=" + toString(RepoUtil.toQNameProperties(getProperties()), getNamespacePrefixResolver()) + "\n]";
+                + toString(getAspects(), getNamespacePrefixResolver()) + "\n  props=" + toString(RepoUtil.toQNameProperties(getProperties()), getNamespacePrefixResolver()) + "\n]";
     }
 
     public static String toString(Collection<?> collection) {
@@ -190,7 +190,7 @@ public class WmNode extends TransientNode {
             for (Object o : collection) {
                 s.append("\n    ");
                 if (o != null) {
-                    s.append(StringUtils.replace(o.toString(), "\n", "\n        "));
+                    s.append(StringUtils.replace(o.toString(), "\n", "\n    "));
                 }
             }
         }
@@ -262,7 +262,7 @@ public class WmNode extends TransientNode {
             for (Entry<? extends Object, ? extends Collection<?>> entry : map.entrySet()) {
                 s.append("\n    ");
                 s.append(entry.getKey());
-                s.append("=").append(StringUtils.replace(toString(entry.getValue()), "\n", "\n        "));
+                s.append("=").append(StringUtils.replace(toString(entry.getValue()), "\n", "\n  "));
             }
         }
         return s.toString();

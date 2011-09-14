@@ -33,6 +33,8 @@ import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 
 import ee.webmedia.alfresco.common.service.IClonable;
+import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.document.service.DocumentPropertySets;
 
 /**
@@ -41,6 +43,8 @@ import ee.webmedia.alfresco.document.service.DocumentPropertySets;
  * @author Ats Uiboupin
  */
 public class RepoUtil {
+    private static final org.apache.commons.logging.Log LOG = org.apache.commons.logging.LogFactory.getLog(RepoUtil.class);
+
     public static final String TRANSIENT_PROPS_NAMESPACE = "temp";
     private static final StoreRef NOT_SAVED_STORE = new StoreRef("NOT_SAVED", "NOT_SAVED");
 
@@ -274,6 +278,9 @@ public class RepoUtil {
         Map<QName, Serializable> sP = RepoUtil.getPropertiesIgnoringSystem(RepoUtil.toQNameProperties(savedProps), getDictionaryService());
         Map<QName, Serializable> uP = RepoUtil.getPropertiesIgnoringSystem(RepoUtil.toQNameProperties(unSavedPprops), getDictionaryService());
         if (sP.size() != uP.size()) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("propsEqual=false\nuP=" + WmNode.toString(uP, BeanHelper.getNamespaceService()) + "\nsP=" + WmNode.toString(sP, BeanHelper.getNamespaceService()));
+            }
             return false; // at least one field/fieldGroup/separatorLine is added or removed
         }
         Set<QName> unSavedQNames = uP.keySet();

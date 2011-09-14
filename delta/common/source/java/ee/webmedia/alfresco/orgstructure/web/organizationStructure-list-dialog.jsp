@@ -12,39 +12,31 @@
    <%-- Main List --%>
    <a:richList id="orgstructsList" viewMode="details" pageSize="#{BrowseBean.pageSizeContent}" styleClass="recordSet" headerStyleClass="recordSetHeader"
       rowStyleClass="recordSetRow" altRowStyleClass="recordSetRowAlt" width="100%" value="#{DialogManager.bean.orgstructs}" var="os"
-      initialSortColumn="unitId">
-
-      <%-- Unit ID --%>
-      <a:column id="col1" primary="true">
-         <f:facet name="header">
-            <a:sortLink id="col1-sort" label="#{msg.orgstruct_unit}" value="unitId" mode="case-insensitive" styleClass="header" />
-         </f:facet>
-         <h:outputText id="col1-text" value="#{os.unitId}" />
-      </a:column>
+      initialSortColumn="name">
 
       <%-- Unit name --%>
-      <a:column id="col2">
+      <a:column id="col1">
          <f:facet name="header">
-            <a:sortLink id="col2-sort" label="#{msg.orgstruct_name}" value="name" mode="case-insensitive" styleClass="header" />
+            <a:sortLink id="col1-sort" label="#{msg.orgstruct_name}" value="name" styleClass="header" />
          </f:facet>
-         <h:outputText id="col2-text" value="#{os.name}" />
-      </a:column>
-
-      <%-- Super Unit ID--%>
-      <a:column id="col3">
-         <f:facet name="header">
-            <a:sortLink id="col3-sort" label="#{msg.orgstruct_superunit}" value="superUnitId" mode="case-insensitive" styleClass="header" />
-         </f:facet>
-         <h:outputText id="col3-text" value="#{os.superUnitId}" />
+         <h:outputText id="col1-text" value="#{os.name}" />
       </a:column>
 
       <%-- Super Unit name --%>
-      <a:column id="col4">
+      <a:column id="col2">
          <f:facet name="header">
-            <a:sortLink id="col4-sort" label="#{msg.orgstruct_supername}" value="superValueName" mode="case-insensitive" styleClass="header" />
+            <a:sortLink id="col2-sort" label="#{msg.orgstruct_supername}" value="superValueName" styleClass="header" />
          </f:facet>
-         <h:outputText id="col4-text" value="#{os.superValueName}" />
+         <h:outputText id="col2-text" value="#{os.superValueName}" />
       </a:column>
+      
+      <%-- Organization path--%>
+      <a:column id="col3">
+         <f:facet name="header">
+            <a:sortLink id="col3-sort" label="#{msg.orgstruct_organizationPath}" value="organizationPath" styleClass="header" />
+         </f:facet>
+         <h:outputText id="col3-text" value="#{os.organizationPath}" />
+      </a:column>      
       
       <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/common/web/page-size.jsp" />
       <a:dataPager id="pager1" styleClass="pager" />

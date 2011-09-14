@@ -1368,6 +1368,18 @@ table.recipient td {
 	width: 193px !important;
 }
 
+.recipient.cells3 textarea {
+	width: 171px !important;
+}
+
+.recipient.cells4 textarea {
+	width: 126px !important;
+}
+
+.recipient.cells5 textarea {
+	width: 98px !important;
+}
+
 .recipient.tasks thead tr th {
    border-bottom: 0px none;
 }

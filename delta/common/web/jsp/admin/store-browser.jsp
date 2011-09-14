@@ -128,12 +128,12 @@
       <hr/>
       <h:outputText styleClass="mainTitle" value="Arendajale testimiseks"/><br/>
 
-         <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" >
+         <a:actionLink value="TestingForDeveloper" actionListener="#{TestingForDeveloperBean.handleTestEvent}" rendered="#{ApplicationService.test}">
               <f:param name="testP" value="11" />
          </a:actionLink>
          <br/>
           <%-- FIXME DLSeadist ajutine link test keskkonna jaoks --%>
-         <a:actionLink value="DeleteFieldAndFieldGroupsAndBootstrapInfo" actionListener="#{TestingForDeveloperBean.deleteFieldAndFieldGroupsAndBootstrapInfo}" />
+         <a:actionLink value="DeleteFieldAndFieldGroupsAndBootstrapInfo" actionListener="#{TestingForDeveloperBean.deleteFieldAndFieldGroupsAndBootstrapInfo}" rendered="#{ApplicationService.test}" />
 
       <hr/>
    </h:form>

@@ -15,7 +15,10 @@ import ee.webmedia.alfresco.common.propertysheet.classificatorselector.Classific
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIProperty;
 import ee.webmedia.alfresco.common.propertysheet.generator.CustomAttributes;
 import ee.webmedia.alfresco.common.propertysheet.generator.GeneralSelectorGenerator;
+import ee.webmedia.alfresco.common.propertysheet.inlinepropertygroup.CombinedPropReader;
+import ee.webmedia.alfresco.common.propertysheet.multivalueeditor.MultiValueEditor;
 import ee.webmedia.alfresco.common.propertysheet.search.Search;
+import ee.webmedia.alfresco.common.propertysheet.search.UserSearchGenerator;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.propertysheet.validator.MandatoryIfValidator;
 
@@ -260,6 +263,18 @@ public class WMPropertySheetConfigElement extends PropertySheetConfigElement {
 
         public void setFilters(String filtersBinding) {
             setCustomAttribute(Search.FILTERS_KEY, filtersBinding);
+        }
+
+        public void setUsernameProp(String usernameProp) {
+            setCustomAttribute(UserSearchGenerator.USERNAME_PROP_ATTR, usernameProp);
+        }
+
+        public void setAddLabelId(String addLabelId) {
+            setCustomAttribute(MultiValueEditor.ADD_LABEL_ID, addLabelId);
+        }
+
+        public void setPropsGeneration(String propsGeneration) {
+            setCustomAttribute(CombinedPropReader.AttributeNames.PROPS_GENERATION, propsGeneration);
         }
 
     }

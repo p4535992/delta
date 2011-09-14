@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
@@ -25,7 +26,11 @@ import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.service.namespace.QNamePattern;
+import org.alfresco.util.Pair;
+import org.apache.commons.collections.CollectionUtils;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.adr.service.AdrService;
 import ee.webmedia.alfresco.base.BaseObject.ChildrenList;
@@ -70,6 +75,7 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         baseService.addTypeMapping(DocumentAdminModel.Types.FIELD_GROUP, FieldGroup.class);
         baseService.addTypeMapping(DocumentAdminModel.Types.SEPARATION_LINE, SeparatorLine.class);
         baseService.addTypeMapping(DocumentAdminModel.Types.FIELD_DEFINITION, FieldDefinition.class);
+        baseService.addTypeMapping(DocumentAdminModel.Types.ASSOCIATION_TO_DOC_TYPE, AssociationToDocType.class);
     }
 
     @Override
@@ -108,19 +114,43 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+    public Map<String/* docTypeId */, String/* docTypeName */> getDocumentTypeNames(Boolean used) {
+        List<DocumentType> documentTypes = getAllDocumentTypes(used);
+        Map<String, String> docTypesByDocTypeId = new HashMap<String, String>(documentTypes.size());
+        for (DocumentType documentType : documentTypes) {
+            docTypesByDocTypeId.put(documentType.getDocumentTypeId(), documentType.getName());
+        }
+        return docTypesByDocTypeId;
+    }
+
+    @Override
     public void addSystematicMetadataItems(DocumentTypeVersion docVer) {
+        addMetadataItems(docVer, new Predicate<FieldGroup>() {
+            @Override
+            public boolean evaluate(FieldGroup sourceGroup) {
+                return sourceGroup.isMandatoryForDoc();
+            }
+        }, new Predicate<FieldDefinition>() {
+            @Override
+            public boolean evaluate(FieldDefinition sourceFieldDef) {
+                return sourceFieldDef.isMandatoryForDoc();
+            }
+        });
+    }
+
+    private void addMetadataItems(DocumentTypeVersion docVer, Predicate<FieldGroup> fieldGroupPredicate, Predicate<FieldDefinition> fieldDefinitionPredicate) {
         // order of mandatory metadataItems under docVer should be set on fieldDefinitions and fieldGroups
         List<FieldDefinition> fieldDefinitions = getFieldDefinitions();
         ChildrenList<MetadataItem> metadata = docVer.getMetadata();
         for (FieldGroup sourceGroup : getFieldGroupDefinitions()) {
-            if (sourceGroup.isMandatoryForDoc()) {
+            if (fieldGroupPredicate.evaluate(sourceGroup)) {
                 FieldGroup targetGroup = metadata.add(FieldGroup.class);
                 addSystematicFields(sourceGroup, targetGroup, fieldDefinitions);
             }
         }
 
         for (FieldDefinition sourceFieldDef : fieldDefinitions) {
-            if (sourceFieldDef.isMandatoryForDoc()) {
+            if (fieldDefinitionPredicate.evaluate(sourceFieldDef)) {
                 Field targetField = metadata.add(Field.class);
                 copyFieldProps(sourceFieldDef, targetField);
             }
@@ -241,6 +271,13 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+    public AssociationToDocType saveOrUpdateAssocToDocType(AssociationToDocType associationToDocType) {
+        AssociationToDocType clone = associationToDocType.clone();
+        baseService.saveObject(clone);
+        return clone;
+    }
+
+    @Override
     public List<FieldDefinition> saveOrUpdateFieldDefinitions(List<FieldDefinition> fieldDefinitions) {
         ArrayList<FieldDefinition> saved = new ArrayList<FieldDefinition>();
         for (FieldDefinition fieldDefinition : fieldDefinitions) {
@@ -292,6 +329,29 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
     }
 
     @Override
+    public boolean isFieldDefinitionExisting(String fieldIdLocalname) {
+        return null != generalService.getChildByAssocName(getFieldDefinitionsRoot(), new QNameLocalnameMatcher(fieldIdLocalname));
+    }
+
+    private class QNameLocalnameMatcher implements QNamePattern {
+        private final String localName;
+
+        public QNameLocalnameMatcher(String localName) {
+            this.localName = localName;
+        }
+
+        @Override
+        public boolean isMatch(QName qname) {
+            return qname.getLocalName().equals(localName);
+        }
+
+        @Override
+        public String toString() {
+            return getClass().getName() + ":" + localName;
+        }
+    }
+
+    @Override
     public List<FieldDefinition> searchFieldDefinitions(String searchCriteria) {
         List<NodeRef> resultRefs = documentSearchService.simpleSearch(searchCriteria, getFieldDefinitionsRoot()
                 , DocumentAdminModel.Types.FIELD_DEFINITION, DocumentAdminModel.Props.NAME, DocumentAdminModel.Props.FIELD_ID);
@@ -331,6 +391,76 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
                         )
                         , generatePropertyExactQuery(DocumentDynamicModel.Props.DOCUMENT_TYPE_ID, documentTypeId, false))
                 );
+    }
+
+    @Override
+    public void createSystematicDocumentTypes(
+            Map<String /* documentTypeId */, Pair<String /* documentTypeName */, Pair<Set<String> /* fieldGroupNames */, Set<QName> /* fieldGroupNames */>>> systematicDocumentTypes,
+            NodeRef fieldGroupDefinitionsTmp, NodeRef fieldDefinitionsTmp) {
+
+        Assert.notNull(fieldGroupDefinitionsTmp);
+        Assert.notNull(fieldDefinitionsTmp);
+
+        fieldGroupDefinitionsRoot = fieldGroupDefinitionsTmp;
+        fieldDefinitionsRoot = fieldDefinitionsTmp;
+
+        for (Entry<String, Pair<String, Pair<Set<String>, Set<QName>>>> systematicDocumentType : systematicDocumentTypes.entrySet()) {
+            createSystematicDocumentType(systematicDocumentType.getKey(), systematicDocumentType.getValue().getFirst(), systematicDocumentType.getValue().getSecond().getFirst(),
+                    systematicDocumentType.getValue().getSecond().getSecond());
+        }
+
+        fieldGroupDefinitionsRoot = null;
+        fieldDefinitionsRoot = null;
+    }
+
+    @Override
+    public Set<String> getNonExistingDocumentTypes(Set<String> documentTypeIds) {
+        Set<String> result = new HashSet<String>(documentTypeIds);
+        CollectionUtils.filter(result, new org.apache.commons.collections.Predicate() {
+            @Override
+            public boolean evaluate(Object documentTypeId) {
+                return !isDocumentTypeExisting((String) documentTypeId);
+            }
+        });
+        return result;
+    }
+
+    private void createSystematicDocumentType(String documentTypeId, String documentTypeName, final Set<String> fieldGroupNames, final Set<QName> fieldDefinitionIds) {
+        LOG.info("Creating systematic document type: " + documentTypeId);
+        DocumentType docType = createNewUnSaved();
+        docType.setDocumentTypeId(documentTypeId);
+        docType.setName(documentTypeName);
+        docType.setSystematic(true);
+        DocumentTypeVersion ver = docType.addNewLatestDocumentTypeVersion();
+        addMetadataItems(ver, new Predicate<FieldGroup>() {
+            @Override
+            public boolean evaluate(FieldGroup sourceGroup) {
+                return fieldGroupNames.contains(sourceGroup.getName());
+            }
+        }, new Predicate<FieldDefinition>() {
+            @Override
+            public boolean evaluate(FieldDefinition sourceFieldDef) {
+                return fieldDefinitionIds.contains(sourceFieldDef.getFieldId());
+            }
+        });
+
+        int order = -1;
+        for (MetadataItem metadataItem : ver.getMetadata()) {
+            if (metadataItem.getOrder() != null) {
+                order = Math.max(order, metadataItem.getOrder());
+            }
+        }
+        for (MetadataItem metadataItem : ver.getMetadata()) {
+            if (metadataItem.getOrder() == null || metadataItem.getOrder() < 1) {
+                metadataItem.setOrder(++order);
+            }
+        }
+
+        saveOrUpdateDocumentType(docType);
+    }
+
+    private boolean isDocumentTypeExisting(String documentTypeId) {
+        return getDocumentTypeRef(documentTypeId) != null;
     }
 
     /** FIXME DLSeadist test data */
@@ -436,10 +566,11 @@ public class DocumentAdminServiceImpl implements DocumentAdminService, Initializ
         Map<QName, FieldDefinition> fieldDefinitions = getFieldDefinitionsByFieldIds();
         // save new fields to fieldDefinitions
         for (Field field : docVer.getFieldsDeeply()) {
-            if (field.getCopyOfNodeRef() == null) {
+            if (!field.isCopyFromPreviousDocTypeVersion()) {
                 // field is not newer version of the same field under previous version of DocumentTypeVersion
                 FieldDefinition fieldDef = fieldDefinitions.get(field.getFieldId());
                 if (fieldDef != null) {
+                    Assert.isTrue(field.getFieldTypeEnum().equals(fieldDef.getFieldTypeEnum()), "fieldDef and new field should have same fieldType");
                     // field is added based on existing fieldDefinition
                     List<String> docTypesOfFieldDef = fieldDef.getDocTypes();
                     if (!docTypesOfFieldDef.contains(docType.getDocumentTypeId())) {

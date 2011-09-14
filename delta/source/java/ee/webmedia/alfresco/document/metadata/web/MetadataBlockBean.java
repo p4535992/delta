@@ -3,7 +3,6 @@ package ee.webmedia.alfresco.document.metadata.web;
 import static ee.webmedia.alfresco.common.web.BeanHelper.getDocumentDialogHelperBean;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithComma;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithParentheses;
-import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithSeparator;
 import static ee.webmedia.alfresco.utils.TextUtil.joinStringAndStringWithSpace;
 import static org.alfresco.web.ui.common.StringUtils.encode;
 
@@ -140,7 +139,7 @@ public class MetadataBlockBean implements ClearStateListener {
     private UserListDialog userListDialog;
     private transient UIPropertySheet propertySheet;
     private transient InMemoryChildNodeHelper inMemoryChildNodeHelper;
-    private SelectItem[] contactOrUserSearchFilters;
+    private final SelectItem[] contactOrUserSearchFilters;
 
     private Node document;
     private Node propertySheetControlDocument;
@@ -158,6 +157,10 @@ public class MetadataBlockBean implements ClearStateListener {
     public MetadataBlockBean() {
         String datePattern = Application.getMessage(FacesContext.getCurrentInstance(), "date_pattern");
         dateFormat = new SimpleDateFormat(datePattern);
+        contactOrUserSearchFilters = new SelectItem[] {
+                new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
+                new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")),
+        };
     }
 
     public String getLeavingLetterContent() {
@@ -538,12 +541,9 @@ public class MetadataBlockBean implements ClearStateListener {
             }
 
             if (document.hasAspect(DocumentCommonModel.Aspects.OWNER)) {
+                // TODO move this code to DocumentOwnerGenerator
+
                 String owner = encode((String) props.get(DocumentCommonModel.Props.OWNER_NAME));
-                String ownerId = (String) props.get(DocumentCommonModel.Props.OWNER_ID);
-                String substitutionInfo = UserUtil.getSubstitute(ownerId);
-                if (!StringUtils.isBlank(substitutionInfo)) {
-                    owner = joinStringAndStringWithSeparator(owner, substitutionInfo, " ");
-                }
                 List<String> ownerProps = new ArrayList<String>(4);
                 String ownerJobTitle = (String) props.get(DocumentCommonModel.Props.OWNER_JOB_TITLE);
                 if (!StringUtils.isBlank(ownerJobTitle)) {
@@ -563,7 +563,13 @@ public class MetadataBlockBean implements ClearStateListener {
                 }
 
                 String ownerDetails = StringUtils.join(ownerProps.iterator(), ", ");
-                props.put("owner", joinStringAndStringWithParentheses(owner, ownerDetails));
+                String ownerId = (String) props.get(DocumentCommonModel.Props.OWNER_ID);
+                String substitutionInfo = UserUtil.getSubstitute(ownerId);
+                String finalOwnerDetails = joinStringAndStringWithParentheses(owner, ownerDetails);
+                if (!StringUtils.isBlank(substitutionInfo)) {
+                    finalOwnerDetails = joinStringAndStringWithSpace(finalOwnerDetails, "<span class=\"fieldExtraInfo\">" + substitutionInfo + "</span>");
+                }
+                props.put("owner", finalOwnerDetails);
             }
 
             if (document.hasAspect(DocumentCommonModel.Aspects.COMMON)) {
@@ -1490,10 +1496,6 @@ public class MetadataBlockBean implements ClearStateListener {
         reloadDoc();
         DocumentType documentType = getDocumentTypeService().getDocumentType(document.getType());
         documentTypeName = documentType != null ? documentType.getName() : null;
-        contactOrUserSearchFilters = new SelectItem[] {
-                new SelectItem(0, MessageUtil.getMessage("task_owner_users")),
-                new SelectItem(1, MessageUtil.getMessage("task_owner_contacts")),
-        };
         BeanHelper.getClearStateNotificationHandler().addClearStateListener(this);
     }
 

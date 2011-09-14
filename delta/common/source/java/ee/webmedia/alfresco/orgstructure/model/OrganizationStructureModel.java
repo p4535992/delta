@@ -23,6 +23,7 @@ public interface OrganizationStructureModel {
 
     interface Props {
         QName NAME = QName.createQName(URI, "name");
+        QName ORGANIZATION_PATH = QName.createQName(URI, "organizationPath");
     }
 
 }

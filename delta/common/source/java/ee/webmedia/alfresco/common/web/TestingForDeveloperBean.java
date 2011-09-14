@@ -6,6 +6,7 @@ import java.util.Collection;
 import javax.faces.event.ActionEvent;
 
 import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
@@ -13,7 +14,10 @@ import org.alfresco.service.cmr.repository.StoreRef;
 import org.alfresco.service.cmr.search.SearchService;
 import org.alfresco.service.transaction.TransactionService;
 
+import ee.webmedia.alfresco.app.AppConstants;
 import ee.webmedia.alfresco.common.service.GeneralService;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
+import ee.webmedia.alfresco.docconfig.bootstrap.SystematicDocumentTypesBootstrap;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.utils.ActionUtil;
 import ee.webmedia.xtee.client.dhl.DhlXTeeServiceImplFSStub;
@@ -62,19 +66,48 @@ public class TestingForDeveloperBean implements Serializable {
     public void deleteFieldAndFieldGroupsAndBootstrapInfo(@SuppressWarnings("unused") ActionEvent event) {
         String simdhsModule = "simdhs";
         deleteBootstrap(simdhsModule, "systematicFieldGroupDefinitionsBootstrap1");
+        deleteBootstrap(simdhsModule, "systematicFieldGroupDefinitionsBootstrap2");
         deleteBootstrap(simdhsModule, "systematicFieldDefinitionsBootstrap1");
+        deleteBootstrap(simdhsModule, "systematicFieldDefinitionsBootstrap2");
+        deleteBootstrap(simdhsModule, "systematicFieldGroupDefinitions1FixBootstrap");
+        deleteBootstrap(simdhsModule, "systematicDocumentTypesBootstrap");
         NodeRef fieldDefsNodeRef = getNodeRef("/{http://alfresco.webmedia.ee/model/document/admin/1.0}fieldDefinitions");
         NodeRef fieldGroupDefsNodeRef = getNodeRef("/{http://alfresco.webmedia.ee/model/document/admin/1.0}fieldGroupDefinitions");
         deleteChildren(fieldDefsNodeRef);
         deleteChildren(fieldGroupDefsNodeRef);
+
+        NodeRef documentTypesNodeRef = getNodeRef("/{http://alfresco.webmedia.ee/model/document/admin/1.0}documentTypes");
+        for (ChildAssociationRef childAssociationRef : getNodeService().getChildAssocs(documentTypesNodeRef)) {
+            NodeRef childRef = childAssociationRef.getChildRef();
+            if (Boolean.TRUE.equals(nodeService.getProperty(childRef, DocumentAdminModel.Props.SYSTEMATIC))) {
+                getNodeService().deleteNode(childRef);
+                LOG.info("deleted node " + childRef);
+            }
+        }
+    }
+
+    public void importSystematicDocumentTypes(@SuppressWarnings("unused") ActionEvent event) {
+        final SystematicDocumentTypesBootstrap systematicDocumentTypesBootstrap = (SystematicDocumentTypesBootstrap) AppConstants.getBeanFactory().getBean(
+                "systematicDocumentTypesBootstrap");
+        BeanHelper.getTransactionService().getRetryingTransactionHelper().doInTransaction(new RetryingTransactionCallback<Void>() {
+            @Override
+            public Void execute() throws Throwable {
+                systematicDocumentTypesBootstrap.executeInternalImpl();
+                return null;
+            }
+        });
     }
 
     private void deleteBootstrap(String moduleName, String bootstrapName) {
         String systematicFieldGroupDefinitionsBootstrap1 = getBootstrapXPath(moduleName, bootstrapName);
         StoreRef store = new StoreRef("system://system");
         final NodeRef nodeRef = getNodeRef(systematicFieldGroupDefinitionsBootstrap1, store);
-        getNodeService().deleteNode(nodeRef);
-        LOG.info("from module '" + moduleName + "' deleted bootstrap '" + bootstrapName + "' (noderef=" + nodeRef + ")");
+        if (nodeRef == null) {
+            LOG.info("from module '" + moduleName + "' bootstrap '" + bootstrapName + "' does not exist");
+        } else {
+            getNodeService().deleteNode(nodeRef);
+            LOG.info("from module '" + moduleName + "' deleted bootstrap '" + bootstrapName + "' (noderef=" + nodeRef + ")");
+        }
     }
 
     private NodeRef getNodeRef(String xpath) {

@@ -50,8 +50,8 @@ public class MetadataItemCompareUtil {
         Map<NodeRef, MetadataItem> unSavedNodeRefOriginals = new HashMap<NodeRef, MetadataItem>();
         for (MetadataItem metadataItem : unSavedMetadata) {
             Assert.isTrue(metadataItem.isUnsaved());
-            NodeRef clonedFromNodeRef = metadataItem.getCopyOfNodeRef();
-            if (clonedFromNodeRef == null) {
+            NodeRef clonedFromNodeRef = metadataItem.getCopyFromPreviousDocTypeVersion();
+            if (clonedFromNodeRef==null) {
                 return true; // new metadataItem is added
             }
             unSavedNodeRefOriginals.put(clonedFromNodeRef, metadataItem);
@@ -66,8 +66,9 @@ public class MetadataItemCompareUtil {
         // all items saved before are present in latestDocumentTypeVersion, check if contents are same
         for (MetadataItem savedMetadataItem : savedMetadata) {
             MetadataItem unSavedMetadataItem = unSavedNodeRefOriginals.get(savedMetadataItem.getNodeRef());
-            boolean propsEqual = RepoUtil.propsEqual(savedMetadataItem.getNode().getProperties(), unSavedMetadataItem.getNode().getProperties());
+            // XXX objectEqual must be called first, because it sets property as empty list when property is missing
             boolean objectsEqual = objectsEqual(savedMetadataItem, unSavedMetadataItem); // FIXME DLSeadist double check - may be removed when stable
+            boolean propsEqual = RepoUtil.propsEqual(savedMetadataItem.getNode().getProperties(), unSavedMetadataItem.getNode().getProperties());
             if (propsEqual != objectsEqual) {
                 throw new RuntimeException("Unexpected: propsEqual=" + propsEqual + " objectsEqual=" + objectsEqual);
             }

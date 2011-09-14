@@ -14,7 +14,7 @@
             <action idref="document_end" />
             <action idref="document_reopen" />
             <action idref="document_delete" />
-            <action idref="document_favorites_add" />
+<!-- TODO            <action idref="document_favorites_add" /> -->
             <action idref="document_favorites_remove" />
             <action idref="document_manage_permissions" />
 <!--             <action idref="document_sendToSap" /> -->

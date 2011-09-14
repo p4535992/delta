@@ -1,9 +1,12 @@
 package ee.webmedia.alfresco.docadmin.service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
+import org.alfresco.util.Pair;
 
 /**
  * @author Ats Uiboupin
@@ -29,6 +32,8 @@ public interface DocumentAdminService {
 
     String getDocumentTypeName(String documentTypeId);
 
+    Map<String/* docTypeId */, String/* docTypeName */> getDocumentTypeNames(Boolean used);
+
     /**
      * Update properties or save new document type.
      * 
@@ -53,6 +58,8 @@ public interface DocumentAdminService {
 
     FieldDefinition getFieldDefinition(QName fieldId);
 
+    boolean isFieldDefinitionExisting(String fieldIdLocalname);
+
     List<FieldDefinition> searchFieldDefinitions(String searchCriteria);
 
     List<FieldGroup> searchFieldGroupDefinitions(String searchCriteria);
@@ -73,5 +80,22 @@ public interface DocumentAdminService {
 
     /** @return true if at least one document is created based on this documentType */
     boolean isDocumentTypeUsed(String documentTypeId);
+
+    AssociationToDocType saveOrUpdateAssocToDocType(AssociationToDocType associationToDocType);
+
+    Set<String> getNonExistingDocumentTypes(Set<String> documentTypeIds);
+
+    /**
+     * Create systematic document types. Document types with specified id-s must not exist before. <br/>
+     * <strong>NB!</strong> This method may only be called when no other threads are using this service (e.g. from bootstrap), because it temporarily modifies service-wide
+     * locations for fieldGroupDefinitions and fieldDefinitions.
+     * 
+     * @param systematicDocumentTypes
+     * @param fieldGroupDefinitionsTmp alternate location for fieldGroupDefinitions
+     * @param fieldDefinitionsTmp alternate location for fieldDefinitions
+     */
+    void createSystematicDocumentTypes(
+            Map<String /* documentTypeId */, Pair<String /* documentTypeName */, Pair<Set<String> /* fieldGroupNames */, Set<QName> /* fieldGroupNames */>>> systematicDocumentTypes,
+            NodeRef fieldGroupDefinitionsTmp, NodeRef fieldDefinitionsTmp);
 
 }

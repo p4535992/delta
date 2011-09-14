@@ -474,7 +474,7 @@ public abstract class BaseObject extends NodeBaseVO implements Cloneable {
         setProp(COPY_OF_NODE_REF, nodeRef);
     }
 
-    public NodeRef getCopyOfNodeRef() {
+    protected NodeRef getCopyOfNodeRef() {
         return getProp(COPY_OF_NODE_REF);
     }
 

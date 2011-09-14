@@ -15,3 +15,7 @@
 </a:panel>
 
 <jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/fields-list-bean.jsp" />
+<%-- FIXME DLSeadist
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-assocs-followup.jsp" />
+<jsp:include page="/WEB-INF/classes/ee/webmedia/alfresco/docadmin/web/doc-type-assocs-reply.jsp" />
+ --%>

@@ -46,6 +46,10 @@ public class DocumentType extends BaseObject {
         return getChildren(DocumentTypeVersion.class);
     }
 
+    public ChildrenList<AssociationToDocType> getAssociationsToDocTypes() {
+        return getChildren(AssociationToDocType.class);
+    }
+
     // Properties
 
     public String getDocumentTypeId() {

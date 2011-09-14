@@ -9,7 +9,6 @@ import java.util.Set;
 
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.namespace.QName;
-import org.springframework.util.Assert;
 
 import ee.webmedia.alfresco.base.BaseObject;
 import ee.webmedia.alfresco.base.BaseServiceImpl;
@@ -99,37 +98,40 @@ public class DocumentTypeVersion extends BaseObject implements MetadataContainer
 
     // Utilities
 
-    /**
-     * Find first {@link Field} that matches given {@code fieldId}. Traverses all child {@link Field}s and {@link FieldGroup}'s {@link Field}s.
-     * 
-     * @param fieldId fieldId to match by, cannot be {@code null}.
-     * @return {@code null} if not found; otherwise the found field.
-     */
-    public Field getFieldById(QName fieldId) {
-        Assert.notNull(fieldId, "fieldId cannot be null");
-        for (MetadataItem metadataItem : getMetadata()) {
-            if (metadataItem instanceof Field) {
-                if (((Field) metadataItem).getFieldId().equals(fieldId)) {
-                    return (Field) metadataItem;
-                }
-            } else if (metadataItem instanceof FieldGroup) {
-                Field field = ((FieldGroup) metadataItem).getFieldById(fieldId);
-                if (field != null) {
-                    return field;
-                }
-            }
-        }
-        return null;
-    }
+    // FIXME DLSeadist - pole vist enam vaja
+//@formatter:off
+//    /**
+//     * Find first {@link Field} that matches given {@code fieldId}. Traverses all child {@link Field}s and {@link FieldGroup}'s {@link Field}s.
+//     * 
+//     * @param fieldId fieldId to match by, cannot be {@code null}.
+//     * @return {@code null} if not found; otherwise the found field.
+//     */
+//    public Field getFieldById(QName fieldId) {
+//        Assert.notNull(fieldId, "fieldId cannot be null");
+//        for (MetadataItem metadataItem : getMetadata()) {
+//            if (metadataItem instanceof Field) {
+//                if (((Field) metadataItem).getFieldId().equals(fieldId)) {
+//                    return (Field) metadataItem;
+//                }
+//            } else if (metadataItem instanceof FieldGroup) {
+//                Field field = ((FieldGroup) metadataItem).getFieldById(fieldId);
+//                if (field != null) {
+//                    return field;
+//                }
+//            }
+//        }
+//        return null;
+//    }
+//@formatter:on
 
     /**
      * return fields added directly or indirectly (trough {@link FieldGroup}) to this {@link DocumentTypeVersion}
      */
     @Override
-    public Collection<Field> getFieldsById(Set<QName> fieldIds) {
+    public Collection<Field> getFieldsById(Set<String> fieldIdLocalNames) {
         HashSet<Field> matchingFields = new HashSet<Field>();
         for (Field field : getFieldsDeeply()) {
-            if (fieldIds.contains(field.getFieldId())) {
+            if (fieldIdLocalNames.contains(field.getFieldId().getLocalName())) {
                 matchingFields.add(field);
             }
         }

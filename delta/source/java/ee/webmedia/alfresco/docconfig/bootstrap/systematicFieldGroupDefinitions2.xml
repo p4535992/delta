@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<view:view xmlns:view="http://www.alfresco.org/view/repository/1.0" xmlns:docadmin="http://alfresco.webmedia.ee/model/document/admin/1.0">
+
+   <docadmin:fieldGroup view:childName="docadmin:senderNameAndEmail">
+      <view:properties>
+         <docadmin:name>Saatja nimi ja e-post</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Saatja</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>{http://alfresco.webmedia.ee/model/document/specific/1.0}senderName</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}senderPersonName</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/specific/1.0}senderEmail</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}senderStreetHouse</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}senderPostalCity</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}senderFax</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:senderRegNumberAndDate">
+      <view:properties>
+         <docadmin:name>Saatja reg nr ja kpv</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Saatja kirja reg nr ja kpv</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule>{senderRegNumber} {senderRegDate</docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>{http://alfresco.webmedia.ee/model/document/specific/1.0}senderRegNumber</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/specific/1.0}senderRegDate</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:complience">
+      <view:properties>
+         <docadmin:name>Dokumendi täitmine</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName></docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>{http://alfresco.webmedia.ee/model/document/specific/1.0}complienceNotation</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/specific/1.0}complienceDate</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:signer">
+      <view:properties>
+         <docadmin:name>Allkirjastaja</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Allkirjastaja</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}signerName</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerServiceRank</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}signerJobTitle</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerOrgStructUnit</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerWorkAddress</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerEmail</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}signerPhone</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:recipients">
+      <view:properties>
+         <docadmin:name>Adressaadid</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Adressaadid</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsNameChangeable>true</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}recipientName</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}recipientPersonName</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}recipientEmail</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}recipientStreetHouse</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}recipientPostalCity</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+   <docadmin:fieldGroup view:childName="docadmin:additionalRecipients">
+      <view:properties>
+         <docadmin:name>Lisaadressaadid</docadmin:name>
+         <docadmin:systematic>true</docadmin:systematic>
+         <docadmin:readonlyFieldsName>Lisaadressaadid</docadmin:readonlyFieldsName>
+         <docadmin:readonlyFieldsNameChangeable>true</docadmin:readonlyFieldsNameChangeable>
+         <docadmin:readonlyFieldsRule></docadmin:readonlyFieldsRule>
+         <docadmin:readonlyFieldsRuleChangeable>false</docadmin:readonlyFieldsRuleChangeable>
+         <docadmin:showInTwoColumns>false</docadmin:showInTwoColumns>
+         <docadmin:showInTwoColumnsChangeable>false</docadmin:showInTwoColumnsChangeable>
+         <docadmin:fieldDefinitionIds>
+            <view:values>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}additionalRecipientName</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}additionalRecipientPersonName</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/common/1.0}additionalRecipientEmail</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}additionalRecipientStreetHouse</view:value>
+               <view:value>{http://alfresco.webmedia.ee/model/document/dynamic/1.0}additionalRecipientPostalCity</view:value>
+            </view:values>
+         </docadmin:fieldDefinitionIds>
+      </view:properties>
+   </docadmin:fieldGroup>
+
+</view:view>

@@ -133,6 +133,17 @@
                </target>
                <duplicate>false</duplicate>
             </child-association>
+            <child-association name="docadmin:associationToDocType">
+               <source>
+                  <mandatory>true</mandatory>
+                  <many>false</many>
+               </source>
+               <target>
+                  <class>docadmin:associationToDocType</class>
+                  <many>true</many>
+               </target>
+               <duplicate>false</duplicate>
+            </child-association>
          </associations>
          <mandatory-aspects>
             <aspect>docadmin:name</aspect>
@@ -329,6 +340,31 @@
             <aspect>sys:aspect_root</aspect>
             <aspect>docadmin:fieldDefinitionContainer</aspect>
          </mandatory-aspects>
+      </type>
+
+      <type name="docadmin:associationToDocType">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="docadmin:associationType">
+               <type>d:text</type>
+            </property>
+            <property name="docadmin:docType">
+               <type>d:text</type>
+               <mandatory enforced="true">true</mandatory>
+            </property>
+         </properties>
+      </type>
+
+      <type name="docadmin:associatedFields">
+         <parent>sys:base</parent>
+         <properties>
+            <property name="docadmin:fromField">
+               <type>d:qname</type>
+            </property>
+            <property name="docadmin:toField">
+               <type>d:qname</type>
+            </property>
+         </properties>
       </type>
 
    </types>

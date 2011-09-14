@@ -14,11 +14,13 @@ import static ee.webmedia.alfresco.document.model.DocumentCommonModel.Props.VOLU
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.alfresco.service.cmr.dictionary.DictionaryService;
+import org.alfresco.service.cmr.dictionary.PropertyDefinition;
 import org.alfresco.service.cmr.repository.NodeRef;
 import org.alfresco.service.cmr.repository.NodeService;
 import org.alfresco.service.namespace.NamespaceService;
@@ -32,6 +34,8 @@ import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.WmNode;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
 import ee.webmedia.alfresco.docadmin.service.DocumentType;
+import ee.webmedia.alfresco.docadmin.service.DocumentTypeVersion;
+import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docconfig.generator.SaveListener;
 import ee.webmedia.alfresco.docdynamic.model.DocumentDynamicModel;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
@@ -73,10 +77,20 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
 
         Map<QName, Serializable> props = new HashMap<QName, Serializable>();
         props.put(DocumentDynamicModel.Props.DOCUMENT_TYPE_ID, documentType.getDocumentTypeId());
-        props.put(DocumentDynamicModel.Props.DOCUMENT_TYPE_VERSION_NR, documentType.getLatestDocumentTypeVersion().getVersionNr());
+        DocumentTypeVersion docVer = documentType.getLatestDocumentTypeVersion();
+        props.put(DocumentDynamicModel.Props.DOCUMENT_TYPE_VERSION_NR, docVer.getVersionNr());
+
+        LinkedHashSet<QName> aspects = generalService.getDefaultAspects(type);
+
+        for (Field field : docVer.getFieldsDeeply()) {
+            if (!field.getFieldId().getNamespaceURI().equals(DocumentDynamicModel.URI)) {
+                PropertyDefinition propDef = dictionaryService.getProperty(field.getFieldId());
+                aspects.add(propDef.getContainerClass().getName());
+                RepoUtil.getMandatoryAspects(propDef.getContainerClass(), aspects);
+            }
+        }
 
         // TODO temporary
-        Set<QName> aspects = generalService.getDefaultAspects(type);
         for (QName docAspect : aspects) {
             documentService.callbackAspectProperiesModifier(docAspect, props);
         }
@@ -85,6 +99,12 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
         NodeRef docRef = nodeService.createNode(drafts, DocumentCommonModel.Assocs.DOCUMENT, DocumentCommonModel.Assocs.DOCUMENT, type,
                 props).getChildRef();
 
+        for (QName aspect : aspects) {
+            if (!nodeService.hasAspect(docRef, aspect)) {
+                LOG.info("Adding aspect: " + aspect.toPrefixString(namespaceService));
+                nodeService.addAspect(docRef, aspect, null);
+            }
+        }
         return docRef;
     }
 
@@ -166,7 +186,7 @@ public class DocumentDynamicServiceImpl implements DocumentDynamicService, BeanF
                     , FUNCTION, SERIES, VOLUME, CASE // location changes
                     , REG_NUMBER, SHORT_REG_NUMBER, REG_DATE_TIME // registration changes
                     , ACCESS_RESTRICTION // access restriction changed
-            );
+                    );
             if (!EventsLoggingHelper.isLoggingDisabled(document.getNode(), DocumentService.TransientProps.TEMP_LOGGING_DISABLED_DOCUMENT_METADATA_CHANGED)) {
                 if (document.isDraft()) {
                     documentLogService.addDocumentLog(docRef, MessageUtil.getMessage("document_log_status_created"));

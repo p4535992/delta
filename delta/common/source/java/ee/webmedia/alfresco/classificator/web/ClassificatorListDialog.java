@@ -95,11 +95,12 @@ public class ClassificatorListDialog extends BaseDialogBean {
     }
 
     public void search() {
-        if (StringUtils.isBlank(getSearchCriteria())) {
+        if (StringUtils.isNotBlank(getSearchCriteria())) {
+            clearRichList();
+            classificators = getClassificatorService().search(getSearchCriteria());
+        } else {
             MessageUtil.addInfoMessage("classificators_error_emptySearchField");
         }
-        clearRichList();
-        classificators = getClassificatorService().search(getSearchCriteria());
     }
 
     private void clearRichList() {

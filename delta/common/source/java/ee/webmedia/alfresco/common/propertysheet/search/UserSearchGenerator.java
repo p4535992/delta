@@ -12,12 +12,13 @@ import org.alfresco.service.cmr.dictionary.PropertyDefinition;
  */
 public class UserSearchGenerator extends SearchGenerator {
 
+    public static final String USERNAME_PROP_ATTR = "usernameProp";
     public static final String EXTRA_INFO_TRANSFORMER = "extraInfoTransformer";
 
     @Override
     protected Map<String, Object> addAttributes(PropertyDefinition propertyDef, UIComponent component) {
         Map<String, Object> attributes = super.addAttributes(propertyDef, component);
-        String propName = getCustomAttributes().get("usernameProp");
+        String propName = getCustomAttributes().get(USERNAME_PROP_ATTR);
         attributes.put(EXTRA_INFO_TRANSFORMER, new SubstituteInfoTransformer(propName));
         return attributes;
     }

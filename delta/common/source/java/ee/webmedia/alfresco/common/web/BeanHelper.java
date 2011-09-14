@@ -27,6 +27,8 @@ import ee.webmedia.alfresco.classificator.web.ClassificatorDetailsDialog;
 import ee.webmedia.alfresco.common.service.ApplicationService;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.docadmin.service.DocumentAdminService;
+import ee.webmedia.alfresco.docadmin.web.AssociationToDocTypeDetailsDialog;
+import ee.webmedia.alfresco.docadmin.web.DocTypeDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.FieldDetailsDialog;
 import ee.webmedia.alfresco.docadmin.web.FieldGroupDetailsDialog;
 import ee.webmedia.alfresco.docconfig.service.DocumentConfigService;
@@ -140,6 +142,15 @@ public class BeanHelper {
 
     public static FieldGroupDetailsDialog getFieldGroupDetailsDialog() {
         return getJsfBean(FieldGroupDetailsDialog.class, FieldGroupDetailsDialog.BEAN_NAME);
+    }
+
+    public static AssociationToDocTypeDetailsDialog getAssociationToDocTypeDetailsDialog() {
+        return getJsfBean(AssociationToDocTypeDetailsDialog.class, AssociationToDocTypeDetailsDialog.BEAN_NAME);
+
+    }
+
+    public static DocTypeDetailsDialog getDocTypeDetailsDialog() {
+        return getJsfBean(DocTypeDetailsDialog.class, DocTypeDetailsDialog.BEAN_NAME);
     }
 
     public static VisitedDocumentsBean getVisitedDocumentsBean() {
