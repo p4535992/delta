@@ -522,6 +522,9 @@ function validateDatePeriods() {
          return;
       }
       var endDate = getEndDate(beginDateElem, row);
+      if (!endDate) {
+         return;
+      }
       var oneDay = 24*60*60*1000; // hours*minutes*seconds*milliseconds
       if (endDate.val() != "") {
          var daysDiff = (endDate.datepicker('getDate') - bDate.datepicker('getDate') ) / oneDay;
@@ -535,15 +538,18 @@ function validateDatePeriods() {
    return !endBeforeBegin;
 }
 
-function getEndDate(beginDateElem, container){
+function getEndDate(beginDateElem, container) {
    var endDates = container.find(".endDate");
-   if(endDates.length>1){
+   if (endDates.length>1) {
       var dates = container.find(".beginDate, .endDate");
-      for ( var i = 0; i < dates.length; i++) {
-         if(dates[i]==beginDateElem && dates.length > i+1){
+      for (var i = 0; i < dates.length; i++) {
+         if (dates[i] == beginDateElem && dates.length > i+1) {
             return $jQ(dates[i+1]);
          }
       }
+      return null;
+   } else if (endDates.length == 0) {
+      return null;
    } else {
       return endDates;
    }

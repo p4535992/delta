@@ -89,6 +89,7 @@ public class AjaxBean implements Serializable {
 
         UIComponent component = ComponentUtil.findChildComponentById(context, viewRoot, componentClientId, true);
         Assert.notNull(component, String.format("Component with clientId=%s was not found", componentClientId));
+        UIForm form = Utils.getParentForm(context, component);
 
         // The following is copied from RestoreStateUtils#recursivelyHandleComponentReferencesAndSetValid
         ValueBinding binding = component.getValueBinding("binding");
@@ -167,7 +168,6 @@ public class AjaxBean implements Serializable {
         ResponseWriter out = context.getResponseWriter();
         out.write("VIEWSTATE:" + viewState);
 
-        UIForm form = Utils.getParentForm(context, component);
         @SuppressWarnings("unchecked")
         Set<String> formHiddenInputs = (Set<String>) context.getExternalContext().getRequestMap().get(
                 HtmlFormRendererBase.getHiddenCommandInputsSetName(context, form));
