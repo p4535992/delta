@@ -43,6 +43,7 @@ import org.springframework.web.jsf.FacesContextUtils;
 import ee.webmedia.alfresco.common.propertysheet.component.WMUIPropertySheet;
 import ee.webmedia.alfresco.common.propertysheet.renderkit.PropertySheetGridRenderer;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docconfig.generator.DialogDataProvider;
 import ee.webmedia.alfresco.docdynamic.web.DocumentDynamicBlock;
 import ee.webmedia.alfresco.document.einvoice.model.Transaction;
@@ -158,7 +159,11 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
         return getWorkflowService().isOwner(getCompoundWorkflows());
     }
 
-    public List<ActionDefinition> findCompoundWorkflowDefinitions(String documentTypeQName) {
+    public List<ActionDefinition> findCompoundWorkflowDefinitions(String documentTypeId, String documentStatus) {
+        if (document == null) {
+            return Collections.emptyList();
+        }
+
         WorkflowService workflowService = getWorkflowService();
         boolean showCWorkflowDefsWith1Workflow = false;
         for (CompoundWorkflow cWorkflow : compoundWorkflows) {
@@ -167,15 +172,10 @@ public class WorkflowBlockBean implements DocumentDynamicBlock {
             }
         }
 
-        QName documentType = QName.createQName(documentTypeQName);
-        String documentStatus = null;
-        try {
-            // TODO DLSeadist
-            documentStatus = (String) BeanHelper.getDocumentDialogHelperBean().getProps().get(DocumentCommonModel.Props.DOC_STATUS);
-        } catch (Exception e) {
-            // Do nothing
-        }
-        List<CompoundWorkflowDefinition> workflowDefs = workflowService.getCompoundWorkflowDefinitions(documentType, documentStatus);
+        documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
+        documentStatus = (String) document.getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
+
+        List<CompoundWorkflowDefinition> workflowDefs = workflowService.getCompoundWorkflowDefinitions(documentTypeId, documentStatus);
         List<ActionDefinition> actionDefinitions = new ArrayList<ActionDefinition>(workflowDefs.size());
         String userId = AuthenticationUtil.getRunAsUser();
         for (CompoundWorkflowDefinition compoundWorkflowDefinition : workflowDefs) {

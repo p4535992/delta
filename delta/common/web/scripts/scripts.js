@@ -950,6 +950,12 @@ function initWithScreenProtected() {
          filterValue = 0;
       }
 
+      var index = callback.indexOf("|");
+      if (index >= 0) {
+         filterValue = callback.substring(0, index);
+         callback = callback.substring(index + 1);
+      }
+
       var backspace = event.keyCode == 8;
       if (value.length == 3 && !backspace) {
          $jQ.ajax({

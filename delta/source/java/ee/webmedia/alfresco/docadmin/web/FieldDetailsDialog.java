@@ -208,7 +208,13 @@ public class FieldDetailsDialog extends BaseDialogBean {
         resetFields();
         field = fieldOrFieldDef;
         fieldParent = parentOfField;
-        propertySheet.setMode(isProperySheetEditable() ? "edit" : "view");
+        if (propertySheet != null) {
+            propertySheet.setMode(getPropertySheetMode());
+        }
+    }
+
+    public String getPropertySheetMode() {
+        return isProperySheetEditable() ? UIPropertySheet.EDIT_MODE : UIPropertySheet.VIEW_MODE;
     }
 
     /** used by jsp */

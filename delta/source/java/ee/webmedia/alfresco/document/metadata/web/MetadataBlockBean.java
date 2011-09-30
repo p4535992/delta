@@ -27,8 +27,6 @@ import javax.faces.component.html.HtmlSelectOneMenu;
 import javax.faces.context.FacesContext;
 import javax.faces.context.ResponseWriter;
 import javax.faces.event.ActionEvent;
-import javax.faces.event.FacesListener;
-import javax.faces.event.PhaseId;
 import javax.faces.event.ValueChangeEvent;
 import javax.faces.model.SelectItem;
 import javax.faces.validator.ValidatorException;
@@ -65,7 +63,6 @@ import ee.webmedia.alfresco.classificator.model.ClassificatorValue;
 import ee.webmedia.alfresco.classificator.service.ClassificatorService;
 import ee.webmedia.alfresco.common.propertysheet.component.SubPropertySheetItem;
 import ee.webmedia.alfresco.common.propertysheet.converter.DoubleCurrencyConverter;
-import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.common.web.BeanHelper;
 import ee.webmedia.alfresco.common.web.ClearStateNotificationHandler.ClearStateListener;
@@ -88,7 +85,6 @@ import ee.webmedia.alfresco.document.type.service.DocumentTypeService;
 import ee.webmedia.alfresco.document.web.DocumentDialog;
 import ee.webmedia.alfresco.dvk.service.DvkService;
 import ee.webmedia.alfresco.dvk.service.ExternalReviewException;
-import ee.webmedia.alfresco.functions.model.Function;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.menu.ui.MenuBean;
 import ee.webmedia.alfresco.orgstructure.service.OrganizationStructureService;
@@ -1137,175 +1133,6 @@ public class MetadataBlockBean implements ClearStateListener {
     }
 
     private void updateFnSerVol(NodeRef functionRef, NodeRef seriesRef, NodeRef volumeRef, String caseLabel, boolean addIfMissing) {
-        { // Function
-            List<Function> allFunctions = getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
-            functions = new ArrayList<SelectItem>(allFunctions.size());
-            functions.add(new SelectItem("", ""));
-            boolean functionFound = false;
-            for (Function function : allFunctions) {
-                List<Series> openSeries = getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, document.getType());
-                if (openSeries.size() == 0) {
-                    continue;
-                }
-                functions.add(new SelectItem(function.getNode().getNodeRef(), function.getMark() + " " + function.getTitle()));
-                if (functionRef != null && functionRef.equals(function.getNode().getNodeRef())) {
-                    functionFound = true;
-                }
-            }
-            if (!functionFound) {
-                if (addIfMissing && functionRef != null && getNodeService().exists(functionRef)) {
-                    Function function = getFunctionsService().getFunctionByNodeRef(functionRef);
-                    functions.add(1, new SelectItem(function.getNode().getNodeRef(), function.getMark() + " " + function.getTitle()));
-                } else {
-                    functionRef = null;
-                }
-            }
-            // If list contains only one value, then select it right away
-            if (functions.size() == 2) {
-                functions.remove(0);
-                if (functionRef == null) {
-                    functionRef = (NodeRef) functions.get(0).getValue();
-                }
-            }
-        }
-
-        if (functionRef == null) {
-            series = null;
-            seriesRef = null;
-        } else {
-            List<Series> allSeries = getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, document.getType());
-            series = new ArrayList<SelectItem>(allSeries.size());
-            series.add(new SelectItem("", ""));
-            boolean serieFound = false;
-            for (Series serie : allSeries) {
-                series.add(new SelectItem(serie.getNode().getNodeRef(), serie.getSeriesIdentifier() + " " + serie.getTitle()));
-                if (seriesRef != null && seriesRef.equals(serie.getNode().getNodeRef())) {
-                    serieFound = true;
-                }
-            }
-            if (!serieFound) {
-                if (addIfMissing && seriesRef != null && getNodeService().exists(seriesRef)) {
-                    Series serie = getSeriesService().getSeriesByNodeRef(seriesRef);
-                    series.add(1, new SelectItem(serie.getNode().getNodeRef(), serie.getSeriesIdentifier() + " " + serie.getTitle()));
-                } else {
-                    seriesRef = null;
-                }
-            }
-            // If list contains only one value, then select it right away
-            if (series.size() == 2) {
-                series.remove(0);
-                if (seriesRef == null) {
-                    seriesRef = (NodeRef) series.get(0).getValue();
-                }
-            }
-        }
-
-        if (seriesRef == null) {
-            volumes = null;
-            volumeRef = null;
-        } else {
-            UIPropertySheet ps = getPropertySheetInner();
-            if (ps == null) { // when metadata block is first rendered
-                updateAccessRestrictionProperties(seriesRef);
-            } else { // when value change event is fired
-                final NodeRef finalSeriesRef = seriesRef;
-                ActionEvent event = new ActionEvent(ps) {
-                    private static final long serialVersionUID = 1L;
-
-                    boolean notExecuted = true;
-
-                    @Override
-                    public void processListener(FacesListener faceslistener) {
-                        notExecuted = false;
-                        updateAccessRestrictionProperties(finalSeriesRef);
-                    }
-
-                    @Override
-                    public boolean isAppropriateListener(FacesListener faceslistener) {
-                        return notExecuted;
-                    }
-                };
-                event.setPhaseId(PhaseId.INVOKE_APPLICATION);
-                ps.queueEvent(event);
-            }
-
-            List<Volume> allVolumes = getVolumeService().getAllValidVolumesBySeries(seriesRef, DocListUnitStatus.OPEN);
-            volumes = new ArrayList<SelectItem>(allVolumes.size());
-            volumes.add(new SelectItem("", ""));
-            boolean volumeFound = false;
-            for (Volume volume : allVolumes) {
-                volumes.add(new SelectItem(volume.getNode().getNodeRef(), volume.getVolumeMark() + " " + volume.getTitle()));
-                if (volumeRef != null && volumeRef.equals(volume.getNode().getNodeRef())) {
-                    volumeFound = true;
-                }
-            }
-            if (!volumeFound) {
-                if (addIfMissing && volumeRef != null && getNodeService().exists(volumeRef)) {
-                    Volume volume = getVolumeService().getVolumeByNodeRef(volumeRef);
-                    volumes.add(1, new SelectItem(volume.getNode().getNodeRef(), volume.getVolumeMark() + " " + volume.getTitle()));
-                } else {
-                    volumeRef = null;
-                }
-            }
-            // If list contains only one value, then select it right away
-            if (volumes.size() == 2) {
-                volumes.remove(0);
-                if (volumeRef == null) {
-                    volumeRef = (NodeRef) volumes.get(0).getValue();
-                }
-            }
-        }
-
-        if (volumeRef == null) {
-            cases = null;
-            caseLabel = null;
-        } else {
-            if (getVolumeService().getVolumeByNodeRef(volumeRef).isContainsCases()) {
-                List<Case> allCases = getCaseService().getAllCasesByVolume(volumeRef, DocListUnitStatus.OPEN);
-                cases = new ArrayList<String>(allCases.size());
-                for (Case tmpCase : allCases) {
-                    cases.add(tmpCase.getTitle());
-                }
-                if (StringUtils.isBlank(caseLabel) && cases.size() == 1) {
-                    caseLabel = cases.get(0);
-                }
-            } else {
-                cases = null;
-                caseLabel = null;
-            }
-        }
-
-        if (getPropertySheet() != null) {
-            @SuppressWarnings("unchecked")
-            List<UIComponent> children = getPropertySheet().getChildren();
-            for (UIComponent component : children) {
-                if (component.getId().endsWith("_function")) {
-                    HtmlSelectOneMenu functionList = (HtmlSelectOneMenu) component.getChildren().get(1);
-                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), functionList, functions);
-                    functionList.setValue(functionRef);
-                } else if (component.getId().endsWith("_series")) {
-                    HtmlSelectOneMenu seriesList = (HtmlSelectOneMenu) component.getChildren().get(1);
-                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), seriesList, series);
-                    seriesList.setValue(seriesRef);
-                } else if (component.getId().endsWith("_volume")) {
-                    HtmlSelectOneMenu volumeList = (HtmlSelectOneMenu) component.getChildren().get(1);
-                    ComponentUtil.setSelectItems(FacesContext.getCurrentInstance(), volumeList, volumes);
-                    volumeList.setValue(volumeRef);
-                } else if (component.getId().endsWith("_case_Lbl_Editable")) {
-                    UIInput caseList = (UIInput) component.getChildren().get(1);
-                    SuggesterGenerator.setValue(caseList, cases);
-                    caseList.setValue(caseLabel);
-                    component.setRendered(cases != null);
-                }
-            }
-        }
-
-        // These only apply when called initially during creation of a new document
-        // If called from eventlistener, then model values are updated after and thus overwritten
-        document.getProperties().put(DocumentService.TransientProps.FUNCTION_NODEREF, functionRef);
-        document.getProperties().put(DocumentService.TransientProps.SERIES_NODEREF, seriesRef);
-        document.getProperties().put(DocumentService.TransientProps.VOLUME_NODEREF, volumeRef);
-        document.getProperties().put(DocumentService.TransientProps.CASE_LABEL_EDITABLE, caseLabel);
     }
 
     public void ministersOrderWhoseChanged(ValueChangeEvent event) {

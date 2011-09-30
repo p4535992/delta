@@ -37,6 +37,7 @@ import ee.webmedia.alfresco.common.propertysheet.config.WMPropertySheetConfigEle
 import ee.webmedia.alfresco.common.propertysheet.converter.NodeRefConverter;
 import ee.webmedia.alfresco.common.propertysheet.suggester.SuggesterGenerator;
 import ee.webmedia.alfresco.common.web.BeanHelper;
+import ee.webmedia.alfresco.docadmin.model.DocumentAdminModel;
 import ee.webmedia.alfresco.docadmin.service.Field;
 import ee.webmedia.alfresco.docadmin.service.FieldGroup;
 import ee.webmedia.alfresco.docconfig.generator.BasePropertySheetStateHolder;
@@ -257,13 +258,14 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
             Node document = dialogDataProvider.getNode();
             UIPropertySheet ps = dialogDataProvider.getPropertySheet();
 
+            String documentTypeId = (String) document.getProperties().get(DocumentAdminModel.Props.OBJECT_TYPE_ID);
             { // Function
                 List<Function> allFunctions = BeanHelper.getFunctionsService().getAllFunctions(DocListUnitStatus.OPEN);
                 functions = new ArrayList<SelectItem>(allFunctions.size());
                 functions.add(new SelectItem("", ""));
                 boolean functionFound = false;
                 for (Function function : allFunctions) {
-                    List<Series> openSeries = BeanHelper.getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, document.getType());
+                    List<Series> openSeries = BeanHelper.getSeriesService().getAllSeriesByFunction(function.getNodeRef(), DocListUnitStatus.OPEN, documentTypeId);
                     if (openSeries.size() == 0) {
                         continue;
                     }
@@ -293,7 +295,7 @@ public class DocumentLocationGenerator extends BaseSystematicFieldGenerator impl
                 series = null;
                 seriesRef = null;
             } else {
-                List<Series> allSeries = BeanHelper.getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, document.getType());
+                List<Series> allSeries = BeanHelper.getSeriesService().getAllSeriesByFunction(functionRef, DocListUnitStatus.OPEN, documentTypeId);
                 series = new ArrayList<SelectItem>(allSeries.size());
                 series.add(new SelectItem("", ""));
                 boolean serieFound = false;

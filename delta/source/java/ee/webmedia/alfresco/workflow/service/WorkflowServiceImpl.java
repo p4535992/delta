@@ -179,14 +179,13 @@ public class WorkflowServiceImpl implements WorkflowService, WorkflowModificatio
     }
 
     @Override
-    public List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(QName documentType, String documentStatus) {
+    public List<CompoundWorkflowDefinition> getCompoundWorkflowDefinitions(String documentTypeId, String documentStatus) {
         boolean isFinished = DocumentStatus.FINISHED.getValueName().equals(documentStatus);
         List<CompoundWorkflowDefinition> compoundWorkflowDefinitions = getCompoundWorkflowDefinitions();
         outer: //
         for (Iterator<CompoundWorkflowDefinition> i = compoundWorkflowDefinitions.iterator(); i.hasNext();) {
             CompoundWorkflowDefinition compoundWorkflowDefinition = i.next();
-            // TODO DLSeadist if docdyn then allow all workflows
-            if (!DocumentCommonModel.Types.DOCUMENT.equals(documentType) && !compoundWorkflowDefinition.getDocumentTypes().contains(documentType)) {
+            if (!compoundWorkflowDefinition.getDocumentTypes().contains(documentTypeId)) {
                 i.remove();
                 continue outer;
             }

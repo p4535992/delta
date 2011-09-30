@@ -11,5 +11,5 @@
       <f:verbatim><div class="message condence200"></f:verbatim><h:outputText value="#{FieldDetailsDialog.field.systematicComment}" /><f:verbatim></div></f:verbatim>
    </a:booleanEvaluator>
 
-   <r:propertySheetGrid id="fieldDefDetailsPS" value="#{FieldDetailsDialog.field.node}" binding="#{FieldDetailsDialog.propertySheet}" columns="1" externalConfig="true" labelStyleClass="propertiesLabel" />
+   <r:propertySheetGrid id="fieldDefDetailsPS" value="#{FieldDetailsDialog.field.node}" binding="#{FieldDetailsDialog.propertySheet}" mode="#{FieldDetailsDialog.propertySheetMode}" columns="1" externalConfig="true" labelStyleClass="propertiesLabel" />
 </a:panel>

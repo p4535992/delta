@@ -308,7 +308,7 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
                             .append(")")
                             .append("<br>\n");
                     debugInfo.append("\n  * ").append(endDate.getTime()).append(" ").append(endDate.toString()).append(" -> ").append(formattedDate).append(" - ")
-                    .append(doc.getNodeRefAsString());
+                            .append(doc.getNodeRefAsString());
                 }
             }
             if (sb.length() > 0) {
@@ -619,11 +619,10 @@ public class DocumentTemplateServiceImpl implements DocumentTemplateService, Ser
         for (FileInfo fi : templateFiles) {
             DocumentTemplate dt = setupDocumentTemplate(fi);
             if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_DOCUMENT)) {
-                // TODO Kaarel
-                // NodeRef docType = generalService.getNodeRef(DocumentTypeModel.Repo.DOCUMENT_TYPES_SPACE + "/" + dt.getDocTypeId());
-                // if (docType != null) {
-                // dt.setDocTypeName((String) nodeService.getProperty(docType, DocumentTypeModel.Props.NAME));
-                // }
+                NodeRef docType = generalService.getNodeRef(DocumentAdminModel.Repo.DOCUMENT_TYPES_SPACE + "/" + DocumentAdminModel.PREFIX + dt.getDocTypeId());
+                if (docType != null) {
+                    dt.setDocTypeName((String) nodeService.getProperty(docType, DocumentAdminModel.Props.NAME));
+                }
             } else if (nodeService.hasAspect(fi.getNodeRef(), DocumentTemplateModel.Aspects.TEMPLATE_EMAIL)) {
                 dt.setDocTypeName("");
             } else {

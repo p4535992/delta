@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.web.bean.repository.Node;
 
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
@@ -27,7 +26,7 @@ public interface SeriesService {
 
     List<Series> getAllSeriesByFunction(NodeRef functionNodeRef);
 
-    List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, QName docTypeId);
+    List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, String docTypeId);
 
     List<Series> getAllSeriesByFunctionForStructUnit(NodeRef functionNodeRef, Integer structUnitId);
 

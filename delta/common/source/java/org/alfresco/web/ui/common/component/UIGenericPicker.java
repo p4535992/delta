@@ -326,7 +326,11 @@ public class UIGenericPicker extends UICommand implements AjaxUpdateable {
                 if (pickerCallback.contains("#{")) {
                     pickerCallback = pickerCallback.substring("#{".length(), pickerCallback.length() - 1);
                 }
-                out.write(" datasrc='" + pickerCallback + "'");
+                out.write(" datasrc='");
+                if (!getShowFilter()) {
+                    out.write(filterIndex + "|");
+                }
+                out.write(pickerCallback + "'");
             }
             out.write(" name='");
             out.write(clientId + FIELD_CONTAINS);

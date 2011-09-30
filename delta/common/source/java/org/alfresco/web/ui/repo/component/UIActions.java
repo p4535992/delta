@@ -43,7 +43,6 @@ import javax.faces.el.ValueBinding;
 import org.alfresco.config.Config;
 import org.alfresco.error.AlfrescoRuntimeException;
 import org.alfresco.service.cmr.repository.NodeRef;
-import org.alfresco.service.namespace.QName;
 import org.alfresco.util.URLEncoder;
 import org.alfresco.web.app.Application;
 import org.alfresco.web.bean.repository.Node;
@@ -61,6 +60,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.myfaces.shared_impl.taglib.UIComponentTagUtils;
+
+import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 
 /**
  * @author kevinr
@@ -149,9 +150,9 @@ public class UIActions extends SelfRenderingComponent
       {
          contextId = ((Node)actionContext).getType().toString();
          String contextKey = contextId;
-         if (isValueReference) {
-             // Ugly solution to get document status for document workflow menu actions filtering 
-             contextStatus = (String) ((Node)actionContext).getProperties().get(QName.createQName("http://alfresco.webmedia.ee/model/document/common/1.0", "docStatus"));
+         if (isValueReference) { // FIXME XXX TODO Vladimir?
+             // Ugly solution to get document status for document workflow menu actions filtering
+             contextStatus = (String) ((Node) actionContext).getProperties().get(DocumentCommonModel.Props.DOC_STATUS);
              if (StringUtils.isNotBlank(contextStatus)) {
                  contextKey += "_" + contextStatus;
              }

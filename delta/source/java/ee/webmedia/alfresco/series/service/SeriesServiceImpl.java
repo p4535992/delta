@@ -29,7 +29,6 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import ee.webmedia.alfresco.classificator.enums.DocListUnitStatus;
 import ee.webmedia.alfresco.common.service.GeneralService;
 import ee.webmedia.alfresco.document.log.service.DocumentLogService;
-import ee.webmedia.alfresco.document.model.DocumentCommonModel;
 import ee.webmedia.alfresco.functions.service.FunctionsService;
 import ee.webmedia.alfresco.series.model.Series;
 import ee.webmedia.alfresco.series.model.SeriesModel;
@@ -73,13 +72,11 @@ public class SeriesServiceImpl implements SeriesService, BeanFactoryAware {
     }
 
     @Override
-    public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, QName docTypeId) {
+    public List<Series> getAllSeriesByFunction(NodeRef functionNodeRef, DocListUnitStatus status, String docTypeId) {
         List<Series> series = getAllSeriesByFunction(functionNodeRef);
         for (Iterator<Series> i = series.iterator(); i.hasNext();) {
             Series s = i.next();
-            // XXX DLSeadist: allow all dyn doctypes for testing
-            if (!status.getValueName().equals(s.getStatus())
-                    || (docTypeId != null && !s.getDocType().contains(docTypeId) && !DocumentCommonModel.Types.DOCUMENT.equals(docTypeId))) {
+            if (!status.getValueName().equals(s.getStatus()) || !s.getDocType().contains(docTypeId)) {
                 i.remove();
             }
         }
